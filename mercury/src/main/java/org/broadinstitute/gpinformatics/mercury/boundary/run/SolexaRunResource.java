@@ -211,8 +211,6 @@ public class SolexaRunResource {
             route = router.routeForVessels(Collections.<LabVessel>singletonList(
                 run.getSampleCartridge()
             ));
-        } else {
-            throw new ResourceException("Run "+runBarcode + " Was not found.", Response.Status.NOT_FOUND);
         }
 
         Throwable squidError = null;

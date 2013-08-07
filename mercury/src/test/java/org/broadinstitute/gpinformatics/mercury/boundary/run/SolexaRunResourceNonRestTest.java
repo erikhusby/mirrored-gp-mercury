@@ -18,7 +18,6 @@ import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessage
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -48,7 +47,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -361,44 +359,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
         Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
         Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
-    }
-    /**
-     * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
-     * method will also create a run to associate the read structures.
-     */
-    @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    public void testSetReadStructureNonExistingRun() throws Exception{
-
-        Double imagedArea = new Double("276.4795532227");
-        String lanesSequenced = "2,3";
-        ReadStructureRequest readStructure = new ReadStructureRequest();
-        readStructure.setRunBarcode(runBarcode+"BAD_NON_EXISTENT");
-        readStructure.setSetupReadStructure("71T8B8B101T");
-
-        IlluminaSequencingRun run =
-                new IlluminaSequencingRun(newFlowcell, runName, runBarcode, machineName,
-                        bspUserList.getByUsername("scottmat").getUserId(), true, runDate, runFileDirectory);
-
-        runDao.persist(run);
-
-        SolexaRunResource runResource =
-                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        null, messageSender, squidConfig, reagentKitDao);
-
-        ReadStructureRequest readstructureResult = null;
-
-        try {
-            readstructureResult = runResource.storeRunReadStructure(readStructure);
-            /**
-             * Had some issue figuring out how to get at the cause exception which will be the Resource Exception
-             */
-            Assert.fail();
-        } finally {
-
-        }
-
-
     }
 
 }
