@@ -261,7 +261,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      */
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
-        TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
+        TwoDBarcodedTube receptacle = twoDBarcodedTubeDao.findByBarcode(tubeBarcode);
         return getAlternativeIds(receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
     }
 
