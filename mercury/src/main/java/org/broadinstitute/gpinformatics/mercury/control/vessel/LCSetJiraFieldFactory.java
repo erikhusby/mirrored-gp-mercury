@@ -11,11 +11,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -74,6 +77,15 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 }
                 pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
             }
+            for (LabVessel rework : batch.getReworks()) {
+                for (SampleInstance sampleInstance : rework.getSampleInstances(LabVessel.SampleType.WITH_PDO, null)) {
+                    String pdoKey = sampleInstance.getProductOrderKey();
+                    if (!pdoToVesselMap.containsKey(pdoKey)) {
+                        pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
+                    }
+                    pdoToVesselMap.get(pdoKey).add(rework);
+                }
+            }
         } else {
             pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
         }
@@ -103,7 +115,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      *
      * @return sample list
      */
-    public static String buildSamplesListString(LabBatch labBatch) {
+    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new HashSet<>();
         Set<String> reworkSamples = new HashSet<>();
@@ -133,7 +145,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if (!reworkSamples.isEmpty()) {
             samplesText.append("\n");
             for (String reworkSample : reworkSamples) {
-                samplesText.append(reworkSample).append(" (rework)\n");
+                if (bucket == null) {
+                    samplesText.append(reworkSample).append(" (rework)\n");
+                } else {
+                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
+                            .append(
+                                    ")\n");
+                }
             }
         }
         return samplesText.toString();
@@ -158,10 +176,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
-        int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
+        int sampleCount = batch.getStartingBatchLabVessels().size();
 
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                buildSamplesListString(batch)));
+                buildSamplesListString(batch, null)));
 
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
@@ -184,7 +202,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 if (StringUtils.isNotBlank(builtProtocol)) {
                     builtProtocol += ", ";
                 }
-                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion();
+                builtProtocol +=
+                        currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion(batch.getCreatedOn())
+                                .getVersion();
             }
             customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
                     builtProtocol));

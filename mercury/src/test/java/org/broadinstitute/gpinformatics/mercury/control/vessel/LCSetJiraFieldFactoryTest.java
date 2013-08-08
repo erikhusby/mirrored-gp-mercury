@@ -166,7 +166,9 @@ public class LCSetJiraFieldFactoryTest {
                 ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(
                         athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflowName());
 
-                Assert.assertEquals(workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn()).getVersion(),
+                Assert.assertEquals(
+                        workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
+                                .getVersion(),
                         currField.getValue());
 
             }
@@ -190,7 +192,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -206,7 +208,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }

@@ -54,8 +54,6 @@ import java.util.Set;
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
-    private static final String REWORK_BUCKET_PAGE = "/workflow/rework_bucket_view.jsp";
-    public static final String REWORK_ACTION = "viewRework";
     public static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
@@ -365,7 +363,7 @@ public class BucketViewActionBean extends CoreActionBean {
         loadReworkVessels();
         if (batch == null) {
             addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
-            return new ForwardResolution(REWORK_BUCKET_PAGE);
+            return new ForwardResolution(VIEW_PAGE);
         }
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
@@ -376,6 +374,7 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        seperateEntriesByType();
     }
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
@@ -388,11 +387,11 @@ public class BucketViewActionBean extends CoreActionBean {
             labBatchEjb.updateBatchWithReworks(selectedLcset, reworkEntryIds);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
-            return new RedirectResolution(REWORK_BUCKET_PAGE);
+            return new RedirectResolution(VIEW_PAGE);
         }
         addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkEntryIds.size(),
                 selectedLcset, selectedBucket));
-        return new RedirectResolution(BucketViewActionBean.class, REWORK_ACTION);
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
     }
 
     /**
