@@ -31,7 +31,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class supports all the actions done on products.
@@ -300,7 +302,7 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         productEjb.saveProduct(
-                editProduct.getBusinessKey(), addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
+                editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
                 allLengthsMatch(), criteria, operators, values);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
