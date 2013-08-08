@@ -83,7 +83,7 @@ public class LedgerEntryCrossEtlDbFreeTest {
     public void testMakePosRecord() throws Exception {
         expect(dao.findById(ProductOrderSample.class, posId)).andReturn(pos);
         expect(pos.getProductOrderSampleId()).andReturn(posId);
-        expect(pos.getBillableLedgerItems()).andReturn(ledgerItems);
+        expect(pos.isAnyBilled()).andReturn(true);
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, posId);
