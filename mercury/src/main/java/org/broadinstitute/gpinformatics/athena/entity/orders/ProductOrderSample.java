@@ -163,6 +163,20 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return false;
     }
 
+    /**
+     * A sample is 'any' billed if any of its price items have been billed.
+     *
+     * @return true if this sample has been billed at least once.
+     */
+    public boolean isAnyBilled() {
+        for (LedgerEntry entry : ledgerItems) {
+            if (entry.isBilled()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
