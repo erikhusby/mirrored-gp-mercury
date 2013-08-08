@@ -107,19 +107,6 @@ public class Bucket {
         return bucketEntries.contains(bucketEntry);
     }
 
-    /**
-     * adds a new {@link BucketEntry} to the bucket
-     *
-     * @param newEntry
-     */
-    public void addEntry(BucketEntry newEntry) {
-        newEntry.setBucket(this);
-        newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
-        newEntry.getLabVessel().addBucketEntry(newEntry);
-        bucketEntries.add(newEntry);
-
-    }
-
 
     /**
      * Helper method to add a new item into the bucket
@@ -132,7 +119,9 @@ public class Bucket {
      */
     public BucketEntry addEntry(String productOrderKey, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
         BucketEntry newEntry = new BucketEntry(vessel, productOrderKey, this, entryType);
-        addEntry(newEntry);
+        newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
+        bucketEntries.add(newEntry);
+        vessel.addBucketEntry(newEntry);
         return newEntry;
     }
 
