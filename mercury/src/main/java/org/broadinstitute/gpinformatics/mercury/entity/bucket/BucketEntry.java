@@ -154,15 +154,6 @@ public class BucketEntry  {
     }
 
     /**
-     * allows a user to associate a specific bucket instance with this bucket entry
-     *
-     * @param bucketExistenceIn a specific instance of a Bucket to associate with this entry
-     */
-    public void setBucket(Bucket bucketExistenceIn) {
-        bucket = bucketExistenceIn;
-    }
-
-    /**
      * accessor to retrieve the date of creation for this bucket entry
      * @return date representing the date this entry was added to the bucket
      */
@@ -228,18 +219,31 @@ public class BucketEntry  {
             return false;
         }
 
-        BucketEntry that = OrmUtil.proxySafeCast(o,BucketEntry.class);
+        BucketEntry that = OrmUtil.proxySafeCast(o, BucketEntry.class);
 
-        return new EqualsBuilder().append(getStatus(), that.getStatus())
+        return new EqualsBuilder()
                 .append(getLabVessel(), that.getLabVessel())
-                .append(getPoBusinessKey(), that.getPoBusinessKey())
-                .append(getEntryType(), that.getEntryType())
+                .append(getBucket(), that.getBucket())
+                .append(getCreatedDate(), that.getCreatedDate())
                 .isEquals();
     }
 
     @Override
     public int hashCode () {
-        return new HashCodeBuilder().append(getStatus()).append(getLabVessel()).append(getPoBusinessKey()).toHashCode();
+        return new HashCodeBuilder()
+                .append(getLabVessel())
+                .append(getBucket())
+                .append(getCreatedDate())
+                .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Bucket: %s, %s, Vessel %s, Batch %s",
+                bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
+                poBusinessKey,
+                labVessel != null ? labVessel.getLabel() : "(no vessel)",
+                labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
     public int compareTo (BucketEntry other) {

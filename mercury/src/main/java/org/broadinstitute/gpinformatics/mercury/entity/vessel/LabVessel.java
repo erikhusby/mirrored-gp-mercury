@@ -918,7 +918,17 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addBucketEntry(BucketEntry bucketEntry) {
-        bucketEntries.add(bucketEntry);
+        boolean added = bucketEntries.add(bucketEntry);
+        if (!added) {
+            /*
+             * We currently don't have any UI gestures that should allow us to violate the contract for equals/hashCode
+             * for BucketEntry (currently using bucket, labVessel, and createdDate). If this exception is ever thrown,
+             * it is because we've added such a feature and this should readily be thrown during development and
+             * testing. If that happens, BucketEntry will have to be enhanced have more inherent uniqueness, likely
+             * using some sort of artificial unique identifier such as a UUID.
+             */
+            throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
+        }
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
