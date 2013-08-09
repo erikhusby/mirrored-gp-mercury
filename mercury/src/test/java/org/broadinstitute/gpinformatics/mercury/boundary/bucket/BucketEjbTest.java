@@ -410,9 +410,15 @@ public class BucketEjbTest extends ContainerTest {
             }
         }
 
-        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel1, bucket));
-        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel2, bucket));
-        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel3, bucket));
+        testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
+        testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
+        testEntry3 = bucketEntryDao.findByVesselAndBucket(vessel3, bucket);
+        testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
+
+        Assert.assertNotNull(testEntry1);
+        Assert.assertNotNull(testEntry2);
+        Assert.assertNotNull(testEntry3);
+        Assert.assertNotNull(testEntry4);
 
         Assert.assertFalse(bucket.contains(testEntry1));
         Assert.assertFalse(bucket.contains(testEntry2));
@@ -427,7 +433,8 @@ public class BucketEjbTest extends ContainerTest {
         bucketDao.clear();
         bucket = bucketDao.findByName(bucketCreationName);
 
-        Assert.assertNotNull(bucketEntryDao.findByVesselAndBucket(vessel4, bucket));
+        testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
+        Assert.assertNotNull(testEntry4);
         Assert.assertFalse(bucket.contains(testEntry4));
 
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
