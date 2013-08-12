@@ -147,7 +147,7 @@ public class WorkflowTest {
                 LabEventType.A_BASE_CLEANUP));
 
         WorkflowProcessDef hybridSelectionProcess =
-                new WorkflowProcessDef(WorkflowName.HYBRID_SELECTION.getWorkflowName());
+                new WorkflowProcessDef(Workflow.HYBRID_SELECTION.getWorkflowName());
         WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
         hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
         WorkflowStepDef capture = new WorkflowStepDef("Capture");
@@ -159,7 +159,7 @@ public class WorkflowTest {
         new WorkflowProcessDef("HiSeq");
 
         workflowConfig = new WorkflowConfig();
-        exomeExpressProductName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        exomeExpressProductName = Workflow.EXOME_EXPRESS.getWorkflowName();
         exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
         exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
         exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);
@@ -206,7 +206,7 @@ public class WorkflowTest {
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
-        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflowByName("Exome Express");
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.EXOME_EXPRESS);
         boolean meetsCriteria = false;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
@@ -234,7 +234,7 @@ public class WorkflowTest {
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
-        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflowByName("Exome Express");
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.EXOME_EXPRESS);
         boolean meetsCriteria = true;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {

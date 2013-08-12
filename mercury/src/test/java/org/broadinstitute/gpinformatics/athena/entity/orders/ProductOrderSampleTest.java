@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hamcrest.Matcher;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -106,7 +107,7 @@ public class ProductOrderSampleTest {
 
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = ProductTestFactory.createDummyProduct("Exome Express", "partNumber");
+            addOn = ProductTestFactory.createDummyProduct(Workflow.EXOME_EXPRESS, "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);

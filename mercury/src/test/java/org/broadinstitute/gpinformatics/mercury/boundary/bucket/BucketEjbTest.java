@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.ExomeExpressV2EndToEndTest;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -102,17 +102,17 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         productOrder2 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         productOrder3 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
 

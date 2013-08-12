@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.ArrayList;
@@ -46,13 +47,13 @@ public class HiSeq2500JaxbBuilder {
     private String stripTubeBarcode;
 
     private final int poolSize;
-    private final String workflowName;
+    private final Workflow workflow;
 
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
                                 String fctTicket, ProductionFlowcellPath productionFlowcellPath,
-                                int poolSize, String designationName, String workflowName) {
+                                int poolSize, String designationName, Workflow workflow) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.denatureTubeBarcode = denatureTubeBarcode;
@@ -61,7 +62,7 @@ public class HiSeq2500JaxbBuilder {
         this.productionFlowcellPath = productionFlowcellPath;
         this.poolSize = poolSize;
         squidDesignationName = designationName;
-        this.workflowName = workflowName;
+        this.workflow = workflow;
     }
 
     public HiSeq2500JaxbBuilder invoke() {
@@ -118,7 +119,7 @@ public class HiSeq2500JaxbBuilder {
             List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
             int sourcePosition = 0;
             // Transfer column 1 to 8 rows, using non-empty source rows
-            int maxTubes = ("Exome Express".equals(workflowName)) ? 2 : 8;
+            int maxTubes = workflow.isExomeExpress() ? 2 : 8;
             for (int destinationPosition = 0; destinationPosition < maxTubes; destinationPosition++) {
                 stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
                         denatureRackBarcode, Character.toString((char) ('A' + 0)) + "01",

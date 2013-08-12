@@ -94,8 +94,8 @@ public class LabBatch {
 
     private Boolean isValidationBatch;
 
+    // TODO: convert to Workflow
     private String workflowName;
-
 
     /**
      * needed for fix-up test
@@ -326,6 +326,10 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
+    public void setWorkflow(Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
+    }
+
     public String getBatchDescription() {
         return batchDescription;
     }
@@ -351,21 +355,21 @@ public class LabBatch {
     }
 
     /**
-     * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
+     * Helper method to dynamically create batch names based on Input from PDM's.  The format for the Names of the
      * batches, when not manually defined, will be:
      * <p/>
      * [Product name] [Product workflow Version]: [comma separated list of PDO names]
      *
-     * @param workflowName
+     * @param workflow
      * @param pdoNames
      *
      * @return
      */
-    public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflowName).append(": ");
+        batchName.append(workflow.getWorkflowName()).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {

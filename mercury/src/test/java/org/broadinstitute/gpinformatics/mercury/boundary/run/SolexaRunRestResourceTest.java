@@ -25,7 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -132,7 +132,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 

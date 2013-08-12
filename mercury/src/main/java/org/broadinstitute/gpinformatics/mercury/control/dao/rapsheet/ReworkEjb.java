@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +118,7 @@ public class ReworkEjb {
      * @param reworkLevel    What level to rework to
      * @param reworkFromStep Where should the rework be reworked from.
      * @param comment        text describing why you are doing this.
-     * @param workflowName   Name of the workflow in which this vessel is to be reworked
+     * @param workflow   Name of the workflow in which this vessel is to be reworked
      *
      * @throws InformaticsServiceException
      */
@@ -126,13 +127,14 @@ public class ReworkEjb {
                                                        ReworkEntry.ReworkReason reworkReason,
                                                        ReworkEntry.ReworkLevel reworkLevel,
                                                        @Nonnull LabEventType reworkFromStep,
-                                                       @Nonnull String comment, String workflowName)
+                                                       @Nonnull String comment,
+                                                       Workflow workflow)
             throws ValidationException {
 
         Set<MercurySample> reworks = new HashSet<>();
         VesselPosition[] vesselPositions = labVessel.getVesselGeometry().getVesselPositions();
 
-        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion.findBucketDef(workflowName, reworkFromStep);
+        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep);
         if (vesselPositions == null) {
             addReworks(labVessel, reworkReason, reworkLevel, reworkFromStep, comment, reworks, bucketDef,
                     null, labVessel.getSampleInstances());
@@ -351,7 +353,7 @@ public class ReworkEjb {
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
      * @param userName         the user adding the reworks, in case vessels/samples need to be created on-the-fly
-     * @param workflowName     name of the workflow in which these vessels are to be reworked
+     * @param workflow     name of the workflow in which these vessels are to be reworked
      * @param bucketName       the name of the bucket to add reworks to
      *
      * @return Collection of validation messages
@@ -362,14 +364,14 @@ public class ReworkEjb {
     public Collection<String> addAndValidateReworks(@Nonnull Collection<ReworkCandidate> reworkCandidates,
                                                     @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                     @Nonnull String comment, @Nonnull String userName,
-                                                    @Nonnull String workflowName, @Nonnull String bucketName)
+                                                    @Nonnull Workflow workflow, @Nonnull String bucketName)
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<String> validationMessages = new ArrayList<>();
         for (ReworkCandidate reworkCandidate : reworkCandidates) {
             try {
                 validationMessages.addAll(
-                        addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName));
+                        addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflow, userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -384,7 +386,7 @@ public class ReworkEjb {
      * @param reworkReason    predefined text describing why the given vessel needs to be reworked
      * @param bucketName      the name of the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflowName    name of the workflow in which this vessel is to be reworked
+     * @param workflow    name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -396,12 +398,12 @@ public class ReworkEjb {
                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                    @Nonnull String bucketName,
                                                    @Nonnull String comment,
-                                                   @Nonnull String workflowName,
+                                                   @Nonnull Workflow workflow,
                                                    @Nonnull String userName)
             throws ValidationException {
 
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
-        return addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflowName, userName);
+        return addAndValidateRework(reworkCandidate, reworkReason, bucket, comment, workflow, userName);
     }
 
     /**
@@ -411,7 +413,7 @@ public class ReworkEjb {
      * @param reworkReason    predefined Text describing why the given vessel needs to be reworked
      * @param bucket          the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflowName    name of the workflow in which this vessel is to be reworked
+     * @param workflow    name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -423,18 +425,18 @@ public class ReworkEjb {
                                                     @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                     @Nonnull Bucket bucket,
                                                     @Nonnull String comment,
-                                                    @Nonnull String workflowName,
+                                                    @Nonnull Workflow workflow,
                                                     @Nonnull String userName)
             throws ValidationException {
 
-        WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflowName, bucket.getBucketDefinitionName());
+        WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
                 getReworkLabVessel(reworkCandidate.getTubeBarcode(), reworkCandidate.getSampleKey(), userName);
 
         Collection<String> validationMessages =
-                validateReworkItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflowName, reworkFromStep),
+                validateReworkItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
                         reworkCandidate.getProductOrderKey(), reworkCandidate.getSampleKey());
 
         addRework(reworkVessel, reworkCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
@@ -443,9 +445,9 @@ public class ReworkEjb {
         return validationMessages;
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(String workflowName, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(Workflow workflow, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflowByName(workflowName)
+        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
                 .getEffectiveVersion();
         WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
         if (bucketDef == null) {
@@ -495,12 +497,9 @@ public class ReworkEjb {
     }
 
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
-    public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode,
-                                 @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                 @Nonnull LabEventType reworkFromStep, @Nonnull String comment, String workflowName,
-                                 String userName)
+    public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode, String userName)
             throws ValidationException {
-        final ReworkCandidate reworkCandidate = new ReworkCandidate(labVesselBarcode);
+        ReworkCandidate reworkCandidate = new ReworkCandidate(labVesselBarcode);
         LabVessel reworkVessel = getReworkLabVessel(reworkCandidate.getTubeBarcode(), reworkCandidate.getSampleKey(),
                 userName
         );

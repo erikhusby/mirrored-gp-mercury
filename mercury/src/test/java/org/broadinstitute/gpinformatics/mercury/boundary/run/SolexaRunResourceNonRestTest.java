@@ -36,7 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -162,7 +162,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 

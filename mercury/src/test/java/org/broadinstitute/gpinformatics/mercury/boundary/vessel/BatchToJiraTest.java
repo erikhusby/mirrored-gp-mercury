@@ -10,12 +10,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -127,9 +125,7 @@ public class BatchToJiraTest extends Arquillian {
         assertThat(gssrIdsText.trim(), equalTo("SM-01"));
 
         // now try it with SM-02 as a rework
-        reworkEjb.addReworkToBatch(batch, tube2Label, ReworkEntry.ReworkReason.MACHINE_ERROR,
-                LabEventType.PICO_PLATING_BUCKET, "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
-                "scottmat");
+        reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());

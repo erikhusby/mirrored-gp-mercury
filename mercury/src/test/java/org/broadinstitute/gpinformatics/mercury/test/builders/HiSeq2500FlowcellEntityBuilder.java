@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -38,14 +39,14 @@ public class HiSeq2500FlowcellEntityBuilder {
     private final String fctTicket;
     private final ProductionFlowcellPath productionFlowcellPath;
     private StripTube stripTube;
-    private final String workflowName;
+    private final Workflow workflow;
 
 
     public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                           LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                           final TubeFormation denatureRack, String flowcellBarcode, String testPrefix,
                                           String fctTicket, ProductionFlowcellPath productionFlowcellPath,
-                                          String designationName, String workflowName) {
+                                          String designationName, Workflow workflow) {
 
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -56,15 +57,15 @@ public class HiSeq2500FlowcellEntityBuilder {
         this.fctTicket = fctTicket;
         this.productionFlowcellPath = productionFlowcellPath;
         this.designationName = designationName;
-        this.workflowName = workflowName;
+        this.workflow = workflow;
     }
 
     public HiSeq2500FlowcellEntityBuilder invoke() {
-        final HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
+        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                 new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
                         denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
                         denatureRack.getLabel(), fctTicket, productionFlowcellPath,
-                        denatureRack.getSampleInstanceCount(), designationName, workflowName);
+                        denatureRack.getSampleInstanceCount(), designationName, workflow);
         hiSeq2500JaxbBuilder.invoke();
         PlateCherryPickEvent dilutionJaxb = hiSeq2500JaxbBuilder.getDilutionJaxb();
         ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();
@@ -162,7 +163,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                 "Wrong number of samples in flowcell lane");
 
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(),
-                (!"Whole Genome".equals(workflowName)) ? 2 : 1,
+                (!workflow.isWholeGenome()) ? 2 : 1,
                 "Wrong number of reagents");
 
         Set<SampleInstance> lane2SampleInstances =
@@ -172,7 +173,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                 "Wrong number of samples in flowcell lane");
 
         Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(),
-                (!"Whole Genome".equals(workflowName)) ? 2 : 1,
+                (!workflow.isWholeGenome()) ? 2 : 1,
                 "Wrong number of reagents");
 
         LabEventTest.validateWorkflow("FlowcellLoaded", illuminaFlowcell);

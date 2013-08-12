@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -81,7 +82,7 @@ public class ProductOrderTest {
             public ProductOrder create() {
 
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, "Exome Express", false, "agg type");
+                        1814400, 1814400, 184, null, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 

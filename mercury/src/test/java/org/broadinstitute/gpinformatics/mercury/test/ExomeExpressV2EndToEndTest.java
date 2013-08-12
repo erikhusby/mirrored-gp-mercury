@@ -39,7 +39,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -89,7 +89,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         String jiraTicketKey = "PD0-1";
@@ -179,7 +179,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder1, workflowBatch, "1");
@@ -310,7 +310,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
                         leHandler,
                         qtpEntityBuilder.getDenatureRack(),
                         flowcellBarcode, "testPrefix", FCT_TICKET, ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                        "Exome Express").invoke();
+                        Workflow.EXOME_EXPRESS).invoke();
         // MiSeq reagent block transfer message
         String miSeqReagentKitBarcode = "MiSeqReagentKit" + new Date().getTime();
 

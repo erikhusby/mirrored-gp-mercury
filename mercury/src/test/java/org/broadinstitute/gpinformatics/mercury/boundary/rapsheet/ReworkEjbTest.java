@@ -39,8 +39,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -373,9 +373,9 @@ public class ReworkEjbTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
         nonExExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.WHOLE_GENOME.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.WHOLE_GENOME));
 
         bucketReadySamples1 = new ArrayList<>(2);
         bucketReadySamples1.add(new ProductOrderSample(genomicSample1));
@@ -429,7 +429,7 @@ public class ReworkEjbTest extends Arquillian {
         productOrderDao.persist(extraProductOrder);
 
         WorkflowBucketDef bucketDef = ProductWorkflowDefVersion
-                .findBucketDef(WorkflowName.EXOME_EXPRESS.getWorkflowName(), LabEventType.PICO_PLATING_BUCKET);
+                .findBucketDef(Workflow.EXOME_EXPRESS, LabEventType.PICO_PLATING_BUCKET);
 
         bucketName = bucketDef.getName();
 
@@ -486,7 +486,7 @@ public class ReworkEjbTest extends Arquillian {
             TwoDBarcodedTube vessel = entry.getValue();
             reworkEjb.addAndValidateRework(
                     new ReworkEjb.ReworkCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey()),
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework", "Exome Express",
+                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework", Workflow.EXOME_EXPRESS,
                     "scottmat");
         }
 
@@ -646,7 +646,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -724,7 +724,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -775,7 +775,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder1.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh"));
+                            Workflow.EXOME_EXPRESS, "jowalsh"));
         }
 
         bucketDao.clear();
@@ -801,7 +801,7 @@ public class ReworkEjbTest extends Arquillian {
         }
         Collection<String> validationMessages = reworkEjb
                 .addAndValidateReworks(reworkCandidates, ReworkEntry.ReworkReason.UNKNOWN_ERROR, "test Rework",
-                        "jowalsh", WorkflowName.EXOME_EXPRESS.getWorkflowName(), "Pico/Plating Bucket");
+                        "jowalsh", Workflow.EXOME_EXPRESS, "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
         bucketDao.clear();
@@ -828,7 +828,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb.addAndValidateRework(
                     new ReworkEjb.ReworkCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey()),
                     ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                    WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                    Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();
@@ -865,7 +865,7 @@ public class ReworkEjbTest extends Arquillian {
                 reworkEjb.addAndValidateRework(
                         new ReworkEjb.ReworkCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey()),
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat");
+                        Workflow.EXOME_EXPRESS, "scottmat");
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
         } catch (ValidationException e) {
@@ -888,7 +888,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT1" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -897,7 +897,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder1.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                            Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();
@@ -932,7 +932,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                            Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();
@@ -957,7 +957,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT2" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -966,7 +966,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                            Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();
@@ -1010,7 +1010,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT4" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -1019,7 +1019,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                            Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();
@@ -1054,7 +1054,7 @@ public class ReworkEjbTest extends Arquillian {
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest
                 .sendMessagesUptoCatch("SGM_RWIT3" + currDate.getTime(), mapBarcodeToTube, bettaLimsMessageFactory,
-                        WorkflowName.EXOME_EXPRESS,
+                        Workflow.EXOME_EXPRESS,
                         bettaLimsMessageResource,
                         reagentDesignDao, twoDBarcodedTubeDao,
                         appConfig.getUrl(), 2);
@@ -1073,7 +1073,7 @@ public class ReworkEjbTest extends Arquillian {
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(new ReworkEjb.ReworkCandidate(barcode, exExProductOrder2.getBusinessKey()),
                             ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            WorkflowName.EXOME_EXPRESS.getWorkflowName(), "scottmat"));
+                            Workflow.EXOME_EXPRESS, "scottmat"));
         }
 
         bucketDao.clear();

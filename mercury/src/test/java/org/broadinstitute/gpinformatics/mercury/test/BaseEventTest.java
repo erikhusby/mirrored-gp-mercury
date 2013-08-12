@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
@@ -370,13 +371,13 @@ public class BaseEventTest {
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param workflowName     The workflow name for the current workflow.
+     * @param workflow     The workflow name for the current workflow.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, String workflowName,
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, Workflow workflow,
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(
@@ -395,19 +396,19 @@ public class BaseEventTest {
      * @param productionFlowcellPath
      * @param designationName        Name of the designation created in Squid to support testing the systems running in
      *                               parallel
-     * @param workflowName
+     * @param workflow
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, String workflowName) {
+                                                                      String designationName, Workflow workflow) {
 
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
-                designationName, workflowName).invoke();
+                designationName, workflow).invoke();
     }
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,

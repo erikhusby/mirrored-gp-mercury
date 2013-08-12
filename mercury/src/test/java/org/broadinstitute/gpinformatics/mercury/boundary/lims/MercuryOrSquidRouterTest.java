@@ -29,7 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -48,6 +48,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -218,18 +219,18 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test samples only", "None", true, "Whole Genome", false, "agg type");
+                0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false, "agg type");
 
         //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
                 0, 0, 0, 0, "Test exome express samples only", "None", true,
-                WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type");
+                Workflow.EXOME_EXPRESS, false, "agg type");
 
         picoBucket = new Bucket("Pico/Plating Bucket");
     }
 
-    private BSPSampleDTO makeBspSampleDTO(String collaboratorSampleId) {
-        Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+    private static BSPSampleDTO makeBspSampleDTO(String collaboratorSampleId) {
+        Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<>(BSPSampleSearchColumn.class);
         dataMap.put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, collaboratorSampleId);
         return new BSPSampleDTO(dataMap);
     }
@@ -503,7 +504,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
             workflowBatch.setCreatedOn(postMercuryOnlyLaunchCalendarDate.getTime());
         }
 
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -562,7 +563,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -589,7 +590,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
@@ -629,7 +630,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
             workflowBatch.setCreatedOn(preJuly25CalendarDate.getTime());
         }
 
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -688,7 +689,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -715,7 +716,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, "Exome Express");
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(mercuryOrSquidRouter.routeForVessels(Collections.<LabVessel>singleton
@@ -766,7 +767,7 @@ public class MercuryOrSquidRouterTest extends BaseEventTest {
             }
             LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
                     LabBatch.LabBatchType.WORKFLOW);
-            labBatch.setWorkflowName(product.getWorkflowName());
+            labBatch.setWorkflow(product.getWorkflow());
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntry.setLabBatch(labBatch);
             }

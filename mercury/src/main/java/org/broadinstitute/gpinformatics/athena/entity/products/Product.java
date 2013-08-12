@@ -4,13 +4,37 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -82,7 +106,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
 
-    private String workflowName;
+    @Enumerated(EnumType.STRING)
+    private Workflow workflow;
 
     private boolean pdmOrderableOnly;
 
@@ -148,7 +173,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName,
+                   Workflow workflow,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;
@@ -164,7 +189,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        this.workflowName = workflowName;
+        this.workflow = workflow;
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -294,8 +319,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
+    public void setWorkflow(Workflow workflow) {
+        this.workflow = workflow;
     }
 
     public void addAllowableMaterialType(MaterialType materialType) {
@@ -310,8 +335,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    public String getWorkflowName() {
-        return workflowName;
+    public Workflow getWorkflow() {
+        return workflow;
     }
 
     public String getAnalysisTypeKey() {
@@ -509,11 +534,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return originalPartNumber;
     }
 
-
-    public static Product makeEmptyProduct() {
-        return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false, null);
-    }
 
     public String getDisplayName() {
         return productName + " - " + partNumber;

@@ -321,7 +321,7 @@ public class SequencingTemplateFactory {
                 lanes.toArray(new SequencingTemplateLaneType[lanes.size()]));
     }
 
-    private SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
+    private static SequencingConfigDef getSequencingConfig(boolean isPoolTest) {
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         if (isPoolTest) {

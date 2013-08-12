@@ -27,7 +27,7 @@ import java.util.Map;
 
 @UrlBinding("/workflow/LinkDenatureTubeToReagentBlock.action")
 public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
-    private static String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
+    private static final String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
 
     @Validate(required = true, on = SAVE_ACTION)
     private String reagentBlockBarcode;
@@ -117,7 +117,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
                 String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                    workflowName = order.getProduct().getWorkflowName();
+                    workflowName = order.getProduct().getWorkflow().getWorkflowName();
                     break;
                 }
             }

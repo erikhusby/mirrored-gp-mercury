@@ -311,7 +311,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                                 String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
                                 if (StringUtils.isBlank(workflowName) && pdo != null) {
-                                    workflowName = pdo.getProduct().getWorkflowName();
+                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
                                 }
                                 WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                         eventName, workflowName, entity.getEventDate());

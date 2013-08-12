@@ -60,7 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -118,7 +118,7 @@ public class ExomeExpressEndToEndTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         String jiraTicketKey = "PD0-1";
@@ -435,8 +435,8 @@ public class ExomeExpressEndToEndTest {
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
                             labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),
-                            fctBatch.getBusinessKey()
-                            , "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", "Exome Express");
+                            fctBatch.getBusinessKey(),
+                            "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", Workflow.EXOME_EXPRESS);
 
             // LC metrics - upload page?
             // LabVessel.addMetric?

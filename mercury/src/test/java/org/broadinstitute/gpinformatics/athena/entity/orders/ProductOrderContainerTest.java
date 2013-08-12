@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -32,7 +33,7 @@ public class ProductOrderContainerTest extends Arquillian {
     public ProductOrder createSimpleProductOrder() throws Exception {
         return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
-                "newQuote", ProductTestFactory.createDummyProduct("Exome Express", "partNumber"),
+                "newQuote", ProductTestFactory.createDummyProduct(Workflow.EXOME_EXPRESS, "partNumber"),
                 ResearchProjectTestFactory.createDummyResearchProject(userList, "Test Research Project"));
     }
 
@@ -79,7 +80,7 @@ public class ProductOrderContainerTest extends Arquillian {
                 new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
                         ProductOrderSampleTestFactory.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
-                        ProductTestFactory.createDummyProduct("Exome Express", "partNumber"),
+                        ProductTestFactory.createDummyProduct(Workflow.EXOME_EXPRESS, "partNumber"),
                         ResearchProjectTestFactory.createDummyResearchProject(userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);

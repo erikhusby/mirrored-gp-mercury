@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -136,7 +137,7 @@ public class IlluminaRunResource implements Serializable {
      * @param systemOfRecord for this run
      * @return DTO
      */
-    ZimsIlluminaRun getRun(TZamboniRun tRun,
+    ZimsIlluminaRun getRun(@Nonnull TZamboniRun tRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
                            ProductOrderDao pdoDao, MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
@@ -201,17 +202,13 @@ public class IlluminaRunResource implements Serializable {
     }
 
     /**
-     * Fetches all BSP data for the run in one shot,
-     * returning a Map from the {@link BSPSampleDTO#getSampleLsid()} to the
-     * {@link BSPSampleDTO}.
+     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link BSPSampleDTO}.
      *
      * @param run from Thrift
      * @return map lsid to DTO
      */
     private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
         Set<String> sampleLsids = new HashSet<>();
-        Set<String> sampleNames = new HashSet<>();
-        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -220,6 +217,7 @@ public class IlluminaRunResource implements Serializable {
             }
         }
 
+        Set<String> sampleNames = new HashSet<>();
         for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
@@ -229,9 +227,10 @@ public class IlluminaRunResource implements Serializable {
         }
         Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
+        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
             BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
-            // make sure we get something out of BSP.  If we don't, consider it a
+            // Make sure we get something out of BSP.  If we don't, consider it a
             // catastrophe, especially for the pipeline.
             String sampleName = bspSampleDTOEntry.getKey();
             if (bspDto == null) {

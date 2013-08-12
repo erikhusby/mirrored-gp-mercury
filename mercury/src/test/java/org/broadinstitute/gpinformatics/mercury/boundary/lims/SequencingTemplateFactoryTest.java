@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
@@ -85,7 +86,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         //Build Event History
@@ -106,7 +107,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
 
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         denatureTubeBarcode = denatureTube.getLabel();
@@ -128,7 +129,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL,null, "Exome Express");
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL,null, Workflow.EXOME_EXPRESS);
         dilutionTube = flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         dilutionTubeBarcode = dilutionTube.getLabel();
 

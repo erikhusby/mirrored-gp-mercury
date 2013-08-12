@@ -32,9 +32,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -124,7 +124,7 @@ public class BucketViewActionBean extends CoreActionBean {
         //currently only do ExEx
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+            if (Workflow.isExomeExpress(workflowDef.getName())) {
                 allProductWorkflowDefs.add(workflowDef);
                 WorkflowBucketDef blankBucketDef = new WorkflowBucketDef("");
                 buckets.add(blankBucketDef);

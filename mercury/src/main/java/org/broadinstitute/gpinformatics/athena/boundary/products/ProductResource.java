@@ -46,7 +46,7 @@ public class ProductResource {
             name = product.getProductName();
             family = product.getProductFamily().getName();
             partNumber = product.getPartNumber();
-            workflowName = product.getWorkflowName();
+            workflowName = product.getWorkflow().getWorkflowName();
         }
     }
 

@@ -80,12 +80,12 @@ public class ProductWorkflowDefVersion implements Serializable {
      * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
      * on a given workflow definition and and step labEventType
      */
-    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
+    public static WorkflowBucketDef findBucketDef(@Nonnull Workflow workflow, @Nonnull LabEventType stepDef) {
 
         WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
         assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
                 !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
         LabEventNode labEventNode =
