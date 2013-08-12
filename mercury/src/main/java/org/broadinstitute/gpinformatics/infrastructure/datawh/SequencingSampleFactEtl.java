@@ -256,74 +256,68 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         if (entity != null) {
             RunCartridge cartridge = entity.getSampleCartridge();
             String flowcellBarcode = cartridge.getCartridgeName();
-
-            Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
-            VesselPosition[] vesselPositions = cartridge.getVesselGeometry().getVesselPositions();
-
             Collection<LabBatch> fctBatches = cartridge.getAllLabBatches(LabBatch.LabBatchType.FCT);
+            LabBatch fctBatch = fctBatches.size() == 1 ? fctBatches.iterator().next() : null;
+            Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
+            for (VesselPosition position : vesselsWithPositions.keySet()) {
 
-            LabBatch firstFctBatch = fctBatches.iterator().next();
-
-            for (VesselPosition position : vesselPositions) {
-                Collection<SampleInstance> sampleInstances =
-                        cartridge.getContainerRole().getSampleInstancesAtPosition(position, SampleType.WITH_PDO);
-                for (SampleInstance si : sampleInstances) {
-                    String productOrderId = null;
-                    String researchProjectId = null;
-                    Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
-                    String batchName = batches.size() == 0 ? NONE :
-                            batches.size() == 1 ? batches.iterator().next().getBatchName() : MULTIPLE;
-                    String pdoKey = si.getProductOrderKey();
-                    if (pdoKey != null) {
-                        // Does cache lookup and fills cache as needed.
-                        synchronized (pdoKeyToPdoId) {
-                            if (pdoKeyToPdoId.containsKey(pdoKey)) {
-                                productOrderId = pdoKeyToPdoId.get(pdoKey);
-                                researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
-                            } else {
-                                ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
-                                if (pdo != null) {
-                                    productOrderId = String.valueOf(pdo.getProductOrderId());
-                                    researchProjectId = (pdo.getResearchProject() != null) ?
-                                            String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                LabVessel tube = vesselsWithPositions.get(position);
+                if (tube != null) {
+                    LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
+                    Collection<SampleInstance> sampleInstances =
+                            tube.getSampleInstances(SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW);
+                    for (SampleInstance si : sampleInstances) {
+                        String productOrderId = null;
+                        String researchProjectId = null;
+                        Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
+                        String batchName = batches.size() == 0 ? NONE :
+                                batches.size() == 1 ? batches.iterator().next().getBatchName() : MULTIPLE;
+                        String pdoKey = si.getProductOrderKey();
+                        if (pdoKey != null) {
+                            // Does cache lookup and fills cache as needed.
+                            synchronized (pdoKeyToPdoId) {
+                                if (pdoKeyToPdoId.containsKey(pdoKey)) {
+                                    productOrderId = pdoKeyToPdoId.get(pdoKey);
+                                    researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
+                                } else {
+                                    ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
+                                    if (pdo != null) {
+                                        productOrderId = String.valueOf(pdo.getProductOrderId());
+                                        researchProjectId = (pdo.getResearchProject() != null) ?
+                                                String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                                    }
+                                    pdoKeyToPdoId.put(pdoKey, productOrderId);
+                                    pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
                                 }
-                                pdoKeyToPdoId.put(pdoKey, productOrderId);
-                                pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
                             }
                         }
-                    }
 
-                    MercurySample sample = si.getStartingSample();
-                    String sampleKey = (sample != null ? sample.getSampleKey() : null);
+                        MercurySample sample = si.getStartingSample();
+                        String sampleKey = (sample != null ? sample.getSampleKey() : null);
 
-                    // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
-                    // concatenation if multiple are found.
-                    SortedSet<String> names = new TreeSet<>();
-                    for (Reagent reagent : si.getReagents()) {
-                        if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                            names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                        // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
+                        // concatenation if multiple are found.
+                        SortedSet<String> names = new TreeSet<>();
+                        for (Reagent reagent : si.getReagents()) {
+                            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                                names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                            }
                         }
+                        String molecularIndexingSchemeName =
+                                (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
+
+                        boolean canEtl = !StringUtils.isBlank(flowcellBarcode)
+                                         && !StringUtils.isBlank(productOrderId)
+                                         && !StringUtils.isBlank(researchProjectId);
+
+                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
+                                molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, canEtl,
+                                fctVessel, batchName));
                     }
-                    String molecularIndexingSchemeName =
-                            (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
-
-                    boolean canEtl = !StringUtils.isBlank(flowcellBarcode)
-                                     && !StringUtils.isBlank(productOrderId)
-                                     && !StringUtils.isBlank(researchProjectId);
-
-                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
-                            molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, canEtl,
-                            (fctBatches.size() == 1) ?
-                                    firstFctBatch.getStartingVesselByPosition(position) :
-                                    vesselsWithPositions.get(position),
-                            batchName));
-                }
-                if (sampleInstances.size() == 0) {
-                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
-                            (fctBatches.size() == 1) ?
-                                    firstFctBatch.getStartingVesselByPosition(position) :
-                                    vesselsWithPositions.get(position),
-                            null));
+                    if (sampleInstances.size() == 0) {
+                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
+                                fctVessel, null));
+                    }
                 }
             }
         } else {
