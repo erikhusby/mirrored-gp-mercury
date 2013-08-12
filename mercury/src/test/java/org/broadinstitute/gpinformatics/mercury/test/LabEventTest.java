@@ -82,6 +82,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.easymock.EasyMock;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -109,8 +110,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.startsWith;
 
 /**
  * Test messaging
@@ -309,6 +308,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
         ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK,
                 "Wrong number of libraries");
@@ -481,6 +481,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -615,6 +616,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -768,6 +770,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
             Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
+            Assert.assertEquals(zimsIlluminaRun2.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
 
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
@@ -897,7 +900,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun1 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run1);
             Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 2, "Wrong number of lanes");
-
+            Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
@@ -1157,13 +1160,13 @@ public class LabEventTest extends BaseEventTest {
              * falsely matching on "HybridizationCleanup into ...".
              */
             // TODO: try removing ugly Matchers.<String> syntax after moving to Java 7
-            assertThat(labEventNames, Matchers.<String>hasItem(startsWith(expectedEventName + " ")));
+            MatcherAssert.assertThat(labEventNames, Matchers.<String>hasItem(Matchers.startsWith(expectedEventName + " ")));
         }
 
         Assert.assertEquals(labEventNames.size(), expectedEventNames.length, "Wrong number of transfers");
 
         for (int i = 0; i < expectedEventNames.length; i++) {
-            assertThat("Unexpected event at position " + i, labEventNames.get(i), startsWith(expectedEventNames[i]));
+            MatcherAssert.assertThat("Unexpected event at position " + i, labEventNames.get(i), Matchers.startsWith(expectedEventNames[i]));
         }
     }
 

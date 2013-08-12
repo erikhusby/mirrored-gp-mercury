@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.DevExperimentDataBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.IndexComponent;
@@ -235,7 +236,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(runBean.getPairedRun().booleanValue(),thriftRun.isPairedRun());
         assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
         assertEquals(runBean.getImagedAreaPerLaneMM2(), ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
-
+        assertEquals(runBean.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.SQUID);
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             int laneNum = Integer.parseInt(lane.getName());
             TZamboniLane zamboniLane = thriftRun.getLanes().get(laneNum-1);

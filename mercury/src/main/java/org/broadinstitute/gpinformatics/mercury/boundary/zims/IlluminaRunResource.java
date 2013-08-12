@@ -117,7 +117,6 @@ public class IlluminaRunResource implements Serializable {
 
     private ZimsIlluminaRun callThrift(String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
-        runBean.setSystemOfRecord(MercuryOrSquidRouter.MercuryOrSquid.SQUID);
         try {
             runBean = getRun(thriftService, runName);
         } catch (Throwable t) {
@@ -134,12 +133,13 @@ public class IlluminaRunResource implements Serializable {
      * for testing.
      * @param tRun from Thrift
      * @param lsidToBSPSample DTOs
+     * @param systemOfRecord for this run
      * @return DTO
      */
     ZimsIlluminaRun getRun(TZamboniRun tRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
-                           ProductOrderDao pdoDao) {
+                           ProductOrderDao pdoDao, MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
         if (tRun == null) {
             throw new NullPointerException("tRun cannot be null");
         }
@@ -155,7 +155,7 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getImagedAreaPerLaneMM2(),
                 tRun.getSetupReadStructure(),
                 tRun.getLanesSequenced(),
-                tRun.getRunFolder(), null, null);
+                tRun.getRunFolder(), null, systemOfRecord);
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);
@@ -183,13 +183,12 @@ public class IlluminaRunResource implements Serializable {
      * @param runName
      * @return
      */
-    ZimsIlluminaRun getRun(ThriftService thriftService,
-                           String runName) {
+    ZimsIlluminaRun getRun(ThriftService thriftService, String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
             Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
+            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao, MercuryOrSquidRouter.MercuryOrSquid.SQUID);
         } else {
             setErrorNoRun(runName, runBean);
         }
