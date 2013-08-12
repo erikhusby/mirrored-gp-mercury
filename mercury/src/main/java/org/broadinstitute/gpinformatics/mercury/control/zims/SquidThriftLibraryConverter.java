@@ -54,7 +54,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getCustomAmpliconSetNames(),
                 pdo,
                 zamboniLibrary.getLcset(),
-                bspDTO);
+                bspDTO, null);
         return libBean;
     }
 }

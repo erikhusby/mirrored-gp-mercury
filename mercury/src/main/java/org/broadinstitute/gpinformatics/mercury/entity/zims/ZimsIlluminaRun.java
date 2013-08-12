@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -33,6 +34,12 @@ public class ZimsIlluminaRun {
 
     @JsonProperty("sequencerModel")
     private String sequencerModel;
+
+    @JsonProperty("labWorkflow")
+    private String labWorkflow;
+
+    @JsonProperty("systemOfRecord")
+    private MercuryOrSquidRouter.MercuryOrSquid systemOfRecord;
 
     @JsonIgnore
     private Date runDate;
@@ -80,13 +87,16 @@ public class ZimsIlluminaRun {
                            String runDate,
                            Boolean isPaired,
                            String actualReadStructure,
-                           double  imagedAreaPerLaneMM2,
-                           String lanesSequenced) {
+                           double imagedAreaPerLaneMM2,
+                           String lanesSequenced, String labWorkflow,
+                           MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
         this.sequencer = sequencer;
         this.sequencerModel = sequencerModel;
+        this.labWorkflow = labWorkflow;
+        this.systemOfRecord = systemOfRecord;
         try {
             this.runDate = dateFormat.parse(runDate);
         }
@@ -107,15 +117,18 @@ public class ZimsIlluminaRun {
                            String runDate,
                            Boolean isPaired,
                            String actualReadStructure,
-                           double imagedAreaPerLaneMM2) {
-        this(runName,runBarcode,flowcellBarcode,sequencer,sequencerModel,runDate,isPaired,actualReadStructure,imagedAreaPerLaneMM2,null);
+                           double imagedAreaPerLaneMM2,
+                            String labWorkflow, MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
+        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, isPaired, actualReadStructure,
+                imagedAreaPerLaneMM2, null, labWorkflow, systemOfRecord);
     }
 
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
-                           double imagedAreaPerLaneMM2, String setupReadStructure,
-                           String lanesSequenced, String runFolder) {
-        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure, imagedAreaPerLaneMM2,lanesSequenced);
+                           double imagedAreaPerLaneMM2, String setupReadStructure, String lanesSequenced,
+                           String runFolder, String labWorkflow, MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
+        this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure,
+                imagedAreaPerLaneMM2, lanesSequenced, labWorkflow, systemOfRecord);
         this.setupReadStructure = setupReadStructure;
         this.runFolder = runFolder;
     }
@@ -223,6 +236,18 @@ public class ZimsIlluminaRun {
 
     public String getRunFolder() {
         return runFolder;
+    }
+
+    public String getLabWorkflow() {
+        return labWorkflow;
+    }
+
+    public MercuryOrSquidRouter.MercuryOrSquid getSystemOfRecord() {
+        return systemOfRecord;
+    }
+
+    public void setSystemOfRecord(MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
+        this.systemOfRecord = systemOfRecord;
     }
 }
 

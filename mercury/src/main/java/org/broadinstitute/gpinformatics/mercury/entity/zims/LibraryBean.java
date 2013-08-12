@@ -37,7 +37,7 @@ public class LibraryBean {
 
     @JsonProperty("molecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
-    
+
     private Boolean hasIndexingRead;
 
     @JsonProperty("expectedInsertSize")
@@ -144,6 +144,9 @@ public class LibraryBean {
     @JsonProperty
     private String materialType;
 
+    @JsonProperty
+    private String pdoSample;
+
     /**
      * This is the aggregation data type defined on the product and used by Picard to report the right data.
      */
@@ -177,10 +180,11 @@ public class LibraryBean {
                        String gssrSpecies,
                        String gssrStrain,
                        String gssrIndividual,
-                       BSPSampleDTO bspSampleDTO) {
+                       BSPSampleDTO bspSampleDTO, String pdoSample) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
+        this.pdoSample = pdoSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
@@ -194,13 +198,13 @@ public class LibraryBean {
                        String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String pdoSample) {
 
         this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
-             analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
-             aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
-             negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-             productOrder, lcSet, bspSampleDTO);
+                analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+                aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+                negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+                productOrder, lcSet, bspSampleDTO, pdoSample);
     }
 
     /**
@@ -250,8 +254,8 @@ public class LibraryBean {
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
-        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO);
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String pdoSample) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, pdoSample);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -377,7 +381,7 @@ public class LibraryBean {
     public String getReferenceSequence() {
         return referenceSequence;
     }
-    
+
     public String getRestrictionEnzyme() {
         return restrictionEnzyme;
     }
@@ -389,7 +393,7 @@ public class LibraryBean {
     public String getRrbsSizeRange() {
         return rrbsSizeRange;
     }
-    
+
     public String getExpectedInsertSize() {
         return expectedInsertSize;
     }
@@ -405,7 +409,7 @@ public class LibraryBean {
     public String getAnalysisType() {
         return analysisType;
     }
-    
+
     public String getSpecies() {
         return species;
     }

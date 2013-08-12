@@ -117,6 +117,7 @@ public class IlluminaRunResource implements Serializable {
 
     private ZimsIlluminaRun callThrift(String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        runBean.setSystemOfRecord(MercuryOrSquidRouter.MercuryOrSquid.SQUID);
         try {
             runBean = getRun(thriftService, runName);
         } catch (Throwable t) {
@@ -154,7 +155,7 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getImagedAreaPerLaneMM2(),
                 tRun.getSetupReadStructure(),
                 tRun.getLanesSequenced(),
-                tRun.getRunFolder());
+                tRun.getRunFolder(), null, null);
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);
