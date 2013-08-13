@@ -1159,8 +1159,7 @@ public class LabEventTest extends BaseEventTest {
              * Concatenate a " " to the expected event name to match, for example, "Hybridization into ..." without
              * falsely matching on "HybridizationCleanup into ...".
              */
-            // TODO: try removing ugly Matchers.<String> syntax after moving to Java 7
-            MatcherAssert.assertThat(labEventNames, Matchers.<String>hasItem(Matchers.startsWith(expectedEventName + " ")));
+            MatcherAssert.assertThat(labEventNames, Matchers.hasItem(Matchers.startsWith(expectedEventName + " ")));
         }
 
         Assert.assertEquals(labEventNames.size(), expectedEventNames.length, "Wrong number of transfers");
