@@ -177,7 +177,7 @@ public class ProductOrderDao extends GenericDao {
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflow), workflow));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 

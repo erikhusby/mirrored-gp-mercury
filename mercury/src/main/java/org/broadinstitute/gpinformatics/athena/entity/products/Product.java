@@ -106,8 +106,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
 
-    @Enumerated(EnumType.STRING)
-    private Workflow workflow;
+    private String workflowName;
 
     private boolean pdmOrderableOnly;
 
@@ -189,7 +188,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        this.workflow = workflow;
+        workflowName = workflow.getWorkflowName();
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -319,8 +318,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflow(Workflow workflow) {
-        this.workflow = workflow;
+    public void setWorkflow(@Nonnull Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
     }
 
     public void addAllowableMaterialType(MaterialType materialType) {
@@ -336,7 +335,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public Workflow getWorkflow() {
-        return workflow;
+        return Workflow.findByName(workflowName);
     }
 
     public String getAnalysisTypeKey() {

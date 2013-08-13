@@ -31,7 +31,7 @@ public enum Workflow {
         return name;
     }
 
-    public Workflow findByName(String searchName) {
+    public static Workflow findByName(String searchName) {
         for (Workflow workflow : values()) {
             if (workflow.name.equals(searchName)) {
                 return workflow;

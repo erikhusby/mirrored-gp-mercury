@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -29,7 +30,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
         pdo.setJiraTicketKey("PDO-2");
         pdo.setProduct(
                 new Product("Mashed Potatoes", new ProductFamily("Mashed Things"), null, null, null, null, null, null,
-                        null, null, null, null, false, null, false, "with gravy"));
+                        null, null, null, null, false, Workflow.EXOME_EXPRESS, false, "with gravy"));
 
         SquidThriftLibraryConverter converter = new SquidThriftLibraryConverter();
         TZamboniLibrary zamboniLibrary = thriftRun.getLanes().iterator().next().getLibraries().iterator().next();
