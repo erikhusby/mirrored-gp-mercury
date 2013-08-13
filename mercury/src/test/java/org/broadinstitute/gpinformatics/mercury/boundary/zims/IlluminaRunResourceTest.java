@@ -231,6 +231,10 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
         Assert.assertEquals(runBean.getImagedAreaPerLaneMM2(), ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
         Assert.assertEquals(runBean.getSystemOfRecord(), SystemRouter.System.SQUID);
+        Assert.assertEquals(runBean.getSetupReadStructure(), thriftRun.getSetupReadStructure());
+        Assert.assertEquals(runBean.getLanesSequenced(), thriftRun.getLanesSequenced());
+        Assert.assertEquals(runBean.getRunFolder(), thriftRun.getRunFolder());
+
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             int laneNum = Integer.parseInt(lane.getName());
             TZamboniLane zamboniLane = thriftRun.getLanes().get(laneNum-1);

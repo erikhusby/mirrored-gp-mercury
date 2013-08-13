@@ -46,6 +46,11 @@ public class ThriftFileAccessor {
                     }
                 }
             }
+            updateRun.setActualReadStructure("76T8B76T");
+            updateRun.setImagedAreaPerLaneMM2(1.23);
+            updateRun.setSetupReadStructure("76T8B8B76T");
+            updateRun.setLanesSequenced("2");
+            updateRun.setRunFolder("/full/path/to/run/folder");
             ThriftFileAccessor.serializeRun(updateRun,ThriftFileAccessor.RUN_FILE);
             */
         }
