@@ -93,9 +93,9 @@ public class ProductEtlDbFreeTest {
         expect(obj.getGuaranteedCycleTimeSeconds()).andReturn(guaranteedCycleTimeSeconds);
         expect(obj.getSamplesPerWeek()).andReturn(samplesPerWeek);
         expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
-        expect(obj.getWorkflow()).andReturn(workflow);
-        expect(obj.getProductFamily()).andReturn(family).times(2);
-        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).times(2);
+        expect(obj.getWorkflow()).andReturn(workflow).anyTimes();
+        expect(obj.getProductFamily()).andReturn(family).anyTimes();
+        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
 
         expect(primaryPriceItem.getPriceItemId()).andReturn(primaryPriceItemId);
 
