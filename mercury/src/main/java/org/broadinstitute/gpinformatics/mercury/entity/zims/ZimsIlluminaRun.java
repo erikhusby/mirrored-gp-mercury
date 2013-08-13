@@ -23,6 +23,8 @@ public class ZimsIlluminaRun {
 
     public static final String DATE_FORMAT = "MM/dd/yyyy HH:mm";
 
+    public static final String NULL_WORKFLOW = null;
+
     @JsonProperty("name")
     private String runName;
     
@@ -141,7 +143,8 @@ public class ZimsIlluminaRun {
      * In thrift, zero is a dual use value that might mean zero or might
      * mean null.  In the context of {@link TZamboniRead}, 0 is really null,
      * so we do a zero-to-null conversion here.
-     * @param thriftRead
+     *
+     * @param thriftRead The thrift read to use
      */
     public void addRead(TZamboniRead thriftRead) {
         Integer firstCycle = ThriftConversionUtil.zeroAsNull(thriftRead.getFirstCycle());
@@ -160,7 +163,8 @@ public class ZimsIlluminaRun {
 
     /**
      * Format is 01/03/2010 24:19
-     * @return
+     *
+     * @return The run date formatted as a string.
      */
     @JsonProperty("runDateString")
     public String getRunDateString() {
@@ -171,6 +175,7 @@ public class ZimsIlluminaRun {
         return date;
     }
 
+    @SuppressWarnings("unused")
     public void setRunDateString(String runDate) throws ParseException {
         if (runDate != null) {
             this.runDate = dateFormat.parse(runDate);
@@ -210,7 +215,8 @@ public class ZimsIlluminaRun {
 
     /**
      * Should only be used in the REST resource itself.
-     * @param error
+     *
+     * @param error The error string
      */
     public void setError(String error) {
         this.error = error;
@@ -241,6 +247,7 @@ public class ZimsIlluminaRun {
         return runFolder;
     }
 
+    @SuppressWarnings("unused")
     public String getLabWorkflow() {
         return labWorkflow;
     }
@@ -249,6 +256,7 @@ public class ZimsIlluminaRun {
         return systemOfRecord;
     }
 
+    @SuppressWarnings("unused")
     public void setSystemOfRecord(MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
         this.systemOfRecord = systemOfRecord;
     }

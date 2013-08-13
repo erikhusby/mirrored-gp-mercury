@@ -5,6 +5,8 @@ import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -80,6 +82,8 @@ public class ZimsIlluminaRunFactory {
         Set<String> sampleIds = new HashSet<>();
         Set<String> productOrderKeys = new HashSet<>();
 
+        Collection<SampleInstance> allSampleInstances = new ArrayList<> ();
+
         // Makes DTOs for aliquot samples and product orders, per lane.
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 0;
@@ -95,6 +99,9 @@ public class ZimsIlluminaRunFactory {
                 Set<SampleInstance> sampleInstances =
                         labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO, LabBatch.LabBatchType.WORKFLOW);
                 for (SampleInstance sampleInstance : sampleInstances) {
+
+                    allSampleInstances.add(sampleInstance);
+
                     String productOrderKey = sampleInstance.getProductOrderKey();
                     if (productOrderKey != null) {
                         productOrderKeys.add(productOrderKey);
@@ -132,10 +139,20 @@ public class ZimsIlluminaRunFactory {
             // avoid unboxing NPE
             imagedArea = illuminaRun.getImagedAreaPerMM2();
         }
+
+        Set<String> workflowNames = SampleInstance.getWorkflowNames(allSampleInstances);
+        if (workflowNames.isEmpty()) {
+           workflowNames.add(ZimsIlluminaRun.NULL_WORKFLOW);
+        } else if (workflowNames.size() > 1) {
+            throw new RuntimeException(
+                    String.format("Multiple workflows detected for run %s: %s", illuminaRun.getRunName(),
+                            StringUtils.join(workflowNames, ", ")));
+        }
+
         ZimsIlluminaRun run = new ZimsIlluminaRun(illuminaRun.getRunName(), illuminaRun.getRunBarcode(),
                 flowcell.getLabel(), illuminaRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
                 false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced(),
-                illuminaRun.getRunDirectory(), null, MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+                illuminaRun.getRunDirectory(), workflowNames.iterator().next(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
@@ -249,7 +266,6 @@ public class ZimsIlluminaRunFactory {
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
 
-        String projectName = null;
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
@@ -422,53 +438,30 @@ public class ZimsIlluminaRunFactory {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
             }
-            if (!(o instanceof SampleInstanceDto)) {
+
+            if (!(other instanceof SampleInstanceDto)) {
                 return false;
             }
 
-            SampleInstanceDto that = (SampleInstanceDto) o;
-
-            if (laneNumber != that.laneNumber) {
-                return false;
-            }
-            if (labVessel != null ? !labVessel.equals(that.labVessel) : that.labVessel != null) {
-                return false;
-            }
-            if (productOrderKey != null ? !productOrderKey.equals(that.productOrderKey) :
-                    that.productOrderKey != null) {
-                return false;
-            }
-            if (sequencedLibraryName != null ? !sequencedLibraryName.equals(that.sequencedLibraryName) :
-                    that.sequencedLibraryName != null) {
-                return false;
-            }
-            if (!sequencedLibraryDate.equals(that.sequencedLibraryDate)) {
-                return false;
-            }
-            if (sampleId != null ? !sampleId.equals(that.sampleId) : that.sampleId != null) {
-                return false;
-            }
-            if (sampleInstance != null ? !sampleInstance.equals(that.sampleInstance) : that.sampleInstance != null) {
-                return false;
-            }
-
-            return true;
+            SampleInstanceDto castOther = (SampleInstanceDto) other;
+            return new EqualsBuilder()
+                    .append(laneNumber, castOther.getLaneNumber())
+                    .append(labVessel, castOther.getLabVessel())
+                    .append(productOrderKey, castOther.getProductOrderKey())
+                    .append(sequencedLibraryName, castOther.getSequencedLibraryName())
+                    .append(sequencedLibraryDate, castOther.getSequencedLibraryDate())
+                    .append(sampleId, castOther.getSampleId())
+                    .append(sampleInstance, castOther.getSampleInstance()).isEquals();
         }
 
         @Override
         public int hashCode() {
-            int result = laneNumber;
-            result = 31 * result + (labVessel != null ? labVessel.hashCode() : 0);
-            result = 31 * result + (sampleInstance != null ? sampleInstance.hashCode() : 0);
-            result = 31 * result + (sampleId != null ? sampleId.hashCode() : 0);
-            result = 31 * result + (productOrderKey != null ? productOrderKey.hashCode() : 0);
-            result = 31 * result + (sequencedLibraryName != null ? sequencedLibraryName.hashCode() : 0);
-            result = 31 * result + (sequencedLibraryDate != null ? sequencedLibraryDate.hashCode() : 0);
-            return result;
+            return new HashCodeBuilder().append(laneNumber) .append(labVessel) .append(sampleInstance) .append(sampleId)
+                    .append(productOrderKey) .append(sequencedLibraryName) .append(sequencedLibraryDate) .toHashCode();
         }
     }
 

@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -27,8 +25,6 @@ import java.util.Set;
  * This class is currently transient, i.e. it is not persisted, but is created on demand by transfer traversal logic.
  */
 public class SampleInstance {
-
-    private static final Log log = LogFactory.getLog(SampleInstance.class);
 
     /**
      * Sample, from another system, typically BSP via Athena.
@@ -134,23 +130,6 @@ public class SampleInstance {
         return reagents;
     }
 
-    // todo jmt unused?
-
-    /**
-     * This getter filters the reagents to return only the indexes.
-     *
-     * @return A list of indexes associated with this sample instance.
-     */
-    public List<MolecularIndexReagent> getIndexes() {
-        List<MolecularIndexReagent> indexes = new ArrayList<>();
-        for (Reagent reagent : reagents) {
-            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                indexes.add((MolecularIndexReagent) reagent);
-            }
-        }
-        return indexes;
-    }
-
     /**
      * This is set only when there is a single lab batch.
      *
@@ -224,6 +203,27 @@ public class SampleInstance {
             return bucketEntry.getPoBusinessKey();
         }
         return null;
+    }
+
+    /**
+     * Get a unique set of the workflow names for all the specified sample instances.
+     *
+     * @param sampleInstances The instances
+     *
+     * @return A set of workflow names that are represented by these.
+     */
+    public static Set<String> getWorkflowNames(Collection<SampleInstance> sampleInstances) {
+        Set<String> workflowNames = new HashSet<>();
+
+        for (SampleInstance sampleInstance : sampleInstances) {
+            // Get this workflow name and add it only if the instance has a workflow name.
+            String workflowName = sampleInstance.getWorkflowName();
+            if (workflowName != null) {
+                workflowNames.add(workflowName);
+            }
+        }
+
+        return workflowNames;
     }
 
     /**
