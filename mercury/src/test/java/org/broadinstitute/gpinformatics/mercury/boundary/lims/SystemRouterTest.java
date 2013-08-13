@@ -42,6 +42,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -122,6 +123,7 @@ public class SystemRouterTest extends BaseEventTest {
     private Product exomeExpress;
     private Bucket picoBucket;
 
+    @Override
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() {
 
@@ -586,7 +588,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
@@ -712,7 +714,8 @@ public class SystemRouterTest extends BaseEventTest {
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal
+                .valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,

@@ -938,8 +938,8 @@ public class LabEventFactory implements Serializable {
 
             // If there is a volume and concentration on the message set it up and communicate it to BSP.
             if ((receptacleType.getConcentration() != null) && (receptacleType.getVolume() != null)) {
-                twoDBarcodedTube.setVolume(receptacleType.getVolume().floatValue());
-                twoDBarcodedTube.setConcentration(receptacleType.getConcentration().floatValue());
+                twoDBarcodedTube.setVolume(receptacleType.getVolume());
+                twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
 
                 // The only way to update volume on concentration in BSP here is if we have a single mercury sample.
                 if (twoDBarcodedTube.getMercurySamples().size() == 1) {
@@ -947,8 +947,8 @@ public class LabEventFactory implements Serializable {
 
                     // Send web service call to BSP to update volume and concentration.
                     bspSetVolumeConcentration.setVolumeAndConcentration(
-                            mercurySample.getSampleKey(), receptacleType.getVolume(),
-                            receptacleType.getConcentration());
+                            mercurySample.getSampleKey(), receptacleType.getVolume().floatValue(),
+                            receptacleType.getConcentration().floatValue());
                     if (!bspSetVolumeConcentration.isValidResult()) {
                         logger.error(
                                 "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);

@@ -45,6 +45,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,9 +84,9 @@ public abstract class LabVessel implements Serializable {
 
     private Date createdOn;
 
-    private Float volume;
+    private BigDecimal volume;
 
-    private Float concentration;
+    private BigDecimal concentration;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -924,19 +925,19 @@ public abstract class LabVessel implements Serializable {
         return events;
     }
 
-    public Float getVolume() {
+    public BigDecimal getVolume() {
         return volume;
     }
 
-    public void setVolume(Float volume) {
+    public void setVolume(BigDecimal volume) {
         this.volume = volume;
     }
 
-    public Float getConcentration() {
+    public BigDecimal getConcentration() {
         return concentration;
     }
 
-    public void setConcentration(Float concentration) {
+    public void setConcentration(BigDecimal concentration) {
         this.concentration = concentration;
     }
 

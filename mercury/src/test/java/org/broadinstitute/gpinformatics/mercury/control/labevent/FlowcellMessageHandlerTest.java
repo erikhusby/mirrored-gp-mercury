@@ -34,6 +34,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -103,8 +104,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulDenatureToFlowcellMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal
+                .valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -183,7 +185,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgNoMiseqBatches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -276,9 +278,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgTooMany2500Batches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
         LabBatch fctBatch2 =
-                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -367,7 +369,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgNo2500Batches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -456,8 +458,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgTooManyMiSeqBatches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -546,10 +548,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulDenatureToDilutionMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
         LabBatch fctBatch2 =
-                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADDF";
 
@@ -626,8 +628,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulSTBToFlowcellMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ASTF";
 

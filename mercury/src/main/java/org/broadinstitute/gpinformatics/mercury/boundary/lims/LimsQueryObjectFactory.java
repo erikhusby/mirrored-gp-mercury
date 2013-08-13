@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 /**
@@ -63,7 +64,7 @@ public class LimsQueryObjectFactory {
      * @param startingVesselLabel
      */
     public static SequencingTemplateLaneType createSequencingTemplateLaneType(@Nonnull String laneName,
-                                                                              @Nullable Float loadingConcentration,
+                                                                              @Nullable BigDecimal loadingConcentration,
                                                                               @Nonnull String loadingVesselLabel,
                                                                               String startingVesselLabel) {
         SequencingTemplateLaneType lane = new SequencingTemplateLaneType();

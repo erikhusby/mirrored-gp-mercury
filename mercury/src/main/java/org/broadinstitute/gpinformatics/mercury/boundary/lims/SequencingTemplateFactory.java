@@ -31,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -235,7 +236,7 @@ public class SequencingTemplateFactory {
         for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
             LabVessel sourceVessel = vesselAndPosition.getVessel();
             VesselPosition vesselPosition = vesselAndPosition.getPosition();
-            Float concentration = getLoadingConcentrationForVessel(sourceVessel);
+            BigDecimal concentration = getLoadingConcentrationForVessel(sourceVessel);
             SequencingTemplateLaneType lane =
                     LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition.name(), concentration,
                             sourceVessel.getLabel(),
@@ -267,13 +268,14 @@ public class SequencingTemplateFactory {
     /**
      * This method gets the loading concentration from the batch/vessel relationship.
      *
+     *
      * @param sourceVessel The vessel to get the loading concentration of.
      *
      * @return The loading concentration for the vessel.
      */
-    private Float getLoadingConcentrationForVessel(LabVessel sourceVessel) {
+    private BigDecimal getLoadingConcentrationForVessel(LabVessel sourceVessel) {
         Collection<LabBatch> batches = sourceVessel.getAllLabBatches(LabBatch.LabBatchType.FCT);
-        Float concentration = null;
+        BigDecimal concentration = null;
         for (LabBatch batch : batches) {
             for (LabBatchStartingVessel labBatchStartingVessel : batch.getLabBatchStartingVessels()) {
                 //All the concentrations should match. If they don't throw an exception.
@@ -296,7 +298,7 @@ public class SequencingTemplateFactory {
     @DaoFree
     public SequencingTemplateType getSequencingTemplate(MiSeqReagentKit miSeqReagentKit, boolean isPoolTest) {
         SequencingConfigDef sequencingConfig = getSequencingConfig(isPoolTest);
-        Float concentration = null;
+        BigDecimal concentration = null;
         if (miSeqReagentKit.getConcentration() != null) {
             concentration = miSeqReagentKit.getConcentration();
         }

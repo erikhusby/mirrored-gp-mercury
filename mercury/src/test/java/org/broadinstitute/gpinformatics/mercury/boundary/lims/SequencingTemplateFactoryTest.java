@@ -30,6 +30,7 @@ import org.hamcrest.core.AnyOf;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -123,9 +124,9 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
         //create a couple Miseq batches then one FCT (2500) batch
-        miseqBatch1 = new LabBatch("FCT-1", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        miseqBatch1 = new LabBatch("FCT-1", starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
 //        miseqBatch2 = new LabBatch("FCT-2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
@@ -232,7 +233,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         assertThat(template.getLanes().get(0).getLaneName(), is("LANE1"));
         assertThat(template.getLanes().get(0).getLoadingVesselLabel(), is(""));
         assertThat(template.getLanes().get(0).getDerivedVesselLabel(), is(denatureTubeBarcode));
-        assertThat(template.getLanes().get(0).getLoadingConcentration(), is(7.0f));
+        assertThat(template.getLanes().get(0).getLoadingConcentration(), is(BigDecimal.valueOf(7.0f)));
     }
 
     public void testGetSequencingTemplateFromDenatureTubeProduction() {
@@ -248,7 +249,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             allLanes.add(lane.getLaneName());
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
             assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
-            assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
+            assertThat(lane.getLoadingConcentration(), is(BigDecimal.valueOf(12.33f)));
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));
@@ -266,7 +267,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             allLanes.add(lane.getLaneName());
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
             assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
-            assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
+            assertThat(lane.getLoadingConcentration(), is(BigDecimal.valueOf(12.33f)));
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));
@@ -284,7 +285,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
             allLanes.add(lane.getLaneName());
             assertThat(lane.getLoadingVesselLabel(), equalTo(""));
             assertThat(lane.getDerivedVesselLabel(), equalTo(denatureTubeBarcode));
-            assertThat(lane.getLoadingConcentration().floatValue(), is(12.33f));
+            assertThat(lane.getLoadingConcentration(), is(BigDecimal.valueOf(12.33f)));
         }
         assertThat(allLanes, hasItem("LANE1"));
         assertThat(allLanes, hasItem("LANE2"));

@@ -79,6 +79,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -430,7 +431,7 @@ public class ExomeExpressEndToEndTest {
 
 
             LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
-                    LabBatch.LabBatchType.FCT, 12.33f);
+                    LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,

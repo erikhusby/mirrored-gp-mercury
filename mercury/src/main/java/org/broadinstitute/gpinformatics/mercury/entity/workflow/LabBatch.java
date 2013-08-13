@@ -30,6 +30,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -156,7 +157,7 @@ public class LabBatch {
     }
 
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
-                    @Nonnull LabBatchType labBatchType, @Nullable Float concentration) {
+                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
         for (LabVessel starter : starterVessels) {
@@ -228,7 +229,7 @@ public class LabBatch {
         addLabVessel(labVessel, null);
     }
 
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration) {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
