@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
@@ -238,7 +238,7 @@ public class LabEventTest extends BaseEventTest {
     public void testHybridSelection() {
 //        Controller.startCPURecording(true);
 
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+        expectedRouting = SystemRouter.System.SQUID;
         // todo jmt receipt batch?
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
                 "A");
@@ -309,7 +309,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
         Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
         ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK,
                 "Wrong number of libraries");
@@ -380,7 +380,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpress() {
 //        Controller.startCPURecording(true);
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
@@ -482,7 +482,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -536,7 +536,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressAlternative() throws Exception {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
                 "A");
@@ -617,7 +617,7 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
         Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
         Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
-        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -669,7 +669,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressRework() {
         try {
-            expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+            expectedRouting = SystemRouter.System.MERCURY;
 
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
             ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
@@ -771,7 +771,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun2 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run2);
             Assert.assertEquals(zimsIlluminaRun2.getLanes().size(), 2, "Wrong number of lanes");
-            Assert.assertEquals(zimsIlluminaRun2.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+            Assert.assertEquals(zimsIlluminaRun2.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
             ZimsIlluminaChamber zimsIlluminaChamber2 = zimsIlluminaRun2.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber2.getLibraries()) {
@@ -792,7 +792,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testExomeExpressShearingRework() {
         try {
-            expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+            expectedRouting = SystemRouter.System.MERCURY;
 
             // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
             ProductOrder productOrder1 = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
@@ -901,7 +901,7 @@ public class LabEventTest extends BaseEventTest {
 
             ZimsIlluminaRun zimsIlluminaRun1 = zimsIlluminaRunFactory.makeZimsIlluminaRun(run1);
             Assert.assertEquals(zimsIlluminaRun1.getLanes().size(), 2, "Wrong number of lanes");
-            Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), MercuryOrSquidRouter.MercuryOrSquid.MERCURY);
+            Assert.assertEquals(zimsIlluminaRun1.getSystemOfRecord(), SystemRouter.System.MERCURY);
             ZimsIlluminaChamber zimsIlluminaChamber1 = zimsIlluminaRun1.getLanes().iterator().next();
             for (LibraryBean libraryBean : zimsIlluminaChamber1.getLibraries()) {
                 Assert.assertEquals(libraryBean.getLcSet(), workflowBatch1.getBatchName());
@@ -983,7 +983,7 @@ public class LabEventTest extends BaseEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testWholeGenomeShotgun() {
 //        Controller.startCPURecording(true);
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+        expectedRouting = SystemRouter.System.SQUID;
 
         ProductOrder productOrder =
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
@@ -1105,7 +1105,7 @@ public class LabEventTest extends BaseEventTest {
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testFluidigm() {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+        expectedRouting = SystemRouter.System.SQUID;
 
         // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
@@ -1166,7 +1166,8 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(labEventNames.size(), expectedEventNames.length, "Wrong number of transfers");
 
         for (int i = 0; i < expectedEventNames.length; i++) {
-            MatcherAssert.assertThat("Unexpected event at position " + i, labEventNames.get(i), Matchers.startsWith(expectedEventNames[i]));
+            MatcherAssert.assertThat("Unexpected event at position " + i, labEventNames.get(i),
+                    Matchers.startsWith(expectedEventNames[i]));
         }
     }
 
@@ -1305,10 +1306,10 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        MercuryOrSquidRouter mercuryOrSquidRouter = new MercuryOrSquidRouter(null, null, new WorkflowLoader(), null);
-        MercuryOrSquidRouter.MercuryOrSquid mercuryOrSquid = mercuryOrSquidRouter.routeForVessels(labVessels,
-                controlCollaboratorIdList, mapSampleNameToDto, MercuryOrSquidRouter.Intent.ROUTE);
-        Assert.assertEquals(mercuryOrSquid, expectedRouting);
+        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null);
+        SystemRouter.System system = systemRouter.routeForVessels(labVessels,
+                controlCollaboratorIdList, mapSampleNameToDto, SystemRouter.Intent.ROUTE);
+        Assert.assertEquals(system, expectedRouting);
 
         WorkflowValidator workflowValidator = new WorkflowValidator();
         AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();

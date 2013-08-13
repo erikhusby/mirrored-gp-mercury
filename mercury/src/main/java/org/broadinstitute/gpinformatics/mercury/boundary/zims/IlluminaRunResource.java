@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
@@ -72,7 +72,7 @@ public class IlluminaRunResource implements Serializable {
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     @Inject
-    private MercuryOrSquidRouter mercuryOrSquidRouter;
+    private SystemRouter systemRouter;
 
     public IlluminaRunResource() {
     }
@@ -98,8 +98,8 @@ public class IlluminaRunResource implements Serializable {
             if (illuminaSequencingRun == null) {
                 runBean = callThrift(runName);
             } else {
-                MercuryOrSquidRouter.MercuryOrSquid systemOfRecordForVessel =
-                        mercuryOrSquidRouter.getSystemOfRecordForVessel(
+                SystemRouter.System systemOfRecordForVessel =
+                        systemRouter.getSystemOfRecordForVessel(
                                 illuminaSequencingRun.getSampleCartridge().getLabel());
                 switch (systemOfRecordForVessel) {
                 case MERCURY:
@@ -141,7 +141,7 @@ public class IlluminaRunResource implements Serializable {
     ZimsIlluminaRun getRun(@Nonnull TZamboniRun tRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
-                           ProductOrderDao pdoDao, MercuryOrSquidRouter.MercuryOrSquid systemOfRecord) {
+                           ProductOrderDao pdoDao, SystemRouter.System systemOfRecord) {
         if (tRun == null) {
             throw new NullPointerException("tRun cannot be null");
         }
@@ -192,7 +192,7 @@ public class IlluminaRunResource implements Serializable {
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
             Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao, MercuryOrSquidRouter.MercuryOrSquid.SQUID);
+            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao, SystemRouter.System.SQUID);
         } else {
             setErrorNoRun(runName, runBean);
         }

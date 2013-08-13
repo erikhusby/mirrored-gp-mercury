@@ -49,7 +49,7 @@ public class LimsQueryResource {
     private LimsQueryResourceResponseFactory responseFactory;
 
     @Inject
-    private MercuryOrSquidRouter mercuryOrSquidRouter;
+    private SystemRouter systemRouter;
 
     @Inject
     private BSPUserList bspUserList;
@@ -60,12 +60,12 @@ public class LimsQueryResource {
     public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
                              SequencingTemplateFactory sequencingTemplateFactory,
                              LimsQueryResourceResponseFactory responseFactory,
-                             MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList) {
+                             SystemRouter systemRouter, BSPUserList bspUserList) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
         this.responseFactory = responseFactory;
-        this.mercuryOrSquidRouter = mercuryOrSquidRouter;
+        this.systemRouter = systemRouter;
         this.bspUserList = bspUserList;
     }
 
@@ -75,7 +75,7 @@ public class LimsQueryResource {
     public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(
             @QueryParam("q") List<String> tubeBarcodes,
             @QueryParam("includeWorkRequestDetails") boolean includeWorkRequestDetails) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
+        switch (systemRouter.getSystemOfRecordForVesselBarcodes(tubeBarcodes)) {
         case MERCURY:
             return limsQueries.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
         case SQUID:
@@ -98,7 +98,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/doesLimsRecognizeAllTubes")
     public boolean doesLimsRecognizeAllTubes(@QueryParam("q") List<String> barcodes) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVesselBarcodes(barcodes)) {
+        switch (systemRouter.getSystemOfRecordForVesselBarcodes(barcodes)) {
         case MERCURY:
             return limsQueries.doesLimsRecognizeAllTubes(barcodes);
         case SQUID:
@@ -161,7 +161,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
                 return limsQueries.findImmediatePlateParents(plateBarcode);
             case SQUID:
@@ -237,7 +237,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
                 return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
             case SQUID:
@@ -255,7 +255,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchQpcrForTube")
     public Double fetchQpcrForTube(@QueryParam("tubeBarcode") String tubeBarcode) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, LabMetric.MetricType.ECO_QPCR.getDisplayName());
         case SQUID:
@@ -272,7 +272,7 @@ public class LimsQueryResource {
     @Path("/fetchQuantForTube")
     public Double fetchQuantForTube(@QueryParam("tubeBarcode") String tubeBarcode,
                                     @QueryParam("quantType") String quantType) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(tubeBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(tubeBarcode)) {
         case MERCURY:
             return limsQueries.fetchQuantForTube(tubeBarcode, quantType);
         case SQUID:
@@ -287,7 +287,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
                 return limsQueries.fetchSourceTubesForPlate(plateBarcode);
             case SQUID:
@@ -309,7 +309,7 @@ public class LimsQueryResource {
     @Path("/fetchTransfersForPlate")
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode,
                                                           @QueryParam("depth") short depth) {
-        switch (mercuryOrSquidRouter.getSystemOfRecordForVessel(plateBarcode)) {
+        switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
                 return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
             case SQUID:

@@ -74,7 +74,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     @Override
     @BeforeTest(alwaysRun = true)
     public void setUp() {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         super.setUp();
         factory = new SequencingTemplateFactory();
