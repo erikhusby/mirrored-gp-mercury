@@ -156,9 +156,6 @@ public class SampleInstance {
     }
 
     public void addLabBatches(Collection<LabBatch> batches) {
-        if (allLabBatches == null) {
-            allLabBatches = new HashSet<>();
-        }
         allLabBatches.addAll(batches);
     }
 

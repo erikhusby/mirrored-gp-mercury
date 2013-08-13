@@ -669,6 +669,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
+        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
         if (sampleInstanceCount == null) {
             sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
         }
@@ -708,6 +709,12 @@ public abstract class LabVessel implements Serializable {
         void setBucketEntry(BucketEntry bucketEntry) {
             for (SampleInstance sampleInstance : sampleInstances) {
                 sampleInstance.setBucketEntry(bucketEntry);
+            }
+        }
+
+        void setBspExportSample(MercurySample exportSample) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setBspExportSample(exportSample);
             }
         }
 
@@ -762,6 +769,11 @@ public abstract class LabVessel implements Serializable {
      * @return accumulated sampleInstances
      */
     TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+
+        /*
+         * Crawl up this vessel's ancestors looking for a vessel that fits the specified sampleType criteria. Once such
+         * a vessel is found, we stop crawling start accumulating the results as we crawl back down.
+         */
         TraversalResults traversalResults = new TraversalResults();
 
         boolean continueTraversing = true;
@@ -792,12 +804,25 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        /*
+         * Start crawling back down the traversed ancestors. We create SampleInstances for the MercurySamples only from
+         * the topmost vessel that actually has MercurySamples. Any other MercurySamples that we encounter on the way
+         * back down are not collected because they were already determined to not meet the specified sampleType
+         * criteria.
+         */
+
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
                 SampleInstance sampleInstance = new SampleInstance(mercurySample);
                 traversalResults.add(sampleInstance);
             }
         }
+
+        /*
+         * LabBatches are accumulated during downward traversal so that we will know all of the batches that the vessel
+         * in question is somehow related to.
+         */
+
         for (LabBatch labBatch : getLabBatches()) {
             if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
                 for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
@@ -808,13 +833,14 @@ public abstract class LabVessel implements Serializable {
             // Expects one sample per vessel in the BSP export.
             if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
                 for (MercurySample mercurySample : mercurySamples) {
-                    for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-                        sampleInstance.setBspExportSample(mercurySample);
-                    }
+                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each sampleInstance.bspExportSample multiple times? I know there's a comment above about the expectation, but we should probably throw an exception if it's not as we expect instead of potentially doing the wrong thing. -BPR
+                    traversalResults.setBspExportSample(mercurySample);
                 }
             }
         }
 
+        // FIXME: Ignore rework bucket entries when deciding whether or not there is a single entry.
+        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide which is the appropriate one in this case (either here or in getSampleInstances).
         if (bucketEntries.size() == 1) {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
@@ -822,6 +848,7 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        // TODO: completeLevel() simply applies reagents to the sample instances, so this code could probably be changed to look more like setting the bspExportSample and bucketEntry above.
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
