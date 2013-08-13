@@ -1136,7 +1136,7 @@
                             <classifier>bettalims-generated</classifier>
                             <includes>
                                 <include>**/bettalims/generated/*.class</include>
-                                <include>**/WorkflowName.class</include>
+                                <include>**/Workflow.class</include>
                             </includes>
                         </configuration>
                     </plugin>
