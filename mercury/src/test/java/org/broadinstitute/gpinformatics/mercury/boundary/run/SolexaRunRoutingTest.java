@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -73,7 +73,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
      * @throws Exception
      */
     public void testWholeGenomeFlowcell() throws Exception {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+        expectedRouting = SystemRouter.System.SQUID;
 
         TemplateEngine templateEngine = new TemplateEngine();
         templateEngine.postConstruct();
@@ -144,7 +144,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
         VesselTransferEjb vesselTransferEjb = EasyMock.createMock(VesselTransferEjb.class);
 
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
+        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
                 new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
@@ -179,7 +179,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
+        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
                 new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
         HipChatMessageSender hipChatMsgSender = EasyMock.createNiceMock(HipChatMessageSender.class);
@@ -307,7 +307,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
 
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
+        SystemRouter router = new SystemRouter(vesselDao, EasyMock.createNiceMock(ControlDao.class),
                 new WorkflowLoader(),
                 EasyMock.createNiceMock(BSPSampleDataFetcher.class));
 

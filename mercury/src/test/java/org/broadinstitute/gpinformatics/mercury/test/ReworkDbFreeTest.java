@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
@@ -39,12 +39,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testAddReworkToBatchFromBucket() {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
 
-        long now = System.currentTimeMillis();
+        long now = java.lang.System.currentTimeMillis();
         String origRackBarcodeSuffix = String.valueOf(now);
         String reworkRackBarcodeSuffix = String.valueOf(now + 137L);
         String origTubePrefix = "999999";
@@ -157,12 +157,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
     // Advance to Pond Pico, rework a sample from the start
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
 
-        long now = System.currentTimeMillis();
+        long now = java.lang.System.currentTimeMillis();
         String origRackBarcodeSuffix = String.valueOf(now);
         String reworkRackBarcodeSuffix = String.valueOf(now + 137L);
 
@@ -265,7 +265,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true)
     public void testMultiplePdos() {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
                 Workflow.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");

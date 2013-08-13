@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
@@ -64,7 +64,7 @@ public class SolexaRunResource {
 
     private VesselTransferEjb vesselTransferEjb;
 
-    private MercuryOrSquidRouter router;
+    private SystemRouter router;
 
     private SquidConnector connector;
 
@@ -78,7 +78,7 @@ public class SolexaRunResource {
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, VesselTransferEjb vesselTransferEjb,
-                             MercuryOrSquidRouter router, SquidConnector connector,
+                             SystemRouter router, SquidConnector connector,
                              HipChatMessageSender messageSender,
                              SquidConfig squidConfig, MiSeqReagentKitDao reagentKitDao) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
@@ -113,7 +113,7 @@ public class SolexaRunResource {
 
         IlluminaFlowcell flowcell= illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
         MiSeqReagentKit reagentKit;
-        MercuryOrSquidRouter.MercuryOrSquid route;
+        SystemRouter.System route;
 
         if(StringUtils.isNotBlank(solexaRunBean.getReagentBlockBarcode())) {
             reagentKit = reagentKitDao.findByBarcode(solexaRunBean.getReagentBlockBarcode());
@@ -124,8 +124,8 @@ public class SolexaRunResource {
 
         Response callerResponse = null;
         UriBuilder absolutePathBuilder = uriInfo.getAbsolutePathBuilder();
-        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.SQUID,
-                MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(SystemRouter.System.SQUID,
+                SystemRouter.System.BOTH).contains(route)) {
             SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
 
             /**
@@ -146,8 +146,8 @@ public class SolexaRunResource {
             updated which routing should determine if a run should be registered in Mercury.  If BOTH is returned, we
              must cover Mercury as well as Squid
          */
-        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,
-                MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(SystemRouter.System.MERCURY,
+                SystemRouter.System.BOTH).contains(route)) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = absolutePathBuilder.path(run.getRunName()).build();
@@ -157,7 +157,7 @@ public class SolexaRunResource {
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 messageSender.postMessageToGpLims("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR);
-                if (route == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+                if (route == SystemRouter.System.MERCURY) {
                     throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
                 }
             }
@@ -202,7 +202,7 @@ public class SolexaRunResource {
             throw new ResourceException("No run barcode given.", Response.Status.NOT_FOUND);
         }
         // in the absence of information, route to squid
-        MercuryOrSquidRouter.MercuryOrSquid route = MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+        SystemRouter.System route = SystemRouter.System.SQUID;
 
         IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
 
@@ -214,7 +214,7 @@ public class SolexaRunResource {
         }
 
         Throwable squidError = null;
-        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.SQUID,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route)) {
+        if (EnumSet.of(SystemRouter.System.SQUID, SystemRouter.System.BOTH).contains(route)) {
             if (squidConfig.getMercuryDeployment() != Deployment.STUBBY) {
                 String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
                 try {
@@ -227,7 +227,7 @@ public class SolexaRunResource {
             requestToReturn = readStructureRequest;
         }
 
-        if (EnumSet.of(MercuryOrSquidRouter.MercuryOrSquid.MERCURY,MercuryOrSquidRouter.MercuryOrSquid.BOTH).contains(route) || run != null) {
+        if (EnumSet.of(SystemRouter.System.MERCURY, SystemRouter.System.BOTH).contains(route) || run != null) {
             // the run != null bit is there as a catch all.  if mercury knows the run, let's save the read structure data in mercury too!
             requestToReturn = illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
         }

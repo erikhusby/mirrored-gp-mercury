@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -171,7 +171,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * system, or pass all information to another system
      *
      * @return String to represent the routing intent.  Values are based on enums found in
-     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System}
      */
     public String getRoutingRule() {
         return routingRule;
@@ -179,16 +179,16 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * This method is an extension of {@link #getRoutingRule()}.  Since the values defined in the routingRule are
-     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid},
+     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System},
      * this method helps solidify that point.  It provides the user with an interpretation of the routing rule
      * in the form of a MercuryOrSquid enum
      *
      * @return an instance of
-     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System} that
      *         corresponds to the String value found in the routing rule.
      */
-    public MercuryOrSquidRouter.MercuryOrSquid getRouting() {
-        return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
+    public SystemRouter.System getRouting() {
+        return SystemRouter.System.valueOf(getRoutingRule());
     }
 
     public boolean getInValidation() {

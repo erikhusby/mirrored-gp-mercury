@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
@@ -82,7 +82,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private String machineName = "ABC-DEF";
     private String cartridgeName = "flowcell09u1234-8931";
     private long operator = 5678L;
-    private String now = String.valueOf(System.currentTimeMillis());
+    private String now = String.valueOf(java.lang.System.currentTimeMillis());
     private String[] molecularIndex = new String[]{"ATTACCA", "GTTACCA", "CTTACCA"};
     private String[] molecularIndexSchemeName = new String[]{"abcd-", "bcde-", "cdef-"};
     private long researchProjectId = 33221144L;
@@ -373,7 +373,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testWithEventHistory() throws Exception {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;

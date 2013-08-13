@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -85,7 +85,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorPreviouslyInBucket() throws ValidationException {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -120,7 +120,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorStillInBucket() throws ValidationException {
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
