@@ -39,7 +39,6 @@ import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.
  * The current definition of "belonging" to Mercury is that all vessels upstream of the specified vessel (or set of
  * vessels) have been batched for Exome Express.
  *
- * TODO SGM  This needs a better name since the options are more than just Mercury or Squid!!!!
  */
 public class SystemRouter implements Serializable {
 
