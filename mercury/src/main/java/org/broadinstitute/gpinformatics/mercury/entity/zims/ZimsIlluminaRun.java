@@ -243,14 +243,8 @@ public static final String WORKFLOW_NULL_VALUE=null;
         return runFolder;
     }
 
-
     public SystemRouter.System getSystemOfRecord() {
         return systemOfRecord;
-    }
-
-    @SuppressWarnings("unused")
-    public void setSystemOfRecord(SystemRouter.System systemOfRecord) {
-        this.systemOfRecord = systemOfRecord;
     }
 }
 
