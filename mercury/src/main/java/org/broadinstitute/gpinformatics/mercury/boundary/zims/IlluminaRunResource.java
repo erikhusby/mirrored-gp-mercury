@@ -52,6 +52,7 @@ import java.util.Set;
 @Path("/IlluminaRun")
 @Stateless
 public class IlluminaRunResource implements Serializable {
+    private static final long serialVersionUID = -4933761044216626763L;
 
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
@@ -156,7 +157,9 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getImagedAreaPerLaneMM2(),
                 tRun.getSetupReadStructure(),
                 tRun.getLanesSequenced(),
-                tRun.getRunFolder(), null, systemOfRecord);
+                tRun.getRunFolder(),
+                ZimsIlluminaRun.NULL_WORKFLOW,
+                systemOfRecord);
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);
@@ -196,7 +199,7 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
-    private static void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
+    private void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
         runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later " +
                          "or contact the mercury team if the problem persists.");
     }
@@ -259,7 +262,7 @@ public class IlluminaRunResource implements Serializable {
      * @param zamboniLibrary from Thrift
      * @return true if LSID indicates BSP
      */
-    private static boolean isBspSample(TZamboniLibrary zamboniLibrary) {
+    private boolean isBspSample(TZamboniLibrary zamboniLibrary) {
         String lsid = zamboniLibrary.getLsid();
         boolean isBsp = false;
         if (lsid != null) {
