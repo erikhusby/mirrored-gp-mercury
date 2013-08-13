@@ -40,9 +40,6 @@ public static final String WORKFLOW_NULL_VALUE=null;
     @JsonProperty("sequencerModel")
     private String sequencerModel;
 
-    @JsonProperty("labWorkflow")
-    private String labWorkflow;
-
     @JsonProperty("systemOfRecord")
     private SystemRouter.System systemOfRecord;
 
@@ -93,14 +90,13 @@ public static final String WORKFLOW_NULL_VALUE=null;
                            Boolean isPaired,
                            String actualReadStructure,
                            double imagedAreaPerLaneMM2,
-                           String lanesSequenced, String labWorkflow,
+                           String lanesSequenced,
                            SystemRouter.System systemOfRecord) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
         this.sequencer = sequencer;
         this.sequencerModel = sequencerModel;
-        this.labWorkflow = labWorkflow;
         this.systemOfRecord = systemOfRecord;
         try {
             this.runDate = dateFormat.parse(runDate);
@@ -123,17 +119,17 @@ public static final String WORKFLOW_NULL_VALUE=null;
                            Boolean isPaired,
                            String actualReadStructure,
                            double imagedAreaPerLaneMM2,
-                            String labWorkflow, SystemRouter.System systemOfRecord) {
+                           SystemRouter.System systemOfRecord) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, isPaired, actualReadStructure,
-                imagedAreaPerLaneMM2, null, labWorkflow, systemOfRecord);
+                imagedAreaPerLaneMM2, null, systemOfRecord);
     }
 
     public ZimsIlluminaRun(String runName, String runBarcode, String flowcellBarcode, String sequencer,
                            String sequencerModel, String runDate, Boolean paired, String actualReadStructure,
                            double imagedAreaPerLaneMM2, String setupReadStructure, String lanesSequenced,
-                           String runFolder, String labWorkflow, SystemRouter.System systemOfRecord) {
+                           String runFolder, SystemRouter.System systemOfRecord) {
         this(runName, runBarcode, flowcellBarcode, sequencer, sequencerModel, runDate, paired, actualReadStructure,
-                imagedAreaPerLaneMM2, lanesSequenced, labWorkflow, systemOfRecord);
+                imagedAreaPerLaneMM2, lanesSequenced, systemOfRecord);
         this.setupReadStructure = setupReadStructure;
         this.runFolder = runFolder;
     }
@@ -247,10 +243,6 @@ public static final String WORKFLOW_NULL_VALUE=null;
         return runFolder;
     }
 
-    @SuppressWarnings("unused")
-    public String getLabWorkflow() {
-        return labWorkflow;
-    }
 
     public SystemRouter.System getSystemOfRecord() {
         return systemOfRecord;

@@ -21,7 +21,8 @@ import java.util.Comparator;
  */
 
 public class LibraryBean {
-
+    public static final String NO_WORKFLOW = null;
+    public static final String NO_PDO_SAMPLE = null;
 
     @JsonProperty("library")
     private String library;
@@ -147,6 +148,8 @@ public class LibraryBean {
     @JsonProperty
     private String pdoSample;
 
+    @JsonProperty("labWorkflow")
+    private String labWorkflow;
     /**
      * This is the aggregation data type defined on the product and used by Picard to report the right data.
      */
@@ -180,10 +183,11 @@ public class LibraryBean {
                        String gssrSpecies,
                        String gssrStrain,
                        String gssrIndividual,
-                       BSPSampleDTO bspSampleDTO, String pdoSample) {
+                       BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
+        this.labWorkflow = labWorkflow;
         this.pdoSample = pdoSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
@@ -198,13 +202,13 @@ public class LibraryBean {
                        String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String pdoSample) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
 
         this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, pdoSample);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, pdoSample);
     }
 
     /**
@@ -254,8 +258,8 @@ public class LibraryBean {
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String pdoSample) {
-        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, pdoSample);
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow, pdoSample);
         this.library = library;
         this.project = project;
         this.initiative = initiative;

@@ -152,7 +152,7 @@ public class ZimsIlluminaRunFactory {
         ZimsIlluminaRun run = new ZimsIlluminaRun(illuminaRun.getRunName(), illuminaRun.getRunBarcode(),
                 flowcell.getLabel(), illuminaRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
                 false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced(),
-                illuminaRun.getRunDirectory(), workflowNames.iterator().next(), SystemRouter.System.MERCURY);
+                illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
 
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
@@ -265,7 +265,7 @@ public class ZimsIlluminaRunFactory {
         edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto, Map<String, Control> mapNameToControl) {
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
-
+        String labWorkflow=null;
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
@@ -338,7 +338,7 @@ public class ZimsIlluminaRunFactory {
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, null);
+                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, null);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {

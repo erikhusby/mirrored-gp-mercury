@@ -50,7 +50,7 @@ public class LibraryBeanTest {
         LibraryBean libraryBean =
             new LibraryBean(
                 gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, null);
+                gssrSpecies, gssrStrain, gssrParticipant, bspDto, LibraryBean.NO_WORKFLOW, LibraryBean.NO_PDO_SAMPLE);
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
@@ -63,7 +63,7 @@ public class LibraryBeanTest {
         // new up sans bsp DTO to confirm gssr fields work.
         libraryBean =
                 new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies, gssrStrain,
-                        gssrParticipant, null, null);
+                        gssrParticipant, null, LibraryBean.NO_WORKFLOW, LibraryBean.NO_PDO_SAMPLE);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
@@ -82,7 +82,9 @@ public class LibraryBeanTest {
             new BSPSampleDataFetcher(
                 bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
 
-        LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null);
+        LibraryBean libraryBean =
+                new LibraryBean(null, null, null, null, null, null, null, sampleDTO, LibraryBean.NO_WORKFLOW,
+                        LibraryBean.NO_PDO_SAMPLE);
 
         assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleDTO.getGender()));
         assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleDTO.getSampleLsid()));

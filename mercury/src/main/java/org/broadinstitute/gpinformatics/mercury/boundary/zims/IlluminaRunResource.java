@@ -158,7 +158,6 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getSetupReadStructure(),
                 tRun.getLanesSequenced(),
                 tRun.getRunFolder(),
-                ZimsIlluminaRun.NULL_WORKFLOW,
                 systemOfRecord);
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
