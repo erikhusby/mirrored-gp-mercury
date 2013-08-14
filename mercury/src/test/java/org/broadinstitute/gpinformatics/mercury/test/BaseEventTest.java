@@ -404,11 +404,14 @@ public class BaseEventTest {
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, Workflow workflow) {
-
+        int flowcellLanes=8;
+        if (workflow == Workflow.EXOME_EXPRESS){
+            flowcellLanes=2;
+        }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
-                designationName, workflow).invoke();
+                designationName, flowcellLanes).invoke();
     }
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,

@@ -437,7 +437,7 @@ public class ExomeExpressEndToEndTest {
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
                             labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),
                             fctBatch.getBusinessKey(),
-                            "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", Workflow.EXOME_EXPRESS);
+                            "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", 2);
 
             // LC metrics - upload page?
             // LabVessel.addMetric?

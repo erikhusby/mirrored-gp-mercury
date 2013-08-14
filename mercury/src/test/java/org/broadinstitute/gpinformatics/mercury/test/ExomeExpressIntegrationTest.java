@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionJaxbBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionJaxbBuilder;
@@ -135,8 +134,7 @@ public class ExomeExpressIntegrationTest {
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                             qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), fctName,
-                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null,
-                            Workflow.EXOME_EXPRESS);
+                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2);
 
             hiSeq2500JaxbBuilder.invoke();
 
