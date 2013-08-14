@@ -194,7 +194,7 @@ public class LibraryBean {
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest,
+    public LibraryBean(String library, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
                        String analysisType, String referenceSequence, String referenceSequenceVersion,
                        String organism, String species, String strain,
@@ -202,13 +202,14 @@ public class LibraryBean {
                        String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow) {
 
-        this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
+        // project and pdoSample was always null in the calls here, so why send them through. Can add back later.
+        this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, pdoSample);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, null);
     }
 
     /**
