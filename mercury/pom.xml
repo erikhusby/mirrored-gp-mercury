@@ -1126,6 +1126,33 @@
             </build>
         </profile>
         <profile>
+            <id>MercuryGpuiJar</id>
+            <properties>
+                <version>${project.version}</version>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>${project.artifactId}-GPUI</artifactId>
+                <packaging>jar</packaging>
+                <file>target/${artifactId}-${project.version}.jar</file>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <configuration>
+                          <includes>
+                            <include>**/Workflow.class</include>
+                          </includes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-install-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>BettaLimsGeneratedJar</id>
             <build>
                 <plugins>
