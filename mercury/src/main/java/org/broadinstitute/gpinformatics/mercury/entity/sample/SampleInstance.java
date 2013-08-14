@@ -203,27 +203,6 @@ public class SampleInstance {
     }
 
     /**
-     * Get a unique set of the workflow names for all the specified sample instances.
-     *
-     * @param sampleInstances The instances
-     *
-     * @return A set of workflow names that are represented by these.
-     */
-    public static Set<String> getWorkflowNames(Collection<SampleInstance> sampleInstances) {
-        Set<String> workflowNames = new HashSet<>();
-
-        for (SampleInstance sampleInstance : sampleInstances) {
-            // Get this workflow name and add it only if the instance has a workflow name.
-            String workflowName = sampleInstance.getWorkflowName();
-            if (workflowName != null) {
-                workflowNames.add(workflowName);
-            }
-        }
-
-        return workflowNames;
-    }
-
-    /**
      * Gets the name of the sample's workflow, based on LCSETs.
      *
      * @return workflow name

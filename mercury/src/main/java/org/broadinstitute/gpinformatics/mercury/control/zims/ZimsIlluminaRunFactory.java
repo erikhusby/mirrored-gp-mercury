@@ -82,8 +82,6 @@ public class ZimsIlluminaRunFactory {
         Set<String> sampleIds = new HashSet<>();
         Set<String> productOrderKeys = new HashSet<>();
 
-        Collection<SampleInstance> allSampleInstances = new ArrayList<> ();
-
         // Makes DTOs for aliquot samples and product orders, per lane.
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 0;
@@ -99,8 +97,6 @@ public class ZimsIlluminaRunFactory {
                 Set<SampleInstance> sampleInstances =
                         labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO, LabBatch.LabBatchType.WORKFLOW);
                 for (SampleInstance sampleInstance : sampleInstances) {
-
-                    allSampleInstances.add(sampleInstance);
 
                     String productOrderKey = sampleInstance.getProductOrderKey();
                     if (productOrderKey != null) {
@@ -138,15 +134,6 @@ public class ZimsIlluminaRunFactory {
         if (illuminaRun.getImagedAreaPerMM2() != null) {
             // avoid unboxing NPE
             imagedArea = illuminaRun.getImagedAreaPerMM2();
-        }
-
-        Set<String> workflowNames = SampleInstance.getWorkflowNames(allSampleInstances);
-        if (workflowNames.isEmpty()) {
-           workflowNames.add(ZimsIlluminaRun.NULL_WORKFLOW);
-        } else if (workflowNames.size() > 1) {
-            throw new RuntimeException(
-                    String.format("Multiple workflows detected for run %s: %s", illuminaRun.getRunName(),
-                            StringUtils.join(workflowNames, ", ")));
         }
 
         ZimsIlluminaRun run = new ZimsIlluminaRun(illuminaRun.getRunName(), illuminaRun.getRunBarcode(),
@@ -251,7 +238,8 @@ public class ZimsIlluminaRunFactory {
 
             libraryBeans.add(
                 createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
-                                  indexingSchemeEntity, catNames, indexingSchemeDto, mapNameToControl));
+                        indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
+                        indexingSchemeDto, mapNameToControl));
         }
 
         // Make order predictable
@@ -261,11 +249,10 @@ public class ZimsIlluminaRunFactory {
 
     private LibraryBean createLibraryBean(
         LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
-        MolecularIndexingScheme indexingSchemeEntity, List<String> catNames,
+        MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
         edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto, Map<String, Control> mapNameToControl) {
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
-        String labWorkflow=null;
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
@@ -334,11 +321,11 @@ public class ZimsIlluminaRunFactory {
         }
 
         return new LibraryBean(
-                library, null, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
+                library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, null);
+                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
