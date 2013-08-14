@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
@@ -46,4 +49,16 @@ public interface SquidConnector extends Serializable {
      * @return An object that represents the results of the JAX-RS Squid request
      */
     SquidResponse createRun(SolexaRunBean runInformation);
+
+    /**
+     * Sends the given read structure changes to squid's
+     * solexa_run_synopsis table
+     *
+     * @param readStructureData
+     * @param squidWSUrl
+     */
+    void saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
+                           @Nonnull String squidWSUrl) throws UniformInterfaceException;
+
+
 }

@@ -169,7 +169,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder1 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK,
                 Workflow.EXOME_EXPRESS);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK);
+                BaseEventTest.NUM_POSITIONS_IN_RACK, twoDBarcodedTubeDao);
         bucketAndBatch(testPrefix, productOrder1, mapBarcodeToTube);
         // message
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
@@ -199,7 +199,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder2 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK - 2,
                 Workflow.EXOME_EXPRESS);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK - 2);
+                BaseEventTest.NUM_POSITIONS_IN_RACK - 2, twoDBarcodedTubeDao);
 
         // Add two samples from first PDO to bucket
         Set<LabVessel> reworks = new HashSet<>();
@@ -424,7 +424,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
                                                             Workflow workflow) {
         ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflow);
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples,
+                twoDBarcodedTubeDao);
         bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
         return mapBarcodeToTube;
     }
@@ -478,12 +479,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Build samples and tubes
      *
+     *
      * @param testPrefix      make unique
      * @param numberOfSamples how many samples
      *
+     * @param twoDBarcodedTubeDao
      * @return map from tube barcode to tube
      */
-    private Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples) {
+    public static Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples,
+                                                                 TwoDBarcodedTubeDao twoDBarcodedTubeDao) {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;

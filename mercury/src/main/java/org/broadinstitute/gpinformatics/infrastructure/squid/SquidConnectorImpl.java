@@ -2,9 +2,16 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 
@@ -34,4 +41,25 @@ public class SquidConnectorImpl implements SquidConnector {
         return new SquidResponse(response.getStatus(), response.getEntity(String.class));
 
     }
+
+    @Override
+    public void saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
+                                  @Nonnull String squidWSUrl) throws UniformInterfaceException {
+
+        SolexaRunSynopsisBean solexaRunSynopsis = new SolexaRunSynopsisBean();
+        solexaRunSynopsis.setRunBarcode(readStructureData.getRunBarcode());
+        solexaRunSynopsis.setLanesSequenced(readStructureData.getLanesSequenced());
+        solexaRunSynopsis.setActualReadStructure(readStructureData.getActualReadStructure());
+        solexaRunSynopsis.setSetupReadStructure(readStructureData.getSetupReadStructure());
+        solexaRunSynopsis.setImagedAreaPerLaneMM2(readStructureData.getImagedArea());
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+        Client.create(clientConfig).resource(squidWSUrl)
+                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                .post(solexaRunSynopsis);
+    }
+
+
 }

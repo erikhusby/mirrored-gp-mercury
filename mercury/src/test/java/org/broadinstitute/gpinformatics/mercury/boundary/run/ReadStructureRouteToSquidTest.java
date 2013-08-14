@@ -10,6 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 
 /**
  * Test that confirms the default
@@ -40,7 +41,8 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
         readStructureRequest.setRunBarcode("FunkyColdMedina");
         readStructureRequest.setLanesSequenced("2,5");
 
-        ReadStructureRequest result = solexaRunResource.storeRunReadStructure(readStructureRequest);
+        Response readStructResponse = solexaRunResource.storeRunReadStructure(readStructureRequest);
+        ReadStructureRequest result = (ReadStructureRequest) readStructResponse.getEntity();
         Assert.assertTrue(result.getError().contains("is not registered in squid"));
     }
 }

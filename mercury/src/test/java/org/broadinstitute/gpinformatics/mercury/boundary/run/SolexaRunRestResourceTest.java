@@ -319,7 +319,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         runDao.persist(run);
 
-        ReadStructureRequest readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
+        Response readStructureStoreResponse =solexaRunResource.storeRunReadStructure(readStructure);
+        ReadStructureRequest readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
@@ -332,7 +333,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         readStructure.setActualReadStructure("101T8B8B101T");
 
-        readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
+        readStructureStoreResponse =solexaRunResource.storeRunReadStructure(readStructure);
+        readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
@@ -347,7 +349,9 @@ public class SolexaRunRestResourceTest extends Arquillian {
         readStructure.setImagedArea(imagedArea);
         readStructure.setLanesSequenced(lanesSequenced);
 
-        readstructureResult = solexaRunResource.storeRunReadStructure(readStructure);
+        readStructureStoreResponse =solexaRunResource.storeRunReadStructure(readStructure);
+        readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+
 
         runDao.clear();
         run = runDao.findByBarcode(runBarcode);
