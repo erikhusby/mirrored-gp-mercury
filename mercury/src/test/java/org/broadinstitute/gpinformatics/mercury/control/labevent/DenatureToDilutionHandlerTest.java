@@ -99,8 +99,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        Workflow.EXOME_EXPRESS)
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -124,8 +123,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName + "bad",
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        Workflow.EXOME_EXPRESS)
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -158,8 +156,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        Workflow.EXOME_EXPRESS)
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -190,8 +187,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        Workflow.EXOME_EXPRESS)
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
