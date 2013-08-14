@@ -156,8 +156,7 @@ public class HiSeq2500FlowcellEntityBuilder {
 
 
         Set<SampleInstance> lane1SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
-                        VesselPosition.LANE1);
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
         SampleInstance sampleInstance = lane1SampleInstances.iterator().next();
@@ -165,12 +164,10 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertNotNull(workflowName);
         int reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
 
-        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize,
-                "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         Set<SampleInstance> lane2SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
-                        VesselPosition.LANE2);
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE2);
 
         sampleInstance = lane2SampleInstances.iterator().next();
         workflowName = sampleInstance.getWorkflowName();
@@ -180,13 +177,11 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
 
-        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize,
-                "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         LabEventTest.validateWorkflow("FlowcellLoaded", illuminaFlowcell);
 
-        LabEvent flowcellLoadEntity = labEventFactory
-                .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+        LabEvent flowcellLoadEntity = labEventFactory.buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
         labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellLoadEntity, flowcellLoadJaxb);
         labEventHandler.processEvent(flowcellLoadEntity);
 
