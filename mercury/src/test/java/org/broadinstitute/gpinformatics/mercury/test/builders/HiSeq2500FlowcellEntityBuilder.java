@@ -160,17 +160,27 @@ public class HiSeq2500FlowcellEntityBuilder {
                         VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
+        SampleInstance sampleInstance = lane1SampleInstances.iterator().next();
+        String workflowName = sampleInstance.getWorkflowName();
+        Assert.assertNotNull(workflowName);
+        int reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
 
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), flowcellLanes,
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize,
                 "Wrong number of reagents");
 
         Set<SampleInstance> lane2SampleInstances =
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                         VesselPosition.LANE2);
+
+        sampleInstance = lane2SampleInstances.iterator().next();
+        workflowName = sampleInstance.getWorkflowName();
+        Assert.assertNotNull(workflowName);
+        reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
+
         Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
 
-        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), flowcellLanes,
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize,
                 "Wrong number of reagents");
 
         LabEventTest.validateWorkflow("FlowcellLoaded", illuminaFlowcell);
