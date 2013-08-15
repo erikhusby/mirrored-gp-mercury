@@ -74,8 +74,10 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         ReceptacleEventType flowcellLoadJaxb = hiSeq2500JaxbBuilder.getFlowcellLoad();
 
-        switch (productionFlowcellPath) {
+        // Used to verify that the tube loading the flowcell is correct. This is filled in in the body of switch statement.
+        String expectedNearestTubeLabel = null;
 
+        switch (productionFlowcellPath) {
         case DILUTION_TO_FLOWCELL:
             //DenatureToDilution
             LabEventTest.validateWorkflow("DenatureToDilutionTransfer", denatureRack);
@@ -93,8 +95,12 @@ public class HiSeq2500FlowcellEntityBuilder {
 
             // DilutionToFlowcellTransfer
             LabEventTest.validateWorkflow("DilutionToFlowcellTransfer", dilutionRack);
-            LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
-                    dilutionRack.getContainerRole().getContainedVessels().iterator().next(), null,
+            TwoDBarcodedTube dilutionTube = dilutionRack.getContainerRole().getContainedVessels().iterator().next();
+
+            // Tube loaded onto the flowcell is the dilution tube.
+            expectedNearestTubeLabel = dilutionTube.getLabel();
+            LabEvent flowcellTransferEntity =
+                    labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb, dilutionTube, null,
                     SBSSection.ALL2.getSectionName());
             labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity,
                     flowcellTransferJaxb);
@@ -108,6 +114,10 @@ public class HiSeq2500FlowcellEntityBuilder {
             flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
                     denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
                     SBSSection.ALL2.getSectionName());
+
+            // Tube loaded onto the flowcell is the denature tube.
+            TwoDBarcodedTube denatureTube = denatureRack.getContainerRole().getContainedVessels().iterator().next();
+            expectedNearestTubeLabel = denatureTube.getLabel();
             labEventFactory.getEventHandlerSelector()
                     .applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
@@ -143,6 +153,10 @@ public class HiSeq2500FlowcellEntityBuilder {
 
             // FlowcellTransfer
             LabEventTest.validateWorkflow("FlowcellTransfer", stripTube);
+
+            // Tube loaded onto the flowcell is the denature tube.
+            denatureTube = denatureRack.getContainerRole().getContainedVessels().iterator().next();
+            expectedNearestTubeLabel = denatureTube.getLabel();
             LabEvent stbFlowcellTransferEntity =
                     labEventFactory.buildFromBettaLimsPlateToPlateDbFree(stbFlowcellTransferJaxb,
                             stripTube, null);
@@ -154,6 +168,11 @@ public class HiSeq2500FlowcellEntityBuilder {
             break;
         }
 
+        // Verify that the tube used to load the flowcell is the correct one.
+        Assert.assertNotNull(expectedNearestTubeLabel);
+        for (LabVessel tube : illuminaFlowcell.getNearestTubeAncestorsForLanes().values()) {
+            Assert.assertTrue(tube.getLabel().equals(expectedNearestTubeLabel));
+        }
 
         Set<SampleInstance> lane1SampleInstances =
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
