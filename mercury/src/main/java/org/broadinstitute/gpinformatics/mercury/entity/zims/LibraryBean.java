@@ -146,7 +146,7 @@ public class LibraryBean {
     private String materialType;
 
     @JsonProperty
-    private String pdoSample;
+    private String productOrderSample;
 
     @JsonProperty("labWorkflow")
     private String labWorkflow;
@@ -183,12 +183,12 @@ public class LibraryBean {
                        String gssrSpecies,
                        String gssrStrain,
                        String gssrIndividual,
-                       BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
+                       BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
         this.labWorkflow = labWorkflow;
-        this.pdoSample = pdoSample;
+        this.productOrderSample = productOrderSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
@@ -204,7 +204,7 @@ public class LibraryBean {
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
                        ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow) {
 
-        // project and pdoSample was always null in the calls here, so why send them through. Can add back later.
+        // project and productOrderSample was always null in the calls here, so why send them through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
@@ -259,8 +259,9 @@ public class LibraryBean {
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
-        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow, pdoSample);
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow,
+                productOrderSample);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
