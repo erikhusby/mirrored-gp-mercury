@@ -141,7 +141,12 @@ public class OfflineThriftService implements ThriftService {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-" + laneNumber);
+        TZamboniLane zamboniLane = new TZamboniLane();
+        zamboniLane.setLaneNumber((short) laneNumber);
+        zamboniLane.setLibraries(libraries);
+        zamboniLane.setPrimer("PESP1+T");
+        zamboniLane.setSequencedLibraryName("LaneLibrary-" + laneNumber);
+        return zamboniLane;
     }
 
     private static TZamboniLibrary makeLibrary(String number) {
