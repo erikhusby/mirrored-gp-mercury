@@ -52,7 +52,7 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.remove(labEvent);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim1938() {
         // Deletes duplicate transfer from tube 346131 to plate 508281
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 192263L);
