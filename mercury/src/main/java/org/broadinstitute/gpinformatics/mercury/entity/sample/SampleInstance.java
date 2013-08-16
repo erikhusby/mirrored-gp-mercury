@@ -58,6 +58,11 @@ public class SampleInstance {
 
     private Set<LabBatch> workflowBatches;
 
+    /**
+     * The product order key that all relevant bucket entries agree on in the case where a single bucket entry cannot be
+     * determined.
+     */
+    private String likelyProductOrderKey;
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -198,8 +203,9 @@ public class SampleInstance {
     public String getProductOrderKey() {
         if (bucketEntry != null) {
             return bucketEntry.getPoBusinessKey();
+        } else {
+            return likelyProductOrderKey;
         }
-        return null;
     }
 
     /**
@@ -237,5 +243,9 @@ public class SampleInstance {
 
     public void setBspExportSample(MercurySample bspExportSample) {
         this.bspExportSample = bspExportSample;
+    }
+
+    public void setLikelyProductOrderKey(String likelyProductOrderKey) {
+        this.likelyProductOrderKey = likelyProductOrderKey;
     }
 }

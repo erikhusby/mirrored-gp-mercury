@@ -713,6 +713,12 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        void setLikelyProductOrderKey(String productOrderKey) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setLikelyProductOrderKey(productOrderKey);
+            }
+        }
+
         void setBspExportSample(MercurySample exportSample) {
             for (SampleInstance sampleInstance : sampleInstances) {
                 sampleInstance.setBspExportSample(exportSample);
@@ -846,6 +852,14 @@ public abstract class LabVessel implements Serializable {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
                 traversalResults.setBucketEntry(bucketEntry);
+            }
+        } else {
+            Set<String> productOrderKeys = new HashSet<>();
+            for (BucketEntry bucketEntry : bucketEntries) {
+                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+            }
+            if (productOrderKeys.size() == 1) {
+                traversalResults.setLikelyProductOrderKey(productOrderKeys.iterator().next());
             }
         }
 
