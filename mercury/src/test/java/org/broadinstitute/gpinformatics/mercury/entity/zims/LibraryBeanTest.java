@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -50,7 +51,7 @@ public class LibraryBeanTest {
         LibraryBean libraryBean =
             new LibraryBean(
                 gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, LibraryBean.NO_WORKFLOW, LibraryBean.NO_PDO_SAMPLE);
+                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
@@ -63,7 +64,7 @@ public class LibraryBeanTest {
         // new up sans bsp DTO to confirm gssr fields work.
         libraryBean =
                 new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies, gssrStrain,
-                        gssrParticipant, null, LibraryBean.NO_WORKFLOW, LibraryBean.NO_PDO_SAMPLE);
+                        gssrParticipant, null, Workflow.EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
@@ -83,7 +84,7 @@ public class LibraryBeanTest {
                 bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
 
         LibraryBean libraryBean =
-                new LibraryBean(null, null, null, null, null, null, null, sampleDTO, LibraryBean.NO_WORKFLOW,
+                new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
                         LibraryBean.NO_PDO_SAMPLE);
 
         assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleDTO.getGender()));

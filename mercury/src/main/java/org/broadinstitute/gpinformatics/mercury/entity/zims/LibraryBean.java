@@ -21,7 +21,6 @@ import java.util.Comparator;
  */
 
 public class LibraryBean {
-    public static final String NO_WORKFLOW = null;
     public static final String NO_PDO_SAMPLE = null;
 
     @JsonProperty("library")
