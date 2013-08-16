@@ -133,37 +133,39 @@ public class IlluminaRunResource implements Serializable {
      * Given a thrift run and a precomputed map of lsids
      * to BSP DTOs, create the run object.  Package protected
      * for testing.
-     * @param tRun from Thrift
+     * @param thriftRun from Thrift
      * @param lsidToBSPSample DTOs
      * @param systemOfRecord for this run
      * @return DTO
      */
-    ZimsIlluminaRun getRun(@Nonnull TZamboniRun tRun,
+    ZimsIlluminaRun getRun(@Nonnull TZamboniRun thriftRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
                            ProductOrderDao pdoDao, SystemRouter.System systemOfRecord) {
-        if (tRun == null) {
-            throw new NullPointerException("tRun cannot be null");
+        if (thriftRun == null) {
+            throw new NullPointerException("thriftRun cannot be null");
         }
 
-        ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),
-                tRun.getRunBarcode(),
-                tRun.getFlowcellBarcode(),
-                tRun.getSequencer(),
-                tRun.getSequencerModel(),
-                tRun.getRunDate(),
-                tRun.isPairedRun(),
-                tRun.getActualReadStructure(),
-                tRun.getImagedAreaPerLaneMM2(),
-                tRun.getSetupReadStructure(),
-                tRun.getLanesSequenced(),
-                tRun.getRunFolder(),
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun(
+                thriftRun.getRunName(),
+                thriftRun.getRunBarcode(),
+                thriftRun.getFlowcellBarcode(),
+                thriftRun.getSequencer(),
+                thriftRun.getSequencerModel(),
+                thriftRun.getRunDate(),
+                thriftRun.isPairedRun(),
+                thriftRun.getActualReadStructure(),
+                thriftRun.getImagedAreaPerLaneMM2(),
+                thriftRun.getSetupReadStructure(),
+                thriftRun.getLanesSequenced(),
+                thriftRun.getRunFolder(),
                 systemOfRecord);
 
-        for (TZamboniRead tZamboniRead : tRun.getReads()) {
-            runBean.addRead(tZamboniRead);
+        for (TZamboniRead thriftZamboniRead : thriftRun.getReads()) {
+            runBean.addRead(thriftZamboniRead);
         }
-        for (TZamboniLane tZamboniLane : tRun.getLanes()) {
+
+        for (TZamboniLane tZamboniLane : thriftRun.getLanes()) {
             List<LibraryBean> libraries = new ArrayList<>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
@@ -176,6 +178,7 @@ public class IlluminaRunResource implements Serializable {
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(),
                     tZamboniLane.getSequencedLibraryName(), null));
         }
+
         return runBean;
     }
 
@@ -186,7 +189,7 @@ public class IlluminaRunResource implements Serializable {
      * @param runName
      * @return
      */
-    ZimsIlluminaRun getRun(ThriftService thriftService, String runName) {
+    ZimsIlluminaRun getRun(ThriftService thriftService, @Nonnull String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
@@ -198,7 +201,7 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
-    private void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
+    private void setErrorNoRun(@Nonnull String runName, @Nonnull ZimsIlluminaRun runBean) {
         runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later " +
                          "or contact the mercury team if the problem persists.");
     }

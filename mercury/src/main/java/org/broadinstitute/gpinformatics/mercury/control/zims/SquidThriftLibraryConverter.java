@@ -24,7 +24,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
 
         // todo arz figure out integration test w/ bsp service, get rid of EverythingYouAskForAndItsHuman mock
 
-        LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
+        return new LibraryBean(zamboniLibrary.getLibrary(),
                 zamboniLibrary.getProject(),
                 zamboniLibrary.getInitiative(),
                 zamboniLibrary.getWorkRequestId(),
@@ -55,6 +55,5 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 pdo,
                 zamboniLibrary.getLcset(),
                 bspDTO, LibraryBean.NO_WORKFLOW, LibraryBean.NO_PDO_SAMPLE);
-        return libBean;
     }
 }
