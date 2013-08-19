@@ -116,11 +116,6 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
-                            <stripes:link id="viewReworkBuckets"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
-                                          event="viewRework">Rework Buckets</stripes:link>
-                        </li>
-                        <li>
                             <stripes:link id="uploadQuants"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
                                           event="view">Upload Quant</stripes:link>

@@ -34,16 +34,17 @@ import java.util.Date;
  */
 @Entity
 @Audited
-@Table (schema = "mercury",name = "bucket_entry")
-public class BucketEntry  {
+@Table(schema = "mercury", name = "bucket_entry")
+public class BucketEntry {
 
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
-        public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
+        public int compare(BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond) {
             int result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
 
-            if(result == 0) {
-                result = bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
+            if (result == 0) {
+                result =
+                        bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
             }
 
             return result;
@@ -52,10 +53,10 @@ public class BucketEntry  {
 
     public static final Comparator<BucketEntry> byPdo = new Comparator<BucketEntry>() {
         @Override
-        public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
+        public int compare(BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond) {
             int result = bucketEntryPrime.getPoBusinessKey().compareTo(bucketEntrySecond.getPoBusinessKey());
 
-            if(result == 0) {
+            if (result == 0) {
                 result = bucketEntryPrime.getLabVessel().compareTo(bucketEntrySecond.getLabVessel());
             }
 
@@ -67,21 +68,21 @@ public class BucketEntry  {
         Active, Archived
     }
 
-    @SequenceGenerator (name = "SEQ_BUCKET_ENTRY", schema = "mercury",  sequenceName = "SEQ_BUCKET_ENTRY")
-    @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
+    @SequenceGenerator(name = "SEQ_BUCKET_ENTRY", schema = "mercury", sequenceName = "SEQ_BUCKET_ENTRY")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
     @Id
     @Column(name = "bucket_entry_id")
     private Long bucketEntryId;
 
-    @ManyToOne (cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    @JoinColumn (name = "lab_vessel_id")
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "lab_vessel_id")
     private LabVessel labVessel;
 
     @Column(name = "po_business_key")
     private String poBusinessKey;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @JoinColumn (name = "bucket_existence_id")
+    @JoinColumn(name = "bucket_existence_id")
     private Bucket bucket;
 
     @Column(name = "STATUS", nullable = false)
@@ -98,7 +99,9 @@ public class BucketEntry  {
     @Column(name = "created_date", nullable = false)
     private Date createdDate;
 
-    /** The batch into which the bucket was drained. */
+    /**
+     * The batch into which the bucket was drained.
+     */
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
@@ -110,13 +113,13 @@ public class BucketEntry  {
     @JoinColumn(name = "rework_detail_id")
     private ReworkDetail reworkDetail;
 
-    protected BucketEntry () {
+    protected BucketEntry() {
     }
 
     public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket,
                        BucketEntryType entryType) {
 
-        this(labVesselIn, poBusinessKey,entryType);
+        this(labVesselIn, poBusinessKey, entryType);
         this.bucket = bucket;
     }
 
@@ -131,6 +134,7 @@ public class BucketEntry  {
 
     /**
      * accessor for the Lab vessel associated with this entry into a bucket
+     *
      * @return an instance of a lab vessel waiting to be processed
      */
     public LabVessel getLabVessel() {
@@ -139,6 +143,7 @@ public class BucketEntry  {
 
     /**
      * accessor for the Business key of the product order associated with this entry in a bucket
+     *
      * @return a representation of a product order associated with an item in a bucket waiting to be processed
      */
     public String getPoBusinessKey() {
@@ -147,6 +152,7 @@ public class BucketEntry  {
 
     /**
      * accessor for the bucket to which this entry is associated with
+     *
      * @return a specific instance of a Bucket
      */
     public Bucket getBucket() {
@@ -155,21 +161,22 @@ public class BucketEntry  {
 
     /**
      * accessor to retrieve the date of creation for this bucket entry
+     *
      * @return date representing the date this entry was added to the bucket
      */
-    public Date getCreatedDate () {
+    public Date getCreatedDate() {
         return createdDate;
     }
 
-    public Integer getProductOrderRanking () {
+    public Integer getProductOrderRanking() {
         return productOrderRanking;
     }
 
-    public void setProductOrderRanking ( Integer productOrderRanking ) {
+    public void setProductOrderRanking(Integer productOrderRanking) {
         this.productOrderRanking = productOrderRanking;
     }
 
-    public Long getBucketEntryId () {
+    public Long getBucketEntryId() {
         return bucketEntryId;
     }
 
@@ -211,11 +218,11 @@ public class BucketEntry  {
     }
 
     @Override
-    public boolean equals ( Object o ) {
-        if ( this == o ) {
+    public boolean equals(Object o) {
+        if (this == o) {
             return true;
         }
-        if ( o == null || !OrmUtil.proxySafeIsInstance(o, BucketEntry.class)) {
+        if (o == null || !OrmUtil.proxySafeIsInstance(o, BucketEntry.class)) {
             return false;
         }
 
@@ -246,8 +253,8 @@ public class BucketEntry  {
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
 
-    public int compareTo (BucketEntry other) {
-        CompareToBuilder builder = new CompareToBuilder ();
+    public int compareTo(BucketEntry other) {
+        CompareToBuilder builder = new CompareToBuilder();
         builder.append(getStatus(), other.getStatus());
         builder.append(getLabVessel(), other.getLabVessel());
         builder.append(getPoBusinessKey(), other.getPoBusinessKey());
@@ -257,6 +264,20 @@ public class BucketEntry  {
     }
 
     public enum BucketEntryType {
-        PDO_ENTRY, REWORK_ENTRY
+        PDO_ENTRY("PDO Entry"), REWORK_ENTRY("Rework Entry");
+
+        private String name;
+
+        BucketEntryType(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 }

@@ -100,7 +100,7 @@
                             <c:forEach items="${tubeToEvent.value}" var="eventVessel">
                                 <tr>
                                     <td>
-                                        <stripes:checkbox class="tube-checkbox" name="selectedVesselLabels"
+                                        <stripes:checkbox class="tube-checkbox" name="selectedEntryIds"
                                                           value="${eventVessel.label}"/>
                                     </td>
                                     <td>${eventVessel.label}</td>
