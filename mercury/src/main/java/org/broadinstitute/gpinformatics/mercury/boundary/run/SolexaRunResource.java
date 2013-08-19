@@ -205,21 +205,26 @@ public class SolexaRunResource {
             throw new ResourceException("No run barcode given.", Response.Status.NOT_FOUND);
         }
         // in the absence of information, route to squid
-        SystemRouter.System route;
+        SystemRouter.System route = SystemRouter.System.SQUID;
 
         IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
 
-        route = router.routeForVessels(Collections.<LabVessel>singletonList(run.getSampleCartridge()));
+        if(run != null) {
+            route = router.routeForVessels(Collections.<LabVessel>singletonList(run.getSampleCartridge()));
+        }
 
-        Throwable squidError = null;
         if (EnumSet.of(SystemRouter.System.SQUID, SystemRouter.System.BOTH).contains(route)) {
             requestToReturn = readStructureRequest;
             if (squidConfig.getMercuryDeployment() != Deployment.STUBBY) {
                 String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
                 try {
 
-                    connector.saveReadStructure(readStructureRequest, squidUrl);
-                    callerResponse = Response.ok(requestToReturn).build();
+                    SquidConnector.SquidResponse structureResponse = connector.saveReadStructure(readStructureRequest, squidUrl);
+                    if(structureResponse.getCode() == Response.Status.CREATED.getStatusCode()) {
+                        callerResponse = Response.ok(requestToReturn).build();
+                    } else {
+                        callerResponse = Response.status(structureResponse.getCode()).entity(requestToReturn).build();
+                    }
                 } catch (UniformInterfaceException t) {
                     requestToReturn.setError(
                             "Failed while sending solexa_run_synopsis data to squid for " + runBarcode + ":" + t

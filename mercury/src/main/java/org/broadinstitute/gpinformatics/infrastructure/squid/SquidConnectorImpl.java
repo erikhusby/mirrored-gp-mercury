@@ -43,7 +43,7 @@ public class SquidConnectorImpl implements SquidConnector {
     }
 
     @Override
-    public void saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
+    public SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
                                   @Nonnull String squidWSUrl) throws UniformInterfaceException {
 
         SolexaRunSynopsisBean solexaRunSynopsis = new SolexaRunSynopsisBean();
@@ -56,9 +56,11 @@ public class SquidConnectorImpl implements SquidConnector {
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        Client.create(clientConfig).resource(squidWSUrl)
-                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                .post(solexaRunSynopsis);
+        ClientResponse response = Client.create(clientConfig).resource(squidWSUrl)
+                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(solexaRunSynopsis)
+                .post(ClientResponse.class);
+
+        return new SquidResponse(response.getStatus(), response.getEntity(String.class));
     }
 
 

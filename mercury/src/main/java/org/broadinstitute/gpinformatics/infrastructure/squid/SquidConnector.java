@@ -57,7 +57,7 @@ public interface SquidConnector extends Serializable {
      * @param readStructureData
      * @param squidWSUrl
      */
-    void saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
+    SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
                            @Nonnull String squidWSUrl) throws UniformInterfaceException;
 
 

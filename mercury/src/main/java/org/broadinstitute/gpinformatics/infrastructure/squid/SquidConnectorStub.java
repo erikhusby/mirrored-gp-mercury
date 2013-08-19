@@ -22,8 +22,8 @@ public class SquidConnectorStub implements SquidConnector{
     }
 
     @Override
-    public void saveReadStructure(@Nonnull ReadStructureRequest readStructureData, @Nonnull String squidWSUrl)
+    public SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData, @Nonnull String squidWSUrl)
             throws UniformInterfaceException {
-
+        return new SquidConnector.SquidResponse(Response.Status.CREATED.getStatusCode(), "");
     }
 }
