@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
+import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.commons.io.IOUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -8,7 +14,13 @@ import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -32,6 +44,10 @@ public class ThriftFileAccessor {
 
     /**
      * Use this method to fetch a fresh thrift result and serialize it to a file.
+     *
+     * @throws TException
+     * @throws TZIMSException
+     * @throws IOException
      */
     private static void writeRunFile() throws TException, TZIMSException, IOException {
         ThriftConfig qaThrift = ThriftConfig.produce(DEV);
@@ -44,6 +60,8 @@ public class ThriftFileAccessor {
      * for testing different conditions. Typically, if you need to test some variation of data or a new field is added,
      * you can modify the serialized thrift file with appropriate data and then use {@link MockThriftService} in a test
      * to verify that the code handles that situation properly.
+     *
+     * @param args The main arguments
      */
     public static void main(String[] args) {
         System.out.println("Perform updates to serialized thrift run? (y/N)");
@@ -54,7 +72,6 @@ public class ThriftFileAccessor {
                 TZamboniRun run = deserializeRun();
 
                 // Make changes to the run here using a separate method. See the bottom of this file for examples.
-
                 ThriftFileAccessor.serializeRun(run, ThriftFileAccessor.RUN_FILE);
             } catch (Throwable t) {
                 t.printStackTrace();
@@ -62,74 +79,110 @@ public class ThriftFileAccessor {
         }
     }
 
+    /**
+     * Fetch a run using a thrift configuration.
+     *
+     * @param thriftConfig The configuration object
+     *
+     * @return A run
+     * @throws TZIMSException
+     * @throws TException
+     */
     private static TZamboniRun fetchRun(ThriftConfig thriftConfig) throws TZIMSException, TException {
 
-        TTransport transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
-        TProtocol protocol = new TBinaryProtocol(transport);
-        LIMQueries.Client client = new LIMQueries.Client(protocol);
-        transport.open();
+        TTransport transport = null;
 
-        TZamboniRun zamboniRun = client.fetchRun(RUN_NAME);
+        try {
+            transport = new TSocket(thriftConfig.getHost(), thriftConfig.getPort());
+            TProtocol protocol = new TBinaryProtocol(transport);
+            LIMQueries.Client client = new LIMQueries.Client(protocol);
+            transport.open();
 
-        // TODO: Hey Zim, couldn't this be done once and serialized back out to the file? I thought that's how we were handling things like this.
-        for (TZamboniLane lane : zamboniRun.getLanes()) {
-            for (TZamboniLibrary lib : lane.getLibraries()) {
-                if (lane.getLaneNumber() % 2 == 0) {
-                    // we're overwriting some values here to make a more representative data set
-                    lib.setAggregate(true);
-                    lib.setLabMeasuredInsertSize(14.3);
-                    lib.setPrecircularizationDnaSize(19.2);
-                    lib.setDevExperimentDataIsSet(true);
-                    lib.setDevExperimentData(new TZDevExperimentData("Dumy Experiment",
-                            Arrays.asList(new String[]{"condition 1", "condition2"})));
+            TZamboniRun zamboniRun = client.fetchRun(RUN_NAME);
+
+            // TODO: Hey Zim, couldn't this be done once and serialized back out to the file? I thought that's how we were handling things like this.
+            for (TZamboniLane lane : zamboniRun.getLanes()) {
+                for (TZamboniLibrary lib : lane.getLibraries()) {
+                    if (lane.getLaneNumber() % 2 == 0) {
+                        // We are overwriting some values here to make a more representative data set.
+                        lib.setAggregate(true);
+                        lib.setLabMeasuredInsertSize(14.3);
+                        lib.setPrecircularizationDnaSize(19.2);
+                        lib.setDevExperimentDataIsSet(true);
+                        lib.setDevExperimentData(new TZDevExperimentData("Dummy Experiment",
+                                Arrays.asList("condition 1", "condition2")));
+                    }
                 }
             }
+
+            return zamboniRun;
+        } finally {
+            if (transport != null) {
+                transport.close();
+            }
         }
-        transport.close();
-        return zamboniRun;
     }
 
+    /**
+     * Take a run and serialize it to a file.
+     *
+     * @param zamboniRun The run
+     * @param fileToWrite The file that will contain the serialized run
+     *
+     * @throws IOException
+     * @throws TException
+     */
     private static void serializeRun(TZamboniRun zamboniRun, File fileToWrite) throws IOException, TException {
         if (!fileToWrite.exists()) {
             if (!fileToWrite.createNewFile()) {
                 throw new RuntimeException("Could not create file " + fileToWrite.getAbsolutePath());
             }
         }
-        BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(fileToWrite));
-        TBinaryProtocol thriftWriter = new TBinaryProtocol(new TIOStreamTransport(outputStream));
-        zamboniRun.write(thriftWriter);
-        outputStream.flush();
-        outputStream.close();
+
+        BufferedOutputStream outputStream = null;
+        try {
+            outputStream = new BufferedOutputStream(new FileOutputStream(fileToWrite));
+            TBinaryProtocol thriftWriter = new TBinaryProtocol(new TIOStreamTransport(outputStream));
+            zamboniRun.write(thriftWriter);
+            outputStream.flush();
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+        }
     }
 
     public static TZamboniRun deserializeRun() throws IOException {
-        InputStream inputStream;
-        if (RUN_FILE.exists()) {
-            inputStream = new BufferedInputStream(new FileInputStream(RUN_FILE));
-        }
-        else {
-            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(RUN_FILE.getName());
-        }
-        if (inputStream == null) {
-            throw new RuntimeException("Cannot access cached zamboni file from " + RUN_FILE.getName()
-                                       + ".  Were you expecting to connect to a live thrift service?");
-        }
-        TBinaryProtocol thriftReader = new TBinaryProtocol(new TIOStreamTransport(inputStream));
-        TZamboniRun zamboniRun = new TZamboniRun();
+        InputStream inputStream = null;
+
         try {
+            if (RUN_FILE.exists()) {
+                inputStream = new BufferedInputStream(new FileInputStream(RUN_FILE));
+            }
+            else {
+                inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(RUN_FILE.getName());
+            }
+
+            if (inputStream == null) {
+                throw new RuntimeException("Cannot access cached zamboni file from " + RUN_FILE.getName()
+                                           + ".  Were you expecting to connect to a live thrift service?");
+            }
+
+            TBinaryProtocol thriftReader = new TBinaryProtocol(new TIOStreamTransport(inputStream));
+            TZamboniRun zamboniRun = new TZamboniRun();
             zamboniRun.read(thriftReader);
+
+            return zamboniRun;
         } catch (TException e) {
             throw new RuntimeException("Error reading thrift file " + RUN_FILE, e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
-        inputStream.close();
-
-        return zamboniRun;
     }
 
-    /*
+    /**
      * Various methods used by previous runs of main() to affect a change in the serialized thrift result.
+     *
+     * @param run The run
      */
-
     private static void addCustomAmplicons(TZamboniRun run) {
         int laneCounter = 0;
         int libraryCounter = 0;
@@ -144,9 +197,11 @@ public class ThriftFileAccessor {
                             library.getCustomAmpliconSetNames().add(customAmplicon);
                         }
                     }
+
                     libraryCounter++;
                 }
             }
+
             laneCounter++;
         }
     }
