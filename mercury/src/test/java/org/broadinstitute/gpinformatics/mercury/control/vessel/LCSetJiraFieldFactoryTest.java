@@ -188,7 +188,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -204,7 +204,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }

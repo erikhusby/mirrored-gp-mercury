@@ -453,17 +453,36 @@ public class LabBatchEjb {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
+        Bucket entryBucket = null;
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             entry.getBucket().removeEntry(entry);
+            entryBucket = entry.getBucket();
         }
         batch.addReworks(reworkVessels);
-        batch.addLabVessels(reworkVessels);
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                LCSetJiraFieldFactory.buildSamplesListString(batch)));
+                LCSetJiraFieldFactory.buildSamplesListString(batch, entryBucket)));
+
+        int sampleCount = batch.getStartingBatchLabVessels().size();
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
+                sampleCount));
+
+        AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
+                .getInstance(batch, athenaClientService);
+
+        if (StringUtils.isBlank(batch.getBatchDescription())) {
+            batch.setBatchDescription(fieldBuilder.generateDescription());
+        } else {
+            batch.setBatchDescription(
+                    fieldBuilder.generateDescription() + "\n\n" + batch.getBatchDescription());
+        }
+
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
+                batch.getBatchDescription()));
+
         jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
     }
 

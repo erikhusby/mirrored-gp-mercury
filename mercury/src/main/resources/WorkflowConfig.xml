@@ -60,9 +60,9 @@
                 <!-- todo jmt what if there's a mix of material types? -->
                 <entryExpression>
                     foreach (iSampleInstance : labVessel.getSampleInstances()) {
-                        if (iSampleInstance.getStartingSample().getBspSampleDTO().getMaterialType() contains "DNA:") {
-                            return true;
-                        }
+                    if (iSampleInstance.getStartingSample().getBspSampleDTO().getMaterialType() contains "DNA:") {
+                    return true;
+                    }
                     }
                     return false;
                 </entryExpression>
@@ -156,6 +156,7 @@
                 <jiraTransition>
                     <project>LCSET</project>
                 </jiraTransition>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Shearing Transfer</name>
@@ -325,6 +326,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Hybridization</name>
@@ -490,6 +492,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pooling Transfer</name>
