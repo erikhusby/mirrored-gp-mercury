@@ -176,7 +176,7 @@ public class IlluminaRunResource implements Serializable {
                 libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary, bspDTO, pdo));
             }
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(),
-                    tZamboniLane.getSequencedLibraryName(), null));
+                    tZamboniLane.getSequencedLibraryName(), tZamboniLane.getSequencedLibraryCreationDate()));
         }
 
         return runBean;
