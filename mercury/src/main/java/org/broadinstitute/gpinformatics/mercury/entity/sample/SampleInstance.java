@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchCompositio
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,10 +60,10 @@ public class SampleInstance {
     private Set<LabBatch> workflowBatches;
 
     /**
-     * The product order key that all relevant bucket entries agree on in the case where a single bucket entry cannot be
-     * determined.
+     * The product order key for this sample instance. Can be set even if there are multiple bucket entries, as long as
+     * all of the bucket entries are for the same product order.
      */
-    private String likelyProductOrderKey;
+    private String productOrderKey;
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -152,8 +153,9 @@ public class SampleInstance {
         this.labBatch = labBatch;
     }
 
-    public void setBucketEntry(BucketEntry bucketEntry) {
+    public void setBucketEntry(@Nonnull BucketEntry bucketEntry) {
         this.bucketEntry = bucketEntry;
+        productOrderKey = bucketEntry.getPoBusinessKey();
     }
 
     public Collection<LabBatch> getAllLabBatches() {
@@ -201,11 +203,7 @@ public class SampleInstance {
 
     @Nullable
     public String getProductOrderKey() {
-        if (bucketEntry != null) {
-            return bucketEntry.getPoBusinessKey();
-        } else {
-            return likelyProductOrderKey;
-        }
+        return productOrderKey;
     }
 
     /**
@@ -245,7 +243,7 @@ public class SampleInstance {
         this.bspExportSample = bspExportSample;
     }
 
-    public void setLikelyProductOrderKey(String likelyProductOrderKey) {
-        this.likelyProductOrderKey = likelyProductOrderKey;
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
     }
 }
