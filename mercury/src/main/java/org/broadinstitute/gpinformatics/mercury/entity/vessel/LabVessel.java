@@ -713,6 +713,12 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        void setProductOrderKey(String productOrderKey) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setProductOrderKey(productOrderKey);
+            }
+        }
+
         void setBspExportSample(MercurySample exportSample) {
             for (SampleInstance sampleInstance : sampleInstances) {
                 sampleInstance.setBspExportSample(exportSample);
@@ -846,6 +852,18 @@ public abstract class LabVessel implements Serializable {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
                 traversalResults.setBucketEntry(bucketEntry);
+            }
+        } else {
+            /*
+             * Even if there are multiple bucket entries (of any type, rework or not), as long as they all agree on the
+             * PDO, we can assume that is the correct PDO.
+             */
+            Set<String> productOrderKeys = new HashSet<>();
+            for (BucketEntry bucketEntry : bucketEntries) {
+                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+            }
+            if (productOrderKeys.size() == 1) {
+                traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
             }
         }
 
