@@ -21,7 +21,6 @@ import java.util.Comparator;
  */
 
 public class LibraryBean {
-    public static final String NO_WORKFLOW = null;
     public static final String NO_PDO_SAMPLE = null;
 
     @JsonProperty("library")
@@ -146,7 +145,7 @@ public class LibraryBean {
     private String materialType;
 
     @JsonProperty
-    private String pdoSample;
+    private String productOrderSample;
 
     @JsonProperty("labWorkflow")
     private String labWorkflow;
@@ -183,18 +182,18 @@ public class LibraryBean {
                        String gssrSpecies,
                        String gssrStrain,
                        String gssrIndividual,
-                       BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
+                       BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
         this.labWorkflow = labWorkflow;
-        this.pdoSample = pdoSample;
+        this.productOrderSample = productOrderSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest,
+    public LibraryBean(String library, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
                        String analysisType, String referenceSequence, String referenceSequenceVersion,
                        String organism, String species, String strain,
@@ -202,13 +201,14 @@ public class LibraryBean {
                        String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow) {
 
-        this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
+        // project and productOrderSample was always null in the calls here, so why send them through. Can add back later.
+        this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, pdoSample);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, null);
     }
 
     /**
@@ -258,8 +258,9 @@ public class LibraryBean {
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String pdoSample) {
-        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow, pdoSample);
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow,
+                productOrderSample);
         this.library = library;
         this.project = project;
         this.initiative = initiative;

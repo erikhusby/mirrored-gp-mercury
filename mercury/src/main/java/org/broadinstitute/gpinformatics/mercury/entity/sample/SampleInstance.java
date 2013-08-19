@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchCompositio
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,6 +59,11 @@ public class SampleInstance {
 
     private Set<LabBatch> workflowBatches;
 
+    /**
+     * The product order key for this sample instance. Can be set even if there are multiple bucket entries, as long as
+     * all of the bucket entries are for the same product order.
+     */
+    private String productOrderKey;
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -147,8 +153,9 @@ public class SampleInstance {
         this.labBatch = labBatch;
     }
 
-    public void setBucketEntry(BucketEntry bucketEntry) {
+    public void setBucketEntry(@Nonnull BucketEntry bucketEntry) {
         this.bucketEntry = bucketEntry;
+        productOrderKey = bucketEntry.getPoBusinessKey();
     }
 
     public Collection<LabBatch> getAllLabBatches() {
@@ -196,31 +203,7 @@ public class SampleInstance {
 
     @Nullable
     public String getProductOrderKey() {
-        if (bucketEntry != null) {
-            return bucketEntry.getPoBusinessKey();
-        }
-        return null;
-    }
-
-    /**
-     * Get a unique set of the workflow names for all the specified sample instances.
-     *
-     * @param sampleInstances The instances
-     *
-     * @return A set of workflow names that are represented by these.
-     */
-    public static Set<String> getWorkflowNames(Collection<SampleInstance> sampleInstances) {
-        Set<String> workflowNames = new HashSet<>();
-
-        for (SampleInstance sampleInstance : sampleInstances) {
-            // Get this workflow name and add it only if the instance has a workflow name.
-            String workflowName = sampleInstance.getWorkflowName();
-            if (workflowName != null) {
-                workflowNames.add(workflowName);
-            }
-        }
-
-        return workflowNames;
+        return productOrderKey;
     }
 
     /**
@@ -258,5 +241,9 @@ public class SampleInstance {
 
     public void setBspExportSample(MercurySample bspExportSample) {
         this.bspExportSample = bspExportSample;
+    }
+
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
     }
 }

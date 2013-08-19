@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -134,9 +135,15 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
         }
 
-        Set<LabVessel> directAndDescendantVessels = new HashSet<>(firstLevelVessels);
+        Set<LabVessel> directAndDescendantVessels = new HashSet<>();
         for (LabVessel vessel : firstLevelVessels) {
-            directAndDescendantVessels.addAll(vessel.getDescendantVessels());
+            if (vessel != null) {
+                directAndDescendantVessels.add(vessel);
+                Collection<LabVessel> vessels = vessel.getDescendantVessels();
+                if (!CollectionUtils.isEmpty(vessels)) {
+                    directAndDescendantVessels.addAll(vessels);
+                }
+            }
         }
 
         Set<Long> descendantEventIds = new HashSet<>();

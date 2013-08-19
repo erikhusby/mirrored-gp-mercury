@@ -20,10 +20,7 @@ import java.util.List;
  * for more details.
  */
 public class ZimsIlluminaRun {
-public static final String WORKFLOW_NULL_VALUE=null;
     public static final String DATE_FORMAT = "MM/dd/yyyy HH:mm";
-
-    public static final String NULL_WORKFLOW = null;
 
     @JsonProperty("name")
     private String runName;

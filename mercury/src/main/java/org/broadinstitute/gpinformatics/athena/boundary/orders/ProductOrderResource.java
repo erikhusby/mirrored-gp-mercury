@@ -44,6 +44,7 @@ public class ProductOrderResource {
             productOrderData.setTitle(productOrder.getTitle());
             productOrderData.setId(productOrder.getBusinessKey());
             productOrderData.setComments(productOrder.getComments());
+            productOrderData.setPlacedDate(productOrder.getPlacedDate());
             productOrderData.setModifiedDate(productOrder.getModifiedDate());
             productOrderData.setProduct(productOrder.getProduct().getPartNumber());
             productOrderData.setProductName(productOrder.getProduct().getName());

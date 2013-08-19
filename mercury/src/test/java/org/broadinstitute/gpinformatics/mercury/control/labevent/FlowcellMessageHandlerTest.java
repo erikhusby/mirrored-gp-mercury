@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormation
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -31,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -161,6 +163,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         LabEvent reagentToFlowcellEvent = getLabEventFactory().buildFromBettaLims(reagentToFlowcellJaxb);
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
+
+        // Verify that the tube used to load the flowcell is the denature tube;
+        IlluminaFlowcell flowcell = (IlluminaFlowcell) reagentToFlowcellEvent.getTargetLabVessels().iterator().next();
+        for (LabVessel tube : flowcell.getNearestTubeAncestorsForLanes().values()) {
+            Assert.assertEquals(tube.getLabel(), denatureTube.getLabel());
+        }
 
         Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());

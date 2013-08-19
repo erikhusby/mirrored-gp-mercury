@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -114,7 +114,7 @@ public class LCSetJiraFieldFactoryTest {
         reworks.add(new TwoDBarcodedTube("Rework2"));
         testBatch.addReworks(reworks);
 
-        int numSamples = testBatch.getStartingBatchLabVessels().size() + testBatch.getReworks().size();
+        int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
@@ -188,7 +188,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -204,7 +204,7 @@ public class LCSetJiraFieldFactoryTest {
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }

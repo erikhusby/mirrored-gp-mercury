@@ -25,22 +25,28 @@ public class ZimsIlluminaChamber {
     @JsonProperty("sequencedLibraryCreationTime")
     private String creationTime;
 
+    private static SimpleDateFormat creationTimeDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
     public ZimsIlluminaChamber() {}
-            
+
+    public ZimsIlluminaChamber(short chamberName,
+                                   final List<LibraryBean> libraries,
+                                   final String primer,
+                                   final String sequencedLibraryName,
+                               String creationTime) {
+        this.chamberName = Short.toString(chamberName);
+        this.libraries = libraries;
+        this.primer = primer;
+        this.sequencedLibraryName = sequencedLibraryName;
+        this.creationTime = creationTime;
+    }
+
     public ZimsIlluminaChamber(short chamberName,
                                final List<LibraryBean> libraries,
                                final String primer,
                                final String sequencedLibraryName,
                                final Date creationTime) {
-        this.chamberName = Short.toString(chamberName);
-        this.libraries = libraries;
-        this.primer = primer;
-        this.sequencedLibraryName = sequencedLibraryName;
-
-        if (creationTime != null) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            this.creationTime = dateFormat.format(creationTime);
-        }
+        this(chamberName, libraries, primer, sequencedLibraryName, creationTimeDateFormat.format(creationTime));
     }
     
     public String getPrimer() {

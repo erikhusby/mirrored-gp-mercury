@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -60,9 +61,12 @@ public class HiSeq2500FlowcellEntityBuilder {
     }
 
     public HiSeq2500FlowcellEntityBuilder invoke() {
+        TwoDBarcodedTube denatureTube =
+                TestUtils.getFirst(denatureRack.getContainerRole().getContainedVessels());
+        Assert.assertNotNull(denatureTube);
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                 new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                        denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
+                        denatureTube.getLabel(),
                         denatureRack.getLabel(), fctTicket, productionFlowcellPath,
                         denatureRack.getSampleInstanceCount(), designationName, flowcellLanes);
         hiSeq2500JaxbBuilder.invoke();
@@ -74,8 +78,10 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         ReceptacleEventType flowcellLoadJaxb = hiSeq2500JaxbBuilder.getFlowcellLoad();
 
-        switch (productionFlowcellPath) {
+        // Used to verify that the tube loading the flowcell is correct. This is filled in in the body of switch statement.
+        String expectedNearestTubeLabel = denatureTube.getLabel();
 
+        switch (productionFlowcellPath) {
         case DILUTION_TO_FLOWCELL:
             //DenatureToDilution
             LabEventTest.validateWorkflow("DenatureToDilutionTransfer", denatureRack);
@@ -88,30 +94,40 @@ public class HiSeq2500FlowcellEntityBuilder {
                     }});
             labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(dilutionTransferEntity, dilutionJaxb);
             labEventHandler.processEvent(dilutionTransferEntity);
-            dilutionRack = (TubeFormation) dilutionTransferEntity.getTargetLabVessels().iterator().next();
+            dilutionRack = (TubeFormation) TestUtils.getFirst(dilutionTransferEntity.getTargetLabVessels());
+            Assert.assertNotNull(dilutionRack);
             Assert.assertEquals(denatureRack.getContainerRole().getContainedVessels().size(), 1);
 
             // DilutionToFlowcellTransfer
             LabEventTest.validateWorkflow("DilutionToFlowcellTransfer", dilutionRack);
-            LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
-                    dilutionRack.getContainerRole().getContainedVessels().iterator().next(), null,
+            TwoDBarcodedTube dilutionTube =
+                    TestUtils.getFirst(dilutionRack.getContainerRole().getContainedVessels());
+            Assert.assertNotNull(dilutionTube);
+
+            // Tube loaded onto the flowcell is the dilution tube.
+            expectedNearestTubeLabel = dilutionTube.getLabel();
+            LabEvent flowcellTransferEntity =
+                    labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb, dilutionTube, null,
                     SBSSection.ALL2.getSectionName());
             labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellTransferEntity,
                     flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
-            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
+            illuminaFlowcell =
+                    (IlluminaFlowcell) TestUtils.getFirst(flowcellTransferEntity.getTargetLabVessels());
 
             break;
         case DENATURE_TO_FLOWCELL:
             LabEventTest.validateWorkflow("DenatureToFlowcellTransfer", denatureRack);
             flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
-                    denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
+                    denatureTube, null,
                     SBSSection.ALL2.getSectionName());
+
             labEventFactory.getEventHandlerSelector()
                     .applyEventSpecificHandling(flowcellTransferEntity, flowcellTransferJaxb);
             labEventHandler.processEvent(flowcellTransferEntity);
-            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
+            illuminaFlowcell =
+                    (IlluminaFlowcell) TestUtils.getFirst(flowcellTransferEntity.getTargetLabVessels());
             break;
         case STRIPTUBE_TO_FLOWCELL:
             Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<>();
@@ -135,7 +151,8 @@ public class HiSeq2500FlowcellEntityBuilder {
                     .applyEventSpecificHandling(stripTubeTransferEntity, stripTubeTransferJaxb);
             labEventHandler.processEvent(stripTubeTransferEntity);
             // asserts
-            stripTube = (StripTube) stripTubeTransferEntity.getTargetLabVessels().iterator().next();
+            stripTube = (StripTube) TestUtils.getFirst(stripTubeTransferEntity.getTargetLabVessels());
+            Assert.assertNotNull(stripTube);
             Assert.assertEquals(
                     stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1).size(),
                     catchSampleInstanceCount,
@@ -150,33 +167,47 @@ public class HiSeq2500FlowcellEntityBuilder {
                     .applyEventSpecificHandling(stbFlowcellTransferEntity, stbFlowcellTransferJaxb);
             labEventHandler.processEvent(stbFlowcellTransferEntity);
             //asserts
-            illuminaFlowcell = (IlluminaFlowcell) stbFlowcellTransferEntity.getTargetLabVessels().iterator().next();
+            illuminaFlowcell =
+                    (IlluminaFlowcell) TestUtils.getFirst(stbFlowcellTransferEntity.getTargetLabVessels());
             break;
         }
 
+        // Verify that the tube used to load the flowcell is the correct one.
+        Assert.assertNotNull(expectedNearestTubeLabel);
+        Assert.assertNotNull(illuminaFlowcell);
+        for (LabVessel tube : illuminaFlowcell.getNearestTubeAncestorsForLanes().values()) {
+            Assert.assertTrue(tube.getLabel().equals(expectedNearestTubeLabel));
+        }
 
         Set<SampleInstance> lane1SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
-                        VesselPosition.LANE1);
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
         Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
+        SampleInstance sampleInstance = TestUtils.getFirst(lane1SampleInstances);
+        Assert.assertNotNull(sampleInstance);
+        String workflowName = sampleInstance.getWorkflowName();
+        Assert.assertNotNull(workflowName);
+        int reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
 
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), flowcellLanes,
-                "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         Set<SampleInstance> lane2SampleInstances =
-                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
-                        VesselPosition.LANE2);
+                illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE2);
+
+        sampleInstance = TestUtils.getFirst(lane2SampleInstances);
+        Assert.assertNotNull(sampleInstance);
+        workflowName = sampleInstance.getWorkflowName();
+        Assert.assertNotNull(workflowName);
+        reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
+
         Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
 
-        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), flowcellLanes,
-                "Wrong number of reagents");
+        Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
         LabEventTest.validateWorkflow("FlowcellLoaded", illuminaFlowcell);
 
-        LabEvent flowcellLoadEntity = labEventFactory
-                .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+        LabEvent flowcellLoadEntity = labEventFactory.buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
         labEventFactory.getEventHandlerSelector().applyEventSpecificHandling(flowcellLoadEntity, flowcellLoadJaxb);
         labEventHandler.processEvent(flowcellLoadEntity);
 
