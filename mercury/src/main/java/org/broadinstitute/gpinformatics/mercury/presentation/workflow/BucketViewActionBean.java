@@ -262,7 +262,7 @@ public class BucketViewActionBean extends CoreActionBean {
         //currently only do ExEx
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+            if (workflowDef.getName().equals(Workflow.EXOME_EXPRESS.getWorkflowName())) {
                 allProductWorkflowDefs.add(workflowDef);
                 WorkflowBucketDef blankBucketDef = new WorkflowBucketDef("");
                 buckets.add(blankBucketDef);
