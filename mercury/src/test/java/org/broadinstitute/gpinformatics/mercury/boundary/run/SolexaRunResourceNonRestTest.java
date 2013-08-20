@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -305,10 +304,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         labVesselDao.persist(tube);
         labVesselDao.flush();
 
-        BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
-                .denatureToReagentKitTransfer(null, denatureRackMap, reagentKitBarcode, "pdunlea", "ZAN");
-        bettaLimsMessageResource.processMessage(bettaLIMSMessage);
-
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -414,6 +409,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
         Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
     }
+
     /**
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
@@ -453,8 +449,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
-//        run = runDao.findByBarcode(runBarcode);
-
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
         Assert.assertEquals(readstructureResult.getSetupReadStructure(), setupReadStructure);
@@ -469,8 +463,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
-
-//        run = runDao.findByBarcode(runBarcode);
 
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
@@ -501,6 +493,4 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
                 LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
     }
-
-
 }
