@@ -16,5 +16,6 @@ TRAILING NULLCOLS
  quant_units,
  quant_value,
  run_name,
- run_date DATE "YYYYMMDDHH24MISS"
+ run_date DATE "YYYYMMDDHH24MISS",
+ vessel_position
 )

@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -114,8 +113,8 @@ public class DbFreeIlluminaRunResourceTest {
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
-        ).getRun(thriftRun, new HashMap<String, BSPSampleDTO>(), new SquidThriftLibraryConverter(), getMockDao(),
-                SystemRouter.System.SQUID);
+        ).getRun(thriftRun, new HashMap<String, BSPSampleDTO>(), new SquidThriftLibraryConverter(), getMockDao()
+        );
         IlluminaRunResourceTest.doAssertions(thriftRun, runBean, new HashMap<Long, ProductOrder>());
     }
 
@@ -140,8 +139,8 @@ public class DbFreeIlluminaRunResourceTest {
         IlluminaRunResource runResource = new IlluminaRunResource(new MockThriftService(), sampleDataFetcher,
                 illuminaSequencingRunDao);
         ZimsIlluminaRun runBean = runResource
-                .getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(), getMockDao(),
-                        SystemRouter.System.SQUID);
+                .getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(), getMockDao()
+                );
 
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {

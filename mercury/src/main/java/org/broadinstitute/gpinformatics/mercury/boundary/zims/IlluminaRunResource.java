@@ -133,33 +133,20 @@ public class IlluminaRunResource implements Serializable {
      * Given a thrift run and a precomputed map of lsids
      * to BSP DTOs, create the run object.  Package protected
      * for testing.
+     *
      * @param thriftRun from Thrift
      * @param lsidToBSPSample DTOs
-     * @param systemOfRecord for this run
      * @return DTO
      */
     ZimsIlluminaRun getRun(@Nonnull TZamboniRun thriftRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
-                           ProductOrderDao pdoDao, SystemRouter.System systemOfRecord) {
+                           ProductOrderDao pdoDao) {
         if (thriftRun == null) {
             throw new NullPointerException("thriftRun cannot be null");
         }
 
-        ZimsIlluminaRun runBean = new ZimsIlluminaRun(
-                thriftRun.getRunName(),
-                thriftRun.getRunBarcode(),
-                thriftRun.getFlowcellBarcode(),
-                thriftRun.getSequencer(),
-                thriftRun.getSequencerModel(),
-                thriftRun.getRunDate(),
-                thriftRun.isPairedRun(),
-                thriftRun.getActualReadStructure(),
-                thriftRun.getImagedAreaPerLaneMM2(),
-                thriftRun.getSetupReadStructure(),
-                thriftRun.getLanesSequenced(),
-                thriftRun.getRunFolder(),
-                systemOfRecord);
+        ZimsIlluminaRun runBean = ZimsIlluminaRun.makeZimsIlluminaRun(thriftRun);
 
         for (TZamboniRead thriftZamboniRead : thriftRun.getReads()) {
             runBean.addRead(thriftZamboniRead);
@@ -194,7 +181,7 @@ public class IlluminaRunResource implements Serializable {
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
             Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao, SystemRouter.System.SQUID);
+            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
         } else {
             setErrorNoRun(runName, runBean);
         }

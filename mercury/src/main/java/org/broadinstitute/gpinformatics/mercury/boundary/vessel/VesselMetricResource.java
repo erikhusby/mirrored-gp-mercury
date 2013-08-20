@@ -61,7 +61,8 @@ public class VesselMetricResource {
                 throw new RuntimeException("Failed to find vessel for barcode " + vesselMetricBean.getBarcode());
             }
             LabMetric labMetric = new LabMetric(new BigDecimal(vesselMetricBean.getValue()), metricType,
-                    LabMetric.LabUnit.getByDisplayName(vesselMetricBean.getUnit()));
+                    LabMetric.LabUnit.getByDisplayName(vesselMetricBean.getUnit()),
+                    vesselMetricBean.getContainerPosition(), vesselMetricRunBean.getRunDate());
             labVessel.addMetric(labMetric);
             labMetricRun.addMetric(labMetric);
         }

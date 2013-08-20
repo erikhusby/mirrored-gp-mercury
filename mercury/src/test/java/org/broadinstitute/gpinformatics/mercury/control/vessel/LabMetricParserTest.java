@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,10 +45,13 @@ public class LabMetricParserTest extends ContainerTest {
 
     @Inject
     private UserTransaction utx;
-    //   private Map<String, LabVessel> barcodeToTubeMap = new HashMap<>();
-    private Map<String, Double> barcodeToQuant = new HashMap<>();
+
+    private List<String> headers;
+    private List<String> barcodes;
+    private List<Double> quants;
+    private List<String> positions;
     private InputStream resourceFile;
-    private String[] positions;
+    private final String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -61,32 +65,36 @@ public class LabMetricParserTest extends ContainerTest {
 
         utx.begin();
 
-        positions = new String[]{"A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12",
-                "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12"};
+        // This following header, position, barcode, and quant data matches what is in GOOD_QUANT_UPLOAD_FILE.
+        headers = Arrays.asList("Location", "Barcode", "Quants");
+        positions = Arrays.asList(
+                new String[]{"A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1",
+                        "A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2",
+                        "A3", "B3", "C3", "D3", "E3", "F3", "G3", "H3",
+                        "A4", "B4", "C4", "D4", "E4", "F4", "G4", "H4",
+                        "A5", "B5", "C5", "D5", "E5", "F5", "G5", "H5",
+                        "A6", "B6", "C6", "D6", "E6", "F6", "G6", "H6",
+                        "A7", "B7", "C7", "D7", "E7", "F7", "G7", "H7",
+                        "A8", "B8", "C8", "D8", "E8", "F8", "G8", "H8"
+                });
 
-        barcodeToQuant.put("SGMTEST2402938482", 32.42d);
-        barcodeToQuant.put("SGMTEST2208428758", 54.22d);
-        barcodeToQuant.put("SGMTEST3559709487", 17.76d);
-        barcodeToQuant.put("SGMTEST3938342818", 16.22d);
-        barcodeToQuant.put("SGMTEST3585528276", 62.74d);
-        barcodeToQuant.put("SGMTEST3132943337", 99.11d);
-        barcodeToQuant.put("SGMTEST8815228500", 42.09d);
-        barcodeToQuant.put("SGMTEST5936483766", 28.04d);
-        barcodeToQuant.put("SGMTEST4621329996", 95.05d);
-        barcodeToQuant.put("SGMTEST9085949196", 41.21d);
-        barcodeToQuant.put("SGMTEST4069756425", 71.66d);
-        barcodeToQuant.put("SGMTEST3850486410", 59.02d);
-        barcodeToQuant.put("SGMTEST5761812024", 50.44d);
-        barcodeToQuant.put("SGMTEST4047896363", 33.95d);
-        barcodeToQuant.put("SGMTEST5142352881", 38.44d);
+        barcodes = Arrays.asList(
+                new String[]{"SGMTEST2402938482", "SGMTEST2208428758", "SGMTEST3559709487", "SGMTEST3938342818",
+                        "SGMTEST3585528276", "SGMTEST3132943337", "SGMTEST8815228500", "SGMTEST5936483766",
+                        "SGMTEST4621329996", "SGMTEST9085949196", "SGMTEST4069756425", "SGMTEST3850486410",
+                        "SGMTEST5761812024", "SGMTEST4047896363", "SGMTEST5142352881"});
 
-        for (Map.Entry<String, Double> quantEntry : barcodeToQuant.entrySet()) {
-            TwoDBarcodedTube testTube = new TwoDBarcodedTube(quantEntry.getKey());
+        quants = Arrays.asList(
+                new Double[]{32.42d, 54.22d, 17.76d, 16.22d, 62.74d, 99.11d, 42.09d, 28.04d, 95.05d, 41.21d, 71.66d,
+                        59.02d, 50.44d, 33.95d, 38.44d});
+
+        for (String barcode : barcodes) {
+            TwoDBarcodedTube testTube = new TwoDBarcodedTube(barcode);
             vesselDao.persist(testTube);
         }
         vesselDao.flush();
         vesselDao.clear();
-        String GOOD_QUANT_UPLOAD_FILE = "quant_upload_good.xlsx";
+
         resourceFile = Thread.currentThread().getContextClassLoader().getResourceAsStream(GOOD_QUANT_UPLOAD_FILE);
     }
 
@@ -104,17 +112,22 @@ public class LabMetricParserTest extends ContainerTest {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testQuantParser() throws InvalidFormatException, IOException, ValidationException {
-
+        Date startDate = new Date();
         LabMetricProcessor processor = new LabMetricProcessor(labVesselDao, LabMetric.MetricType.ECO_QPCR);
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processor);
         parser.processUploadFile(resourceFile);
+        Date endDate = new Date();
 
         Collection<LabMetric> createdMetrics = processor.getMetrics();
-        Assert.assertEquals(createdMetrics.size(), barcodeToQuant.size());
+        Assert.assertEquals(createdMetrics.size(), barcodes.size());
 
         for (LabMetric testMetric : createdMetrics) {
-            Assert.assertEquals(testMetric.getValue().setScale(2),
-                    BigDecimal.valueOf(barcodeToQuant.get(testMetric.getLabVessel().getLabel())));
+            int idx = barcodes.indexOf(testMetric.getLabVessel().getLabel());
+            Assert.assertTrue(idx >= 0);
+            Assert.assertEquals(testMetric.getValue().setScale(2), BigDecimal.valueOf(quants.get(idx)));
+            Assert.assertEquals(testMetric.getVesselPosition(), positions.get(idx));
+            Assert.assertFalse(testMetric.getCreatedDate().before(startDate));
+            Assert.assertFalse(testMetric.getCreatedDate().after(endDate));
         }
     }
 
@@ -123,14 +136,14 @@ public class LabMetricParserTest extends ContainerTest {
         LabMetricProcessor processor = new LabMetricProcessor(labVesselDao, LabMetric.MetricType.ECO_QPCR);
         PoiSpreadsheetParser parser = new PoiSpreadsheetParser(processor);
 
-        File quantUploadFile = createQuantUploadFile(Arrays.asList("Location", "Barcode", "Quants"), barcodeToQuant);
+        File quantUploadFile = createQuantUploadFile(headers, positions, barcodes, quants);
         InputStream fileInputStream = new FileInputStream(quantUploadFile);
         try {
             parser.processUploadFile(fileInputStream);
         } catch (ValidationException e) {
             Assert.assertEquals(e.getValidationMessages().size(), 1);
         }
-        quantUploadFile = createQuantUploadFile(Arrays.asList("Location", "Barcodes", "Quants"), barcodeToQuant);
+        quantUploadFile = createQuantUploadFile(headers, positions, barcodes, quants);
         fileInputStream = new FileInputStream(quantUploadFile);
         try {
             parser.processUploadFile(fileInputStream);
@@ -139,7 +152,8 @@ public class LabMetricParserTest extends ContainerTest {
         }
     }
 
-    public File createQuantUploadFile(List<String> headers, Map<String, Double> barcodeToQuant) {
+    public File createQuantUploadFile(List<String> headers, List<String> positions, List<String> barcodes,
+                                      List<Double> quants) {
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet = workbook.createSheet();
         int currentSheetRow = 0;
@@ -149,23 +163,16 @@ public class LabMetricParserTest extends ContainerTest {
             currentRow.createCell(i).setCellValue(new HSSFRichTextString(header));
         }
 
-        currentSheetRow++;
-
-
-        for (Map.Entry<String, Double> currBarcode : barcodeToQuant.entrySet()) {
-            currentRow = sheet.createRow(currentSheetRow);
-            String barcode = currBarcode.getKey();
-            Double quantValue = currBarcode.getValue();
-
-            currentRow.createCell(0, Cell.CELL_TYPE_STRING).setCellValue(positions[currentSheetRow]);
-            currentRow.createCell(1, Cell.CELL_TYPE_STRING).setCellValue(barcode);
-            currentRow.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(quantValue);
+        for (int idx = 0; idx < positions.size(); ++idx) {
             currentSheetRow++;
-        }
-        while (currentSheetRow < positions.length) {
+            String position = positions.get(idx);
             currentRow = sheet.createRow(currentSheetRow);
-            currentRow.createCell(0).setCellValue(positions[currentSheetRow]);
-            currentSheetRow++;
+            currentRow.createCell(0, Cell.CELL_TYPE_STRING).setCellValue(position);
+
+            if (idx < barcodes.size()) {
+                currentRow.createCell(1, Cell.CELL_TYPE_STRING).setCellValue(barcodes.get(idx));
+                currentRow.createCell(2, Cell.CELL_TYPE_NUMERIC).setCellValue(quants.get(idx));
+            }
         }
 
         File quantFile = null;

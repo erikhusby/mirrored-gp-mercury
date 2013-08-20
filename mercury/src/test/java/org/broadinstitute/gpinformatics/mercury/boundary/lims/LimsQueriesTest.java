@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -195,7 +196,8 @@ public class LimsQueriesTest {
         replay(labVesselDao);
 
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML);
+                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.POND_PICO, LabMetric.LabUnit.UG_PER_ML,
+                        "D04", new Date());
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", "Pond Pico");
@@ -209,7 +211,8 @@ public class LimsQueriesTest {
         replay(labVesselDao);
 
         LabMetric quantMetric =
-                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML);
+                new LabMetric(new BigDecimal("55.55"), LabMetric.MetricType.ECO_QPCR, LabMetric.LabUnit.UG_PER_ML,
+                        "D04", new Date());
         tube.addMetric(quantMetric);
 
         Double quantValue = limsQueries.fetchQuantForTube("tube1", LabMetric.MetricType.ECO_QPCR.getDisplayName());
