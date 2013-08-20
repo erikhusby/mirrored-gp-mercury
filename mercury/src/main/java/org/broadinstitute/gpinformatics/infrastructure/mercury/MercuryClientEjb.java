@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -19,20 +17,26 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author breilly
- */
 @Stateful
 @RequestScoped
 public class MercuryClientEjb {
-    private static final Log logger = LogFactory.getLog(MercuryClientEjb.class);
     private LabVesselDao labVesselDao;
     private BSPUserList userList;
     private BucketEjb bucketEjb;
@@ -61,17 +65,16 @@ public class MercuryClientEjb {
         return addFromProductOrder(pdo, pdo.getSamples());
     }
 
-    public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo, Collection<ProductOrderSample> samples) {
+    public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
+                                                              Collection<ProductOrderSample> samples) {
         // Limited to ExomeExpress pdos.
-        if (pdo.getProduct() == null ||
-                !WorkflowName.EXOME_EXPRESS.getWorkflowName().equals(pdo.getProduct().getWorkflowName())) {
+        if (order.getProduct() == null || !order.getProduct().getWorkflow().isExomeExpress()) {
             return Collections.emptyList();
         }
 
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion =
-                workflowConfig.getWorkflowByName(pdo.getProduct().getWorkflowName())
-                        .getEffectiveVersion();
+                workflowConfig.getWorkflow(order.getProduct().getWorkflow()).getEffectiveVersion();
         WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
 
         Bucket initialBucket = null;
@@ -83,7 +86,7 @@ public class MercuryClientEjb {
         }
 
         String username = null;
-        Long bspUserId = pdo.getCreatedBy();
+        Long bspUserId = order.getCreatedBy();
         if (bspUserId != null) {
             BspUser bspUser = userList.getById(bspUserId);
             if (bspUser != null) {
@@ -94,14 +97,14 @@ public class MercuryClientEjb {
         // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
-        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<String, Collection<ProductOrderSample>>();
-        Set<String> sampleKeyList = new HashSet<String>();
+        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<>();
+        Set<String> sampleKeyList = new HashSet<>();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
             Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getSampleName());
             if (pdoSampleList == null) {
-                pdoSampleList = new ArrayList<ProductOrderSample>();
+                pdoSampleList = new ArrayList<>();
                 nameToSampleMap.put(pdoSample.getSampleName(), pdoSampleList);
             }
             pdoSampleList.add(pdoSample);
@@ -111,7 +114,7 @@ public class MercuryClientEjb {
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
 
         // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = new ArrayList<String>(sampleKeyList);
+        Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
@@ -125,13 +128,13 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         bucketEjb.add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-                LabEvent.UI_EVENT_LOCATION, initialBucketDef.getBucketEventType(), pdo.getBusinessKey());
+                LabEvent.UI_EVENT_LOCATION, initialBucketDef.getBucketEventType(), order.getBusinessKey());
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);
         }
 
-        List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> samplesAdded = new ArrayList<>();
         for (LabVessel vessel : validVessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesAdded.addAll(nameToSampleMap.get(sample.getSampleKey()));
@@ -142,7 +145,7 @@ public class MercuryClientEjb {
 
     // todo jmt should this check be in bucketEjb.add?
     private Collection<LabVessel> applyBucketCriteria(Collection<LabVessel> vessels, WorkflowBucketDef bucketDef) {
-        Collection<LabVessel> validVessels = new HashSet<LabVessel>();
+        Collection<LabVessel> validVessels = new HashSet<>();
         for (LabVessel vessel : vessels) {
             if (bucketDef.meetsBucketCriteria(vessel)) {
                 validVessels.add(vessel);
@@ -159,7 +162,7 @@ public class MercuryClientEjb {
      * @return the created LabVessels
      */
     public Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
-        Collection<LabVessel> vessels = new ArrayList<LabVessel>();
+        Collection<LabVessel> vessels = new ArrayList<>();
         Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
         for (String sampleName : samplesWithoutVessel) {
             BSPSampleDTO bspDto = bspDtoMap.get(sampleName);

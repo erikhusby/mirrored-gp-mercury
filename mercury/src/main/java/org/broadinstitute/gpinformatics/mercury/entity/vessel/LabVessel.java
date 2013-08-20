@@ -45,6 +45,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -83,9 +84,9 @@ public abstract class LabVessel implements Serializable {
 
     private Date createdOn;
 
-    private Float volume;
+    private BigDecimal volume;
 
-    private Float concentration;
+    private BigDecimal concentration;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
@@ -177,9 +178,11 @@ public abstract class LabVessel implements Serializable {
     @Transient
     private Map<String, LabMetric> metricMap;
 
-    /** Set by {@link #preProcessEvents()} */
+    /**
+     * Set by {@link #preProcessEvents()}
+     */
     @Transient
-    private boolean havePreProcessedEvents;
+    private Set<LabBatch> preProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -218,9 +221,7 @@ public abstract class LabVessel implements Serializable {
      * of a lab vessel.  Labels are GUIDs
      * for LabVessels; no two LabVessels
      * may share this id.  It's primarily the
-     * barcode on the piece of plastic.f
-     *
-     * @return
+     * barcode on the piece of plastic.
      */
     public String getLabel() {
         return label;
@@ -361,6 +362,24 @@ public abstract class LabVessel implements Serializable {
      * @return transfers
      */
     public Set<LabEvent> getTransfersTo() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersTo());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersTo());
+        }
+        // todo jmt vessel to vessel transfers
+        return transfersTo;
+    }
+
+    /**
+     * Get LabEvents that are transfers to this vessel, including re-arrays
+     *
+     * @return transfers
+     */
+    public Set<LabEvent> getTransfersToWithReArrays() {
         Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
             for (VesselContainer<?> vesselContainer : getContainers()) {
@@ -537,127 +556,6 @@ public abstract class LabVessel implements Serializable {
 
 
     /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param positionName position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull String positionName) {
-        VesselPosition position = VesselPosition.getByName(positionName);
-        return getSamplesAtPosition(position);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param vesselPosition position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
-        return getSamplesAtPosition(vesselPosition, SampleType.ANY);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position, traversing until sample type is reached.
-     */
-    public Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
-        Set<SampleInstance> sampleInstances;
-        VesselContainer<?> vesselContainer = getContainerRole();
-        if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, sampleType);
-        } else {
-            sampleInstances = getSampleInstances(sampleType, null);
-        }
-        if (sampleInstances == null) {
-            sampleInstances = Collections.emptySet();
-        }
-        return sampleInstances;
-    }
-
-
-    /**
-     * This method gets all of the positions within this vessel that contain the sample instance passed in.
-     *
-     * @param sampleInstance The sample instance to search for positions of within the vessel
-     *
-     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
-     */
-    public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            return Collections.emptyList();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptyList();
-        }
-
-        List<VesselPosition> positionList = new ArrayList<>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    public Set<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance, SampleType sampleType) {
-        if (getContainerRole() == null) {
-            return Collections.emptySet();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptySet();
-        }
-
-        Set<VesselPosition> positionList = new HashSet<>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position, sampleType)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    /**
-     * This method will get the last known position of a sample. If the sample is in a tube it will check the last rack
-     * it was in. Otherwise it will defer to the getPositionsOfSample.
-     *
-     * @param sampleInstance The sample instance to find the last position for.
-     *
-     * @return A list of vessel positions that the sample instance was last known to be at.
-     */
-    public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            Map<Date, List<VesselPosition>> positionList = new TreeMap<>();
-            for (VesselContainer<?> container : getContainers()) {
-                List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
-                if (curPositionLists == null) {
-                    curPositionLists = new ArrayList<>();
-                    positionList.put(container.getEmbedder().getCreatedOn(), curPositionLists);
-                }
-                curPositionLists.add(container.getPositionOfVessel(this));
-            }
-
-            if (positionList.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return positionList.get(positionList.keySet().iterator().next());
-        }
-        return getPositionsOfSample(sampleInstance);
-    }
-
-    /**
      * Returned from getAncestors and getDescendants
      */
     public static class VesselEvent {
@@ -730,12 +628,18 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-        if (!havePreProcessedEvents) {
-            preProcessEvents();
-            havePreProcessedEvents = true;
+        if (preProcessedEvents == null) {
+            preProcessedEvents = preProcessEvents();
         }
         if (getContainerRole() != null) {
-            return getContainerRole().getSampleInstances(sampleType, labBatchType);
+            Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
+            for (SampleInstance sampleInstance : sampleInstances) {
+                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null
+                    && preProcessedEvents.size() == 1) {
+                    sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+                }
+            }
+            return sampleInstances;
         }
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
@@ -750,6 +654,14 @@ public abstract class LabVessel implements Serializable {
             filteredSampleInstances = traversalResults.getSampleInstances();
         }
 
+        // This handles the case where controls are added in a re-array of the destination of the first transfer
+        // from LCSET starting tubes.
+        if (filteredSampleInstances.size() == 1) {
+            SampleInstance sampleInstance = filteredSampleInstances.iterator().next();
+            if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+            }
+        }
         return filteredSampleInstances;
     }
 
@@ -758,6 +670,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
+        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
         if (sampleInstanceCount == null) {
             sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
         }
@@ -800,6 +713,18 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        void setProductOrderKey(String productOrderKey) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setProductOrderKey(productOrderKey);
+            }
+        }
+
+        void setBspExportSample(MercurySample exportSample) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setBspExportSample(exportSample);
+            }
+        }
+
         /**
          * After traversing all ancestors in a level in the hierarchy, apply reagents to that level, if any.
          * Reagents are consumed when they are applied to SampleInstances, they don't continue to be applied to
@@ -818,7 +743,8 @@ public abstract class LabVessel implements Serializable {
 
         /**
          * Called after an event has been traversed, sets lab batch and product order key.
-         * @param labEvent event that was traversed
+         *
+         * @param labEvent  event that was traversed
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
@@ -841,10 +767,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    private static boolean isBspEvent(LabEvent labEvent) {
-        return labEvent.getEventLocation().equals("BSP");
-    }
-
     /**
      * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
@@ -854,6 +776,11 @@ public abstract class LabVessel implements Serializable {
      * @return accumulated sampleInstances
      */
     TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+
+        /*
+         * Crawl up this vessel's ancestors looking for a vessel that fits the specified sampleType criteria. Once such
+         * a vessel is found, we stop crawling start accumulating the results as we crawl back down.
+         */
         TraversalResults traversalResults = new TraversalResults();
 
         boolean continueTraversing = true;
@@ -884,29 +811,63 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
+        /*
+         * Start crawling back down the traversed ancestors. We create SampleInstances for the MercurySamples only from
+         * the topmost vessel that actually has MercurySamples. Any other MercurySamples that we encounter on the way
+         * back down are not collected because they were already determined to not meet the specified sampleType
+         * criteria.
+         */
+
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
                 SampleInstance sampleInstance = new SampleInstance(mercurySample);
                 traversalResults.add(sampleInstance);
             }
         }
-        for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getAllLabBatches(labBatchType));
+
+        /*
+         * LabBatches are accumulated during downward traversal so that we will know all of the batches that the vessel
+         * in question is somehow related to.
+         */
+
+        for (LabBatch labBatch : getLabBatches()) {
+            if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
+                for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                    sampleInstance.addLabBatches(Collections.singleton(labBatch));
+                }
+            }
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
-            if (!getAllLabBatches(LabBatch.LabBatchType.SAMPLES_IMPORT).isEmpty()) {
+            if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
                 for (MercurySample mercurySample : mercurySamples) {
-                    sampleInstance.setBspExportSample(mercurySample);
+                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each sampleInstance.bspExportSample multiple times? I know there's a comment above about the expectation, but we should probably throw an exception if it's not as we expect instead of potentially doing the wrong thing. -BPR
+                    traversalResults.setBspExportSample(mercurySample);
                 }
             }
         }
+
+        // FIXME: Ignore rework bucket entries when deciding whether or not there is a single entry.
+        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide which is the appropriate one in this case (either here or in getSampleInstances).
         if (bucketEntries.size() == 1) {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
                 traversalResults.setBucketEntry(bucketEntry);
             }
+        } else {
+            /*
+             * Even if there are multiple bucket entries (of any type, rework or not), as long as they all agree on the
+             * PDO, we can assume that is the correct PDO.
+             */
+            Set<String> productOrderKeys = new HashSet<>();
+            for (BucketEntry bucketEntry : bucketEntries) {
+                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+            }
+            if (productOrderKeys.size() == 1) {
+                traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
+            }
         }
 
+        // TODO: completeLevel() simply applies reagents to the sample instances, so this code could probably be changed to look more like setting the bspExportSample and bucketEntry above.
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
@@ -982,19 +943,19 @@ public abstract class LabVessel implements Serializable {
         return events;
     }
 
-    public Float getVolume() {
+    public BigDecimal getVolume() {
         return volume;
     }
 
-    public void setVolume(Float volume) {
+    public void setVolume(BigDecimal volume) {
         this.volume = volume;
     }
 
-    public Float getConcentration() {
+    public BigDecimal getConcentration() {
         return concentration;
     }
 
-    public void setConcentration(Float concentration) {
+    public void setConcentration(BigDecimal concentration) {
         this.concentration = concentration;
     }
 
@@ -1003,7 +964,17 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addBucketEntry(BucketEntry bucketEntry) {
-        bucketEntries.add(bucketEntry);
+        boolean added = bucketEntries.add(bucketEntry);
+        if (!added) {
+            /*
+             * We currently don't have any UI gestures that should allow us to violate the contract for equals/hashCode
+             * for BucketEntry (currently using bucket, labVessel, and createdDate). If this exception is ever thrown,
+             * it is because we've added such a feature and this should readily be thrown during development and
+             * testing. If that happens, BucketEntry will have to be enhanced have more inherent uniqueness, likely
+             * using some sort of artificial unique identifier such as a UUID.
+             */
+            throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
+        }
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1053,7 +1024,7 @@ public abstract class LabVessel implements Serializable {
      * @return filtered lab batches
      *
      * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
-     * traverser
+     *             traverser
      */
     @Deprecated
     public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
@@ -1205,6 +1176,7 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    // todo jmt unused?
     public Collection<String> getNearestProductOrders() {
 
         if (getContainerRole() != null) {
@@ -1376,7 +1348,7 @@ public abstract class LabVessel implements Serializable {
      * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
      * vessels.
      *
-     * @return A collection contain all ancestor and descentdant vessels.
+     * @return A collection containing all ancestor and descendant vessels.
      */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
@@ -1655,7 +1627,7 @@ public abstract class LabVessel implements Serializable {
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
-        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<>();
 
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());
@@ -1693,17 +1665,21 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.
+     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.  This is
+     * necessary because a control doesn't have a {@link BucketEntry}; controls become associated with LCSETs by being
+     * in the same transfer as vessels with BucketEntries.
      */
-    public void preProcessEvents() {
+    public Set<LabBatch> preProcessEvents() {
         Set<LabEvent> visitedLabEvents = new HashSet<>();
-        recurseEvents(visitedLabEvents, getTransfersTo());
+        return recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
     }
 
     /**
      * Recurses ancestor transfers, setting computed LCSETs.
+     *
      * @param visitedLabEvents avoid visiting event twice
      * @param currentTransfers the transfers at the current point in the recursion
+     *
      * @return results of recursion
      */
     Set<LabBatch> recurseEvents(Set<LabEvent> visitedLabEvents, Set<LabEvent> currentTransfers) {
@@ -1712,7 +1688,7 @@ public abstract class LabVessel implements Serializable {
             if (visitedLabEvents.add(labEvent)) {
                 Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
                 for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersTo()));
+                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
                 }
                 Set<LabBatch> computedLcSets = labEvent.computeLcSets();
                 if (computedLcSets.isEmpty()) {
@@ -1722,7 +1698,6 @@ public abstract class LabVessel implements Serializable {
                     returnLcSets.addAll(computedLcSets);
                     labEvent.addComputedLcSets(computedLcSets);
                 }
-//                System.out.println(labEvent.getLabEventType() + " " + labEvent.getComputedLcSets());
             }
         }
         return returnLcSets;

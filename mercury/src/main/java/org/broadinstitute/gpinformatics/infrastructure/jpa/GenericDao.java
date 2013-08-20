@@ -271,7 +271,7 @@ public class GenericDao {
             List<VALUE_TYPE> values,
             @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
 
-        List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
+        List<ENTITY_TYPE> resultList = new ArrayList<>();
         if(values.isEmpty()) {
             return resultList;
         }

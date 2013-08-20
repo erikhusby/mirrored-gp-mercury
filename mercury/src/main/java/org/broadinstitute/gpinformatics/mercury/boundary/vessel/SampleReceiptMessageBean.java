@@ -15,7 +15,7 @@ import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
-// todo jmt see if there's a way to reduce copy and paste between this and BettalimsMessageBean
+// todo jmt see if there's a way to reduce copy and paste between this and BettaLimsMessageBean
 // onMessage could call a method that takes the resource method as a callback.
 // Can't use command pattern, because we're transmitting XML, not objects.
 
@@ -51,6 +51,7 @@ public class SampleReceiptMessageBean implements MessageListener {
     /**
      * Transaction is NOT_SUPPORTED because we don't want re-delivery in case of failure.  We store all messages
      * on the file system, and email in case of failure, so the recipient of the email can resubmit messages manually.
+     *
      * @param message JMS message from BSP
      */
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

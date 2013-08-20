@@ -21,7 +21,7 @@ import java.util.*;
 public class PriceListCache extends AbstractCache implements Serializable {
     private static final long serialVersionUID = 1843525203075284455L;
 
-    private Collection<QuotePriceItem> quotePriceItems = new ArrayList<QuotePriceItem>();
+    private Collection<QuotePriceItem> quotePriceItems = new ArrayList<>();
 
     private PMBQuoteService quoteService;
 
@@ -81,7 +81,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return The matching price items
      */
     public Collection<QuotePriceItem> getPriceItemsByPlatform(QuotePlatformType quotePlatformType) {
-        Collection<QuotePriceItem> items = new HashSet<QuotePriceItem>();
+        Collection<QuotePriceItem> items = new HashSet<>();
         for (QuotePriceItem quotePriceItem : getQuotePriceItems()) {
             if (quotePlatformType.getPlatformName().equalsIgnoreCase(quotePriceItem.getPlatformName())) {
                 items.add(quotePriceItem);
@@ -97,7 +97,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
 
     public List<QuotePriceItem> searchPriceItems(String query) {
-        List<QuotePriceItem> results = new ArrayList<QuotePriceItem>();
+        List<QuotePriceItem> results = new ArrayList<>();
         String lowerQuery = query.toLowerCase();
 
         // Currently searching all price items, not filtering by platform or anything else

@@ -42,7 +42,7 @@ public class LabMetricRun {
     private LabMetric.MetricType metricType;
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "labMetricRun")
-    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
+    private Set<LabMetric> labMetrics = new HashSet<>();
 
     public LabMetricRun(String runName, Date runDate, LabMetric.MetricType metricType) {
         this.runName = runName;

@@ -11,8 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Vertex;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -59,11 +57,11 @@ public class TransferVisualizerClient {
     /**
      * Random access to vertices, for edge sources and destinations
      */
-    private Map<String, mxCell> mapIdToMxVertex = new HashMap<String, mxCell>();
+    private Map<String, mxCell> mapIdToMxVertex = new HashMap<>();
     /**
      * List of alternative ID types to display in each vertex
      */
-    private List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<TransferVisualizer.AlternativeId>();
+    private List<TransferVisualizer.AlternativeId> alternativeDisplayIds = new ArrayList<>();
     private static final int BUTTON_HEIGHT = 20;
 
     public mxGraph getMxGraph() {
@@ -164,7 +162,7 @@ public class TransferVisualizerClient {
 
         @Override
         public List<String> getPopupList() {
-            List<String> popupList = new ArrayList<String>();
+            List<String> popupList = new ArrayList<>();
             popupList.add(CellValue.COPY_BARCODE);
             if(vertex.getChildVertices() != null) {
                 popupList.add(CellValue.COPY_TUBE_BARCODES);
@@ -175,9 +173,11 @@ public class TransferVisualizerClient {
         @Override
         public String handlePopup(String name) {
             StringSelection contents;
-            if (name.equals(CellValue.COPY_BARCODE)) {
+            switch (name) {
+            case CellValue.COPY_BARCODE:
                 contents = new StringSelection(vertex.getTitle());
-            } else if (name.equals(CellValue.COPY_TUBE_BARCODES)) {
+                break;
+            case CellValue.COPY_TUBE_BARCODES:
                 StringBuilder tubeBarcodes = new StringBuilder();
                 for (Vertex[] rows : vertex.getChildVertices()) {
                     for (Vertex column : rows) {
@@ -188,7 +188,8 @@ public class TransferVisualizerClient {
                     }
                 }
                 contents = new StringSelection(tubeBarcodes.toString());
-            } else {
+                break;
+            default:
                 throw new RuntimeException("Unknown popup " + name);
             }
 
@@ -613,13 +614,6 @@ public class TransferVisualizerClient {
         return graph;
     }
 
-    public Graph fetchGraph(LabVessel labVessel) {
-        TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
-        Graph graph = new Graph();
-        transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, new ArrayList<TransferVisualizer.AlternativeId>());
-        return graph;
-    }
-
     private void createMxGraph() {
         mxGraph = new mxGraph() {
             /** Enable layout of edges attached to ports */
@@ -641,5 +635,19 @@ public class TransferVisualizerClient {
         mxGraph.setHtmlLabels(true);
         // Don't allow the user to drag edges away from vertices
         mxGraph.setCellsDisconnectable(false);
+    }
+
+    /**
+     * For testing only.
+     */
+    public Graph getGraph() {
+        return graph;
+    }
+
+    /**
+     * For testing only.
+     */
+    public void setGraph(Graph graph) {
+        this.graph = graph;
     }
 }

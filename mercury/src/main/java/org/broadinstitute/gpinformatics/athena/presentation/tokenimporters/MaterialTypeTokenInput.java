@@ -38,7 +38,7 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
         }
 
         Collection<MaterialType> materialTypes = materialTypeListCache.find(query);
-        return createItemListString(new ArrayList<MaterialType>(materialTypes));
+        return createItemListString(new ArrayList<>(materialTypes));
     }
 
     @Override
@@ -67,7 +67,7 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {
         List<org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> mercuryTokenObjects =
-                new ArrayList<org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType>();
+                new ArrayList<>();
 
         for (MaterialType materialType : getTokenObjects()) {
             if (materialType != null) {

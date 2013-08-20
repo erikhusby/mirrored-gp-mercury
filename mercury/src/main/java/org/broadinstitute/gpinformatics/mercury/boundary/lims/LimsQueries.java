@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -34,36 +34,40 @@ import java.util.Map;
  */
 public class LimsQueries {
 
-    private static final String NOT_FOUND =  "NOT_FOUND";
+    private static final String NOT_FOUND = "NOT_FOUND";
 
-    private StaticPlateDAO staticPlateDAO;
+    private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Inject
-    public LimsQueries(StaticPlateDAO staticPlateDAO, LabVesselDao labVesselDao,
-                       TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
-        this.staticPlateDAO = staticPlateDAO;
+    public LimsQueries(StaticPlateDao staticPlateDao, LabVesselDao labVesselDao,
+                       TwoDBarcodedTubeDao twoDBarcodedTubeDao) {
+        this.staticPlateDao = staticPlateDao;
         this.labVesselDao = labVesselDao;
-        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
+        this.twoDBarcodedTubeDao = twoDBarcodedTubeDao;
     }
 
     /**
      * Fetch library details for given tube barcodes.  Used by automation engineering "scan and save" application.
      * Library has less meaning in Mercury than in Squid, so many of the DTO fields are null.
-     * @param tubeBarcodes from deck
+     *
+     * @param tubeBarcodes              from deck
      * @param includeWorkRequestDetails work request has no meaning in Mercury, so this is ignored
+     *
      * @return list of DTOs
      */
     public List<LibraryDataType> fetchLibraryDetailsByTubeBarcode(List<String> tubeBarcodes,
                                                                   boolean includeWorkRequestDetails) {
-        Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
+        Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(tubeBarcodes);
         return fetchLibraryDetailsByTubeBarcode(mapBarcodeToVessel);
     }
 
     /**
      * DaoFree implementation of {@link #fetchLibraryDetailsByTubeBarcode(java.util.List, boolean)}
-     * @param mapBarcodeToVessel    key is barcode, entry is vessel.  Entry is null if not found in the database
+     *
+     * @param mapBarcodeToVessel key is barcode, entry is vessel.  Entry is null if not found in the database
+     *
      * @return list of DTOs
      */
     @DaoFree
@@ -91,11 +95,13 @@ public class LimsQueries {
 
     /**
      * Determines whether all tube barcodes are in the database
+     *
      * @param barcodes list of tube barcodes
+     *
      * @return true if all tube barcodes are in the database
      */
     public boolean doesLimsRecognizeAllTubes(List<String> barcodes) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(barcodes);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(barcodes);
         for (Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
             if (stringTwoDBarcodedTubeEntry.getValue() == null) {
                 return false;
@@ -112,7 +118,7 @@ public class LimsQueries {
      * @return the barcodes of the immediate parent plates
      */
     public List<String> findImmediatePlateParents(String plateBarcode) {
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
@@ -121,7 +127,9 @@ public class LimsQueries {
 
     /**
      * DaoFree implementation of {@link #findImmediatePlateParents(String)}
+     *
      * @param plate entity
+     *
      * @return list of barcodes
      */
     @DaoFree
@@ -138,7 +146,7 @@ public class LimsQueries {
      * See {@link LimsQueryResource#fetchParentRackContentsForPlate(String)}.
      */
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
@@ -147,7 +155,9 @@ public class LimsQueries {
 
     /**
      * DaoFree implementation of {@link #fetchParentRackContentsForPlate(String)}
+     *
      * @param plate entity
+     *
      * @return map from well position to true if position occupied
      */
     @DaoFree
@@ -162,7 +172,7 @@ public class LimsQueries {
 
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
         List<WellAndSourceTubeType> results = new ArrayList<>();
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
@@ -177,12 +187,14 @@ public class LimsQueries {
 
     /**
      * Fetch ancestor transfers for a plate
+     *
      * @param plateBarcode barcode of plate for which to fetch transfers
-     * @param depth how many levels of transfer to recurse
+     * @param depth        how many levels of transfer to recurse
+     *
      * @return plate transfer details
      */
     public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
         if (plate == null) {
             throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
         }
@@ -212,7 +224,8 @@ public class LimsQueries {
 
     /**
      * Adds WellAndTube DTOs to {@link PlateTransferType}
-     * @param vesselContainer entity
+     *
+     * @param vesselContainer        entity
      * @param wellAndSourceTubeTypes list to which to add DTOs
      */
     @DaoFree

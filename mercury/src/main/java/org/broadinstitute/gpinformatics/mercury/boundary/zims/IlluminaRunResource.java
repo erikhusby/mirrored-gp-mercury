@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -51,6 +52,7 @@ import java.util.Set;
 @Path("/IlluminaRun")
 @Stateless
 public class IlluminaRunResource implements Serializable {
+    private static final long serialVersionUID = -4933761044216626763L;
 
     private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
@@ -70,7 +72,7 @@ public class IlluminaRunResource implements Serializable {
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
 
     @Inject
-    private MercuryOrSquidRouter mercuryOrSquidRouter;
+    private SystemRouter systemRouter;
 
     public IlluminaRunResource() {
     }
@@ -85,7 +87,7 @@ public class IlluminaRunResource implements Serializable {
 
     @GET
     @Path("/query")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getRun(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
@@ -96,8 +98,8 @@ public class IlluminaRunResource implements Serializable {
             if (illuminaSequencingRun == null) {
                 runBean = callThrift(runName);
             } else {
-                MercuryOrSquidRouter.MercuryOrSquid systemOfRecordForVessel =
-                        mercuryOrSquidRouter.getSystemOfRecordForVessel(
+                SystemRouter.System systemOfRecordForVessel =
+                        systemRouter.getSystemOfRecordForVessel(
                                 illuminaSequencingRun.getSampleCartridge().getLabel());
                 switch (systemOfRecordForVessel) {
                 case MERCURY:
@@ -131,32 +133,26 @@ public class IlluminaRunResource implements Serializable {
      * Given a thrift run and a precomputed map of lsids
      * to BSP DTOs, create the run object.  Package protected
      * for testing.
-     * @param tRun from Thrift
+     *
+     * @param thriftRun from Thrift
      * @param lsidToBSPSample DTOs
      * @return DTO
      */
-    ZimsIlluminaRun getRun(TZamboniRun tRun,
+    ZimsIlluminaRun getRun(@Nonnull TZamboniRun thriftRun,
                            Map<String, BSPSampleDTO> lsidToBSPSample,
                            ThriftLibraryConverter thriftLibConverter,
                            ProductOrderDao pdoDao) {
-        if (tRun == null) {
-            throw new NullPointerException("tRun cannot be null");
+        if (thriftRun == null) {
+            throw new NullPointerException("thriftRun cannot be null");
         }
 
-        ZimsIlluminaRun runBean = new ZimsIlluminaRun(tRun.getRunName(),
-                tRun.getRunBarcode(),
-                tRun.getFlowcellBarcode(),
-                tRun.getSequencer(),
-                tRun.getSequencerModel(),
-                tRun.getRunDate(),
-                tRun.isPairedRun(),
-                tRun.getActualReadStructure(),
-                tRun.getImagedAreaPerLaneMM2());
+        ZimsIlluminaRun runBean = ZimsIlluminaRun.makeZimsIlluminaRun(thriftRun);
 
-        for (TZamboniRead tZamboniRead : tRun.getReads()) {
-            runBean.addRead(tZamboniRead);
+        for (TZamboniRead thriftZamboniRead : thriftRun.getReads()) {
+            runBean.addRead(thriftZamboniRead);
         }
-        for (TZamboniLane tZamboniLane : tRun.getLanes()) {
+
+        for (TZamboniLane tZamboniLane : thriftRun.getLanes()) {
             List<LibraryBean> libraries = new ArrayList<>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
@@ -166,8 +162,10 @@ public class IlluminaRunResource implements Serializable {
                 }
                 libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary, bspDTO, pdo));
             }
-            runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(), tZamboniLane.getSequencedLibraryName()));
+            runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(),
+                    tZamboniLane.getSequencedLibraryName(), tZamboniLane.getSequencedLibraryCreationDate()));
         }
+
         return runBean;
     }
 
@@ -178,8 +176,7 @@ public class IlluminaRunResource implements Serializable {
      * @param runName
      * @return
      */
-    ZimsIlluminaRun getRun(ThriftService thriftService,
-                           String runName) {
+    ZimsIlluminaRun getRun(ThriftService thriftService, @Nonnull String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         TZamboniRun tRun = thriftService.fetchRun(runName);
         if (tRun != null) {
@@ -191,22 +188,19 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
-    private void setErrorNoRun(String runName, ZimsIlluminaRun runBean) {
-        runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+    private void setErrorNoRun(@Nonnull String runName, @Nonnull ZimsIlluminaRun runBean) {
+        runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later " +
+                         "or contact the mercury team if the problem persists.");
     }
 
     /**
-     * Fetches all BSP data for the run in one shot,
-     * returning a Map from the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO#getSampleLsid()} to the
-     * {@link BSPSampleDTO}.
+     * Fetches all BSP data for the run in one shot, returning a Map from the LSID to the {@link BSPSampleDTO}.
      *
      * @param run from Thrift
      * @return map lsid to DTO
      */
     private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
         Set<String> sampleLsids = new HashSet<>();
-        Set<String> sampleNames = new HashSet<>();
-        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -215,7 +209,8 @@ public class IlluminaRunResource implements Serializable {
             }
         }
 
-        for (Map.Entry<String, String> lsIdToBareId :BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
+        Set<String> sampleNames = new HashSet<>();
+        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
             } else {
@@ -224,18 +219,20 @@ public class IlluminaRunResource implements Serializable {
         }
         Map<String, BSPSampleDTO> sampleToBspDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
+        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<>();
         for (Map.Entry<String, BSPSampleDTO> bspSampleDTOEntry : sampleToBspDto.entrySet()) {
             BSPSampleDTO bspDto = bspSampleDTOEntry.getValue();
-            // make sure we get something out of BSP.  If we don't, consider it a
-            // catastrophe, especially for the pipeline
+            // Make sure we get something out of BSP.  If we don't, consider it a
+            // catastrophe, especially for the pipeline.
+            String sampleName = bspSampleDTOEntry.getKey();
             if (bspDto == null) {
-                throw new BSPLookupException("BSP returned no data for " + bspSampleDTOEntry.getKey());
+                throw new BSPLookupException("BSP returned no data for " + sampleName);
             }
             if (bspDto.getSampleLsid() == null || StringUtils.isBlank(bspDto.getSampleLsid())) {
-                throw new BSPLookupException("BSP returned no LSID.");
+                throw new BSPLookupException("BSP returned no LSID for " + sampleName);
             }
             if (bspDto.getSampleId() == null || StringUtils.isBlank(bspDto.getSampleId())) {
-                throw new BSPLookupException("BSP returned no sample id.");
+                throw new BSPLookupException("BSP returned no sample id for " + sampleName);
             }
             lsidToBspDto.put(bspDto.getSampleLsid(), bspDto);
         }
@@ -273,7 +270,7 @@ public class IlluminaRunResource implements Serializable {
      */
     @GET
     @Path("/queryMercury")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getMercuryRun(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
@@ -304,7 +301,7 @@ public class IlluminaRunResource implements Serializable {
      */
     @GET
     @Path("/querySquid")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces(MediaType.APPLICATION_JSON)
     public ZimsIlluminaRun getRunSquid(
             @QueryParam("runName") String runName) {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -14,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.testng.Assert;
@@ -44,7 +45,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
         Collection<MercurySample> reworkSamples =
                 reworkEjb.getVesselRapSheet(mapBarcodeToTube.values().iterator().next(),
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        LabEventType.PICO_PLATING_BUCKET, "", Workflow.EXOME_EXPRESS);
 
         Assert.assertEquals(reworkSamples.size(), 1);
 
@@ -73,7 +74,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
         Collection<MercurySample> reworkSamples =
                 reworkEjb.getVesselRapSheet(mapBarcodeToTube.values().iterator().next(),
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        LabEventType.PICO_PLATING_BUCKET, "", Workflow.EXOME_EXPRESS);
 
         Assert.assertEquals(reworkSamples.size(), 1);
 
@@ -84,6 +85,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorPreviouslyInBucket() throws ValidationException {
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -92,6 +94,8 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
 
         Date runDate = new Date();
 
@@ -105,7 +109,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
                 reworkEjb.getVesselRapSheet(
                         picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values().iterator().next(),
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        LabEventType.PICO_PLATING_BUCKET, "", Workflow.EXOME_EXPRESS);
 
         Assert.assertEquals(reworkSamples.size(), 1);
 
@@ -116,6 +120,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void reworkDaoFreeAncestorStillInBucket() throws ValidationException {
+        expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(1);
         AthenaClientServiceStub.addProductOrder(productOrder);
@@ -124,6 +129,8 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         Date runDate = new Date();
 
@@ -137,7 +144,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
                 reworkEjb.getVesselRapSheet(
                         picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values().iterator().next(),
                         ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                        LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        LabEventType.PICO_PLATING_BUCKET, "", Workflow.EXOME_EXPRESS);
 
         Assert.assertEquals(reworkSamples.size(), 1);
 
@@ -163,7 +170,7 @@ public class ReworkEjbDaoFreeTest extends BaseEventTest {
         try {
             reworkEjb.getVesselRapSheet(mapBarcodeToTube.values().iterator().next(),
                     ReworkEntry.ReworkReason.UNKNOWN_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                    LabEventType.PICO_PLATING_BUCKET, "", WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                    LabEventType.PICO_PLATING_BUCKET, "", Workflow.EXOME_EXPRESS);
 
             Assert.fail();
         } catch (ValidationException e) {

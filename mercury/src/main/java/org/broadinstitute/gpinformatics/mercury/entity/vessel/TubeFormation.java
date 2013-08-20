@@ -22,7 +22,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
                       joinColumns = @JoinColumn(name = "LAB_VESSEL"),
                       inverseJoinColumns = @JoinColumn(name = "RACKS_OF_TUBES"))
-    private Set<RackOfTubes> racksOfTubes = new HashSet<RackOfTubes>();
+    private Set<RackOfTubes> racksOfTubes = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     private RackOfTubes.RackType rackType;
@@ -100,9 +100,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
                 sb.append(Integer.toHexString((anArray & 0xFF) | 0x100).substring(1, 3));
             }
             return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }

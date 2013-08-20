@@ -78,7 +78,7 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
-        List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
+        List<LibraryData> libraryDataList = new ArrayList<>();
         for (String libraryName : libraryNames) {
             LibraryData libraryData = new LibraryData();
             libraryData.setLibraryName(libraryName);
@@ -115,11 +115,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {
-        List<TZamboniLane> lanes = new ArrayList<TZamboniLane>();
+        List<TZamboniLane> lanes = new ArrayList<>();
         for (int i = 1; i <= numLanes; i++) {
             lanes.add(makeLane(i, numLibraries));
         }
-        List<TZamboniRead> reads = new ArrayList<TZamboniRead>();
+        List<TZamboniRead> reads = new ArrayList<>();
         reads.add(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         reads.add(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
         //TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2,
@@ -136,25 +136,55 @@ public class OfflineThriftService implements ThriftService {
     }
 
     private static TZamboniLane makeLane(int laneNumber, int numLibraries) {
-        List<TZamboniLibrary> libraries = new ArrayList<TZamboniLibrary>();
+        List<TZamboniLibrary> libraries = new ArrayList<>();
         for (int i = 0; i < numLibraries; i++) {
             libraries.add(makeLibrary(Integer.toString(libraryNumber)));
             libraryNumber++;
         }
-        return new TZamboniLane((short) laneNumber, libraries, "PESP1+T", "LaneLibrary-" + laneNumber);
+        TZamboniLane zamboniLane = new TZamboniLane();
+        zamboniLane.setLaneNumber((short) laneNumber);
+        zamboniLane.setLibraries(libraries);
+        zamboniLane.setPrimer("PESP1+T");
+        zamboniLane.setSequencedLibraryName("LaneLibrary-" + laneNumber);
+        return zamboniLane;
     }
 
     private static TZamboniLibrary makeLibrary(String number) {
-        List<String> conditions = new ArrayList<String>();
+        List<String> conditions = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             conditions.add("condition " + number + "-" + i);
         }
-        List<String> gssrBarcodes = new ArrayList<String>();
+        List<String> gssrBarcodes = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             gssrBarcodes.add(number + "." + i);
         }
         TZDevExperimentData experimentData = new TZDevExperimentData("Experiment " + number, conditions);
-        return new TZamboniLibrary("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), null, null, number, "Analysis-" + number, (short) 1, "GSSR-" + number, "OrganismDescription-" + number, "LSID-" + number, "Strain-" + number, "Sample-" + number, "Collaborator-" + number, "Tissue-" + number, "Organism-" + number, "Plasmid-" + number, false, false, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "Species-" + number, "CellLine-" + number, "Reference-" + number, "RevVer-" + number, "Bait-" + number, true, "GSSR SampleType-" + number, gssrBarcodes, "Individual-" + number, 123.4, false, false, "no weirdness", 123.4, false, experimentData, new ArrayList<String>(), false,null,null);
+        TZamboniLibrary zamboniLibrary =
+                new TZamboniLibrary();
+        zamboniLibrary.setLibrary("Library-" + number);        zamboniLibrary.setProject("Project-" + number);
+        zamboniLibrary.setInitiative("Initiative-" + number);        zamboniLibrary.setWorkRequestId(1L);
+        zamboniLibrary.setMolecularIndexes(new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()));
+        zamboniLibrary.setExpectedInsertSize(number);        zamboniLibrary.setAnalysisType("Analysis-" + number);
+        zamboniLibrary.setTargetLaneCoverage((short) 1);     zamboniLibrary.setGssrBarcode("GSSR-" + number);
+        zamboniLibrary.setSampleOrganismDescription("OrganismDescription-" + number) ;
+        zamboniLibrary.setLsid("LSID-" + number) ;        zamboniLibrary.setStrain("Strain-" + number) ;
+        zamboniLibrary.setSampleAlias("Sample-" + number);         zamboniLibrary.setSampleCollaborator("Collaborator-" + number);
+        zamboniLibrary.setTissueType("Tissue-" + number); zamboniLibrary.setOrganism("Organism-" + number);
+        zamboniLibrary.setExpectedPlasmid("Plasmid-" + number);
+        zamboniLibrary.setAggregate(false); zamboniLibrary.setCalibrateQualities(false);
+        zamboniLibrary.setAligner("Aligner-" + number); zamboniLibrary.setRrbsSizeRange("Size Range " + number);
+        zamboniLibrary.setRestrictionEnzyme("Enzyme-" + number); zamboniLibrary.setSpecies("Species-" + number);
+        zamboniLibrary.setCellLine("CellLine-" + number); zamboniLibrary.setReferenceSequence("Reference-" + number);
+        zamboniLibrary.setReferenceSequenceVersion("RevVer-" + number);
+        zamboniLibrary.setBaitSetName("Bait-" + number); zamboniLibrary.setHasIndexingRead(true);
+        zamboniLibrary.setGssrSampleType("GSSR SampleType-" + number);
+        zamboniLibrary.setGssrBarcodes(gssrBarcodes); zamboniLibrary.setIndividual("Individual-" + number);
+        zamboniLibrary.setLabMeasuredInsertSize(123.4);
+        zamboniLibrary.setPositiveControl(false); zamboniLibrary.setNegativeControl(false);
+        zamboniLibrary.setDevExperimentData(experimentData);
+        zamboniLibrary.setCustomAmpliconSetNames(new ArrayList<String>());
+        zamboniLibrary.setFastTrack(false);
+        return zamboniLibrary;
 
     }
 }

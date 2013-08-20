@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 		  http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-           version="3.0">
+         version="3.0">
 
     <!-- BEGIN for JBoss AS 7 -->
 
@@ -38,7 +38,7 @@
     <!-- END for JBoss AS 7 -->
 
     <context-param>
-        <param-name>resteasy.scan.resources </param-name>
+        <param-name>resteasy.scan.resources</param-name>
         <!-- we don't scan for test performance reasons.  use resteasy.resources explicitly instead. -->
         <param-value>false</param-value>
     </context-param>
@@ -59,7 +59,7 @@
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportResource,
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource,
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
             org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource
         </param-value>
@@ -135,7 +135,9 @@
         <filter-class>net.sourceforge.stripes.controller.StripesFilter</filter-class>
         <init-param>
             <param-name>ActionResolver.Packages</param-name>
-            <param-value>org.broadinstitute.gpinformatics.athena.presentation, org.broadinstitute.gpinformatics.mercury.presentation</param-value>
+            <param-value>org.broadinstitute.gpinformatics.athena.presentation,
+                org.broadinstitute.gpinformatics.mercury.presentation
+            </param-value>
         </init-param>
         <init-param>
             <param-name>Extension.Packages</param-name>
@@ -207,8 +209,8 @@
     </filter-mapping>
 
     <session-config>
-		<session-timeout>480</session-timeout>
-	</session-config>
+        <session-timeout>480</session-timeout>
+    </session-config>
 
     <error-page>
         <error-code>500</error-code>
@@ -219,8 +221,8 @@
         <location>/404.jsp</location>
     </error-page>
     <error-page>
-       <exception-type>java.lang.Exception</exception-type>
-       <location>/error.jsp</location>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/error.jsp</location>
     </error-page>
 
 </web-app>

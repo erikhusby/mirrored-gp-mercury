@@ -46,7 +46,7 @@ public class ProductResource {
             name = product.getProductName();
             family = product.getProductFamily().getName();
             partNumber = product.getPartNumber();
-            workflowName = product.getWorkflowName();
+            workflowName = product.getWorkflow().getWorkflowName();
         }
     }
 
@@ -61,7 +61,7 @@ public class ProductResource {
         }
 
         public Products(List<Product> products) {
-            this.products = new ArrayList<ProductData>(products.size());
+            this.products = new ArrayList<>(products.size());
             for (Product order : products) {
                 this.products.add(new ProductData(order));
             }
@@ -75,7 +75,7 @@ public class ProductResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public Products findOrders() {
+    public Products findProducts() {
         return new Products(productDao.findProductsForProductList());
     }
 }

@@ -26,7 +26,7 @@ public class ProductOrderSampleTestFactory {
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
                                                             Collection<LedgerEntry> billableItems,
                                                             boolean dbFree) {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleArray.length);
         for (String sampleName : sampleArray) {
             ProductOrderSample productOrderSample;
             if (dbFree) {

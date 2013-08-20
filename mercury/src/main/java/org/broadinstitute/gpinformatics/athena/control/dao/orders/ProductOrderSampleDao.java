@@ -71,7 +71,7 @@ public class ProductOrderSampleDao extends GenericDao {
      */
     public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
         Map<String, List<ProductOrderSample>> mapSampleNameToProductOrderSampleList =
-                new HashMap<String, List<ProductOrderSample>>();
+                new HashMap<>();
         for (String sampleName : sampleNames) {
             mapSampleNameToProductOrderSampleList.put(sampleName, new ArrayList<ProductOrderSample>());
         }

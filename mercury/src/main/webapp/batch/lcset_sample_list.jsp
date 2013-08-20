@@ -51,13 +51,13 @@
                 }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
                 $j('.exportPico').heatcolor(function () {
                     return $j(this).text();
-                }, { lightness:0.6, maxval:3, minval:1, colorStyle:'greentored' });
+                }, { lightness:0.6, maxval:3.5, minval:1.5, colorStyle:'greentored' });
                 $j('.pondPico').heatcolor(function () {
                     return $j(this).text();
-                }, { lightness:0.6, maxval:80, minval:30, colorStyle:'greentored' });
+                }, { lightness:0.6, maxval:75, minval:25, colorStyle:'greentored' });
                 $j('.catchPico').heatcolor(function () {
                     return $j(this).text();
-                }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
+                }, { lightness:0.6, maxval:15, minval:2, colorStyle:'greentored' });
                 $j('.ecoQPCR').heatcolor(function () {
                     return $j(this).text();
                 }, { lightness:0.6, maxval:60, minval:10, colorStyle:'greentored' });
@@ -67,6 +67,7 @@
 
     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleLibrariesActionBean">
         <div class="actionButtons">
+            <stripes:hidden name="searchKey"/>
             <stripes:submit name="showLibraries" value="Show Libraries" class="btn" style="margin-right:30px;"/>
             JIRA Link <a target="JIRA" href="${batch.jiraTicket.browserUrl}" class="external"
                          target="JIRA"> ${batch.businessKey} </a>
@@ -97,7 +98,7 @@
             </thead>
             <tbody>
             <c:forEach items="${batch.startingBatchLabVessels}" var="vessel">
-                <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
+                <c:forEach items="${vessel.sampleInstances}" var="sample">
                     <tr>
                         <td>
                             <stripes:checkbox class="sample-checkbox${index - 1}" name="selectedSamples"
@@ -117,7 +118,7 @@
                         <td class="ecoQPCR"> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
                         <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
-                        <td> ${bean.getPositionsForEvent(vessel, "POND_ENRICHMENT")}</td>
+                        <td> ${bean.getPositionsForEvent(vessel, "POND_REGISTRATION")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "NORMALIZED_CATCH_REGISTRATION")}</td>
                         <td> ${bean.getLatestEventForVessel(vessel).labEventType.name} </td>
                         <td> ${bean.getUserFullName(bean.getLatestEventForVessel(vessel).eventOperator)} </td>

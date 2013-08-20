@@ -26,7 +26,7 @@ public class MolecularIndexingSchemeFactory {
     private MolecularIndexDao indexDao;
 
     private Map<List<IndexPositionPair>, MolecularIndexingScheme> cachedSchemes =
-            new HashMap<List<IndexPositionPair>, MolecularIndexingScheme>();
+            new HashMap<>();
 
     public static class IndexPositionPair {
         private final String sequence;
@@ -75,7 +75,7 @@ public class MolecularIndexingSchemeFactory {
     }
 
     static List<IndexPositionPair> getPairArray(MolecularIndexingScheme scheme, IndexPositionPair... indexPositionPairs) {
-        List<IndexPositionPair> pairList = new ArrayList<IndexPositionPair>(); //new IndexPositionPair[scheme.getIndexes().size() + indexPositionPairs.length];
+        List<IndexPositionPair> pairList = new ArrayList<>(); //new IndexPositionPair[scheme.getIndexes().size() + indexPositionPairs.length];
 
         for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : scheme.getIndexes().entrySet()) {
             pairList.add(new IndexPositionPair(entry.getKey(), entry.getValue().getSequence()));
@@ -152,7 +152,7 @@ public class MolecularIndexingSchemeFactory {
             return foundScheme;
         }
 
-        Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> positionIndexMap = new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>();
+        Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> positionIndexMap = new HashMap<>();
         for (IndexPositionPair pair : indexPositionPairs) {
             MolecularIndex index = this.indexDao.findBySequence(pair.getSequence());
             if (index == null) {

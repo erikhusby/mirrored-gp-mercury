@@ -14,7 +14,7 @@ import java.util.List;
 @Startup
 public class ExternalDataCacheControl extends AbstractCacheControl {
 
-    private final List<AbstractCache> caches = new ArrayList<AbstractCache>();
+    private final List<AbstractCache> caches = new ArrayList<>();
 
     private static final int MAX_SIZE = 100000;
 

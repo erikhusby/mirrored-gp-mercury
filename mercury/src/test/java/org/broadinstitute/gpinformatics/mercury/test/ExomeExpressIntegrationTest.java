@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,7 +51,7 @@ public class ExomeExpressIntegrationTest {
 
             // get list of samples and tube barcodes.
             BufferedReader bufferedReader = new BufferedReader(new FileReader(sampleFileName));
-            Map<String, String> sampleBarcodeMap = new HashMap<String, String>();
+            Map<String, String> sampleBarcodeMap = new HashMap<>();
             while (bufferedReader.ready()) {
                 String line = bufferedReader.readLine();
                 if (!line.trim().isEmpty()) {
@@ -82,7 +81,7 @@ public class ExomeExpressIntegrationTest {
             bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
             ShearingJaxbBuilder shearingJaxbBuilder = new ShearingJaxbBuilder(
                     bettaLimsMessageTestFactory,
-                    new ArrayList<String>(sampleBarcodeMap.values()),
+                    new ArrayList<>(sampleBarcodeMap.values()),
                     testSuffix, exportRackBarcode).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
@@ -135,8 +134,7 @@ public class ExomeExpressIntegrationTest {
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                             qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), fctName,
-                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK,null,
-                            "Exome Express");
+                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2);
 
             hiSeq2500JaxbBuilder.invoke();
 
@@ -171,8 +169,6 @@ public class ExomeExpressIntegrationTest {
 
             // User checks chain of custody, activity stream.
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);

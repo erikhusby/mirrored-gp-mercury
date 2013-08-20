@@ -14,8 +14,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -27,10 +25,10 @@ public class BucketEntryFixupTest extends Arquillian {
     BucketDao bucketDao;
 
     @Inject
-    UserTransaction utx;
+    LabVesselDao labVesselDao;
 
-//    @Inject
-//    LabVesselDao labVesselDao;
+    @Inject
+    UserTransaction utx;
 
     /**
      * Use test deployment here to talk to the actual jira
@@ -75,5 +73,14 @@ public class BucketEntryFixupTest extends Arquillian {
         for(BucketEntry reworkEntry : fixupBucket.getReworkEntries()) {
             reworkEntry.setStatus(BucketEntry.Status.Archived);
         }
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void remove0150385070FromShearingBucketForGPLIM1932() {
+        Bucket bucket = bucketDao.findByName("Shearing Bucket");
+        LabVessel vessel = labVesselDao.findByIdentifier("0150385070");
+
+        BucketEntry bucketEntry = bucket.findEntry(vessel);
+        bucket.removeEntry(bucketEntry);
     }
 }

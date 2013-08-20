@@ -53,7 +53,7 @@
         <xs:attribute name="start" type="xs:dateTime" use="required"/>
         <xs:attribute name="end" type="xs:dateTime"/>
         <xs:attribute name="disambiguator" type="xs:long"/>
-        <xs:attribute name="batchId" type="xs:NMTOKEN" />
+        <xs:attribute name="batchId" type="xs:NMTOKEN"/>
     </xs:complexType>
 
     <xs:complexType name="experimentType">
@@ -84,21 +84,21 @@
         <xs:complexContent>
             <xs:extension base="receptacleType">
                 <xs:attribute name="well" type="xs:NCName" use="required"/>
-                <xs:attribute name="poolingExpectation" type="xs:NMTOKEN" />
+                <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="seqContentSampleType">
-        <xs:attribute name="id" type="xs:NMTOKEN" use="required" />
+        <xs:attribute name="id" type="xs:NMTOKEN" use="required"/>
         <xs:attribute name="well" type="xs:NCName" use="required"/>
-        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN" />
+        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
     </xs:complexType>
 
     <xs:complexType name="lcSampleSampleType">
-        <xs:attribute name="id" type="xs:NMTOKEN" use="required" />
-        <xs:attribute name="well" type="xs:NCName" use="required" />
-        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN" />
+        <xs:attribute name="id" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="well" type="xs:NCName" use="required"/>
+        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
     </xs:complexType>
 
     <xs:complexType name="registrationType">
@@ -109,9 +109,9 @@
         will be named automatically. -->
             <xs:element name="sample" type="sampleType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="experiment" type="experimentType" minOccurs="0"/>
-            <xs:element name="receptacleSample" type="receptacleSampleType" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="seqContentSample" type="seqContentSampleType" minOccurs="0" maxOccurs="unbounded" />
-            <xs:element name="lcSampleSample" type="lcSampleSampleType" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="receptacleSample" type="receptacleSampleType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="seqContentSample" type="seqContentSampleType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="lcSampleSample" type="lcSampleSampleType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="sampleClass" type="xs:NCName"/>
         <xs:attribute name="lib" type="xs:NCName"/>
@@ -173,7 +173,8 @@
                         <xs:element name="plate" type="plateType" maxOccurs="unbounded"/>
                         <xs:element name="positionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
                         <xs:element name="sourcePlate" type="plateType" minOccurs="0" maxOccurs="unbounded"/>
-                        <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0"
+                                    maxOccurs="unbounded"/>
                         <xs:element name="source" type="cherryPickSourceType" maxOccurs="unbounded"/>
                         <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
                     </xs:sequence>
@@ -192,7 +193,8 @@
                         <xs:element name="sourcePlate" type="plateType" minOccurs="0" maxOccurs="1"/>
                         <xs:element name="sourceReceptacle" type="receptacleType" minOccurs="0" maxOccurs="1"/>
                         <xs:element name="destinationPlate" type="plateType" minOccurs="0" maxOccurs="1"/>
-                        <xs:element name="destinationPositionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="destinationPositionMap" type="positionMapType" minOccurs="0"
+                                    maxOccurs="unbounded"/>
                         <xs:element name="destinationReceptacle" type="receptacleType" minOccurs="0" maxOccurs="1"/>
                     </xs:sequence>
                 </xs:extension>
@@ -234,20 +236,20 @@
         <xs:attribute name="position" type="xs:NMTOKEN" use="optional"/>
         <xs:attribute name="materialType" type="xs:NMTOKEN" use="optional"/>
         <!-- if volume is on 'source' then it means how much was transferred out; if it is on destination then it means the final actual volume in the tube.  -->
-        <xs:attribute name="volume" type="xs:double" use="optional"/>
-        <xs:attribute name="concentration" type="xs:double" use="optional"/>
-        <xs:attribute name="fragmentSize" type="xs:double" use="optional"/>
+        <xs:attribute name="volume" type="xs:decimal" use="optional"/>
+        <xs:attribute name="concentration" type="xs:decimal" use="optional"/>
+        <xs:attribute name="fragmentSize" type="xs:decimal" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="lcSampleType">
-        <xs:attribute name="lsid" type="xs:NMTOKEN" />
+        <xs:attribute name="lsid" type="xs:NMTOKEN"/>
     </xs:complexType>
 
     <xs:complexType name="receptacleSampleEventType">
         <xs:complexContent>
             <xs:extension base="receptacleEventType">
                 <xs:sequence>
-                    <xs:element name="lcSample" type="lcSampleType" minOccurs="0" maxOccurs="unbounded" />
+                    <xs:element name="lcSample" type="lcSampleType" minOccurs="0" maxOccurs="unbounded"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -257,7 +259,7 @@
         <xs:complexContent>
             <xs:extension base="stationEventType">
                 <xs:sequence>
-                    <xs:element name="receptacle" type="receptacleType" />
+                    <xs:element name="receptacle" type="receptacleType"/>
                 </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -268,11 +270,11 @@
             <xs:choice>
                 <xs:element name="plateEvent" type="plateEventType" maxOccurs="unbounded"/>
                 <xs:element name="plateTransferEvent" type="plateTransferEventType" maxOccurs="unbounded"/>
-                <xs:element ref="stationSetupEvent" />
+                <xs:element ref="stationSetupEvent"/>
                 <xs:element ref="plateCherryPickEvent" maxOccurs="unbounded"/>
                 <xs:element ref="receptaclePlateTransferEvent" maxOccurs="unbounded"/>
-                <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="unbounded" />
-                <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1" />
+                <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1"/>
             </xs:choice>
             <xs:attribute name="mode" type="xs:NCName"/>
         </xs:complexType>

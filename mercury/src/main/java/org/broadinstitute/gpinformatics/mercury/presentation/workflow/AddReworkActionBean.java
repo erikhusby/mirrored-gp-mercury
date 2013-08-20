@@ -22,9 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 
@@ -94,8 +94,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
         try {
             Collection<String> validationMessages = reworkEjb.addAndValidateReworks(reworkCandidates, reworkReason,
-                    commentText, getUserBean().getLoginUserName(), WorkflowName.EXOME_EXPRESS.getWorkflowName(),
-                    bucketName);
+                    commentText, getUserBean().getLoginUserName(), Workflow.EXOME_EXPRESS, bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", reworkCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
@@ -130,15 +129,15 @@ public class AddReworkActionBean extends CoreActionBean {
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
-        //currently only do ExEx
+        // Currently only do ExEx.
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+            if (Workflow.isExomeExpress(workflowDef.getName())) {
                 buckets.addAll(workflowVersion.getBuckets());
             }
         }
-        //set the initial bucket to the first in the list and load it
-        if (buckets.size() > 0) {
+        // Set the initial bucket to the first in the list and load it.
+        if (!buckets.isEmpty()) {
             bucketName = buckets.get(0).getName();
         }
     }
@@ -147,8 +146,7 @@ public class AddReworkActionBean extends CoreActionBean {
     public void setUpReworkCandidates() {
         List<String> searchTerms = SearchActionBean.cleanInputStringForSamples(vesselLabel);
         numQueryInputs = searchTerms.size();
-        reworkCandidates = new ArrayList(reworkEjb.findReworkCandidates(
-                searchTerms));
+        reworkCandidates = new ArrayList<>(reworkEjb.findReworkCandidates(searchTerms));
 
         Set<String> barcodes = new HashSet<>();
         Set<String> sampleIds = new HashSet<>();

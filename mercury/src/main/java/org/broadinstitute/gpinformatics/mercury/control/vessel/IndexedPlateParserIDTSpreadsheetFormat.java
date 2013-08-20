@@ -148,7 +148,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
     };
 
     List<ColumnParser> getColumnParsers() {
-        final List<ColumnParser> parsers = new ArrayList<ColumnParser>(5);
+        final List<ColumnParser> parsers = new ArrayList<>(5);
         parsers.add(this.antisenseSequenceColumnParser);
         parsers.add(this.antisenseSequenceNameColumnParser);
         parsers.add(this.broadBarcodeColumnParser);
@@ -171,7 +171,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
         this.validateWorksheet(sheet);
 
-        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<PlateWellIndexAssociation>();
+        final List<PlateWellIndexAssociation> plateIndexes = new ArrayList<>();
 
         final int lastRowNum = sheet.getLastRowNum();
         int i = 1;

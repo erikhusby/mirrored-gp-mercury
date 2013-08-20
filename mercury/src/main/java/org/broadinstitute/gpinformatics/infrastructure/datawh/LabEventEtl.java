@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -50,7 +51,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
                        SequencingSampleFactEtl sequencingSampleFactEtl) {
-        super(LabEvent.class, "event_fact", dao);
+        super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
@@ -93,7 +94,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format(fact.getBatchName()),
                             format(fact.getLabEvent().getEventLocation()),
                             format(fact.getLabVessel().getLabVesselId()),
-                            format(ExtractTransform.secTimestampFormat.format(fact.getLabEvent().getEventDate()))
+                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate()))
                     ));
                 }
             }
@@ -134,9 +135,15 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
         }
 
-        Set<LabVessel> directAndDescendantVessels = new HashSet<>(firstLevelVessels);
+        Set<LabVessel> directAndDescendantVessels = new HashSet<>();
         for (LabVessel vessel : firstLevelVessels) {
-            directAndDescendantVessels.addAll(vessel.getDescendantVessels());
+            if (vessel != null) {
+                directAndDescendantVessels.add(vessel);
+                Collection<LabVessel> vessels = vessel.getDescendantVessels();
+                if (!CollectionUtils.isEmpty(vessels)) {
+                    directAndDescendantVessels.addAll(vessels);
+                }
+            }
         }
 
         Set<Long> descendantEventIds = new HashSet<>();
@@ -276,6 +283,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
 
             if (vessels.isEmpty()) {
+                // Use of the full constructor which in this case has multiple nulls is intentional
+                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                 dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, false));
             }
 
@@ -311,7 +321,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
                                 String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
                                 if (StringUtils.isBlank(workflowName) && pdo != null) {
-                                    workflowName = pdo.getProduct().getWorkflowName();
+                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
                                 }
                                 WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
                                         eventName, workflowName, entity.getEventDate());
@@ -322,11 +332,17 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
                                         sample, pdo, wfDenorm, canEtl));
                             } else {
+                                // Use of the full constructor which in this case has multiple nulls is intentional
+                                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
                                         null, null, null, pdo, null, false));
                             }
                         }
                     } else {
+                        // Use of the full constructor which in this case has multiple nulls is intentional
+                        // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                        // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                         dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, null, false));
                     }
                 } catch (RuntimeException e) {

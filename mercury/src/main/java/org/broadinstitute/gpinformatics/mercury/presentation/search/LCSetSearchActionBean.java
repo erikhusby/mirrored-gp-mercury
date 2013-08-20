@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -145,7 +146,14 @@ public class LCSetSearchActionBean extends SearchActionBean {
                     Set<SampleInstance> sampleInstances = sourceVessel.getSampleInstances();
                     for (SampleInstance targetSampleInstance : sampleInstances) {
                         if (allMercurySamples.contains(targetSampleInstance.getStartingSample())) {
-                            allPositions.addAll(sourceVessel.getLastKnownPositionsOfSample(targetSampleInstance));
+                            if (sourceVessel.getContainers().isEmpty()) {
+                                allPositions.addAll(sourceVessel.getContainerRole()
+                                        .getPositionsOfSampleInstance(targetSampleInstance));
+                            } else {
+                                for (VesselContainer container : sourceVessel.getContainers()) {
+                                    allPositions.addAll(container.getPositionsOfSampleInstance(targetSampleInstance));
+                                }
+                            }
                         }
                     }
                 }

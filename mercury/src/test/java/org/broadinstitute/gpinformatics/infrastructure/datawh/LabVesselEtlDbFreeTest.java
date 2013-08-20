@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -8,10 +7,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
@@ -24,7 +21,7 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabVesselEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 1122334455L;
     private String vesselLabel = "8917538.0";
     private LabVessel.ContainerType vesselType = LabVessel.ContainerType.TUBE;

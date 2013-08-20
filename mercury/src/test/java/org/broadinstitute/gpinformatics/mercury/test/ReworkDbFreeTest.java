@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchComposition;
@@ -14,8 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -39,10 +39,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testAddReworkToBatchFromBucket() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
 
-        long now = System.currentTimeMillis();
+        long now = java.lang.System.currentTimeMillis();
         String origRackBarcodeSuffix = String.valueOf(now);
         String reworkRackBarcodeSuffix = String.valueOf(now + 137L);
         String origTubePrefix = "999999";
@@ -55,7 +57,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
-        origBatch.setWorkflowName("Exome Express");
+        origBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
@@ -80,7 +83,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
 
-        reworkBatch.setWorkflowName("Exome Express");
+        reworkBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
@@ -153,11 +157,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
     // Advance to Pond Pico, rework a sample from the start
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testRework() {
+        expectedRouting = SystemRouter.System.MERCURY;
 
         String origLcsetSuffix = "-111";
         String reworkLcsetSuffix = "-222";
 
-        long now = System.currentTimeMillis();
+        long now = java.lang.System.currentTimeMillis();
         String origRackBarcodeSuffix = String.valueOf(now);
         String reworkRackBarcodeSuffix = String.valueOf(now + 137L);
 
@@ -171,7 +176,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
-        origBatch.setWorkflowName("Exome Express");
+        origBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
                 origRackMap,
@@ -202,7 +208,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
-        reworkBatch.setWorkflowName("Exome Express");
+        reworkBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
                 reworkRackMap,
@@ -255,13 +263,14 @@ public class ReworkDbFreeTest extends BaseEventTest {
         Assert.assertTrue(reworkTube.getPluralityLabBatch(reworkContainer).getBatchName().endsWith(reworkLcsetSuffix));
     }
 
-    // todo jmt enable this
     @Test(enabled = true)
     public void testMultiplePdos() {
+        expectedRouting = SystemRouter.System.MERCURY;
+
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
-                WorkflowName.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
+                Workflow.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
-                WorkflowName.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
+                Workflow.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
         AthenaClientServiceStub.addProductOrder(productOrder1);
         AthenaClientServiceStub.addProductOrder(productOrder2);
         final Date runDate = new Date();
@@ -274,10 +283,13 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                 new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch1.setWorkflowName("Exome Express");
+        workflowBatch1.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+
         LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch2.setWorkflowName("Exome Express");
+        workflowBatch2.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
@@ -292,15 +304,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 = runExomeExpressShearingProcess(
                 picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
                 picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "2");
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(stringTwoDBarcodedTubeEntry.getValue());
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+
+        runTransferVisualizer(stringTwoDBarcodedTubeEntry.getValue());
+
         for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
                 .getSampleInstances()) {
             Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);

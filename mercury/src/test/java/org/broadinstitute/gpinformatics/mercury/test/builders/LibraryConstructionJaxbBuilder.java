@@ -24,7 +24,7 @@ public class LibraryConstructionJaxbBuilder {
     private String pondRegRackBarcode;
     private List<String> pondRegTubeBarcodes;
 
-    private PlateEventType         endRepairJaxb;
+    private PlateEventType endRepairJaxb;
     private PlateEventType endRepairCleanupJaxb;
     private PlateEventType aBaseJaxb;
     private PlateEventType aBaseCleanupJaxb;
@@ -37,11 +37,12 @@ public class LibraryConstructionJaxbBuilder {
     private PlateEventType postABaseThermoCyclerLoadedJaxb;
     private PlateEventType postIdxAdapterLigationThermoCyclerLoadedJaxb;
     private PlateEventType postPondEnrichmentThermoCyclerLoadedJaxb;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private int numSamples;
 
     public LibraryConstructionJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
-            String shearCleanPlateBarcode, String p7IndexPlateBarcode, String p5IndexPlateBarcode, int numSamples) {
+                                          String shearCleanPlateBarcode, String p7IndexPlateBarcode,
+                                          String p5IndexPlateBarcode, int numSamples) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.shearCleanPlateBarcode = shearCleanPlateBarcode;
@@ -132,7 +133,8 @@ public class LibraryConstructionJaxbBuilder {
         aBaseJaxb = bettaLimsMessageTestFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, aBaseJaxb);
 
-        postABaseThermoCyclerLoadedJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PostAbaseThermoCyclerLoaded", shearCleanPlateBarcode);
+        postABaseThermoCyclerLoadedJaxb =
+                bettaLimsMessageTestFactory.buildPlateEvent("PostAbaseThermoCyclerLoaded", shearCleanPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, postABaseThermoCyclerLoadedJaxb);
 
 
@@ -174,7 +176,7 @@ public class LibraryConstructionJaxbBuilder {
         bettaLimsMessageTestFactory.addMessage(messageList, pondCleanupJaxb);
 
         pondRegRackBarcode = "PondReg" + testPrefix;
-        pondRegTubeBarcodes = new ArrayList<String>();
+        pondRegTubeBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
             pondRegTubeBarcodes.add(LabEventTest.POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
         }

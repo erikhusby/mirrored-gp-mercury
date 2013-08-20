@@ -13,6 +13,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -30,7 +31,9 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class supports all the actions done on products.
@@ -53,6 +56,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private ProductEjb productEjb;
 
     @Inject
     private ProductDao productDao;
@@ -282,7 +288,6 @@ public class ProductActionBean extends CoreActionBean {
         return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
-
     /**
      * This method retrieves all possible material types.
      *
@@ -296,53 +301,12 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        populateTokenListFields();
-
-        // If all lengths match, just send it.
-        if (allLengthsMatch()) {
-            editProduct.updateRiskCriteria(criteria, operators, values);
-        } else {
-            // Otherwise, there must be a boolean and we need to make them synchronized.
-            String[] fullOperators = new String[criteria.length];
-            String[] fullValues = new String[criteria.length];
-
-            // Insert the operators and values for booleans, otherwise, use the next item.
-            int fullPosition = 0;
-            int originalPosition = 0;
-            for (String criterion : criteria) {
-                RiskCriterion.RiskCriteriaType type = RiskCriterion.RiskCriteriaType.findByLabel(criterion);
-                if (type.getOperatorType() == Operator.OperatorType.BOOLEAN) {
-                    fullOperators[fullPosition] = type.getOperators().get(0).getLabel();
-                    fullValues[fullPosition] = "true";
-                } else {
-                    fullOperators[fullPosition] = operators[originalPosition];
-                    fullValues[fullPosition] = values[originalPosition];
-
-                    // Only increment original position for values that are not boolean.
-                    originalPosition++;
-                }
-
-                // Always increment full position.
-                fullPosition++;
-            }
-
-            editProduct.updateRiskCriteria(criteria, fullOperators, fullValues);
-        }
-
-        productDao.persist(editProduct);
+        productEjb.saveProduct(
+                editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
+                allLengthsMatch(), criteria, operators, values);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
-    }
-
-    private void populateTokenListFields() {
-        editProduct.getAddOns().clear();
-        editProduct.getAddOns().addAll(addOnTokenInput.getTokenObjects());
-
-        editProduct.setPrimaryPriceItem(priceItemTokenInput.getTokenObject());
-
-        editProduct.getAllowableMaterialTypes().clear();
-        editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());
     }
 
     public Product getEditProduct() {

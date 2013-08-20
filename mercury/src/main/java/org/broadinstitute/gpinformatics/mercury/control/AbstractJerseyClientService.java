@@ -66,7 +66,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
             public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
                 ClientResponse resp = getNext().handle(cr);
                 MultivaluedMap<String, String> map = resp.getHeaders();
-                List<String> mimeTypes = new ArrayList<String>();
+                List<String> mimeTypes = new ArrayList<>();
 
                 for (MediaType mediaType : mediaTypes) {
                     mimeTypes.add(mediaType.toString());

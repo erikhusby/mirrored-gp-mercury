@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -49,7 +49,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     private transient LabEventNode rootLabEventNode;
     private transient ProductWorkflowDef productWorkflowDef;
 
-    /** e.g. SQUID, MERCURY or BOTH*/
+    /**
+     * e.g. SQUID, MERCURY or BOTH
+     */
     private String routingRule;
 
     /**
@@ -61,8 +63,9 @@ public class ProductWorkflowDefVersion implements Serializable {
     private Boolean inValidation;
 
 
-
-    /** For JAXB */
+    /**
+     * For JAXB
+     */
     @SuppressWarnings("UnusedDeclaration")
     ProductWorkflowDefVersion() {
     }
@@ -77,12 +80,12 @@ public class ProductWorkflowDefVersion implements Serializable {
      * findBucketDef will utilize the WorkflowConfig to return an instance of a {@link org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef} based
      * on a given workflow definition and and step labEventType
      */
-    public static WorkflowBucketDef findBucketDef(@Nonnull String workflowName, @Nonnull LabEventType stepDef) {
+    public static WorkflowBucketDef findBucketDef(@Nonnull Workflow workflow, @Nonnull LabEventType stepDef) {
 
         WorkflowConfig workflowConfig = (new WorkflowLoader()).load();
         assert (workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
                 !workflowConfig.getProductWorkflowDefs().isEmpty());
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(workflowName);
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflow(workflow);
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
         LabEventNode labEventNode =
@@ -144,7 +147,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
         return workflowBucketDefs;
     }
-    
+
     public List<WorkflowBucketDef> getCreationBuckets() {
         List<WorkflowBucketDef> workflowBucketDefs = new ArrayList<>();
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
@@ -168,7 +171,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * system, or pass all information to another system
      *
      * @return String to represent the routing intent.  Values are based on enums found in
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System}
      */
     public String getRoutingRule() {
         return routingRule;
@@ -176,21 +179,23 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * This method is an extension of {@link #getRoutingRule()}.  Since the values defined in the routingRule are
-     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid},
+     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System},
      * this method helps solidify that point.  It provides the user with an interpretation of the routing rule
      * in the form of a MercuryOrSquid enum
      *
      * @return an instance of
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
-     * corresponds to the String value found in the routing rule.
+     *         {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System} that
+     *         corresponds to the String value found in the routing rule.
      */
-    public MercuryOrSquidRouter.MercuryOrSquid getRouting() {
-        return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
+    public SystemRouter.System getRouting() {
+        return SystemRouter.System.valueOf(getRoutingRule());
     }
 
     public boolean getInValidation() {
         return inValidation == null ? false : inValidation;
-    }    public static class LabEventNode {
+    }
+
+    public static class LabEventNode {
         private final LabEventType labEventType;
         private final List<LabEventNode> predecessors = new ArrayList<>();
         private final List<LabEventNode> successors = new ArrayList<>();
@@ -291,7 +296,8 @@ public class ProductWorkflowDefVersion implements Serializable {
     /**
      * Finds the workflow bucket step with the given bucket name.
      *
-     * @param bucketName    the name of the bucket to find
+     * @param bucketName the name of the bucket to find
+     *
      * @return the bucket, or null if not found
      */
     public WorkflowBucketDef findBucketDefByName(String bucketName) {

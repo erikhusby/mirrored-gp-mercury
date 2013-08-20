@@ -18,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.BettalimsMessageUtils;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,29 +83,29 @@ public class WorkflowValidator {
     public void validateWorkflow(BettaLIMSMessage bettaLIMSMessage) throws WorkflowException {
         try {
             for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
-                validateWorkflow(plateCherryPickEvent, new ArrayList<String>(
-                        BettalimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
+                validateWorkflow(plateCherryPickEvent, new ArrayList<>(
+                        BettaLimsMessageUtils.getBarcodesForCherryPick(plateCherryPickEvent)));
             }
 
             for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
-                validateWorkflow(plateEventType, new ArrayList<String>(
-                        BettalimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
+                validateWorkflow(plateEventType, new ArrayList<>(
+                        BettaLimsMessageUtils.getBarcodesForPlateEvent(plateEventType)));
             }
 
             for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
-                validateWorkflow(plateTransferEventType, new ArrayList<String>(
-                        BettalimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
+                validateWorkflow(plateTransferEventType, new ArrayList<>(
+                        BettaLimsMessageUtils.getBarcodesForPlateTransfer(plateTransferEventType)));
             }
 
             for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
-                validateWorkflow(receptacleEventType, new ArrayList<String>(
-                        BettalimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
+                validateWorkflow(receptacleEventType, new ArrayList<>(
+                        BettaLimsMessageUtils.getBarcodesForReceptacleEvent(receptacleEventType)));
             }
 
             for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                     .getReceptaclePlateTransferEvent()) {
-                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<String>(
-                        BettalimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
+                validateWorkflow(receptaclePlateTransferEvent, new ArrayList<>(
+                        BettaLimsMessageUtils.getBarcodesForReceptaclePlateTransfer(receptaclePlateTransferEvent)));
             }
         } catch (RuntimeException e) {
             // convert runtime exceptions to checked, so the transaction is not rolled back
@@ -187,7 +188,7 @@ public class WorkflowValidator {
         List<WorkflowValidationError> validationErrors = validateWorkflow(labVessels, stationEventType.getEventType());
 
         if (!validationErrors.isEmpty()) {
-            Map<String, Object> rootMap = new HashMap<String, Object>();
+            Map<String, Object> rootMap = new HashMap<>();
             String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
                                    VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
                     .getLabel();
@@ -212,10 +213,10 @@ public class WorkflowValidator {
      * @return list of errors
      */
     public List<WorkflowValidationError> validateWorkflow(Collection<LabVessel> labVessels, String eventType) {
-        List<WorkflowValidationError> validationErrors = new ArrayList<WorkflowValidationError>();
+        List<WorkflowValidationError> validationErrors = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
-            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO,
+            Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
                     LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
@@ -226,8 +227,8 @@ public class WorkflowValidator {
                     is what will happen if the batch is not found (Sample exists in multiple batches)
                  */
                 if (workflowName != null && effectiveBatch != null) {
-                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowByName(workflowName).
-                            getEffectiveVersion(effectiveBatch.getCreatedOn());
+                    ProductWorkflowDefVersion workflowVersion = workflowLoader.load().getWorkflowVersionByName(
+                            workflowName, effectiveBatch.getCreatedOn());
                     if (workflowVersion != null) {
                         List<ProductWorkflowDefVersion.ValidationError> errors =
                                 workflowVersion.validate(labVessel, eventType);
@@ -252,6 +253,19 @@ public class WorkflowValidator {
                         }
                     }
                 }
+                /*
+                    TO re-evaluate the usage later.
+                 */
+/*
+                else {
+                    List<ProductWorkflowDefVersion.ValidationError> errors =
+                            Collections.singletonList(new ProductWorkflowDefVersion.ValidationError(
+                                    "Either the lab batch is missing or the Workflow is missing"));
+                    validationErrors.add(new WorkflowValidationError(sampleInstance, errors,
+                            athenaClientService.retrieveProductOrderDetails(
+                                    sampleInstance.getProductOrderKey()), appConfig));
+                }
+*/
             }
         }
         return validationErrors;

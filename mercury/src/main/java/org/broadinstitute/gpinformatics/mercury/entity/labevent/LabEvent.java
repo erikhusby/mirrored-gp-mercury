@@ -73,7 +73,7 @@ public class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
 
-    public static final Comparator<LabEvent> byEventDate = new Comparator<LabEvent>() {
+    public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
@@ -404,11 +404,4 @@ todo jmt adder methods
         return computedLcSets;
     }
 
-    @Transient
-    public static Comparator BY_EVENT_DATE = new Comparator<LabEvent>() {
-        @Override
-        public int compare(LabEvent o1, LabEvent o2) {
-            return o1.getEventDate().compareTo(o2.getEventDate());
-        }
-    };
 }

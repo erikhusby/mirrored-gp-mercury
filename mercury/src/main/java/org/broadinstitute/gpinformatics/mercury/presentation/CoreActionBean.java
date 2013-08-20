@@ -12,7 +12,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 import net.sourceforge.stripes.action.ActionBean;
 import net.sourceforge.stripes.action.ActionBeanContext;
 import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Message;
 import net.sourceforge.stripes.action.OnwardResolution;
@@ -39,8 +38,6 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -180,7 +177,7 @@ public class CoreActionBean implements ActionBean {
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
         if (errors == null) {
-            errors = new ArrayList<ValidationError>();
+            errors = new ArrayList<>();
         }
 
         errors.add(error);
@@ -211,7 +208,7 @@ public class CoreActionBean implements ActionBean {
         List<Message> messages = (List<Message>) scope.get(FLASH_MESSAGE);
 
         if (messages == null) {
-            messages = new ArrayList<Message>();
+            messages = new ArrayList<>();
         }
 
         messages.add(message);

@@ -10,12 +10,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -40,16 +38,16 @@ import static org.hamcrest.Matchers.notNullValue;
 public class BatchToJiraTest extends Arquillian {
 
     @Inject
-    LabBatchEjb batchEjb;
+    private LabBatchEjb batchEjb;
 
     @Inject
-    ReworkEjb reworkEjb;
+    private ReworkEjb reworkEjb;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private UserTransaction transaction;
@@ -84,7 +82,7 @@ public class BatchToJiraTest extends Arquillian {
 
     private String getGssrFieldFromJiraTicket(JiraIssue issue) throws IOException {
         Map<String, CustomFieldDefinition> gssrField =
-                jiraService.getCustomFields(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName());
+                jiraService.getCustomFields(LabBatch.TicketFields.GSSR_IDS.getName());
         String gssrIdsText =
                 (String) jiraService.getIssueFields(issue.getKey(), gssrField.values()).getFields().values().iterator()
                         .next();
@@ -94,14 +92,14 @@ public class BatchToJiraTest extends Arquillian {
     @Test(enabled = true)
     public void testJiraCreationFromBatch() throws Exception {
         String expectedGssrText = "SM-01\n\nSM-02 (rework)";
-        Set<LabVessel> startingVessels = new HashSet<LabVessel>();
+        Set<LabVessel> startingVessels = new HashSet<>();
         String tube1Label = "Starter01";
         String tube2Label = "Rework01";
 
         LabVessel tube1 = new TwoDBarcodedTube(tube1Label);
         tube1.addSample(new MercurySample("SM-01"));
         startingVessels.add(tube1);
-        Set<LabVessel> reworkVessels = new HashSet<LabVessel>();
+        Set<LabVessel> reworkVessels = new HashSet<>();
         LabVessel tube2 = new TwoDBarcodedTube(tube2Label);
         tube2.addSample(new MercurySample("SM-02"));
         labVesselDao.persistAll(Arrays.asList(tube1, tube2));
@@ -127,9 +125,7 @@ public class BatchToJiraTest extends Arquillian {
         assertThat(gssrIdsText.trim(), equalTo("SM-01"));
 
         // now try it with SM-02 as a rework
-        reworkEjb.addReworkToBatch(batch, tube2Label, ReworkEntry.ReworkReason.MACHINE_ERROR,
-                LabEventType.PICO_PLATING_BUCKET, "I am reworking this", WorkflowName.EXOME_EXPRESS.getWorkflowName(),
-                "scottmat");
+        reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 
         ticket = jiraService.getIssue(batch.getJiraTicket().getTicketId());

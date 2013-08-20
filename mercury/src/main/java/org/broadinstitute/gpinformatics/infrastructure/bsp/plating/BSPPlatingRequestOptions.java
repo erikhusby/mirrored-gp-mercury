@@ -14,7 +14,7 @@ public class BSPPlatingRequestOptions {
     public enum HighConcentrationOption {
         VOLUME_FIRST,
         CONCENTRATION_FIRST,
-        OMIT;
+        OMIT
     }
 
     public enum PlatformAndProcess {
@@ -23,17 +23,17 @@ public class BSPPlatingRequestOptions {
         ILLUMINA_cDNA_OTHER,
         ILLUMINA_FOSILL_LC,
         _454_FRAGMENT_LC,
-        _454_16S_PLAN_A;
+        _454_16S_PLAN_A
     }
 
 
     public enum PlateType {
-        Matrix96SlotRackSC05;
+        Matrix96SlotRackSC05
         // Matrix96SlotRackSC14;        
     }
 
     public enum TubeType {
-        MatrixTubeSC05;
+        MatrixTubeSC05
 
         // Andrew thought MatrixTubeSC14 was the proper tube type to use with the
         // ILLUMINA_HYBRID_SELECTION_WGS_FRAGMENT_180BP platform/process, but
@@ -46,11 +46,11 @@ public class BSPPlatingRequestOptions {
     }
 
     public enum CancerProject {
-        YES, NO;
+        YES, NO
     }
 
     public enum AllowLessThanOne {
-        YES, NO;
+        YES, NO
     }
 
     public BSPPlatingRequestOptions(HighConcentrationOption highConcentrationOption, PlatformAndProcess platformAndProcess, PlateType plateType,

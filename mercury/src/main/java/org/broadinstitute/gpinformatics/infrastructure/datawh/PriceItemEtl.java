@@ -17,7 +17,7 @@ public class PriceItemEtl extends GenericEntityEtl<PriceItem, PriceItem> {
 
     @Inject
     public PriceItemEtl(PriceItemDao dao) {
-        super(PriceItem.class, "price_item", dao);
+        super(PriceItem.class, "price_item", "athena.price_item_aud", "price_item_id", dao);
     }
 
     @Override

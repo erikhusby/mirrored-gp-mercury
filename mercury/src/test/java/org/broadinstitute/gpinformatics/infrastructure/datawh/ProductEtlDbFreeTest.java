@@ -6,14 +6,19 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
 
-import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
 
 
 /**
@@ -24,7 +29,7 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long entityId = 1122334455L;
     private String productName = "Test Product";
     private String partNumber = "TestNumber-5544";
@@ -34,7 +39,7 @@ public class ProductEtlDbFreeTest {
     private int guaranteedCycleTimeSeconds = 99999;
     private int samplesPerWeek = 200;
     private boolean isTopLevelProduct = true;
-    private String workflowName = "Test Workflow 1";
+    private Workflow workflow = Workflow.EXOME_EXPRESS;
     private String productFamilyName = "Test ProductFamily";
     private long primaryPriceItemId = 987654321L;
     private ProductEtl tst;
@@ -71,7 +76,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -88,9 +93,9 @@ public class ProductEtlDbFreeTest {
         expect(obj.getGuaranteedCycleTimeSeconds()).andReturn(guaranteedCycleTimeSeconds);
         expect(obj.getSamplesPerWeek()).andReturn(samplesPerWeek);
         expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
-        expect(obj.getWorkflowName()).andReturn(workflowName);
-        expect(obj.getProductFamily()).andReturn(family).times(2);
-        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).times(2);
+        expect(obj.getWorkflow()).andReturn(workflow).anyTimes();
+        expect(obj.getProductFamily()).andReturn(family).anyTimes();
+        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
 
         expect(primaryPriceItem.getPriceItemId()).andReturn(primaryPriceItemId);
 
@@ -98,7 +103,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -109,7 +114,7 @@ public class ProductEtlDbFreeTest {
     private void verifyRecord(String record) {
         String[] parts = record.split(",");
         int i = 0;
-        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], productName);
@@ -120,10 +125,9 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], String.valueOf(guaranteedCycleTimeSeconds));
         assertEquals(parts[i++], String.valueOf(samplesPerWeek));
         assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
-        assertEquals(parts[i++], workflowName);
+        assertEquals(parts[i++], workflow.getWorkflowName());
         assertEquals(parts[i++], productFamilyName);
         assertEquals(parts[i++], String.valueOf(primaryPriceItemId));
         assertEquals(parts.length, i);
     }
 }
-

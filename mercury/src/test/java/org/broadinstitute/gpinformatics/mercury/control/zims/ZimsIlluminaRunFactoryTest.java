@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -24,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -44,9 +46,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-/**
- * @author breilly
- */
 public class ZimsIlluminaRunFactoryTest {
 
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
@@ -78,12 +77,12 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
-                "Test Workflow", false, "agg type");
+                Workflow.EXOME_EXPRESS, false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService,
                 mockControlDao);
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+        LabEventFactory labEventFactory = new LabEventFactory(null, null);
+        labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
             @Override
             public BspUser getOperator(String userId) {
                 return new BSPUserList.QADudeUser("Test", 101L);
@@ -169,13 +168,13 @@ public class ZimsIlluminaRunFactoryTest {
             if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                 JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
                 batch.setJiraTicket(lcSetTicket);
-                batch.setWorkflowName("Exome Express");
+                batch.setWorkflow(Workflow.EXOME_EXPRESS);
                 batch.addBucketEntry(bucketEntry);
                 bucketEntry.setLabBatch(batch);
             }
             sampleInstanceDtoList.add(
                             new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
-                                    PRODUCT_ORDER_KEY));
+                                    PRODUCT_ORDER_KEY, null, null));
         }
 
         return sampleInstanceDtoList;
@@ -199,24 +198,29 @@ public class ZimsIlluminaRunFactoryTest {
     public void testMakeZimsIlluminaRun() {
         Date runDate = new Date(1358889107084L);
         String testRunDirectory = "TestRun";
+        LabVessel denatureTube = flowcell.getNearestTubeAncestorsForLanes().values().iterator().next();
+
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123",
-                "IlluminaRunServiceImplTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
+                "ZimsIlluminaRunFactoryTest", 101L, true, runDate, "/root/path/to/run/" + testRunDirectory);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());
         assertThat(zimsIlluminaRun.getName(), equalTo("TestRun"));
         assertThat(zimsIlluminaRun.getBarcode(), equalTo("Run-123"));
-        assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
+        assertThat(zimsIlluminaRun.getSequencer(), equalTo("ZimsIlluminaRunFactoryTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
+        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo(
+                IlluminaFlowcell.FlowcellType.HiSeqFlowcell.getSequencerModel()));
 //        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO SGM will pull from Workflow
-//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO  SGM Will pull from workflow
 //        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8)); // TODO SGM WIll pull from workflow
 
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             assertThat(lane.getLibraries().size(), is(1));
+            assertThat(lane.getSequencedLibrary(), equals(denatureTube.getLabel()));
         }
         assertThat(zimsIlluminaRun.getSequencerModel(),equalTo("Illumina HiSeq 2000"));
+        assertThat(zimsIlluminaRun.getRunFolder(), equalTo("/root/path/to/run/" + testRunDirectory));
     }
 
     @Test(groups = DATABASE_FREE)
@@ -229,7 +233,7 @@ public class ZimsIlluminaRunFactoryTest {
         for (LibraryBean libraryBean : zimsIlluminaRuns) {
             assertThat(libraryBean.getLibrary(),
                     equalTo("testTube")); // TODO: expand with full definition of generated library name
-            assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
+            assertThat(libraryBean.getProject(), nullValue());
 //            assertThat(libraryBean.getMolecularIndexingScheme().getName(), equalTo("???")); // TODO
             assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
             assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));

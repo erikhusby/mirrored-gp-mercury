@@ -253,7 +253,7 @@
                             <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                         </th>
                         <th>Name</th>
-                        <th width="100">ID</th>
+                        <th style="min-width: 55px;">ID</th>
                         <th style="min-width: 80px;">Product</th>
                         <th>Product Family</th>
                         <th width="80">Status</th>
@@ -262,7 +262,7 @@
                         <th width="70">Placed</th>
                         <th width="80">Complete</th>
                         <th width="25">Sample Count</th>
-                        <th width="75">Quote</th>
+                        <th style="min-width: 60px;">Quote</th>
                         <th width="35">Ledger Status</th>
                     </tr>
                 </thead>

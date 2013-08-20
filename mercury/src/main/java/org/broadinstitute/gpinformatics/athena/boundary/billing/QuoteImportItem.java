@@ -173,7 +173,7 @@ public class QuoteImportItem {
      * @return a list of keys of all PDOs that are affected by this collection of ledger items.
      */
     public Collection<String> getOrderKeys() {
-        Set<String> keys = new HashSet<String>();
+        Set<String> keys = new HashSet<>();
         for (LedgerEntry entry : ledgerItems) {
             keys.add(entry.getProductOrderSample().getProductOrder().getJiraTicketKey());
         }

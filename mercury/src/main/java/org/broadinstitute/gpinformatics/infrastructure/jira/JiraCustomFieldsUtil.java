@@ -22,26 +22,27 @@ public class JiraCustomFieldsUtil {
 
     public static final String[] REQUIRED_FIELD_NAMES =
             new String[]{PROTOCOL, WORK_REQUEST_IDS, GSSR_IDS, DESCRIPTION,
-                    ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName(),
-                    ProductOrder.JiraField.QUOTE_ID.getFieldName(),
-                    ResearchProject.RequiredSubmissionFields.FUNDING_SOURCE.getFieldName(),
-                    ResearchProject.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getFieldName(),
-                    ResearchProject.RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName(),
-                    ResearchProject.RequiredSubmissionFields.COHORTS.getFieldName(),
-                    ResearchProject.RequiredSubmissionFields.DESCRIPTION.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.PRIORITY.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.DUE_DATE.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.IMPORTANT.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.NUMBER_OF_CONTROLS.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName(),
-                    LabBatch.RequiredSubmissionFields.DESCRIPTION.getFieldName()
-                    ,
+                    ProductOrder.JiraField.PRODUCT_FAMILY.getName(),
+                    ProductOrder.JiraField.QUOTE_ID.getName(),
+                    ResearchProject.RequiredSubmissionFields.FUNDING_SOURCE.getName(),
+                    ResearchProject.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getName(),
+                    ResearchProject.RequiredSubmissionFields.IRB_IACUC_NUMBER.getName(),
+                    ResearchProject.RequiredSubmissionFields.COHORTS.getName(),
+                    ResearchProject.RequiredSubmissionFields.DESCRIPTION.getName(),
+                    LabBatch.TicketFields.PROTOCOL.getName(),
+                    LabBatch.TicketFields.WORK_REQUEST_IDS.getName(),
+                    LabBatch.TicketFields.POOLING_STATUS.getName(),
+                    LabBatch.TicketFields.PRIORITY.getName(),
+                    LabBatch.TicketFields.DUE_DATE.getName(),
+                    LabBatch.TicketFields.IMPORTANT.getName(),
+                    LabBatch.TicketFields.NUMBER_OF_CONTROLS.getName(),
+                    LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName(),
+                    LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName(),
+                    LabBatch.TicketFields.PROGRESS_STATUS.getName(),
+                    LabBatch.TicketFields.GSSR_IDS.getName(),
+                    LabBatch.TicketFields.DESCRIPTION.getName(),
+                    LabBatch.TicketFields.SUMMARY.getName(),
+                    LabBatch.TicketFields.SEQUENCING_STATION.getName(),
             };
 
     /**
@@ -55,7 +56,7 @@ public class JiraCustomFieldsUtil {
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
         final Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions =
-                new HashMap<String, CustomFieldDefinition>();
+                new HashMap<>();
 
         for (String requiredFieldName : REQUIRED_FIELD_NAMES) {
             boolean foundIt = false;

@@ -17,18 +17,18 @@ public class HybridSelectionJaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private final String testPrefix;
     private final String pondRegRackBarcode;
-    private final List<String>                pondRegTubeBarcodes;
+    private final List<String> pondRegTubeBarcodes;
     private String normCatchRackBarcode;
     private List<String> normCatchBarcodes;
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
 
-    private PlateTransferEventType       preSelPoolJaxb;
+    private PlateTransferEventType preSelPoolJaxb;
     private PlateTransferEventType preSelPoolJaxb2;
     private PlateTransferEventType hybridizationJaxb;
     private String baitTubeBarcode;
     private ReceptaclePlateTransferEvent baitSetupJaxb;
     private PlateTransferEventType baitAdditionJaxb;
-    private PlateEventType               beadAdditionJaxb;
+    private PlateEventType beadAdditionJaxb;
     private PlateEventType apWashJaxb;
     private PlateEventType gsWash1Jaxb;
     private PlateEventType gsWash2Jaxb;
@@ -131,22 +131,24 @@ public class HybridSelectionJaxbBuilder {
     public List<BettaLIMSMessage> getMessageList() {
         return messageList;
     }
+
     public PlateEventType getPostHybridizationThermoCyclerLoadedJaxb() {
         return postHybridizationThermoCyclerLoadedJaxb;
     }
+
     public PlateEventType getPostCatchEnrichmentSetupThermoCyclerLoadedJaxb() {
         return postCatchEnrichmentSetupThermoCyclerLoadedJaxb;
     }
 
     public HybridSelectionJaxbBuilder invoke() {
-        List<String> preSelPoolBarcodes = new ArrayList<String>();
+        List<String> preSelPoolBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= pondRegTubeBarcodes.size() / 2; rackPosition++) {
             preSelPoolBarcodes.add("PreSelPool" + testPrefix + rackPosition);
         }
         String preSelPoolRackBarcode = "PreSelPool" + testPrefix;
         preSelPoolJaxb = bettaLimsMessageTestFactory.buildRackToRack("PreSelectionPool", pondRegRackBarcode,
                 pondRegTubeBarcodes.subList(0, pondRegTubeBarcodes
-                        .size() / 2), preSelPoolRackBarcode,
+                                                       .size() / 2), preSelPoolRackBarcode,
                 preSelPoolBarcodes);
         bettaLimsMessageTestFactory.addMessage(messageList, preSelPoolJaxb);
 
@@ -214,7 +216,7 @@ public class HybridSelectionJaxbBuilder {
                 catchCleanupBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, catchEnrichmentCleanupJaxb);
 
-        normCatchBarcodes = new ArrayList<String>();
+        normCatchBarcodes = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= pondRegTubeBarcodes.size() / 2; rackPosition++) {
             normCatchBarcodes.add("NormCatch" + testPrefix + rackPosition);
         }

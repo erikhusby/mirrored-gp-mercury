@@ -27,13 +27,14 @@ public class HiSeq2500JaxbBuilder {
     private final String denatureTubeBarcode;
     private String flowcellBarcode;
     private String squidDesignationName;
+    private int flowcellLanes;
     private final String denatureRackBarcode;
 
     private String dilutionTubeBarcode;
     private String dilutionRackBarcode;
     private final String fctTicket;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private ReceptaclePlateTransferEvent flowcellTransferJaxb;
     private PlateCherryPickEvent dilutionTransferJaxb;
     private final ProductionFlowcellPath productionFlowcellPath;
@@ -46,13 +47,12 @@ public class HiSeq2500JaxbBuilder {
     private String stripTubeBarcode;
 
     private final int poolSize;
-    private final String workflowName;
 
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                 String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
                                 String fctTicket, ProductionFlowcellPath productionFlowcellPath,
-                                int poolSize, String designationName, String workflowName) {
+                                int poolSize, String designationName, int flowcellLanes) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
         this.denatureTubeBarcode = denatureTubeBarcode;
@@ -61,7 +61,7 @@ public class HiSeq2500JaxbBuilder {
         this.productionFlowcellPath = productionFlowcellPath;
         this.poolSize = poolSize;
         squidDesignationName = designationName;
-        this.workflowName = workflowName;
+        this.flowcellLanes = flowcellLanes;
     }
 
     public HiSeq2500JaxbBuilder invoke() {
@@ -118,8 +118,7 @@ public class HiSeq2500JaxbBuilder {
             List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
             int sourcePosition = 0;
             // Transfer column 1 to 8 rows, using non-empty source rows
-            int maxTubes = ("Exome Express".equals(workflowName)) ? 2 : 8;
-            for (int destinationPosition = 0; destinationPosition < maxTubes; destinationPosition++) {
+            for (int destinationPosition = 0; destinationPosition < flowcellLanes; destinationPosition++) {
                 stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
                         denatureRackBarcode, Character.toString((char) ('A' + 0)) + "01",
                         stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));

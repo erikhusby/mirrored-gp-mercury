@@ -40,7 +40,7 @@ public class DbFreeIlluminaRunResourceTest {
     @BeforeMethod
     private ProductOrderDao getMockDao() {
         ProductOrderDao pdoDao = EasyMock.createMock(ProductOrderDao.class);
-        EasyMock.expect(pdoDao.findByBusinessKey((String)EasyMock.anyObject())).andReturn(null).atLeastOnce();
+        EasyMock.expect(pdoDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(null).atLeastOnce();
         EasyMock.replay(pdoDao);
         return pdoDao;
     }
@@ -49,12 +49,12 @@ public class DbFreeIlluminaRunResourceTest {
     @Test(groups = DATABASE_FREE)
     public void test_error_handling() throws Exception {
         ThriftService brokenThrift = EasyMock.createMock(ThriftService.class);
-        EasyMock.expect(brokenThrift.fetchRun((String)EasyMock.anyObject())).andThrow(
+        EasyMock.expect(brokenThrift.fetchRun((String) EasyMock.anyObject())).andThrow(
                 new RuntimeException("something blew up remotely")
         );
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
-        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String) EasyMock.anyObject())).andReturn(null);
         EasyMock.replay(brokenThrift, illuminaSequencingRunDao);
 
         ZimsIlluminaRun runBean = new IlluminaRunResource(
@@ -77,8 +77,9 @@ public class DbFreeIlluminaRunResourceTest {
         );
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
-        long timeStamp=new Date().getTime();
-        IlluminaFlowcell flowcell=new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,"FS-"+timeStamp);
+        long timeStamp = new Date().getTime();
+        IlluminaFlowcell flowcell =
+                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, "FS-" + timeStamp);
 //        IlluminaSequencingRun run = new IlluminaSequencingRun(flowcell, "testrun-"+timeStamp);
 //        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(run);
         EasyMock.replay(brokenThrift, illuminaSequencingRunDao);
@@ -103,7 +104,7 @@ public class DbFreeIlluminaRunResourceTest {
     @Test(groups = DATABASE_FREE)
     public void test_known_good_run() throws Exception {
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
-        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String) EasyMock.anyObject())).andReturn(null);
         EasyMock.replay(illuminaSequencingRunDao);
 
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
@@ -112,8 +113,9 @@ public class DbFreeIlluminaRunResourceTest {
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub()),
                 illuminaSequencingRunDao
-        ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter(),getMockDao());
-        IlluminaRunResourceTest.doAssertions(thriftRun,runBean,new HashMap<Long,ProductOrder>());
+        ).getRun(thriftRun, new HashMap<String, BSPSampleDTO>(), new SquidThriftLibraryConverter(), getMockDao()
+        );
+        IlluminaRunResourceTest.doAssertions(thriftRun, runBean, new HashMap<Long, ProductOrder>());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -122,11 +124,11 @@ public class DbFreeIlluminaRunResourceTest {
         BSPSampleDataFetcher sampleDataFetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceStub());
         String sample = BSPSampleSearchServiceStub.SM_12CO4;
         BSPSampleDTO sampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample);
-        Map <String, BSPSampleDTO> lsidToSampleDTO = new HashMap<String, BSPSampleDTO>();
-        lsidToSampleDTO.put(sampleDTO.getSampleLsid(),sampleDTO);
+        Map<String, BSPSampleDTO> lsidToSampleDTO = new HashMap<>();
+        lsidToSampleDTO.put(sampleDTO.getSampleLsid(), sampleDTO);
 
         IlluminaSequencingRunDao illuminaSequencingRunDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
-        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String)EasyMock.anyObject())).andReturn(null);
+        EasyMock.expect(illuminaSequencingRunDao.findByRunName((String) EasyMock.anyObject())).andReturn(null);
         EasyMock.replay(illuminaSequencingRunDao);
 
         for (TZamboniLane lane : thriftRun.getLanes()) {
@@ -136,14 +138,16 @@ public class DbFreeIlluminaRunResourceTest {
         }
         IlluminaRunResource runResource = new IlluminaRunResource(new MockThriftService(), sampleDataFetcher,
                 illuminaSequencingRunDao);
-        ZimsIlluminaRun runBean = runResource.getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(), getMockDao());
+        ZimsIlluminaRun runBean = runResource
+                .getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter(), getMockDao()
+                );
 
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {
-                Assert.assertEquals(sampleDTO.getOrganism(),libraryBean.getSpecies());
+                Assert.assertEquals(sampleDTO.getOrganism(), libraryBean.getSpecies());
 
-                Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getPrimaryDisease());
-                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getSampleType());
+                Assert.assertEquals(sampleDTO.getPrimaryDisease(), libraryBean.getPrimaryDisease());
+                Assert.assertEquals(sampleDTO.getSampleType(), libraryBean.getSampleType());
             }
         }
     }

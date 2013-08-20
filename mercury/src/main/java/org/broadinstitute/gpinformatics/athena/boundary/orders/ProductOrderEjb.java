@@ -300,11 +300,16 @@ public class ProductOrderEjb {
             throw new BadBusinessKeyException(message);
         }
 
-        // If null, then it will calculate for all samples.
-        if (samples == null) {
-            editOrder.calculateRisk();
-        } else {
-            editOrder.calculateRisk(samples);
+        try {
+            // If null, then it will calculate for all samples.
+            if (samples == null) {
+                editOrder.calculateRisk();
+            } else {
+                editOrder.calculateRisk(samples);
+            }
+        } catch (Exception ex) {
+            log.error("Could not calculate risk", ex);
+            throw ex;
         }
 
         // Set the create and modified information.
@@ -403,7 +408,7 @@ public class ProductOrderEjb {
         public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
                               boolean isBulkField) {
             this.field = field;
-            displayName = field.getFieldName();
+            displayName = field.getName();
             this.newValue = newValue;
             this.isBulkField = isBulkField;
         }
@@ -775,7 +780,7 @@ public class ProductOrderEjb {
         if (order.updateOrderStatus()) {
             String operation;
             JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getFieldName());
+            Object statusValue = issue.getField(ProductOrder.JiraField.STATUS.getName());
             JiraStatus status = JiraStatus.fromString(((Map<?, ?>) statusValue).get("name").toString());
             JiraTransition transition;
             if (order.getOrderStatus() == OrderStatus.Completed) {

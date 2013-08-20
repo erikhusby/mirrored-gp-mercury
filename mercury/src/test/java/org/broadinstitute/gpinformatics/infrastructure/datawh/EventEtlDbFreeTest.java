@@ -38,7 +38,7 @@ import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class EventEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private final long entityId = 1122334455L;
     private final long workflowId = -1234123412341234123L;
     private final long processId = 3412341234123412312L;
@@ -76,9 +76,9 @@ public class EventEtlDbFreeTest {
             sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge, cartridgeEvent,
             flowcell};
 
-    private final Set<LabVessel> vesselList = new HashSet<LabVessel>();
-    private final Set<SampleInstance> sampleInstList = new HashSet<SampleInstance>();
-    private final Set<LabBatch> workflowLabBatches = new HashSet<LabBatch>();
+    private final Set<LabVessel> vesselList = new HashSet<>();
+    private final Set<SampleInstance> sampleInstList = new HashSet<>();
+    private final Set<LabBatch> workflowLabBatches = new HashSet<>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -333,20 +333,9 @@ public class EventEtlDbFreeTest {
 
 
     private void verifyRecord(String record) {
-        int i = 0;
-        String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(entityId));
-        Assert.assertEquals(parts[i++], String.valueOf(workflowId));
-        Assert.assertEquals(parts[i++], String.valueOf(processId));
-        Assert.assertEquals(parts[i++], String.valueOf(pdoId));
-        Assert.assertEquals(parts[i++], sampleKey);
-        Assert.assertEquals(parts[i++], String.valueOf(labBatchName));
-        Assert.assertEquals(parts[i++], location);
-        Assert.assertEquals(parts[i++], String.valueOf(vesselId));
-        Assert.assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
-        Assert.assertEquals(parts.length, i);
+        EtlTestUtilities.verifyRecord(record, etlDateStr,"F", String.valueOf(entityId), String.valueOf(workflowId),
+                String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(labBatchName), location,
+                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate));
     }
 }
 

@@ -8,19 +8,41 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
 @UrlBinding("/workflow/LinkDenatureTubeToReagentBlock.action")
-public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCoreActionBean {
-    private static String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
+public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
+    private static final String VIEW_PAGE = "/workflow/link_dtube_to_rb.jsp";
 
     @Validate(required = true, on = SAVE_ACTION)
     private String reagentBlockBarcode;
+    @Inject
+    protected LabVesselDao labVesselDao;
+    @Inject
+    protected AthenaClientService athenaClientService;
+    @Inject
+    protected BettaLimsMessageResource bettaLimsMessageResource;
+    @Inject
+    protected VesselTransferEjb vesselTransferEjb;
+    @Validate(required = true, on = SAVE_ACTION)
+    public String denatureTubeBarcode;
+    private TwoDBarcodedTube denatureTube;
+    protected String workflowName;
 
     public String getReagentBlockBarcode() {
         return reagentBlockBarcode;
@@ -44,7 +66,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCo
         BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
                         getUserBean().getLoginUserName(), "UI");
-        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+        bettaLimsMessageResource.processMessage(bettaLIMSMessage);
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
                 reagentBlockBarcode);
@@ -59,4 +81,46 @@ public class LinkDenatureTubeToReagentBlockActionBean extends LinkDenatureTubeCo
         }
     }
 
+    public LabVessel getDenatureTube() {
+        if (denatureTube == null && !denatureTubeBarcode.isEmpty()) {
+            loadDenatureTubeAndWorkflow();
+        }
+        return denatureTube;
+    }
+
+    public void setDenatureTube(TwoDBarcodedTube denatureTube) {
+        this.denatureTube = denatureTube;
+    }
+
+    public String getWorkflowName() {
+        return workflowName;
+    }
+
+    public String getDenatureTubeBarcode() {
+        return denatureTubeBarcode;
+    }
+
+    public void setDenatureTubeBarcode(String denatureTubeBarcode) {
+        this.denatureTubeBarcode = denatureTubeBarcode;
+    }
+
+    @HandlesEvent("denatureInfo")
+    public ForwardResolution denatureTubeInfo() {
+        loadDenatureTubeAndWorkflow();
+        return new ForwardResolution("/workflow/denature_tube_info.jsp");
+    }
+
+    private void loadDenatureTubeAndWorkflow() {
+        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
+        if (denatureTube != null) {
+            for (SampleInstance sample : denatureTube.getAllSamplesOfType(LabVessel.SampleType.WITH_PDO)) {
+                String productOrderKey = sample.getProductOrderKey();
+                if (StringUtils.isNotEmpty(productOrderKey)) {
+                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                    workflowName = order.getProduct().getWorkflow().getWorkflowName();
+                    break;
+                }
+            }
+        }
+    }
 }

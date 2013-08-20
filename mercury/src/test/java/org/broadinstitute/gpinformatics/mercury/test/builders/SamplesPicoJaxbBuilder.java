@@ -16,10 +16,10 @@ import java.util.List;
 @SuppressWarnings("FeatureEnvy")
 public class SamplesPicoJaxbBuilder {
     private final List<String> tubeBarcodes;
-    private final String       labBatchId;
-    private final String       timestamp;
+    private final String labBatchId;
+    private final String timestamp;
 
-    private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
+    private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private PlateTransferEventType picoDilutionTransferJaxbA1;
     private PlateTransferEventType picoDilutionTransferJaxbA2;
     private PlateTransferEventType picoDilutionTransferJaxbB1;
@@ -39,7 +39,7 @@ public class SamplesPicoJaxbBuilder {
     }
 
     /**
-     * Build JAXB messages.  These messages can be sent to BettalimsMessageResource, or used to build entity
+     * Build JAXB messages.  These messages can be sent to BettaLimsMessageResource, or used to build entity
      * graphs.
      */
     public void buildJaxb() {
@@ -48,7 +48,7 @@ public class SamplesPicoJaxbBuilder {
         // 3 x  PicoDilutionTransfer
         String picoDilutionPlateBarcode = "PicoDilutionPlate" + timestamp;
         picoDilutionTransferJaxbA1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
-                "PicoRack"  + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
+                "PicoRack" + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
         picoDilutionTransferJaxbA1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_A1.getSectionName());
         picoDilutionTransferJaxbA1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
         picoDilutionTransferJaxbA1.setBatchId(labBatchId);
@@ -60,7 +60,7 @@ public class SamplesPicoJaxbBuilder {
         picoDilutionTransferJaxbA2.setBatchId(labBatchId);
 
         picoDilutionTransferJaxbB1 = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
-                "PicoRack"  + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
+                "PicoRack" + timestamp, tubeBarcodes, picoDilutionPlateBarcode);
         picoDilutionTransferJaxbB1.getPlate().setSection(SBSSection.P384_96TIP_1INTERVAL_B1.getSectionName());
         picoDilutionTransferJaxbB1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
         picoDilutionTransferJaxbB1.setBatchId(labBatchId);
@@ -79,14 +79,14 @@ public class SamplesPicoJaxbBuilder {
         */
         // plateEvent PicoBufferAddition
         picoBufferAdditionJaxb = bettaLimsMessageTestFactory.buildPlateEvent("PicoBufferAddition",
-                                                                         picoDilutionPlateBarcode);
+                picoDilutionPlateBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAdditionJaxb);
 
         // PicoMicrofluorTransfer
         String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate" + timestamp;
         picoMicrofluorTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoMicrofluorTransfer",
-                                                                               picoDilutionPlateBarcode,
-                                                                               picoMicrofluorPlateBarcode);
+                picoDilutionPlateBarcode,
+                picoMicrofluorPlateBarcode);
         picoMicrofluorTransferJaxb.getSourcePlate().setSection(SBSSection.ALL384.getSectionName());
         picoMicrofluorTransferJaxb.getSourcePlate().setPhysType(
                 StaticPlate.PlateType.Eppendorf384.getDisplayName());

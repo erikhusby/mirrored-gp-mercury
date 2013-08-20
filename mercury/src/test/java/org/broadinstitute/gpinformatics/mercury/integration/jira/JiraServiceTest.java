@@ -51,7 +51,7 @@ public class JiraServiceTest {
                             CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
-            Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+            Collection<CustomField> customFieldList = new LinkedList<>();
 
             customFieldList.add(new CustomField(requiredFields.get("Protocol"), "test protocol"));
             customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"), "WR 1 Billion!"));
@@ -78,7 +78,7 @@ public class JiraServiceTest {
 
     public void testCreatePdoTicket() {
         setUp();
-        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+        Collection<CustomField> customFieldList = new LinkedList<>();
 
         try {
             Map<String, CustomFieldDefinition> requiredFields =
@@ -86,11 +86,11 @@ public class JiraServiceTest {
                             new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
                             CreateFields.IssueType.PRODUCT_ORDER);
 
-            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()));
+            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
 
 
             customFieldList
-                    .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()),
+                    .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getName()),
                             "Test Exome Express"));
             customFieldList.add(new CustomField(requiredFields.get("Description"),
                     "Athena Test Case:  Test description setting"));
@@ -112,7 +112,7 @@ public class JiraServiceTest {
                 service.getRequiredFields(
                         new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
                         CreateFields.IssueType.PRODUCT_ORDER);
-        Collection<CustomField> customFieldList = new LinkedList<CustomField>();
+        Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
@@ -123,7 +123,7 @@ public class JiraServiceTest {
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
 
         CustomField mercuryUrlField = new CustomField(
-                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getName()),
                 "http://www.broadinstitute.org/");
         issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }

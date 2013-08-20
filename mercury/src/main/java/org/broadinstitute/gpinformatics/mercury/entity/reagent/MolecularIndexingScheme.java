@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
 import org.hibernate.envers.Audited;
@@ -219,6 +220,7 @@ public class MolecularIndexingScheme {
 //    @MapKeyColumn(name="POSITION_HINT")
     @MapKeyColumn(name="mapkey")
     @Sort(type= SortType.NATURAL)
+    @BatchSize(size = 500)
     private SortedMap<IndexPosition, MolecularIndex> indexes = new TreeMap<>();
 
     /**

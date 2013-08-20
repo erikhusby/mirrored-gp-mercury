@@ -19,8 +19,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -50,7 +50,7 @@ public class LCSetJiraFieldFactoryTest {
 
     private String pdoBusinessName;
     private List<String> pdoNames;
-    private String workflowName;
+    private Workflow workflow;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
@@ -59,26 +59,26 @@ public class LCSetJiraFieldFactoryTest {
     public void startUp() throws IOException {
         pdoBusinessName = "PDO-999";
 
-        pdoNames = new ArrayList<String>();
+        pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
-        mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        workflow = Workflow.EXOME_EXPRESS;
+        mapBarcodeToTube = new LinkedHashMap<>();
 
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         rpSynopsis = "Test synopsis";
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                 new Product("Test product",
                         new ProductFamily("Test product family"), "test",
                         "1234", null, null, 10000, 20000, 100, 40, null, null,
-                        true, workflowName, false, "agg type"),
+                        true, workflow, false, "agg type"),
                 new ResearchProject(101L, "Test RP", rpSynopsis, false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
 
-        List<String> vesselSampleList = new ArrayList<String>(6);
+        List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
@@ -104,17 +104,17 @@ public class LCSetJiraFieldFactoryTest {
     }
 
     public void testLCSetFieldGeneration() throws IOException {
-        LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
+        LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflow, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        testBatch.setWorkflowName("Exome Express");
+        testBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
 
-        Set<LabVessel> reworks = new HashSet<LabVessel>();
+        Set<LabVessel> reworks = new HashSet<>();
         reworks.add(new TwoDBarcodedTube("Rework1"));
         reworks.add(new TwoDBarcodedTube("Rework2"));
         testBatch.addReworks(reworks);
 
-        int numSamples = testBatch.getStartingBatchLabVessels().size() + testBatch.getReworks().size();
+        int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
@@ -126,12 +126,12 @@ public class LCSetJiraFieldFactoryTest {
         Assert.assertEquals(7, generatedFields.size());
 
         for (CustomField currField : generatedFields) {
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName())) {
+
+            final String fieldDefinitionName = currField.getFieldDefinition().getName();
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.WORK_REQUEST_IDS.getName())) {
                 Assert.assertEquals("N/A", (String) currField.getValue());
             }
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.GSSR_IDS.getName())) {
                 for (LabVessel currVessel : testBatch.getStartingBatchLabVessels()) {
                     for (String sampleName : currVessel.getSampleNames()) {
                         Assert.assertTrue(((String) currField.getValue()).contains(sampleName));
@@ -144,29 +144,27 @@ public class LCSetJiraFieldFactoryTest {
                     }
                 }
             }
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName())) {
                 Assert.assertEquals(((CustomField.SelectOption) currField.getValue()).getId(), "-1");
             }
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName())) {
                 Assert.assertEquals(numSamples, currField.getValue());
             }
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.PROGRESS_STATUS.getName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS,
                         ((CustomField.ValueContainer) currField.getValue()).getValue());
             }
-            if (currField.getFieldDefinition().getName()
-                    .equals(LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName())) {
+            if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
                 WorkflowLoader wfLoader = new WorkflowLoader();
                 WorkflowConfig wfConfig = wfLoader.load();
                 AthenaClientService athenaSvc = AthenaClientProducer.stubInstance();
 
-                ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(
-                        athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflowName());
+                ProductWorkflowDef workflowDef = wfConfig.getWorkflow(
+                        athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflow());
 
-                Assert.assertEquals(workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn()).getVersion(),
+                Assert.assertEquals(
+                        workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
+                                .getVersion(),
                         currField.getValue());
 
             }
@@ -177,8 +175,8 @@ public class LCSetJiraFieldFactoryTest {
     public void test_sample_field_text_with_reworks() {
         String expectedText = "SM-1\n\nSM-2 (rework)";
 
-        Set<LabVessel> newTubes = new HashSet<LabVessel>();
-        Set<LabVessel> reworks = new HashSet<LabVessel>();
+        Set<LabVessel> newTubes = new HashSet<>();
+        Set<LabVessel> reworks = new HashSet<>();
         LabVessel tube1 = new TwoDBarcodedTube("000012");
         tube1.addSample(new MercurySample("SM-1"));
         LabVessel tube2 = new TwoDBarcodedTube("000033");
@@ -190,7 +188,7 @@ public class LCSetJiraFieldFactoryTest {
 
         batch.addReworks(reworks);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(expectedText.trim()));
     }
@@ -199,14 +197,14 @@ public class LCSetJiraFieldFactoryTest {
     public void test_sample_field_text_no_reworks() {
         String sampleKey = "SM-123";
 
-        Set<LabVessel> newTubes = new HashSet<LabVessel>();
+        Set<LabVessel> newTubes = new HashSet<>();
         LabVessel tube = new TwoDBarcodedTube("000012");
         tube.addSample(new MercurySample(sampleKey));
         newTubes.add(tube);
 
         LabBatch batch = new LabBatch("test", newTubes, LabBatch.LabBatchType.WORKFLOW);
 
-        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch);
+        String actualText = LCSetJiraFieldFactory.buildSamplesListString(batch, null);
 
         assertThat(actualText.trim(), equalTo(sampleKey.trim()));
     }

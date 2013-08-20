@@ -8,18 +8,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 12/19/12
- * Time: 5:31 PM
+ * Stubbed version of the cohort service.
  */
 @Stub
 @Alternative
 public class BSPCohortSearchServiceStub implements BSPCohortSearchService {
 
+    private static final long serialVersionUID = -4537906882178920633L;
+
     @Override
     public Set<Cohort> getAllCohorts() {
-        Set<Cohort> cohorts = new HashSet<Cohort>();
+        Set<Cohort> cohorts = new HashSet<>();
 
         Cohort cohort = new Cohort("1", "name1", "category1", "group1", true);
         cohorts.add( cohort);

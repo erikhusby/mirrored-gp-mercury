@@ -9,21 +9,35 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentrationProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -36,6 +50,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
@@ -54,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -64,20 +82,35 @@ import java.util.Random;
  * This class handles setting up various factories and EJBs for use in any lab event test.
  */
 public class BaseEventTest {
+    public static final String POSITIVE_CONTROL = "NA12878";
+    public static final String NEGATIVE_CONTROL = "WATER_CONTROL";
     private static Log log = LogFactory.getLog(BaseEventTest.class);
 
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
+    // todo jmt find a better way to do this, without propagating it to every call to validateWorkflow.
+    /**
+     * Referenced in validation of routing.
+     */
+    protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
+
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
-    private LabEventFactory labEventFactory = new LabEventFactory();
+    private LabEventFactory labEventFactory;
 
     private LabBatchEjb labBatchEJB;
 
     private BucketEjb bucketEjb;
 
-    protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
-            new LabEventFactory.LabEventRefDataFetcher() {
+    /**
+     * The date on which Exome Express is routed to Mercury only.
+     */
+    public static final GregorianCalendar EX_EX_IN_MERCURY_CALENDAR = new GregorianCalendar(2013, 6, 26);
+
+    protected static Map<String, BSPSampleDTO> mapSampleNameToDto = new HashMap<>();
+
+    protected final LabEventRefDataFetcher labEventRefDataFetcher =
+            new LabEventRefDataFetcher() {
 
                 @Override
                 public BspUser getOperator(String userId) {
@@ -101,12 +134,27 @@ public class BaseEventTest {
         labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
         JiraService jiraService = JiraServiceProducer.stubInstance();
         labBatchEJB.setJiraService(jiraService);
-        labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDAO.class));
+        labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
 
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
+        labEventFactory = new LabEventFactory(testUserList, bspSetVolumeConcentration);
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+
+        final FlowcellMessageHandler flowcellMessageHandler =
+                new FlowcellMessageHandler();
+        flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
+        flowcellMessageHandler.setEmailSender( new EmailSender());
+        flowcellMessageHandler.setAppConfig(new AppConfig(
+                        Deployment.DEV));
+
+        EventHandlerSelector eventHandlerSelector =
+                new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
+                        flowcellMessageHandler);
+        labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
     }
@@ -128,6 +176,9 @@ public class BaseEventTest {
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getSampleName());
+            mapSampleNameToDto.put(poSample.getSampleName(), new BSPSampleDTO(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()
@@ -165,17 +216,16 @@ public class BaseEventTest {
     }
 
     /**
-     *
-     * @param mapBarcodeToTube     A map of barcodes to tubes that will be added to the bucket and drained into the
-     *                             batch.
-     * @param productOrder         The product order to use for bucket entries.
-     * @param workflowBatch        The batch that will be used for this process.
-     * @param lcsetSuffix          Set this non-null to override the lcset id number.
+     * @param mapBarcodeToTube A map of barcodes to tubes that will be added to the bucket and drained into the
+     *                         batch.
+     * @param productOrder     The product order to use for bucket entries.
+     * @param workflowBatch    The batch that will be used for this process.
+     * @param lcsetSuffix      Set this non-null to override the lcset id number.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
-            LabBatch workflowBatch, String lcsetSuffix) {
+                                      LabBatch workflowBatch, String lcsetSuffix) {
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
         // Controls what the created lcset id is by temporarily overriding the static variable.
@@ -212,7 +262,8 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            String rackBarcodeSuffix, String barcodeSuffix, boolean archiveBucketEntries) {
+                                                          String rackBarcodeSuffix, String barcodeSuffix,
+                                                          boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
@@ -222,7 +273,6 @@ public class BaseEventTest {
 
     /**
      * This method runs the entities through the ExEx shearing process.
-     *
      *
      * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx shearing process.
      * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
@@ -250,7 +300,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            String barcodeSuffix) {
+                                                      String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                 labEventFactory, getLabEventHandler(),
                 mapBarcodeToTube, barcodeSuffix).invoke();
@@ -321,13 +371,13 @@ public class BaseEventTest {
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param workflowName     The workflow name for the current workflow.
+     * @param workflow     The workflow name for the current workflow.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, String workflowName,
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, Workflow workflow,
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(
@@ -341,44 +391,27 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the HiSeq2500 process.
      *
-     *
-     * @param denatureRack  The denature tube rack.
-     * @param barcodeSuffix Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
-     *
-     * @param fctTicket
-     * @param productionFlowcellPath
-     * @return Returns the entity builder that contains the entities after this process has been invoked.
-     */
-//    public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack,
-//                                                                      String barcodeSuffix, String fctTicket,
-//                                                                      ProductionFlowcellPath productionFlowcellPath) {
-//
-//        String flowcellBarcode = "flowcell" + new Date().getTime();
-//        return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-//                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath).invoke();
-//    }
-
-    /**
-     * This method runs the entities through the HiSeq2500 process.
-     *
      * @param denatureRack           The denature tube rack.
      * @param barcodeSuffix          Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      * @param productionFlowcellPath
      * @param designationName        Name of the designation created in Squid to support testing the systems running in
      *                               parallel
-     * @param workflowName
+     * @param workflow
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, String workflowName) {
-
+                                                                      String designationName, Workflow workflow) {
+        int flowcellLanes=8;
+        if (workflow == Workflow.EXOME_EXPRESS){
+            flowcellLanes=2;
+        }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
-                designationName, workflowName).invoke();
+                designationName, flowcellLanes).invoke();
     }
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,
@@ -445,17 +478,21 @@ public class BaseEventTest {
 
         // Controls are added in a re-array
         TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
-        posControlTube.addSample(new MercurySample("NA12878", new BSPSampleDTO(
+        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "NA12878");
-                }})));
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                }});
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
+        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
         TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
-        negControlTube.addSample(new MercurySample("WATER_CONTROL", new BSPSampleDTO(
+        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "WATER_CONTROL");
-                }})));
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                }});
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
+        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
         mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
 
         return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
@@ -467,5 +504,36 @@ public class BaseEventTest {
 
     public LabEventFactory getLabEventFactory() {
         return labEventFactory;
+    }
+
+    /**
+     * Allows Transfer Visualizer to be run inside a test, so developer can verify that vessel transfer graph is
+     * constructed correctly.
+     *
+     * @param labVessel starting point in graph.
+     */
+    public void runTransferVisualizer(LabVessel labVessel) {
+        // Disabled by default, because it would block Bamboo tests.
+        if (false) {
+            TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
+            // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
+            transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
+            Graph graph = new Graph();
+            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph,
+                    new ArrayList<TransferVisualizer.AlternativeId>());
+
+            TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
+                    labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+            transferVisualizerClient.setGraph(graph);
+
+            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+            transferVisualizerFrame.setTransferVisualizerClient(transferVisualizerClient);
+            // Suspend the test thread, to give the user time to scroll around the graph.
+            try {
+                Thread.sleep(500000L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

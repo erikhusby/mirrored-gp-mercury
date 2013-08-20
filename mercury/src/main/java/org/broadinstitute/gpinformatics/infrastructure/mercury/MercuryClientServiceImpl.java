@@ -44,16 +44,13 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     @Inject
     private AlignerDao alignerDao;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples) {
         return mercuryClientEjb.addFromProductOrder(pdo, samples);
     }
 
     private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(items.size());
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(items.size());
 
         for (BusinessObject item : items) {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));

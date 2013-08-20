@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -12,6 +13,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * A library DTO for Zamboni.  Copied from
@@ -19,7 +21,7 @@ import java.util.Collection;
  */
 
 public class LibraryBean {
-
+    public static final String NO_PDO_SAMPLE = null;
 
     @JsonProperty("library")
     private String library;
@@ -35,7 +37,7 @@ public class LibraryBean {
 
     @JsonProperty("molecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
-    
+
     private Boolean hasIndexingRead;
 
     @JsonProperty("expectedInsertSize")
@@ -88,10 +90,10 @@ public class LibraryBean {
     private DevExperimentDataBean devExperimentData; // Squid only
 
     @JsonProperty("gssrBarcodes")
-    private Collection<String> gssrBarcodes = new ArrayList<String>(); // Squid only
+    private Collection<String> gssrBarcodes = new ArrayList<>(); // Squid only
 
     @JsonProperty("customAmpliconSetNames")
-    private Collection<String> customAmpliconSetNames = new ArrayList<String>(); // Squid only
+    private Collection<String> customAmpliconSetNames = new ArrayList<>(); // Squid only
 
     @JsonProperty
     private String lcSet;
@@ -142,6 +144,11 @@ public class LibraryBean {
     @JsonProperty
     private String materialType;
 
+    @JsonProperty
+    private String productOrderSample;
+
+    @JsonProperty("labWorkflow")
+    private String labWorkflow;
     /**
      * This is the aggregation data type defined on the product and used by Picard to report the right data.
      */
@@ -175,16 +182,18 @@ public class LibraryBean {
                        String gssrSpecies,
                        String gssrStrain,
                        String gssrIndividual,
-                       BSPSampleDTO bspSampleDTO) {
+                       BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
+        this.labWorkflow = labWorkflow;
+        this.productOrderSample = productOrderSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
-    public LibraryBean(String library, String project, String initiative, Long workRequest,
+    public LibraryBean(String library, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
                        String analysisType, String referenceSequence, String referenceSequenceVersion,
                        String organism, String species, String strain,
@@ -192,13 +201,14 @@ public class LibraryBean {
                        String bait, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow) {
 
-        this(library, project, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
-             analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
-             aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
-             negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-             productOrder, lcSet, bspSampleDTO);
+        // project and productOrderSample was always null in the calls here, so why send them through. Can add back later.
+        this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
+                analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
+                aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
+                negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
+                productOrder, lcSet, bspSampleDTO, labWorkflow, null);
     }
 
     /**
@@ -248,8 +258,9 @@ public class LibraryBean {
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
-                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
-        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO);
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO, labWorkflow,
+                productOrderSample);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -375,7 +386,7 @@ public class LibraryBean {
     public String getReferenceSequence() {
         return referenceSequence;
     }
-    
+
     public String getRestrictionEnzyme() {
         return restrictionEnzyme;
     }
@@ -387,7 +398,7 @@ public class LibraryBean {
     public String getRrbsSizeRange() {
         return rrbsSizeRange;
     }
-    
+
     public String getExpectedInsertSize() {
         return expectedInsertSize;
     }
@@ -403,7 +414,7 @@ public class LibraryBean {
     public String getAnalysisType() {
         return analysisType;
     }
-    
+
     public String getSpecies() {
         return species;
     }
@@ -508,4 +519,11 @@ public class LibraryBean {
     public String getRace() {
         return race;
     }
+
+    public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {
+        @Override
+        public int compare(LibraryBean libraryBean1, LibraryBean libraryBean2) {
+            return new CompareToBuilder().append(libraryBean1.getSampleId(), libraryBean2.getSampleId()).toComparison();
+        }
+    };
 }

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -90,8 +91,7 @@ public class ProductDaoTest extends ContainerTest {
                 "dummy input requirements",                // input requirements
                 "dummy deliverables",                      // deliverables
                 false,                                     // top level product
-                "dummy price item id"                      // quote server price item id
-                ,
+                Workflow.EXOME_EXPRESS,
                 false, "agg type");
 
         // we have some tests that call this method more than once so the price item compound key must be unique

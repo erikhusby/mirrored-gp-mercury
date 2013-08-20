@@ -87,7 +87,7 @@ public class WorkflowStepDef implements Serializable {
     Final Library Size*/
 
     private String name;
-    private List<LabEventType> labEventTypes = new ArrayList<LabEventType>();
+    private List<LabEventType> labEventTypes = new ArrayList<>();
     /** Whether this step is optional, e.g. normalization is otional if the concentration is fine as is */
     private boolean optional;
     /** decision, perhaps expressed in MVEL */

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -7,7 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -26,7 +27,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBException;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -47,7 +48,7 @@ public class SampleReceiptResource {
     ObjectMarshaller<SampleReceiptBean> marshaller;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -60,18 +61,18 @@ public class SampleReceiptResource {
     private LabVesselFactory labVesselFactory;
 
     public SampleReceiptResource() throws JAXBException {
-        marshaller = new ObjectMarshaller<SampleReceiptBean>(SampleReceiptBean.class);
+        marshaller = new ObjectMarshaller<>(SampleReceiptBean.class);
     }
 
     @GET
     @Path("{batchName}")
     @Produces({MediaType.APPLICATION_XML})
     public SampleReceiptBean getByBatchName(@PathParam("batchName") String batchName) {
-        LabBatch labBatch = labBatchDAO.findByName(batchName);
+        LabBatch labBatch = labBatchDao.findByName(batchName);
         if (labBatch == null) {
             return null;
         }
-        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
         Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
         for (LabVessel startingLabVessel : startingLabVessels) {
             parentVesselBeans.add(new ParentVesselBean(
@@ -127,12 +128,12 @@ public class SampleReceiptResource {
                 labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
                         sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);
 
-        // If the kit has already been partially registered, append a timestamp to make a unique batch name
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
-        LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
+        // If the kit has already been partially registered, append a timestamp to make a unique batch name.
+        Format simpleDateFormat = FastDateFormat.getInstance("yyyyMMddHHmmssSSSS");
+        LabBatch labBatch = labBatchDao.findByName(sampleReceiptBean.getKitId());
         String batchName =
                 sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
-        labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
+        labBatchDao.persist(new LabBatch(batchName, new HashSet<>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received: " + batchName;
     }

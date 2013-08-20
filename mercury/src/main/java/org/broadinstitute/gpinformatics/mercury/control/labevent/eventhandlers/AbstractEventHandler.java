@@ -4,12 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEvent
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 
 /**
- * BettaLims messages that are processed in mercury are, for the most part, generic.  There is no specific validation
- * or processing per message that needs to happen.  The purpose of this method is to provide a structure for those
- * special cases where specific validation or handling needs to happen.
- *
- * By triggering off of the {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType}, we can
- * target each message at it's own message validator.
+ * This abstract class defines the makeup of each event handler.
  */
 public abstract class AbstractEventHandler {
 
@@ -22,20 +17,5 @@ public abstract class AbstractEventHandler {
      *                     that is not captured in the Lab Event (e.g. ReceptacleType Metadata)
      */
     public abstract void handleEvent(LabEvent targetEvent, StationEventType stationEvent) ;
-
-    public static void applyEventSpecificHandling(LabEvent targetEvent, StationEventType stationEvent){
-        AbstractEventHandler validator = null;
-
-        switch (targetEvent.getLabEventType()) {
-        case DENATURE_TO_DILUTION_TRANSFER:
-            validator = new DenatureToDilutionTubeHandler();
-
-            break;
-        }
-
-        if (validator != null) {
-            validator.handleEvent(targetEvent, stationEvent);
-        }
-    }
 
 }

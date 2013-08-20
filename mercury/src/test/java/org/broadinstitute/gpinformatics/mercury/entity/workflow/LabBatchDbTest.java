@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -31,7 +31,7 @@ import java.util.Set;
 public class LabBatchDbTest extends ContainerTest {
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     public static final String XML_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private SimpleDateFormat xmlDateFormat = new SimpleDateFormat(XML_DATE_FORMAT);
@@ -41,11 +41,11 @@ public class LabBatchDbTest extends ContainerTest {
      */
     public static class AccumulateLabEvents implements TransferTraverserCriteria {
         private int hopCount = -1;
-        private final List<LabEvent> labEventsList = new ArrayList<LabEvent>();
+        private final List<LabEvent> labEventsList = new ArrayList<>();
         /**
          * Avoid infinite loops
          */
-        private Set<LabEvent> visitedLabEvents = new HashSet<LabEvent>();
+        private Set<LabEvent> visitedLabEvents = new HashSet<>();
 
 
         public List<LabEvent> getLabEventsList() {
@@ -73,7 +73,7 @@ public class LabBatchDbTest extends ContainerTest {
                         }
                     }
 
-                    List<LabEvent> inPlaceLabEvents = new ArrayList<LabEvent>();
+                    List<LabEvent> inPlaceLabEvents = new ArrayList<>();
                     if (context.getLabVessel() == null) {
                         for (LabVessel sourceLabVessel : context.getEvent().getSourceLabVessels()) {
                             inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEvents());
@@ -109,7 +109,7 @@ public class LabBatchDbTest extends ContainerTest {
 
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void findMessageFilesForBatch() {
-        List<String> lcSets = new ArrayList<String>();
+        List<String> lcSets = new ArrayList<>();
         // PDO-135, C19F5ACXX
         lcSets.add("LCSET-2519");
         // D1JNDACXX, WR 34532, LCSET-2588, PDO-183
@@ -135,7 +135,7 @@ public class LabBatchDbTest extends ContainerTest {
         // D1K7DACXD
 
         for (String lcSet : lcSets) {
-            LabBatch labBatch = labBatchDAO.findByBusinessKey(lcSet);
+            LabBatch labBatch = labBatchDao.findByBusinessKey(lcSet);
             Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
             // For now, assume all vessels have the same events
             LabVessel labVessel = startingLabVessels.iterator().next();

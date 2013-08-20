@@ -224,6 +224,22 @@ IS
       WHERE is_delete = 'T'
     );
 
+    DELETE FROM ledger_entry
+    WHERE ledger_id IN (
+      SELECT
+        ledger_id
+      FROM im_ledger_entry
+      WHERE is_delete = 'T'
+    );
+
+    DELETE FROM billing_session
+    WHERE billing_session_id IN (
+      SELECT
+        billing_session_id
+      FROM im_billing_session
+      WHERE is_delete = 'T'
+    );
+
     -- For this fact table, a re-export of audited entity ids should replace existing ones.
     DELETE FROM sequencing_sample_fact
     WHERE sequencing_run_id IN (SELECT
@@ -454,6 +470,7 @@ IS
         quant_value = new.quant_value,
         run_name = new.run_name,
         run_date = new.run_date,
+	vessel_position = new.vessel_position,
         etl_date = new.etl_date
       WHERE lab_metric_id = new.lab_metric_id;
 
@@ -468,6 +485,7 @@ IS
         quant_value,
         run_name,
         run_date,
+	vessel_position,
         etl_date
       )
       SELECT
@@ -481,6 +499,7 @@ IS
         new.quant_value,
         new.run_name,
         new.run_date,
+	new.vessel_position,
         new.etl_date
       FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
 
@@ -984,7 +1003,9 @@ IS
         SELECT 1 INTO v_tmp FROM DUAL
         WHERE NVL(new.batch_name, 'NONE') NOT IN ('NONE', 'MULTIPLE')
         OR EXISTS (SELECT 1 FROM workflow w
-        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id);
+        WHERE w.workflow_name = 'BSP' AND new.workflow_id = w.workflow_id)
+        OR EXISTS (SELECT 1 FROM workflow_process p
+        WHERE p.event_name = 'PicoPlatingBucket' AND new.process_id = p.process_id);
 
         EXCEPTION WHEN NO_DATA_FOUND
         THEN RAISE INVALID_LAB_BATCH;

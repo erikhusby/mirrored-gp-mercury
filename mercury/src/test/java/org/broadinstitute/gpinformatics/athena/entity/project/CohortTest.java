@@ -13,7 +13,7 @@ public class CohortTest {
 
     @Test
     public void sortCohortTest() throws Exception {
-        SortedSet<Cohort> usersCohorts = new TreeSet<Cohort>(Cohort.COHORT_BY_ID);
+        SortedSet<Cohort> usersCohorts = new TreeSet<>(Cohort.COHORT_BY_ID);
 
         // Add an item with a null id
         Cohort cohort = new Cohort(null, null, null, null, false);

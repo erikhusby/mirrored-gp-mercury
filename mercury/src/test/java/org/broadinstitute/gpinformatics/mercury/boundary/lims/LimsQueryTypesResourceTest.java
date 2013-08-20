@@ -132,7 +132,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     public void testEchoStringArrayLargeAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringArray");
 
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
         for (int i = 0; i < 384; i++) {
             values.add(String.format("%012d", i));
         }

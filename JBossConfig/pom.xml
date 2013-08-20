@@ -128,16 +128,23 @@
                                 <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
+                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true" file="src/main/resources/keystore/.keystore"/>
+                                    
                                 <echo>
 
 Your JBoss has been updated with the Mercury configurations.
 
 It is recommended that you increase the memory settings, in particular PERMGEN.
-Put the heap to at lease 1G.
+Put the heap to at least 1G. For example:
+   JAVA_OPTS="-Xms64m -Xmx4096M -XX:MaxPermSize=1G"
 
-Edit ${env.JBOSS_HOME}/bin/standalone.conf and change the JAVA_OPS.
+Edit ${env.JBOSS_HOME}/bin/standalone.conf (or ${env.JBOSS_HOME}/bin/standalone.conf.bat )
+   * Change the value of JAVA_OPTS for memory.
+   * Change the value of jboss.server.default.conf to be standalone-full.xml
+   * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
 
-Change the value of jboss.server.default.conf to be standalone-full.xml
+If you've made server configuration changes that need to be applied to the Mercury Production, QA, RC and DEV servers, please create or update a
+GPInfoJira Mercury (GPLIM) issue and assign it to the Release Engineer.
 
                                 </echo>
                             </target>

@@ -39,9 +39,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -59,7 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -78,6 +79,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,10 +100,6 @@ public class ExomeExpressEndToEndTest {
     private LibraryRegistrationSOAPService registrationSOAPService =
             LibraryRegistrationSOAPServiceProducer.stubInstance();
 
-    //    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
-
-    //    private PassService passService = PassServiceProducer.stubInstance();
-
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
     private JiraService jiraService = JiraServiceProducer.stubInstance();
@@ -118,10 +116,10 @@ public class ExomeExpressEndToEndTest {
 
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() throws Exception {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, WorkflowName.EXOME_EXPRESS.getWorkflowName(), false, "agg type"),
+                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         String jiraTicketKey = "PD0-1";
@@ -154,7 +152,7 @@ public class ExomeExpressEndToEndTest {
             //            String laneNumber = "3";
 
             // BasicProjectPlan
-            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<LabEventName, QuotePriceItem>();
+            HashMap<LabEventName, QuotePriceItem> billableEvents = new HashMap<>();
 
             //            BasicProjectPlan projectPlan = new BasicProjectPlan(
             //                    project,
@@ -227,7 +225,7 @@ public class ExomeExpressEndToEndTest {
             CustomField descriptionCustomField =
                     new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.DESCRIPTION), "Pass ");
 
-            Collection<CustomField> allCustomFields = new HashSet<CustomField>();
+            Collection<CustomField> allCustomFields = new HashSet<>();
             allCustomFields.add(workRequestCustomField);
             allCustomFields.add(stockSamplesCustomField);
             allCustomFields.add(protocolCustomField);
@@ -252,7 +250,7 @@ public class ExomeExpressEndToEndTest {
             //From projectPlan .. build BSPPlatingRequest objects
             //            Collection<Starter> starterStocks = testLabBatch.getStarters();
             //List<StartingSample> startingSamples = new ArrayList<StartingSample>();
-            Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
+            Map<MercurySample, AliquotParameters> starterMap = new HashMap<>();
             //            for (Starter stock : starterStocks) {
             //                starterMap.put((StartingSample) stock, new AliquotParameters(/*projectPlan, */1.9f, 1.6f));
             //            }
@@ -264,7 +262,7 @@ public class ExomeExpressEndToEndTest {
             //            Assert.assertEquals(bspRequests.size(), starterStocks.size(), "Plating Requests returned doesn't match the Starter count");
 
             //add the controls ??
-            List<ControlWell> controls = new ArrayList<ControlWell>();
+            List<ControlWell> controls = new ArrayList<>();
             BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
             BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
             BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
@@ -286,7 +284,7 @@ public class ExomeExpressEndToEndTest {
 
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
             //            Collection<Starter> starters = projectPlan.getStarters();
-            Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
+            Map<String, LabVessel> stockSampleAliquotMap = new HashMap<>();
             //            for (Starter starter : starters) {
             //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             //                Assert.assertNotNull(aliquot);
@@ -302,8 +300,8 @@ public class ExomeExpressEndToEndTest {
             // deck query for barcodes
             // (deck query for workflow)
             // deck sends message, check workflow
-            LabEventFactory labEventFactory = new LabEventFactory();
-            labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+            LabEventFactory labEventFactory = new LabEventFactory(null, null);
+            labEventFactory.setLabEventRefDataFetcher(new LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
@@ -327,13 +325,13 @@ public class ExomeExpressEndToEndTest {
             labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
             LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
-            labBatchEJB.setTubeDAO(tubeDao);
+            labBatchEJB.setTubeDao(tubeDao);
 
             JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
             labBatchEJB.setJiraTicketDao(mockJira);
 
-            LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-            labBatchEJB.setLabBatchDao(labBatchDAO);
+            LabBatchDao labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
+            labBatchEJB.setLabBatchDao(labBatchDao);
 
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
             BucketDao bucketDao = EasyMock.createNiceMock(BucketDao.class);
@@ -344,7 +342,7 @@ public class ExomeExpressEndToEndTest {
             BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
                     bucketDao);
 
-            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao, reworkEjb, bucketDao);
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
 
 
             TemplateEngine templateEngine = new TemplateEngine();
@@ -352,7 +350,7 @@ public class ExomeExpressEndToEndTest {
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
                     AthenaClientProducer.stubInstance());
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
                 mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
@@ -432,13 +430,14 @@ public class ExomeExpressEndToEndTest {
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
-            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel)denatureTube),
-                    LabBatch.LabBatchType.FCT, 12.33f);
+            LabBatch fctBatch = new LabBatch("FCT-3", Collections.singleton((LabVessel) denatureTube),
+                    LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory,
-                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),fctBatch.getBusinessKey()
-                            , "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", "Exome Express");
+                            labEventFactory, labEventHandler, qtpEntityBuilder.getDenatureRack(),
+                            fctBatch.getBusinessKey(),
+                            "testPrefix", "", ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "", 2);
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
@@ -453,7 +452,7 @@ public class ExomeExpressEndToEndTest {
             //            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
-            final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
+            final Collection<String> aliquotsFromProjectPlan = new HashSet<>();
             //            for (Starter starter : projectPlan.getStarters()) {
             //                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
             //                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {

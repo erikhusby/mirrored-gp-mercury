@@ -103,7 +103,7 @@ public class WorkflowConfigLookupDbFreeTest {
         WorkflowConfig config = new WorkflowConfig();
 
         // defining workflows
-        List<WorkflowProcessDef> workflowList = new ArrayList<WorkflowProcessDef>();
+        List<WorkflowProcessDef> workflowList = new ArrayList<>();
 
         WorkflowProcessDef w1 = new WorkflowProcessDef("Process 1");
 
@@ -138,10 +138,10 @@ public class WorkflowConfigLookupDbFreeTest {
         w2.addWorkflowProcessDefVersion(w2v1);
         workflowList.add(w2);
 
-        config.setWorkflowProcessDefs(workflowList);
+        config.getWorkflowProcessDefs().addAll(workflowList);
 
         // defining products
-        List<ProductWorkflowDef> pList = new ArrayList<ProductWorkflowDef>();
+        List<ProductWorkflowDef> pList = new ArrayList<>();
 
         ProductWorkflowDef p1 = new ProductWorkflowDef("Workflow 1");
         // only valid day 0
@@ -161,7 +161,7 @@ public class WorkflowConfigLookupDbFreeTest {
         p2.addProductWorkflowDefVersion(p2v1);
         pList.add(p2);
 
-        config.setProductWorkflowDefs(pList);
+        config.getProductWorkflowDefs().addAll(pList);
 
         return config;
     }

@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -52,6 +53,8 @@ public class ProductOrderDao extends GenericDao {
      */
     public boolean isAutoProcessing() {
         int hourOfDay = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+        // Even though this is a constant expression, we want to leave it in for the time when these values change.
+        //noinspection ConstantConditions
         if (AutomatedBiller.PROCESSING_START_HOUR < AutomatedBiller.PROCESSING_END_HOUR) {
             return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR && hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
         }
@@ -161,8 +164,8 @@ public class ProductOrderDao extends GenericDao {
                 new ProductOrderDaoCallback(fs));
     }
 
-
-    public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
+    // Used by tests only.
+    public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -174,7 +177,7 @@ public class ProductOrderDao extends GenericDao {
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflowName));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
@@ -210,9 +213,8 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getAllProgressByBusinessKey() {
-        return getProgressByBusinessKey(null);
+    public Map<String, ProductOrderCompletionStatus> getAllProgress() {
+        return getProgress(null);
     }
 
     /**
@@ -224,17 +226,16 @@ public class ProductOrderDao extends GenericDao {
      * <dt>abandoned</dt><dd>The number of samples that ARE abandoned</dd>
      * <dt>total</dt><dd>The total number of samples</dd>
      * </dl>
-     * @param productOrderKeys null if returning info for all orders, the list of keys for specific ones
+     * @param productOrderIds null if returning info for all orders, the list of keys for specific ones
      *
      * @return The mapping of business keys to the completion status object for each order
      */
-    @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(Collection<String> productOrderKeys) {
-        if (productOrderKeys != null && productOrderKeys.isEmpty()) {
+    public Map<String, ProductOrderCompletionStatus> getProgress(Collection<Long> productOrderIds) {
+        if (productOrderIds != null && productOrderIds.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        /**
+        /*
          * This SQL query looks up the product orders specified by the order keys (all, if the keys are null) and then
          * projects out three count queries along with the jira ticket and the order id:
          *
@@ -264,9 +265,9 @@ public class ProductOrderDao extends GenericDao {
                            "    ) AS total" +
                            " FROM athena.PRODUCT_ORDER ord ";
 
-        // Add the business key, if we are only doing one.
-        if (productOrderKeys != null) {
-            sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
+        // Handle searching by ID.
+        if (productOrderIds != null) {
+            sqlString += " WHERE ord.PRODUCT_ORDER_ID in (:productOrderIds) ";
         }
 
         Query query = getEntityManager().createNativeQuery(sqlString);
@@ -276,9 +277,10 @@ public class ProductOrderDao extends GenericDao {
              .addScalar("total", StandardBasicTypes.INTEGER);
 
         List<Object> results;
-        if (productOrderKeys != null) {
-            results = JPASplitter.runQuery(query, "businessKeys", productOrderKeys);
+        if (productOrderIds != null) {
+            results = JPASplitter.runQuery(query, "productOrderIds", productOrderIds);
         } else {
+            //noinspection unchecked
             results = (List<Object>) query.getResultList();
         }
 
@@ -309,14 +311,13 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrders for the specified varargs array of barcodes, will throw {@link IllegalArgumentException}
-     * if given more than 1000 barcodes.
+     * Find all ProductOrders for the specified list of barcodes.
      *
      * @param barcodes One or more sample barcodes.
      *
      * @return All Product Orders containing samples with these barcodes.
      */
-    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
+    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) {
 
         CriteriaBuilder cb = getCriteriaBuilder();
 

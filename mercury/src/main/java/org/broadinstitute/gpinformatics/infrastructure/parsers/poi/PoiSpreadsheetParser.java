@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -17,7 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public final class PoiSpreadsheetParser implements Serializable {
 
     private static final String DATE_PATTERN = "MM/dd/yyyy";
 
-    private final SimpleDateFormat dateFormatter = new SimpleDateFormat(DATE_PATTERN);
+    private final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
     private static final long serialVersionUID = 1294878041185823009L;
     protected List<String> validationMessages = new ArrayList<>();
@@ -117,7 +118,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @param processor The Table Processor that will be turning rows of data into objects based on headers.
      * @param rows The row iterator.
      */
-    private void processHeaders(TableProcessor processor, Iterator<Row> rows) {
+    private void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
         int headerRowIndex = 0;
         int numHeaderRows = processor.getNumHeaderRows();
         while (rows.hasNext() && headerRowIndex < numHeaderRows) {
@@ -133,7 +134,9 @@ public final class PoiSpreadsheetParser implements Serializable {
 
             // The primary header row is the one that needs to be generally validated.
             if (processor.getPrimaryHeaderRow() == headerRowIndex) {
-                processor.validateHeaders(headers);
+                if (!processor.validateHeaders(headers)) {
+                    throw new ValidationException("Error parsing headers.", processor.getMessages());
+                }
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.

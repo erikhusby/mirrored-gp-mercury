@@ -21,7 +21,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
     private static final Long TEST_CREATOR = 1111L;
     public static final String rpSynopsis = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
-    private static Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
+    private static Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<>();
 
     @Override
     public synchronized ProductOrder retrieveProductOrderDetails(@Nonnull String poBusinessKey) {
@@ -43,12 +43,12 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     @Override
     public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
-        Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<String, List<ProductOrderSample>>();
+        Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<>();
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         List<ProductOrderSample> samples = productOrder.getSamples();
         for (ProductOrderSample productOrderSample : samples) {
             mapSampleIdToPdoSample.put(productOrderSample.getSampleName(),
-                    new ArrayList<ProductOrderSample>(Collections.singletonList(productOrderSample)));
+                    new ArrayList<>(Collections.singletonList(productOrderSample)));
         }
         return mapSampleIdToPdoSample;
     }
@@ -59,7 +59,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
             productOrderByBusinessKeyMap = ProductOrderTestFactory.buildTestProductOrderMap();
         }
 
-        List<ProductOrder> productOrderList = new ArrayList<ProductOrder>(poBusinessKeys.size());
+        List<ProductOrder> productOrderList = new ArrayList<>(poBusinessKeys.size());
 
         for(String poKey:poBusinessKeys) {
             productOrderList.add(pullProductOrder(poKey));

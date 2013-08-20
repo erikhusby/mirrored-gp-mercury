@@ -14,15 +14,18 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,17 +35,18 @@ import java.util.Set;
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
-
     public static final String LOAD_ACTION = "load";
-    public static final CreateFields.IssueType[] SUPPORTED_TYPES =
-            new CreateFields.IssueType[]{CreateFields.IssueType.FLOWCELL, CreateFields.IssueType.MISEQ};
+    public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES =
+            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -55,7 +59,7 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private int numberOfLanes;
 
-    private float loadingConc;
+    private BigDecimal loadingConc;
 
     private LabBatch labBatch;
 
@@ -65,13 +69,13 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private List<LabBatch> createdBatches;
 
-    private CreateFields.IssueType selectedType;
+    private IlluminaFlowcell.FlowcellType selectedType;
 
-    public CreateFields.IssueType getSelectedType() {
+    public IlluminaFlowcell.FlowcellType getSelectedType() {
         return selectedType;
     }
 
-    public void setSelectedType(CreateFields.IssueType selectedType) {
+    public void setSelectedType(IlluminaFlowcell.FlowcellType selectedType) {
         this.selectedType = selectedType;
     }
 
@@ -123,11 +127,11 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.numberOfLanes = numberOfLanes;
     }
 
-    public float getLoadingConc() {
+    public BigDecimal getLoadingConc() {
         return loadingConc;
     }
 
-    public void setLoadingConc(float loadingConc) {
+    public void setLoadingConc(BigDecimal loadingConc) {
         this.loadingConc = loadingConc;
     }
 
@@ -156,7 +160,7 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(LOAD_ACTION)
     public Resolution loadLCSet() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         if (labBatch != null) {
             for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
                 denatureTubeToEvent.putAll(vessel.findVesselsForLabEventType(LabEventType.DENATURE_TRANSFER));
@@ -174,27 +178,19 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-            //create a new FCT ticket for every two lanes requested.
-            int lanesPerFlowcell = 1;
-            LabBatch.LabBatchType batchType = LabBatch.LabBatchType.FCT;
-            if (selectedType.equals(CreateFields.IssueType.FLOWCELL)) {
-                lanesPerFlowcell = 2;
-                batchType = LabBatch.LabBatchType.FCT;
-            }
-            if (selectedType.equals(CreateFields.IssueType.MISEQ)) {
-                lanesPerFlowcell = 1;
-                batchType = LabBatch.LabBatchType.MISEQ;
-            }
+
+            LabBatch.LabBatchType batchType = selectedType.getBatchType();
+            int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
+            CreateFields.IssueType issueType = selectedType.getIssueType();
             for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType,
-                                loadingConc);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);
                 batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), selectedType);
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
                 createdBatches.add(batch);
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);
@@ -221,7 +217,7 @@ public class CreateFCTActionBean extends CoreActionBean {
         }
     }
 
-    public CreateFields.IssueType[] getSupportedTypes() {
-        return SUPPORTED_TYPES;
+    public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
+        return FLOWCELL_TYPES;
     }
 }

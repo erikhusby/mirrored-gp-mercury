@@ -1,15 +1,38 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -20,8 +43,10 @@ import java.util.*;
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
+    private static final long serialVersionUID = 4859861191078406439L;
+
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     public static final boolean TOP_LEVEL_PRODUCT = true;
 
     @Id
@@ -77,7 +102,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
-    private final Set<Product> addOns = new HashSet<Product>();
+    private final Set<Product> addOns = new HashSet<>();
 
     private String workflowName;
 
@@ -115,13 +140,13 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             joinColumns=@JoinColumn(name="PRODUCT_ID"),
             inverseJoinColumns=@JoinColumn(name="MATERIAL_TYPE_ID")
     )
-    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<>();
 
     // The onRisk criteria that are associated with the Product. When creating new, default to empty list.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriterion> riskCriteria = new ArrayList<RiskCriterion>();
+    private List<RiskCriterion> riskCriteria = new ArrayList<>();
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -129,7 +154,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
+        this.topLevelProduct=topLevelProduct;
+        this.pdmOrderableOnly=false;
     }
 
     public Product(String productName,
@@ -145,7 +171,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName,
+                   @Nonnull Workflow workflow,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;
@@ -161,7 +187,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        this.workflowName = workflowName;
+        workflowName = workflow.getWorkflowName();
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -291,8 +317,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
+    public void setWorkflow(@Nonnull Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
     }
 
     public void addAllowableMaterialType(MaterialType materialType) {
@@ -307,8 +333,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    public String getWorkflowName() {
-        return workflowName;
+    public Workflow getWorkflow() {
+        return Workflow.findByName(workflowName);
     }
 
     public String getAnalysisTypeKey() {
@@ -352,11 +378,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public BillingRequirement getRequirement() {
-        if (requirements == null) {
-            requirements = Collections.singletonList(new BillingRequirement());
-        } else if (requirements.isEmpty()) {
-            requirements.add(new BillingRequirement());
+
+        if (CollectionUtils.isEmpty(requirements)) {
+            return new BillingRequirement();
         }
+
         return requirements.get(0);
     }
 
@@ -378,11 +404,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
-        if (primaryPriceItem == priceItem) return true;
-
-        if (primaryPriceItem == null) return false;
-
-        return primaryPriceItem.equals(priceItem);
+        return primaryPriceItem == priceItem || primaryPriceItem != null && primaryPriceItem.equals(priceItem);
     }
 
     @Override
@@ -426,8 +448,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
      * @return Get all duplicate price item names for any products or add ons on this product. Null if none.
      */
     public String[] getDuplicatePriceItemNames() {
-        List<String> duplicates = new ArrayList<String> ();
-        Set<String> priceItemNames = new HashSet<String> ();
+        List<String> duplicates = new ArrayList<>();
+        Set<String> priceItemNames = new HashSet<>();
 
         // Add the duplicates for this product.
         addProductDuplicates(duplicates, priceItemNames);
@@ -511,11 +533,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
 
-    public static Product makeEmptyProduct() {
-        return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false, null);
-    }
-
     public String getDisplayName() {
         return productName + " - " + partNumber;
     }
@@ -563,7 +580,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         assert (criteria.length == operators.length) && (criteria.length == values.length);
 
         // The new list.
-        List<RiskCriterion> newList = new ArrayList<RiskCriterion>();
+        List<RiskCriterion> newList = new ArrayList<>();
         // Assume that the new list is no different than the original.
         boolean isDifferent = false;
 

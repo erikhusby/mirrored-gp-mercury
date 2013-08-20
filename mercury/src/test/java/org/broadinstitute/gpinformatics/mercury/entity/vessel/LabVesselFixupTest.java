@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -39,7 +39,7 @@ public class LabVesselFixupTest extends Arquillian {
     private RackOfTubesDao rackOfTubesDao;
 
     @Inject
-    private StaticPlateDAO staticPlateDAO;
+    private StaticPlateDao staticPlateDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -186,18 +186,18 @@ public class LabVesselFixupTest extends Arquillian {
                 "CO-4405034",
                 "CO-4301567"};
         for (String rackBarcode : rackBarcodes) {
-            StaticPlate staticPlate = staticPlateDAO.findByBarcode(rackBarcode);
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(rackBarcode);
             Iterator<SectionTransfer> iterator = staticPlate.getContainerRole().getSectionTransfersFrom().iterator();
             while (iterator.hasNext()) {
                 SectionTransfer sectionTransfer = iterator.next();
                 LabEvent labEvent = sectionTransfer.getLabEvent();
                 labEvent.getReagents().clear();
                 labEvent.getSectionTransfers().clear();
-                staticPlateDAO.remove(labEvent);
+                staticPlateDao.remove(labEvent);
                 iterator.remove();
             }
-            staticPlateDAO.remove(staticPlate);
+            staticPlateDao.remove(staticPlate);
         }
-        staticPlateDAO.flush();
+        staticPlateDao.flush();
     }
 }

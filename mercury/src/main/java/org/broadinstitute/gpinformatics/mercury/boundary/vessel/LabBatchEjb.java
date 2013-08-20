@@ -19,7 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -58,7 +58,7 @@ public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
 
-    private LabBatchDAO labBatchDao;
+    private LabBatchDao labBatchDao;
 
     private AthenaClientService athenaClientService;
 
@@ -66,7 +66,7 @@ public class LabBatchEjb {
 
     private JiraTicketDao jiraTicketDao;
 
-    private LabVesselDao tubeDAO;
+    private LabVesselDao tubeDao;
 
     private BucketDao bucketDao;
 
@@ -92,7 +92,7 @@ public class LabBatchEjb {
         Set<LabVessel> vesselsForBatch = new HashSet<>(labVesselNames.size());
 
         for (String currVesselLabel : labVesselNames) {
-            vesselsForBatch.add(tubeDAO.findByIdentifier(currVesselLabel));
+            vesselsForBatch.add(tubeDao.findByIdentifier(currVesselLabel));
         }
 
         return createLabBatch(vesselsForBatch, reporter, batchName, labBatchType, issueType);
@@ -170,7 +170,7 @@ public class LabBatchEjb {
                                                       @Nonnull LabBatch.LabBatchType labBatchType,
                                                       @Nonnull CreateFields.IssueType issueType) {
         Set<LabVessel> vessels =
-                new HashSet<>(tubeDAO.findByListIdentifiers(vesselLabels));
+                new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
         bucketEjb.start(operator, vessels, bucket, location);
@@ -453,17 +453,36 @@ public class LabBatchEjb {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
+        Bucket entryBucket = null;
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             entry.getBucket().removeEntry(entry);
+            entryBucket = entry.getBucket();
         }
         batch.addReworks(reworkVessels);
-        batch.addLabVessels(reworkVessels);
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
-                LCSetJiraFieldFactory.buildSamplesListString(batch)));
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
+                LCSetJiraFieldFactory.buildSamplesListString(batch, entryBucket)));
+
+        int sampleCount = batch.getStartingBatchLabVessels().size();
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
+                sampleCount));
+
+        AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
+                .getInstance(batch, athenaClientService);
+
+        if (StringUtils.isBlank(batch.getBatchDescription())) {
+            batch.setBatchDescription(fieldBuilder.generateDescription());
+        } else {
+            batch.setBatchDescription(
+                    fieldBuilder.generateDescription() + "\n\n" + batch.getBatchDescription());
+        }
+
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
+                batch.getBatchDescription()));
+
         jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
     }
 
@@ -471,7 +490,7 @@ public class LabBatchEjb {
        To Support DBFree Tests
     */
     @Inject
-    public void setLabBatchDao(LabBatchDAO labBatchDao) {
+    public void setLabBatchDao(LabBatchDao labBatchDao) {
         this.labBatchDao = labBatchDao;
     }
 
@@ -491,8 +510,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setTubeDAO(LabVesselDao tubeDAO) {
-        this.tubeDAO = tubeDAO;
+    public void setTubeDao(LabVesselDao tubeDao) {
+        this.tubeDao = tubeDao;
     }
 
     @Inject

@@ -304,7 +304,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
                                                                     BSPSampleSearchColumn... resultColumns) {
-        List<Map<BSPSampleSearchColumn, String>> sampleAttributes = new ArrayList<Map<BSPSampleSearchColumn, String>>();
+        List<Map<BSPSampleSearchColumn, String>> sampleAttributes = new ArrayList<>();
         for (String sampleID : sampleIDs) {
             if (samples.containsKey(sampleID)) {
                 sampleAttributes.add(samples.get(sampleID));

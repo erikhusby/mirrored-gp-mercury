@@ -66,13 +66,16 @@
                 </td>
                 <td style="padding: 0;">
                     <table style="padding: 0">
-                        <c:forEach items="${vessel.getPositionsOfSample(sample, 'WITH_PDO')}" var="position">
-                            <tr>
-                                <td style="border: none;">
-                                        ${position}
-                                </td>
-                            </tr>
-                        </c:forEach>
+                        <c:if test="${vessel.containerRole != null}">
+                            <c:forEach items="${vessel.containerRole.getPositionsOfSampleInstance(sample, 'WITH_PDO')}"
+                                       var="position">
+                                <tr>
+                                    <td style="border: none;">
+                                            ${position}
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </c:if>
                     </table>
                 </td>
                 <td style="padding: 0;">

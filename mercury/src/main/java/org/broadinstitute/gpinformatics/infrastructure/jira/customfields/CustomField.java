@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Map;
 
 public class CustomField {
@@ -40,7 +39,7 @@ public class CustomField {
         private String id;
 
         public SelectOption(String value) {
-            if(value.equals("None")) {
+            if (value.equals("None")) {
                 this.id = "-1";
             } else {
                 this.setValue(value);
@@ -56,7 +55,7 @@ public class CustomField {
      * Should work with current Specs but does not:
      * https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue#JIRARESTAPIExample-CreateIssue-CascadingSelectField
      */
-    public static class CascadingSelectList extends ValueContainer{
+    public static class CascadingSelectList extends ValueContainer {
 
         private final SelectOption child;
 
@@ -70,6 +69,14 @@ public class CustomField {
         }
     }
 
+    /**
+     * Main constructor for the custom field.  Since there are different variations of the custom field, This
+     * constructor is pretty generic to allow flexibility
+     *
+     * @param definition custom field definition returned from Jira.  Main values needed are the field name and the
+     *                   Jira recognized field ID
+     * @param value      value to be associated with the custom field.
+     */
     public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value) {
         if (definition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
@@ -83,19 +90,63 @@ public class CustomField {
     }
 
     public interface SubmissionField {
-        @Nonnull String getFieldName();
+        @Nonnull
+        String getName();
     }
 
+    /**
+     * Secondary constructor for the custom field.  Allows just about any value to be set for the field.
+     *
+     * @param submissionFields A Map containing a reference to the jira definition of the custom field being
+     *                         created indexed by the field name.  The main item needed from the field definition is
+     *                         the Jira field ID
+     * @param field            Represents the name of the field for which this custom field is to be generated.  The
+     *                         implementation of SubmissionField is typically an Enum
+     * @param value            value to assign to the custom field
+     */
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field,
                        @Nonnull Object value) {
-        this(submissionFields.get(field.getFieldName()), value);
+        this(submissionFields.get(field.getName()), value);
     }
 
+
+    /**
+     * similar to the other constructors, this is a convenience constructor specifically oriented to custom Fields that
+     * are for booleans.  The representation in Jira is very specific for booleans so the this constructor will handle
+     * the conversion for the user
+     *
+     * @param submissionFields A Map containing a reference to the jira definition of the custom field being
+     *                         created indexed by the field name.  The main item needed from the field definition is
+     *                         the Jira field ID
+     * @param field            Represents the name of the field for which this custom field is to be generated.  The
+     *                         implementation of SubmissionField is typically an Enum
+     * @param value            boolean value to associate with the custom field.  This value is converted to
+     *                         a {@link ValueContainer} and then that is passed to the main constructor
+     */
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field,
                        boolean value) {
-        this(submissionFields.get(field.getFieldName()), new ValueContainer(value));
+        this(submissionFields.get(field.getName()), new ValueContainer(value));
+    }
+
+
+    /**
+     * Field Constructor associated with a cascading select field.  The structure of a cascading select is different
+     * than a regular field
+     *
+     * @param submissionFields A Map containing a reference to the jira definition of the custom field being
+     *                         created indexed by the field name.  The main item needed from the field definition is
+     *                         the Jira field ID
+     * @param field            Represents the name of the field for which this custom field is to be generated.  The
+     *                         implementation of SubmissionField is typically an Enum
+     * @param parentValue      Primary cascading field value
+     * @param childValue       secondary cascading field value
+     */
+    public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
+                       @Nonnull SubmissionField field,
+                       String parentValue, String childValue) {
+        this(submissionFields.get(field.getName()), new CascadingSelectList(parentValue, childValue));
     }
 
     @Nonnull

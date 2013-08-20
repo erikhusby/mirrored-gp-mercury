@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
