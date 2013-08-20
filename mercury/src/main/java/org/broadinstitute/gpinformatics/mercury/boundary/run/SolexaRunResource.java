@@ -221,7 +221,7 @@ public class SolexaRunResource {
 
                     SquidConnector.SquidResponse structureResponse = connector.saveReadStructure(readStructureRequest, squidUrl);
                     if(structureResponse.getCode() == Response.Status.CREATED.getStatusCode()) {
-                        callerResponse = Response.ok(requestToReturn).build();
+                        callerResponse = Response.ok(requestToReturn).entity(requestToReturn).build();
                     } else {
                         callerResponse = Response.status(structureResponse.getCode()).entity(requestToReturn).build();
                     }
@@ -244,7 +244,7 @@ public class SolexaRunResource {
             // the run != null bit is there as a catch all.  if mercury knows the run, let's save the read structure data in mercury too!
             try {
                 requestToReturn = illuminaSequencingRunFactory.storeReadsStructureDBFree(readStructureRequest, run);
-                callerResponse = Response.ok(requestToReturn).build();
+                callerResponse = Response.ok(requestToReturn).entity(requestToReturn).build();
             } catch (ResourceException e) {
                 callerResponse = Response.status(e.getStatus()).entity(requestToReturn).build();
             }
