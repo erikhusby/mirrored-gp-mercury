@@ -146,20 +146,7 @@ public class IlluminaRunResource implements Serializable {
             throw new NullPointerException("thriftRun cannot be null");
         }
 
-        ZimsIlluminaRun runBean = new ZimsIlluminaRun(
-                thriftRun.getRunName(),
-                thriftRun.getRunBarcode(),
-                thriftRun.getFlowcellBarcode(),
-                thriftRun.getSequencer(),
-                thriftRun.getSequencerModel(),
-                thriftRun.getRunDate(),
-                thriftRun.isPairedRun(),
-                thriftRun.getActualReadStructure(),
-                thriftRun.getImagedAreaPerLaneMM2(),
-                thriftRun.getSetupReadStructure(),
-                thriftRun.getLanesSequenced(),
-                thriftRun.getRunFolder(),
-                SystemRouter.System.SQUID);
+        ZimsIlluminaRun runBean = ZimsIlluminaRun.makeZimsIlluminaRun(thriftRun);
 
         for (TZamboniRead thriftZamboniRead : thriftRun.getReads()) {
             runBean.addRead(thriftZamboniRead);

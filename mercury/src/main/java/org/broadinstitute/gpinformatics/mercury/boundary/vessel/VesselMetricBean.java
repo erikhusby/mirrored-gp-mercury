@@ -22,7 +22,7 @@ public class VesselMetricBean {
     private String unit;
     /** For qPCR, whether the value passes the criteria */
     private boolean pass;
-    /** The position of the tube in the rack, e.g. A01 */ // todo jmt is this necessary?
+    /** The position of the tube in the rack, e.g. A01 */
     private String containerPosition;
 
     /** For JAXB */

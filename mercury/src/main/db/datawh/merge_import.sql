@@ -470,6 +470,7 @@ IS
         quant_value = new.quant_value,
         run_name = new.run_name,
         run_date = new.run_date,
+	vessel_position = new.vessel_position,
         etl_date = new.etl_date
       WHERE lab_metric_id = new.lab_metric_id;
 
@@ -484,6 +485,7 @@ IS
         quant_value,
         run_name,
         run_date,
+	vessel_position,
         etl_date
       )
       SELECT
@@ -497,6 +499,7 @@ IS
         new.quant_value,
         new.run_name,
         new.run_date,
+	new.vessel_position,
         new.etl_date
       FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
 
