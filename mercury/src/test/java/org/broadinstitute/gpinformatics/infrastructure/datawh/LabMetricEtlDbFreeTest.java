@@ -44,6 +44,7 @@ public class LabMetricEtlDbFreeTest {
     private final Set<LabVessel> vesselList = new HashSet<>();
     private final Set<SampleInstance> sampleInstList = new HashSet<>();
     private final Set<LabBatch> workflowLabBatches = new HashSet<>();
+    private final String vesselPosition = "D4";
     private LabMetricEtl tst;
 
     private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
@@ -132,6 +133,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
+        EasyMock.expect(obj.getCreatedDate()).andReturn(new Date());
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
 
         EasyMock.replay(mocks);
         Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 1);
@@ -154,6 +157,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
+        EasyMock.expect(obj.getCreatedDate()).andReturn(new Date());
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
 
         EasyMock.replay(mocks);
         Assert.assertEquals(tst.dataRecords(etlDateStr, false, entityId).size(), 1);
@@ -179,13 +184,15 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
+        EasyMock.expect(obj.getCreatedDate()).andReturn(runDate);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
         EasyMock.replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
         EasyMock.verify(mocks);
 
         Assert.assertEquals(records.size(), 1);
-        verifyRecord(records.iterator().next(), null, null);
+        verifyRecord(records.iterator().next(), null, runDate);
     }
 
     public void testWithLabMetricRun() throws Exception {
@@ -207,6 +214,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(obj.getName()).andReturn(type);
         EasyMock.expect(obj.getUnits()).andReturn(units);
         EasyMock.expect(obj.getValue()).andReturn(value);
+        EasyMock.expect(obj.getVesselPosition()).andReturn(vesselPosition);
         EasyMock.expect(run.getRunName()).andReturn(runName);
         EasyMock.expect(run.getRunDate()).andReturn(runDate);
         EasyMock.replay(mocks);
@@ -233,6 +241,7 @@ public class LabMetricEtlDbFreeTest {
         Assert.assertEquals(parts[i++], String.valueOf(value));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunName));
         Assert.assertEquals(parts[i++], GenericEntityEtl.format(metricRunDate));
+        Assert.assertEquals(parts[i++], vesselPosition);
         Assert.assertEquals(parts.length, i);
     }
 }

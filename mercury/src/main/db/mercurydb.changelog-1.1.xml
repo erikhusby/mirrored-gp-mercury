@@ -324,4 +324,26 @@
             <column name="dilution_vessel" type="number(19,0)" />
         </addColumn>
     </changeSet>
+    <changeSet id="GPLIM-1874-3" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="vessel_position" schemaName="mercury" tableName="lab_metric" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_metric" schemaName="mercury">
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="created_date" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="gplim-1874-4" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="vessel_position" schemaName="mercury" tableName="lab_metric_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_metric_aud" schemaName="mercury">
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="created_date" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
