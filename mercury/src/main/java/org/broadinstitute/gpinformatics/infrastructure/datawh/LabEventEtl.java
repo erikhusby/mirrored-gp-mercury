@@ -283,6 +283,9 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
 
             if (vessels.isEmpty()) {
+                // Use of the full constructor which in this case has multiple nulls is intentional
+                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                 dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, false));
             }
 
@@ -329,11 +332,17 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                                 dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
                                         sample, pdo, wfDenorm, canEtl));
                             } else {
+                                // Use of the full constructor which in this case has multiple nulls is intentional
+                                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
                                         null, null, null, pdo, null, false));
                             }
                         }
                     } else {
+                        // Use of the full constructor which in this case has multiple nulls is intentional
+                        // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                        // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                         dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, null, false));
                     }
                 } catch (RuntimeException e) {
