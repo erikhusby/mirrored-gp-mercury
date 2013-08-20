@@ -12,8 +12,6 @@ import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -156,7 +154,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NULL_WORKFLOW, false, null);
     }
 
     public Product(String productName,
@@ -172,7 +170,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   Workflow workflow,
+                   @Nonnull Workflow workflow,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;

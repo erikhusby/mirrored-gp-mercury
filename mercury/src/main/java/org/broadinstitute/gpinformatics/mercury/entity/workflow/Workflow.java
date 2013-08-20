@@ -3,7 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 public enum Workflow {
     EXOME_EXPRESS("Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
-    WHOLE_GENOME("Whole Genome");
+    WHOLE_GENOME("Whole Genome"),
+    NULL_WORKFLOW(null);
 
     private final String name;
 
