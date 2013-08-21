@@ -185,4 +185,8 @@ public class LabMetric {
         return createdDate;
     }
 
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
 }
