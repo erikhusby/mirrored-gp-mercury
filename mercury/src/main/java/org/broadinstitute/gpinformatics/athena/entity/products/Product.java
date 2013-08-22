@@ -74,7 +74,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String reagentDesignKey;
 
 
-    @Column(unique = true)
+    @Column(name = "PART_NUMBER")
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
@@ -104,6 +104,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
 
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     private boolean pdmOrderableOnly;
@@ -332,6 +333,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
+    @Nonnull
     public Workflow getWorkflow() {
         return Workflow.findByName(workflowName);
     }

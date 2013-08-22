@@ -21,9 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackExc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -35,20 +33,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselComment;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.LabVesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -78,7 +71,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.S
 @Stateful
 @RequestScoped
 public class ReworkEjb {
-    private final static Log logger = LogFactory.getLog(ReworkEjb.class);
+    private static final Log logger = LogFactory.getLog(ReworkEjb.class);
 
     @Inject
     MercurySampleDao mercurySampleDao;
@@ -109,97 +102,6 @@ public class ReworkEjb {
 
     @Inject
     private WorkflowLoader workflowLoader;
-
-    /**
-     * Create rework for all samples in a LabVessel
-     *
-     * @param labVessel      the labVessel where the sample is located.
-     * @param reworkReason   Why is the rework being done.
-     * @param reworkLevel    What level to rework to
-     * @param reworkFromStep Where should the rework be reworked from.
-     * @param comment        text describing why you are doing this.
-     * @param workflow   Name of the workflow in which this vessel is to be reworked
-     *
-     * @throws InformaticsServiceException
-     */
-    @DaoFree
-    public Collection<MercurySample> getVesselRapSheet(@Nonnull LabVessel labVessel,
-                                                       ReworkEntry.ReworkReason reworkReason,
-                                                       ReworkEntry.ReworkLevel reworkLevel,
-                                                       @Nonnull LabEventType reworkFromStep,
-                                                       @Nonnull String comment,
-                                                       Workflow workflow)
-            throws ValidationException {
-
-        Set<MercurySample> reworks = new HashSet<>();
-        VesselPosition[] vesselPositions = labVessel.getVesselGeometry().getVesselPositions();
-
-        WorkflowBucketDef bucketDef = ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep);
-        if (vesselPositions == null) {
-            addReworks(labVessel, reworkReason, reworkLevel, reworkFromStep, comment, reworks, bucketDef,
-                    null, labVessel.getSampleInstances());
-        } else {
-            for (VesselPosition vesselPosition : vesselPositions) {
-                Collection<SampleInstance> samplesAtPosition =
-                        labVessel.getContainerRole().getSampleInstancesAtPosition(vesselPosition);
-                addReworks(labVessel, reworkReason, reworkLevel, reworkFromStep, comment, reworks, bucketDef,
-                        vesselPosition,
-                        samplesAtPosition);
-            }
-        }
-        return reworks;
-    }
-
-    private void addReworks(LabVessel labVessel, ReworkEntry.ReworkReason reworkReason,
-                            ReworkEntry.ReworkLevel reworkLevel, LabEventType reworkFromStep, String comment,
-                            Set<MercurySample> reworks, WorkflowBucketDef bucketDef,
-                            @Nullable VesselPosition vesselPosition,
-                            Collection<SampleInstance> samplesAtPosition) throws ValidationException {
-        for (SampleInstance sampleInstance : samplesAtPosition) {
-            MercurySample mercurySample = sampleInstance.getStartingSample();
-
-            //TODO SGM Revisit.  Ensure that this is truly what we wish to do.
-            if (labVessel.checkCurrentBucketStatus(sampleInstance.getProductOrderKey(), bucketDef.getName(),
-                    BucketEntry.Status.Active)) {
-                String error =
-                        String.format("Sample %s in product order %s already exists in the %s bucket.",
-                                mercurySample.getSampleKey(), sampleInstance.getProductOrderKey(),
-                                bucketDef.getName());
-                logger.error(error);
-                throw new ValidationException(error);
-            }
-
-            getReworkEntryDaoFree(mercurySample, labVessel, vesselPosition,
-                    reworkReason, reworkLevel, reworkFromStep, comment);
-
-            reworks.add(mercurySample);
-        }
-    }
-
-    /**
-     * Create a @link(ReworkEntry) for one Sample
-     *
-     * @param mercurySample  the sample to be reworked.
-     * @param labVessel      the labVessel where the sample is located.
-     * @param vesselPosition Where on the vessel the sample is located.
-     * @param reworkReason   Why is the rework being done.
-     * @param reworkLevel    What level to rework to
-     * @param reworkFromStep Where should the rework be reworked from.
-     * @param comment        text describing why you are doing this.
-     */
-    @DaoFree
-    public void getReworkEntryDaoFree(@Nonnull MercurySample mercurySample, @Nonnull LabVessel labVessel,
-                                      @Nonnull VesselPosition vesselPosition,
-                                      @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                      ReworkEntry.ReworkLevel reworkLevel, @Nonnull LabEventType reworkFromStep,
-                                      String comment) {
-        LabVesselPosition labVesselPosition = new LabVesselPosition(vesselPosition, mercurySample);
-        LabVesselComment<ReworkEntry> reworkComment =
-                new LabVesselComment<>(labVessel.getLatestEvent(), labVessel, comment);
-        ReworkEntry reworkEntry = new ReworkEntry(labVesselPosition, reworkComment, reworkReason,
-                reworkLevel, reworkFromStep);
-        mercurySample.getRapSheet().addRework(reworkEntry);
-    }
 
     /**
      * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at

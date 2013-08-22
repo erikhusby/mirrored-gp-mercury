@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * This represents the workflow associated with a product.
+ */
 public enum Workflow {
     EXOME_EXPRESS("Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
+    /** Use this to indicate that no workflow is associated. */
     NONE(null);
 
     @Nullable
@@ -28,6 +33,7 @@ public enum Workflow {
         return name;
     }
 
+    @Nonnull
     public static Workflow findByName(@Nullable String searchName) {
         if (searchName != null) {
             for (Workflow workflow : values()) {

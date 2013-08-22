@@ -57,7 +57,7 @@ public class ProductOrderTestFactory {
         productOrder.setOrderStatus(Submitted);
 
         Product dummyAddOnProduct =
-                ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "partNumber");
+                ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
         return productOrder;
@@ -126,7 +126,7 @@ public class ProductOrderTestFactory {
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
-                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.EXOME_EXPRESS,
+                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.NONE,
                         false, "Aggregation Data Type");
 
 

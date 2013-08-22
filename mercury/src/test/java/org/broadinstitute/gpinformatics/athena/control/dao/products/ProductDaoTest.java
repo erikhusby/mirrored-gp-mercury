@@ -91,7 +91,7 @@ public class ProductDaoTest extends ContainerTest {
                 "dummy input requirements",                // input requirements
                 "dummy deliverables",                      // deliverables
                 false,                                     // top level product
-                Workflow.EXOME_EXPRESS,
+                Workflow.NONE,
                 false, "agg type");
 
         // we have some tests that call this method more than once so the price item compound key must be unique
