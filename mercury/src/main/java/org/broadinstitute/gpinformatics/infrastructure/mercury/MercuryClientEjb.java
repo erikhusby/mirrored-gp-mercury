@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -68,7 +69,7 @@ public class MercuryClientEjb {
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
                                                               Collection<ProductOrderSample> samples) {
         // Limited to ExomeExpress pdos.
-        if (order.getProduct() == null || order.getProduct().getWorkflow() == null || !order.getProduct().getWorkflow().isExomeExpress()) {
+        if (order.getProduct() == null || order.getProduct().getWorkflow() != Workflow.EXOME_EXPRESS) {
             return Collections.emptyList();
         }
 

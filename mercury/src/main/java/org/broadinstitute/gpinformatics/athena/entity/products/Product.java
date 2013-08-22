@@ -154,8 +154,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this.topLevelProduct=topLevelProduct;
-        this.pdmOrderableOnly=false;
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
     public Product(String productName,
