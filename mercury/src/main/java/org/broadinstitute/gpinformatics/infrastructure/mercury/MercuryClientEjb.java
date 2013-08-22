@@ -68,7 +68,7 @@ public class MercuryClientEjb {
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
                                                               Collection<ProductOrderSample> samples) {
         // Limited to ExomeExpress pdos.
-        if (order.getProduct() == null || !order.getProduct().getWorkflow().isExomeExpress()) {
+        if (order.getProduct() == null || order.getProduct().getWorkflow() == null || !order.getProduct().getWorkflow().isExomeExpress()) {
             return Collections.emptyList();
         }
 
