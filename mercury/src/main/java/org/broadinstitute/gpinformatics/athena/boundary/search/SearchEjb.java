@@ -86,13 +86,13 @@ public class SearchEjb {
     /**
      * The resulting object from performing a search.
      */
-    public class SearchResult<T> {
+    public class SearchResult {
         SearchType searchType;
-        BusinessObject<T> businessObject;
+        BusinessObject businessObject;
         Class<? extends CoreActionBean> actionBeanClass;
         String parameter;
 
-        public SearchResult(SearchType searchType, BusinessObject<T> businessObject,
+        public SearchResult(SearchType searchType, BusinessObject businessObject,
                             Class<? extends CoreActionBean> actionBeanClass,
                             String parameter) {
             this.searchType = searchType;
@@ -105,7 +105,7 @@ public class SearchEjb {
             return searchType;
         }
 
-        public BusinessObject<T> getBusinessObject() {
+        public BusinessObject getBusinessObject() {
             return businessObject;
         }
 
