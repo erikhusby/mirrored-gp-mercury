@@ -41,7 +41,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = "PART_NUMBER"))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
 
     private static final long serialVersionUID = 4859861191078406439L;
