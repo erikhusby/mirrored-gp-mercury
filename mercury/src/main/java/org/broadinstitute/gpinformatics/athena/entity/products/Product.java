@@ -41,7 +41,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = "PART_NUMBER"))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
 
     private static final long serialVersionUID = 4859861191078406439L;
@@ -74,7 +74,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String reagentDesignKey;
 
 
-    @Column(unique = true)
+    @Column(name = "PART_NUMBER")
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
@@ -104,6 +104,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
 
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     private boolean pdmOrderableOnly;
@@ -154,8 +155,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this.topLevelProduct=topLevelProduct;
-        this.pdmOrderableOnly=false;
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
     public Product(String productName,
@@ -333,6 +333,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
+    @Nonnull
     public Workflow getWorkflow() {
         return Workflow.findByName(workflowName);
     }

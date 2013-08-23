@@ -95,7 +95,7 @@ public class LabBatch {
 
     private Boolean isValidationBatch;
 
-    // TODO: convert to Workflow
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     /**
@@ -181,7 +181,7 @@ public class LabBatch {
                     @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
                     String important) {
         this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
-        setWorkflowName(workflowName);
+        this.workflowName = workflowName;
         addReworks(reworkLabVessels);
     }
 

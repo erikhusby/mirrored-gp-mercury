@@ -52,7 +52,7 @@ public class ProductEtl extends GenericEntityEtl<Product, Product> {
                 format(entity.getGuaranteedCycleTimeSeconds()),
                 format(entity.getSamplesPerWeek()),
                 format(entity.isTopLevelProduct()),
-                format(entity.getWorkflow() != null ? entity.getWorkflow().getWorkflowName() : null),
+                format(entity.getWorkflow().getWorkflowName()),
                 format(entity.getProductFamily() != null ? entity.getProductFamily().getName() : null),
                 format(entity.getPrimaryPriceItem() != null ? entity.getPrimaryPriceItem().getPriceItemId() : null)
         );

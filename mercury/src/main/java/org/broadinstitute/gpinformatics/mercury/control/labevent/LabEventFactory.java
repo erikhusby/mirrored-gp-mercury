@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -925,7 +926,7 @@ public class LabEventFactory implements Serializable {
     private TubeFormation buildRackDaoFree(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
                                            PlateType plate, PositionMapType positionMap, boolean source,
                                            boolean createSources) {
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (twoDBarcodedTube == null) {
