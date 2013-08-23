@@ -24,7 +24,7 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV);
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST);
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)

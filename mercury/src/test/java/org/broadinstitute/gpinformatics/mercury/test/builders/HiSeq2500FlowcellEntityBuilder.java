@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -187,7 +188,7 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertNotNull(sampleInstance);
         String workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
-        int reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
+        int reagentsSize = !workflowName.equals(Workflow.WHOLE_GENOME.getWorkflowName()) ? 2 : 1;
 
         Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
@@ -198,7 +199,7 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertNotNull(sampleInstance);
         workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
-        reagentsSize = !workflowName.equals("Whole Genome") ? 2 : 1;
+        reagentsSize = !workflowName.equals(Workflow.WHOLE_GENOME.getWorkflowName()) ? 2 : 1;
 
         Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
