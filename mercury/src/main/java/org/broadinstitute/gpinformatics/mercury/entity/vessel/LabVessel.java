@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -269,7 +270,7 @@ public abstract class LabVessel implements Serializable {
      * @return reagents
      */
     public Set<Reagent> getReagentContents() {
-        if (getReagentContentsCount() != null && getReagentContentsCount() > 0) {
+        if (reagentContentsCount != null && reagentContentsCount > 0) {
             return reagentContents;
         }
         return Collections.emptySet();
@@ -281,10 +282,6 @@ public abstract class LabVessel implements Serializable {
             reagentContentsCount = 0;
         }
         reagentContentsCount++;
-    }
-
-    public Integer getReagentContentsCount() {
-        return reagentContentsCount;
     }
 
     public void addToContainer(VesselContainer<?> vesselContainer) {
@@ -432,11 +429,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceEvents() {
-        Set<LabEvent> totalInPlaceEventsSet = new HashSet<>();
+        Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
         for (LabVessel vesselContainer : containers) {
-            totalInPlaceEventsSet.addAll(vesselContainer.getInPlaceEvents());
+            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEvents());
         }
-        totalInPlaceEventsSet.addAll(inPlaceLabEvents);
         return totalInPlaceEventsSet;
     }
 
@@ -465,7 +461,7 @@ public abstract class LabVessel implements Serializable {
         Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<>();
 
         for (LabVessel currVessel : labVessels) {
-            Set<SampleInstance> sampleInstances = currVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, null);
+            Set<SampleInstance> sampleInstances = currVessel.getSampleInstances(SampleType.WITH_PDO, null);
 
             for (SampleInstance sampleInstance : sampleInstances) {
                 String pdoKey = sampleInstance.getProductOrderKey();
@@ -482,12 +478,11 @@ public abstract class LabVessel implements Serializable {
 
     public String getNearestLabBatchesString() {
         Collection<LabBatch> nearest = getNearestLabBatches();
-        if ((nearest == null) || nearest.isEmpty()) {
+        if (nearest == null) {
             return "";
         }
 
-        LabBatch[] batchArray = nearest.toArray(new LabBatch[nearest.size()]);
-        return StringUtils.join(batchArray);
+        return StringUtils.join(nearest, "");
     }
 
     public int getNearestLabBatchesCount() {
@@ -840,14 +835,18 @@ public abstract class LabVessel implements Serializable {
             // Expects one sample per vessel in the BSP export.
             if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
                 for (MercurySample mercurySample : mercurySamples) {
-                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each sampleInstance.bspExportSample multiple times? I know there's a comment above about the expectation, but we should probably throw an exception if it's not as we expect instead of potentially doing the wrong thing. -BPR
+                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each
+                    // FIXME: sampleInstance.bspExportSample multiple times? I know there's a comment above about
+                    // FIXME: the expectation, but we should probably throw an exception if it's not as we expect
+                    // FIXME: instead of potentially doing the wrong thing. -BPR
                     traversalResults.setBspExportSample(mercurySample);
                 }
             }
         }
 
         // FIXME: Ignore rework bucket entries when deciding whether or not there is a single entry.
-        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide which is the appropriate one in this case (either here or in getSampleInstances).
+        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide
+        // FIXME: which is the appropriate one in this case (either here or in getSampleInstances).
         if (bucketEntries.size() == 1) {
             BucketEntry bucketEntry = bucketEntries.iterator().next();
             if (bucketEntry.getReworkDetail() == null) {
@@ -929,18 +928,11 @@ public abstract class LabVessel implements Serializable {
      * @return in place events, transfers from, transfers to
      */
     public Set<LabEvent> getEvents() {
-        Set<LabEvent> events = new HashSet<>();
-        events.addAll(getInPlaceEvents());
-        events.addAll(getTransfersFrom());
-        events.addAll(getTransfersTo());
-        return events;
+        return Sets.union(getInPlaceEvents(), Sets.union(getTransfersFrom(), getTransfersTo()));
     }
 
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
-        Set<LabEvent> events = new HashSet<>();
-        events.addAll(getInPlaceEvents());
-        events.addAll(getTransfersTo());
-        return events;
+        return Sets.union(getInPlaceEvents(), getTransfersTo());
     }
 
     public BigDecimal getVolume() {
