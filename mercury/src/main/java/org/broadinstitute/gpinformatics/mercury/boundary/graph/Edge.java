@@ -9,21 +9,20 @@ import java.io.Serializable;
 public class Edge implements Serializable {
     private static final long serialVersionUID = 20101015L;
 
-    public static enum LineType {
+    public enum LineType {
         SOLID,
         DASHED
     }
 
-    private String label;
-    private Vertex source;
-    private Vertex destination;
-    private boolean rendered = false;
-    private LineType lineType = LineType.SOLID;
+    private final String label;
+    private final Vertex source;
+    private final Vertex destination;
+    private final LineType lineType;
+
+    private boolean rendered;
 
     public Edge(String label, Vertex source, Vertex destination) {
-        this.label = label;
-        this.source = source;
-        this.destination = destination;
+        this(label, source, destination, LineType.SOLID);
     }
 
     public Edge(String label, Vertex source, Vertex destination, LineType lineType) {
@@ -49,8 +48,8 @@ public class Edge implements Serializable {
         return rendered;
     }
 
-    public void setRendered(boolean rendered) {
-        this.rendered = rendered;
+    public void markRendered() {
+        rendered = true;
     }
 
     public LineType getLineType() {

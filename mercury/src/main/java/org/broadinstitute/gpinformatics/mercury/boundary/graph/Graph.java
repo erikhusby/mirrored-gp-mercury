@@ -15,11 +15,11 @@ public class Graph implements Serializable {
     /** A message for the user */
     private String message;
     /** Random access to vertices */
-    private Map<String, Vertex> mapIdToVertex = new HashMap<>();
+    private final Map<String, Vertex> mapIdToVertex = new HashMap<>();
     /** Random access to edges */
-    private Map<String, Edge> mapIdToEdge = new HashMap<>();
+    private final Map<String, Edge> mapIdToEdge = new HashMap<>();
     /** Avoid visiting an event twice */
-    private Set<String> visitedEventIds = new HashSet<>();
+    private final Set<String> visitedEventIds = new HashSet<>();
 
     public Map<String, Vertex> getMapIdToVertex() {
         return mapIdToVertex;
