@@ -356,31 +356,18 @@ public class TransferVisualizerClient {
 
     private void renderEdge(Edge edge) {
         if (!edge.hasBeenRendered()) {
-            mxCell sourceReceptacleCell = mapIdToMxVertex.get(edge.getSource().getId());
-            if (sourceReceptacleCell == null) {
-                renderVertex(graph.getMapIdToVertex().get(edge.getSource().getId()));
-                sourceReceptacleCell = mapIdToMxVertex.get(edge.getSource().getId());
-            }
+            mxCell sourceReceptacleCell = getReceptacleCell(edge.getSource().getId());
+            mxCell destinationReceptacleCell = getReceptacleCell(edge.getDestination().getId());
 
-            mxCell destinationReceptacleCell = mapIdToMxVertex.get(edge.getDestination().getId());
-            if (destinationReceptacleCell == null) {
-                renderVertex(graph.getMapIdToVertex().get(edge.getDestination().getId()));
-                destinationReceptacleCell = mapIdToMxVertex.get(edge.getDestination().getId());
-            }
-
-            if (sourceReceptacleCell.getValue() instanceof ChildCellValue) {
-                sourceReceptacleCell = ((ChildCellValue) sourceReceptacleCell.getValue()).getPort();
-            }
-
-            if (destinationReceptacleCell.getValue() instanceof ChildCellValue) {
-                destinationReceptacleCell = ((ChildCellValue) destinationReceptacleCell.getValue()).getPort();
-            }
+            sourceReceptacleCell = updateToPort(sourceReceptacleCell);
+            destinationReceptacleCell = updateToPort(destinationReceptacleCell);
 
             String label = edge.getLabel();
             // If the edge has both ends in child cells (e.g. cherry picks)
             if (!sourceReceptacleCell.getParent().equals(mxGraph.getDefaultParent()) && !destinationReceptacleCell
                     .getParent().equals(mxGraph.getDefaultParent())) {
                 int sourceParentEdgeCount = sourceReceptacleCell.getParent().getEdgeCount();
+
                 // If we find another edge to the same destination parent, and it already has a label, don't label the
                 // current edge, because it would be very cluttered if all edges where labeled
                 for (int i = 0; i < sourceParentEdgeCount; i++) {
@@ -392,13 +379,33 @@ public class TransferVisualizerClient {
                     }
                 }
             }
+
             mxGraph.insertEdge(mxGraph.getDefaultParent(), null,
                     label,
                     sourceReceptacleCell,
                     destinationReceptacleCell,
                     edge.getLineType() == Edge.LineType.DASHED ? mxConstants.STYLE_DASHED + "=1" : "");
+
             edge.markRendered();
         }
+    }
+
+    private mxCell updateToPort(mxCell cell) {
+        if (cell.getValue() instanceof ChildCellValue) {
+            return ((ChildCellValue) cell.getValue()).getPort();
+        }
+
+        return cell;
+    }
+
+    private mxCell getReceptacleCell(String edgeReceptacleId) {
+        mxCell receptacleCell = mapIdToMxVertex.get(edgeReceptacleId);
+        if (receptacleCell == null) {
+            renderVertex(graph.getMapIdToVertex().get(edgeReceptacleId));
+            receptacleCell = mapIdToMxVertex.get(edgeReceptacleId);
+        }
+
+        return receptacleCell;
     }
 
     /**
