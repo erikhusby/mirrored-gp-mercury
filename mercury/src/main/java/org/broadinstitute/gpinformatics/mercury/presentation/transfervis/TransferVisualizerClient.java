@@ -164,7 +164,7 @@ public class TransferVisualizerClient {
         public List<String> getPopupList() {
             List<String> popupList = new ArrayList<>();
             popupList.add(CellValue.COPY_BARCODE);
-            if (vertex.getChildVertices() != null) {
+            if(vertex.getChildVertices() != null) {
                 popupList.add(CellValue.COPY_TUBE_BARCODES);
             }
             return popupList;
@@ -300,7 +300,8 @@ public class TransferVisualizerClient {
         @Override
         public String handleClick() {
             try {
-                graph = getServer().expandVertex(graph, vertex.getId(), vertex.getIdType(), alternativeDisplayIds);
+                TransferVisualizerClient.this.graph = getServer().expandVertex(
+                        TransferVisualizerClient.this.graph, vertex.getId(), vertex.getIdType(), alternativeDisplayIds);
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }
@@ -328,7 +329,7 @@ public class TransferVisualizerClient {
 
     public void renderGraph() {
         for (Vertex vertex : graph.getMapIdToVertex().values()) {
-            if (vertex.getParentVertex() == null) {
+            if(vertex.getParentVertex() == null) {
                 renderVertex(vertex);
             }
         }
@@ -374,12 +375,12 @@ public class TransferVisualizerClient {
                     sourceReceptacleCell,
                     destinationReceptacleCell,
                     edge.getLineType() == Edge.LineType.DASHED ? mxConstants.STYLE_DASHED + "=1" : "");
-            edge.markRendered();
+            edge.setRendered(true);
         }
     }
 
     /**
-     * Insert a vertex for a plate, or a rack and tubes.
+     * Insert a vertex for a plate, or a rack and tubes
      * @param vertex barcode and transfers
      */
     void renderVertex(Vertex vertex) {
@@ -387,26 +388,24 @@ public class TransferVisualizerClient {
             vertex.setRendered(true);
             // the layout algorithm will set x and y later
             // todo jmt highlight GSSR barcodes and library names
-            mxCell mxVertex = (mxCell) mxGraph.insertVertex(mxGraph.getDefaultParent(), null, new CellValue(vertex),
-                    0.0, 0.0, 160.0, 40.0,
-                    (vertex.getTitle().contains(highlightBarcode) ? "fillColor=#FFFF00;fontColor=#000000;" :
-                            "fillColor=#FFFFFF;fontColor=#000000;") +
-                    mxConstants.STYLE_VERTICAL_ALIGN + "=" + mxConstants.ALIGN_TOP +
-                    mxConstants.STYLE_VERTICAL_LABEL_POSITION + "=" + mxConstants.ALIGN_TOP);
+            mxCell mxVertex = (mxCell) mxGraph.insertVertex(mxGraph.getDefaultParent(), null,
+                    new CellValue(vertex), 0.0, 0.0, 160.0, 40.0,
+                    (vertex.getTitle().contains(highlightBarcode) ? "fillColor=#FFFF00;fontColor=#000000;" : "fillColor=#FFFFFF;fontColor=#000000;") +
+                            mxConstants.STYLE_VERTICAL_ALIGN + "=" + mxConstants.ALIGN_TOP +
+                            mxConstants.STYLE_VERTICAL_LABEL_POSITION + "=" + mxConstants.ALIGN_TOP);
             mxVertex.setConnectable(false);
             mxGraph.updateCellSize(mxVertex);
-            if (vertex.getTitle().contains(highlightBarcode)) {
+            if(vertex.getTitle().contains(highlightBarcode)) {
                 highlightVertex = mxVertex;
             }
             double rackHeight = mxVertex.getGeometry().getHeight();
-            if (vertex.getChildVertices() != null) {
-                mxCell[][] childCells = insertChildCells(vertex.getChildVertices(), mxVertex);
+            if(vertex.getChildVertices() != null) {
+                mxCell[][] childCells = insertChildCells(vertex, mxVertex);
                 double maxChildCellHeight = arrangeChildCells(vertex, mxVertex, rackHeight, childCells);
                 rackHeight += maxChildCellHeight * (double) childCells.length;
             }
-            // If there are self-referential plate events, draw a box for the user to click on, to see a list of these
-            // events.
-            if (vertex.getDetails() != null && !vertex.getDetails().isEmpty()) {
+            // If there are self-referential plate events, draw a box for the user to click on, to see a list of these events
+            if(vertex.getDetails() != null && !vertex.getDetails().isEmpty()) {
                 mxGraph.insertVertex(
                         mxVertex,
                         null,
@@ -414,8 +413,8 @@ public class TransferVisualizerClient {
                         0.0, rackHeight, mxVertex.getGeometry().getWidth(), (double) BUTTON_HEIGHT);
                 rackHeight += (double) BUTTON_HEIGHT;
             }
-            // If there are more transfers, draw a box for the user to click on, to see the transfers.
-            if (vertex.getHasMoreEdges()) {
+            // If there are more transfers, draw a box for the user to click on, to see the transfers
+            if(vertex.getHasMoreEdges()) {
                 mxGraph.insertVertex(
                         mxVertex,
                         null,
@@ -431,15 +430,15 @@ public class TransferVisualizerClient {
 
     /**
      * Insert child cells, and resize, so they fit their titles
-     * @param childVertices child cells to insert
+     * @param vertex rack
      * @param mxVertex JGraph vertex
      * @return array of JGraph child cells
      */
-    private mxCell[][] insertChildCells(Vertex[][] childVertices, mxCell mxVertex) {
-        int numChildRows = childVertices.length;
-        mxCell[][] childCells = new mxCell[childVertices.length][childVertices[0].length];
+    private mxCell[][] insertChildCells(Vertex vertex, mxCell mxVertex) {
+        int numChildRows = vertex.getChildVertices().length;
+        mxCell[][] childCells = new mxCell[vertex.getChildVertices().length][vertex.getChildVertices()[0].length];
         for(int rowIndex = 0; rowIndex < numChildRows; rowIndex++) {
-            Vertex[] row = childVertices[rowIndex];
+            Vertex[] row = vertex.getChildVertices()[rowIndex];
             for(int columnIndex = 0; columnIndex < row.length; columnIndex++) {
                 Vertex childVertex = row[columnIndex];
                 if (childVertex != null) {
@@ -480,8 +479,7 @@ public class TransferVisualizerClient {
      * @param childCells array of JGraph child vertices
      * @return the height of the tallest child cell
      */
-    private static double arrangeChildCells(Vertex vertex, mxCell mxVertex, double rackHeaderHeight,
-                                            mxCell[][] childCells) {
+    private double arrangeChildCells(Vertex vertex, mxCell mxVertex, double rackHeaderHeight, mxCell[][] childCells) {
         int numColumns = vertex.getChildVertices()[0].length;
         double maxChildCellHeight = 0.0;
         double maxChildCellWidth = 0.0;
@@ -495,14 +493,14 @@ public class TransferVisualizerClient {
         }
         double totalCellsHeight = maxChildCellHeight * (double) childCells.length;
         double totalY = rackHeaderHeight + totalCellsHeight;
-        if (vertex.getDetails() != null && !vertex.getDetails().isEmpty()) {
+        if(vertex.getDetails() != null && !vertex.getDetails().isEmpty()) {
             totalY += (double) BUTTON_HEIGHT;
         }
-        if (vertex.getHasMoreEdges()) {
+        if(vertex.getHasMoreEdges()) {
             totalY += (double) BUTTON_HEIGHT;
         }
-        for (int rowIndex = 0; rowIndex < childCells.length; rowIndex++) {
-            for (int columnIndex = 0; columnIndex < childCells[0].length; columnIndex++) {
+        for(int rowIndex = 0; rowIndex < childCells.length; rowIndex++) {
+            for(int columnIndex = 0; columnIndex < childCells[0].length; columnIndex++) {
                 mxCell mxCell = childCells[rowIndex][columnIndex];
                 if (mxCell != null) {
                     mxGeometry mxGeometry = mxCell.getGeometry();
@@ -543,28 +541,28 @@ public class TransferVisualizerClient {
 
     private static TransferVisualizer getServer() {
         try {
-            Hashtable<String, String> jndiProperties = new Hashtable<>();
+            final Hashtable jndiProperties = new Hashtable();
             jndiProperties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-            Context context = new InitialContext(jndiProperties);
+            final Context context = new InitialContext(jndiProperties);
             // The app name is the application name of the deployed EJBs. This is typically the ear name
             // without the .ear suffix. However, the application name could be overridden in the application.xml of the
             // EJB deployment on the server.
             // Since we haven't deployed the application as a .ear, the app name for us will be an empty string
-            String appName = "";
+            final String appName = "";
             // This is the module name of the deployed EJBs on the server. This is typically the jar name of the
             // EJB deployment, without the .jar suffix, but can be overridden via the ejb-jar.xml
             // In this example, we have deployed the EJBs in a jboss-as-ejb-remote-app.jar, so the module name is
             // jboss-as-ejb-remote-app
             // todo jmt change web.xml to make this fixed, or fetch it from BuildInfoBean
-            String moduleName = "Mercury-1.31-SNAPSHOT";
+            final String moduleName = "Mercury-1.31-SNAPSHOT";
 //            final String moduleName = "Mercury-Arquillian";
             // AS7 allows each deployment to have an (optional) distinct name. We haven't specified a distinct name for
             // our EJB deployment, so this is an empty string
-            String distinctName = "";
+            final String distinctName = "";
             // The EJB name which by default is the simple class name of the bean implementation class
-            String beanName = TransferEntityGrapher.class.getSimpleName();
+            final String beanName = TransferEntityGrapher.class.getSimpleName();
             // the remote view fully qualified class name
-            String viewClassName = TransferVisualizer.class.getName();
+            final String viewClassName = TransferVisualizer.class.getName();
             // let's do the lookup (notice the ?stateful string as the last part of the jndi name for stateful bean lookup)
             String name = "ejb:" + appName + "/" + moduleName + "/" + distinctName + "/" + beanName + "!" + viewClassName + "?stateful";
             return (TransferVisualizer) context.lookup(name);
