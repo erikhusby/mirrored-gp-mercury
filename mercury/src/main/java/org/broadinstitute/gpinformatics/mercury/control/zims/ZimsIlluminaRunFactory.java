@@ -102,15 +102,15 @@ public class ZimsIlluminaRunFactory {
                     if (productOrderKey != null) {
                         productOrderKeys.add(productOrderKey);
                     }
+                    String pdoSampleName = sampleInstance.getStartingSample().getSampleKey();
                     String sampleId = (sampleInstance.getBspExportSample() != null) ?
-                            sampleInstance.getBspExportSample().getSampleKey() :
-                            sampleInstance.getStartingSample().getSampleKey();
+                            sampleInstance.getBspExportSample().getSampleKey() : pdoSampleName;
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                     String libraryName = libraryVessel.getLabel();
                     sampleInstanceDtos
                             .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey,
-                                    libraryName, libraryVessel.getCreatedOn()));
+                                    libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
                 }
             }
         }
@@ -239,7 +239,7 @@ public class ZimsIlluminaRunFactory {
             libraryBeans.add(
                 createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
                         indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
-                        indexingSchemeDto, mapNameToControl));
+                        indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName()));
         }
 
         // Make order predictable
@@ -250,7 +250,8 @@ public class ZimsIlluminaRunFactory {
     private LibraryBean createLibraryBean(
         LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
         MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
-        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto, Map<String, Control> mapNameToControl) {
+        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
+        Map<String, Control> mapNameToControl, String pdoSampleName) {
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
@@ -325,7 +326,7 @@ public class ZimsIlluminaRunFactory {
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow);
+                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, pdoSampleName);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
@@ -384,9 +385,11 @@ public class ZimsIlluminaRunFactory {
         private String productOrderKey;
         private String sequencedLibraryName;
         private Date sequencedLibraryDate;
+        private String pdoSampleName;
 
         public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstance sampleInstance, String sampleId,
-                                 String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate) {
+                                 String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate,
+                                 String pdoSampleName) {
             this.laneNumber = laneNumber;
             this.labVessel = labVessel;
             this.sampleInstance = sampleInstance;
@@ -394,6 +397,7 @@ public class ZimsIlluminaRunFactory {
             this.productOrderKey = productOrderKey;
             this.sequencedLibraryName = sequencedLibraryName;
             this.sequencedLibraryDate = sequencedLibraryDate;
+            this.pdoSampleName = pdoSampleName;
         }
 
         public short getLaneNumber() {
@@ -424,6 +428,10 @@ public class ZimsIlluminaRunFactory {
             return sequencedLibraryDate;
         }
 
+        String getPdoSampleName() {
+            return pdoSampleName;
+        }
+
         @Override
         public boolean equals(Object other) {
             if (this == other) {
@@ -442,13 +450,15 @@ public class ZimsIlluminaRunFactory {
                     .append(sequencedLibraryName, castOther.getSequencedLibraryName())
                     .append(sequencedLibraryDate, castOther.getSequencedLibraryDate())
                     .append(sampleId, castOther.getSampleId())
-                    .append(sampleInstance, castOther.getSampleInstance()).isEquals();
+                    .append(sampleInstance, castOther.getSampleInstance())
+                    .append(pdoSampleName, castOther.getPdoSampleName()).isEquals();
         }
 
         @Override
         public int hashCode() {
             return new HashCodeBuilder().append(laneNumber) .append(labVessel) .append(sampleInstance) .append(sampleId)
-                    .append(productOrderKey) .append(sequencedLibraryName) .append(sequencedLibraryDate) .toHashCode();
+                    .append(productOrderKey) .append(sequencedLibraryName) .append(sequencedLibraryDate)
+                    .append(pdoSampleName).toHashCode();
         }
     }
 

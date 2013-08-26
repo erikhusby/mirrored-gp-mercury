@@ -174,7 +174,7 @@ public class ZimsIlluminaRunFactoryTest {
             }
             sampleInstanceDtoList.add(
                             new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
-                                    PRODUCT_ORDER_KEY, null, null));
+                                    PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
         }
 
         return sampleInstanceDtoList;
@@ -259,6 +259,7 @@ public class ZimsIlluminaRunFactoryTest {
             assertThat(libraryBean.getRace(), equalTo("N/A"));
             // in mercury, pipeline should always be told to aggregate
             assertThat(libraryBean.doAggregation(), equalTo(true));
+            assertThat(libraryBean.getProductOrderSample(), equalTo(TEST_SAMPLE_ID));
         }
     }
 }
