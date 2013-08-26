@@ -375,7 +375,7 @@ public class TransferVisualizerClient {
                     sourceReceptacleCell,
                     destinationReceptacleCell,
                     edge.getLineType() == Edge.LineType.DASHED ? mxConstants.STYLE_DASHED + "=1" : "");
-            edge.setRendered(true);
+            edge.markRendered();
         }
     }
 
