@@ -32,7 +32,17 @@
                 </div>
             </div>
 
-        <img src="images/workflow/${actionBean.viewWorkflow.name}.png"/>
+        <c:choose>
+            <c:when test="${actionBean.workflowImage != null}">
+                    <img src="${actionBean.workflowImage}"  class="hidden-print img-rounded workflow-image"
+                         alt="Image for Workflow: ${actionBean.viewWorkflow.name} Version: ${actionBean.viewWorkflow.effectiveVersion.version}"/>
+            </c:when>
+            <c:otherwise>
+                <div class="help-block btn-warning">
+                    No image available for Workflow: ${actionBean.viewWorkflow.name} Version: ${actionBean.viewWorkflow.effectiveVersion.version}
+                </div>
+            </c:otherwise>
+        </c:choose>
 
     </stripes:layout-component>
 </stripes:layout-render>

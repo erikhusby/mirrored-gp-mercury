@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -93,5 +94,17 @@ public class WorkflowActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return false;
+    }
+
+    public String getWorkflowImage() {
+        String location = "/images/workflow/" + viewWorkflow.getWorkflowImageFileName();
+
+        String fullPath = getContext().getServletContext().getRealPath(location);
+        File imageFile = new File(fullPath);
+        if (imageFile.exists()) {
+            return getContext().getRequest().getContextPath() + location;
+        }
+
+        return null;
     }
 }

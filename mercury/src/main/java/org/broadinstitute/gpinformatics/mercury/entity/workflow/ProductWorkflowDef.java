@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,4 +85,9 @@ public class ProductWorkflowDef implements Serializable {
         return productDefVersionsByVersion.get(version);
     }
 
+    @Nonnull
+    public String getWorkflowImageFileName() {
+        return "/images/workflow/" + getName() + "_" + getEffectiveVersion().getVersion() + "_" +
+               getEffectiveVersion().getEffectiveDate().getTime() + ".png";
+    }
 }
