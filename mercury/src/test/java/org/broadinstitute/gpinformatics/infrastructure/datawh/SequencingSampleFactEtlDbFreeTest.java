@@ -72,24 +72,24 @@ import java.util.TreeSet;
 public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     public static final String FCT_TICKET = "FCT-1";
     private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
-    private long entityId = 9988776655L;
-    private String runName = "hiseqRun_name_dbfreetest";
-    private Date runDate = new Date(1377000000000L);
-    private Date tubeCreateDate = new Date(1376000000000L);
-    private String tubeCreateDateFormat = ExtractTransform.formatTimestamp(tubeCreateDate);
-    private String barcode = "22223333";
-    private String tubeBarcode = "44445555";
-    private String machineName = "ABC-DEF";
-    private String cartridgeName = "flowcell09u1234-8931";
-    private long operator = 5678L;
-    private String now = String.valueOf(java.lang.System.currentTimeMillis());
-    private String[] molecularIndex = new String[]{"ATTACCA", "GTTACCA", "CTTACCA"};
-    private String[] molecularIndexSchemeName = new String[]{"abcd-", "bcde-", "cdef-"};
-    private long researchProjectId = 33221144L;
-    private Set<SampleInstance> sampleInstances = new HashSet<>();
-    private List<Reagent> reagents = new ArrayList<>();
+    private final long entityId = 9988776655L;
+    private final String runName = "hiseqRun_name_dbfreetest";
+    private final Date runDate = new Date(1377000000000L);
+    private final Date tubeCreateDate = new Date(1376000000000L);
+    private final String tubeCreateDateFormat = ExtractTransform.formatTimestamp(tubeCreateDate);
+    private final String barcode = "22223333";
+    private final String tubeBarcode = "44445555";
+    private final String machineName = "ABC-DEF";
+    private final String cartridgeName = "flowcell09u1234-8931";
+    private final long operator = 5678L;
+    private final String now = String.valueOf(java.lang.System.currentTimeMillis());
+    private final String[] molecularIndex = new String[]{"ATTACCA", "GTTACCA", "CTTACCA"};
+    private final String[] molecularIndexSchemeName = new String[]{"abcd-", "bcde-", "cdef-"};
+    private final long researchProjectId = 33221144L;
+    private final Set<SampleInstance> sampleInstances = new HashSet<>();
+    private final List<Reagent> reagents = new ArrayList<>();
     private LabBatch fctBatch;
-    private Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
+    private final Map<VesselPosition, LabVessel> laneVesselsAndPositions = new HashMap<>();
 
     private SequencingRun run;
     private SequencingSampleFactEtl tst;
@@ -183,8 +183,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 EasyMock.anyObject(LabBatch.LabBatchType.class)))
                 .andReturn(sampleInstances).anyTimes();
 
-        for (SampleInstance si : sampleInstances) {
-            EasyMock.expect(si.getAllWorkflowLabBatches()).andReturn(
+        for (SampleInstance sampleInstance1 : sampleInstances) {
+            EasyMock.expect(sampleInstance1.getAllWorkflowLabBatches()).andReturn(
                     Collections.<LabBatch>singletonList(workflowBatch)).anyTimes();
         }
     }
@@ -368,6 +368,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                     ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                     researchProjectId, workflowBatch.getBatchName());
         }
+        Assert.assertEquals(counts[0], 0);
         Assert.assertEquals(counts[1], 2);
         Assert.assertEquals(counts[2], 2);
     }

@@ -259,9 +259,9 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             Collection<LabBatch> fctBatches = cartridge.getAllLabBatches(LabBatch.LabBatchType.FCT);
             LabBatch fctBatch = fctBatches.size() == 1 ? fctBatches.iterator().next() : null;
             Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
-            for (VesselPosition position : vesselsWithPositions.keySet()) {
-
-                LabVessel tube = vesselsWithPositions.get(position);
+            for (Map.Entry<VesselPosition, LabVessel> entry : vesselsWithPositions.entrySet()) {
+                VesselPosition position = entry.getKey();
+                LabVessel tube = entry.getValue();
                 if (tube != null) {
                     LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
                     Collection<SampleInstance> sampleInstances =
@@ -315,12 +315,18 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                                 fctVessel, batchName));
                     }
                     if (sampleInstances.size() == 0) {
+                        // Use of the full constructor which in this case has multiple nulls is intentional
+                        // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                        // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                         dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
                                 fctVessel, null));
                     }
                 }
             }
         } else {
+            // Use of the full constructor which in this case has multiple nulls is intentional
+            // since exactly which fields are null is used as indicator in postEtlLogging, and this
+            // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
             dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false, null, null));
         }
         Collections.sort(dtos, SequencingRunDto.BY_SAMPLE_KEY);

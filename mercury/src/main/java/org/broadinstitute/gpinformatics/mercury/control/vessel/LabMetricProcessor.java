@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ public class LabMetricProcessor extends TableProcessor {
     private List<String> headerNames;
 
     private final LabVesselDao labVesselDao;
+    private final Date metricDate;
 
     /**
      * This constructor requires classes to pass in the injected values. We might want to make this injectable, but
@@ -39,12 +41,14 @@ public class LabMetricProcessor extends TableProcessor {
         super(null);
         this.labVesselDao = labVesselDao;
         this.metricType = metricType;
+        this.metricDate = new Date();
     }
 
     @Override
     public void processRowDetails(Map<String, String> dataRow, int dataRowIndex) {
         String barcode = dataRow.get(LabMetricHeaders.BARCODE.getText());
         String metric = dataRow.get(LabMetricHeaders.METRIC.getText());
+        String vesselPosition = dataRow.get(LabMetricHeaders.LOCATION.getText());
 
         // If the barcode is blank, we just skip the row. This is a valid case since we only want to update
         // rows that have a barcode.
@@ -58,7 +62,8 @@ public class LabMetricProcessor extends TableProcessor {
         // Convert to a number.
         try {
             BigDecimal metricDecimal = new BigDecimal(dataRow.get(LabMetricHeaders.METRIC.getText()));
-            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.UG_PER_ML);
+            LabMetric currentMetric = new LabMetric(metricDecimal, metricType, LabMetric.LabUnit.UG_PER_ML,
+                    vesselPosition, metricDate);
             LabVessel metricVessel = labVesselDao.findByIdentifier(barcode);
             if (metricVessel == null) {
                 addDataMessage("Vessel not found for " + barcode, dataRowIndex);

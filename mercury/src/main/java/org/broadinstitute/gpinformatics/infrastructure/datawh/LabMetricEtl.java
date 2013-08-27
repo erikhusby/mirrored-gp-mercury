@@ -92,7 +92,8 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                                     format(entity.getUnits().name()),
                                     format(entity.getValue()),
                                     format(run != null ? run.getRunName() : null),
-                                    format(run != null ? run.getRunDate() : null)));
+                                    format(run != null ? run.getRunDate() : entity.getCreatedDate()),
+                                    format(entity.getVesselPosition())));
                         }
                     }
                 }

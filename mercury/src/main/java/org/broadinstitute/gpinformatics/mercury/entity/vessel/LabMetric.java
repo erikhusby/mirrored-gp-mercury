@@ -5,6 +5,7 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,6 @@ public class LabMetric {
     }
 
     public enum MetricType {
-//        FRAGMENT_SIZE,
-//        VOLUME,
         BSP_PICO("BSP Pico", false),
         PRE_FLIGHT_PRE_NORM_PICO("Pre Flight Pre Norm Pico", false),
         PRE_FLIGHT_POST_NORM_PICO("Pre Flight Post Norm Pico", false),
@@ -129,14 +128,21 @@ public class LabMetric {
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
+    private String vesselPosition;
+
+    private Date createdDate;
+
     /** For JPA */
     protected LabMetric() {
     }
 
-    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit) {
+    public LabMetric(BigDecimal value, MetricType metricType, LabUnit labUnit, String vesselPosition,
+                     Date createdDate) {
         this.value = value;
         this.metricType = metricType;
         this.labUnit = labUnit;
+        this.vesselPosition = vesselPosition;
+        this.createdDate = createdDate;
     }
 
     public Long getLabMetricId() {
@@ -169,6 +175,18 @@ public class LabMetric {
 
     public void setLabVessel(LabVessel labVessel) {
         this.labVessel = labVessel;
+    }
+
+    public String getVesselPosition() {
+        return vesselPosition;
+    }
+
+    public Date getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
     }
 
 }

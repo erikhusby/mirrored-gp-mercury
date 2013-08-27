@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -129,6 +130,35 @@ public class ZimsIlluminaRun {
                 imagedAreaPerLaneMM2, lanesSequenced, systemOfRecord);
         this.setupReadStructure = setupReadStructure;
         this.runFolder = runFolder;
+    }
+
+    /**
+     * Creates a ZimsIlluminaRun from a TZamboniRun.
+     *
+     * TODO: Make this method fill in more data from the thrift run.
+     * It would be good if this method could handle the rest of what is currently done in
+     * {@link org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource#getRun(edu.mit.broad.prodinfo.thrift.lims.TZamboniRun, java.util.Map, org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter, org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao)}.
+     * However, that method currently relies on some external data sources that are not available to ZimsIlluminaRun and
+     * it's not immediately obvious that passing those into this method is the right way to go about it.
+     *
+     * @param zamboniRun    the thrift run to build the ZimsIlluminaRun from
+     * @return a new ZimsIlluminaRun
+     */
+    public static ZimsIlluminaRun makeZimsIlluminaRun(TZamboniRun zamboniRun) {
+        return new ZimsIlluminaRun(
+                zamboniRun.getRunName(),
+                zamboniRun.getRunBarcode(),
+                zamboniRun.getFlowcellBarcode(),
+                zamboniRun.getSequencer(),
+                zamboniRun.getSequencerModel(),
+                zamboniRun.getRunDate(),
+                zamboniRun.isPairedRun(),
+                zamboniRun.getActualReadStructure(),
+                zamboniRun.getImagedAreaPerLaneMM2(),
+                zamboniRun.getSetupReadStructure(),
+                zamboniRun.getLanesSequenced(),
+                zamboniRun.getRunFolder(),
+                SystemRouter.System.SQUID);
     }
 
     /**

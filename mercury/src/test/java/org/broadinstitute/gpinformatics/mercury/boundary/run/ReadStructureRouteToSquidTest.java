@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -10,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.ws.rs.core.Response;
 
 /**
  * Test that confirms the default
@@ -21,7 +23,8 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST);
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -40,7 +43,9 @@ public class ReadStructureRouteToSquidTest extends Arquillian {
         readStructureRequest.setRunBarcode("FunkyColdMedina");
         readStructureRequest.setLanesSequenced("2,5");
 
-        ReadStructureRequest result = solexaRunResource.storeRunReadStructure(readStructureRequest);
-        Assert.assertTrue(result.getError().contains("is not registered in squid"));
+        Response readStructResponse = solexaRunResource.storeRunReadStructure(readStructureRequest);
+        ReadStructureRequest result = (ReadStructureRequest) readStructResponse.getEntity();
+        Assert.assertNotEquals(readStructResponse.getStatus(), Response.Status.OK);
+//        Assert.assertTrue(result.getError().contains("is not registered in squid"));
     }
 }

@@ -234,6 +234,7 @@ CREATE TABLE lab_metric (
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
   run_date         DATE,
+  vessel_position  VARCHAR2(255),
   etl_date         DATE NOT NULL
 );
 
@@ -521,7 +522,8 @@ CREATE TABLE im_lab_metric (
   quant_units      VARCHAR2(255),
   quant_value      NUMBER(19,2),
   run_name         VARCHAR2(255),
-  run_date         DATE
+  run_date         DATE,
+  vessel_position  VARCHAR2(255)
 );
 
 

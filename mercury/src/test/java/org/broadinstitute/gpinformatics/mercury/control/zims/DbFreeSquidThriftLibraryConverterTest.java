@@ -30,7 +30,7 @@ public class DbFreeSquidThriftLibraryConverterTest {
         pdo.setJiraTicketKey("PDO-2");
         pdo.setProduct(
                 new Product("Mashed Potatoes", new ProductFamily("Mashed Things"), null, null, null, null, null, null,
-                        null, null, null, null, false, Workflow.EXOME_EXPRESS, false, "with gravy"));
+                        null, null, null, null, false, Workflow.NONE, false, "with gravy"));
 
         SquidThriftLibraryConverter converter = new SquidThriftLibraryConverter();
         TZamboniLibrary zamboniLibrary = thriftRun.getLanes().iterator().next().getLibraries().iterator().next();
