@@ -84,7 +84,7 @@ public class LabEventResource {
     /**
      * Find all LabEvents for the specified batch ID.
      */
-    public LabEventResponseBean transfersByBatchId(@PathParam("batchId") String batchId) {
+    public LabEventResponseBean labEventsByBatchId(@PathParam("batchId") String batchId) {
         LabBatch labBatch = labBatchDao.findByName(batchId);
         if (labBatch == null) {
             throw new RuntimeException("Batch not found: " + batchId);
@@ -93,6 +93,31 @@ public class LabEventResource {
         Collections.sort(labEventsByTime, LabEvent.BY_EVENT_DATE);
         List<LabEventBean> labEventBeans =
                 buildLabEventBeans(labEventsByTime, new DefaultLabEventRefDataFetcher());
+        return new LabEventResponseBean(labEventBeans);
+    }
+
+    @Path("/reagents/{plateBarcodes}")
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    public LabEventResponseBean reagentsByPlateBarcodes(@PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
+        String[] barcodes = StringUtils.split(plateBarcodes, ",");
+        Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
+
+        List<LabEvent> labEvents = new ArrayList<>();
+
+        for (LabVessel labVessel : byBarcodes.values()) {
+            for (LabEvent labEvent : labVessel.getInPlaceEvents()) {
+                if (!labEvent.getReagents().isEmpty()) {
+                    labEvents.add(labEvent);
+                }
+            }
+        }
+
+        Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);
+
+        List<LabEventBean> labEventBeans =
+                buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
+
         return new LabEventResponseBean(labEventBeans);
     }
 
