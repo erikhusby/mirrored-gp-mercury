@@ -27,7 +27,7 @@
             <tr>
                 <th>Name</th>
                 <th>Version</th>
-                <th>Date</th>
+                <th>Effective Date</th>
             </tr>
             </thead>
             <tbody>
