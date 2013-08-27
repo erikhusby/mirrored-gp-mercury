@@ -87,7 +87,7 @@ public class ProductWorkflowDef implements Serializable {
 
     @Nonnull
     public String getWorkflowImageFileName() {
-        return "/images/workflow/" + getName() + "_" + getEffectiveVersion().getVersion() + "_" +
+        return getName() + "_" + getEffectiveVersion().getVersion() + "_" +
                getEffectiveVersion().getEffectiveDate().getTime() + ".png";
     }
 }
