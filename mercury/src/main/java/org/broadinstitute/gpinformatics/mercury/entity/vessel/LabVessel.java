@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
@@ -177,7 +178,7 @@ public abstract class LabVessel implements Serializable {
     private Integer sampleInstanceCount;
 
     @Transient
-    private Map<String, LabMetric> metricMap;
+    private Map<String, Set<LabMetric>> metricMap;
 
     /**
      * Set by {@link #preProcessEvents()}
@@ -250,11 +251,11 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
-    public Map<String, LabMetric> getMetricMap() {
+    public Map<String, Set<LabMetric>> getMetricMap() {
         return metricMap;
     }
 
-    public void setMetricMap(Map<String, LabMetric> metricMap) {
+    public void setMetricMap(Map<String, Set<LabMetric>> metricMap) {
         this.metricMap = metricMap;
     }
 
@@ -1641,7 +1642,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return Returns a map of lab metrics keyed by the metric display name.
      */
-    public Map<String, LabMetric> getMetricsForVesselAndDescendants() {
+    public Map<String, Set<LabMetric>> getMetricsForVesselAndDescendants() {
         Set<LabMetric> allMetrics = new HashSet<>();
         if (metricMap == null) {
             metricMap = new HashMap<>();
@@ -1649,8 +1650,14 @@ public abstract class LabVessel implements Serializable {
             for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
                 allMetrics.addAll(curVessel.getMetrics());
             }
+            Set<LabMetric> metricSet;
             for (LabMetric metric : allMetrics) {
-                metricMap.put(metric.getName().getDisplayName(), metric);
+                metricSet = metricMap.get(metric.getName().getDisplayName());
+                if (metricSet == null) {
+                    metricSet = new TreeSet<>();
+                    metricMap.put(metric.getName().getDisplayName(), metricSet);
+                }
+                metricSet.add(metric);
             }
         }
         return metricMap;

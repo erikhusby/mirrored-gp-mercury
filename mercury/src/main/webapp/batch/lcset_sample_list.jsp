@@ -113,9 +113,9 @@
                         <td> ${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).volume}</td>
                         <td class="initialPico">${bean.sampleToBspPicoValueMap.get(sample.startingSample.sampleKey).concentration}</td>
                         <td class="exportPico"> ${bean.getExportedSampleConcentration(vessel)}</td>
-                        <td class="pondPico"> ${vessel.metricsForVesselAndDescendants.get("Pond Pico").value} </td>
-                        <td class="catchPico"> ${vessel.metricsForVesselAndDescendants.get("Catch Pico").value} </td>
-                        <td class="ecoQPCR"> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").value} </td>
+                        <td class="pondPico"> ${vessel.metricsForVesselAndDescendants.get("Pond Pico").last().value} </td>
+                        <td class="catchPico"> ${vessel.metricsForVesselAndDescendants.get("Catch Pico").last().value} </td>
+                        <td class="ecoQPCR"> ${vessel.metricsForVesselAndDescendants.get("ECO QPCR").last().value} </td>
                         <td> ${bean.getPositionsForEvent(vessel, "SAMPLE_IMPORT")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "SHEARING_TRANSFER")}</td>
                         <td> ${bean.getPositionsForEvent(vessel, "POND_REGISTRATION")}</td>

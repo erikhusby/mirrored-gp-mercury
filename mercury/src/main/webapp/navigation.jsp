@@ -181,15 +181,6 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
                                       event="view">LCSets</stripes:link>
                     </li>
-
-                    <security:authorizeBlock roles="<%= roles(Developer) %>">
-                        <li class="divider"></li>
-                        <li>
-                            <stripes:link id="allSearch"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                                          event="view">All Types</stripes:link>
-                        </li>
-                    </security:authorizeBlock>
                 </ul>
             </li>
         </ul>
