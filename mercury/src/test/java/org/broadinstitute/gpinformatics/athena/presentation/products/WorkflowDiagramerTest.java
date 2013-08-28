@@ -17,7 +17,7 @@ public class WorkflowDiagramerTest extends ContainerTest {
     }
 
     /** Enable and run this test to get workflow diagrams generated. */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testMakeDiagrams() throws Exception {
         // Diagram files are put in destDir (java.io.tmpDir)
         String destDir = diagramer.makeAllDiagramFiles();
