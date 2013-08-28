@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
@@ -26,6 +28,9 @@ public class ProductResource {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private WorkflowDiagramer diagramer;
 
     @XmlRootElement
     public static class ProductData {
@@ -77,5 +82,13 @@ public class ProductResource {
     @Produces(MediaType.APPLICATION_XML)
     public Products findProducts() {
         return new Products(productDao.findProductsForProductList());
+    }
+
+    @GET
+    @Path("workflowDiagrams")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String makeWorkflowDiagrams() throws Exception {
+        String destDir = diagramer.makeAllDiagramFiles();
+        return "Created files in " + destDir + "        ";
     }
 }

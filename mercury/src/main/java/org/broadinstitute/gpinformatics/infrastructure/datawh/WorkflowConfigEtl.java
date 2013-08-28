@@ -87,7 +87,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl<WorkflowConfig, Object> 
         return doEtlFiles(workflowConfigLookup.getDenormConfigs(), etlDateStr);
     }
 
-    /** Creates the wrapped Writer to the sqlLoader data files and exports flattened records. */
+    /** Creates the wrapped Writer to the sql`Loader data files and exports flattened records. */
     private int doEtlFiles(Collection<WorkflowConfigDenorm> denorms, String etlDateStr) {
         int count = 0;
 
