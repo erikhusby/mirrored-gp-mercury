@@ -96,10 +96,20 @@ public class LabEventResource {
         return new LabEventResponseBean(labEventBeans);
     }
 
-    @Path("/reagents/{plateBarcodes}")
+
+    /**
+     * Return any in-place LabEvents that correspond to reagent additions for any of the specified plate barcodes.
+     * This does <b>not</b> return reagents that are part of transfer events.  This is added specifically to support
+     * batchless Pico where the Pico reagent is not part of a transfer and events are not grouped by a batch.
+     */
+    @Path("/{url: inPlaceReagentEvents|reagents}/{plateBarcodes}")
+    // TODO mlc Simplify the @Path regex above to @Path("/inPlaceReagentEvents/{plateBarcodes}") once the updated
+    // TODO dev BSP that references the renamed endpoint is deployed.
     @GET
     @Produces(MediaType.APPLICATION_XML)
-    public LabEventResponseBean reagentsByPlateBarcodes(@PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
+    public LabEventResponseBean inPlaceReagentEventsByPlateBarcodes(
+            @PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
+
         String[] barcodes = StringUtils.split(plateBarcodes, ",");
         Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
 
