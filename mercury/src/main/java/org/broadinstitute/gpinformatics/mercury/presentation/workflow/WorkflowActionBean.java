@@ -9,12 +9,17 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import javax.inject.Inject;
 import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,7 +28,7 @@ import java.util.List;
 @UrlBinding(WorkflowActionBean.ACTIONBEAN_URL_BINDING)
 public class WorkflowActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/workflow/workflow.action";
-    public static final String WORKFLOW_PARAMETER = "workflow";
+    public static final String WORKFLOW_PARAMETER = "workflowDtoId";
 
     public static final String LIST_PAGE = "/workflow/list_workflow.jsp";
     public static final String VIEW_PAGE = "/workflow/view_workflow.jsp";
@@ -31,30 +36,71 @@ public class WorkflowActionBean extends CoreActionBean {
     public static final String GET_WORKFLOW_IMAGE_ACTION = "workflowImage";
 
     private final WorkflowLoader workflowLoader;
+    private WorkflowDiagramer workflowDiagramer;
+
+    // Combination of workflow def and one of its effective dates.
+    public class WorkflowDefDateDto {
+        public int id;
+        public ProductWorkflowDef workflowDef;
+        public Date effectiveDate;
+
+        public WorkflowDefDateDto(int id, ProductWorkflowDef workflowDef,Date effectiveDate) {
+            this.id = id;
+            this.workflowDef = workflowDef;
+            this.effectiveDate = effectiveDate;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public ProductWorkflowDef getWorkflowDef() {
+            return workflowDef;
+        }
+
+        public Date getEffectiveDate() {
+            return effectiveDate;
+        }
+    }
 
     // Data needed for displaying the list.
-    private final List<ProductWorkflowDef> allWorkflows;
+    private final List<WorkflowDefDateDto> allWorkflows;
 
     @Validate(required = true, on = {VIEW_ACTION})
-    private String workflowName;
+    private WorkflowDefDateDto workflowDto;
 
     // Data needed for displaying the view.
-    private ProductWorkflowDef viewWorkflow;
+    private WorkflowDefDateDto viewWorkflowDto;
 
-    public List<ProductWorkflowDef> getAllWorkflows() {
+
+    public List<WorkflowDefDateDto> getAllWorkflows() {
         return allWorkflows;
     }
 
-    public ProductWorkflowDef getViewWorkflow() {
-        return viewWorkflow;
+    public WorkflowDefDateDto getViewWorkflowDto() {
+        return viewWorkflowDto;
     }
 
-    public WorkflowActionBean() {
+    public ProductWorkflowDef getViewWorkflow() {
+        return (viewWorkflowDto != null ? viewWorkflowDto.getWorkflowDef() : null);
+    }
+
+    public WorkflowActionBean() throws Exception {
         super(null, null, WORKFLOW_PARAMETER);
 
         workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
-        allWorkflows = workflowConfig.getProductWorkflowDefs();
+        allWorkflows = new ArrayList<>();
+        // Collects all workflows each with possibly multiple effective dates.
+        int id = 0;
+        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
+            for (Date date : workflowDef.getEffectiveDates()) {
+                allWorkflows.add(new WorkflowDefDateDto(id++, workflowDef, date));
+            }
+        }
+        workflowDiagramer = new WorkflowDiagramer();
+        workflowDiagramer.setWorkflowLoader(workflowLoader);
+        workflowDiagramer.makeAllDiagramFiles();
     }
 
     /**
@@ -62,10 +108,16 @@ public class WorkflowActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, GET_WORKFLOW_IMAGE_ACTION})
     public void init() {
-        workflowName = getContext().getRequest().getParameter(WORKFLOW_PARAMETER);
-        if (!StringUtils.isBlank(workflowName)) {
-            WorkflowConfig workflowConfig = workflowLoader.load();
-            viewWorkflow = workflowConfig.getWorkflowByName(workflowName);
+        String workflowDtoId = getContext().getRequest().getParameter(WORKFLOW_PARAMETER);
+
+        if (!StringUtils.isBlank(workflowDtoId)) {
+            int id = Integer.valueOf(workflowDtoId);
+            for (WorkflowDefDateDto dto : allWorkflows) {
+                if (dto.getId() == id) {
+                    viewWorkflowDto = dto;
+                    break;
+                }
+            }
         }
     }
 
@@ -96,15 +148,16 @@ public class WorkflowActionBean extends CoreActionBean {
         return false;
     }
 
+    /** Returns the url of the relevant workflow image file, or null if it doesn't exist. */
     public String getWorkflowImage() {
-        String location = "/images/workflow/" + viewWorkflow.getWorkflowImageFileName();
 
-        String fullPath = getContext().getServletContext().getRealPath(location);
-        File imageFile = new File(fullPath);
-        if (imageFile.exists()) {
-            return getContext().getRequest().getContextPath() + location;
-        }
+        ProductWorkflowDef workflowDef = viewWorkflowDto.getWorkflowDef();
+        Date effectiveDate = viewWorkflowDto.getEffectiveDate();
 
-        return null;
+        File imageFile =
+                new File(WorkflowDiagramer.DIAGRAM_DIRECTORY, workflowDef.getWorkflowImageFileName(effectiveDate));
+
+        String baseUrl = "/Mercury/rest/products/workflowDiagrams/";
+        return (imageFile.exists() ? baseUrl + imageFile.getName() : null);
     }
 }

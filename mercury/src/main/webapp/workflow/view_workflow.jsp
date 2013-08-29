@@ -28,7 +28,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Effective Date</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.viewWorkflow.effectiveVersion.effectiveDate}</div>
+                    <div class="form-value">${actionBean.viewWorkflowDto.effectiveDate}</div>
                 </div>
             </div>
 
