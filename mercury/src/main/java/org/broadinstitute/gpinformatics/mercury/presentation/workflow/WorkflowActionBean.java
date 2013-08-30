@@ -36,7 +36,6 @@ public class WorkflowActionBean extends CoreActionBean {
     public static final String GET_WORKFLOW_IMAGE_ACTION = "workflowImage";
 
     private final WorkflowLoader workflowLoader;
-    private WorkflowDiagramer workflowDiagramer;
 
     // Combination of workflow def and one of its effective dates.
     public class WorkflowDefDateDto {
@@ -91,16 +90,13 @@ public class WorkflowActionBean extends CoreActionBean {
         workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         allWorkflows = new ArrayList<>();
-        // Collects all workflows each with possibly multiple effective dates.
+        // Collects all workflows, each with possibly multiple effective dates.
         int id = 0;
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             for (Date date : workflowDef.getEffectiveDates()) {
                 allWorkflows.add(new WorkflowDefDateDto(id++, workflowDef, date));
             }
         }
-        workflowDiagramer = new WorkflowDiagramer();
-        workflowDiagramer.setWorkflowLoader(workflowLoader);
-        workflowDiagramer.makeAllDiagramFiles();
     }
 
     /**
@@ -148,7 +144,10 @@ public class WorkflowActionBean extends CoreActionBean {
         return false;
     }
 
-    /** Returns the url of the relevant workflow image file, or null if it doesn't exist. */
+    /**
+     * Returns the url to a Mercury REST service that returns the relevant workflow image file.
+     * @return relative url or null if the image doesn't exist.
+     */
     public String getWorkflowImage() {
 
         ProductWorkflowDef workflowDef = viewWorkflowDto.getWorkflowDef();

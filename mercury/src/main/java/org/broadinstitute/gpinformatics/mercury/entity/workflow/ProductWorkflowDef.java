@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -72,7 +74,8 @@ public class ProductWorkflowDef implements Serializable {
     public ProductWorkflowDefVersion getEffectiveVersion(Date eventDate) {
         ProductWorkflowDefVersion mostRecentEffWorkflowVersion = null;
         for (ProductWorkflowDefVersion productWorkflowDefVersion : getWorkflowVersionsDescEffDate()) {
-            if(productWorkflowDefVersion.getEffectiveDate().before(eventDate)) {
+            // Should select workflow when effectiveDate <= eventDate.
+            if (!productWorkflowDefVersion.getEffectiveDate().after(eventDate)) {
                 mostRecentEffWorkflowVersion = productWorkflowDefVersion;
                 break;
             }
@@ -87,19 +90,20 @@ public class ProductWorkflowDef implements Serializable {
 
     @Nonnull
     public String getWorkflowImageFileName(Date effectiveDate) {
-        return getName().replaceAll("\\s+", "_") + "_" + getEffectiveVersion().getVersion() + "_" +
-               effectiveDate.getTime() + ".png";
+        return getName().replaceAll("\\s+", "_") + "_" + getEffectiveVersion(effectiveDate).getVersion() + "_" +
+               effectiveDate.getTime() + WorkflowDiagramer.DIAGRAM_FILE_EXTENSION;
     }
 
     /** Returns the unique start dates for each product-process pairing, sorted by increasing date . */
     public List<Date> getEffectiveDates() {
         Set<Date> startDates = new HashSet<>();
         for (ProductWorkflowDefVersion workflow : getWorkflowVersionsDescEffDate()) {
+            // Always uses the workflow effectiveDate.
+            startDates.add(workflow.getEffectiveDate());
             for (WorkflowProcessDef wf : workflow.getWorkflowProcessDefs()) {
                 for (WorkflowProcessDefVersion process : wf.getProcessVersionsDescEffDate()) {
-                    if (workflow.getEffectiveDate().after(process.getEffectiveDate())) {
-                        startDates.add(workflow.getEffectiveDate());
-                    } else {
+                    if (workflow.getEffectiveDate().before(process.getEffectiveDate())) {
+                        // Adds process effectiveDate if different from (after) the workflow start date.
                         startDates.add(process.getEffectiveDate());
                     }
                 }
