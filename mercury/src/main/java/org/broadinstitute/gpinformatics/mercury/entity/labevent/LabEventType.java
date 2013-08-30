@@ -353,25 +353,20 @@ public enum LabEventType {
 
     /**
      * For each event, which system is primarily responsible for that lab process
+     * <p/>
+     * <ul>
+     * <li>SQUID: Squid / BettaLIMS, being phased out.</li>
+     * <li>MERCURY: Mercury, being phased in.</li>
+     * <li>WORKFLOW_DEPENDENT: For processes that are shared by multiple products, a message could belong to either
+     * system.  The message router must examine the plastic barcodes to determine system of record.</li>
+     * <li>BOTH: Some messages, e.g. BaitSetup, don't include enough information to determine system of record,
+     * so they must be processed in both.</li>
+     * </ul>
      */
     public enum SystemOfRecord {
-        /**
-         * Squid / BettaLIMS, being phased out
-         */
         SQUID,
-        /**
-         * Mercury, being phased in
-         */
         MERCURY,
-        /**
-         * For processes that are shared by multiple products, a message could belong to either system.  The
-         * message router must examine the plastic barcodes to determine system of record
-         */
         WORKFLOW_DEPENDENT,
-        /**
-         * Some messages, e.g. BaitSetup, don't include enough information to determine system of record, so
-         * they must be processed in both.
-         */
         BOTH
     }
 
@@ -379,25 +374,19 @@ public enum LabEventType {
 
     private static final Map<String, LabEventType> mapNameToType = new HashMap<>();
 
+    /**
+     * <ul>
+     * <li>SOURCE: Lab Event Types associated with this will expect that the <b>source</b> of the event will be the only
+     * plasticware that should already have been registered in the system AND be associated with a PDO that can be validated.</li>
+     * <li>TARGET: Lab Event Types associated with this will expect that the <b>target</b> of the event will be the only
+     * plasticware that should already have been registered in the system AND be associated with a PDO that can be validated.</li>
+     * <li>BOTH: No existing plan to Use this!!  Lab event Types associated with this will expect that both the Source and
+     * the Target of the event will have plasticware that should already have been registered in the system AND
+     * be associated with a PDO that can be validated.</li>
+     * </ul>
+     */
     public enum PlasticToValidate {
-        /*
-            Lab Event Types associated with this will expect that the source of the event will be the only plastic ware
-             that should already have been registered in the system AND be associated with a PDO that can be validated
-         */
-        SOURCE,
-
-        /*
-            Lab Event Types associated with this will expect that the Target of the event will be the only plasticware
-            that should already have been registered in the system AND be associated with a PDO that can be validated
-         */
-        TARGET,
-
-        /*
-            No existing plan to Use this!!  Lab event Types associated with this will expect that both the Source and
-            the Target of the event will have plasticware that should already have been registered in the system AND
-            be associated with a PDO that can be validated
-         */
-        BOTH
+        SOURCE,TARGET,BOTH
     }
 
     private final PlasticToValidate plasticToValidate;
