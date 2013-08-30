@@ -169,9 +169,11 @@ public class WorkflowDiagramerDbFreeTest {
     @Test
     public void testGraph() throws Exception {
         List<WorkflowDiagramer.WorkflowGraph> graphs = diagramer.createGraphs();
-        Assert.assertEquals(graphs.size(), 4);
+        Assert.assertEquals(graphs.size(), 5);
         boolean found1 = false;
         boolean found2 = false;
+        boolean found3 = false;
+        boolean found4 = false;
         for (WorkflowDiagramer.WorkflowGraph graph : graphs) {
             Assert.assertFalse(StringUtils.isEmpty(graph.getDiagramFileName()));
             switch (graph.getWorkflowName()) {
@@ -204,8 +206,15 @@ public class WorkflowDiagramerDbFreeTest {
             case "Whole Genome" :
                 switch (graph.getWorkflowVersion()) {
                 case "1.0" :
-                    Assert.assertEquals(graph.getEffectiveDate(), new Date(MSEC_DATES[0]));
-                    Assert.assertEquals(graph.getNodes().size(), 5);
+                    if (graph.getEffectiveDate().equals(new Date(MSEC_DATES[0]))) {
+                        found3 = true;
+                        Assert.assertEquals(graph.getNodes().size(), 5);
+                    } else if (graph.getEffectiveDate().equals(new Date(MSEC_DATES[1]))) {
+                        found4 = true;
+                        Assert.assertEquals(graph.getNodes().size(), 5);
+                    } else {
+                        Assert.fail();
+                    }
                     break;
                 default :
                     Assert.fail();
@@ -215,6 +224,8 @@ public class WorkflowDiagramerDbFreeTest {
         }
         Assert.assertTrue(found1);
         Assert.assertTrue(found2);
+        Assert.assertTrue(found3);
+        Assert.assertTrue(found4);
     }
 
     @Test
@@ -231,7 +242,7 @@ public class WorkflowDiagramerDbFreeTest {
                 return name.endsWith(WorkflowDiagramer.DOT_EXTENSION);
             }
         });
-        Assert.assertEquals(files.length, 4);
+        Assert.assertEquals(files.length, 5);
         FileUtils.deltree(tmpDir);
     }
 }
