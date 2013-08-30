@@ -1,18 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The workflow definition for a product, composed of processes
@@ -72,7 +74,8 @@ public class ProductWorkflowDef implements Serializable {
     public ProductWorkflowDefVersion getEffectiveVersion(Date eventDate) {
         ProductWorkflowDefVersion mostRecentEffWorkflowVersion = null;
         for (ProductWorkflowDefVersion productWorkflowDefVersion : getWorkflowVersionsDescEffDate()) {
-            if(productWorkflowDefVersion.getEffectiveDate().before(eventDate)) {
+            // Should select workflow when effectiveDate <= eventDate.
+            if (!productWorkflowDefVersion.getEffectiveDate().after(eventDate)) {
                 mostRecentEffWorkflowVersion = productWorkflowDefVersion;
                 break;
             }
@@ -86,8 +89,29 @@ public class ProductWorkflowDef implements Serializable {
     }
 
     @Nonnull
-    public String getWorkflowImageFileName() {
-        return getName() + "_" + getEffectiveVersion().getVersion() + "_" +
-               getEffectiveVersion().getEffectiveDate().getTime() + ".png";
+    public String getWorkflowImageFileName(Date effectiveDate) {
+        return getName().replaceAll("\\s+", "_") + "_" + getEffectiveVersion(effectiveDate).getVersion() + "_" +
+               effectiveDate.getTime() + WorkflowDiagramer.DIAGRAM_FILE_EXTENSION;
     }
+
+    /** Returns the unique start dates for each product-process pairing, sorted by increasing date . */
+    public List<Date> getEffectiveDates() {
+        Set<Date> startDates = new HashSet<>();
+        for (ProductWorkflowDefVersion workflow : getWorkflowVersionsDescEffDate()) {
+            // Always uses the workflow effectiveDate.
+            startDates.add(workflow.getEffectiveDate());
+            for (WorkflowProcessDef wf : workflow.getWorkflowProcessDefs()) {
+                for (WorkflowProcessDefVersion process : wf.getProcessVersionsDescEffDate()) {
+                    if (workflow.getEffectiveDate().before(process.getEffectiveDate())) {
+                        // Adds process effectiveDate if different from (after) the workflow start date.
+                        startDates.add(process.getEffectiveDate());
+                    }
+                }
+            }
+        }
+        List<Date> list = new ArrayList<>(startDates);
+        Collections.sort(list);
+        return list;
+    }
+
 }

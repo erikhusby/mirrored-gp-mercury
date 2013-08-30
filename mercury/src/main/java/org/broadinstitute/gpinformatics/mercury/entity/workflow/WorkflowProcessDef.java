@@ -65,7 +65,8 @@ public class WorkflowProcessDef implements Serializable {
     public WorkflowProcessDefVersion getEffectiveVersion(Date eventDate) {
         WorkflowProcessDefVersion effectiveProcessDef = null;
         for (WorkflowProcessDefVersion workflowProcessDefVersion : getProcessVersionsDescEffDate()) {
-            if(workflowProcessDefVersion.getEffectiveDate().before(eventDate)) {
+            // Should select workflow when effectiveDate <= eventDate.
+            if (!workflowProcessDefVersion.getEffectiveDate().after(eventDate)) {
                 effectiveProcessDef = workflowProcessDefVersion;
                 break;
             }
