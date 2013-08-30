@@ -31,16 +31,16 @@
             </tr>
             </thead>
             <tbody>
-            <c:forEach items="${actionBean.allWorkflows}" var="workflow">
+            <c:forEach items="${actionBean.allWorkflows}" var="workflowDto">
                 <tr>
                     <td>
-                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${workflow.name}">
-                            <stripes:param name="workflow" value="${workflow.name}"/>
-                            ${workflow.name}
+                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${workflowDto.workflowDef.name}">
+                            <stripes:param name="workflowDtoId" value="${workflowDto.id}"/>
+                            ${workflowDto.workflowDef.name}
                         </stripes:link>
                     </td>
-                    <td>${workflow.effectiveVersion.version}</td>
-                    <td>${workflow.effectiveVersion.effectiveDate}</td>
+                    <td>${workflowDto.workflowDef.effectiveVersion.version}</td>
+                    <td>${workflowDto.effectiveDate}</td>
                 </tr>
             </c:forEach>
             </tbody>

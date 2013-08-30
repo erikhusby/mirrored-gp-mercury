@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -15,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.validation.constraints.Null;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -44,8 +42,9 @@ public class WorkflowDiagramer implements Serializable {
     private static Object nodeIdMutex = new Object();
     private static int nextNodeId = 0;
     private WorkflowLoader workflowLoader;
-    private static final String PNG_EXTENSION = ".png";
     private static final String DOT_EXTENSION = ".dot";
+    public static final String DIAGRAM_DIRECTORY = System.getProperty("java.io.tmpdir") + File.separator +
+                                                   "images" + File.separator + "workflow" + File.separator;
 
     public WorkflowDiagramer() {
     }
@@ -56,64 +55,54 @@ public class WorkflowDiagramer implements Serializable {
     }
 
     /**
-     * Parses the workflow config and creates directed graphs of all defined workflows in combination with
-     * all workflow def and process def date ranges.
+     * Parses the workflow config and creates directed graphs of all workflow-effectiveDate combinations,
+     * with the effective date being the later of workflow def date and subordinate process def date.
      *
      * @return List of workflow graphs ordered as found in WorkflowConfig.
      */
-    protected List<WorkflowGraph> createGraphs() {
+    List<WorkflowGraph> createGraphs() throws Exception {
         WorkflowConfig workflowConfig = workflowLoader.load();
+
         List<WorkflowGraph> graphs = new ArrayList<>();
         if (workflowConfig == null) {
             return graphs;
         }
 
-        // First collects the start dates for product-process pairings.  There can be multiple workflowDefs
-        // having the same name (and version, which we ignore here) only distinguished by effective date.
-        Map<String, Set<Date>> mapNameToStartDates = new HashMap<>();
-        for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
-            Set<Date> startDates = mapNameToStartDates.get(workflowDef.getName());
-            if (startDates == null) {
-                startDates = new HashSet<Date>();
-                mapNameToStartDates.put(workflowDef.getName(), startDates);
-            }
-            for (ProductWorkflowDefVersion workflow : workflowDef.getWorkflowVersionsDescEffDate()) {
-                for (WorkflowProcessDef wf : workflow.getWorkflowProcessDefs()) {
-                    for (WorkflowProcessDefVersion process : wf.getProcessVersionsDescEffDate()) {
-                        if (workflow.getEffectiveDate().after(process.getEffectiveDate())) {
-                            startDates.add(workflow.getEffectiveDate());
-                        } else {
-                            startDates.add(process.getEffectiveDate());
-                        }
-                    }
-                }
-            }
-        }
-
-        // Iterates on each workflowDef name and generates workflow graphs at each start date.
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
             String workflowName = workflowDef.getName();
-            // Examine dates in order.
-            List<Date> startDates = new ArrayList<>(mapNameToStartDates.get(workflowName));
-            Collections.sort(startDates);
-            for (Date startDate : startDates) {
-                WorkflowGraph graph =
-                        new WorkflowGraph(workflowName, workflowDef.getEffectiveVersion().getVersion(), startDate);
+
+            for (Date startDate : workflowDef.getEffectiveDates()) {
+
+                WorkflowGraph graph = new WorkflowGraph(workflowName, workflowDef.getEffectiveVersion().getVersion(),
+                        startDate, workflowDef.getWorkflowImageFileName(startDate));
+
                 List<WorkflowGraphNode> previousNodes = new ArrayList<>();
 
                 ProductWorkflowDefVersion workflow = workflowDef.getEffectiveVersion(startDate);
                 if (workflow != null) {
+
+                    Set<String> visitedProcessStep = new HashSet<>();
+
                     for (WorkflowProcessDef processDef : workflow.getWorkflowProcessDefs()) {
                         WorkflowProcessDefVersion process = processDef.getEffectiveVersion(startDate);
                         if (process != null) {
+
                             for (WorkflowStepDef step : process.getWorkflowStepDefs()) {
+
+                                if (!visitedProcessStep.add(processDef.getName() + "//" + step.getName())) {
+                                    throw new Exception("Workflow config contains a cyclic graph in process " +
+                                                        processDef.getName() + " at step " + step.getName());
+                                }
+
                                 if (graph.isEmpty() && CollectionUtils.isEmpty(step.getLabEventTypes())) {
                                     // Workflow step having no events can only be an entry point.
                                     WorkflowGraphNode entryNode = new WorkflowGraphNode(step.getName());
                                     graph.add(entryNode);
                                     previousNodes.add(entryNode);
+
                                 } else {
                                     for (LabEventType eventType : step.getLabEventTypes()) {
+
                                         // Entry point is a free-standing node.
                                         if (step.isEntryPoint() || step.isReEntryPoint() || graph.isEmpty()) {
                                             WorkflowGraphNode entryNode =
@@ -121,14 +110,17 @@ public class WorkflowDiagramer implements Serializable {
                                             graph.add(entryNode);
                                             previousNodes.add(entryNode);
                                         }
+
                                         WorkflowGraphNode toNode =
-                                                new WorkflowGraphNode(step.isDeadEndBranch() ? "(dead end)" : null);
+                                                new WorkflowGraphNode(step.isDeadEndBranch() ? "(dead end)" : "");
                                         graph.add(toNode);
+
                                         for (WorkflowGraphNode fromNode : previousNodes) {
                                             graph.add(new WorkflowGraphEdge(fromNode, toNode, eventType.getName()));
                                         }
-                                        // All subsequent edges must come out of a non-optional step.
+
                                         if (!step.isOptional()) {
+                                            // All subsequent edges must come out of a non-optional step.
                                             previousNodes.clear();
                                         }
                                         previousNodes.add(toNode);
@@ -146,45 +138,37 @@ public class WorkflowDiagramer implements Serializable {
         return graphs;
     }
 
-
     /**
-     * Creates graphs, writes their .dot files, and convert the .dot file to a .png file that is put in an obscure
-     * directory (java.io.tmpdir).
-     * @return the directory name where the .png files were put
+     * Creates graphs, writes their .dot files, and converts the .dot file to a diagram file in DIAGRAM_DIRECTORY
+     * @return the directory name where the diagram files were put
      */
     public String makeAllDiagramFiles() throws Exception {
-        return makeAllDiagramFiles(null);
-    }
-
-    /**
-     * Creates graphs, writes their .dot files, and convert the .dot file to a .png file that is put in the specified
-     * directory.
-     * @return the directory name where the .png files were put
-     */
-    public String makeAllDiagramFiles(String directoryName) throws Exception {
-        String tmpDirName = System.getProperty("java.io.tmpdir");
-        String destDirName = (StringUtils.isEmpty(directoryName) ? tmpDirName : directoryName);
-        File destDir = new File(destDirName);
-        if (!destDir.exists() || !destDir.isDirectory()) {
-            throw new Exception("Cannot use " + destDir.getAbsolutePath() + " as a directory.");
-        }
-
         List<WorkflowGraph> graphs = createGraphs();
 
-        // Puts the .dot files in tmp dir
-        List<String> fileNames = makeFileNames(graphs);
-        writeDotFiles(tmpDirName, fileNames, graphs);
+        File diagramDirectory = createOrCleanoutDir(DIAGRAM_DIRECTORY);
+        writeDotFiles(diagramDirectory, graphs);
 
-        // Runs dot on each .dot file to create the .png.
-        for (String baseFileName : fileNames) {
-            String dotFileName = baseFileName + DOT_EXTENSION;
-            String pngFileName = baseFileName + PNG_EXTENSION;
-            File dotFile = new File(tmpDirName, dotFileName);
-            File pngFile = new File(destDirName, pngFileName);
-            logger.info("Writing workflow diagram file " + pngFile.getAbsolutePath());
-            runCommand("dot -Tpng -o " + pngFile.getAbsolutePath() + " " + dotFile.getAbsolutePath());
+        // Runs dot on each .dot file to create a diagram file.
+        for (WorkflowGraph graph : graphs) {
+            String diagramFileName = graph.getDiagramFileName();
+
+            // If filename has a 3 letter extension, uses it as the graph type, otherwise uses 'png'.
+            int dotIdx = diagramFileName.lastIndexOf(".");
+            String diagramFileType =
+                    (dotIdx == diagramFileName.length() - 4) ? diagramFileName.substring(dotIdx + 1) : "png";
+
+            File diagramFile = new File(DIAGRAM_DIRECTORY, diagramFileName);
+            File dotFile = new File(DIAGRAM_DIRECTORY, graph.getDiagramFileName() + DOT_EXTENSION);
+
+            logger.info("Writing workflow diagram file " + diagramFile.getAbsolutePath());
+
+            runCommand("dot -T" + diagramFileType +
+                       " -o " + diagramFile.getAbsolutePath() +
+                       " " + dotFile.getAbsolutePath());
+
+            dotFile.delete();
         }
-        return destDirName;
+        return DIAGRAM_DIRECTORY;
     }
 
     protected void runCommand(@Nonnull final String command) throws Exception {
@@ -215,7 +199,7 @@ public class WorkflowDiagramer implements Serializable {
                         stdErrString.append(reader.readLine());
                     }
                 } catch (IOException e) {
-                    logger.error("While running \"" + command + "\" ", e);
+                    stdErrString.append(" Caught " + e);
                 }
             }
         });
@@ -226,53 +210,28 @@ public class WorkflowDiagramer implements Serializable {
         stdOutThread.join();
         stdErrThread.join();
         if (stdErrString.length() > 0) {
-            logger.error("stdErr: " + stdErrString.toString());
+            throw new Exception("Error running command \"" + command + "\" : " + stdErrString.toString());
         }
         if (stdOutString.length() > 0) {
-            logger.info("stdOut: " + stdOutString.toString());
+            logger.debug("stdOut: " + stdOutString.toString());
         }
     }
 
 
     /**
-     * Given the list of graphs, makes a suitable filename from graph name, version, and startDate.
-     */
-    public List<String> makeFileNames(@Nonnull List<WorkflowGraph> graphs) {
-        List<String> list = new ArrayList<>();
-        for (WorkflowGraph graph : graphs) {
-            String filename = graph.getWorkflowName() + "_" + graph.getWorkflowVersion() + "_" +
-                              graph.getEffectiveDate().getTime();
-            list.add(filename.replaceAll("[ ]+", "_"));
-        }
-        return list;
-    }
-
-    /**
-     * Given a workflow graph, formats the nodes and edges into a .dot file.
-     * @param directoryName the directory that gets the .dot files
-     * @param baseFileNames the base filenames for the .dot files, in the same order as the graphs list.
+     * Given a workflow graph, formats the nodes and edges into a directed graph .dot file.
+     * @param directory the directory that gets the .dot files
      * @param graphs the workflow graph objects.
      * @throws Exception
      */
-    protected void writeDotFiles(@Nonnull String directoryName,
-                                 @Nonnull List<String> baseFileNames,
-                                 @Nonnull List<WorkflowGraph> graphs) throws Exception {
-
-        File directory = new File(directoryName);
-        if (!directory.exists() || !directory.isDirectory()) {
-            throw new Exception("Cannot use " + directory.getCanonicalPath() + " as a directory.");
-        }
-        if (baseFileNames.size() != graphs.size()) {
-            throw new Exception("Number of filenames does not match number of graphs.");
-        }
-
-        for (int idx = 0; idx < baseFileNames.size(); ++idx) {
-            File file = new File(directory, baseFileNames.get(idx) + DOT_EXTENSION);
+    void writeDotFiles(@Nonnull File directory, @Nonnull List<WorkflowGraph> graphs) throws Exception {
+        for (WorkflowGraph graph : graphs) {
+            File file = new File(directory, graph.getDiagramFileName() + DOT_EXTENSION);
             if (file.exists()) {
                 file.delete();
             }
             PrintWriter writer = new PrintWriter(new FileWriter(file));
-            WorkflowGraph graph = graphs.get(idx);
+            // Writes .dot file header, nodes, edges, and trailer.
             writer.println("digraph G {");
             for (WorkflowGraphNode node : graph.getNodes()) {
                 writer.println(node.toDotString());
@@ -284,6 +243,22 @@ public class WorkflowDiagramer implements Serializable {
             writer.flush();
             writer.close();
         }
+    }
+
+    // Creates a new directory or reuses an existing one after deleting any files found in it.
+    private File createOrCleanoutDir(String directoryName) throws Exception {
+        File directory = new File(directoryName);
+        if (directory.exists() && !directory.isDirectory()) {
+            throw new Exception("Cannot use " + directory.getCanonicalPath() + " as a directory.");
+        }
+        if (!directory.exists()) {
+            directory.mkdirs();
+        } else {
+            for (File file : directory.listFiles()) {
+                file.delete();
+            }
+        }
+        return directory;
     }
 
     // Determines if the testGraph matches one of the existing graphs, ignoring effective date.
@@ -298,14 +273,11 @@ public class WorkflowDiagramer implements Serializable {
         return true;
     }
 
+
     // Class represents a node in the workflow graph.
     private class WorkflowGraphNode implements Comparable {
         private final int id;
         private final String label;
-
-        WorkflowGraphNode() {
-            this(null);
-        }
 
         WorkflowGraphNode(String label) {
             synchronized (nodeIdMutex) {
@@ -329,7 +301,7 @@ public class WorkflowDiagramer implements Serializable {
 
         /** Returns a .dot file representation of a node. */
         String toDotString() {
-            return String.valueOf(id) + (StringUtils.isEmpty(label) ? ";" : "[label=\"" + label + "\"];");
+            return String.valueOf(id) + "[label=\"" + id + " " + label + "\"];";
         }
     }
 
@@ -385,11 +357,13 @@ public class WorkflowDiagramer implements Serializable {
         private final Date effectiveDate;
         private final SortedSet<WorkflowGraphNode> nodes = new TreeSet<>();
         private final SortedSet<WorkflowGraphEdge> edges = new TreeSet<>();
+        private final String diagramFileName;
 
-        WorkflowGraph(String workflowName, String workflowVersion, Date effectiveDate) {
+        WorkflowGraph(String workflowName, String workflowVersion, Date effectiveDate, String diagramFileName) {
             this.workflowName = workflowName;
             this.workflowVersion = workflowVersion;
             this.effectiveDate = effectiveDate;
+            this.diagramFileName = diagramFileName;
         }
 
         void add(WorkflowGraphNode node) {
@@ -418,6 +392,10 @@ public class WorkflowDiagramer implements Serializable {
 
         Date getEffectiveDate() {
             return effectiveDate;
+        }
+
+        String getDiagramFileName() {
+            return diagramFileName;
         }
 
         /** Returns true if graph has no nodes or edges. */
