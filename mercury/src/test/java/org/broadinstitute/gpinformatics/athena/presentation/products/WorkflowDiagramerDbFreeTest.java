@@ -167,15 +167,6 @@ public class WorkflowDiagramerDbFreeTest {
     }
 
     @Test
-    public void testUniqueGraph() throws Exception {
-        List<WorkflowDiagramer.WorkflowGraph> graphs1 = diagramer.createGraphs();
-        List<WorkflowDiagramer.WorkflowGraph> graphs2 = diagramer.createGraphs();
-        for (WorkflowDiagramer.WorkflowGraph graph : graphs2) {
-            Assert.assertFalse(diagramer.isUniqueGraph(graph, graphs1));
-        }
-    }
-
-    @Test
     public void testGraph() throws Exception {
         List<WorkflowDiagramer.WorkflowGraph> graphs = diagramer.createGraphs();
         Assert.assertEquals(graphs.size(), 4);

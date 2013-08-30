@@ -95,17 +95,23 @@ public class WorkflowDiagramer implements Serializable {
                                                         processDef.getName() + " at step " + step.getName());
                                 }
 
-                                if (graph.isEmpty() && CollectionUtils.isEmpty(step.getLabEventTypes())) {
-                                    // Workflow step having no events can only be an entry point.
-                                    WorkflowGraphNode entryNode = new WorkflowGraphNode(nodeIndex++, step.getName());
-                                    graph.add(entryNode);
-                                    previousNodes.add(entryNode);
+                                if (CollectionUtils.isEmpty(step.getLabEventTypes())) {
+
+                                    // Workflow step having no events is either an entry point or ignored.
+                                    if (CollectionUtils.isEmpty(previousNodes) &&
+                                        CollectionUtils.isEmpty(graph.getNodes())) {
+                                        WorkflowGraphNode entryNode =
+                                                new WorkflowGraphNode(nodeIndex++, step.getName());
+                                        graph.add(entryNode);
+                                        previousNodes.add(entryNode);
+                                    }
 
                                 } else {
                                     for (LabEventType eventType : step.getLabEventTypes()) {
 
-                                        // Entry point is a free-standing node.
-                                        if (step.isEntryPoint() || step.isReEntryPoint() || graph.isEmpty()) {
+                                        // Creates entry point if this is the first node encountered.
+                                        if (CollectionUtils.isEmpty(previousNodes) &&
+                                            CollectionUtils.isEmpty(graph.getNodes())) {
                                             WorkflowGraphNode entryNode = new WorkflowGraphNode(nodeIndex++,
                                                     step.isReEntryPoint() ? "Reenter" : "Start");
                                             graph.add(entryNode);
@@ -129,7 +135,7 @@ public class WorkflowDiagramer implements Serializable {
                             }
                         }
                     }
-                    if (!graph.isEmpty() && isUniqueGraph(graph, graphs)) {
+                    if (!graph.isEmpty()) {
                         graphs.add(graph);
                     }
                 }
@@ -257,18 +263,6 @@ public class WorkflowDiagramer implements Serializable {
             }
         });
         return diagramFiles;
-    }
-
-    // Determines if the testGraph matches one of the existing graphs, ignoring effective date.
-    boolean isUniqueGraph(WorkflowGraph testGraph, Collection<WorkflowGraph> existingGraphs) {
-        for (WorkflowGraph graph : existingGraphs) {
-            if (testGraph.getWorkflowName().equals(graph.getWorkflowName()) &&
-                testGraph.getWorkflowVersion().equals(graph.getWorkflowVersion()) &&
-                testGraph.equals(graph)) {
-                return false;
-            }
-        }
-        return true;
     }
 
 
