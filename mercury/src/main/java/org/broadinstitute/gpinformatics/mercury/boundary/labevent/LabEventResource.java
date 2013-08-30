@@ -102,9 +102,7 @@ public class LabEventResource {
      * This does <b>not</b> return reagents that are part of transfer events.  This is added specifically to support
      * batchless Pico where the Pico reagent is not part of a transfer and events are not grouped by a batch.
      */
-    @Path("/{url: inPlaceReagentEvents|reagents}/{plateBarcodes}")
-    // TODO mlc Simplify the @Path regex above to @Path("/inPlaceReagentEvents/{plateBarcodes}") once the updated
-    // TODO dev BSP that references the renamed endpoint is deployed.
+    @Path("/inPlaceReagentEvents/{plateBarcodes}")
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public LabEventResponseBean inPlaceReagentEventsByPlateBarcodes(
