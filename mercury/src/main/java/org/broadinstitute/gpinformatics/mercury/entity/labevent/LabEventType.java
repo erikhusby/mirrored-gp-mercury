@@ -202,6 +202,8 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     PICO_PLATING_POST_NORM_PICO("PicoPlatingPostNorm", true, true, SystemOfRecord.MERCURY, false,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    PICO_REWORK("PicoRework", true, true, SystemOfRecord.MERCURY, false,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Dried Blood Spot
     DBS_SAMPLE_PUNCH("DBSSamplePunch", false, true, SystemOfRecord.MERCURY, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
