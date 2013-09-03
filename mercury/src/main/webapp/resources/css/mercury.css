@@ -19,7 +19,7 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 .navbar .nav > li > a { padding: 7px 15px; }
 .navbar-inner { min-height: 30px; }
 
-input.search-query { padding-left: 0px; }
+input[name='searchKey'].search-query { padding-left: 0px; }
 
 .control-group a, table a { font-size: 12px; }
 
