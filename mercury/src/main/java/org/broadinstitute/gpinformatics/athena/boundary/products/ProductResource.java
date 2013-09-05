@@ -5,7 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -21,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -104,12 +107,18 @@ public class ProductResource {
         return "Created diagram files: " + filenames;
     }
 
+    @Nonnull
+    public String createWorkflowImageUrl(ProductWorkflowDef productWorkflowDef, Date effectiveDate) {
+        return "/Mercury/rest/products/workflowDiagrams/" +
+               WorkflowDiagramer.workflowImageFileName(productWorkflowDef, effectiveDate);
+    }
+
     /**
      * Returns a workflow diagram image.
      */
     @GET
     @Path("workflowDiagrams/{filename}")
-    @Produces("image/jpeg")
+    @Produces("image/png")
     public byte[] getWorkflowDiagramImage(@PathParam("filename") String filename) throws Exception {
         File diagramFileDir = WorkflowDiagramer.makeDiagramFileDir();
         // If diagramFile directory is empty, invokes the diagramer to create all of the workflow diagrams.
@@ -117,7 +126,7 @@ public class ProductResource {
             diagramer.makeAllDiagramFiles();
         }
 
-        File diagramFile = new File (diagramFileDir, filename);
+        File diagramFile = new File(diagramFileDir, filename);
         if (diagramFile.exists()) {
             InputStream stream = new BufferedInputStream(new FileInputStream(diagramFile));
             byte[] diagram = IOUtils.toByteArray(stream);
@@ -126,5 +135,4 @@ public class ProductResource {
             return null;
         }
     }
-
  }

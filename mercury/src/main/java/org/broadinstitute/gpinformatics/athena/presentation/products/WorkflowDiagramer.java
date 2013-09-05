@@ -24,7 +24,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,6 +44,10 @@ public class WorkflowDiagramer implements Serializable {
                                                    "images" + File.separator + "workflow" + File.separator;
 
     public WorkflowDiagramer() {
+    }
+
+    public static String workflowImageFileName(ProductWorkflowDef productWorkflowDef, Date effectiveDate) {
+        return productWorkflowDef.getWorkflowKey(effectiveDate).replaceAll("\\s+", "_") + DIAGRAM_FILE_EXTENSION;
     }
 
     @Inject
@@ -78,7 +81,7 @@ public class WorkflowDiagramer implements Serializable {
                 if (workflow != null) {
 
                     WorkflowGraph graph = new WorkflowGraph(workflowName, workflow.getVersion(), startDate,
-                            workflowDef.getWorkflowImageFileName(startDate));
+                            workflowImageFileName(workflowDef, startDate));
 
                     List<WorkflowGraphNode> previousNodes = new ArrayList<>();
                     Set<String> visitedProcessStep = new HashSet<>();

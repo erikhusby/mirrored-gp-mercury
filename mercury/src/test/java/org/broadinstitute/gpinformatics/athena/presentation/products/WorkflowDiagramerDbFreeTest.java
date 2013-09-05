@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import com.cenqua.clover.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -16,9 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import sun.swing.StringUIClientPropertyKey;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -160,7 +156,7 @@ public class WorkflowDiagramerDbFreeTest {
     public void testFilename() {
         Date testDate = new Date(MSEC_DATES[0]);
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
-            String filename = workflowDef.getWorkflowImageFileName(testDate);
+            String filename = WorkflowDiagramer.workflowImageFileName(workflowDef, testDate);
             Assert.assertTrue(filename.contains(String.valueOf(MSEC_DATES[0])));
             Assert.assertFalse(filename.contains(" "));
         }

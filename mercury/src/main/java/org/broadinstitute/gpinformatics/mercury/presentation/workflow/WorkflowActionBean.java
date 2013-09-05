@@ -9,15 +9,13 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,15 +33,16 @@ public class WorkflowActionBean extends CoreActionBean {
 
     public static final String GET_WORKFLOW_IMAGE_ACTION = "workflowImage";
 
-    private final WorkflowLoader workflowLoader;
+    @Inject
+    private ProductResource productResource;
 
     // Combination of workflow def and one of its effective dates.
-    public class WorkflowDefDateDto {
+    public static class WorkflowDefDateDto {
         public int id;
         public ProductWorkflowDef workflowDef;
         public Date effectiveDate;
 
-        public WorkflowDefDateDto(int id, ProductWorkflowDef workflowDef,Date effectiveDate) {
+        public WorkflowDefDateDto(int id, ProductWorkflowDef workflowDef, Date effectiveDate) {
             this.id = id;
             this.workflowDef = workflowDef;
             this.effectiveDate = effectiveDate;
@@ -87,7 +86,7 @@ public class WorkflowActionBean extends CoreActionBean {
     public WorkflowActionBean() throws Exception {
         super(null, null, WORKFLOW_PARAMETER);
 
-        workflowLoader = new WorkflowLoader();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         allWorkflows = new ArrayList<>();
         // Collects all workflows, each with possibly multiple effective dates.
@@ -148,15 +147,9 @@ public class WorkflowActionBean extends CoreActionBean {
      * Returns the url to a Mercury REST service that returns the relevant workflow image file.
      * @return relative url or null if the image doesn't exist.
      */
+    @HandlesEvent(GET_WORKFLOW_IMAGE_ACTION)
     public String getWorkflowImage() {
-
-        ProductWorkflowDef workflowDef = viewWorkflowDto.getWorkflowDef();
-        Date effectiveDate = viewWorkflowDto.getEffectiveDate();
-
-        File imageFile =
-                new File(WorkflowDiagramer.DIAGRAM_DIRECTORY, workflowDef.getWorkflowImageFileName(effectiveDate));
-
-        String baseUrl = "/Mercury/rest/products/workflowDiagrams/";
-        return (imageFile.exists() ? baseUrl + imageFile.getName() : null);
+        return productResource.createWorkflowImageUrl(viewWorkflowDto.getWorkflowDef(),
+                viewWorkflowDto.getEffectiveDate());
     }
 }
