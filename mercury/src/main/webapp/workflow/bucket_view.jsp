@@ -22,9 +22,7 @@
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [1, 7, 'asc']
-                ],
+                "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
                     {"bSortable":false},
                     {"bSortable":true},
