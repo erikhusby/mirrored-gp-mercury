@@ -137,7 +137,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
-            // Third AddOn data
+            // Second AddOn data
             String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
             productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
