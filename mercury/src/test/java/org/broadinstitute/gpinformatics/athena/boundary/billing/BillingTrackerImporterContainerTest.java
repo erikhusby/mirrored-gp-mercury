@@ -35,7 +35,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContaineFrTest.xlsx";
+    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
 
     @Inject
     private ProductDao productDao;
@@ -132,15 +132,9 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
 
             // First AddOn data
-            String rnaAddonPriceItemName = "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
+            String rnaAddonPriceItemName = "DNA or RNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
             productStatData = getOrderBillSummaryStat(entries, rnaAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
-            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
-
-            // Second AddOn data
-            String rnaSecondAddonPriceItemName = "DNA and RNA Extract from Fresh Frozen Tissue or stool";
-            productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
-            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // Third AddOn data
