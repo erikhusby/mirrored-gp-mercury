@@ -120,7 +120,7 @@
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
                                           event="view">Upload Quant</stripes:link>
                         </li>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
                             <li>
                                 <stripes:link id="listWorkflows"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.WorkflowActionBean"
