@@ -11,6 +11,7 @@
         <div>Latest Event: ${vessel.latestEvent.labEventType.name}</div>
         <div>Event Date: <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="${bean.datePattern}"/></div>
         <div>Event Location: ${vessel.latestEvent.eventLocation}</div>
+        <div>Script: ${vessel.latestEvent.programName}</div>
         <div>Event Operator: ${bean.getUserFullName(vessel.latestEvent.eventOperator)}</div>
         <div>Sample Instance Count: ${vessel.sampleInstanceCount}</div>
         <div>Unique Index Count: ${vessel.uniqueIndexesCount}</div>

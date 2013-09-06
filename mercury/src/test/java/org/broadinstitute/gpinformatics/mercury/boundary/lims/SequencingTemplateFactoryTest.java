@@ -114,7 +114,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         denatureTubeBarcode = denatureTube.getLabel();
         reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                "ZLAB", 1L, 1L);
+                "ZLAB", 1L, 1L, "sequencingTemplateFactoryTest");
         final VesselToSectionTransfer sectionTransfer =
                 new VesselToSectionTransfer(denatureTube,
                         SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),

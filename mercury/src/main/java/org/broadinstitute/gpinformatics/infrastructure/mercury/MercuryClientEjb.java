@@ -129,7 +129,9 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         bucketEjb.add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-                LabEvent.UI_EVENT_LOCATION, initialBucketDef.getBucketEventType(), order.getBusinessKey());
+                LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
+                order.getBusinessKey()
+        );
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);

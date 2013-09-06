@@ -45,6 +45,7 @@
             <th>Event</th>
             <th>Date</th>
             <th>Location</th>
+            <th>Script</th>
             <th>Operator</th>
             <th>Index</th>
             <th>JIRAs + PDOs</th>
@@ -100,6 +101,9 @@
                     </td>
                     <td>
                             ${event.eventLocation}
+                    </td>
+                    <td>
+                            ${event.programName}
                     </td>
                     <td>
                             ${bean.getUserFullName(event.eventOperator)}
