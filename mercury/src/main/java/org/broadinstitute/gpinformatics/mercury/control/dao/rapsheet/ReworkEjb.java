@@ -224,7 +224,7 @@ public class ReworkEjb {
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
-                        LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
+                        LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, reworkFromStep, productOrderKey);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         for (BucketEntry bucketEntry : bucketEntries) {
