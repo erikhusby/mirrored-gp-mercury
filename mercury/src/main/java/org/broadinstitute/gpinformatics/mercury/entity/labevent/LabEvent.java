@@ -291,10 +291,6 @@ public class LabEvent {
         return programName;
     }
 
-    public void setProgramName(String programName) {
-        this.programName = programName;
-    }
-
     public Date getEventDate() {
         return eventDate;
     }
@@ -321,18 +317,6 @@ public class LabEvent {
 
     public Long getLabEventId() {
         return labEventId;
-    }
-
-    public void setEventLocation(String eventLocation) {
-        this.eventLocation = eventLocation;
-    }
-
-    public void setEventOperator( Long eventOperator) {
-        this.eventOperator = eventOperator;
-    }
-
-    public void setEventDate(Date eventDate) {
-        this.eventDate = eventDate;
     }
 
 /*
