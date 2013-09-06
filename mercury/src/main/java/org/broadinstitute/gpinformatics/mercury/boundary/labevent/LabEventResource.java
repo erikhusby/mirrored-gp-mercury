@@ -185,7 +185,8 @@ public class LabEventResource {
                 labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
             }
 
-            labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
+            LabBatch labBatch = labEvent.getLabBatch();
+            labEventBean.setBatchId(labBatch != null ? labBatch.getBatchName() : null);
 
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {

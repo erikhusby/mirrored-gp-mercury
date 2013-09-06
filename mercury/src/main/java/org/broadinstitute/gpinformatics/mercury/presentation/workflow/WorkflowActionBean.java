@@ -15,9 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
-import javax.inject.Inject;
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -157,6 +155,6 @@ public class WorkflowActionBean extends CoreActionBean {
                 new File(WorkflowDiagramer.DIAGRAM_DIRECTORY, workflowDef.getWorkflowImageFileName(effectiveDate));
 
         String baseUrl = "/Mercury/rest/products/workflowDiagrams/";
-        return (imageFile.exists() ? baseUrl + imageFile.getName() : null);
+        return baseUrl + imageFile.getName();
     }
 }
