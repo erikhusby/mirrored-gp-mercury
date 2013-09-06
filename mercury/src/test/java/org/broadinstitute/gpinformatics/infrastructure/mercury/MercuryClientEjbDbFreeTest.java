@@ -178,7 +178,9 @@ public class MercuryClientEjbDbFreeTest {
 
         // It's OK to return an empty collection because the returned bucket entries are only needed for rework cases.
         expect(bucketEjb.add((List<LabVessel>)anyObject(), eq(bucket),
-                eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+                eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION),
+                eq(LabEvent.UI_PROGRAM_NAME),
+                eq(EVENT_TYPE),
                 eq(pdo.getBusinessKey()))).andReturn(Collections.<BucketEntry>emptySet());
 
         replay(mocks);
