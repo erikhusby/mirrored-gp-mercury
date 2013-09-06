@@ -35,7 +35,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
+    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContaineFrTest.xlsx";
 
     @Inject
     private ProductDao productDao;
@@ -138,8 +138,14 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // Second AddOn data
-            String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
+            String rnaSecondAddonPriceItemName = "DNA and RNA Extract from Fresh Frozen Tissue or stool";
             productStatData = getOrderBillSummaryStat(entries, rnaSecondAddonPriceItemName);
+            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
+
+            // Third AddOn data
+            String rnaThirdAddonPriceItemName = "RNA Extract from FFPE";
+            productStatData = getOrderBillSummaryStat(entries, rnaThirdAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
         } catch (Exception e) {
@@ -161,7 +167,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
                 entry = null;
             }
         }
-        Assert.assertNotNull(entry, "Could not find the matching price item");
+        Assert.assertNotNull(entry, "Could not find the matching price item for: " + rnaPriceItemName);
         return entry.getValue();
     }
 
