@@ -442,29 +442,41 @@ public class LabBatchEjb {
     }
 
     /**
-     * This method adds rework entries to an existing lab batch.
+     * This method adds bucket entries, from PDO creation or rework, to an existing lab batch.
      *
-     * @param businessKey   The business key for the lab batch we are adding samples to.
-     * @param reworkEntries The rework bucket entries whose vessels are being added to the batch.
-     *
+     * @param businessKey       the business key for the lab batch we are adding samples to
+     * @param bucketEntryIds    the bucket entries whose vessel are being added to the batch
+     * @param reworkEntries     the rework bucket entries whose vessels are being added to the batch
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
-    public void updateBatchWithReworks(String businessKey, List<Long> reworkEntries) throws IOException {
+    public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries)
+            throws IOException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
+        Set<LabVessel> labVessels = new HashSet<>();
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labVessels.add(bucketEntry.getLabVessel());
+            bucketEntry.getBucket().removeEntry(bucketEntry);
+        }
+        batch.addLabVessels(labVessels);
+        bucketEjb.start(bucketEntries, batch);
+
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
-        Bucket entryBucket = null;
+        Bucket reworkFromBucket = null;
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             entry.getBucket().removeEntry(entry);
-            entryBucket = entry.getBucket();
+            reworkFromBucket = entry.getBucket();
         }
         batch.addReworks(reworkVessels);
+        bucketEjb.start(reworkBucketEntries, batch);
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
-                LCSetJiraFieldFactory.buildSamplesListString(batch, entryBucket)));
+                LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
 
         int sampleCount = batch.getStartingBatchLabVessels().size();
         customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,

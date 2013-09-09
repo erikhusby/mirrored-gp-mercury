@@ -384,13 +384,13 @@ public class BucketViewActionBean extends CoreActionBean {
             if (!selectedLcset.startsWith("LCSET-")) {
                 selectedLcset = "LCSET-" + selectedLcset;
             }
-            labBatchEjb.updateBatchWithReworks(selectedLcset, reworkEntryIds);
+            labBatchEjb.addToLabBatch(selectedLcset, bucketEntryIds, reworkEntryIds);
         } catch (IOException e) {
             addGlobalValidationError("IOException contacting JIRA service." + e.getMessage());
             return new RedirectResolution(VIEW_PAGE);
         }
-        addMessage(String.format("Successfully added %d reworks to %s at the '%s'.", reworkEntryIds.size(),
-                selectedLcset, selectedBucket));
+        addMessage(String.format("Successfully added %d sample(s) and %d rework(s) to %s at the '%s'.",
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedLcset, selectedBucket));
         return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
     }
 
