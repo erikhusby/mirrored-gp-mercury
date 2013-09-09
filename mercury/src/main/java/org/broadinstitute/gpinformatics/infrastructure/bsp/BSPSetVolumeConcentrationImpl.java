@@ -10,6 +10,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 
 /**
  * This class provides Mercury with a way to send volume and concentration to BSP.
@@ -41,7 +42,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
     }
 
     @Override
-    public void setVolumeAndConcentration(String barcode, double volume, double concentration) {
+    public void setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
 
         String queryString = String.format(VOLUME_CONCENTRATION_URL, barcode, volume, concentration);
         String urlString = getUrl(queryString);

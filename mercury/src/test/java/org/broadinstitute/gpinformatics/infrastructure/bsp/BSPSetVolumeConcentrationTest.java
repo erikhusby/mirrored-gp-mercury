@@ -9,6 +9,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.math.BigDecimal;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -27,7 +29,7 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     @Test(enabled = true)
     public void testSetVolumeAndConcentration() {
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
-        bspSetVolumeConcentration.setVolumeAndConcentration("SM-1234", 50.0, 125.2);
+        bspSetVolumeConcentration.setVolumeAndConcentration("SM-1234", BigDecimal.valueOf(50.0), BigDecimal.valueOf(125.2));
         String[] result = bspSetVolumeConcentration.getResult();
         Assert.assertTrue("There should be a result", result != null && result.length > 0);
         Assert.assertTrue("Should have received update result", bspSetVolumeConcentration.isValidResult());
