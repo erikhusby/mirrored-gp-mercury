@@ -111,9 +111,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Inject
     private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
 
-    //    @Inject
-//    private BSPSampleSearchService bspSampleSearchService;
-//
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -133,7 +130,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Inject
-    AppConfig appConfig;
+    private AppConfig appConfig;
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
@@ -216,7 +213,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
             throw new RuntimeException(e);
         }
         pdo1JiraKey = exexOrder.getJiraTicketKey();
-//        productOrderDao.persist(exexOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, twoDBarcodedTubeDao);
