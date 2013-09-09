@@ -486,7 +486,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
                     Vertex tubeVertex =
                             new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode,
-                                    rackVertex, getAlternativeIds(receptacle, alternativeIds));
+                                    rackVertex, getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -562,7 +562,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             if (vertex == null) {
                 newVertex = true;
                 vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(),
-                        buildReceptacleLabel(), getAlternativeIds(receptacle, alternativeIds));
+                        buildReceptacleLabel(), getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
                 graph.getMapIdToVertex().put(vertex.getId(), vertex);
                 vertex.setHasMoreEdges(true);
             }

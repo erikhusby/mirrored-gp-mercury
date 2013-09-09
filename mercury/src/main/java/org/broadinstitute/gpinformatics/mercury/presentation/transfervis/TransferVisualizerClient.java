@@ -72,11 +72,9 @@ public class TransferVisualizerClient {
      * Which entity the user wants to search on
      */
     public enum SearchType {
-        SEARCH_PLATE("Plate Barcode"),
         SEARCH_TUBE("Tube Barcode"),
-        SEARCH_CONTAINER("Container Barcode"),
-        SEARCH_GSSR_SAMPLE("GSSR Sample"),
-        SEARCH_LIBRARY_NAME("Library Name");
+        SEARCH_CONTAINER("Container Barcode");
+//        SEARCH_GSSR_SAMPLE("GSSR Sample");
 
         private final String displayName;
 
@@ -640,9 +638,6 @@ public class TransferVisualizerClient {
         TransferVisualizer transferVisualizer = getServer();
         // todo jmt fold this code into the enum
         switch (searchType) {
-        case SEARCH_PLATE:
-            graph = transferVisualizer.forPlate(barcode, alternativeIds);
-            break;
         case SEARCH_TUBE:
             graph = transferVisualizer.forTube(barcode, alternativeIds);
             break;
@@ -651,9 +646,6 @@ public class TransferVisualizerClient {
             break;
 //            case SEARCH_GSSR_SAMPLE:
 //                graph = transferVisualizer.forGssrBarcode(barcode, alternativeIds);
-//                break;
-//            case SEARCH_LIBRARY_NAME:
-//                graph = transferVisualizer.forLibraryName(barcode, alternativeIds);
 //                break;
         default:
             throw new RuntimeException("Unknown searchType " + searchType);
