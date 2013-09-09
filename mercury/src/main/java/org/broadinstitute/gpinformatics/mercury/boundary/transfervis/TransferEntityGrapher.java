@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
@@ -28,6 +27,7 @@ import javax.ejb.Remote;
 import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -92,22 +92,6 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 transferEntityGrapher.startWithTube(receptacle, graph, alternativeIds);
             }
         });
-    }
-
-    /**
-     * Build a graph, staring with a plate barcode
-     *
-     * @param plateBarcode   plate the user is searching on
-     * @param alternativeIds which IDs to include in the vertices
-     *
-     * @return vertices and edges
-     */
-    @Override
-    public Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) {
-        Graph graph = new Graph();
-        StaticPlate plate = staticPlateDao.findByBarcode(plateBarcode);
-//        startWithPlate(plate, graph, alternativeIds);
-        return graph;
     }
 
     @Override
@@ -468,12 +452,10 @@ public class TransferEntityGrapher implements TransferVisualizer {
             if (rackVertex == null) {
                 newVertex = true;
                 // Create a child vertex for each tube, and position it correctly within the rack
-                int maxRowNumber = 0;
-                int maxColumnNumber = 0;
                 // todo jmt set these based on the actual layout of tubes
                 VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
-                maxRowNumber = vesselGeometry.getRowNames().length;
-                maxColumnNumber = vesselGeometry.getColumnNames().length;
+                int maxRowNumber = vesselGeometry.getRowNames().length;
+                int maxColumnNumber = vesselGeometry.getColumnNames().length;
 
                 // todo jmt fix rack type
                 rackVertex = new Vertex(label, IdType.CONTAINER_ID_TYPE.toString(),
@@ -484,9 +466,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
                     LabVessel receptacle = vesselContainer.getVesselAtPosition(vesselPosition);
                     String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
-                    Vertex tubeVertex =
-                            new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode,
-                                    rackVertex, getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
+                    Vertex tubeVertex = new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(),
+                            barcode, rackVertex, getAlternativeIds(receptacle == null ?
+                            Collections.<SampleInstance>emptySet() : receptacle.getSampleInstances(), alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -572,8 +554,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
         @Override
         public int renderEdges(Graph graph, Queue<VesselVertex> vesselVertexQueue, List<AlternativeId> alternativeIds) {
-            int numVesselsAdded = renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
-            return numVesselsAdded;
+            return renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
         }
 
         private String buildReceptacleLabel() {
@@ -741,7 +722,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     /**
      * The user can select one more ID types to be rendered into each vertex
      *
-     * @param receptacle        tube for which to list IDs
+     * @param sampleInstances   sample details
      * @param alternativeIdList list of ID types specified by user
      *
      * @return list of Ids for the given receptacle

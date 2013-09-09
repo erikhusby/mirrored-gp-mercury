@@ -28,15 +28,9 @@ public interface TransferVisualizer {
         }
     }
     
-    Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
-
     Graph forTube(String tubeBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
 
     Graph forContainer(String containerBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
-
-//    Graph forGssrBarcode(String gssrBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
-
-//    Graph forLibraryName(String libraryName, List<AlternativeId> alternativeIds) throws RemoteException;
 
     Graph expandVertex(Graph graph, String vertexId, String idType, List<AlternativeId> alternativeIds) throws RemoteException;
 
