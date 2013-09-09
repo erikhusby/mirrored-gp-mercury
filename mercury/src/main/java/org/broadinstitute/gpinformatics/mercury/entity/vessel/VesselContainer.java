@@ -418,7 +418,10 @@ public class VesselContainer<T extends LabVessel> {
     public Set<VesselPosition> getPositions() {
         if (hasAnonymousVessels()) {
             Set<VesselPosition> positions = new HashSet<>();
-            positions.addAll(Arrays.asList(getEmbedder().getVesselGeometry().getVesselPositions()));
+            VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
+            if (vesselPositions != null) {
+                positions.addAll(Arrays.asList(vesselPositions));
+            }
             return positions;
         } else {
             return mapPositionToVessel.keySet();
