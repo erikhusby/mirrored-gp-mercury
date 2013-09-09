@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderS
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import java.util.List;
 import java.util.Random;
@@ -37,8 +37,7 @@ public class ProductOrderDBTestFactory {
         assertThat(projects, is(not(nullOrEmptyCollection())));
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
 
-        List<Product> products = productDao.findList(Product.class, Product_.workflowName,
-                WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.EXOME_EXPRESS.getWorkflowName());
         assertThat(products, is(not(nullOrEmptyCollection())));
         Product product = products.get(new Random().nextInt(products.size()));
 

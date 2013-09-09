@@ -33,7 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -121,12 +121,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         utx.begin();
 
-        testExExOrder =
-                poDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName()).iterator().next();
+        testExExOrder = poDao.findByWorkflow(Workflow.EXOME_EXPRESS).iterator().next();
         exExJiraKey = testExExOrder.getBusinessKey();
 
-        squidProductOrder =
-                poDao.findByWorkflowName(WorkflowName.WHOLE_GENOME.getWorkflowName()).iterator().next();
+        squidProductOrder = poDao.findByWorkflow(Workflow.WHOLE_GENOME).iterator().next();
         squidPdoJiraKey = squidProductOrder.getBusinessKey();
 
         testPrefix = "bcode";
@@ -929,7 +927,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         //THis will automatically add the batch to the tubes via the internal set methods
         LabBatch labBatch = new LabBatch("testBatch" + testSuffix.getTime(), tubes, LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setWorkflowName("Exome Express");
+        labBatch.setWorkflow(Workflow.EXOME_EXPRESS);
 
 //        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch,"scottmat",bucketName,"HOME", CreateFields.IssueType.EXOME_EXPRESS);
         for (LabVessel currTube : tubes) {

@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -113,8 +113,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         productOrderDao.flush();
         productOrderDao.clear();
 
-        Collection<ProductOrder> orders =
-                productOrderDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName());
+        Collection<ProductOrder> orders = productOrderDao.findByWorkflow(Workflow.EXOME_EXPRESS);
 
         Assert.assertFalse(orders.isEmpty());
     }

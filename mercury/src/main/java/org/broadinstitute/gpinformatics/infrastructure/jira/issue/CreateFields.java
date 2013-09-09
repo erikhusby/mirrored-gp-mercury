@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
@@ -98,7 +98,7 @@ public class CreateFields extends UpdateFields {
     public enum IssueType {
 
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS(Workflow.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project"),
         FLOWCELL("Flowcell"),

@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -925,7 +926,7 @@ public class LabEventFactory implements Serializable {
     private TubeFormation buildRackDaoFree(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
                                            PlateType plate, PositionMapType positionMap, boolean source,
                                            boolean createSources) {
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
         for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
             if (twoDBarcodedTube == null) {
@@ -938,8 +939,8 @@ public class LabEventFactory implements Serializable {
 
             // If there is a volume and concentration on the message set it up and communicate it to BSP.
             if ((receptacleType.getConcentration() != null) && (receptacleType.getVolume() != null)) {
-                twoDBarcodedTube.setVolume(receptacleType.getVolume().floatValue());
-                twoDBarcodedTube.setConcentration(receptacleType.getConcentration().floatValue());
+                twoDBarcodedTube.setVolume(receptacleType.getVolume());
+                twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
 
                 // The only way to update volume on concentration in BSP here is if we have a single mercury sample.
                 if (twoDBarcodedTube.getMercurySamples().size() == 1) {
@@ -947,8 +948,8 @@ public class LabEventFactory implements Serializable {
 
                     // Send web service call to BSP to update volume and concentration.
                     bspSetVolumeConcentration.setVolumeAndConcentration(
-                            mercurySample.getSampleKey(), receptacleType.getVolume(),
-                            receptacleType.getConcentration());
+                            mercurySample.getSampleKey(), receptacleType.getVolume().floatValue(),
+                            receptacleType.getConcentration().floatValue());
                     if (!bspSetVolumeConcentration.isValidResult()) {
                         logger.error(
                                 "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
@@ -1144,7 +1145,7 @@ public class LabEventFactory implements Serializable {
         }
         LabEvent genericLabEvent =
                 new LabEvent(labEventType, stationEventType.getStart().toGregorianCalendar().getTime(),
-                        stationEventType.getStation(), disambiguator, operator);
+                        stationEventType.getStation(), disambiguator, operator, stationEventType.getProgram());
         if (stationEventType.getBatchId() != null) {
             LabBatch labBatch = labEventRefDataFetcher.getLabBatch(stationEventType.getBatchId());
             if (labBatch == null) {
@@ -1164,17 +1165,18 @@ public class LabEventFactory implements Serializable {
      * Based on a collection of {@link LabVessel}s to be processed, this method will generate the appropriate event
      * to associate with each Vessel
      *
+     *
      * @param entryCollection
      * @param operator        representation of the user that submitted the request
      * @param batchIn         LabBatch to which the created events will be associate
      * @param eventLocation
-     * @param eventType
-     *
-     * @return A collection of the created events for the submitted lab vessels
+     * @param programName
+     *@param eventType
+     *  @return A collection of the created events for the submitted lab vessels
      */
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
-                                                       @Nonnull LabEventType eventType) {
+                                                       @Nonnull String programName, @Nonnull LabEventType eventType) {
 
         long workCounter = 1L;
 
@@ -1185,7 +1187,7 @@ public class LabEventFactory implements Serializable {
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<>();
             LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
-                    workCounter++, operator, eventType, eventLocation);
+                    workCounter++, operator, eventType, eventLocation, programName);
             if (null != batchIn) {
                 currEvent.setLabBatch(batchIn);
             }
@@ -1203,12 +1205,13 @@ public class LabEventFactory implements Serializable {
      *
      */
     public LabEvent createFromBatchItems(@Nonnull String pdoKey, @Nonnull LabVessel batchItem,
-                                         @Nonnull Long disambiguator, String operator,
-                                         @Nonnull LabEventType eventType, @Nonnull String eventLocation) {
+                                         @Nonnull Long disambiguator, String operator, @Nonnull LabEventType eventType,
+                                         @Nonnull String eventLocation, @Nonnull String programName) {
 
         Long operatorInfo = labEventRefDataFetcher.getOperator(operator).getUserId();
 
-        LabEvent bucketMoveEvent = new LabEvent(eventType, new Date(), eventLocation, disambiguator, operatorInfo);
+        LabEvent bucketMoveEvent =
+                new LabEvent(eventType, new Date(), eventLocation, disambiguator, operatorInfo, programName);
 
         bucketMoveEvent.setProductOrderId(pdoKey);
 

@@ -155,7 +155,6 @@ public class MercuryClientEjbDbFreeTest {
         reset(mocks);
         // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th test samples.
         // The 4th sample is in house so a standalone vessel/sample should be created.
-        List<String> pdoSampleNames = new ArrayList<>();
         List<LabVessel> mockVessels = new ArrayList<>();
         for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
             ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
@@ -179,7 +178,9 @@ public class MercuryClientEjbDbFreeTest {
 
         // It's OK to return an empty collection because the returned bucket entries are only needed for rework cases.
         expect(bucketEjb.add((List<LabVessel>)anyObject(), eq(bucket),
-                eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION), eq(EVENT_TYPE),
+                eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION),
+                eq(LabEvent.UI_PROGRAM_NAME),
+                eq(EVENT_TYPE),
                 eq(pdo.getBusinessKey()))).andReturn(Collections.<BucketEntry>emptySet());
 
         replay(mocks);

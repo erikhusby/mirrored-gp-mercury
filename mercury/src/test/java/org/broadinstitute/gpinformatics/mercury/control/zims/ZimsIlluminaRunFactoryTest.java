@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -76,7 +77,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
-                "Test Workflow", false, "agg type");
+                Workflow.EXOME_EXPRESS, false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService,
                 mockControlDao);
@@ -167,13 +168,13 @@ public class ZimsIlluminaRunFactoryTest {
             if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                 JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
                 batch.setJiraTicket(lcSetTicket);
-                batch.setWorkflowName("Exome Express");
+                batch.setWorkflow(Workflow.EXOME_EXPRESS);
                 batch.addBucketEntry(bucketEntry);
                 bucketEntry.setLabBatch(batch);
             }
             sampleInstanceDtoList.add(
                             new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
-                                    PRODUCT_ORDER_KEY, null, null));
+                                    PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
         }
 
         return sampleInstanceDtoList;
@@ -258,6 +259,7 @@ public class ZimsIlluminaRunFactoryTest {
             assertThat(libraryBean.getRace(), equalTo("N/A"));
             // in mercury, pipeline should always be told to aggregate
             assertThat(libraryBean.doAggregation(), equalTo(true));
+            assertThat(libraryBean.getProductOrderSample(), equalTo(TEST_SAMPLE_ID));
         }
     }
 }

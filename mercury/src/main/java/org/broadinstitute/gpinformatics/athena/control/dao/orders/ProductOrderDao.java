@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -163,8 +164,8 @@ public class ProductOrderDao extends GenericDao {
                 new ProductOrderDaoCallback(fs));
     }
 
-
-    public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
+    // Used by tests only.
+    public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {
 
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -176,7 +177,7 @@ public class ProductOrderDao extends GenericDao {
         Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflowName));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflow.getWorkflowName()));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 

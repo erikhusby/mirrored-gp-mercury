@@ -138,7 +138,7 @@ public class WorkflowConfigLookupDbFreeTest {
         w2.addWorkflowProcessDefVersion(w2v1);
         workflowList.add(w2);
 
-        config.setWorkflowProcessDefs(workflowList);
+        config.getWorkflowProcessDefs().addAll(workflowList);
 
         // defining products
         List<ProductWorkflowDef> pList = new ArrayList<>();
@@ -161,7 +161,7 @@ public class WorkflowConfigLookupDbFreeTest {
         p2.addProductWorkflowDefVersion(p2v1);
         pList.add(p2);
 
-        config.setProductWorkflowDefs(pList);
+        config.getProductWorkflowDefs().addAll(pList);
 
         return config;
     }

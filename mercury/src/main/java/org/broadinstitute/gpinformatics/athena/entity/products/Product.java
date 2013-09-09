@@ -4,13 +4,35 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This entity represents all the stored information for a Mercury Project.
@@ -19,7 +41,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = "PART_NUMBER"))
 public class Product implements BusinessObject, Serializable, Comparable<Product> {
 
     private static final long serialVersionUID = 4859861191078406439L;
@@ -52,7 +74,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private String reagentDesignKey;
 
 
-    @Column(unique = true)
+    @Column(name = "PART_NUMBER")
     private String partNumber;
     private Date availabilityDate;
     private Date discontinuedDate;
@@ -82,6 +104,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     @JoinTable(schema = "athena")
     private final Set<Product> addOns = new HashSet<>();
 
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
 
     private boolean pdmOrderableOnly;
@@ -132,7 +155,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public Product() {}
 
     public Product(boolean topLevelProduct) {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, Workflow.NONE, false, null);
     }
 
     public Product(String productName,
@@ -148,7 +171,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
                    String inputRequirements,
                    String deliverables,
                    boolean topLevelProduct,
-                   String workflowName,
+                   @Nonnull Workflow workflow,
                    boolean pdmOrderableOnly,
                    String aggregationDataType) {
         this.productName = productName;
@@ -164,7 +187,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.inputRequirements = inputRequirements;
         this.deliverables = deliverables;
         this.topLevelProduct = topLevelProduct;
-        this.workflowName = workflowName;
+        workflowName = workflow.getWorkflowName();
         this.pdmOrderableOnly = pdmOrderableOnly;
         this.aggregationDataType = aggregationDataType;
     }
@@ -294,8 +317,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(String workflowName) {
-        this.workflowName = workflowName;
+    public void setWorkflow(@Nonnull Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
     }
 
     public void addAllowableMaterialType(MaterialType materialType) {
@@ -310,8 +333,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         addOns.add(addOn);
     }
 
-    public String getWorkflowName() {
-        return workflowName;
+    @Nonnull
+    public Workflow getWorkflow() {
+        return Workflow.findByName(workflowName);
     }
 
     public String getAnalysisTypeKey() {
@@ -509,11 +533,6 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return originalPartNumber;
     }
 
-
-    public static Product makeEmptyProduct() {
-        return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false, null);
-    }
 
     public String getDisplayName() {
         return productName + " - " + partNumber;

@@ -67,13 +67,14 @@ public class BucketEjb {
      * @param entryType            the type of bucket entry to add
      * @param operator             Represents the user that initiated adding the vessels to the bucket
      * @param labEventLocation     Machine location from which operator initiated this action
+     * @param programName          Name of the program that initiated this action
      * @param eventType            Type of the Lab Event that initiated this bucket add request
      * @param singlePdoBusinessKey Product order key for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
                                        @Nonnull String labEventLocation,
-                                       LabEventType eventType,
+                                       @Nonnull String programName, LabEventType eventType,
                                        @Nonnull String singlePdoBusinessKey) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<>();
@@ -93,7 +94,7 @@ public class BucketEjb {
 
         //TODO SGM: Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
-                eventType));
+                programName, eventType));
 
         return listOfNewEntries;
     }

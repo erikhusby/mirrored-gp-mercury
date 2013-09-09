@@ -11,10 +11,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
  */
 public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
 
-    public SquidThriftLibraryConverter() {}
+    public SquidThriftLibraryConverter() {
+    }
 
     @Override
-    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary,BSPSampleDTO bspDTO,ProductOrder pdo) {
+    public LibraryBean convertLibrary(TZamboniLibrary zamboniLibrary, BSPSampleDTO bspDTO, ProductOrder pdo) {
         // todo arz extract more fields from bsp here.
 
         // todo arz test with all bsp data, some bsp samples and some gssr samples
@@ -24,7 +25,7 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
 
         // todo arz figure out integration test w/ bsp service, get rid of EverythingYouAskForAndItsHuman mock
 
-        LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
+        return new LibraryBean(zamboniLibrary.getLibrary(),
                 zamboniLibrary.getProject(),
                 zamboniLibrary.getInitiative(),
                 zamboniLibrary.getWorkRequestId(),
@@ -54,7 +55,8 @@ public class SquidThriftLibraryConverter implements ThriftLibraryConverter {
                 zamboniLibrary.getCustomAmpliconSetNames(),
                 pdo,
                 zamboniLibrary.getLcset(),
-                bspDTO);
-        return libBean;
+                bspDTO,
+                zamboniLibrary.getLabWorkflow(),
+                zamboniLibrary.getPdoSample());
     }
 }

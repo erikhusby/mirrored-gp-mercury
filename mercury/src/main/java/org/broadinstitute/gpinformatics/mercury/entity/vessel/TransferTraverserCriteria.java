@@ -48,37 +48,37 @@ public interface TransferTraverserCriteria {
          * The lab vessel being visited.
          * Null if traversing all positions of a container and there is no lab vessel at the current position.
          */
-        private LabVessel labVessel;
+        private final LabVessel labVessel;
 
         /**
          * The container holding the lab vessel.
          * Null if the lab vessel is not in a container in the current context.
          */
-        private VesselContainer vesselContainer;
+        private final VesselContainer<?> vesselContainer;
 
         /**
          * The position of the vessel within its holding container.
          * Not null if vesselContainer is not null.
          */
-        private VesselPosition vesselPosition;
+        private final VesselPosition vesselPosition;
 
         /**
          * The event being visited.
          * Null if there is no event being processed, such as at the beginning of a traversal.
          */
-        private LabEvent event;
+        private final LabEvent event;
 
         /**
          * The current hop count.
          * Not null.
          */
-        private int hopCount;
+        private final int hopCount;
 
         /**
          * The direction of the current traversal.
          * Not null.
          */
-        private TransferTraverserCriteria.TraversalDirection traversalDirection;
+        private final TransferTraverserCriteria.TraversalDirection traversalDirection;
 
         /**
          * Creates a context for a single lab vessel outside of any vessel container. For example, this could represent
@@ -95,6 +95,8 @@ public interface TransferTraverserCriteria {
             this.event = event;
             this.hopCount = hopCount;
             this.traversalDirection = traversalDirection;
+            vesselContainer = null;
+            vesselPosition = null;
         }
 
         /**
@@ -108,7 +110,7 @@ public interface TransferTraverserCriteria {
          * @param hopCount           the traversal depth
          * @param traversalDirection the direction of traversal
          */
-        public Context(LabVessel labVessel, @Nonnull VesselContainer vesselContainer,
+        public Context(LabVessel labVessel, @Nonnull VesselContainer<?> vesselContainer,
                        @Nonnull VesselPosition vesselPosition, LabEvent event, int hopCount,
                        @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
@@ -123,7 +125,7 @@ public interface TransferTraverserCriteria {
             return labVessel;
         }
 
-        public VesselContainer getVesselContainer() {
+        public VesselContainer<?> getVesselContainer() {
             return vesselContainer;
         }
 
@@ -172,12 +174,8 @@ public interface TransferTraverserCriteria {
      */
     class NearestLabBatchFinder implements TransferTraverserCriteria {
 
-        // index -1 is for batches for sampleInstance's starter (think BSP stock)
-        private static final int STARTER_INDEX = -1;
-
-        private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount =
-                new HashMap<>();
-        private LabBatch.LabBatchType type;
+        private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount = new HashMap<>();
+        private final LabBatch.LabBatchType type;
 
         /**
          * Constructs a new NearestLabBatchFinder with a LabBatch type filter.
@@ -460,9 +458,6 @@ public interface TransferTraverserCriteria {
      * TwoDBarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
      * be saved for access, but also an object that relates the tube to its position at its found location will be
      * returned.
-     * <p/>
-     * TODO SGM/BR/JMT:  A similar object {@link StaticPlate.NearestTubeAncestorsCriteria} (created before this one)
-     * has an extra safety if check on it. Consider merging into here
      */
     class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
 

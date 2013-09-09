@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -12,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchCompositio
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,8 +26,6 @@ import java.util.Set;
  * This class is currently transient, i.e. it is not persisted, but is created on demand by transfer traversal logic.
  */
 public class SampleInstance {
-
-    private static final Log log = LogFactory.getLog(SampleInstance.class);
 
     /**
      * Sample, from another system, typically BSP via Athena.
@@ -62,6 +59,11 @@ public class SampleInstance {
 
     private Set<LabBatch> workflowBatches;
 
+    /**
+     * The product order key for this sample instance. Can be set even if there are multiple bucket entries, as long as
+     * all of the bucket entries are for the same product order.
+     */
+    private String productOrderKey;
 
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
@@ -134,23 +136,6 @@ public class SampleInstance {
         return reagents;
     }
 
-    // todo jmt unused?
-
-    /**
-     * This getter filters the reagents to return only the indexes.
-     *
-     * @return A list of indexes associated with this sample instance.
-     */
-    public List<MolecularIndexReagent> getIndexes() {
-        List<MolecularIndexReagent> indexes = new ArrayList<>();
-        for (Reagent reagent : reagents) {
-            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                indexes.add((MolecularIndexReagent) reagent);
-            }
-        }
-        return indexes;
-    }
-
     /**
      * This is set only when there is a single lab batch.
      *
@@ -168,8 +153,9 @@ public class SampleInstance {
         this.labBatch = labBatch;
     }
 
-    public void setBucketEntry(BucketEntry bucketEntry) {
+    public void setBucketEntry(@Nonnull BucketEntry bucketEntry) {
         this.bucketEntry = bucketEntry;
+        productOrderKey = bucketEntry.getPoBusinessKey();
     }
 
     public Collection<LabBatch> getAllLabBatches() {
@@ -177,9 +163,6 @@ public class SampleInstance {
     }
 
     public void addLabBatches(Collection<LabBatch> batches) {
-        if (allLabBatches == null) {
-            allLabBatches = new HashSet<>();
-        }
         allLabBatches.addAll(batches);
     }
 
@@ -220,10 +203,7 @@ public class SampleInstance {
 
     @Nullable
     public String getProductOrderKey() {
-        if (bucketEntry != null) {
-            return bucketEntry.getPoBusinessKey();
-        }
-        return null;
+        return productOrderKey;
     }
 
     /**
@@ -261,5 +241,9 @@ public class SampleInstance {
 
     public void setBspExportSample(MercurySample bspExportSample) {
         this.bspExportSample = bspExportSample;
+    }
+
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
     }
 }

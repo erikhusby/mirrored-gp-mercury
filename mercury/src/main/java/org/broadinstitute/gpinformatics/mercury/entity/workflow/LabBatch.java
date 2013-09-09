@@ -30,6 +30,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -94,8 +95,8 @@ public class LabBatch {
 
     private Boolean isValidationBatch;
 
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
-
 
     /**
      * needed for fix-up test
@@ -156,7 +157,7 @@ public class LabBatch {
     }
 
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
-                    @Nonnull LabBatchType labBatchType, @Nullable Float concentration) {
+                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
         for (LabVessel starter : starterVessels) {
@@ -180,7 +181,7 @@ public class LabBatch {
                     @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
                     String important) {
         this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
-        setWorkflowName(workflowName);
+        this.workflowName = workflowName;
         addReworks(reworkLabVessels);
     }
 
@@ -228,7 +229,7 @@ public class LabBatch {
         addLabVessel(labVessel, null);
     }
 
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration) {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
@@ -326,6 +327,10 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
+    public void setWorkflow(Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
+    }
+
     public String getBatchDescription() {
         return batchDescription;
     }
@@ -351,21 +356,21 @@ public class LabBatch {
     }
 
     /**
-     * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
+     * Helper method to dynamically create batch names based on Input from PDM's.  The format for the Names of the
      * batches, when not manually defined, will be:
      * <p/>
      * [Product name] [Product workflow Version]: [comma separated list of PDO names]
      *
-     * @param workflowName
+     * @param workflow
      * @param pdoNames
      *
      * @return
      */
-    public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflowName).append(": ");
+        batchName.append(workflow.getWorkflowName()).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {

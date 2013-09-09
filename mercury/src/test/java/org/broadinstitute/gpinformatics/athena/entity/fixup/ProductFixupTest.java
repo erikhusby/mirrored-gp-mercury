@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -40,7 +41,7 @@ public class ProductFixupTest extends Arquillian {
     public void addExomeExpressWorkflowName() {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
-            exExProduct.setWorkflowName("Exome Express");
+            exExProduct.setWorkflow(Workflow.EXOME_EXPRESS);
 
         productDao.persist(exExProduct);
     }
@@ -49,7 +50,7 @@ public class ProductFixupTest extends Arquillian {
     public void addHybridSelectionWorkflowName() {
 
         Product hybSelProject = productDao.findByPartNumber("P-EX-0001");
-            hybSelProject.setWorkflowName("Hybrid Selection");
+            hybSelProject.setWorkflow(Workflow.HYBRID_SELECTION);
 
         productDao.persist(hybSelProject);
     }
@@ -60,11 +61,11 @@ public class ProductFixupTest extends Arquillian {
         List<Product> wgProducts = new ArrayList<>(3);
 
         Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
-            wholeGenomeProduct1.setWorkflowName("Whole Genome");
+            wholeGenomeProduct1.setWorkflow(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct2 = productDao.findByPartNumber("P-WG-0002");
-            wholeGenomeProduct2.setWorkflowName("Whole Genome");
+            wholeGenomeProduct2.setWorkflow(Workflow.WHOLE_GENOME);
         Product wholeGenomeProduct3 = productDao.findByPartNumber("P-WG-0003");
-            wholeGenomeProduct3.setWorkflowName("Whole Genome");
+            wholeGenomeProduct3.setWorkflow(Workflow.WHOLE_GENOME);
 
         Collections.addAll(wgProducts, wholeGenomeProduct1, wholeGenomeProduct2, wholeGenomeProduct3);
 

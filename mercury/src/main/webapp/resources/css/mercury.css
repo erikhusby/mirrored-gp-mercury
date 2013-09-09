@@ -19,7 +19,7 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 .navbar .nav > li > a { padding: 7px 15px; }
 .navbar-inner { min-height: 30px; }
 
-input.search-query { padding-left: 0px; }
+input[name='searchKey'].search-query { padding-left: 0px; }
 
 .control-group a, table a { font-size: 12px; }
 
@@ -171,3 +171,5 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .accordion .ui-state-focus {color: #0088CC; border: 1px solid #0088CC; background: #f9fbff;}
 .accordion .ui-icon {background-image: url("/Mercury/images/ui-icons_222222_256x240.png") !important;}
 .accordion .ui-state-active .ui-icon { background-image: url("/Mercury/images/ui-icons_2e83ff_256x240.png") !important;}
+
+.workflow-image { background-color: #d3d3d3; padding: 10px; }

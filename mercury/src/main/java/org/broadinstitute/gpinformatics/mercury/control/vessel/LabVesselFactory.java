@@ -153,7 +153,7 @@ public class LabVesselFactory implements Serializable {
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
                 if (labEventType != null) {
-                    twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
+                    twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator, "BSP"));
                     disambiguator++;
                 }
                 labVessels.add(twoDBarcodedTube);
@@ -174,7 +174,7 @@ public class LabVesselFactory implements Serializable {
                                 childVesselBean.getSampleId()));
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
-                    staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
+                    staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator, "BSP"));
                     disambiguator++;
                 } else if (vesselType.contains("rack")) {
                     RackOfTubes rackOfTubes =
@@ -197,7 +197,7 @@ public class LabVesselFactory implements Serializable {
                         twoDBarcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                 childVesselBean.getSampleId()));
                         twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
-                                operator));
+                                operator, "BSP"));
                         disambiguator++;
                         mapPositionToTube.put(vesselPosition, twoDBarcodedTube);
                         labVessels.add(twoDBarcodedTube);
@@ -225,26 +225,27 @@ public class LabVesselFactory implements Serializable {
      */
     @DaoFree
     private MercurySample getMercurySample(Map<String, List<MercurySample>> mapIdToListMercurySample,
-            Map<String, List<ProductOrderSample>> mapIdToListPdoSamples, String sampleId) {
+                                           Map<String, List<ProductOrderSample>> mapIdToListPdoSamples,
+                                           String sampleId) {
         List<MercurySample> mercurySamples = mapIdToListMercurySample.get(sampleId);
-        if(mercurySamples == null) {
+        if (mercurySamples == null) {
             mercurySamples = Collections.emptyList();
         }
         List<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);
-        if(productOrderSamples == null) {
+        if (productOrderSamples == null) {
             productOrderSamples = Collections.emptyList();
         }
 
         MercurySample mercurySample = null;
-        if(mercurySamples.isEmpty()) {
-            if(productOrderSamples.isEmpty()) {
+        if (mercurySamples.isEmpty()) {
+            if (productOrderSamples.isEmpty()) {
                 mercurySample = new MercurySample(sampleId);
             } else {
                 for (ProductOrderSample productOrderSample : productOrderSamples) {
                     mercurySample = new MercurySample(productOrderSample.getSampleName());
                 }
             }
-        } else if(mercurySamples.size() > 1) {
+        } else if (mercurySamples.size() > 1) {
             throw new RuntimeException("More than one MercurySample for " + sampleId);
         } else {
             mercurySample = mercurySamples.get(0);

@@ -9,6 +9,7 @@ import org.hamcrest.Matcher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -134,7 +135,7 @@ public class LimsQueryResourceResponseFactoryTest {
         for (int i = 0; i < expected.getLibraryDataSize(); i++) {
             assertLibraryData(outLane.getLibraryData().get(i), expected.getLibraryData().get(i));
         }
-        assertThat(outLane.getLoadingConcentration(), equalTo(expected.getLoadingConcentration()));
+        assertThat(outLane.getLoadingConcentration(), equalTo(BigDecimal.valueOf(expected.getLoadingConcentration())));
         for (int i = 0; i < expected.getDerivedLibraryDataSize(); i++) {
             assertLibraryData(outLane.getDerivedLibraryData().get(i), expected.getDerivedLibraryData().get(i));
         }

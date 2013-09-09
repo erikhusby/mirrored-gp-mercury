@@ -1,17 +1,25 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +34,9 @@ public class ProductResource {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private WorkflowDiagramer diagramer;
 
     @XmlRootElement
     public static class ProductData {
@@ -46,7 +57,7 @@ public class ProductResource {
             name = product.getProductName();
             family = product.getProductFamily().getName();
             partNumber = product.getPartNumber();
-            workflowName = product.getWorkflowName();
+            workflowName = product.getWorkflow().getWorkflowName();
         }
     }
 
@@ -78,4 +89,42 @@ public class ProductResource {
     public Products findProducts() {
         return new Products(productDao.findProductsForProductList());
     }
-}
+
+    /**
+     * Invokes the WorkflowDiagrammer to make diagram files.
+     *
+     * @return the diagram file names that were made.
+     */
+    @GET
+    @Path("workflowDiagrams")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String makeWorkflowDiagrams() throws Exception {
+        diagramer.makeAllDiagramFiles();
+        String filenames = StringUtils.join(WorkflowDiagramer.listDiagramFiles(), "  ");
+        return "Created diagram files: " + filenames;
+    }
+
+    /**
+     * Returns a workflow diagram image.
+     */
+    @GET
+    @Path("workflowDiagrams/{filename}")
+    @Produces("image/jpeg")
+    public byte[] getWorkflowDiagramImage(@PathParam("filename") String filename) throws Exception {
+        File diagramFileDir = WorkflowDiagramer.makeDiagramFileDir();
+        // If diagramFile directory is empty, invokes the diagramer to create all of the workflow diagrams.
+        if (WorkflowDiagramer.listDiagramFiles().length == 0) {
+            diagramer.makeAllDiagramFiles();
+        }
+
+        File diagramFile = new File (diagramFileDir, filename);
+        if (diagramFile.exists()) {
+            InputStream stream = new BufferedInputStream(new FileInputStream(diagramFile));
+            byte[] diagram = IOUtils.toByteArray(stream);
+            return diagram;
+        } else {
+            return null;
+        }
+    }
+
+ }

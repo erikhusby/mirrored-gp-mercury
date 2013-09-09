@@ -452,9 +452,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
     private class ContainerVertex extends VesselVertex {
 
-        private VesselContainer vesselContainer;
+        private VesselContainer<?> vesselContainer;
 
-        private ContainerVertex(VesselContainer vesselContainer) {
+        private ContainerVertex(VesselContainer<?> vesselContainer) {
             this.vesselContainer = vesselContainer;
         }
 
@@ -485,11 +485,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     LabVessel receptacle = vesselContainer.getVesselAtPosition(vesselPosition);
                     String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
                     Vertex tubeVertex =
-                            new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
-                    tubeVertex.setParentVertex(rackVertex);
-
-                    tubeVertex.setAlternativeIds(getAlternativeIds(
-                            vesselContainer.getSampleInstancesAtPosition(vesselPosition), alternativeIds));
+                            new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode,
+                                    rackVertex, getAlternativeIds(receptacle, alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
                     VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
@@ -564,8 +561,8 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Vertex vertex = graph.getMapIdToVertex().get(receptacle.getLabel());
             if (vertex == null) {
                 newVertex = true;
-                vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(), buildReceptacleLabel(receptacle));
-                vertex.setAlternativeIds(getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
+                vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(),
+                        buildReceptacleLabel(), getAlternativeIds(receptacle, alternativeIds));
                 graph.getMapIdToVertex().put(vertex.getId(), vertex);
                 vertex.setHasMoreEdges(true);
             }
@@ -575,12 +572,11 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
         @Override
         public int renderEdges(Graph graph, Queue<VesselVertex> vesselVertexQueue, List<AlternativeId> alternativeIds) {
-            int numVesselsAdded = 0;
-            numVesselsAdded = renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
+            int numVesselsAdded = renderReceptacleEdges(receptacle, graph, vesselVertexQueue, alternativeIds);
             return numVesselsAdded;
         }
 
-        private String buildReceptacleLabel(LabVessel receptacle) {
+        private String buildReceptacleLabel() {
             String contentTypeName = "";
 //            if (receptacle.getCurrentContent() != null /*&& receptacle.getCurrentContent().getTypeId() != null*/) {
 //                contentTypeName = receptacle.getCurrentContent().getLibraryTypeName();
@@ -588,7 +584,6 @@ public class TransferEntityGrapher implements TransferVisualizer {
             return "Tube : " + receptacle.getLabel() + "<br/>" + contentTypeName;
         }
     }
-
 
     private int renderSectionTransfers(Graph graph, Queue<VesselVertex> vesselVertexQueue,
                                        List<AlternativeId> alternativeIds,

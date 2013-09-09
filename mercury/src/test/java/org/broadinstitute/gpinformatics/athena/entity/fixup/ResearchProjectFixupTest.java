@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -34,14 +36,45 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+    }
+
+    /**
+     * Need to get default reference sequence - Homo_sapiens_assembly19|1.  This is the Reference sequence that will be
+     * used for Exome projects.
+     *
+     * @throws Exception Any problems that might occur get thrown
+     */
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void fixupGpLim1927() throws Exception {
+        List<ResearchProject> rpListToPersist = new ArrayList<>();
+        List<ResearchProject> rpList = rpDao.findAllResearchProjects();
+
+        final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
+        int count = 0;
+
+        for (ResearchProject rp : rpList) {
+            if (StringUtils.isBlank(rp.getReferenceSequenceKey())) {
+                rp.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
+                rpListToPersist.add(rp);
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            Assert.fail("No Research Projects updated but there should have been some that needed updating.");
+        }
+
+        // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
+        // change gets flushed.  This is an artifact of the test environment.
+        rpDao.persistAll(rpListToPersist);
     }
 
     /**
      * For each Project missing a JIRA ticket poke the service to create & associate one
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void fixupGpLim95() throws IOException{
+    public void fixupGpLim95() throws IOException {
         List<ResearchProject> rpList = rpDao.findAllResearchProjects();
         List<ResearchProject> rpListToPersist = new ArrayList<>();
         int count = 0;
@@ -68,8 +101,9 @@ public class ResearchProjectFixupTest extends Arquillian {
 
     /**
      * Helper method to change the owner of a research project.
+     *
      * @param newOwnerUsername new owner's username
-     * @param projectKeys list of RP keys
+     * @param projectKeys      list of RP keys
      */
     private void changeProjectOwner(String newOwnerUsername, String... projectKeys) {
         for (BspUser user : bspUserList.find(newOwnerUsername)) {

@@ -29,27 +29,27 @@ public interface MercuryClientService extends Serializable {
      *
      * @return a collection of {@link DisplayableItem} objects modeling a reference sequence
      */
-    public Collection<DisplayableItem> getReferenceSequences();
+    Collection<DisplayableItem> getReferenceSequences();
 
     /**
      * Get all the sequence aligners.
      *
      * @return a collection of {@link DisplayableItem} objects modeling a sequence aligner
      */
-    public Collection<DisplayableItem> getSequenceAligners();
+    Collection<DisplayableItem> getSequenceAligners();
     /**
      * Get all the analysis types.
      *
      * @return a collection of {@link DisplayableItem} objects modeling an analysis type
      */
-    public Collection<DisplayableItem> getAnalysisTypes();
+    Collection<DisplayableItem> getAnalysisTypes();
 
     /**
      * Get all the reagent designs (i.e. baits).
      *
      * @return a collection of {@link DisplayableItem} objects modeling a reagent design
      */
-    public Collection<DisplayableItem> getReagentDesigns();
+    Collection<DisplayableItem> getReagentDesigns();
 
     /**
      * Get a specific reagent design by its ID.
@@ -57,7 +57,7 @@ public interface MercuryClientService extends Serializable {
      * @param businessKey the business key
      * @return a UI helper object {@link DisplayableItem} to display the reagent design information
      */
-    public DisplayableItem getReagentDesign(String businessKey);
+    DisplayableItem getReagentDesign(String businessKey);
 
     /**
      * Get a specific sequence aligner by its ID.
@@ -65,7 +65,7 @@ public interface MercuryClientService extends Serializable {
      * @param businessKey the business key
      * @return a UI helper object {@link DisplayableItem} to display the sequence aligner information
      */
-    public DisplayableItem getSequenceAligner(String businessKey);
+    DisplayableItem getSequenceAligner(String businessKey);
 
     /**
      * Get a specific reference sequence by its ID.
@@ -73,7 +73,7 @@ public interface MercuryClientService extends Serializable {
      * @param businessKey the business key
      * @return a UI helper object {@link DisplayableItem} to display the reference sequence information
      */
-    public DisplayableItem getReferenceSequence(String businessKey);
+    DisplayableItem getReferenceSequence(String businessKey);
 
     /**
      * Get a specific analysis type by its ID.
@@ -81,6 +81,5 @@ public interface MercuryClientService extends Serializable {
      * @param businessKey the business key
      * @return a UI helper object {@link DisplayableItem} to display the analysis type information
      */
-    public DisplayableItem getAnalysisType(String businessKey);
-
+    DisplayableItem getAnalysisType(String businessKey);
 }

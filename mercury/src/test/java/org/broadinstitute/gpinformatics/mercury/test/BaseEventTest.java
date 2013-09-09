@@ -26,7 +26,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -50,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerClient;
 import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
@@ -91,7 +92,7 @@ public class BaseEventTest {
     /**
      * Referenced in validation of routing.
      */
-    protected static MercuryOrSquidRouter.MercuryOrSquid expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+    protected static SystemRouter.System expectedRouting = SystemRouter.System.MERCURY;
 
     private BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
 
@@ -370,13 +371,13 @@ public class BaseEventTest {
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param workflowName     The workflow name for the current workflow.
+     * @param workflow     The workflow name for the current workflow.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, String workflowName,
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, Workflow workflow,
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(
@@ -395,19 +396,22 @@ public class BaseEventTest {
      * @param productionFlowcellPath
      * @param designationName        Name of the designation created in Squid to support testing the systems running in
      *                               parallel
-     * @param workflowName
+     * @param workflow
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public HiSeq2500FlowcellEntityBuilder runHiSeq2500FlowcellProcess(TubeFormation denatureRack, String barcodeSuffix,
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
-                                                                      String designationName, String workflowName) {
-
+                                                                      String designationName, Workflow workflow) {
+        int flowcellLanes=8;
+        if (workflow == Workflow.EXOME_EXPRESS){
+            flowcellLanes=2;
+        }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
-                designationName, workflowName).invoke();
+                designationName, flowcellLanes).invoke();
     }
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,

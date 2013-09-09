@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -27,9 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.BOTH;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
-import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.BOTH;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
@@ -40,9 +39,8 @@ import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.
  * The current definition of "belonging" to Mercury is that all vessels upstream of the specified vessel (or set of
  * vessels) have been batched for Exome Express.
  *
- * TODO SGM  This needs a better name since the options are more than just Mercury or Squid!!!!
  */
-public class MercuryOrSquidRouter implements Serializable {
+public class SystemRouter implements Serializable {
 
     private static final long serialVersionUID = 20130507L;
 
@@ -59,7 +57,7 @@ public class MercuryOrSquidRouter implements Serializable {
      * the element in Mercury, send it to Squid</li>
      * </ol>
      */
-    public enum MercuryOrSquid {
+    public enum System {
         BOTH, MERCURY, SQUID
     }
 
@@ -75,12 +73,12 @@ public class MercuryOrSquidRouter implements Serializable {
     private WorkflowLoader       workflowLoader;
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
-    MercuryOrSquidRouter() {
+    SystemRouter() {
     }
 
     @Inject
-    public MercuryOrSquidRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                                WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
+    public SystemRouter(LabVesselDao labVesselDao, ControlDao controlDao,
+                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
         this.labVesselDao = labVesselDao;
         this.controlDao = controlDao;
         this.workflowLoader = workflowLoader;
@@ -95,15 +93,15 @@ public class MercuryOrSquidRouter implements Serializable {
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes) {
+    public System routeForVesselBarcodes(Collection<String> barcodes) {
         return routeForVesselBarcodes(barcodes, Intent.ROUTE);
     }
 
-    public MercuryOrSquid getSystemOfRecordForVesselBarcodes(Collection<String> barcodes) {
+    public System getSystemOfRecordForVesselBarcodes(Collection<String> barcodes) {
         return routeForVesselBarcodes(barcodes, Intent.SYSTEM_OF_RECORD);
     }
 
-    private MercuryOrSquid routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
+    private System routeForVesselBarcodes(Collection<String> barcodes, Intent intent) {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(new ArrayList<>(barcodes));
         // can't use mapBarcodeToVessel.values(), because it doesn't include nulls
         List<LabVessel> labVessels = new ArrayList<>();
@@ -114,18 +112,18 @@ public class MercuryOrSquidRouter implements Serializable {
     }
 
     /**
-     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
+     * Determines if a tube belongs to Mercury or Squid. See {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System} for a description of "belongs".
      *
      * @param barcode the barcode of the tube to check
      *
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVessel(String barcode) {
+    public System routeForVessel(String barcode) {
         return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.ROUTE);
     }
 
-    public MercuryOrSquid getSystemOfRecordForVessel(String barcode) {
+    public System getSystemOfRecordForVessel(String barcode) {
         return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.SYSTEM_OF_RECORD);
     }
 
@@ -136,12 +134,12 @@ public class MercuryOrSquidRouter implements Serializable {
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    public MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels) {
+    public System routeForVessels(Collection<LabVessel> labVessels) {
         return routeForVessels(labVessels, Intent.ROUTE);
     }
 
-    private MercuryOrSquid routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
-        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
+    private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
+        Set<System> routingOptions = EnumSet.noneOf(System.class);
 
         // Determine which samples might be controls
         Set<SampleInstance> possibleControls = new HashSet<>();
@@ -171,9 +169,9 @@ public class MercuryOrSquidRouter implements Serializable {
                 controlCollaboratorSampleIds.add(control.getCollaboratorSampleId());
             }
         }
-        MercuryOrSquid mercuryOrSquid = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToDto, intent);
-        if (mercuryOrSquid != null) {
-            routingOptions.add(mercuryOrSquid);
+        System system = routeForVessels(labVessels, controlCollaboratorSampleIds, mapSampleNameToDto, intent);
+        if (system != null) {
+            routingOptions.add(system);
         }
 
         return evaluateRoutingOption(routingOptions, intent);
@@ -200,9 +198,9 @@ public class MercuryOrSquidRouter implements Serializable {
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      */
     @DaoFree
-    public MercuryOrSquid routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
+    public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
                                          Map<String, BSPSampleDTO> mapSampleNameToDto, Intent intent) {
-        Set<MercuryOrSquid> routingOptions = EnumSet.noneOf(MercuryOrSquid.class);
+        Set<System> routingOptions = EnumSet.noneOf(System.class);
         for (LabVessel vessel : vessels) {
             if (vessel == null) {
                 routingOptions.add(SQUID);
@@ -222,7 +220,7 @@ public class MercuryOrSquidRouter implements Serializable {
                                 ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                         batch.getCreatedOn());
                                 if (intent == Intent.SYSTEM_OF_RECORD) {
-                                    MercuryOrSquid mercuryOrSquid;
+                                    System system;
                                     if (productWorkflowDef.getInValidation()) {
                                         LabBatch labBatch = sampleInstance.getLabBatch();
                                         if(labBatch == null) {
@@ -230,17 +228,17 @@ public class MercuryOrSquidRouter implements Serializable {
                                         }
                                         // Per Andrew, we can assume that validation plastic has only one LCSET
                                         if(labBatch.isValidationBatch()) {
-                                            mercuryOrSquid = MERCURY;
+                                            system = MERCURY;
                                         } else {
-                                            mercuryOrSquid = productWorkflowDef.getRouting();
+                                            system = productWorkflowDef.getRouting();
                                         }
                                     } else {
-                                        mercuryOrSquid = productWorkflowDef.getRouting();
+                                        system = productWorkflowDef.getRouting();
                                     }
-                                    if (mercuryOrSquid == BOTH) {
-                                        mercuryOrSquid = SQUID;
+                                    if (system == BOTH) {
+                                        system = SQUID;
                                     }
-                                    routingOptions.add(mercuryOrSquid);
+                                    routingOptions.add(system);
                                 } else {
                                     routingOptions.add(productWorkflowDef.getRouting());
                                 }
@@ -324,9 +322,9 @@ public class MercuryOrSquidRouter implements Serializable {
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
      * routed.
      */
-    private MercuryOrSquid evaluateRoutingOption(Set<MercuryOrSquid> routingOptions, Intent intent) {
+    private System evaluateRoutingOption(Set<System> routingOptions, Intent intent) {
 
-        MercuryOrSquid result;
+        System result;
 
         if (routingOptions.isEmpty()) {
             result = SQUID;

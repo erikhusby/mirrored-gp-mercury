@@ -41,7 +41,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -80,7 +80,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -147,11 +147,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    public static final Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>() {{
-        put("Custom Amplicon", "P-VAL-0002");
-        put("Whole Genome", "P-WG-0002");
-        put("Exome Express", "P-EX-0002");
-        put("Hybrid Selection", "P-EX-0001");
+    public static final Map<Workflow, String> mapWorkflowToPartNum = new EnumMap<Workflow, String>(Workflow.class) {{
+        put(Workflow.WHOLE_GENOME, "P-WG-0002");
+        put(Workflow.EXOME_EXPRESS, "P-EX-0002");
+        put(Workflow.HYBRID_SELECTION, "P-EX-0001");
     }};
 
 
@@ -168,14 +167,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         // Set up one PDO / bucket / batch
         String testPrefix = testPrefixDateFormat.format(new Date());
         ProductOrder productOrder1 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK,
-                WorkflowName.EXOME_EXPRESS);
+                Workflow.EXOME_EXPRESS);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK);
+                BaseEventTest.NUM_POSITIONS_IN_RACK, twoDBarcodedTubeDao);
         bucketAndBatch(testPrefix, productOrder1, mapBarcodeToTube);
         // message
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
-                mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettaLimsMessageResource,
+                mapBarcodeToTube, bettaLimsMessageFactory, Workflow.EXOME_EXPRESS, bettaLimsMessageResource,
                 reagentDesignDao, twoDBarcodedTubeDao,
                 ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
 
@@ -190,7 +189,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
                 ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, null, "Exome Express").invoke();
+                BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -198,9 +197,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         // Create second PDO
         testPrefix = testPrefixDateFormat.format(new Date());
         ProductOrder productOrder2 = buildProductOrder(testPrefix, BaseEventTest.NUM_POSITIONS_IN_RACK - 2,
-                WorkflowName.EXOME_EXPRESS);
+                Workflow.EXOME_EXPRESS);
         Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK - 2);
+                BaseEventTest.NUM_POSITIONS_IN_RACK - 2, twoDBarcodedTubeDao);
 
         // Add two samples from first PDO to bucket
         Set<LabVessel> reworks = new HashSet<>();
@@ -208,14 +207,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
                 ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
-                WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh");
+                Workflow.EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
         barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
                 ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
-                WorkflowName.EXOME_EXPRESS.getWorkflowName(), "jowalsh");
+                Workflow.EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -231,7 +230,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
                 LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
         // message
         hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix, mapBarcodeToTube2, bettaLimsMessageFactory,
-                WorkflowName.EXOME_EXPRESS, bettaLimsMessageResource,
+                Workflow.EXOME_EXPRESS, bettaLimsMessageResource,
                 reagentDesignDao, twoDBarcodedTubeDao, ImportFromSquidTest.TEST_MERCURY_URL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK);
 
@@ -246,7 +245,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
                 ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, null, "Exome Express").invoke();
+                BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -262,12 +261,12 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 //        Controller.startCPURecording(true);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, WorkflowName.EXOME_EXPRESS);
+                BaseEventTest.NUM_POSITIONS_IN_RACK, Workflow.EXOME_EXPRESS);
 
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
 
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = sendMessagesUptoCatch(testPrefix,
-                mapBarcodeToTube, bettaLimsMessageFactory, WorkflowName.EXOME_EXPRESS, bettaLimsMessageResource,
+                mapBarcodeToTube, bettaLimsMessageFactory, Workflow.EXOME_EXPRESS, bettaLimsMessageResource,
                 reagentDesignDao, twoDBarcodedTubeDao,
                 ImportFromSquidTest.TEST_MERCURY_URL, BaseEventTest.NUM_POSITIONS_IN_RACK);
 
@@ -281,8 +280,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, null, "Exome Express").invoke();
+                ProductionFlowcellPath.DENATURE_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -365,14 +363,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     public static HybridSelectionJaxbBuilder sendMessagesUptoCatch(String testPrefix,
                                                                    Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                                                    BettaLimsMessageTestFactory bettaLimsMessageFactory,
-                                                                   WorkflowName workflowName,
+                                                                   Workflow workflow,
                                                                    BettaLimsMessageResource bettalimsMessageResource,
                                                                    ReagentDesignDao reagentDesignDao,
                                                                    TwoDBarcodedTubeDao twoDBarcodedTubeDao,
                                                                    String testMercuryUrl, int numPositionsInRack) {
 
         String shearingRackBarcode;
-        if (workflowName == WorkflowName.EXOME_EXPRESS) {
+        if (workflow == Workflow.EXOME_EXPRESS) {
             shearingRackBarcode = "ShearRack" + testPrefix;
         } else {
             PreFlightJaxbBuilder preFlightJaxbBuilder = new PreFlightJaxbBuilder(
@@ -424,9 +422,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      * @return map from tube barcode to sample tube
      */
     private Map<String, TwoDBarcodedTube> buildSamplesInPdo(String testPrefix, int numberOfSamples,
-                                                            WorkflowName workflowName) {
-        ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflowName);
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples);
+                                                            Workflow workflow) {
+        ProductOrder productOrder = buildProductOrder(testPrefix, numberOfSamples, workflow);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSampleTubes(testPrefix, numberOfSamples,
+                twoDBarcodedTubeDao);
         bucketAndBatch(testPrefix, productOrder, mapBarcodeToTube);
         return mapBarcodeToTube;
     }
@@ -439,14 +438,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @return product order
      */
-    private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, WorkflowName workflowName) {
-        String partNumber = mapWorkflowToPartNum.get(workflowName.getWorkflowName());
+    private ProductOrder buildProductOrder(String testPrefix, int numberOfSamples, Workflow workflow) {
+        String partNumber = mapWorkflowToPartNum.get(workflow);
         Product product = productDao.findByPartNumber(partNumber);
         if (product == null) {
             // todo jmt change to exome express
             product = new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"),
                     "Standard Exome Sequencing", "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null,
-                    null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false, "agg type");
+                    null, true, Workflow.HYBRID_SELECTION, false, "agg type");
             product.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics",
                     "Standard Pony"));
             productDao.persist(product);
@@ -480,12 +479,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Build samples and tubes
      *
+     *
      * @param testPrefix      make unique
      * @param numberOfSamples how many samples
      *
+     * @param twoDBarcodedTubeDao
      * @return map from tube barcode to tube
      */
-    private Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples) {
+    public static Map<String, TwoDBarcodedTube> buildSampleTubes(String testPrefix, int numberOfSamples,
+                                                                 TwoDBarcodedTubeDao twoDBarcodedTubeDao) {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= numberOfSamples; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;
@@ -514,7 +516,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setValidationBatch(true);
-        labBatch.setWorkflowName("Exome Express");
+        labBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
                 LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
@@ -535,10 +537,10 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         for (int i = 0; i < 8; i++) {
             testPrefix = testPrefixDateFormat.format(new Date());
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildSamplesInPdo(testPrefix,
-                    BaseEventTest.NUM_POSITIONS_IN_RACK, WorkflowName.HYBRID_SELECTION);
+                    BaseEventTest.NUM_POSITIONS_IN_RACK, Workflow.HYBRID_SELECTION);
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder =
                     sendMessagesUptoCatch(testPrefix, mapBarcodeToTube, bettaLimsMessageFactory,
-                            WorkflowName.HYBRID_SELECTION, bettaLimsMessageResource,
+                            Workflow.HYBRID_SELECTION, bettaLimsMessageResource,
                             reagentDesignDao, twoDBarcodedTubeDao, ImportFromSquidTest.TEST_MERCURY_URL,
                             BaseEventTest.NUM_POSITIONS_IN_RACK);
             listLcsetListNormCatchBarcodes.add(hybridSelectionJaxbBuilder.getNormCatchBarcodes());
@@ -558,7 +560,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                 new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix, qtpJaxbBuilder.getDenatureTubeBarcode(),
                         qtpJaxbBuilder.getDenatureRackBarcode(), null, ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,
-                        BaseEventTest.NUM_POSITIONS_IN_RACK, null, "Hybrid Selection");
+                        BaseEventTest.NUM_POSITIONS_IN_RACK, null, 8);
 
         IlluminaSequencingRun illuminaSequencingRun =
                 registerIlluminaSequencingRun(testPrefix, hiSeq2500JaxbBuilder.getFlowcellBarcode());

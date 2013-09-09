@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -37,8 +38,8 @@ public class BettaLimsObjectFactory {
     }
 
     public static ReceptacleType createReceptacleType(String barcode, String receptacleType, String position,
-                                                      String materialType, Double volume, Double concentration,
-                                                      Double fragmentSize, List<ReagentType> reagent,
+                                                      String materialType, BigDecimal volume, BigDecimal concentration,
+                                                      BigDecimal fragmentSize, List<ReagentType> reagent,
                                                       List<MetadataType> metadata) {
         ReceptacleType receptacle = new ReceptacleType();
         receptacle.setReceptacleType(receptacleType);

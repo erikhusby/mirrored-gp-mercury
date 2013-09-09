@@ -236,9 +236,9 @@
         <xs:attribute name="position" type="xs:NMTOKEN" use="optional"/>
         <xs:attribute name="materialType" type="xs:NMTOKEN" use="optional"/>
         <!-- if volume is on 'source' then it means how much was transferred out; if it is on destination then it means the final actual volume in the tube.  -->
-        <xs:attribute name="volume" type="xs:double" use="optional"/>
-        <xs:attribute name="concentration" type="xs:double" use="optional"/>
-        <xs:attribute name="fragmentSize" type="xs:double" use="optional"/>
+        <xs:attribute name="volume" type="xs:decimal" use="optional"/>
+        <xs:attribute name="concentration" type="xs:decimal" use="optional"/>
+        <xs:attribute name="fragmentSize" type="xs:decimal" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="lcSampleType">

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -67,7 +68,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
 
         if (order != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
-            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(order.getProduct().getWorkflowName());
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(order.getProduct().getWorkflow());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
             WorkflowBucketDef workingBucketIdentifier = null;
             for (WorkflowBucketDef bucketDef : workflowVersion.getBuckets()) {
@@ -93,7 +94,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                         vessel.addSample(mercurySample);
                         // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
                         workingBucket.addEntry(sample.getProductOrder().getBusinessKey(), vessel,
-                                org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+                                BucketEntry.BucketEntryType.PDO_ENTRY);
                         // }
                     }
                 }

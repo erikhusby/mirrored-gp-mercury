@@ -116,15 +116,17 @@
                             </li>
                         </security:authorizeBlock>
                         <li>
-                            <stripes:link id="viewReworkBuckets"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
-                                          event="viewRework">Rework Buckets</stripes:link>
-                        </li>
-                        <li>
                             <stripes:link id="uploadQuants"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
                                           event="view">Upload Quant</stripes:link>
                         </li>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
+                            <li>
+                                <stripes:link id="listWorkflows"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.WorkflowActionBean"
+                                              event="List">Show Workflows</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
                     </ul>
                 </li>
             </security:authorizeBlock>
@@ -179,15 +181,6 @@
                                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
                                       event="view">LCSets</stripes:link>
                     </li>
-
-                    <security:authorizeBlock roles="<%= roles(Developer) %>">
-                        <li class="divider"></li>
-                        <li>
-                            <stripes:link id="allSearch"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                                          event="view">All Types</stripes:link>
-                        </li>
-                    </security:authorizeBlock>
                 </ul>
             </li>
         </ul>

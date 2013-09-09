@@ -32,12 +32,23 @@ public class ProductEjb {
         this.productDao = productDao;
     }
 
+    /**
+     * Using the product here because I need all the edited fields for both save and edit.
+     *
+     * @param product The product with all updated date (it was found for edit).
+     * @param addOnTokenInput The add ons
+     * @param priceItemTokenInput The price items
+     * @param materialTypeTokenInput The materials
+     * @param allLengthsMatch Do the lengths match
+     * @param criteria The risk criteria
+     * @param operators The operators
+     * @param values The values
+     */
     public void saveProduct(
-            String productKey, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
+            Product product, ProductTokenInput addOnTokenInput, PriceItemTokenInput priceItemTokenInput,
             MaterialTypeTokenInput materialTypeTokenInput, boolean allLengthsMatch, String[] criteria,
             String[] operators, String[] values) {
 
-        Product product = productDao.findByBusinessKey(productKey);
         populateTokenListFields(product, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput);
 
         // If all lengths match, just send it.
@@ -70,6 +81,9 @@ public class ProductEjb {
 
             product.updateRiskCriteria(criteria, fullOperators, fullValues);
         }
+
+        // Need to persist for product
+        productDao.persist(product);
     }
 
     private void populateTokenListFields(Product product, ProductTokenInput addOnTokenInput,

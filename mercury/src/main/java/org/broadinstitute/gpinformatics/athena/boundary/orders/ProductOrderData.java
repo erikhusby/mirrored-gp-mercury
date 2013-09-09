@@ -16,6 +16,7 @@ public class ProductOrderData {
     private String title;
     private String id;
     private String comments;
+    private Date placedDate;
     private Date modifiedDate;
     private String product;
     private String status;
@@ -52,6 +53,14 @@ public class ProductOrderData {
 
     public void setComments(String comments) {
         this.comments = comments;
+    }
+
+    public Date getPlacedDate() {
+        return placedDate;
+    }
+
+    public void setPlacedDate(Date placedDate) {
+        this.placedDate = placedDate;
     }
 
     public Date getModifiedDate() {

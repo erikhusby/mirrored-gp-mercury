@@ -6,16 +6,14 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.AbstractEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
@@ -46,7 +44,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         super.setUp();
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
@@ -55,7 +53,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         //Build Event History
@@ -76,7 +74,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
         denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
@@ -101,8 +99,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        "Exome Express")
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -126,8 +123,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName + "bad",
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        "Exome Express")
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -160,8 +156,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        "Exome Express")
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
@@ -192,8 +187,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         HiSeq2500JaxbBuilder dilutionBuilder =
                 new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
                         denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null,
-                        "Exome Express")
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
                         .invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =

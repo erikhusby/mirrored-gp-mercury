@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.BettaLimsMessageUtils;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -92,7 +92,7 @@ public class BettaLimsMessageResource {
     private ThriftService thriftService;
 
     @Inject
-    private MercuryOrSquidRouter mercuryOrSquidRouter;
+    private SystemRouter systemRouter;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -178,19 +178,19 @@ public class BettaLimsMessageResource {
                     target specific workflows and adjust where the system of record should be considered for
                     each workflow
                     */
-                    final MercuryOrSquidRouter.MercuryOrSquid route =
-                            mercuryOrSquidRouter.routeForVesselBarcodes(barcodesToBeVerified);
+                    final SystemRouter.System route =
+                            systemRouter.routeForVesselBarcodes(barcodesToBeVerified);
 
-                    if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == route) {
+                    if (SystemRouter.System.MERCURY == route) {
                         processInMercury = true;
                     } else {
-                        if (MercuryOrSquidRouter.MercuryOrSquid.BOTH == route) {
+                        if (SystemRouter.System.BOTH == route) {
                             processInMercury = true;
                         }
                         processInSquid = true;
                     }
 
-                    if (processInMercury && processInSquid && route != MercuryOrSquidRouter.MercuryOrSquid.BOTH) {
+                    if (processInMercury && processInSquid && route != SystemRouter.System.BOTH) {
                         throw new InformaticsServiceException(
                                 "For Workflow Dependent processing, we cannot process in both " +
                                 "Mercury and Squid unless routing specifies both");

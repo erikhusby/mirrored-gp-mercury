@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -48,7 +47,6 @@ public class LabBatchEjbDBFreeTest {
     private LabVesselDao tubeDao;
 
     private LinkedHashMap<String, LabVessel> mapBarcodeToTube = new LinkedHashMap<>();
-    private String workflowName;
     private ArrayList<String> pdoNames;
     private String scottmat;
     private String testLCSetKey;
@@ -106,8 +104,6 @@ public class LabBatchEjbDBFreeTest {
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
-
-        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
         EasyMock.replay(mockJira, labBatchDao, tubeDao);
 

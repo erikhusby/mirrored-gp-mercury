@@ -25,6 +25,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -440,7 +441,7 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setDisambiguator(1L);
         plateTransferEvent.setOperator("pdunlea");
         plateTransferEvent.setStation("ZAN");
-        plateTransferEvent.setProgram("Bravo");
+        plateTransferEvent.setProgram(eventType + "-testProgram");
     }
 
     private PlateType buildRack(String rackBarcode) {
@@ -475,8 +476,8 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setBarcode(barcode);
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
-        receptacleType.setConcentration(12.2);
-        receptacleType.setVolume(8.3);
+        receptacleType.setConcentration(BigDecimal.valueOf(12.2));
+        receptacleType.setVolume(BigDecimal.valueOf(8.3));
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 

@@ -517,7 +517,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
-            if (getProduct().isSupportsPico()) {
+            if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",
                         lastPicoCount);
             }

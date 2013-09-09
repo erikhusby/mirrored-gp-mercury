@@ -24,20 +24,20 @@ import java.util.regex.Pattern;
  * Frame holding JGraph control and search controls
  */
 public class TransferVisualizerFrame extends JFrame {
-    private JTextField plateBarcodeTF;
+    private final JTextField plateBarcodeTF;
     private mxGraph mxGraph;
     private String barcode;
     private TransferVisualizerClient transferVisualizerClient;
     private JPopupMenu popupMenu;
-    private List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<>();
+    private final List<JCheckBox> alternativeIdCheckBoxes = new ArrayList<>();
     private static final Pattern FILL_COLOR_PATTERN = Pattern.compile("fillColor=[^;]*;");
     private mxICell clickedCell;
-    private JLabel status = new JLabel(" ");
-    private JFrame statusFrame = new JFrame();
-    private mxGraphComponent graphComponent;
+    private final JLabel status = new JLabel(" ");
+    private final JFrame statusFrame = new JFrame();
+    private final mxGraphComponent graphComponent;
 
     public TransferVisualizerFrame() throws HeadlessException {
-        this.setTitle("Transfer Visualizer");
+        setTitle("Transfer Visualizer");
 
         statusFrame.getContentPane().setLayout(new FlowLayout());
         statusFrame.getContentPane().add(new JLabel("Status: "));
@@ -66,7 +66,7 @@ public class TransferVisualizerFrame extends JFrame {
         controlsPanel.add(printPanel);
 
         idPanel.add(new JLabel("ID Type: "));
-        final JComboBox searchEntityComboBox = new JComboBox();
+        final JComboBox<TransferVisualizerClient.SearchType> searchEntityComboBox = new JComboBox<>();
         for (TransferVisualizerClient.SearchType searchType : TransferVisualizerClient.SearchType.values()) {
             searchEntityComboBox.addItem(searchType);
         }
@@ -151,7 +151,7 @@ public class TransferVisualizerFrame extends JFrame {
         printPanel.add(printButton);
 
         zoomPanel.add(new JLabel("Zoom: "));
-        final JComboBox zoomCombo = new JComboBox(new Object[]{"400%",
+        final JComboBox<String> zoomCombo = new JComboBox<>(new String[]{"400%",
                 "200%", "150%", "100%", "75%", "50%", mxResources.get("page"),
                 mxResources.get("width"), mxResources.get("actualSize")});
         zoomCombo.setEditable(true);
@@ -202,9 +202,10 @@ public class TransferVisualizerFrame extends JFrame {
                     if (cell != null) {
                         // Left clicks: MoreDetails button (MsgBox), MoreTransfers button (server call), tube in a receptacle (MsgBox)
                         // Right clicks: parent, child
-                        if(e.isPopupTrigger()) {
-                            if(cell.getValue() instanceof TransferVisualizerClient.HandlesPopups) {
-                                final TransferVisualizerClient.HandlesPopups handlesPopups = (TransferVisualizerClient.HandlesPopups) cell.getValue();
+                        if (e.isPopupTrigger()) {
+                            if (cell.getValue() instanceof TransferVisualizerClient.HandlesPopups) {
+                                final TransferVisualizerClient.HandlesPopups handlesPopups =
+                                        (TransferVisualizerClient.HandlesPopups) cell.getValue();
 
                                 popupMenu = new JPopupMenu();
                                 for (final String popupEntry : handlesPopups.getPopupList()) {
@@ -222,8 +223,9 @@ public class TransferVisualizerFrame extends JFrame {
                                         e.getYOnScreen() - (int)graphComponent.getLocationOnScreen().getY());
                             }
                         } else {
-                            if(cell.getValue() instanceof TransferVisualizerClient.HandlesClicks) {
-                                final TransferVisualizerClient.HandlesClicks handlesClicks = (TransferVisualizerClient.HandlesClicks) cell.getValue();
+                            if (cell.getValue() instanceof TransferVisualizerClient.HandlesClicks) {
+                                final TransferVisualizerClient.HandlesClicks handlesClicks =
+                                        (TransferVisualizerClient.HandlesClicks) cell.getValue();
                                 statusFrame.setVisible(true);
                                 status.setText("Handling click");
                                 statusFrame.pack();
@@ -278,10 +280,10 @@ public class TransferVisualizerFrame extends JFrame {
         });
 
         pack();
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
         String receptacleBarcode = System.getProperty("jnlp.receptacleBarcode");
-        if(receptacleBarcode != null && receptacleBarcode.trim().length() > 0) {
+        if (receptacleBarcode != null && receptacleBarcode.trim().length() > 0) {
             searchEntityComboBox.setSelectedItem(TransferVisualizerClient.SearchType.SEARCH_TUBE);
             plateBarcodeTF.setText(receptacleBarcode);
             searchButton.doClick();
@@ -289,7 +291,7 @@ public class TransferVisualizerFrame extends JFrame {
     }
 
     private void renderGraph(Graph graph) {
-        if(graph.getMessage() == null) {
+        if (graph.getMessage() == null) {
             transferVisualizerClient.renderAndLayoutGraph(graph);
         } else {
             JOptionPane.showMessageDialog(this, graph.getMessage());
@@ -300,7 +302,7 @@ public class TransferVisualizerFrame extends JFrame {
         mxGraph = transferVisualizerClient.getMxGraph();
         graphComponent.setGraph(transferVisualizerClient.getMxGraph());
         graphComponent.refresh();
-        if(transferVisualizerClient.getHighlightVertex() != null) {
+        if (transferVisualizerClient.getHighlightVertex() != null) {
             graphComponent.scrollCellToVisible(transferVisualizerClient.getHighlightVertex(), true);
         }
     }

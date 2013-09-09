@@ -10,20 +10,18 @@
             function typeChanged() {
                 var numLanesInput = $j('#numLanesText');
                 var loadingConcInput = $j('#loadingConcText');
+                numLanesInput.prop('readonly', false);
+                loadingConcInput.prop('readonly', false);
+
                 if ($j('#typeSelect').val() == 'MiSeqFlowcell') {
                     numLanesInput.prop('readonly', true);
                     numLanesInput.val(1);
                     loadingConcInput.prop('readonly', true);
                     loadingConcInput.val('7');
                 } else if ($j('#typeSelect').val() == 'HiSeq2500Flowcell') {
-                    numLanesInput.prop('readonly', true);
                     numLanesInput.val(2);
-                    loadingConcInput.val('7');
                 } else {
-                    numLanesInput.prop('readonly', true);
                     numLanesInput.val(8);
-                    loadingConcInput.prop('readonly', false);
-                    loadingConcInput.val('7');
                 }
             }
 

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,7 +42,7 @@ public class LimsQueryResourceResponseFactory {
         for (LibraryData libraryData : lane.getLibraryData()) {
             outLane.getLibraryData().add(makeLibraryData(libraryData));
         }
-        outLane.setLoadingConcentration(lane.getLoadingConcentration());
+        outLane.setLoadingConcentration(BigDecimal.valueOf(lane.getLoadingConcentration()));
         if (lane.getDerivedLibraryData() != null) {
             for (LibraryData libraryData : lane.getDerivedLibraryData()) {
                 outLane.getDerivedLibraryData().add(makeLibraryData(libraryData));

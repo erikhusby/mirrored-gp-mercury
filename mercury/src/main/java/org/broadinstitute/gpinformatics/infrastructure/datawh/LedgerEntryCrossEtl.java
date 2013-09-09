@@ -66,8 +66,7 @@ public class LedgerEntryCrossEtl extends GenericEntityEtl<LedgerEntry, ProductOr
     String dataRecord(String etlDateStr, boolean isDelete, ProductOrderSample entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
-                format(entity.getBillableLedgerItems().size() == 0)
+                format(entity.isAnyBilled())
         );
     }
-
 }

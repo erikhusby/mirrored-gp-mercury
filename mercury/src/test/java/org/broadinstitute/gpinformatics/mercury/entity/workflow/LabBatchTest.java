@@ -37,7 +37,7 @@ public class LabBatchTest {
     private String testLCSetTicketKey;
     private String pdoBusinessName;
     private List<String> pdoNames;
-    private String workflowName;
+    private Workflow workflow;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
@@ -48,7 +48,7 @@ public class LabBatchTest {
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        workflow = Workflow.EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
@@ -56,7 +56,7 @@ public class LabBatchTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, workflowName, false, "agg type"),
+                40, null, null, true, workflow, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         productOrder.setJiraTicketKey(pdoBusinessName);
@@ -108,12 +108,12 @@ public class LabBatchTest {
     public void testLabBatchCreation() {
 
 
-        LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
+        LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflow, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
 
         Assert.assertNotNull(testBatch.getBatchName());
-        Assert.assertEquals(workflowName + ": " + pdoBusinessName, testBatch.getBatchName());
+        Assert.assertEquals(workflow.getWorkflowName() + ": " + pdoBusinessName, testBatch.getBatchName());
 
         Assert.assertNotNull(testBatch.getStartingBatchLabVessels());
         Assert.assertEquals(6, testBatch.getStartingBatchLabVessels().size());

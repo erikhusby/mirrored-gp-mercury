@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -58,7 +57,6 @@ public class LabBatchEJBTest extends ContainerTest {
     private BucketDao bucketDao;
 
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
-    private String workflowName;
     private ArrayList<String> pdoNames;
     private String scottmat;
     private Bucket bucket;
@@ -83,8 +81,6 @@ public class LabBatchEJBTest extends ContainerTest {
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
-
-        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
         List<String> vesselSampleList = new ArrayList<>(6);
 

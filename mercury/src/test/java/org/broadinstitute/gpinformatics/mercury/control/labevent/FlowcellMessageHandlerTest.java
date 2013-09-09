@@ -9,18 +9,19 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
@@ -31,9 +32,11 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityB
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,7 +64,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         super.setUp();
-        expectedRouting = MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+        expectedRouting = SystemRouter.System.MERCURY;
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
@@ -70,7 +73,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflowName("Exome Express");
+        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         workflowBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), "LCSET-tst123"));
 
@@ -92,7 +95,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "Exome Express", "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
 
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
@@ -103,8 +106,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulDenatureToFlowcellMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal
+                .valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -160,6 +164,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
+        // Verify that the tube used to load the flowcell is the denature tube;
+        IlluminaFlowcell flowcell = (IlluminaFlowcell) reagentToFlowcellEvent.getTargetLabVessels().iterator().next();
+        for (LabVessel tube : flowcell.getNearestTubeAncestorsForLanes().values()) {
+            Assert.assertEquals(tube.getLabel(), denatureTube.getLabel());
+        }
+
         Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
@@ -170,7 +180,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
@@ -183,7 +193,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgNoMiseqBatches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -263,7 +273,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.never()).getWorkflowValidationEmail();
@@ -276,9 +286,9 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgTooMany2500Batches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
         LabBatch fctBatch2 =
-                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -355,7 +365,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -367,7 +377,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgNo2500Batches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -444,7 +454,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -456,8 +466,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testFailureDenatureToFlowcellMsgTooManyMiSeqBatches() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch miseqBatch2 = new LabBatch(MISEQ_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADTF";
 
@@ -534,7 +544,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -546,10 +556,10 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulDenatureToDilutionMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
         LabBatch fctBatch2 =
-                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+                new LabBatch(FLOWCELL_2500_TICKET_KEY + "2", starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ADDF";
 
@@ -613,7 +623,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
 
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
@@ -626,8 +636,8 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     public void testSuccessfulSTBToFlowcellMsg() throws Exception {
 
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, 7f);
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, 12.33f);
+        LabBatch miseqBatch = new LabBatch(MISEQ_TICKET_KEY, starterVessels, LabBatch.LabBatchType.MISEQ, BigDecimal.valueOf(7f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET_KEY, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
 
         final String denatureToFlowcellFlowcellBarcode = "ASTF";
 
@@ -691,7 +701,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, null,
-                        WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                        Workflow.EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();

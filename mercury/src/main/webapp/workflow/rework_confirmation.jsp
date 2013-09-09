@@ -30,7 +30,7 @@
         <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal">
             <stripes:hidden name="selectedLcset"/>
             <stripes:hidden name="selectedBucket"/>
-            <stripes:hidden name="selectedReworks"/>
+            <stripes:hidden name="selectedEntryIds"/>
             <h5>Adding samples :</h5>
             <table id="selectedReworkVessels" class="table simple">
                 <thead>
@@ -44,7 +44,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <c:forEach items="${actionBean.seletecReworkEntries}" var="entry">
+                <c:forEach items="${actionBean.selectedEntries}" var="entry">
                     <tr>
                         <td>
 

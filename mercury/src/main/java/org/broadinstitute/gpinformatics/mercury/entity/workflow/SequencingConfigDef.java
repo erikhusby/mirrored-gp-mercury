@@ -24,10 +24,10 @@ public class SequencingConfigDef implements Serializable {
     private static final long serialVersionUID = 2013061401L;
 
     @XmlID
-    private String name=null;
-    private InstrumentWorkflow instrumentWorkflow=InstrumentWorkflow.NULL_VALUE;
-    private ReadStructure readStructure=ReadStructure.NULL_VALUE;
-    private Chemistry chemistry=Chemistry.NULL_VALUE;
+    private String name;
+    private InstrumentWorkflow instrumentWorkflow = InstrumentWorkflow.NULL_VALUE;
+    private ReadStructure readStructure = ReadStructure.NULL_VALUE;
+    private Chemistry chemistry = Chemistry.NULL_VALUE;
 
 
     /** For JAXB */
@@ -44,7 +44,7 @@ public class SequencingConfigDef implements Serializable {
         Amplicon("Amplicon"),
         NULL_VALUE(null);
 
-        private String value;
+        private final String value;
 
         InstrumentWorkflow(String value) {
             this.value = value;
@@ -60,7 +60,7 @@ public class SequencingConfigDef implements Serializable {
         PRODUCTION("76T8B8B76T"),
         NULL_VALUE(null);
 
-        private String value;
+        private final String value;
 
         ReadStructure(String value) {
             this.value = value;
@@ -73,9 +73,9 @@ public class SequencingConfigDef implements Serializable {
 
     public enum Chemistry {
         Default("Default"), LongRead("LongRead"), Amplicon("Amplicon"),NULL_VALUE(null);
-        private String value;
+        private final String value;
 
-        private Chemistry(String value) {
+        Chemistry(String value) {
             this.value = value;
         }
 

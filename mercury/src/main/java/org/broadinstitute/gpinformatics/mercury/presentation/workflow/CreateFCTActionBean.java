@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public class CreateFCTActionBean extends CoreActionBean {
 
     private int numberOfLanes;
 
-    private float loadingConc;
+    private BigDecimal loadingConc;
 
     private LabBatch labBatch;
 
@@ -126,11 +127,11 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.numberOfLanes = numberOfLanes;
     }
 
-    public float getLoadingConc() {
+    public BigDecimal getLoadingConc() {
         return loadingConc;
     }
 
-    public void setLoadingConc(float loadingConc) {
+    public void setLoadingConc(BigDecimal loadingConc) {
         this.loadingConc = loadingConc;
     }
 

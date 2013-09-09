@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -19,20 +17,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * @author breilly
- */
 @Stateful
 @RequestScoped
 public class MercuryClientEjb {
-    private static final Log logger = LogFactory.getLog(MercuryClientEjb.class);
     private LabVesselDao labVesselDao;
     private BSPUserList userList;
     private BucketEjb bucketEjb;
@@ -61,17 +66,16 @@ public class MercuryClientEjb {
         return addFromProductOrder(pdo, pdo.getSamples());
     }
 
-    public Collection<ProductOrderSample> addFromProductOrder(ProductOrder pdo, Collection<ProductOrderSample> samples) {
+    public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
+                                                              Collection<ProductOrderSample> samples) {
         // Limited to ExomeExpress pdos.
-        if (pdo.getProduct() == null ||
-                !WorkflowName.EXOME_EXPRESS.getWorkflowName().equals(pdo.getProduct().getWorkflowName())) {
+        if (order.getProduct() == null || order.getProduct().getWorkflow() != Workflow.EXOME_EXPRESS) {
             return Collections.emptyList();
         }
 
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion =
-                workflowConfig.getWorkflowByName(pdo.getProduct().getWorkflowName())
-                        .getEffectiveVersion();
+                workflowConfig.getWorkflow(order.getProduct().getWorkflow()).getEffectiveVersion();
         WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
 
         Bucket initialBucket = null;
@@ -83,7 +87,7 @@ public class MercuryClientEjb {
         }
 
         String username = null;
-        Long bspUserId = pdo.getCreatedBy();
+        Long bspUserId = order.getCreatedBy();
         if (bspUserId != null) {
             BspUser bspUser = userList.getById(bspUserId);
             if (bspUser != null) {
@@ -125,7 +129,9 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         bucketEjb.add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-                LabEvent.UI_EVENT_LOCATION, initialBucketDef.getBucketEventType(), pdo.getBusinessKey());
+                LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
+                order.getBusinessKey()
+        );
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);

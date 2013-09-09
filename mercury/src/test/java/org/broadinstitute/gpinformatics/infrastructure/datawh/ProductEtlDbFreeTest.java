@@ -6,14 +6,19 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
 
-import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.testng.Assert.assertEquals;
 
 
 /**
@@ -34,7 +39,7 @@ public class ProductEtlDbFreeTest {
     private int guaranteedCycleTimeSeconds = 99999;
     private int samplesPerWeek = 200;
     private boolean isTopLevelProduct = true;
-    private String workflowName = "Test Workflow 1";
+    private Workflow workflow = Workflow.EXOME_EXPRESS;
     private String productFamilyName = "Test ProductFamily";
     private long primaryPriceItemId = 987654321L;
     private ProductEtl tst;
@@ -88,9 +93,9 @@ public class ProductEtlDbFreeTest {
         expect(obj.getGuaranteedCycleTimeSeconds()).andReturn(guaranteedCycleTimeSeconds);
         expect(obj.getSamplesPerWeek()).andReturn(samplesPerWeek);
         expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
-        expect(obj.getWorkflowName()).andReturn(workflowName);
-        expect(obj.getProductFamily()).andReturn(family).times(2);
-        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).times(2);
+        expect(obj.getWorkflow()).andReturn(workflow).anyTimes();
+        expect(obj.getProductFamily()).andReturn(family).anyTimes();
+        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
 
         expect(primaryPriceItem.getPriceItemId()).andReturn(primaryPriceItemId);
 
@@ -120,10 +125,9 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], String.valueOf(guaranteedCycleTimeSeconds));
         assertEquals(parts[i++], String.valueOf(samplesPerWeek));
         assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
-        assertEquals(parts[i++], workflowName);
+        assertEquals(parts[i++], workflow.getWorkflowName());
         assertEquals(parts[i++], productFamilyName);
         assertEquals(parts[i++], String.valueOf(primaryPriceItemId));
         assertEquals(parts.length, i);
     }
 }
-
