@@ -6,6 +6,8 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -20,8 +22,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
     private static final long serialVersionUID = -2649024856161379565L;
 
-    private static final String VOLUME_CONCENTRATION_URL =
-            "sample/setVolumeConcentration?barcode=%s&volume=%f&concentration=%f";
+    private static final String VOLUME_CONCENTRATION_URL = "sample/setVolumeConcentration?barcode=%s";
 
     private final String[] result = new String[] { "No result calculated" };
 
@@ -41,10 +42,35 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
         super(bspConfig);
     }
 
-    @Override
-    public void setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
+    /**
+     * Create URL String for the web service call that ignores ignoring null values
+     *
+     * @return queryString to pass to the web service.
+     */
+    private static final String getQueryString(String barcode, BigDecimal volume, BigDecimal concentration) {
+        String queryString = String.format(VOLUME_CONCENTRATION_URL, barcode);
+        if (volume != null) {
+            queryString = queryString + String.format("&volume=%f", volume);
+        }
+        if (concentration != null) {
+            queryString = queryString + String.format("&concentration=%f", concentration);
+        }
+        return queryString;
+    }
 
-        String queryString = String.format(VOLUME_CONCENTRATION_URL, barcode, volume, concentration);
+
+    /**
+     * Call BSP WebService which sets the volume and or the concentration of the thing barcoded.
+     * At lease one of must be Nonnull.
+     *
+     * @param barcode       The thing having its quant updated. In BSP this currently can be a SM id or a manufacturer
+     *                      barcode.
+     * @param volume        new volume of the sample. Can be null.
+     * @param concentration the new concentration of the sample. Can be null.
+     */
+    @Override
+    public void setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume, @Nullable BigDecimal concentration) {
+        String queryString = getQueryString(barcode, volume, concentration);
         String urlString = getUrl(queryString);
 
         BufferedReader rdr = null;
