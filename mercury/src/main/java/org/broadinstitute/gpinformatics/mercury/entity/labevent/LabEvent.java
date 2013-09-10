@@ -104,10 +104,9 @@ public class LabEvent {
     private Long disambiguator = 0L;
 
     /**
-     * The program name is passed into the message using the 'program' attribute and is the script or program  which
-     * created this lab event. Some examples of scripts are "Bravo" or "Multiprobe". Having the script name saved
-     * will help clarify how messaging, scripts and jira workflows inter-relate.
-     * FIXME: bravo and multiprobe aren't really good examples
+     * The program name is passed into the message using the 'program' attribute and is the script or program which
+     * created this lab event (e.g., "FlowcellLoader"). Having the script name saved will help clarify how messaging,
+     * scripts and jira workflows inter-relate.
      */
     @Column(name = "PROGRAM_NAME", length = 255)
     private String programName;
