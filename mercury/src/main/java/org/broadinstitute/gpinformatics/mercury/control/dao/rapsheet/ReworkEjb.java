@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -59,7 +58,7 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
- * Encapsulates the business logic related to {@link RapSheet}s and rework. This includes the creation of a new batch
+ * Encapsulates the business logic related to rework. This includes the creation of a new batch
  * entity and saving that to Jira.
  * <p/>
  * More information about Rework can be found here:
@@ -347,7 +346,7 @@ public class ReworkEjb {
         return validationMessages;
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(Workflow workflow, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Workflow workflow, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
                 .getEffectiveVersion();
