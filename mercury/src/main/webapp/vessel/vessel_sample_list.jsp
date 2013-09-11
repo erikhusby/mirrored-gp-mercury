@@ -86,7 +86,7 @@
                                class="external" target="JIRA">
                                     ${batchComposition.labBatch.businessKey}
                                 (${batchComposition.count}/${batchComposition.denominator})
-                            </a>
+                            </a>&nbsp;&nbsp;
                         </c:if>
 
                         <c:if test="${not empty sample.productOrderKey}">
