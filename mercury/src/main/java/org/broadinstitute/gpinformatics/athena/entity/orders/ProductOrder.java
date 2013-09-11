@@ -1132,7 +1132,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Issue Type for Product Orders
      */
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.PRODUCT_ORDER;
+        return (Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER;
     }
 
     /**

@@ -658,7 +658,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      */
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.RESEARCH_PROJECT;
+        return Deployment.isCRSP?CreateFields.IssueType.CLIA_RESEARCH_PROJECT:CreateFields.IssueType.RESEARCH_PROJECT;
     }
 
     /**
