@@ -6,6 +6,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -258,7 +259,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.LCSET_PROJECT;
+        return Deployment.isCRSP ? CreateFields.ProjectType.CRSP_LCSET_PROJECT : CreateFields.ProjectType.LCSET_PROJECT;
     }
 
 }

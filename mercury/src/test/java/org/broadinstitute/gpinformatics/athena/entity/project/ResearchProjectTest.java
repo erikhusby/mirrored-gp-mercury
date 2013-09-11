@@ -113,7 +113,7 @@ public class ResearchProjectTest {
 
         assertThat(researchProject.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.RESEARCH_PROJECT)));
 
-        assertThat(researchProject.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.Research_Projects)));
+        assertThat(researchProject.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.RESEARCH_PROJECTS)));
 
         assertThat(researchProject.getProjectManagers(), is(arrayWithSize(greaterThan(0))));
         assertThat(researchProject.getBroadPIs(), is(arrayWithSize(greaterThan(0))));
