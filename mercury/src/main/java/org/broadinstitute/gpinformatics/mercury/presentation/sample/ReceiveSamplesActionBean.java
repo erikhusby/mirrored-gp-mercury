@@ -5,7 +5,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.broadinstitute.gpinformatics.mercury.boundary.sample.ReceiveSamplesEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -20,9 +19,6 @@ public class ReceiveSamplesActionBean extends CoreActionBean {
     public static final String RECEIVE_SAMPLES_ACTION = "receiveSamples";
 
     private List<String> samplesToReceive;
-
-    @Inject
-    private ReceiveSamplesEjb receiveSamplesEjb;
 
     @DefaultHandler
     @HandlesEvent(SHOW_RECEIPT_ACTION)
