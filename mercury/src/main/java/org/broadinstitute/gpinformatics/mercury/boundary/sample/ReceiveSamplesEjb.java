@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPRestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 
 import javax.ejb.Stateful;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class ReceiveSamplesEjb {
 
     @Inject
-    private BSPRestService service;
+    private BSPSampleDataFetcher service;
 
     public List<String> receiveSamples(List<String> barcodes) {
 

@@ -55,4 +55,10 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
         Assert.assertNotNull(rootSample.getPlasticBarcodes());
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
     }
+
+    @Test
+    public void testGetSampleDetails() {
+        List<String> barcodes = Arrays.asList("0156343673");
+        bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(barcodes);
+    }
 }
