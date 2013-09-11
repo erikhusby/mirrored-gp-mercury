@@ -26,7 +26,7 @@ public class WorkflowConfigLookupDbFreeTest {
     static final long[] MSEC_DATES = {1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2L * 86400000L};
 
     private WorkflowConfigLookup wfConfigLookup;
-    private WorkflowConfig workflowConfig = buildWorkflowConfig();
+    private final WorkflowConfig workflowConfig = buildWorkflowConfig();
     private Collection<WorkflowConfigDenorm> workflowConfigDenorms;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
@@ -100,7 +100,6 @@ public class WorkflowConfigLookupDbFreeTest {
 
 
     static WorkflowConfig buildWorkflowConfig() {
-        WorkflowConfig config = new WorkflowConfig();
 
         // defining workflows
         List<WorkflowProcessDef> workflowList = new ArrayList<>();
@@ -138,8 +137,6 @@ public class WorkflowConfigLookupDbFreeTest {
         w2.addWorkflowProcessDefVersion(w2v1);
         workflowList.add(w2);
 
-        config.getWorkflowProcessDefs().addAll(workflowList);
-
         // defining products
         List<ProductWorkflowDef> pList = new ArrayList<>();
 
@@ -161,8 +158,6 @@ public class WorkflowConfigLookupDbFreeTest {
         p2.addProductWorkflowDefVersion(p2v1);
         pList.add(p2);
 
-        config.getProductWorkflowDefs().addAll(pList);
-
-        return config;
+        return new WorkflowConfig(workflowList, pList);
     }
 }

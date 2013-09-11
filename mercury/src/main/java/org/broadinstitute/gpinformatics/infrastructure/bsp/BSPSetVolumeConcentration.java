@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * This interface provides the methods needed to set volume and concentration on a sample, but barcode. This is so
@@ -18,7 +19,7 @@ public interface BSPSetVolumeConcentration extends Serializable {
      * @param volume The volume value to set.
      * @param concentration The concentration value to set.
      */
-    void setVolumeAndConcentration(String barcode, double volume, double concentration);
+    void setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration);
 
     /**
      * This is the result of sending the request to BSP.

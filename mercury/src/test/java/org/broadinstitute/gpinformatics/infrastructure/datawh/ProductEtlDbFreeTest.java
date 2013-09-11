@@ -7,18 +7,13 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 import java.util.Date;
-
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.reset;
-import static org.easymock.EasyMock.verify;
-import static org.testng.Assert.assertEquals;
 
 
 /**
@@ -30,104 +25,104 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductEtlDbFreeTest {
     private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
-    private long entityId = 1122334455L;
-    private String productName = "Test Product";
-    private String partNumber = "TestNumber-5544";
-    private Date availabilityDate = new Date(1350000000000L);
-    private Date discontinuedDate = new Date(1380000000000L);
-    private int expectedCycleTimeSeconds = 5400;
-    private int guaranteedCycleTimeSeconds = 99999;
-    private int samplesPerWeek = 200;
-    private boolean isTopLevelProduct = true;
-    private Workflow workflow = Workflow.EXOME_EXPRESS;
-    private String productFamilyName = "Test ProductFamily";
-    private long primaryPriceItemId = 987654321L;
-    private ProductEtl tst;
+    private static final long ENTITY_ID = 1122334455L;
+    private static final String PRODUCT_NAME = "Test Product";
+    private static final String PART_NUMBER = "TestNumber-5544";
+    private static final Date AVAILABILITY_DATE = new Date(1350000000000L);
+    private static final Date DISCONTINUED_DATE = new Date(1380000000000L);
+    private static final int EXPECTED_CYCLE_TIME_SECONDS = 5400;
+    private static final int GUARANTEED_CYCLE_TIME_SECONDS = 99999;
+    private static final int SAMPLES_PER_WEEK = 200;
+    private static final boolean IS_TOP_LEVEL_PRODUCT = true;
+    private static final Workflow WORKFLOW = Workflow.EXOME_EXPRESS;
+    private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
+    private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
+    private ProductEtl productEtl;
 
-    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
 
-    private Product obj = createMock(Product.class);
-    private ProductDao dao = createMock(ProductDao.class);
-    private ProductFamily family = createMock(ProductFamily.class);
-    private PriceItem primaryPriceItem = createMock(PriceItem.class);
-    private Object[] mocks = new Object[]{auditReader, dao, obj, family, primaryPriceItem};
+    private final Product product = EasyMock.createMock(Product.class);
+    private final ProductDao productDao = EasyMock.createMock(ProductDao.class);
+    private final ProductFamily family = EasyMock.createMock(ProductFamily.class);
+    private final PriceItem primaryPriceItem = EasyMock.createMock(PriceItem.class);
+    private final Object[] mocks = new Object[]{auditReader, productDao, product, family, primaryPriceItem};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
-        reset(mocks);
+        EasyMock.reset(mocks);
 
-        tst = new ProductEtl(dao);
-        tst.setAuditReaderDao(auditReader);
+        productEtl = new ProductEtl(productDao);
+        productEtl.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
-        expect(obj.getProductId()).andReturn(entityId);
-        replay(mocks);
+        EasyMock.expect(product.getProductId()).andReturn(ENTITY_ID);
+        EasyMock.replay(mocks);
 
-        assertEquals(tst.entityClass, Product.class);
-        assertEquals(tst.baseFilename, "product");
-        assertEquals(tst.entityId(obj), (Long) entityId);
+        Assert.assertEquals(productEtl.entityClass, Product.class);
+        Assert.assertEquals(productEtl.baseFilename, "product");
+        Assert.assertEquals(productEtl.entityId(product), (Long) ENTITY_ID);
 
-        verify(mocks);
+        EasyMock.verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        expect(dao.findById(Product.class, -1L)).andReturn(null);
+        EasyMock.expect(productDao.findById(Product.class, -1L)).andReturn(null);
 
-        replay(mocks);
+        EasyMock.replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
+        Assert.assertEquals(productEtl.dataRecords(etlDateString, false, -1L).size(), 0);
 
-        verify(mocks);
+        EasyMock.verify(mocks);
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(dao.findById(Product.class, entityId)).andReturn(obj);
+        EasyMock.expect(productDao.findById(Product.class, ENTITY_ID)).andReturn(product);
 
-        expect(obj.getProductId()).andReturn(entityId);
-        expect(obj.getProductName()).andReturn(productName);
-        expect(obj.getPartNumber()).andReturn(partNumber);
-        expect(obj.getAvailabilityDate()).andReturn(availabilityDate);
-        expect(obj.getDiscontinuedDate()).andReturn(discontinuedDate);
-        expect(obj.getExpectedCycleTimeSeconds()).andReturn(expectedCycleTimeSeconds);
-        expect(obj.getGuaranteedCycleTimeSeconds()).andReturn(guaranteedCycleTimeSeconds);
-        expect(obj.getSamplesPerWeek()).andReturn(samplesPerWeek);
-        expect(obj.isTopLevelProduct()).andReturn(isTopLevelProduct);
-        expect(obj.getWorkflow()).andReturn(workflow).anyTimes();
-        expect(obj.getProductFamily()).andReturn(family).anyTimes();
-        expect(obj.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
+        EasyMock.expect(product.getProductId()).andReturn(ENTITY_ID);
+        EasyMock.expect(product.getProductName()).andReturn(PRODUCT_NAME);
+        EasyMock.expect(product.getPartNumber()).andReturn(PART_NUMBER);
+        EasyMock.expect(product.getAvailabilityDate()).andReturn(AVAILABILITY_DATE);
+        EasyMock.expect(product.getDiscontinuedDate()).andReturn(DISCONTINUED_DATE);
+        EasyMock.expect(product.getExpectedCycleTimeSeconds()).andReturn(EXPECTED_CYCLE_TIME_SECONDS);
+        EasyMock.expect(product.getGuaranteedCycleTimeSeconds()).andReturn(GUARANTEED_CYCLE_TIME_SECONDS);
+        EasyMock.expect(product.getSamplesPerWeek()).andReturn(SAMPLES_PER_WEEK);
+        EasyMock.expect(product.isTopLevelProduct()).andReturn(IS_TOP_LEVEL_PRODUCT);
+        EasyMock.expect(product.getWorkflow()).andReturn(WORKFLOW).anyTimes();
+        EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
+        EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
 
-        expect(primaryPriceItem.getPriceItemId()).andReturn(primaryPriceItemId);
+        EasyMock.expect(primaryPriceItem.getPriceItemId()).andReturn(PRIMARY_PRICE_ITEM_ID);
 
-        expect(family.getName()).andReturn(productFamilyName);
+        EasyMock.expect(family.getName()).andReturn(PRODUCT_FAMILY_NAME);
 
-        replay(mocks);
+        EasyMock.replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
-        assertEquals(records.size(), 1);
+        Collection<String> records = productEtl.dataRecords(etlDateString, false, ENTITY_ID);
+        Assert.assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
 
-        verify(mocks);
+        EasyMock.verify(mocks);
     }
 
     private void verifyRecord(String record) {
         String[] parts = record.split(",");
         int i = 0;
-        assertEquals(parts[i++], etlDateString);
-        assertEquals(parts[i++], "F");
-        assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], productName);
-        assertEquals(parts[i++], partNumber);
-        assertEquals(parts[i++], EtlTestUtilities.format(availabilityDate));
-        assertEquals(parts[i++], EtlTestUtilities.format(discontinuedDate));
-        assertEquals(parts[i++], String.valueOf(expectedCycleTimeSeconds));
-        assertEquals(parts[i++], String.valueOf(guaranteedCycleTimeSeconds));
-        assertEquals(parts[i++], String.valueOf(samplesPerWeek));
-        assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
-        assertEquals(parts[i++], workflow.getWorkflowName());
-        assertEquals(parts[i++], productFamilyName);
-        assertEquals(parts[i++], String.valueOf(primaryPriceItemId));
-        assertEquals(parts.length, i);
+        Assert.assertEquals(parts[i++], etlDateString);
+        Assert.assertEquals(parts[i++], "F");
+        Assert.assertEquals(parts[i++], String.valueOf(ENTITY_ID));
+        Assert.assertEquals(parts[i++], PRODUCT_NAME);
+        Assert.assertEquals(parts[i++], PART_NUMBER);
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(AVAILABILITY_DATE));
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(DISCONTINUED_DATE));
+        Assert.assertEquals(parts[i++], String.valueOf(EXPECTED_CYCLE_TIME_SECONDS));
+        Assert.assertEquals(parts[i++], String.valueOf(GUARANTEED_CYCLE_TIME_SECONDS));
+        Assert.assertEquals(parts[i++], String.valueOf(SAMPLES_PER_WEEK));
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(IS_TOP_LEVEL_PRODUCT));
+        Assert.assertEquals(parts[i++], WORKFLOW.getWorkflowName());
+        Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
+        Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
+        Assert.assertEquals(parts.length, i);
     }
 }

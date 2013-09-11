@@ -125,47 +125,46 @@ public class LCSetJiraFieldFactoryTest {
 
         Assert.assertEquals(7, generatedFields.size());
 
-        for (CustomField currField : generatedFields) {
+        for (CustomField field : generatedFields) {
 
-            final String fieldDefinitionName = currField.getFieldDefinition().getName();
+            String fieldDefinitionName = field.getFieldDefinition().getName();
             if (fieldDefinitionName.equals(LabBatch.TicketFields.WORK_REQUEST_IDS.getName())) {
-                Assert.assertEquals("N/A", (String) currField.getValue());
+                Assert.assertEquals("N/A", (String) field.getValue());
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.GSSR_IDS.getName())) {
                 for (LabVessel currVessel : testBatch.getStartingBatchLabVessels()) {
                     for (String sampleName : currVessel.getSampleNames()) {
-                        Assert.assertTrue(((String) currField.getValue()).contains(sampleName));
+                        Assert.assertTrue(((String) field.getValue()).contains(sampleName));
                     }
                 }
                 Assert.assertFalse(testBatch.getReworks().isEmpty());
                 for (LabVessel currVessel : testBatch.getReworks()) {
                     for (String sampleName : currVessel.getSampleNames()) {
-                        Assert.assertTrue(((String) currField.getValue()).contains(sampleName));
+                        Assert.assertTrue(((String) field.getValue()).contains(sampleName));
                     }
                 }
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName())) {
-                Assert.assertEquals(((CustomField.SelectOption) currField.getValue()).getId(), "-1");
+                Assert.assertEquals(((CustomField.SelectOption) field.getValue()).getId(), "-1");
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName())) {
-                Assert.assertEquals(numSamples, currField.getValue());
+                Assert.assertEquals(numSamples, field.getValue());
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROGRESS_STATUS.getName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS,
-                        ((CustomField.ValueContainer) currField.getValue()).getValue());
+                        ((CustomField.ValueContainer) field.getValue()).getValue());
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
-                WorkflowLoader wfLoader = new WorkflowLoader();
-                WorkflowConfig wfConfig = wfLoader.load();
-                AthenaClientService athenaSvc = AthenaClientProducer.stubInstance();
+                WorkflowLoader workflowLoader = new WorkflowLoader();
+                WorkflowConfig workflowConfig = workflowLoader.load();
+                AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
 
-                ProductWorkflowDef workflowDef = wfConfig.getWorkflow(
-                        athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflow());
+                ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
+                        athenaClientService.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflow());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
-                                .getVersion(),
-                        currField.getValue());
+                                .getVersion(), field.getValue());
 
             }
         }

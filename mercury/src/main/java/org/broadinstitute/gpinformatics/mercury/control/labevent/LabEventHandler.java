@@ -126,53 +126,6 @@ public class LabEventHandler implements Serializable {
 //        }
 //    }
 
-//    /**
-//     * getWorkflowVersion will, based on a lab batch, find the defined Workflow Version.
-//     *
-//     * @param labBatch LCSET
-//     * @return Workflow Definition for the defined workflow for the LCSET
-//     */
-//    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull LabBatch labBatch) {
-//        WorkflowConfig workflowConfig = workflowLoader.load();
-//
-//        ProductWorkflowDefVersion versionResult = null;
-//
-//        String workflowName = labBatch.getWorkflowName();
-//        if (StringUtils.isNotBlank(workflowName)) {
-//            versionResult = workflowConfig.getWorkflowVersionByName(workflowName, labBatch.getCreatedOn());
-//        }
-//        return versionResult;
-//    }
-//
-//    /**
-//     * getWorkflowVersion will, based on the BusinessKey of a product order, find the defined Workflow Version.  It
-//     * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
-//     * workflow definition based on the workflow name defined on the ProductOrder
-//     *
-//     * @param productOrderKey Business Key for a previously defined product order
-//     * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
-//     */
-//    public ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String productOrderKey) {
-//        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-//        return getWorkflowVersionByWorkflow(productOrder.getProduct().getWorkflow());
-//    }
-//
-//    /**
-//     * getWorkflowVersionByWorkflow allows a caller to retrieve an instance of the latest workflow Version based on the
-//     * name of the workflow
-//     * @param workflow The workflow for which the user wishes to find a workflow version instance
-//     * @return a representation of the latest workflow version as a java class
-//     */
-//    public ProductWorkflowDefVersion getWorkflowVersionByWorkflow(Workflow workflow) {
-//        WorkflowConfig workflowConfig = workflowLoader.load();
-//
-//        ProductWorkflowDefVersion versionResult = null;
-//        if (workflow != null) {
-//            versionResult = workflowConfig.getWorkflow(workflow).getEffectiveVersion();
-//        }
-//        return versionResult;
-//    }
-
     /**
      * Primarily utilized for removing items from a bucket, this method determines the proper Bucket->Vessel Combination.
      * <p/>
