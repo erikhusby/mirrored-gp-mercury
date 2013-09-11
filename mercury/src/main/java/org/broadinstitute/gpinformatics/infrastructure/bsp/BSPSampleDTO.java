@@ -121,12 +121,12 @@ public class BSPSampleDTO {
         return "";
     }
 
-    private double getDouble(BSPSampleSearchColumn column) {
+    private Double getDouble(BSPSampleSearchColumn column) {
         String s = getValue(column);
         if (StringUtils.isNotBlank(s)) {
             return Double.parseDouble(s);
         }
-        return 0;
+        return null;
     }
 
     /**
@@ -183,11 +183,11 @@ public class BSPSampleDTO {
         }
     }
 
-    public double getVolume() {
+    public Double getVolume() {
         return getDouble(BSPSampleSearchColumn.VOLUME);
     }
 
-    public double getConcentration() {
+    public Double getConcentration() {
         return getDouble(BSPSampleSearchColumn.CONCENTRATION);
     }
 

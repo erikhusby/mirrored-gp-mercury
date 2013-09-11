@@ -27,7 +27,8 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     @Inject
     private BSPConfig bspConfig;
 
-    @Inject @SuppressWarnings("redundantImplemen")
+    @Inject
+    @SuppressWarnings("redundantImplemen")
     private BSPSampleSearchService bspSampleSearchService;
 
     @Test()
@@ -36,8 +37,8 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
         String TEST_SAMPLE_ID = "SM-1234";
         BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
 
-        double currentVolume = bspSampleDTO.getVolume();
-        double currentConcentration = bspSampleDTO.getConcentration();
+        Double currentVolume = bspSampleDTO.getVolume();
+        Double currentConcentration = bspSampleDTO.getConcentration();
         BigDecimal newVolume = BigDecimal.valueOf((Math.random() * 50) + 1);
         BigDecimal newConcentration = BigDecimal.valueOf((Math.random() * 50) + 1);
 
@@ -57,11 +58,10 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
         currentConcentration = bspSampleDTO.getConcentration();
 
         // Numbers returned from BSP are rounded differently so I need to lower the precision of the returned value.
+        Double scaledVolume = newVolume.setScale(5, RoundingMode.HALF_UP).doubleValue();
+        Double scaledConcentration = newConcentration.setScale(5, RoundingMode.HALF_UP).doubleValue();
 
-        Double scaledVolume = newVolume.setScale(5, RoundingMode.HALF_DOWN).doubleValue();
-        Double scaledConcentration = newConcentration.setScale(5, RoundingMode.HALF_DOWN).doubleValue();
-
-        Assert.assertEquals(scaledVolume.compareTo(currentVolume), 0);
-        Assert.assertEquals(scaledConcentration.compareTo(currentConcentration), 0);
+        Assert.assertEquals(scaledVolume, currentVolume);
+        Assert.assertEquals(scaledConcentration, currentConcentration);
     }
 }
