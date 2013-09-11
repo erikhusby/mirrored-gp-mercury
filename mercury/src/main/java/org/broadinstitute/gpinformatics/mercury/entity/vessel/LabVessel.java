@@ -591,7 +591,7 @@ public abstract class LabVessel implements Serializable {
      * on-the-fly by walking the history and applying the
      * StateChange applied during lab work.
      *
-     * @return
+     * @return All the sample instances.
      */
     public Set<SampleInstance> getSampleInstances() {
         return getSampleInstances(SampleType.ANY, null);

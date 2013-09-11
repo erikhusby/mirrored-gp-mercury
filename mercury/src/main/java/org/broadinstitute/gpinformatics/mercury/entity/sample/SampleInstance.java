@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -246,4 +248,33 @@ public class SampleInstance {
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
     }
+
+    @Override
+    public boolean equals(Object other) {
+
+        if (this == other) {
+            return true;
+        }
+
+        if (!(other instanceof SampleInstance)) {
+            return false;
+        }
+
+        SampleInstance castOther = (SampleInstance) other;
+        return new EqualsBuilder()
+                .append(getStartingSample(), castOther.getStartingSample())
+                .append(getLabBatch(), castOther.getLabBatch())
+                .append(getProductOrderKey(), castOther.getProductOrderKey())
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(getStartingSample())
+                .append(getLabBatch())
+                .append(getProductOrderKey())
+                .toHashCode();
+    }
+
 }
