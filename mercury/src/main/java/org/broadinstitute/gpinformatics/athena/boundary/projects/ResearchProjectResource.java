@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -183,22 +184,31 @@ public class ResearchProjectResource {
      * @return Returns the research project data for the project created.
      */
     @POST
-    @Path("createResearchProject")
+    @Path("create")
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
-    public ResearchProjectData createResearchProject(ResearchProjectData data) {
-        ResearchProject newProject = new ResearchProject(null, data.title, data.synopsis, false);
-        ResearchProject dupProject = researchProjectDao.findByTitle(data.title);
-        newProject.setCreatedBy(bspUserList.getByUsername(data.userName).getUserId());
-        if (dupProject != null) {
-            throw new InformaticsServiceException("Can not create a project that already exists.");
+    public ResearchProjectData create(@Nonnull ResearchProjectData data) {
+        if (data == null) {
+            throw new InformaticsServiceException(("No data found to define the new Research Project"));
         }
+
+        ResearchProject dupProject = researchProjectDao.findByTitle(data.title);
+
+        if (researchProjectDao.findByTitle(data.title) != null) {
+            throw new InformaticsServiceException("Cannot create a project that already exists.");
+        }
+
+        ResearchProject newProject = new ResearchProject(null, data.title, data.synopsis, false);
+        newProject.setCreatedBy(bspUserList.getByUsername(data.userName).getUserId());
+
         try {
             newProject.submitToJira();
         } catch (IOException e) {
             throw new InformaticsServiceException("Could not submit new research project to JIRA.");
         }
+
         researchProjectDao.persist(newProject);
+
         return new ResearchProjectData(bspUserList, newProject);
     }
 }

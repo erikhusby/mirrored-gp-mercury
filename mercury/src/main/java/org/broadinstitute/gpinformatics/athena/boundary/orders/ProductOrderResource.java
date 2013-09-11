@@ -4,18 +4,28 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 
 import javax.annotation.Nonnull;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.JAXBElement;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -29,46 +39,43 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderResource {
-
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    ProductOrderEjb productOrderEjb;
 
-    private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
-                                                     boolean includeSamples) {
+    @Context
+    private UriInfo uriInfo;
 
-        List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
+    /**
+     * Only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names as defined in the
+     * class (although I can't seem to be able to use the enum for the annotation.  Return the information on the newly
+     * created {@link ProductOrder}.
+     *
+     * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
+     *
+     * @return the reference for the newly created {@link ProductOrder}
+     *
+     * @throws DuplicateTitleException
+     * @throws NoSamplesException
+     * @throws QuoteNotFoundException
+     */
+    @POST
+    @Path("create")
+    @RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
+    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_XML)
+    public Response create(JAXBElement<ProductOrder> productOrderJaxB)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException {
+        ProductOrder productOrder = productOrderJaxB.getValue();
 
-        for (ProductOrder productOrder : productOrderList) {
-            ProductOrderData productOrderData = new ProductOrderData();
-            productOrderData.setTitle(productOrder.getTitle());
-            productOrderData.setId(productOrder.getBusinessKey());
-            productOrderData.setComments(productOrder.getComments());
-            productOrderData.setPlacedDate(productOrder.getPlacedDate());
-            productOrderData.setModifiedDate(productOrder.getModifiedDate());
-            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
-            productOrderData.setProductName(productOrder.getProduct().getName());
-            productOrderData.setStatus(productOrder.getOrderStatus().name());
-            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
-            productOrderData.setQuoteId(productOrder.getQuoteId());
+        // Do we need to supply samples and add-ons?  productOrder.getSamples(), productOrder.getAddOnList())
+        productOrderEjb.save(productOrder, null, null);
 
-            if (includeSamples) {
-                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
-                for (ProductOrderSample sample : productOrder.getSamples()) {
-                    sampleNames.add(sample.getSampleName());
-                }
-                productOrderData.setSamples(sampleNames);
-            } else {
-                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
-                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
-                productOrderData.setSamples(null);
-            }
-
-            productOrderDataList.add(productOrderData);
-        }
-
-        return new ProductOrders(productOrderDataList);
+        URI productOrderUri =
+                uriInfo.getAbsolutePathBuilder().path(productOrder.getProductOrderId().toString()).build();
+        return Response.created(productOrderUri).build();
     }
 
     /**
@@ -84,7 +91,6 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     public ProductOrders findByIds(@PathParam("productOrderIds") String productOrderIds,
                                    @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
-
         List<String> businessKeyList = Arrays.asList(productOrderIds.split(","));
 
         List<ProductOrder> productOrderList = includeSamples ?
@@ -144,5 +150,41 @@ public class ProductOrderResource {
         }
 
         return buildProductOrdersFromList(orders, includeSamples);
+    }
+
+    private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
+                                                     boolean includeSamples) {
+        List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
+
+        for (ProductOrder productOrder : productOrderList) {
+            ProductOrderData productOrderData = new ProductOrderData();
+            productOrderData.setTitle(productOrder.getTitle());
+            productOrderData.setId(productOrder.getBusinessKey());
+            productOrderData.setComments(productOrder.getComments());
+            productOrderData.setPlacedDate(productOrder.getPlacedDate());
+            productOrderData.setModifiedDate(productOrder.getModifiedDate());
+            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
+            productOrderData.setProductName(productOrder.getProduct().getName());
+            productOrderData.setStatus(productOrder.getOrderStatus().name());
+            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
+            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setQuoteId(productOrder.getQuoteId());
+
+            if (includeSamples) {
+                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
+                for (ProductOrderSample sample : productOrder.getSamples()) {
+                    sampleNames.add(sample.getSampleName());
+                }
+                productOrderData.setSamples(sampleNames);
+            } else {
+                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
+                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
+                productOrderData.setSamples(null);
+            }
+
+            productOrderDataList.add(productOrderData);
+        }
+
+        return new ProductOrders(productOrderDataList);
     }
 }

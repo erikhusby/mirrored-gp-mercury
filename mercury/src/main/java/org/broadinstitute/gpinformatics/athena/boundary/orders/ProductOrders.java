@@ -12,7 +12,6 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class ProductOrders {
-
     private List<ProductOrderData> orders = new ArrayList<>();
 
     /** For JAXB. */

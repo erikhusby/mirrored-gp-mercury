@@ -4,6 +4,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
@@ -36,6 +37,8 @@ import java.util.Set;
  * </ol>
  */
 public class MercuryConfiguration {
+    Logger log = Logger.getLogger(MercuryConfiguration.class);
+
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
     private static final String MERCURY_CONFIG_LOCAL = "/mercury-config-local.yaml";
