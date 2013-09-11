@@ -26,11 +26,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
     /**
      * Write a JSON representation of the bean parameter to a {@link String} and return.
-     *
-     * @param bean
-     *
-     * @return
-     * @throws IOException
      */
     protected String writeValue(Object bean) throws IOException {
         OutputStream outputStream = new ByteArrayOutputStream();
@@ -40,10 +35,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
     /**
      * Set the JSON MIME types for both request and response on the {@link WebResource}
-     *
-     * @param webResource
-     *
-     * @return
      */
     protected WebResource.Builder setJsonMimeTypes(WebResource webResource) {
         return webResource.type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON_TYPE);
@@ -52,13 +43,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     /**
      * POST a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
      * representation of the response.
-     *
-     * @param webResource
-     * @param requestPojo
-     * @param responseGenericType
-     * @param <T>
-     * @return
-     * @throws IOException
      */
     protected <T> T post(WebResource webResource, Object requestPojo, GenericType<T> responseGenericType) throws IOException {
         String request = writeValue(requestPojo);
@@ -79,11 +63,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     /**
      * POST a JSON representation of the requestPojo to the specified {@link WebResource} This method is used when a
      * a post does not expect a response (HTTP Status code in the 200 range)
-     *
-     * @param webResource
-     * @param requestPojo
-     * @return
-     * @throws IOException
      */
     protected void post(WebResource webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
@@ -102,10 +81,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     /**
      * PUT a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
      * representation of the response.
-     *
-     * @param webResource
-     * @param requestPojo
-     * @throws IOException
      */
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
@@ -121,11 +96,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
     /**
      * Return a JSON representation of the response to a GET issued to the specified {@link WebResource}
-     * 
-     * @param webResource
-     * @param genericType
-     * @param <T>
-     * @return
      */
     protected <T> T get(WebResource webResource, GenericType<T> genericType) {
         try {

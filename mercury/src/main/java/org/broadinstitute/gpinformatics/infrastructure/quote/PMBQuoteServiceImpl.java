@@ -60,7 +60,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(alphaId, url( Endpoint.SINGLE_QUOTE) );
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
     }
 
     private String url(Endpoint endpoint) {
