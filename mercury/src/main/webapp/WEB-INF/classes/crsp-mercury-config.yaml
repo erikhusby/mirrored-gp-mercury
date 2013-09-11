@@ -73,15 +73,15 @@ datawhEtl:
 jira:
 
     TEST:
-      login:    squid
-      password: squid
+      login:    crspuser
+      password: crspuser
       host:     crsptestjira.broadinstitute.org
       port:     8443
       urlBase:      https://crsptestjira.broadinstitute.org:8443
 
     PROD:
-      login:    squid
-      password: squid
+      login:    crspuser
+      password: crspuser
       host:     crspjira.broadinstitute.org
 #      port:     8020
       urlBase:      https://crspjira.broadinstitute.org
@@ -223,7 +223,7 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      QA
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -237,7 +237,7 @@ mercury:
     RC:
 
       app:      RC
-      bsp:      QA
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    DISABLED

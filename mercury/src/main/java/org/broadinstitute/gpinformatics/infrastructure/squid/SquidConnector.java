@@ -54,8 +54,8 @@ public interface SquidConnector extends Serializable {
      * Sends the given read structure changes to squid's
      * solexa_run_synopsis table
      *
-     * @param readStructureData
-     * @param squidWSUrl
+     * @param readStructureData     JAXB structure containing all relevant information to update the read structure
+     * @param squidWSUrl            URL to the instance of Squid that will be called when updating squid
      */
     SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
                            @Nonnull String squidWSUrl) throws UniformInterfaceException;

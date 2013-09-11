@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import com.cenqua.clover.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -16,12 +14,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import sun.swing.StringUIClientPropertyKey;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -43,7 +40,6 @@ public class WorkflowDiagramerDbFreeTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         // Defines workflows.
-        workflowConfig = new WorkflowConfig();
         ProductWorkflowDef exEx = new ProductWorkflowDef("Exome Express");
         ProductWorkflowDef wholeGenome = new ProductWorkflowDef("Whole Genome");
 
@@ -55,7 +51,6 @@ public class WorkflowDiagramerDbFreeTest {
         ProductWorkflowDefVersion wholeGenomeV1 = new ProductWorkflowDefVersion("1.0", new Date(MSEC_DATES[0]));
 
         // Defines processes.
-        List<WorkflowProcessDef> processDefs = new ArrayList<>();
         WorkflowProcessDef process1 = new WorkflowProcessDef("Process 1");
         WorkflowProcessDef process2 = new WorkflowProcessDef("Process 2");
 
@@ -105,14 +100,6 @@ public class WorkflowDiagramerDbFreeTest {
         process2v2.addStep(new WorkflowStepDef("Step 4").addLabEvent(LabEventType.SAGE_CLEANUP));
         process2.addWorkflowProcessDefVersion(process2v2);
 
-        // Puts all into WorkflowConfig.
-        processDefs.add(process1);
-        workflowConfig.getWorkflowProcessDefs().addAll(processDefs);
-        processDefs.clear();
-        processDefs.add(process2);
-        workflowConfig.getWorkflowProcessDefs().addAll(processDefs);
-        processDefs.clear();
-
         exExV1.addWorkflowProcessDef(process1);
 
         exExV2.addWorkflowProcessDef(process1);
@@ -127,7 +114,9 @@ public class WorkflowDiagramerDbFreeTest {
         List<ProductWorkflowDef> workflowDefs = new ArrayList<>();
         workflowDefs.add(exEx);
         workflowDefs.add(wholeGenome);
-        workflowConfig.getProductWorkflowDefs().addAll(workflowDefs);
+
+        // Puts all into WorkflowConfig.
+        workflowConfig = new WorkflowConfig(Arrays.asList(process1, process2), workflowDefs);
 
         // Mock the loader.
         reset(workflowLoader);

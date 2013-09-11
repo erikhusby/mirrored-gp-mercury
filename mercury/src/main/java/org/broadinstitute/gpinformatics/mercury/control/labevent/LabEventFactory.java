@@ -42,7 +42,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -61,6 +60,7 @@ import javax.inject.Inject;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -936,26 +936,8 @@ public class LabEventFactory implements Serializable {
                 twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode());
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), twoDBarcodedTube);
             }
-
-            // If there is a volume and concentration on the message set it up and communicate it to BSP.
-            if ((receptacleType.getConcentration() != null) && (receptacleType.getVolume() != null)) {
-                twoDBarcodedTube.setVolume(receptacleType.getVolume());
-                twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
-
-                // The only way to update volume on concentration in BSP here is if we have a single mercury sample.
-                if (twoDBarcodedTube.getMercurySamples().size() == 1) {
-                    MercurySample mercurySample = twoDBarcodedTube.getMercurySamples().iterator().next();
-
-                    // Send web service call to BSP to update volume and concentration.
-                    bspSetVolumeConcentration.setVolumeAndConcentration(
-                            mercurySample.getSampleKey(), receptacleType.getVolume().floatValue(),
-                            receptacleType.getConcentration().floatValue());
-                    if (!bspSetVolumeConcentration.isValidResult()) {
-                        logger.error(
-                                "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
-                    }
-                }
-            }
+            twoDBarcodedTube.setVolume(receptacleType.getVolume());
+            twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
 
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
@@ -1006,14 +988,41 @@ public class LabEventFactory implements Serializable {
                     buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
                             true, LabEventType.getByName(plateEvent.getEventType()).isCreateSources());
         }
-
+        updateVolumeConcentration(plateEvent);
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
+    /**
+     * Pull volume and concentration values from the plateEvent and update the receptacle.
+     *
+     * @param plateEvent plate event from a BettaLimsMessage.
+     */
+    private void updateVolumeConcentration(PlateEventType plateEvent) {
+        for (ReceptacleType receptacleType : plateEvent.getPositionMap().getReceptacle()) {
+            BigDecimal volume = null;
+            BigDecimal concentration = null;
+            if (receptacleType.getVolume() != null) {
+                volume = receptacleType.getVolume();
+            }
+            if (receptacleType.getConcentration() != null) {
+                concentration = receptacleType.getConcentration();
+            }
+
+            // volume or concentration can be null but not both.
+            if (volume != null || concentration != null) {
+                bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
+                if (!bspSetVolumeConcentration.isValidResult()) {
+                    logger.error(
+                            "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
+                }
+            }
+        }
+    }
+
     @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree(PlateTransferEventType plateTransferEvent,
-                                                         StripTube sourceStripTube,
+                StripTube sourceStripTube,
                                                          IlluminaFlowcell targetFlowcell) {
         if (sourceStripTube == null) {
             throw new RuntimeException("Failed to find StripTube " + plateTransferEvent.getSourcePlate().getBarcode());

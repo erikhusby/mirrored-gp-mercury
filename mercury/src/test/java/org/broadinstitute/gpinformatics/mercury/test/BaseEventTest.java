@@ -519,11 +519,13 @@ public class BaseEventTest {
             // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
             Graph graph = new Graph();
-            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph,
-                    new ArrayList<TransferVisualizer.AlternativeId>());
+            ArrayList<TransferVisualizer.AlternativeId> alternativeIds = new ArrayList<>();
+//            alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
+//            alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, alternativeIds);
 
             TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
-                    labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+                    labVessel.getLabel(), alternativeIds);
             transferVisualizerClient.setGraph(graph);
 
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();

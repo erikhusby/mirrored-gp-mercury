@@ -41,4 +41,71 @@
             <column name="auto_ledger_timestamp"/>
         </createIndex>
     </changeSet>
+    <changeSet id="GPLIM-2036-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="sample_receipt_validation" />
+            </not>
+        </preConditions>
+        <createTable tableName="sample_receipt_validation" schemaName="athena">
+            <column name="validation_id" type="number(19,0)" >
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="product_order_sample" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="validation_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="number(19, 0)" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" >
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="number(19, 0)" />
+            <column name="modified_date" type="timestamp" />
+        </createTable>
+
+        <createSequence sequenceName="SEQ_SAMP_REC_VALIDATION" schemaName="athena" startValue="1"
+                        incrementBy="50"/>
+
+        <addForeignKeyConstraint baseColumnNames="product_order_sample" baseTableName="sample_receipt_validation"
+                                 baseTableSchemaName="athena" constraintName="fk_sample_receipt_po_sample"
+                                 referencedColumnNames="product_order_sample_id" referencedTableName="product_order_sample"
+                                 referencedTableSchemaName="athena" />
+
+    </changeSet>
+    <changeSet id="GPLIM-2036-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="sample_receipt_validation_aud" />
+            </not>
+        </preConditions>
+        <createTable tableName="sample_receipt_validation_aud" schemaName="athena">
+            <column name="validation_id" type="number(19,0)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="product_order_sample" type="number(19,0)"/>
+            <column name="validation_type" type="varchar(255)"/>
+            <column name="status" type="varchar(255)"/>
+            <column name="created_by" type="number(19, 0)" />
+            <column name="created_date" type="timestamp" />
+            <column name="modified_by" type="number(19, 0)" />
+            <column name="modified_date" type="timestamp" />
+        </createTable>
+
+        <addPrimaryKey tableName="sample_receipt_validation_aud" schemaName="athena" columnNames="validation_id, rev"/>
+        <addForeignKeyConstraint baseTableName="sample_receipt_validation_aud" baseTableSchemaName="athena"
+                                 baseColumnNames="rev" constraintName="fk_samp_rcpt_val_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
 </databaseChangeLog>

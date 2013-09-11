@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -294,10 +293,14 @@ public class SolexaRunRestResourceTest extends Arquillian {
                         .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
                         .entity(readStructureData).post(Response.class);
 
-        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getSetupReadStructure(), readStructureData.getSetupReadStructure());
-        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getActualReadStructure(), readStructureData.getActualReadStructure());
-        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getLanesSequenced(), readStructureData.getLanesSequenced());
-        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getImagedArea(), readStructureData.getImagedArea());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getSetupReadStructure(),
+                readStructureData.getSetupReadStructure());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getActualReadStructure(),
+                readStructureData.getActualReadStructure());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getLanesSequenced(),
+                readStructureData.getLanesSequenced());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getImagedArea(),
+                readStructureData.getImagedArea());
 
     }
 }
