@@ -94,7 +94,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         }
     }
 
-
     /**
      * Return a JSON representation of the response to a GET issued to the specified {@link WebResource}
      */
