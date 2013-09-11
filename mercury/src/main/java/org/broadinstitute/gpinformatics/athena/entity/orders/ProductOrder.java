@@ -1148,7 +1148,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         FUNDING_DEADLINE("Funding Deadline"),
         PUBLICATION_DEADLINE("Publication Deadline"),
         DESCRIPTION("Description"),
-        STATUS("Status");
+        STATUS("Status"),
+        REQUISITION_ID("Requisition ID");
 
         private final String fieldName;
 
