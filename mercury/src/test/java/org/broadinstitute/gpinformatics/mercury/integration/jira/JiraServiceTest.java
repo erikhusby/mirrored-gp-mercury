@@ -116,7 +116,7 @@ public class JiraServiceTest {
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
-                CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
+                CreateFields.ProjectType.RESEARCH_PROJECTS.getKeyPrefix(), "breilly",
                 CreateFields.IssueType.RESEARCH_PROJECT,
                 "JiraServiceTest.testUpdateTicket", customFieldList);
 

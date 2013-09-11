@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +76,12 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
         Collection<String> records = new ArrayList<>();
         try {
-            Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
-            for (SequencingRunDto dto : dtos) {
+            // De-duplicate based on flowcell barcode, lane, and molecular index (GPLIM-1618).
+            Map<String, SequencingRunDto> uniqueFlowcellLaneIndex = new HashMap<>();
+            for (SequencingRunDto dto : makeSequencingRunDtos(entity)) {
+                uniqueFlowcellLaneIndex.put(dto.getFlowcellLaneIndexKey(), dto);
+            }
+            for (SequencingRunDto dto : uniqueFlowcellLaneIndex.values()) {
                 if (dto.canEtl()) {
                     // Turns "LANE1" to "LANE8" into "1" to "8".
                     String position = dto.getPosition().replaceAll("LANE", "");
@@ -151,6 +156,10 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 String s2 = rhs.getSampleKey() == null ? NULLS_LAST : rhs.getSampleKey();
                 return s1.compareTo(s2);
             }
+        };
+
+        public String getFlowcellLaneIndexKey() {
+            return molecularIndexingSchemeName + position + flowcellBarcode;
         };
 
         public String getFlowcellBarcode() {
@@ -251,6 +260,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         }
     }
 
+    /** This is used by diagnostics (ExtractTransformResource class) so do not suppress error data in this method. */
     public List<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
         List<SequencingRunDto> dtos = new ArrayList<>();
         if (entity != null) {
