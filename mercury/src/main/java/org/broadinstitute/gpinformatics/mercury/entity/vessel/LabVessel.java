@@ -188,7 +188,7 @@ public abstract class LabVessel implements Serializable {
 
     protected LabVessel(String label) {
         createdOn = new Date();
-        if (label == null || label.equals("0")) {
+        if (label == null || label.isEmpty() || label.equals("0")) {
             throw new RuntimeException("Invalid label " + label);
         }
         this.label = label;
