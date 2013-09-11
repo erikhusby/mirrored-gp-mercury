@@ -126,7 +126,7 @@ public class BSPSampleDTO {
         if (StringUtils.isNotBlank(s)) {
             return Double.parseDouble(s);
         }
-        return 0;
+        return 0.0;
     }
 
     /**
@@ -187,7 +187,7 @@ public class BSPSampleDTO {
         return getDouble(BSPSampleSearchColumn.VOLUME);
     }
 
-    public double getConcentration() {
+    public Double getConcentration() {
         return getDouble(BSPSampleSearchColumn.CONCENTRATION);
     }
 
