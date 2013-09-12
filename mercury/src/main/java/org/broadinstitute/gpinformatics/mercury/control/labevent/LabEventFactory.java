@@ -319,6 +319,7 @@ public class LabEventFactory implements Serializable {
     public List<LabEvent> buildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
         List<LabEvent> labEvents = new ArrayList<>();
         Set<UniqueEvent> uniqueEvents = new HashSet<>();
+        Set<ReceptacleType> updateReceptacles = new HashSet<>();
 
         // Have to persist and flush inside each loop, because the first event may create
         // vessels that are referenced by the second event, e.g. PreSelectionPool
@@ -327,18 +328,27 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateCherryPickEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+            for (PositionMapType positionMapType : plateCherryPickEvent.getPositionMap()) {
+                updateReceptacles.addAll(positionMapType.getReceptacle());
+            }
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+            if (plateEventType.getPositionMap() != null) {
+                updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+            }
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+            if (plateTransferEventType.getPositionMap() != null) {
+                updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
+            }
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
@@ -346,14 +356,19 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptaclePlateTransferEvent);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+            for (PositionMapType positionMapType : receptaclePlateTransferEvent.getDestinationPositionMap()) {
+                updateReceptacles.addAll(positionMapType.getReceptacle());
+            }
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
             LabEvent labEvent = buildFromBettaLims(receptacleEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, receptacleEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
+            updateReceptacles.add(receptacleEventType.getReceptacle());
         }
 
+        updateVolumeConcentration(updateReceptacles.toArray(new ReceptacleType[updateReceptacles.size()]));
         return labEvents;
     }
 
@@ -988,18 +1003,17 @@ public class LabEventFactory implements Serializable {
                     buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
                             true, LabEventType.getByName(plateEvent.getEventType()).isCreateSources());
         }
-        updateVolumeConcentration(plateEvent);
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
     /**
-     * Pull volume and concentration values from the plateEvent and update the receptacle.
+     * Pull volume and concentration values from the receptacleType and update bsp samples.
      *
-     * @param plateEvent plate event from a BettaLimsMessage.
+     * @param receptacleTypes One or more receptacleTypes from a BettaLimsMessage.
      */
-    private void updateVolumeConcentration(PlateEventType plateEvent) {
-        for (ReceptacleType receptacleType : plateEvent.getPositionMap().getReceptacle()) {
+    private void updateVolumeConcentration(ReceptacleType... receptacleTypes) {
+        for (ReceptacleType receptacleType : receptacleTypes) {
             BigDecimal volume = null;
             BigDecimal concentration = null;
             if (receptacleType.getVolume() != null) {
@@ -1013,8 +1027,7 @@ public class LabEventFactory implements Serializable {
             if (volume != null || concentration != null) {
                 bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
                 if (!bspSetVolumeConcentration.isValidResult()) {
-                    logger.error(
-                            "Could not set volume and concentration: " + bspSetVolumeConcentration.getResult()[0]);
+                    logger.error(bspSetVolumeConcentration.getResult()[0]);
                 }
             }
         }
@@ -1174,14 +1187,14 @@ public class LabEventFactory implements Serializable {
      * Based on a collection of {@link LabVessel}s to be processed, this method will generate the appropriate event
      * to associate with each Vessel
      *
-     *
      * @param entryCollection
      * @param operator        representation of the user that submitted the request
      * @param batchIn         LabBatch to which the created events will be associate
      * @param eventLocation
      * @param programName
-     *@param eventType
-     *  @return A collection of the created events for the submitted lab vessels
+     * @param eventType
+     *
+     * @return A collection of the created events for the submitted lab vessels
      */
     public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,

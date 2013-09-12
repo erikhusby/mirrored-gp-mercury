@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
-
-import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -86,12 +83,6 @@ public class ProductWorkflowDef implements Serializable {
 
     public ProductWorkflowDefVersion getByVersion(String version) {
         return productDefVersionsByVersion.get(version);
-    }
-
-    @Nonnull
-    public String getWorkflowImageFileName(Date effectiveDate) {
-        return getName().replaceAll("\\s+", "_") + "_" + getEffectiveVersion(effectiveDate).getVersion() + "_" +
-               effectiveDate.getTime() + WorkflowDiagramer.DIAGRAM_FILE_EXTENSION;
     }
 
     /** Returns the unique start dates for each product-process pairing, sorted by increasing date . */

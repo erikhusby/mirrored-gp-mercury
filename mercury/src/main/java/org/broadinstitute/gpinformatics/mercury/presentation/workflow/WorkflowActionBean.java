@@ -9,7 +9,8 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
@@ -41,7 +42,7 @@ public class WorkflowActionBean extends CoreActionBean {
         public ProductWorkflowDef workflowDef;
         public Date effectiveDate;
 
-        public WorkflowDefDateDto(int id, ProductWorkflowDef workflowDef,Date effectiveDate) {
+        public WorkflowDefDateDto(int id, ProductWorkflowDef workflowDef, Date effectiveDate) {
             this.id = id;
             this.workflowDef = workflowDef;
             this.effectiveDate = effectiveDate;
@@ -143,18 +144,17 @@ public class WorkflowActionBean extends CoreActionBean {
     }
 
     /**
-     * Returns the url to a Mercury REST service that returns the relevant workflow image file.
-     * @return relative url or null if the image doesn't exist.
+     * @return the path part of the Mercury REST url that returns the relevant workflow image file.
      */
     public String getWorkflowImage() {
 
         ProductWorkflowDef workflowDef = viewWorkflowDto.getWorkflowDef();
         Date effectiveDate = viewWorkflowDto.getEffectiveDate();
 
-        File imageFile =
-                new File(WorkflowDiagramer.DIAGRAM_DIRECTORY, workflowDef.getWorkflowImageFileName(effectiveDate));
+        File imageFile = new File(WorkflowDiagrammer.DIAGRAM_DIRECTORY,
+                WorkflowDiagrammer.getWorkflowImageFileName(workflowDef, effectiveDate));
 
-        String baseUrl = "/Mercury/rest/products/workflowDiagrams/";
-        return baseUrl + imageFile.getName();
+        return getContext().getRequest().getContextPath() + "/rest/" + ProductResource.WORKFLOW_DIAGRAM_IMAGE_URL +
+               imageFile.getName();
     }
 }

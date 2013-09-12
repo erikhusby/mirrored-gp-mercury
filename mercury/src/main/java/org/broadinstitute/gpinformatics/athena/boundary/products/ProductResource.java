@@ -4,7 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagramer;
+import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -31,12 +31,13 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductResource {
+    public static final String WORKFLOW_DIAGRAM_IMAGE_URL = "products/workflowDiagrams/";
 
     @Inject
     private ProductDao productDao;
 
     @Inject
-    private WorkflowDiagramer diagramer;
+    private WorkflowDiagrammer diagrammer;
 
     @XmlRootElement
     public static class ProductData {
@@ -99,28 +100,30 @@ public class ProductResource {
     @Path("workflowDiagrams")
     @Produces(MediaType.TEXT_PLAIN)
     public String makeWorkflowDiagrams() throws Exception {
-        diagramer.makeAllDiagramFiles();
-        String filenames = StringUtils.join(WorkflowDiagramer.listDiagramFiles(), "  ");
+        diagrammer.makeAllDiagramFiles();
+        String filenames = StringUtils.join(WorkflowDiagrammer.listDiagramFiles(), "  ");
         return "Created diagram files: " + filenames;
     }
 
     /**
-     * Returns a workflow diagram image.
+     * Returns a workflow diagram image, or null if no such diagram exists.
      */
     @GET
     @Path("workflowDiagrams/{filename}")
-    @Produces("image/jpeg")
+    @Produces("image/png")
     public byte[] getWorkflowDiagramImage(@PathParam("filename") String filename) throws Exception {
-        File diagramFileDir = WorkflowDiagramer.makeDiagramFileDir();
-        // If diagramFile directory is empty, invokes the diagramer to create all of the workflow diagrams.
-        if (WorkflowDiagramer.listDiagramFiles().length == 0) {
-            diagramer.makeAllDiagramFiles();
-        }
-
+        File diagramFileDir = WorkflowDiagrammer.makeDiagramFileDir();
+        // If diagramFile is not found in the directory, invoke the diagrammer to create all of the workflow diagrams.
+        // Caching all of them will speed up the next viewing.  The cache is flushed when the app starts, so no
+        // fear of caching an stale diagram.
         File diagramFile = new File (diagramFileDir, filename);
+        if (!diagramFile.exists()) {
+            diagrammer.makeAllDiagramFiles();
+        }
         if (diagramFile.exists()) {
             InputStream stream = new BufferedInputStream(new FileInputStream(diagramFile));
             byte[] diagram = IOUtils.toByteArray(stream);
+            IOUtils.closeQuietly(stream);
             return diagram;
         } else {
             return null;

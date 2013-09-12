@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import com.cenqua.clover.util.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -16,12 +13,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import sun.swing.StringUIClientPropertyKey;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -31,31 +27,32 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class WorkflowDiagramerDbFreeTest {
+public class WorkflowDiagrammerDbFreeTest {
     // 3 successive days starting 1-jan-2013 00:00:00 EST
     private static final long ONE_DAY = 86400000L;
     private static final long[] MSEC_DATES = {1357016400000L, 1357016400000L + ONE_DAY, 1357016400000L + 2L * ONE_DAY};
 
-    private final WorkflowDiagramer diagramer = new WorkflowDiagramer();
+    private final WorkflowDiagrammer diagrammer = new WorkflowDiagrammer();
     private final WorkflowLoader workflowLoader = createMock(WorkflowLoader.class);
     private WorkflowConfig workflowConfig;
+
+    private static final String WORKFLOW_NAME_1 = "Partial Genome";
+    private static final String WORKFLOW_NAME_2 = "Complete Genome";
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         // Defines workflows.
-        workflowConfig = new WorkflowConfig();
-        ProductWorkflowDef exEx = new ProductWorkflowDef("Exome Express");
-        ProductWorkflowDef wholeGenome = new ProductWorkflowDef("Whole Genome");
+        ProductWorkflowDef workflow1 = new ProductWorkflowDef(WORKFLOW_NAME_1);
+        ProductWorkflowDef workflow2 = new ProductWorkflowDef(WORKFLOW_NAME_2);
 
-        // Exome Express 1.0 is only valid day 0
-        ProductWorkflowDefVersion exExV1 = new ProductWorkflowDefVersion("1.0", new Date(MSEC_DATES[0]));
-        // Exome Express 2.0 is valid day 1 and later
-        ProductWorkflowDefVersion exExV2 = new ProductWorkflowDefVersion("2.0", new Date(MSEC_DATES[1]));
+        // workflow1 1.0 is only valid day 0
+        ProductWorkflowDefVersion workflow1V1 = new ProductWorkflowDefVersion("1.0", new Date(MSEC_DATES[0]));
+        // workflow1 2.0 is valid day 1 and later
+        ProductWorkflowDefVersion workflow1V2 = new ProductWorkflowDefVersion("2.0", new Date(MSEC_DATES[1]));
         // Whole Genome 1.0 is valid day 0 and later
-        ProductWorkflowDefVersion wholeGenomeV1 = new ProductWorkflowDefVersion("1.0", new Date(MSEC_DATES[0]));
+        ProductWorkflowDefVersion workflow2V1 = new ProductWorkflowDefVersion("1.0", new Date(MSEC_DATES[0]));
 
         // Defines processes.
-        List<WorkflowProcessDef> processDefs = new ArrayList<>();
         WorkflowProcessDef process1 = new WorkflowProcessDef("Process 1");
         WorkflowProcessDef process2 = new WorkflowProcessDef("Process 2");
 
@@ -105,47 +102,41 @@ public class WorkflowDiagramerDbFreeTest {
         process2v2.addStep(new WorkflowStepDef("Step 4").addLabEvent(LabEventType.SAGE_CLEANUP));
         process2.addWorkflowProcessDefVersion(process2v2);
 
-        // Puts all into WorkflowConfig.
-        processDefs.add(process1);
-        workflowConfig.getWorkflowProcessDefs().addAll(processDefs);
-        processDefs.clear();
-        processDefs.add(process2);
-        workflowConfig.getWorkflowProcessDefs().addAll(processDefs);
-        processDefs.clear();
+        workflow1V1.addWorkflowProcessDef(process1);
 
-        exExV1.addWorkflowProcessDef(process1);
+        workflow1V2.addWorkflowProcessDef(process1);
+        workflow1V2.addWorkflowProcessDef(process2);
 
-        exExV2.addWorkflowProcessDef(process1);
-        exExV2.addWorkflowProcessDef(process2);
+        workflow2V1.addWorkflowProcessDef(process2);
 
-        wholeGenomeV1.addWorkflowProcessDef(process2);
-
-        exEx.addProductWorkflowDefVersion(exExV1);
-        exEx.addProductWorkflowDefVersion(exExV2);
-        wholeGenome.addProductWorkflowDefVersion(wholeGenomeV1);
+        workflow1.addProductWorkflowDefVersion(workflow1V1);
+        workflow1.addProductWorkflowDefVersion(workflow1V2);
+        workflow2.addProductWorkflowDefVersion(workflow2V1);
 
         List<ProductWorkflowDef> workflowDefs = new ArrayList<>();
-        workflowDefs.add(exEx);
-        workflowDefs.add(wholeGenome);
-        workflowConfig.getProductWorkflowDefs().addAll(workflowDefs);
+        workflowDefs.add(workflow1);
+        workflowDefs.add(workflow2);
+
+        // Puts all into WorkflowConfig.
+        workflowConfig = new WorkflowConfig(Arrays.asList(process1, process2), workflowDefs);
 
         // Mock the loader.
         reset(workflowLoader);
         expect(workflowLoader.load()).andReturn(workflowConfig).anyTimes();
         replay(workflowLoader);
-        diagramer.setWorkflowLoader(workflowLoader);
+        diagrammer.setWorkflowLoader(workflowLoader);
     }
 
     @Test
     public void testDates() {
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
-            if (workflowDef.getName().equals("Exome Express")) {
+            if (workflowDef.getName().equals(WORKFLOW_NAME_1)) {
                 List<Date> dates = workflowDef.getEffectiveDates();
                 Assert.assertEquals(dates.size(), 3);
                 Assert.assertTrue(dates.contains(new Date(MSEC_DATES[0])));
                 Assert.assertTrue(dates.contains(new Date(MSEC_DATES[1])));
                 Assert.assertTrue(dates.contains(new Date(MSEC_DATES[2])));
-            } else if (workflowDef.getName().equals("Whole Genome")) {
+            } else if (workflowDef.getName().equals(WORKFLOW_NAME_2)) {
                 List<Date> dates = workflowDef.getEffectiveDates();
                 Assert.assertEquals(dates.size(), 2);
                 Assert.assertTrue(dates.contains(new Date(MSEC_DATES[0])));
@@ -160,7 +151,7 @@ public class WorkflowDiagramerDbFreeTest {
     public void testFilename() {
         Date testDate = new Date(MSEC_DATES[0]);
         for (ProductWorkflowDef workflowDef : workflowConfig.getProductWorkflowDefs()) {
-            String filename = workflowDef.getWorkflowImageFileName(testDate);
+            String filename = WorkflowDiagrammer.getWorkflowImageFileName(workflowDef, testDate);
             Assert.assertTrue(filename.contains(String.valueOf(MSEC_DATES[0])));
             Assert.assertFalse(filename.contains(" "));
         }
@@ -168,22 +159,22 @@ public class WorkflowDiagramerDbFreeTest {
 
     @Test
     public void testGraph() throws Exception {
-        List<WorkflowDiagramer.WorkflowGraph> graphs = diagramer.createGraphs();
+        List<WorkflowDiagrammer.Graph> graphs = diagrammer.createGraphs();
         Assert.assertEquals(graphs.size(), 5);
         boolean found1 = false;
         boolean found2 = false;
         boolean found3 = false;
         boolean found4 = false;
-        for (WorkflowDiagramer.WorkflowGraph graph : graphs) {
+        for (WorkflowDiagrammer.Graph graph : graphs) {
             Assert.assertFalse(StringUtils.isEmpty(graph.getDiagramFileName()));
             switch (graph.getWorkflowName()) {
-            case "Exome Express" :
+            case WORKFLOW_NAME_1:
                 switch (graph.getWorkflowVersion()) {
-                case "1.0" :
+                case "1.0":
                     Assert.assertEquals(graph.getEffectiveDate(), new Date(MSEC_DATES[0]));
                     Assert.assertEquals(graph.getNodes().size(), 4);
                     break;
-                case "2.0" :
+                case "2.0":
                     if (graph.getEffectiveDate().equals(new Date(MSEC_DATES[1]))) {
                         found1 = true;
                         Assert.assertEquals(graph.getNodes().size(), 8);
@@ -194,18 +185,18 @@ public class WorkflowDiagramerDbFreeTest {
                         Assert.fail();
                     }
                     break;
-                case "3.0" :
+                case "3.0":
                     Assert.assertEquals(graph.getEffectiveDate(), new Date(MSEC_DATES[2]));
                     Assert.assertEquals(graph.getNodes().size(), 4);
                     break;
-                default :
+                default:
                     Assert.fail();
                     break;
                 }
                 break;
-            case "Whole Genome" :
+            case WORKFLOW_NAME_2:
                 switch (graph.getWorkflowVersion()) {
-                case "1.0" :
+                case "1.0":
                     if (graph.getEffectiveDate().equals(new Date(MSEC_DATES[0]))) {
                         found3 = true;
                         Assert.assertEquals(graph.getNodes().size(), 5);
@@ -216,7 +207,7 @@ public class WorkflowDiagramerDbFreeTest {
                         Assert.fail();
                     }
                     break;
-                default :
+                default:
                     Assert.fail();
                     break;
                 }
@@ -233,16 +224,21 @@ public class WorkflowDiagramerDbFreeTest {
         File tmpDir = new File(System.getProperty("java.io.tmpdir") + "/test" + System.currentTimeMillis());
         Assert.assertTrue(tmpDir.mkdirs());
 
-        List<WorkflowDiagramer.WorkflowGraph> graphs = diagramer.createGraphs();
-        diagramer.writeDotFiles(tmpDir, graphs);
+        List<WorkflowDiagrammer.Graph> graphs = diagrammer.createGraphs();
+        diagrammer.writeDotFiles(tmpDir, graphs);
 
         File[] files = tmpDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith(WorkflowDiagramer.DOT_EXTENSION);
+                // Filter passes only the .dot files.
+                return name.endsWith(WorkflowDiagrammer.DOT_EXTENSION);
             }
         });
         Assert.assertEquals(files.length, 5);
-        FileUtils.deltree(tmpDir);
+
+        for (File file : tmpDir.listFiles()) {
+            file.delete();
+        }
+        tmpDir.delete();
     }
 }
