@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.security.RolesAllowed;
@@ -25,6 +30,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,13 +52,20 @@ public class ProductOrderResource {
     @Inject
     ProductOrderEjb productOrderEjb;
 
+    @Inject
+    private BSPUserList bspUserList;
+
+    @Inject
+    ResearchProjectDao researchProjectDao;
+
     @Context
     private UriInfo uriInfo;
 
     /**
-     * Only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names as defined in the
-     * class (although I can't seem to be able to use the enum for the annotation.  Return the information on the newly
-     * created {@link ProductOrder}.
+     * Return the information on the newly created {@link ProductOrder} that has Draft status.
+     * <p/>
+     * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
+     * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
      * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
      *
@@ -63,19 +77,66 @@ public class ProductOrderResource {
      */
     @POST
     @Path("create")
-    @RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
+    //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
-    public Response create(JAXBElement<ProductOrder> productOrderJaxB)
+    public ProductOrderData create(@Nonnull ProductOrderData productOrderJaxB)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException {
-        ProductOrder productOrder = productOrderJaxB.getValue();
+        if (productOrderJaxB == null) {
+            throw new InformaticsServiceException(("No data found to define the new Product Order"));
+        }
 
-        // Do we need to supply samples and add-ons?  productOrder.getSamples(), productOrder.getAddOnList())
-        productOrderEjb.save(productOrder, null, null);
+        ProductOrder productOrder = convert(productOrderJaxB);
 
+        // Figure out who called this so we can record the owner.
+        BspUser user = bspUserList.getByUsername(productOrderJaxB.getUsername());
+        if (user != null) {
+            productOrder.setCreatedBy(user.getUserId());
+        }
+
+        productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+
+        // Not supplying samples and add-ons at this point, just saving what we defined above.
+        productOrderDao.persist(productOrder);
+
+        /*
+        // If returning the URI to the resource we made, then return type needs to be Response.
         URI productOrderUri =
                 uriInfo.getAbsolutePathBuilder().path(productOrder.getProductOrderId().toString()).build();
         return Response.created(productOrderUri).build();
+        */
+
+        ProductOrderData newProductOrderData = new ProductOrderData(productOrder);
+        return newProductOrderData;
+    }
+
+    /**
+     * Try to convert the JAXB XML data into a {@link ProductOrder}.
+     *
+     * @param productOrderData The JAXB XML element
+     *
+     * @return the populated {@link ProductOrder}
+     */
+    private ProductOrder convert(ProductOrderData productOrderData) {
+        //QName qname = new QName("http://mercury.broadinstitute.org/Mercury", "productOrder");
+        //JAXBElement<ProductOrder> productOrderJaxB = new JAXBElement(qname, ProductOrderData.class, productOrderData);
+        //return productOrderJaxB.getValue();
+
+        ProductOrder productOrder = new ProductOrder();
+        productOrder.setTitle(productOrderData.getTitle());
+        productOrder.setComments(productOrderData.getComments());
+        productOrder.setQuoteId(productOrderData.getQuoteId());
+
+        if (productOrderData.getResearchProjectId() != null) {
+            ResearchProject researchProject =
+                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
+            if (researchProject != null) {
+                productOrder.setResearchProject(researchProject);
+            }
+        }
+
+        return productOrder;
     }
 
     /**

@@ -30,7 +30,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Restful webservice to list research projects.
+ * Restful webservice to list and create research projects.
  */
 @Path("researchProjects")
 @Stateful
@@ -46,16 +46,23 @@ public class ResearchProjectResource {
     @XmlRootElement
     public static class ResearchProjectData {
         public final String title;
+
         public final String id;
+
         public final String synopsis;
+
         public final Date modifiedDate;
-        public final String userName;
+
+        public final String username;
+
         @XmlElementWrapper
         @XmlElement(name = "projectManager")
         public final List<String> projectManagers;
+
         @XmlElementWrapper
         @XmlElement(name = "broadPI")
         public final List<String> broadPIs;
+
         @XmlElementWrapper
         @XmlElement(name = "order")
         public final List<String> orders;
@@ -69,7 +76,7 @@ public class ResearchProjectResource {
             broadPIs = null;
             orders = null;
             modifiedDate = null;
-            userName = null;
+            username = null;
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
@@ -100,9 +107,9 @@ public class ResearchProjectResource {
             orders = new ArrayList<>(researchProject.getProductOrders().size());
             BspUser user = bspUserList.getById(researchProject.getCreatedBy());
             if (user != null) {
-                userName = user.getUsername();
+                username = user.getUsername();
             } else {
-                userName = null;
+                username = null;
             }
             for (ProductOrder order : researchProject.getProductOrders()) {
                 // We omit draft orders from the report. At this point there is no requirement to expose draft
@@ -192,14 +199,14 @@ public class ResearchProjectResource {
             throw new InformaticsServiceException(("No data found to define the new Research Project"));
         }
 
-        ResearchProject dupProject = researchProjectDao.findByTitle(data.title);
-
         if (researchProjectDao.findByTitle(data.title) != null) {
-            throw new InformaticsServiceException("Cannot create a project that already exists.");
+            throw new InformaticsServiceException(
+                    "Cannot create a project that already exists - the project name is already being used.");
         }
 
         ResearchProject newProject = new ResearchProject(null, data.title, data.synopsis, false);
-        newProject.setCreatedBy(bspUserList.getByUsername(data.userName).getUserId());
+        BspUser user = bspUserList.getByUsername(data.username);
+        newProject.setCreatedBy(user.getUserId());
 
         try {
             newProject.submitToJira();

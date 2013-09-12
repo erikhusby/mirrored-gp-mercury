@@ -144,7 +144,7 @@ public class ProductOrderEjb {
 
     /**
      * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
-     * validation.
+     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
      *
      * @param productOrder          product order
      * @param productOrderSampleIds sample IDs
@@ -155,7 +155,6 @@ public class ProductOrderEjb {
     public void save(
             ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
             throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
         setSamples(productOrder, productOrderSampleIds);
@@ -351,7 +350,6 @@ public class ProductOrderEjb {
      * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
      */
     private static class PDOUpdateField {
-
         private final String displayName;
         private final Object newValue;
         private final CustomField.SubmissionField field;
@@ -486,7 +484,6 @@ public class ProductOrderEjb {
      * @param addOnPartNumbers add-on part numbers
      */
     public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
-
         // update JIRA ticket with new quote
         // GPLIM-488
         try {
@@ -525,9 +522,7 @@ public class ProductOrderEjb {
         }
     }
 
-
     public static class SampleDeliveryStatusChangeException extends Exception {
-
         protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
@@ -628,7 +623,6 @@ public class ProductOrderEjb {
                                                   DeliveryStatus targetStatus,
                                                   Collection<ProductOrderSample> samples)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
-
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
