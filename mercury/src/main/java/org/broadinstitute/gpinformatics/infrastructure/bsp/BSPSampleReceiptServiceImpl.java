@@ -1,8 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.sun.jersey.api.client.WebResource;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
+import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +37,15 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
 
         List<String> parameters = new ArrayList<>();
         parameters.add("username=" + username);
-        parameters.add("barcodes=");
+        parameters.add("barcodes=" + StringUtils.join(barcodes, ","));
+
+        String parameterString = StringUtils.join(parameters, "&");
+
+        String urlString = getUrl(WEB_SERVICE_URL + "?" + parameterString);
+
+        WebResource webResource = getJerseyClient().resource(urlString);
+        SampleKitReceiptResponse receiptResource =
+                webResource.type(MediaType.APPLICATION_XML_TYPE).post(SampleKitReceiptResponse.class, urlString);
+
     }
 }

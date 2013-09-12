@@ -34,7 +34,7 @@ public class ReceiveSamplesEjb {
 
         if (!messageCollection.hasErrors()) {
 
-            receiptService.receiveSamples(sampleInfoMap, username);
+            receiptService.receiveSamples(sampleInfoMap.keySet(), username);
         }
 
         return messageCollection;
