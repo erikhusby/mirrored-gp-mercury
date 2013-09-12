@@ -199,8 +199,10 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         }
 
         // Overwrite the map values that were found in BSP with the SampleDetails objects.
-        for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
-            map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+        if (details.getSampleDetails().getSampleInfo() != null) {
+            for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
+                map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+            }
         }
 
         return map;

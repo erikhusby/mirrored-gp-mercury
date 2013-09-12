@@ -7,13 +7,17 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Path("/vessel")
 @Stateful
@@ -25,11 +29,12 @@ public class VesselResource {
 
     @Path("/registerTubes")
     @Produces(MediaType.APPLICATION_XML)
-    @GET
-    public RegisterTubesResponseBean registerTubes(@QueryParam("barcodes") @Nonnull List<String> barcodes) {
+    @POST
+    public Response registerTubes(@Nonnull MultivaluedMap<String, String> parameters) {
+        Collection<String> barcodes = extractBarcodes(parameters);
         Map<String, SampleInfo> sampleInfoMap = bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(barcodes);
 
-        RegisterTubesResponseBean responseBean = new RegisterTubesResponseBean();
+        RegisterTubesBean responseBean = new RegisterTubesBean();
 
         boolean error = false;
 
@@ -55,6 +60,17 @@ public class VesselResource {
             responseBean.getRegisterTubeBeans().add(tubeBean);
         }
 
-        return responseBean;
+        Response.Status status = error ? Response.Status.PRECONDITION_FAILED : Response.Status.OK;
+        return Response.status(status).entity(responseBean).type(MediaType.APPLICATION_XML_TYPE).build();
+    }
+
+    private Collection<String> extractBarcodes(@Nonnull MultivaluedMap<String, String> map) {
+        Set<String> barcodes = new HashSet<>();
+
+        for (List<String> value : map.values()) {
+            barcodes.addAll(value);
+        }
+
+        return barcodes;
     }
 }
