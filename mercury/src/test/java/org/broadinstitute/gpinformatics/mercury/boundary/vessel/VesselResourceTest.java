@@ -32,26 +32,32 @@ public class VesselResourceTest extends Arquillian {
     }
 
     /**
-     * Simple test with two known barcodes, this data should never become invalid.
+     * Simple tube registration test with two known barcodes, this data should never become invalid.
      */
     @Test
-    public void test() {
+    public void testTubeRegistration() {
 
         Map<String, String> matrixToSample = new HashMap<>();
         matrixToSample.put("0101584604", "SM-1TNRT");
         matrixToSample.put("0097401641", "SM-1TNRR");
 
+        // This does not actually call the webservice but provides a MultiValuedMap that looks like what the
+        // VesselResource should be receiving.
         MultivaluedMap<String, String> parameterMap = new MultivaluedMapImpl();
         for (String barcode : matrixToSample.keySet()) {
             parameterMap.add("barcodes", barcode);
         }
 
+        // Check the HTTP Status.
         Response response = vesselResource.registerTubes(parameterMap);
-        Object responseEntity = response.getEntity();
+        assertThat(response.getStatus(), is(equalTo(Response.Status.OK.getStatusCode())));
 
+        // Make sure the returned entity is not null and of the expected type.
+        Object responseEntity = response.getEntity();
         assertThat(responseEntity, is(notNullValue()));
         assertThat(responseEntity, is(instanceOf(RegisterTubesBean.class)));
 
+        // Make sure the returned entity has the expected number of contained tube beans.
         RegisterTubesBean registerTubesBean = (RegisterTubesBean) responseEntity;
         assertThat(registerTubesBean.getRegisterTubeBeans(), hasSize(matrixToSample.size()));
 
@@ -59,6 +65,7 @@ public class VesselResourceTest extends Arquillian {
             String sampleBarcode = tubeBean.getSampleId();
             String matrixBarcode = tubeBean.getBarcode();
 
+            // Make sure the returned tube beans have the expected sample barcodes.
             assertThat(sampleBarcode, is(notNullValue()));
             assertThat("map contains key", matrixToSample.containsKey(matrixBarcode));
             assertThat(matrixToSample.get(matrixBarcode), is(equalTo(sampleBarcode)));
