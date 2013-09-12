@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -409,6 +411,38 @@ todo jmt adder methods
                     sectionTransfer.getSourceSection()));
         }
         return computedLcSets;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+
+        if (this == other) {
+            return true;
+        }
+
+        if (!(other instanceof LabEvent)) {
+            return false;
+        }
+
+        LabEvent castOther = (LabEvent) other;
+        return new EqualsBuilder()
+                .append(getLabEventType(), castOther.getLabEventType())
+                .append(getLabBatch(), castOther.getLabBatch())
+                .append(getEventLocation(), castOther.getEventLocation())
+                .append(getEventOperator(), castOther.getEventOperator())
+                .append(getInPlaceLabVessel(), castOther.getInPlaceLabVessel())
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(getLabEventType())
+                .append(getLabBatch())
+                .append(getEventLocation())
+                .append(getEventOperator())
+                .append(getInPlaceLabVessel())
+                .toHashCode();
     }
 
 }
