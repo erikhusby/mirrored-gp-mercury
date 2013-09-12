@@ -1025,7 +1025,8 @@ IS
         station_name,
         lab_vessel_id,
         event_date,
-        etl_date
+        etl_date,
+        program_name
       )
         SELECT
           new.event_fact_id,
@@ -1038,7 +1039,8 @@ IS
           new.station_name,
           new.lab_vessel_id,
           new.event_date,
-          new.etl_date
+          new.etl_date,
+          new.program_name
         FROM DUAL
         WHERE NOT EXISTS(
             SELECT

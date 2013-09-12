@@ -47,6 +47,7 @@ public class EventEtlDbFreeTest {
     private final String sampleKey = "SMID-000000";
     private final String labBatchName = "LCSET-123";
     private final String location = "Machine-XYZ";
+    private final String programName = "FlowcellLoader";
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
@@ -191,6 +192,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
 
@@ -222,6 +224,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
 
@@ -254,6 +257,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate);
 
@@ -335,7 +339,7 @@ public class EventEtlDbFreeTest {
     private void verifyRecord(String record) {
         EtlTestUtilities.verifyRecord(record, etlDateStr,"F", String.valueOf(entityId), String.valueOf(workflowId),
                 String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(labBatchName), location,
-                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate));
+                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate), programName);
     }
 }
 

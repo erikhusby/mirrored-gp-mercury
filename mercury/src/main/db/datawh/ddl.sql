@@ -174,7 +174,8 @@ CREATE TABLE event_fact (
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
   event_date       DATE        NOT NULL,
-  etl_date         DATE        NOT NULL
+  etl_date         DATE        NOT NULL,
+  program_name     VARCHAR2(255)
 );
 
 CREATE TABLE sequencing_sample_fact (
@@ -433,6 +434,7 @@ CREATE TABLE im_event_fact (
   batch_name       VARCHAR(40),
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
+  program_name     VARCHAR2(255),
   event_date       DATE,
   event_fact_id    NUMERIC(28) --this gets populated by merge_import.sql
 );

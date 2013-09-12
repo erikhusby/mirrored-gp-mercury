@@ -94,7 +94,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             format(fact.getBatchName()),
                             format(fact.getLabEvent().getEventLocation()),
                             format(fact.getLabVessel().getLabVesselId()),
-                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate()))
+                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate())),
+                            format(fact.getLabEvent().getProgramName())
                     ));
                 }
             }
