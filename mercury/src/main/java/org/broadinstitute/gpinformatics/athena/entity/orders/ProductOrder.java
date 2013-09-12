@@ -65,6 +65,10 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     private static final String DRAFT_PREFIX = "Draft-";
 
+    public static final boolean IS_CREATING = true;
+
+    public static final boolean IS_UPDATING = false;
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -88,7 +92,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * Unique title for the order
      */
-    @Column(name = "TITLE", unique = true)
+    @Column(name = "TITLE", unique = true, length = 255)
     private String title = "";
 
     @ManyToOne
