@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -27,41 +26,40 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     @Inject
     private BSPConfig bspConfig;
 
-    @Inject @SuppressWarnings("redundantImplemen")
+    @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
     @Test()
     public void testSetVolumeAndConcentration() {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
-        String TEST_SAMPLE_ID = "SM-1234";
-        BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
-
-        double currentVolume = bspSampleDTO.getVolume();
-        double currentConcentration = bspSampleDTO.getConcentration();
-        BigDecimal newVolume = BigDecimal.valueOf((Math.random() * 50) + 1);
-        BigDecimal newConcentration = BigDecimal.valueOf((Math.random() * 50) + 1);
-
-        Assert.assertNotEquals(currentVolume, newVolume);
-        Assert.assertNotEquals(currentConcentration, newConcentration);
-
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
-        bspSetVolumeConcentration
-                .setVolumeAndConcentration(TEST_SAMPLE_ID, newVolume, newConcentration);
-        String[] result = bspSetVolumeConcentration.getResult();
-        Assert.assertTrue(result.length > 0);
-        Assert.assertFalse(StringUtils.isBlank(result[0]));
-        Assert.assertTrue(bspSetVolumeConcentration.isValidResult());
 
-        bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
-        currentVolume = bspSampleDTO.getVolume();
-        currentConcentration = bspSampleDTO.getConcentration();
+        String TEST_SAMPLE_ID = "SM-1234";
+        BigDecimal newVolume = getRandomBigDecimal();
+        BigDecimal newConcentration = getRandomBigDecimal();
 
-        // Numbers returned from BSP are rounded differently so I need to lower the precision of the returned value.
+        String result =
+                bspSetVolumeConcentration.setVolumeAndConcentration(TEST_SAMPLE_ID, newVolume, newConcentration);
+        Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-        Double scaledVolume = newVolume.setScale(5, RoundingMode.HALF_DOWN).doubleValue();
-        Double scaledConcentration = newConcentration.setScale(5, RoundingMode.HALF_DOWN).doubleValue();
+        BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
+        Double currentVolume = bspSampleDTO.getVolume();
+        Double currentConcentration = bspSampleDTO.getConcentration();
 
-        Assert.assertEquals(scaledVolume.compareTo(currentVolume), 0);
-        Assert.assertEquals(scaledConcentration.compareTo(currentConcentration), 0);
+        Assert.assertEquals(scaleResult(newVolume), currentVolume);
+        Assert.assertEquals(scaleResult(newConcentration), currentConcentration);
+    }
+
+    /**
+     * get a random number  for use in test.
+     *
+     * @return
+     */
+    private BigDecimal getRandomBigDecimal() {
+        return BigDecimal.valueOf((Math.random() * 50) + 1);
+    }
+
+    private Double scaleResult(BigDecimal bigDecimal) {
+        return bigDecimal.setScale(5, RoundingMode.HALF_UP).doubleValue();
     }
 }

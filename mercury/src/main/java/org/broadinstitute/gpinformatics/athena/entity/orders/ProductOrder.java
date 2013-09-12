@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -847,9 +848,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     public static void loadBspData(List<ProductOrderSample> samples) {
 
         // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> bspSampleNames = new HashSet<>(samples.size()) ;
+        Set<String> bspSampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()){
+            if (productOrderSample.needsBspMetaData()) {
                 bspSampleNames.add(productOrderSample.getSampleName());
             }
         }
@@ -1120,7 +1121,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Project for Product Orders
      */
     public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.PRODUCT_ORDERING;
+        return (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING :
+                CreateFields.ProjectType.PRODUCT_ORDERING;
     }
 
     /**
@@ -1130,7 +1132,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Issue Type for Product Orders
      */
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.PRODUCT_ORDER;
+        return (Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER;
     }
 
     /**
@@ -1146,7 +1148,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         FUNDING_DEADLINE("Funding Deadline"),
         PUBLICATION_DEADLINE("Publication Deadline"),
         DESCRIPTION("Description"),
-        STATUS("Status");
+        STATUS("Status"),
+        REQUISITION_ID("Requisition ID");
 
         private final String fieldName;
 

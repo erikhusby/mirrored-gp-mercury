@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -79,11 +80,11 @@ public class ResearchProjectTest {
         // Using title to discern projects from each other because the equals() is just looking at business key.
         Assert.assertEquals(anotherResearchProject.getTitle(),
                 anotherResearchProject.getRootResearchProject().getTitle(), "There is no parent Research Project, so " +
-                "the root should be itself.");
+                                                                            "the root should be itself.");
 
         ResearchProject rootResearchProject = researchProject.getRootResearchProject();
         Assert.assertNotEquals(researchProject.getTitle(), rootResearchProject.getTitle(), "The parent Research " +
-                "Project should not be the same the root.");
+                                                                                           "Project should not be the same the root.");
 
         Assert.assertEquals(researchProject.getRootResearchProject().getTitle(), anotherResearchProject.getTitle(),
                 "The parent Research Project should be the same same as the root.");
@@ -111,9 +112,13 @@ public class ResearchProjectTest {
 
         assertThat(researchProject.getJiraTicketKey(), is(nullValue()));
 
-        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.RESEARCH_PROJECT)));
+        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(
+                (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_RESEARCH_PROJECT :
+                        CreateFields.IssueType.RESEARCH_PROJECT)));
 
-        assertThat(researchProject.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.Research_Projects)));
+        assertThat(researchProject.fetchJiraProject(), is(equalTo(
+                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_RESEARCH_PROJECTS :
+                        CreateFields.ProjectType.RESEARCH_PROJECTS)));
 
         assertThat(researchProject.getProjectManagers(), is(arrayWithSize(greaterThan(0))));
         assertThat(researchProject.getBroadPIs(), is(arrayWithSize(greaterThan(0))));
