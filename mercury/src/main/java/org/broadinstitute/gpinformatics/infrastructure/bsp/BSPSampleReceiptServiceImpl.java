@@ -33,7 +33,7 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
     }
 
     @Override
-    public void receiveSamples(Set<String> barcodes, String username) {
+    public SampleKitReceiptResponse receiveSamples(Set<String> barcodes, String username) {
 
         List<String> parameters = new ArrayList<>();
         parameters.add("username=" + username);
@@ -47,5 +47,6 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
         SampleKitReceiptResponse receiptResource =
                 webResource.type(MediaType.APPLICATION_XML_TYPE).post(SampleKitReceiptResponse.class, urlString);
 
+        return receiptResource;
     }
 }

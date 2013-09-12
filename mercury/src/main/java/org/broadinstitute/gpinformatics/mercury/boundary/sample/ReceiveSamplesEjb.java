@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
+import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
@@ -34,7 +35,7 @@ public class ReceiveSamplesEjb {
 
         if (!messageCollection.hasErrors()) {
 
-            receiptService.receiveSamples(sampleInfoMap.keySet(), username);
+            SampleKitReceiptResponse receiptResponse = receiptService.receiveSamples(sampleInfoMap.keySet(), username);
         }
 
         return messageCollection;
