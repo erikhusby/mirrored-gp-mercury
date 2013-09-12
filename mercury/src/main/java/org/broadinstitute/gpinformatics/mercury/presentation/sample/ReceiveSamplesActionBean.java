@@ -5,6 +5,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.mercury.boundary.sample.ReceiveSamplesEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -33,11 +34,9 @@ public class ReceiveSamplesActionBean extends CoreActionBean {
     @HandlesEvent(RECEIVE_SAMPLES_ACTION)
     public Resolution receiveSamples() {
 
-        List<String> errorMessages = receiveSamplesEjb.receiveSamples(samplesToReceive);
+        MessageCollection messageCollection = receiveSamplesEjb.receiveSamples(samplesToReceive, getUserBean().getBspUser().getUsername());
 
-        for (String error : errorMessages) {
-            addGlobalValidationError(error);
-        }
+        addMessages(messageCollection);
 
         return showReceipt();
     }

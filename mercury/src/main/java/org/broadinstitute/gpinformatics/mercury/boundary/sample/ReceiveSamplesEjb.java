@@ -24,7 +24,7 @@ public class ReceiveSamplesEjb {
     @Inject
     private BSPSampleReceiptService receiptService;
 
-    public MessageCollection receiveSamples(List<String> barcodes) {
+    public MessageCollection receiveSamples(List<String> barcodes, String username) {
 
         MessageCollection messageCollection = new MessageCollection();
 
@@ -34,7 +34,7 @@ public class ReceiveSamplesEjb {
 
         if (!messageCollection.hasErrors()) {
 
-            receiptService.receiveSamples(sampleInfoMap);
+            receiptService.receiveSamples(sampleInfoMap, username);
         }
 
         return messageCollection;

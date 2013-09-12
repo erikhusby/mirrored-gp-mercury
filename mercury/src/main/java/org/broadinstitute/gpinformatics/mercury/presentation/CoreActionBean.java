@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -287,6 +288,24 @@ public class CoreActionBean implements ActionBean {
      */
     protected void addValidationError(String field, String errorMessage, Object... arguments) {
         getContext().getValidationErrors().add(field, createSafeErrorMessage(errorMessage, arguments));
+    }
+
+    /**
+     * Support for converting a message collection to ValidationErrors/SimpleErrors.
+     */
+    protected void addMessages(MessageCollection messages) {
+        for (String error : messages.getErrors()) {
+            SimpleError simpleError = createSafeErrorMessage("{2}", error);
+
+            getContext().getValidationErrors().addGlobalError(simpleError);
+            flashErrorMessage(simpleError);
+        }
+        for (String warn : messages.getWarnings()) {
+            getContext().getMessages().add(createSafeMessage("{0}", warn));
+        }
+        for (String info : messages.getInfos()) {
+            getContext().getMessages().add(createSafeMessage("{0}", info));
+        }
     }
 
     /**
