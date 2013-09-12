@@ -50,6 +50,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,7 +74,7 @@ import java.util.TreeSet;
 @BatchSize(size = 50)
 public abstract class LabVessel implements Serializable {
 
-    //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
+    private static final long serialVersionUID = 2868707154970743503L;
 
     private static final Log logger = LogFactory.getLog(LabVessel.class);
 
@@ -526,6 +527,27 @@ public abstract class LabVessel implements Serializable {
         labBatches.add(labBatchStartingVessel);
     }
 
+    public Set<SampleInstance> getUniqueSampleInstances() {
+        // Return the sample instances unique by the vessel sample comparator's vision of uniqueness.
+        Set<SampleInstance> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_COMPARATOR);
+        filteredForUI.addAll(getSampleInstances(LabVessel.SampleType.PREFER_PDO, null));
+        return filteredForUI;
+    }
+
+    /**
+     * Compare by modified date.
+     */
+    public static final Comparator<SampleInstance> VESSEL_SAMPLE_COMPARATOR = new Comparator<SampleInstance>() {
+        @Override
+        public int compare(SampleInstance lhs, SampleInstance rhs) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(lhs.getStartingSample(), rhs.getStartingSample());
+            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
+            builder.append(lhs.getProductOrderKey(), rhs.getProductOrderKey());
+            return builder.build();
+        }
+    };
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -591,7 +613,7 @@ public abstract class LabVessel implements Serializable {
      * on-the-fly by walking the history and applying the
      * StateChange applied during lab work.
      *
-     * @return
+     * @return All the sample instances.
      */
     public Set<SampleInstance> getSampleInstances() {
         return getSampleInstances(SampleType.ANY, null);
@@ -935,6 +957,30 @@ public abstract class LabVessel implements Serializable {
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
         return Sets.union(getInPlaceEvents(), getTransfersTo());
     }
+
+    public Set<LabEvent> getFilteredInPlaceAndTransferToEvents() {
+        // Return the sample instances unique by the vessel sample comparator's vision of uniqueness.
+        Set<LabEvent> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_EVENT_COMPARATOR);
+        filteredForUI.addAll(getInPlaceAndTransferToEvents());
+        return filteredForUI;
+
+    }
+
+    /**
+     * Compare by modified date.
+     */
+    public static final Comparator<LabEvent> VESSEL_SAMPLE_EVENT_COMPARATOR = new Comparator<LabEvent>() {
+        @Override
+        public int compare(LabEvent lhs, LabEvent rhs) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(lhs.getLabEventType(), rhs.getLabEventType());
+            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
+            builder.append(lhs.getEventLocation(), rhs.getEventLocation());
+            builder.append(lhs.getEventOperator(), rhs.getEventOperator());
+            builder.append(lhs.getInPlaceLabVessel(), rhs.getInPlaceLabVessel());
+            return builder.build();
+        }
+    };
 
     public BigDecimal getVolume() {
         return volume;
