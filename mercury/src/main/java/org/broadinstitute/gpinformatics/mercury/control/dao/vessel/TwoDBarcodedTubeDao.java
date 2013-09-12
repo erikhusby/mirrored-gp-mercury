@@ -4,8 +4,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube_;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -16,6 +19,13 @@ import java.util.TreeMap;
 @Stateful
 @RequestScoped
 public class TwoDBarcodedTubeDao extends GenericDao {
+
+    /**
+     * Convenience version of the findByBarcodes method that wraps its Collection argument in a List.
+     */
+    public Map<String, TwoDBarcodedTube> findByBarcodes(@Nonnull Collection<String> barcodes) {
+        return findByBarcodes(new ArrayList<>(barcodes));
+    }
 
     /**
      * Finds tube entities for given barcodes

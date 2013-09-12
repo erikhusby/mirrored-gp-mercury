@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.Namespaces;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.bind.annotation.XmlType;
 
-@XmlType(namespace = Namespaces.VESSEL)
+@XmlType
 public class RegisterTubeBean {
 
     private String barcode;
