@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -81,10 +82,17 @@ public class JiraServiceTest {
         Collection<CustomField> customFieldList = new LinkedList<>();
 
         try {
+            CreateFields.ProjectType productOrdering =
+                    (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING :
+                            CreateFields.ProjectType.PRODUCT_ORDERING;
+
+            CreateFields.IssueType productOrder = (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_PRODUCT_ORDER :
+                    CreateFields.IssueType.PRODUCT_ORDER;
+
             Map<String, CustomFieldDefinition> requiredFields =
                     service.getRequiredFields(
-                            new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
-                            CreateFields.IssueType.PRODUCT_ORDER);
+                            new CreateFields.Project(productOrdering.getKeyPrefix()),
+                            productOrder);
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
 
@@ -96,8 +104,8 @@ public class JiraServiceTest {
                     "Athena Test Case:  Test description setting"));
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix(), "hrafal",
-                            CreateFields.IssueType.PRODUCT_ORDER,
+                    service.createIssue(productOrdering.getKeyPrefix(), "hrafal",
+                            productOrder,
                             "Athena Test case:::  Test new Summary Addition", customFieldList);
 
             Assert.assertNotNull(jiraIssue.getKey());
@@ -110,14 +118,19 @@ public class JiraServiceTest {
     public void testUpdateTicket() throws IOException {
         Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(
-                        new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
-                        CreateFields.IssueType.PRODUCT_ORDER);
+                        new CreateFields.Project(
+                                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING.getKeyPrefix() :
+                                        CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
+                        (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_PRODUCT_ORDER :
+                                CreateFields.IssueType.PRODUCT_ORDER);
         Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
-                CreateFields.ProjectType.RESEARCH_PROJECTS.getKeyPrefix(), "breilly",
-                CreateFields.IssueType.RESEARCH_PROJECT,
+                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_RESEARCH_PROJECTS.getKeyPrefix() :
+                        CreateFields.ProjectType.RESEARCH_PROJECTS.getKeyPrefix(), "breilly",
+                (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_RESEARCH_PROJECT :
+                        CreateFields.IssueType.RESEARCH_PROJECT,
                 "JiraServiceTest.testUpdateTicket", customFieldList);
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
