@@ -54,7 +54,7 @@
         </thead>
         <tbody>
         <c:forEach items="${vessels}" var="vessel">
-            <c:forEach items="${vessel.inPlaceAndTransferToEvents}" var="event">
+            <c:forEach items="${vessel.filteredInPlaceAndTransferToEvents}" var="event">
                 <tr>
                     <td>
                         <stripes:link
@@ -133,7 +133,7 @@
                                        class="external" target="JIRA">
                                             ${batchComposition.labBatch.businessKey}
                                         (${batchComposition.count}/${batchComposition.denominator})
-                                    </a>
+                                    </a>&nbsp;&nbsp;
                                 </c:if>
 
                                 <c:if test="${not empty sampleInstance.productOrderKey}">
