@@ -43,35 +43,30 @@ public class ProductOrderData {
      * @param productOrder the {@link ProductOrder}
      */
     public  ProductOrderData(@Nonnull ProductOrder productOrder) {
-        this.title = productOrder.getTitle();
+        title = productOrder.getTitle();
 
         if (productOrder.getProductOrderId() != null) {
-            this.id = productOrder.getProductOrderId().toString();
+            id = productOrder.getProductOrderId().toString();
         }
 
-        this.comments = productOrder.getComments();
-        this.placedDate = productOrder.getPlacedDate();
-        this.modifiedDate = productOrder.getModifiedDate();
+        comments = productOrder.getComments();
+        placedDate = productOrder.getPlacedDate();
+        modifiedDate = productOrder.getModifiedDate();
+        quoteId = productOrder.getQuoteId();
+        status = productOrder.getOrderStatus().name();
+        aggregationDataType = null;  // productOrder.?
 
         if (productOrder.getProduct() != null) {
-            // TODO: How is this different than productName?
-            this.product = productOrder.getProduct().getProductName();
+            product = productOrder.getProduct().getBusinessKey();
+            productName = productOrder.getProduct().getProductName();
         }
-        this.status = productOrder.getOrderStatus().name();
 
-        this.samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
-
-        this.aggregationDataType = null;  // productOrder.?
+        samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
 
         if (productOrder.getResearchProject() != null) {
-            this.researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
+            researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
         }
 
-        if (productOrder.getProduct() != null) {
-            this.productName = productOrder.getProduct().getProductName();
-        }
-
-        this.quoteId = productOrder.getQuoteId();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
