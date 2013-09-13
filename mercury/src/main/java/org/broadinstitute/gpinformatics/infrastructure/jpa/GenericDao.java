@@ -353,8 +353,7 @@ public class GenericDao {
      *
      * @return list of entities that match the value, or empty list if not found
      */
-    @SafeVarargs
-    public final <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
             Class<ENTITY_TYPE> entity, String value, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
