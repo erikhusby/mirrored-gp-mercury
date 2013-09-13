@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
+import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleResponse;
 import org.broadinstitute.bsp.client.sample.MaterialType;
@@ -110,6 +111,11 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
     public SampleManager createSampleManager() {
 
         return new SampleManager() {
+
+            @Override
+            public SampleKitListResponse getSampleKitsBySampleIds(List<String> strings) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
 
             @Override
             public SampleKitResponse getSampleKit(String s) {
