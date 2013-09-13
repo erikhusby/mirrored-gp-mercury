@@ -25,7 +25,7 @@ public class ProductOrderData {
     private Date modifiedDate;
     private String product;
     private String status;
-    private List<String> samples;
+    private List<String> sampleIds;
     private String aggregationDataType;
     private String researchProjectId;
     private String productName;
@@ -61,18 +61,17 @@ public class ProductOrderData {
             productName = productOrder.getProduct().getProductName();
         }
 
-        samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
+        sampleIds = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
 
         if (productOrder.getResearchProject() != null) {
             researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
         }
-
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
         List<String> sampleIdList = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            sampleIdList.add(productOrderSample.getProductOrderSampleId().toString());
+            sampleIdList.add(productOrderSample.getSampleKey());
         }
 
         return sampleIdList;
@@ -135,13 +134,13 @@ public class ProductOrderData {
     }
 
     @XmlElementWrapper
-    @XmlElement(name = "sample")
-    public List<String> getSamples() {
-        return samples;
+    @XmlElement(name = "sampleId")
+    public List<String> getSampleIds() {
+        return sampleIds;
     }
 
-    public void setSamples(List<String> samples) {
-        this.samples = samples;
+    public void setSamples(List<String> sampleIds) {
+        this.sampleIds = sampleIds;
     }
 
     public void setAggregationDataType(String aggregationDataType) {

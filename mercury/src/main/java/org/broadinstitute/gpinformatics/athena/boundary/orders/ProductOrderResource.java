@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Restful webservice to list product orders.
+ * Restful webservice to list and create product orders.
  */
 @Path("productOrders")
 @Stateful
@@ -96,8 +96,10 @@ public class ProductOrderResource {
         productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
 
-        // Not supplying samples and add-ons at this point, just saving what we defined above.
+        // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
+        // sure any DB constraints have been enforced.
         productOrderDao.persist(productOrder);
+        productOrderDao.flush();
 
         /*
         // If returning the URI to the resource we made, then return type needs to be Response.
