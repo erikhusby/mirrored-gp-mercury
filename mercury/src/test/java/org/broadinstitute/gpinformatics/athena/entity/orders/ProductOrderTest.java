@@ -70,6 +70,7 @@ public class ProductOrderTest {
                 .ignoreProperty("comments")
                 .ignoreProperty("sampleList")
                 .ignoreProperty("fundingDeadline")
+                .ignoreProperty("requisitionKey")
                 .ignoreProperty("publicationDeadline").build();
         tester.testBean(ProductOrder.class, configuration);
 
