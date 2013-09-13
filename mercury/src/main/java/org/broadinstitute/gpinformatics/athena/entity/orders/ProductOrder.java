@@ -132,6 +132,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     /** Counts the number of lanes, the default value is one lane. */
     private int laneCount = 1;
 
+    @Column(name = "REQUISITION_KEY")
+    private String requisitionKey;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
@@ -830,6 +833,14 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public Date getPlacedDate() {
         return placedDate;
+    }
+
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
     }
 
     /**

@@ -139,6 +139,13 @@ public class ProductOrderResource {
                 productOrder.setResearchProject(researchProject);
         }
 
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        for (String sample : productOrderData.getSamples()) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        productOrder.setRequisitionKey(productOrderData.getRequisitionKey());
+
         return productOrder;
     }
 

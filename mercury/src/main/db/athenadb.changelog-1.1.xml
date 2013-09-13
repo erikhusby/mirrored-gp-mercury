@@ -108,4 +108,27 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
+
+
+    <changeSet id="GPLIM-1957-1" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order" columnName="REQUISITION_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order">
+            <column name="REQUISITION_KEY" type="VARCHAR(60)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1957-2" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_aud" columnName="REQUISITION_KEY" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud">
+            <column name="REQUISITION_KEY" type="VARCHAR(60)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

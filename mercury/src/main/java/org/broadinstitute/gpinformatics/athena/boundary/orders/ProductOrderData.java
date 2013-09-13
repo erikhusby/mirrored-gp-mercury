@@ -36,6 +36,7 @@ public class ProductOrderData {
     private String productName;
     private String quoteId;
     public String username;
+    private String requisitionKey;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -189,9 +190,16 @@ public class ProductOrderData {
         return username;
     }
 
-    public void setUserName(String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
+    }
 
 }
