@@ -332,6 +332,7 @@ public enum LabEventType {
     ICE_CATCH_ENRICHMENT_SETUP("IceCatchEnrichmentSetup", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_CATCH_ENRICHMENT_CLEANUP("IceCatchEnrichmentCleanup", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_CATCH_PICO("IceCatchPico", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_POOL_TEST("IcePoolTest", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of

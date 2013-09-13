@@ -17,17 +17,7 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
     private String[] result;
 
     @Override
-    public void setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
-        result = new String[] { VALID_COMMUNICATION_PREFIX + " " + barcode };
-    }
-
-    @Override
-    public String[] getResult() {
-        return result;
-    }
-
-    @Override
-    public boolean isValidResult() {
-        return result[0].startsWith(BSPSetVolumeConcentration.VALID_COMMUNICATION_PREFIX);
+    public String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
+        return RESULT_OK;
     }
 }

@@ -31,7 +31,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
     private static final String VOLUME_CONCENTRATION_URL = "sample/setVolumeConcentration";
 
-    private final String[] result = new String[]{"No result calculated"};
+    private String result;
 
     /**
      * Required for @Impl class.
@@ -54,7 +54,8 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      *
      * @return queryString to pass to the web service.
      */
-    private static String getQueryString(@Nonnull String barcode, @Nullable BigDecimal volume, @Nullable BigDecimal concentration)
+    private static String getQueryString(@Nonnull String barcode, @Nullable BigDecimal volume,
+                                         @Nullable BigDecimal concentration)
             throws ValidationException {
         List<NameValuePair> parameters = new ArrayList<>();
 
@@ -85,8 +86,8 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * @param concentration the new concentration of the sample. Can be null.
      */
     @Override
-    public void setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                          @Nullable BigDecimal concentration) {
+    public String setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
+                                            @Nullable BigDecimal concentration) {
         BufferedReader rdr = null;
         try {
             String queryString = getQueryString(barcode, volume, concentration);
@@ -100,26 +101,18 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             rdr = new BufferedReader(new InputStreamReader(is));
 
             // Check for OK status.
-            if (clientResponse.getStatus() != ClientResponse.Status.OK.getStatusCode()) {
-                result[0] = "Cannot set volume and concentration: " + clientResponse.getStatus();
+            if (clientResponse.getStatus() == ClientResponse.Status.OK.getStatusCode() &&
+                rdr.readLine().startsWith(VALID_COMMUNICATION_PREFIX)) {
+                result = RESULT_OK;
             } else {
-                result[0] = rdr.readLine();
+                result = "Cannot set volume and concentration: " + clientResponse.getStatus();
             }
         } catch (Exception exp) {
-            result[0] = "Cannot set volume and concentration: " + exp.getMessage();
+            result = "Cannot set volume and concentration: " + exp.getMessage();
         } finally {
             // Close the reader, which will close the underlying input stream.
             IOUtils.closeQuietly(rdr);
         }
-    }
-
-    @Override
-    public String[] getResult() {
         return result;
-    }
-
-    @Override
-    public boolean isValidResult() {
-        return result[0].startsWith(VALID_COMMUNICATION_PREFIX);
     }
 }

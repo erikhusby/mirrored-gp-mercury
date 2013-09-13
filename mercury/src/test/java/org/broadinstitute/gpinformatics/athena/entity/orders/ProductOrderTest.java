@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -99,8 +100,8 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-        assertThat(productOrder.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.PRODUCT_ORDER)));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.PRODUCT_ORDERING)));
+        assertThat(productOrder.fetchJiraIssueType(), is(equalTo((Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER)));
+        assertThat(productOrder.fetchJiraProject(), is(equalTo((Deployment.isCRSP)?CreateFields.ProjectType.CRSP_PRODUCT_ORDERING:CreateFields.ProjectType.PRODUCT_ORDERING)));
         assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }

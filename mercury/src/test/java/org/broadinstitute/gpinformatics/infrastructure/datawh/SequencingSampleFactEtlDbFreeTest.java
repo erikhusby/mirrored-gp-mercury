@@ -327,8 +327,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     }
 
-    public void testNone() throws Exception {
-        // Adds no molecular barcodes, but has non-barcode reagents.
+    public void testGenericIndexAndDedup() throws Exception {
+        // Has only non-indexed reagents so molecular indexes are all "NONE"
         reagents.add(new GenericReagent("DMSO", "a whole lot"));
         reagents.add(new GenericReagent("H2O", "Quabbans finest"));
         sampleInstances.add(sampleInstance2);
@@ -349,8 +349,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(sampleInstance.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
-        String sampleKey2 = "SM-4567";
-        EasyMock.expect(sampleInstance2.getStartingSample()).andReturn(new MercurySample(sampleKey2)).anyTimes();
+        EasyMock.expect(sampleInstance2.getStartingSample()).andReturn(new MercurySample(sampleKey)).anyTimes();
         EasyMock.expect(sampleInstance2.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);
@@ -358,19 +357,25 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         EasyMock.verify(mocks);
 
-        // One tube containing 2 samples is put on each of the 2 lanes.
-        Assert.assertEquals(records.size(), 4);
-        int counts[] = new int[]{0, 0, 0};
+        // One tube containing 2 samples is put on each of the 2 lanes, but de-duplication is done based on
+        // molecular index, so only one sample per lane will be kept.  It's undefined which sample is kept.
+        Assert.assertEquals(records.size(), 2);
+        boolean foundLane1 = false;
+        boolean foundLane2 = false;
         for (String record : records) {
-            int sampleIdx = record.contains(sampleKey) ? 1 : record.contains(sampleKey2) ? 2 : 0;
-            counts[sampleIdx]++;
-            verifyRecord(record, "NONE", pdoId, null, null, denatureSource.getLabel(),
+            int laneNumber = Integer.parseInt(record.split(",")[4]);
+            if (laneNumber == 1) {
+                foundLane1 = true;
+            }
+            if (laneNumber == 2) {
+                foundLane2 = true;
+            }
+            verifyRecord(record, "NONE", pdoId, sampleKey, laneNumber, denatureSource.getLabel(),
                     ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                     researchProjectId, workflowBatch.getBatchName());
         }
-        Assert.assertEquals(counts[0], 0);
-        Assert.assertEquals(counts[1], 2);
-        Assert.assertEquals(counts[2], 2);
+        Assert.assertTrue(foundLane1);
+        Assert.assertTrue(foundLane2);
     }
 
     public void testWithEventHistory() throws Exception {
@@ -501,14 +506,14 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey, Integer lane,
-                                  String tubeBarcode, String createdDateStr, String cartridgeName1,
-                                  long researchProjectId1, String batchName) {
+                                  String tubeBarcode, String createdDateStr, String cartridgeName,
+                                  long researchProjectId, String batchName) {
         int i = 0;
         String[] parts = record.split(",");
         Assert.assertEquals(parts[i++], etlDateString);
         Assert.assertEquals(parts[i++], "F");
         Assert.assertEquals(parts[i++], String.valueOf(entityId));
-        Assert.assertEquals(parts[i++], cartridgeName1);
+        Assert.assertEquals(parts[i++], cartridgeName);
         if (lane != null) {
             Assert.assertEquals(parts[i++], String.valueOf(lane));
         } else {
@@ -516,12 +521,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         }
         Assert.assertEquals(parts[i++], expectedName);
         Assert.assertEquals(parts[i++], String.valueOf(pdoId));
-        if (sampleKey != null) {
-            Assert.assertEquals(parts[i++], sampleKey);
-        } else {
-            i++;
-        }
-        Assert.assertEquals(parts[i++], String.valueOf(researchProjectId1));
+        Assert.assertEquals(parts[i++], sampleKey);
+        Assert.assertEquals(parts[i++], String.valueOf(researchProjectId));
         Assert.assertEquals(parts[i++], tubeBarcode);
         Assert.assertEquals(parts[i++], createdDateStr);
         Assert.assertEquals(parts[i++], batchName);
