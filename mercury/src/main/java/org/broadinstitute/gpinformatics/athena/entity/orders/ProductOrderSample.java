@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
@@ -100,6 +101,8 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     @Column(name = "ALIQUOT_ID")
     private String aliquotId;
 
+    @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    Set<SampleReceiptValidation> validations = new HashSet<>();
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -572,5 +575,17 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         }
 
         return null;
+    }
+
+    public Set<SampleReceiptValidation> getValidations() {
+        return validations;
+    }
+
+    public void setValidations(Set<SampleReceiptValidation> validations) {
+        this.validations = validations;
+    }
+
+    public void addValidation(SampleReceiptValidation validation) {
+        this.validations.add(validation);
     }
 }
