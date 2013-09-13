@@ -192,7 +192,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         Map<String, SampleInfo> map = new HashMap<>();
 
         WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
-        Details details = resource.accept(MediaType.APPLICATION_XML).get(new GenericType<Details>() {});
+        Details details = resource.accept(MediaType.TEXT_XML).get(new GenericType<Details>() {});
         // Initialize all map values to null.
         for (String matrixBarcode : matrixBarcodes) {
             map.put(matrixBarcode, null);

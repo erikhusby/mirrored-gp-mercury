@@ -111,7 +111,7 @@ public class GenericDao {
      * Transaction is SUPPORTS (default).
      *
      * @return the persistence context
-     * @see org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager#getEntityManager()
+     * @see ThreadEntityManager#getEntityManager()
      */
     public EntityManager getEntityManager() {
         return threadEntityManager.getEntityManager();
@@ -268,11 +268,11 @@ public class GenericDao {
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity,
             final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
-            List<VALUE_TYPE> values,
+            Collection<VALUE_TYPE> values,
             @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
 
         List<ENTITY_TYPE> resultList = new ArrayList<>();
-        if(values.isEmpty()) {
+        if (values.isEmpty()) {
             return resultList;
         }
 
@@ -297,7 +297,8 @@ public class GenericDao {
     }
 
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+            Collection<VALUE_TYPE> values) {
         return findListByList(entity, singularAttribute, values, null);
     }
 
@@ -352,7 +353,8 @@ public class GenericDao {
      *
      * @return list of entities that match the value, or empty list if not found
      */
-    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
+    @SafeVarargs
+    public final <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
             Class<ENTITY_TYPE> entity, String value, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
@@ -379,13 +381,13 @@ public class GenericDao {
         }
     }
 
-    protected Predicate createOrTerms(CriteriaBuilder cb, Path fieldExpression, List<?> values) {
+    protected Predicate createOrTerms(CriteriaBuilder builder, Path<?> fieldExpression, List<?> values) {
         Predicate[] listOfOrTerms = new Predicate[values.size()];
-        int i=0;
+        int i = 0;
         for (Object value : values) {
-            listOfOrTerms[i++] = cb.equal(fieldExpression, value);
+            listOfOrTerms[i++] = builder.equal(fieldExpression, value);
         }
 
-        return cb.or(listOfOrTerms);
+        return builder.or(listOfOrTerms);
     }
 }

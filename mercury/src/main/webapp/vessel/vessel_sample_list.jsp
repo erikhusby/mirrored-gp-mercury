@@ -40,7 +40,7 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.getUniqueSampleInstances()}" var="sample">
+        <c:forEach items="${vessel.uniqueSampleInstances}" var="sample">
             <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
             <tr>
                 <td>

@@ -129,7 +129,6 @@ public class ProductOrderEjb {
         productOrder.setSamples(orderSamples);
     }
 
-
     private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
         List<Product> addOns =
                 addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
@@ -144,7 +143,8 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation.
+     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
+     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
      *
      * @param productOrder          product order
      * @param productOrderSampleIds sample IDs
@@ -155,7 +155,6 @@ public class ProductOrderEjb {
     public void save(
             ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
             throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
         setSamples(productOrder, productOrderSampleIds);
@@ -164,8 +163,8 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a
-     * billing session because of the confirmation upload (and manual update) of the tracker spreadsheet.
+     * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a billing
+     * session because of the confirmation upload (and manual update) of the tracker spreadsheet.
      *
      * @param order the order to check
      *
@@ -206,12 +205,14 @@ public class ProductOrderEjb {
         if (sampleName == null) {
             throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
         }
+
         for (ProductOrderSample sample : order.getSamples()) {
             if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
                 return sample;
             }
         }
+
         throw new Exception(
                 MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
                                      " samples have been assigned aliquots already.",
@@ -222,19 +223,18 @@ public class ProductOrderEjb {
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *
-     *
-     * @param orderKey      business key of order to bill for
-     * @param aliquotId     the sample aliquot ID
-     * @param completedDate the date completed to use when billing
-     * @param data          used to check and see if billing can occur
+     * @param orderKey          business key of order to bill for
+     * @param aliquotId         the sample aliquot ID
+     * @param completedDate     the date completed to use when billing
+     * @param data              used to check and see if billing can occur
      * @param orderLockoutCache The cache by keys whether the order is locked out or not
      *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
      *         is currently locked out of billing.
      */
     public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
-                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache) throws Exception {
-
+                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
+            throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
         if (order == null) {
             log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", orderKey));
@@ -243,7 +243,8 @@ public class ProductOrderEjb {
 
         Product product = order.getProduct();
         if (!product.isUseAutomatedBilling()) {
-            log.debug(MessageFormat.format("Product {0} does not support automated billing.", product.getProductName()));
+            log.debug(
+                    MessageFormat.format("Product {0} does not support automated billing.", product.getProductName()));
             return true;
         }
 
@@ -289,7 +290,7 @@ public class ProductOrderEjb {
      * parameter is null, then all samples on the order will be used.
      *
      * @param productOrderKey The product order business key.
-     * @param samples The samples to calculate risk on. Null if all.
+     * @param samples         The samples to calculate risk on. Null if all.
      *
      * @throws Exception Any errors in reporting the risk.
      */
@@ -317,8 +318,8 @@ public class ProductOrderEjb {
     }
 
     public void setManualOnRisk(
-        BspUser user, String productOrderKey,
-        List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
+            BspUser user, String productOrderKey,
+            List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
 
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
 
@@ -349,7 +350,6 @@ public class ProductOrderEjb {
      * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
      */
     private static class PDOUpdateField {
-
         private final String displayName;
         private final Object newValue;
         private final CustomField.SubmissionField field;
@@ -484,7 +484,6 @@ public class ProductOrderEjb {
      * @param addOnPartNumbers add-on part numbers
      */
     public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
-
         // update JIRA ticket with new quote
         // GPLIM-488
         try {
@@ -523,9 +522,7 @@ public class ProductOrderEjb {
         }
     }
 
-
     public static class SampleDeliveryStatusChangeException extends Exception {
-
         protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
@@ -626,7 +623,6 @@ public class ProductOrderEjb {
                                                   DeliveryStatus targetStatus,
                                                   Collection<ProductOrderSample> samples)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
-
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
