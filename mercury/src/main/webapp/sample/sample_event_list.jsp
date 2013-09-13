@@ -54,7 +54,7 @@
         </thead>
         <tbody>
         <c:forEach items="${vessels}" var="vessel">
-            <c:forEach items="${vessel.filteredInPlaceAndTransferToEvents}" var="event">
+            <c:forEach items="${vessel.uniqueInPlaceAndTransferToEvents}" var="event">
                 <tr>
                     <td>
                         <stripes:link
