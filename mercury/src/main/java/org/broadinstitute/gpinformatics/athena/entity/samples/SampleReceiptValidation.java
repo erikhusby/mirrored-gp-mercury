@@ -26,6 +26,22 @@ import java.util.Date;
 @Table(name = "sample_receipt_validation", schema = "athena")
 public class SampleReceiptValidation {
 
+    public enum SampleValidationReason {
+        SAMPLE_NOT_IN_BSP("The sample is not recognized in BSP"),
+        MISSING_SAMPLE_FROM_SAMPLE_KIT("Not all of the Samples for the Sample kit came back"),
+        SAMPLES_FROM_MULTIPLE_KITS("");
+
+        private final String reasonMessage;
+
+        private SampleValidationReason(String reasonMessage) {
+            this.reasonMessage = reasonMessage;
+        }
+
+        public String getReasonMessage() {
+            return reasonMessage;
+        }
+    }
+
     public enum SampleValidationType {
         WARNING, BLOCKING;
     }
@@ -62,20 +78,29 @@ public class SampleReceiptValidation {
     @Column(name = "MODIFIED_BY")
     private long modifiedBy;
 
+    @Column(name = "reason", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SampleValidationReason reason;
+
 
     protected SampleReceiptValidation() {
     }
 
-    public SampleReceiptValidation(@Nonnull Long createdBy,
-                                   @Nonnull ProductOrderSample productOrderSample,
-                                   @Nonnull SampleValidationType validationType) {
-        this(productOrderSample,createdBy,SampleValidationStatus.PENDING,validationType);
+    public SampleReceiptValidation(@Nonnull Long createdBy, @Nonnull SampleValidationType validationType,
+                                   SampleValidationReason reason) {
+        this(null, createdBy, null, validationType, reason);
     }
 
-    public SampleReceiptValidation(
-            @Nonnull ProductOrderSample productOrderSample, @Nonnull Long createdBy,
-            @Nonnull SampleValidationStatus status,
-            @Nonnull SampleValidationType validationType) {
+    public SampleReceiptValidation(ProductOrderSample productOrderSample, @Nonnull Long createdBy,
+                                   @Nonnull SampleValidationType validationType,
+                                   SampleValidationReason reason) {
+        this(productOrderSample,createdBy,SampleValidationStatus.PENDING,validationType, reason);
+    }
+
+    public SampleReceiptValidation(ProductOrderSample productOrderSample, @Nonnull Long createdBy,
+                                   @Nonnull SampleValidationStatus status,
+                                   @Nonnull SampleValidationType validationType,
+                                   @Nonnull SampleValidationReason reason) {
         this.productOrderSample = productOrderSample;
         this.createdBy = createdBy;
         this.status = status;
@@ -110,5 +135,41 @@ public class SampleReceiptValidation {
 
     public long getModifiedBy() {
         return modifiedBy;
+    }
+
+    public SampleValidationReason getReason() {
+        return reason;
+    }
+
+    public void setReason(SampleValidationReason reason) {
+        this.reason = reason;
+    }
+
+    public void setProductOrderSample(ProductOrderSample productOrderSample) {
+        this.productOrderSample = productOrderSample;
+    }
+
+    public void setValidationType(SampleValidationType validationType) {
+        this.validationType = validationType;
+    }
+
+    public void setStatus(SampleValidationStatus status) {
+        this.status = status;
+    }
+
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public void setModifiedDate(Date modifiedDate) {
+        this.modifiedDate = modifiedDate;
+    }
+
+    public void setModifiedBy(long modifiedBy) {
+        this.modifiedBy = modifiedBy;
     }
 }

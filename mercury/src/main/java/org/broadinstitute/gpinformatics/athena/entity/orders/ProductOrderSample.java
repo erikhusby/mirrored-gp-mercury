@@ -586,6 +586,7 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     }
 
     public void addValidation(SampleReceiptValidation validation) {
+        validation.setProductOrderSample(this);
         this.validations.add(validation);
     }
 }
