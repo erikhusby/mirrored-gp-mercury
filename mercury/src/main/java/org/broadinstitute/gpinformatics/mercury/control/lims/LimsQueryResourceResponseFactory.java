@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,6 +15,10 @@ import java.util.GregorianCalendar;
  * @author breilly
  */
 public class LimsQueryResourceResponseFactory {
+
+    private static final String CREATE_DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm";
+
+    private final SimpleDateFormat createDateFormat = new SimpleDateFormat(CREATE_DATE_FORMAT_STRING);
 
     public FlowcellDesignationType makeFlowcellDesignation(FlowcellDesignation designation) {
         FlowcellDesignationType outDesignation = new FlowcellDesignationType();
@@ -37,7 +42,7 @@ public class LimsQueryResourceResponseFactory {
         for (LibraryData libraryData : lane.getLibraryData()) {
             outLane.getLibraryData().add(makeLibraryData(libraryData));
         }
-        outLane.setLoadingConcentration(lane.getLoadingConcentration());
+        outLane.setLoadingConcentration(BigDecimal.valueOf(lane.getLoadingConcentration()));
         if (lane.getDerivedLibraryData() != null) {
             for (LibraryData libraryData : lane.getDerivedLibraryData()) {
                 outLane.getDerivedLibraryData().add(makeLibraryData(libraryData));
@@ -62,9 +67,10 @@ public class LimsQueryResourceResponseFactory {
         String dateCreated = libraryData.getDateCreated();
         if (dateCreated != null) {
             try {
-                createDateTime = new SimpleDateFormat("yyyy/MM/dd HH:mm").parse(dateCreated);
+                createDateTime = createDateFormat.parse(dateCreated);
             } catch (ParseException e) {
-                throw new RuntimeException("Unexpected date format. Wanted: yyyy-MM-ddTHH:mm:ss.SSSZ. Got: " + dateCreated, e);
+                throw new RuntimeException("Unexpected date format. Wanted: " + CREATE_DATE_FORMAT_STRING
+                                           + ". Got: " + dateCreated, e);
             }
             GregorianCalendar calendar = new GregorianCalendar();
             calendar.setTime(createDateTime);

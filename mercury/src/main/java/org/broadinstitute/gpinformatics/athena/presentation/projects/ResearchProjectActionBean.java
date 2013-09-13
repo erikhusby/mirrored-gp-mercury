@@ -47,8 +47,6 @@ import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
@@ -103,11 +101,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private List<ResearchProject> allResearchProjects;
 
     /**
-     * On demand counts of orders on the project. Map of business key to count value *
+     * On demand counts of orders on the project. Map of business key to count value.
      */
     private Map<String, Long> projectOrderCounts;
 
-    // These are the fields for catching the input tokens
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     )
@@ -174,12 +171,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         // Get the totals for the order
-        Collection<String> businessKeys = new ArrayList<String> ();
+        Collection<Long> productOrderIds = new ArrayList<>();
         for (ProductOrder order : editResearchProject.getProductOrders()) {
-            businessKeys.add(order.getBusinessKey());
+            productOrderIds.add(order.getProductOrderId());
         }
 
-        progressFetcher.loadProgress(productOrderDao, businessKeys);
+        progressFetcher.loadProgress(productOrderDao, productOrderIds);
     }
 
     /**
@@ -190,11 +187,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void createUniqueNameValidation(ValidationErrors errors) {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
-        // OR if this was fetched and the title has been changed
+        // OR if this was fetched and the title has been changed.
         if ((editResearchProject.getOriginalTitle() == null) ||
                 (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
 
-            // Check if there is an existing research project and error out if it already exists
+            // Check if there is an existing research project and error out if it already exists.
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
             if (existingProject != null) {
                 errors.add("title", new SimpleError("A research project already exists with this name."));

@@ -37,7 +37,7 @@
             </#list>
         </td>
         <td><a href="${validationError.linkToProductOrder}">${(validationError.productOrder.businessKey)!''}</a></td>
-        <td><a href="${validationError.linkToResearchProject}">${(validationError.productOrder.researchProject.businessKey!'')}</a></td>
+        <td><a href="${validationError.linkToResearchProject}">${(validationError.productOrder.researchProject.businessKey)!''}</a></td>
     </tr>
     </#list>
     </tbody>

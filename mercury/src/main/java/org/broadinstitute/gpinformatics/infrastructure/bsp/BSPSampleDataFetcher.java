@@ -1,19 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.Client;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.ArrayList;
+import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,21 +21,32 @@ import java.util.Map;
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public class BSPSampleDataFetcher extends AbstractJerseyClientService {
+public class BSPSampleDataFetcher extends BSPJerseyClient {
 
+    private static final long serialVersionUID = -1432207534876411738L;
+
+    // Many versions of this service written only for tests are considered as options by IntelliJ.
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     BSPSampleSearchService service;
 
-    @Inject
-    BSPConfig bspConfig;
-
-    private final static Log logger = LogFactory.getLog(BSPSampleDataFetcher.class);
-
     private static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
-
-    private static final String WS_SAMPLE_DETAILS = "sample/getdetails";
+    private static final String WS_DETAILS = "sample/getdetails";
+    // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
+    private static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
     public BSPSampleDataFetcher() {
+    }
+
+    /**
+     * Container free constructor, need to initialize all dependencies explicitly.
+     *
+     * @param service The sample search service to use.
+     * @param bspConfig The config object - Thi sis only nullable for tests that don't need to deal with BSP directly.
+     */
+    public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service, @Nullable BSPConfig bspConfig) {
+        super(bspConfig);
+        this.service = service;
     }
 
     /**
@@ -44,10 +55,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      * @param service The search service object.
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
-        if (service == null) {
-            throw new NullPointerException("service cannot be null.");
-        }
-        this.service = service;
+        this(service, null);
     }
 
     /**
@@ -76,51 +84,25 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     /**
      * Fetch the data from bsp for multiple samples.
      *
-     * @param sampleNames The sample names
+     * @param sampleNames The sample names, which can be short barcodes such as SM-4FHTK,
+     *                    or bare ids such as 4FHTK.
      *
      * @return Mapping of sample id to its bsp data
      */
     public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
-        if (sampleNames == null) {
-            throw new NullPointerException("sampleNames cannot be null.");
-        }
-
-        Collection<String> filteredNames;
-        // Work around issue with test (stub) BSPSampleSearchService implementations, which allow lookups
-        // of non-BSP samples.
-        if (service instanceof BSPSampleSearchServiceImpl) {
-            filteredNames = new ArrayList<>(sampleNames);
-            // Remove non BSP samples.
-            Iterator<String> namesIterator = filteredNames.iterator();
-            while (namesIterator.hasNext()) {
-                String sampleName = namesIterator.next();
-                if (sampleName == null || !BSPUtil.isInBspFormat(sampleName)) {
-                    namesIterator.remove();
-                }
-            }
-        } else {
-            // Using a stub service, don't filter out bogus samples.
-            filteredNames = sampleNames;
-        }
-
-        if (filteredNames.isEmpty()) {
+        if (sampleNames.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<>();
         List<Map<BSPSampleSearchColumn, String>> results =
-                service.runSampleSearch(filteredNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
+                service.runSampleSearch(sampleNames, BSPSampleSearchColumn.PDO_SEARCH_COLUMNS);
         for (Map<BSPSampleSearchColumn, String> result : results) {
             BSPSampleDTO bspDTO = new BSPSampleDTO(result);
             sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
 
         return sampleNameToDTO;
-    }
-
-    @Override
-    protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, bspConfig);
     }
 
     /**
@@ -134,15 +116,15 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             return;
         }
 
-        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
         }
 
         // Check to see if BSP is supported before trying to get data.
-        if (AbstractConfig.isSupported(bspConfig)) {
-            String urlString = bspConfig.getWSUrl(WS_FFPE_DERIVED);
-            String queryString = "barcodes=" + StringUtils.join(barcodeToDTOMap.keySet(), "&barcodes=");
+        if (AbstractConfig.isSupported(getBspConfig())) {
+            String urlString = getUrl(WS_FFPE_DERIVED);
+            String queryString = makeQueryString("barcodes", barcodeToDTOMap.keySet());
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
@@ -165,13 +147,13 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             return;
         }
 
-        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<>();
         for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
             lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
         }
 
-        String urlString = bspConfig.getWSUrl(WS_SAMPLE_DETAILS);
-        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
+        String urlString = getUrl(WS_DETAILS);
+        String queryString = makeQueryString("sample_lsid", lsidToDTOMap.keySet());
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
         post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
@@ -198,5 +180,31 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         }
 
         return results.get(0).get(BSPSampleSearchColumn.STOCK_SAMPLE);
+    }
+
+    /**
+     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
+     */
+    public Map<String, SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
+        String queryString = makeQueryString("barcodes", matrixBarcodes);
+        String urlString = getUrl(WS_SAMPLE_DETAILS);
+
+        Map<String, SampleInfo> map = new HashMap<>();
+
+        WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
+        Details details = resource.accept(MediaType.TEXT_XML).get(new GenericType<Details>() {});
+        // Initialize all map values to null.
+        for (String matrixBarcode : matrixBarcodes) {
+            map.put(matrixBarcode, null);
+        }
+
+        // Overwrite the map values that were found in BSP with the SampleDetails objects.
+        if (details.getSampleDetails().getSampleInfo() != null) {
+            for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
+                map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+            }
+        }
+
+        return map;
     }
 }

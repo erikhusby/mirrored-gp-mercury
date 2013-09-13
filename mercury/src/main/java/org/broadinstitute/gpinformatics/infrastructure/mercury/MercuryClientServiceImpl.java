@@ -18,7 +18,6 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -45,30 +44,13 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     @Inject
     private AlignerDao alignerDao;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo) {
-        if (deployment != Deployment.PROD) {
-            return mercuryClientEjb.addFromProductOrder(pdo);
-        }
-        return Collections.emptyList();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples) {
-        if (deployment != Deployment.PROD) {
-            return mercuryClientEjb.addFromProductOrder(pdo, samples);
-        }
-        return Collections.emptyList();
+        return mercuryClientEjb.addFromProductOrder(pdo, samples);
     }
 
     private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
-        Collection<DisplayableItem> displayableItems = new ArrayList<DisplayableItem>(items.size());
+        Collection<DisplayableItem> displayableItems = new ArrayList<>(items.size());
 
         for (BusinessObject item : items) {
             displayableItems.add(new DisplayableItem(item.getBusinessKey(), item.getName()));

@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
@@ -11,15 +11,13 @@ import javax.annotation.Nullable;
 /**
  * We use a custom serializer here because custom fields are not
  * instance portable.  In other words, the custom field names in a cloned
- * dev instance of jira arent't the same as they are in production,
+ * dev instance of jira aren't the same as they are in production,
  * so there's a bit more work here to make sure that tickets
  * which have custom fields can be properly created in dev and prod.
  */
 @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
 public class CreateFields extends UpdateFields {
-
     public static class Project {
-
         public Project() {
 
         }
@@ -43,7 +41,6 @@ public class CreateFields extends UpdateFields {
     }
 
     public static class Reporter {
-
         public Reporter() {
         }
 
@@ -70,11 +67,13 @@ public class CreateFields extends UpdateFields {
 
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum ProjectType {
-
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
+        CRSP_LCSET_PROJECT("Illumina Library Construction Tracking", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO"),
-        Research_Projects("Research Projects", "RP");
+        CRSP_PRODUCT_ORDERING("Product Ordering", "CPDO"),
+        RESEARCH_PROJECTS("Research Projects", "RP"),
+        CRSP_RESEARCH_PROJECTS("Research Projects", "CRP");
 
         private final String projectName;
         private final String keyPrefix;
@@ -93,14 +92,14 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum IssueType {
-
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS(Workflow.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
+        CLIA_PRODUCT_ORDER("CLIA Product Order"),
         RESEARCH_PROJECT("Research Project"),
+        CLIA_RESEARCH_PROJECT("CLIA Research Project"),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq");
 
@@ -112,6 +111,15 @@ public class CreateFields extends UpdateFields {
 
         public String getJiraName() {
             return jiraName;
+        }
+
+        public static IssueType valueForJiraName(String jiraName) {
+            for (IssueType issueType : IssueType.values()) {
+                if (issueType.getJiraName().equals(jiraName)) {
+                    return issueType;
+                }
+            }
+            return null;
         }
     }
 

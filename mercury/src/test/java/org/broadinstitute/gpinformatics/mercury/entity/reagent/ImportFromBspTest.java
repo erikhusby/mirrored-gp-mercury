@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
@@ -10,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
@@ -27,17 +27,17 @@ import java.util.List;
  */
 public class ImportFromBspTest extends ContainerTest {
 
-//    @PersistenceContext(unitName = "gap_pu")
+    //    @PersistenceContext(unitName = "gap_pu")
     private EntityManager entityManager;
 
-    private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
+    private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportExportedTubes() {
         String testSuffix = testPrefixDateFormat.format(new Date());
 
         // todo jmt incorporate query to fetch these
-        List<String> sampleIds = new ArrayList<String>();
+        List<String> sampleIds = new ArrayList<>();
         sampleIds.add("3TJ4Y");
         sampleIds.add("3TJ4T");
         sampleIds.add("3TJ44");
@@ -78,44 +78,53 @@ public class ImportFromBspTest extends ContainerTest {
         // where clause
         // todo jmt, what about controls?
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "     root_sample.sample_id AS root_sample_id, " +
-                "     root_receptacle.external_id AS root_barcode, " +
-                "     pico_sample.sample_id AS pico_sample_id, " +
-                "     pico_receptacle.external_id AS pico_barcode, " +
-                "     bsp_sample_export.sample_id AS extract_sample_id, " +
-                "     bsp_receptacle.EXTERNAL_ID AS extract_barcode, " +
-                "     export_attributes.concentration " +
-                "FROM " +
-                "     bsp_sample root_sample " +
-                "     INNER JOIN bsp_receptacle root_receptacle " +
-                "          ON   root_receptacle.receptacle_id = root_sample.receptacle_id " +
-                "     INNER JOIN bsp_parent_sample bsp_parent_sample1 " +
-                "          ON   bsp_parent_sample1.parent_sample_id = root_sample.sample_id " +
-                "     INNER JOIN bsp_sample pico_sample " +
-                "          ON   pico_sample.sample_id = bsp_parent_sample1.sample_id " +
-                "     INNER JOIN bsp_receptacle pico_receptacle " +
-                "          ON   pico_sample.receptacle_id = pico_receptacle.receptacle_id " +
-                "     INNER JOIN bsp_parent_sample bsp_parent_sample2 " +
-                "          ON   bsp_parent_sample2.parent_sample_id = bsp_parent_sample1.sample_id " +
-                "     INNER JOIN bsp_sample_export " +
-                "          ON   bsp_sample_export.sample_id = bsp_parent_sample2.sample_id " +
-                "     INNER JOIN bsp_sample export_sample " +
-                "          ON   export_sample.sample_id = bsp_parent_sample2.sample_id " +
-                "     INNER JOIN bsp_sample_attributes export_attributes" +
-                "          ON   export_attributes.sample_attributes_id = export_sample.sample_attributes_id" +
-                "     INNER JOIN bsp_receptacle " +
-                "          ON   bsp_receptacle.receptacle_id = export_sample.receptacle_id " +
-                "WHERE " +
-                "     bsp_sample_export.destination = 'Sequencing' " +
-                "     AND bsp_sample_export.sample_id IN (:sampleList)");
+                                                            "     root_sample.sample_id AS root_sample_id, " +
+                                                            "     root_receptacle.external_id AS root_barcode, " +
+                                                            "     pico_sample.sample_id AS pico_sample_id, " +
+                                                            "     pico_receptacle.external_id AS pico_barcode, " +
+                                                            "     bsp_sample_export.sample_id AS extract_sample_id, " +
+                                                            "     bsp_receptacle.EXTERNAL_ID AS extract_barcode, " +
+                                                            "     export_attributes.concentration " +
+                                                            "FROM " +
+                                                            "     bsp_sample root_sample " +
+                                                            "     INNER JOIN bsp_receptacle root_receptacle " +
+                                                            "          ON   root_receptacle.receptacle_id = root_sample.receptacle_id "
+                                                            +
+                                                            "     INNER JOIN bsp_parent_sample bsp_parent_sample1 " +
+                                                            "          ON   bsp_parent_sample1.parent_sample_id = root_sample.sample_id "
+                                                            +
+                                                            "     INNER JOIN bsp_sample pico_sample " +
+                                                            "          ON   pico_sample.sample_id = bsp_parent_sample1.sample_id "
+                                                            +
+                                                            "     INNER JOIN bsp_receptacle pico_receptacle " +
+                                                            "          ON   pico_sample.receptacle_id = pico_receptacle.receptacle_id "
+                                                            +
+                                                            "     INNER JOIN bsp_parent_sample bsp_parent_sample2 " +
+                                                            "          ON   bsp_parent_sample2.parent_sample_id = bsp_parent_sample1.sample_id "
+                                                            +
+                                                            "     INNER JOIN bsp_sample_export " +
+                                                            "          ON   bsp_sample_export.sample_id = bsp_parent_sample2.sample_id "
+                                                            +
+                                                            "     INNER JOIN bsp_sample export_sample " +
+                                                            "          ON   export_sample.sample_id = bsp_parent_sample2.sample_id "
+                                                            +
+                                                            "     INNER JOIN bsp_sample_attributes export_attributes" +
+                                                            "          ON   export_attributes.sample_attributes_id = export_sample.sample_attributes_id"
+                                                            +
+                                                            "     INNER JOIN bsp_receptacle " +
+                                                            "          ON   bsp_receptacle.receptacle_id = export_sample.receptacle_id "
+                                                            +
+                                                            "WHERE " +
+                                                            "     bsp_sample_export.destination = 'Sequencing' " +
+                                                            "     AND bsp_sample_export.sample_id IN (:sampleList)");
         nativeQuery.setParameter("sampleList", sampleIds);
         List<?> resultList = nativeQuery.getResultList();
-        List<TubeBean> rootTubeBeans = new ArrayList<TubeBean>();
-        List<TubeBean> exportTubeBeans = new ArrayList<TubeBean>();
-        List<String> normSourceBarcodes = new ArrayList<String>();
-        List<String> normTargetBarcodes = new ArrayList<String>();
-        List<String> platingTargetBarcodes = new ArrayList<String>();
-        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        List<TubeBean> rootTubeBeans = new ArrayList<>();
+        List<TubeBean> exportTubeBeans = new ArrayList<>();
+        List<String> normSourceBarcodes = new ArrayList<>();
+        List<String> normTargetBarcodes = new ArrayList<>();
+        List<String> platingTargetBarcodes = new ArrayList<>();
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
 
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
@@ -157,8 +166,9 @@ public class ImportFromBspTest extends ContainerTest {
         createBatch(labBatchBean);
         // Identify candidate samples: Flowcell -> samples -> LCSET -> PDO
 
-        VesselMetricRunBean vesselMetricRunBean = new VesselMetricRunBean("BSP-PICO" + testSuffix, new Date(), "BSP Pico",
-                vesselMetricBeans);
+        VesselMetricRunBean vesselMetricRunBean =
+                new VesselMetricRunBean("BSP-PICO" + testSuffix, new Date(), "BSP Pico",
+                        vesselMetricBeans);
         recordMetrics(vesselMetricRunBean);
     }
 

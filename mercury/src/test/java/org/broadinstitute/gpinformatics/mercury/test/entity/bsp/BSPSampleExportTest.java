@@ -90,7 +90,7 @@ public class BSPSampleExportTest {
         String platingRequestName = "TEST BSP PR-1";
         String label = platingRequestName;
         String comments = "BSP Plating Request test from ExomeExpress";
-        List<ControlWell> controlWells = new ArrayList<ControlWell>();
+        List<ControlWell> controlWells = new ArrayList<>();
         //TODO .. test add controls
         //controlWells = bspSampleFactory.buildControlWells(null, projectPlan, 1, 0.5F, "DNA3DY", "DNA274");
         String technology = "Solexa";

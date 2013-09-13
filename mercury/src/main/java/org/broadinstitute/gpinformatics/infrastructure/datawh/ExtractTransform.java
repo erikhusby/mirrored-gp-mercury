@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
+import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -72,7 +74,23 @@ public class ExtractTransform implements Serializable {
     /**
      * This date format matches what cron job expects in filenames, and in SqlLoader data files.
      */
-    public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final String TIMESTAMP_FORMAT_STRING = "yyyyMMddHHmmss";
+
+    /**
+     * Format a timestamp for output.
+     */
+    public static final Format TIMESTAMP_FORMATTER = FastDateFormat.getInstance(TIMESTAMP_FORMAT_STRING);
+
+    public static String formatTimestamp(Date timestamp) {
+        return TIMESTAMP_FORMATTER.format(timestamp);
+    }
+
+    /**
+     * Parse a timestamp from a string.
+     */
+    public static Date parseTimestamp(String text) throws ParseException {
+        return new SimpleDateFormat(TIMESTAMP_FORMAT_STRING).parse(text);
+    }
 
     /**
      * Name of file that contains the mSec time of the last etl run.
@@ -113,7 +131,7 @@ public class ExtractTransform implements Serializable {
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
     private static EtlConfig etlConfig = null;
-    private final Collection<GenericEntityEtl> etlInstances = new HashSet<GenericEntityEtl>();
+    private final Collection<GenericEntityEtl> etlInstances = new HashSet<>();
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -138,7 +156,6 @@ public class ExtractTransform implements Serializable {
     @Inject
     public ExtractTransform(
             LabEventEtl labEventEtl,
-            LabBatchEtl labBatchEtl,
             LabVesselEtl labVesselEtl,
             PriceItemEtl priceItemEtl,
             ProductEtl productEtl,
@@ -155,11 +172,11 @@ public class ExtractTransform implements Serializable {
             LedgerEntryCrossEtl ledgerEntryCrossEtl,
             LedgerEntryEtl ledgerEntryEtl,
             SequencingRunEtl sequencingRunEtl,
-            SequencingSampleFactEtl sequencingSampleFactEtl
+            SequencingSampleFactEtl sequencingSampleFactEtl,
+            BillingSessionEtl billingSessionEtl,
+            LabMetricEtl labMetricEtl
     ) {
-
         etlInstances.add(labEventEtl);
-        etlInstances.add(labBatchEtl);
         etlInstances.add(labVesselEtl);
         etlInstances.add(priceItemEtl);
         etlInstances.add(productEtl);
@@ -177,6 +194,8 @@ public class ExtractTransform implements Serializable {
         etlInstances.add(ledgerEntryEtl);
         etlInstances.add(sequencingRunEtl);
         etlInstances.add(sequencingSampleFactEtl);
+        etlInstances.add(billingSessionEtl);
+        etlInstances.add(labMetricEtl);
     }
 
     /**
@@ -190,6 +209,17 @@ public class ExtractTransform implements Serializable {
     }
 
     /**
+     * "0" is used as a sentinel value for start/end times,
+     *
+     * @see ExtractTransform#incrementalEtl
+     */
+    private static final String ZERO = "0";
+
+    private static boolean isZero(String value) {
+        return ZERO.equals(value);
+    }
+
+    /**
      * Extracts data from operational database, transforms the data into data warehouse records,
      * and writes the records to files, one per DW table.
      *
@@ -200,7 +230,6 @@ public class ExtractTransform implements Serializable {
      * @return count of records created, or -1 if could not run
      */
     public int incrementalEtl(String requestedStart, String requestedEnd) {
-        final String ZERO = "0";
 
         // Bails if target directory is not defined, is missing or cannot read it.
         String dataDir = getDatafileDir();
@@ -210,7 +239,8 @@ public class ExtractTransform implements Serializable {
                 loggedConfigError = true;
             }
             return -1;
-        } else if (!(new File(dataDir)).exists()) {
+        }
+        if (!(new File(dataDir)).exists()) {
             if (!loggedConfigError) {
                 log.error("ETL data file directory is missing: " + dataDir);
                 loggedConfigError = true;
@@ -228,21 +258,21 @@ public class ExtractTransform implements Serializable {
         // Forces start and end to be whole second boundaries, which the auditReaderDao needs.
         try {
             long startTimeSec;
-            if (ZERO.equals(requestedStart)) {
+            if (isZero(requestedStart)) {
                 startTimeSec = readLastEtlRun();
                 if (startTimeSec == 0L) {
                     log.warn("Cannot start ETL because the run time of the last incremental ETL can't be read");
                     return -1;
                 }
             } else {
-                startTimeSec = secTimestampFormat.parse(requestedStart).getTime() / MSEC_IN_SEC;
+                startTimeSec = parseTimestamp(requestedStart).getTime() / MSEC_IN_SEC;
             }
 
             long endTimeSec;
-            if (ZERO.equals(requestedEnd)) {
+            if (isZero(requestedEnd)) {
                 endTimeSec = System.currentTimeMillis() / MSEC_IN_SEC;
             } else {
-                endTimeSec = secTimestampFormat.parse(requestedEnd).getTime() / MSEC_IN_SEC;
+                endTimeSec = parseTimestamp(requestedEnd).getTime() / MSEC_IN_SEC;
             }
 
             if (startTimeSec < endTimeSec) {
@@ -253,8 +283,8 @@ public class ExtractTransform implements Serializable {
 
                 // Updates the lastEtlRun file with the actual end of etl, but only when doing etl ending now,
                 // which is the case for timer-driven incremental etl.
-                if (ZERO.equals(requestedEnd)) {
-                    writeLastEtlRun(secTimestampFormat.parse(countAndDate.right).getTime() / MSEC_IN_SEC);
+                if (isZero(requestedEnd)) {
+                    writeLastEtlRun(parseTimestamp(countAndDate.right).getTime() / MSEC_IN_SEC);
                 }
 
                 if (countAndDate.left > 0) {
@@ -288,8 +318,8 @@ public class ExtractTransform implements Serializable {
         }
         
         log.trace("Starting incremental ETL");
-        final List<Integer> count = new ArrayList<Integer>(1);
-        final List<String> date = new ArrayList<String>(1);
+        final List<Integer> count = new ArrayList<>(1);
+        final List<String> date = new ArrayList<>(1);
 
         try {
             incrementalRunStartTime = System.currentTimeMillis();
@@ -309,13 +339,12 @@ public class ExtractTransform implements Serializable {
                         log.debug("Incremental ETL found " + revs.size() + " changes");
                     }
 
-                    final String actualEtlDateStr = secTimestampFormat.format(
-                            new Date(revsAndDate.right * MSEC_IN_SEC));
+                    String actualEtlDateStr = formatTimestamp(new Date(revsAndDate.right * MSEC_IN_SEC));
 
                     int recordCount = 0;
                     if (!revsAndDate.left.isEmpty()) {
                         // The order of ETL is not significant since import tables have no referential integrity.
-                        for (GenericEntityEtl etlInstance : etlInstances) {
+                        for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
                             recordCount += etlInstance.doEtl(revsAndDate.left.keySet(), actualEtlDateStr);
                         }
                     }
@@ -329,7 +358,7 @@ public class ExtractTransform implements Serializable {
             mutex.release();
         }
 
-        return (!count.isEmpty() && !date.isEmpty()) ? new ImmutablePair<Integer, String>(count.get(0), date.get(0)) : null;
+        return (!count.isEmpty() && !date.isEmpty()) ? new ImmutablePair<>(count.get(0), date.get(0)) : null;
     }
 
     // Limits batch size and adjusts end time accordingly.
@@ -360,7 +389,7 @@ public class ExtractTransform implements Serializable {
                 revs = revs.headMap(itemBeyondEnd);
             }
         }
-        return new ImmutablePair<SortedMap<Long, Date>, Long>(revs, batchEndSec);
+        return new ImmutablePair<>(revs, batchEndSec);
     }
 
 
@@ -376,28 +405,23 @@ public class ExtractTransform implements Serializable {
      * @param endId           Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public Response.Status backfillEtl(String entityClassname, final long startId, long endId) {
+    public Response backfillEtl(String entityClassname, final long startId, long endId) {
         String dataDir = getDatafileDir();
         if (StringUtils.isBlank(dataDir)) {
-            log.info("ETL data file directory is not configured. Backfill ETL will not be run");
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            return createErrorResponse("ETL data file directory is not configured. Backfill ETL will not be run");
         } else if (!(new File(dataDir)).exists()) {
-            log.error("ETL data file directory is missing: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            return createErrorResponse("ETL data file directory is missing: " + dataDir);
         } else if (!(new File(dataDir)).canRead()) {
-            log.error("Cannot read the ETL data file directory: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            return createErrorResponse("Cannot read the ETL data file directory: " + dataDir);
         } else if (!(new File(dataDir)).canWrite()) {
-            log.error("Cannot write to the ETL data file directory: " + dataDir);
-            return Response.Status.INTERNAL_SERVER_ERROR;
+            return createErrorResponse("Cannot write to the ETL data file directory: " + dataDir);
         }
 
         Class entityClass;
         try {
             entityClass = Class.forName(entityClassname);
         } catch (ClassNotFoundException e) {
-            log.error("Unknown class " + entityClassname);
-            return Response.Status.NOT_FOUND;
+            return createInfoResponse("Unknown class " + entityClassname, Response.Status.NOT_FOUND);
         }
 
         if (endId == -1) {
@@ -405,32 +429,32 @@ public class ExtractTransform implements Serializable {
         }
 
         if (startId < 0 || endId < startId) {
-            log.error("Invalid entity id range " + startId + " to " + endId);
-            return Response.Status.BAD_REQUEST;
+            return createInfoResponse("Invalid entity id range " + startId + " to " + endId, Response.Status.BAD_REQUEST);
         }
 
         log.debug("Starting ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
         long backfillStartTime = System.currentTimeMillis();
 
         final long finalEndId = endId;
-        final Class finalEntityClass = entityClass;
-        final List<Integer> count = new ArrayList<Integer>(1);
-        final List<String> date = new ArrayList<String>(1);
+        final Class<?> finalEntityClass = entityClass;
+        final List<Integer> count = new ArrayList<>(1);
+        final List<String> date = new ArrayList<>(1);
 
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
             @Override
             public void apply() {
                 int recordCount = 0;
                 // The one of these that matches the entityClass will make ETL records, others are no-ops.
-                String etlDateStr = secTimestampFormat.format(new Date());
+                String etlDateStr = formatTimestamp(new Date());
 
-                for (GenericEntityEtl etlInstance : etlInstances) {
+                for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
                     recordCount += etlInstance.doEtl(finalEntityClass, startId, finalEndId, etlDateStr);
                 }
                 count.add(recordCount);
                 date.add(etlDateStr);
             }
         });
+        String msg = null;
         if (!count.isEmpty() && !date.isEmpty()) {
             int recordCount = count.get(0);
             String etlDateStr = date.get(0);
@@ -438,11 +462,12 @@ public class ExtractTransform implements Serializable {
             if (recordCount > 0) {
                 writeIsReadyFile(etlDateStr);
             }
-            log.info("Backfill ETL created " + recordCount +
-                    " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds");
+            msg = "Created " + recordCount + " " +  " data records in " +
+                  (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds";
+        } else {
+            msg = "Backfill ETL created no data records";
         }
-        return Response.Status.NO_CONTENT;
-
+        return createInfoResponse(msg, Response.Status.OK);
     }
 
     /**
@@ -574,4 +599,18 @@ public class ExtractTransform implements Serializable {
     private int minutesSince(long msecTimestamp) {
         return (int) Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
     }
+
+    private Response createErrorResponse(String msg) {
+        return createErrorResponse(msg, Response.Status.INTERNAL_SERVER_ERROR);
+    }
+    private Response createErrorResponse(String msg, Response.Status status) {
+        log.warn(msg);
+        return Response.status(status).entity(msg).build();
+    }
+    private Response createInfoResponse(String msg, Response.Status status) {
+        log.debug(msg);
+        return Response.status(status).entity(msg).build();
+    }
+
+
 }

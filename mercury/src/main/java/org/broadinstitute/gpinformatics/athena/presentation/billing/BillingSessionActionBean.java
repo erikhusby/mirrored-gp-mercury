@@ -109,10 +109,10 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadTracker")
     public Resolution downloadTracker() {
-        List<String> productOrderBusinessKeys = editSession.getProductOrderBusinessKeys();
 
         List<ProductOrder> productOrders =
-                productOrderDao.findListByBusinessKeyList(productOrderBusinessKeys, Product, ResearchProject, Samples);
+                productOrderDao.findListByBusinessKeyList(editSession.getProductOrderBusinessKeys(),
+                        Product, ResearchProject, Samples);
 
         Resolution downloadResolution =
             ProductOrderActionBean.getTrackerForOrders(this, productOrders, priceItemDao, bspUserList, priceListCache);
@@ -242,7 +242,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         this.editSession = editSession;
     }
 
-    private final Map<String, String> priceItemNameMap = new HashMap<String, String>();
+    private final Map<String, String> priceItemNameMap = new HashMap<>();
     public Map<String, String> getQuotePriceItemNameMap() {
         Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
         if (priceItemNameMap.isEmpty() && !quotePriceItems.isEmpty()) {

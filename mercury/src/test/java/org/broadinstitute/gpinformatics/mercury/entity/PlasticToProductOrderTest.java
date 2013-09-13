@@ -7,9 +7,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.fail;
 
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class PlasticToProductOrderTest extends ContainerTest {
@@ -36,13 +36,13 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private BucketEjb bucketResource;
 
     @Inject
-    private TwoDBarcodedTubeDAO tubeDAO;
+    private TwoDBarcodedTubeDao tubeDao;
 
     @Inject
-    private TubeFormationDao rackDAO;
+    private TubeFormationDao rackDao;
 
     @Inject
-    private StaticPlateDAO plateDAO;
+    private StaticPlateDao plateDao;
 
     @Inject
     private LabEventDao labEventDao;
@@ -54,41 +54,40 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private UserTransaction utx;
 
 
-
     private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
     private Bucket bucket;
     private String tubeBarcode;
     private WorkflowBucketDef bucketDef;
 
-    @BeforeMethod ( groups = TestGroups.EXTERNAL_INTEGRATION )
-    public void setUp () throws Exception {
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if ( utx == null ) {
+        if (utx == null) {
             return;
         }
-        utx.begin ();
+        utx.begin();
 
-        if(bucketDao == null) {
+        if (bucketDao == null) {
             return;
         }
-        bucketDef = new WorkflowBucketDef (BUCKET_REFERENCE_NAME);
+        bucketDef = new WorkflowBucketDef(BUCKET_REFERENCE_NAME);
 
-        bucket = new Bucket (bucketDef);
+        bucket = new Bucket(bucketDef);
         bucketDao.persist(bucket);
-        bucketDao.flush ();
+        bucketDao.flush();
         bucketDao.clear();
 
     }
 
-    @AfterMethod ( groups = TestGroups.EXTERNAL_INTEGRATION )
-    public void tearDown () throws Exception {
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
-        if ( utx == null ) {
+        if (utx == null) {
             return;
         }
 
-        utx.rollback ();
+        utx.rollback();
     }
 
     /**
@@ -138,7 +137,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
      * {@link LabEvent#productOrderId}, and then apply some
      * events and transfers after that.  The branch
      * below this is considered a dev branch.
-     *
+     * <p/>
      * Does the code map the stuff on the dev branch
      * to the dev PDO?  Does the stuff on the earlier
      * production branch map to the production PDO?
@@ -163,8 +162,6 @@ public class PlasticToProductOrderTest extends ContainerTest {
     public void test_multistep_pooling() {
         fail();
     }
-
-
 
 
 }

@@ -15,7 +15,11 @@ section { margin-left: 2%; margin-right: 2% }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; font-size: medium; }
-a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
+a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 15px 0 0;}
+.navbar .nav > li > a { padding: 7px 15px; }
+.navbar-inner { min-height: 30px; }
+
+input[name='searchKey'].search-query { padding-left: 0px; }
 
 .control-group a, table a { font-size: 12px; }
 
@@ -62,6 +66,8 @@ table.simple tr.odd { background-color: #f5f5f5; }
 table.simple { border: 1px solid #ccc; border-collapse: collapse; }
 table.simple tr:hover td { background-color: #def; }
 table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; vertical-align: middle }
+table.dataTable tr:hover td.group, table.dataTable td.group { background-color: #D1CFD0; border-bottom: 1px solid #A19B9E; }
+table.dataTable tr:hover td.subgroup, table.dataTable td.subgroup { background-color: #D4DFD8; border-bottom: 1px solid #A19B9E; }
 
 table.workflow td.latest { background-color: #b4ffcc }
 table.workflow td.current { background-color: #eecac6}
@@ -165,3 +171,5 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .accordion .ui-state-focus {color: #0088CC; border: 1px solid #0088CC; background: #f9fbff;}
 .accordion .ui-icon {background-image: url("/Mercury/images/ui-icons_222222_256x240.png") !important;}
 .accordion .ui-state-active .ui-icon { background-image: url("/Mercury/images/ui-icons_2e83ff_256x240.png") !important;}
+
+.workflow-image { background-color: #d3d3d3; padding: 10px; }

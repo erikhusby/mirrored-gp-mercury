@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.Assert;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -59,8 +60,8 @@ public class EtlTestUtilities {
      * Returns all files in the given directory, having filename timestamp in the given range.
      */
     public static File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
-        String etlDateStart = ExtractTransform.secTimestampFormat.format(new Date(msecStart));
-        String etlDateEnd = ExtractTransform.secTimestampFormat.format(new Date(msecEnd));
+        String etlDateStart = ExtractTransform.formatTimestamp(new Date(msecStart));
+        String etlDateEnd = ExtractTransform.formatTimestamp(new Date(msecEnd));
         return getDirFiles(directoryName, etlDateStart, etlDateEnd);
     }
 
@@ -89,6 +90,22 @@ public class EtlTestUtilities {
     }
 
     public static String format(Date d) {
-        return ExtractTransform.secTimestampFormat.format(d);
+        return ExtractTransform.formatTimestamp(d);
+    }
+
+    /**
+     * Given a single SQL Loader record, verify that its values match the expected values.  If a non-matching value
+     * is found an assertion is fired.
+     *
+     * @param record the record to verify, comma separated values
+     * @param matchValues the values to match
+     */
+    static void verifyRecord(String record, String... matchValues) {
+        int i = 0;
+        String[] parts = record.split(",");
+        for (String matchValue : matchValues) {
+            Assert.assertEquals(parts[i++], matchValue);
+        }
+        Assert.assertEquals(parts.length, i);
     }
 }

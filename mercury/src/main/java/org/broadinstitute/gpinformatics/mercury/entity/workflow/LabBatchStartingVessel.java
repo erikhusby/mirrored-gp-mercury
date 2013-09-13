@@ -15,6 +15,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Entity
 @Audited
@@ -34,7 +35,10 @@ public class LabBatchStartingVessel {
     private LabVessel labVessel;
 
     @Column
-    private Float concentration;
+    private BigDecimal concentration;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel dilutionVessel;
 
     public LabBatchStartingVessel() {
     }
@@ -44,7 +48,7 @@ public class LabBatchStartingVessel {
     }
 
     public LabBatchStartingVessel(@Nonnull LabVessel labVessel, @Nonnull LabBatch labBatch,
-                                  @Nullable Float concentration) {
+                                  @Nullable BigDecimal concentration) {
         this.labVessel = labVessel;
         this.labBatch = labBatch;
         this.concentration = concentration;
@@ -74,11 +78,20 @@ public class LabBatchStartingVessel {
         this.labVessel = vessel;
     }
 
-    public float getConcentration() {
+    public BigDecimal getConcentration() {
         return concentration;
     }
 
-    public void setConcentration(float concentration) {
+    public void setConcentration(BigDecimal concentration) {
         this.concentration = concentration;
+    }
+
+    public LabVessel getDilutionVessel() {
+        return dilutionVessel;
+    }
+
+    public void setDilutionVessel(LabVessel dilutionVessel) {
+        this.dilutionVessel = dilutionVessel;
+        this.dilutionVessel.addDilutionReferences(this);
     }
 }

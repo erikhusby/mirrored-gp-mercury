@@ -8,6 +8,7 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -20,6 +21,7 @@ import java.io.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -35,8 +37,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
     
     /**
      * Subclasses can call this to turn on JSON processing support for client calls.
-     *
-     * @param clientConfig
      */
     protected void supportJson(ClientConfig clientConfig) {
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
@@ -45,9 +45,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
     /**
      * Subclasses can call this to specify the username and password for HTTP Auth
      *
-     * @param client
-     *
-     * @param loginAndPassword
      */
     protected void specifyHttpAuthCredentials(Client client, LoginAndPassword loginAndPassword) {
         client.addFilter(new HTTPBasicAuthFilter(loginAndPassword.getLogin(), loginAndPassword.getPassword()));
@@ -55,10 +52,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
     /**
      * Subclasses can call this to force a MIME type on the response if needed (Quote service)
-     *
-     * @param client
-     *
-     * @param mediaTypes
      */
     protected void forceResponseMimeTypes(Client client, final MediaType... mediaTypes) {
         client.addFilter(new ClientFilter() {
@@ -66,7 +59,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
             public ClientResponse handle(ClientRequest cr) throws ClientHandlerException {
                 ClientResponse resp = getNext().handle(cr);
                 MultivaluedMap<String, String> map = resp.getHeaders();
-                List<String> mimeTypes = new ArrayList<String>();
+                List<String> mimeTypes = new ArrayList<>();
 
                 for (MediaType mediaType : mediaTypes) {
                     mimeTypes.add(mediaType.toString());
@@ -87,7 +80,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * but we are currently only applying it to the Jersey ClientConfig pointed at the Quote server so
      * this is probably okay.
      *
-     * @param config
      */
     protected void acceptAllServerCertificates(ClientConfig config) {
         try {
@@ -126,8 +118,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
     /**
      * Method for subclasses to retrieve the {@link Client} for making webservice calls.
-     *
-     * @return
      */
     protected Client getJerseyClient() {
         if (jerseyClient == null) {
@@ -150,10 +140,15 @@ public abstract class AbstractJerseyClientService implements Serializable {
 
     /**
      * Template pattern method for subclasses to modify the {@link Client} after it has been created
-     *
-     * @param client
      */
     protected abstract void customizeClient(Client client);
+
+    /**
+     * Returns a query string of the form key=value1&key=value2 etc.
+     */
+    protected String makeQueryString(@Nonnull String parameterKey, Collection<String> parameters) {
+        return parameterKey + "=" + StringUtils.join(parameters, "&" + parameterKey + "=");
+    }
 
     /**
      * Callback for the #post method
@@ -161,8 +156,6 @@ public abstract class AbstractJerseyClientService implements Serializable {
     public interface PostCallback {
         /**
          * BSP data with newlines removed, accounting for trailing tab if necessary
-         *
-         * @param bspData
          */
         void callback(String[] bspData);
     }
@@ -198,7 +191,7 @@ public abstract class AbstractJerseyClientService implements Serializable {
             Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
 
             // Per http://developer.yahoo.com/social/rest_api_guide/http-response-codes.html, BSP should properly be
-            // returning a 202 ACCEPTED response for this POST, but in actuality it returns a 200 OK.  I'm allowing
+            // returning a 202 ACCEPTED response for this POST, but in actuality it returns a 200 OK.  Allow
             // for both in the event that the BSP server's behavior is ever corrected.
             if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
                 logger.error("response code " + clientResponse.getStatus() + ": " + reader.readLine());

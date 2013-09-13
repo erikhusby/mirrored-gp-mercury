@@ -31,13 +31,18 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
 
     @Inject
     public RiskItemEtl(RiskItemDao dao, ProductOrderSampleDao pdoSampleDao) {
-        super(RiskItem.class, "product_order_sample_risk", dao);
+        super(RiskItem.class, "product_order_sample_risk", "athena.risk_item_aud", "risk_item_id", dao);
         this.pdoSampleDao = pdoSampleDao;
     }
 
     @Override
     Long entityId(RiskItem entity) {
         return entity.getRiskItemId();
+    }
+
+    @Override
+    protected Long dataSourceEntityId(ProductOrderSample entity) {
+        return entity.getProductOrderSampleId();
     }
 
     @Override
@@ -61,11 +66,11 @@ public class RiskItemEtl extends GenericEntityEtl<RiskItem, ProductOrderSample> 
     @Override
     protected Collection<ProductOrderSample> convertAuditedEntityToDataSourceEntity(
             Collection<RiskItem> auditEntities) {
-        Collection<Long> riskIds = new ArrayList<Long>();
+        Collection<Long> riskIds = new ArrayList<>();
         for (RiskItem auditedEntity : auditEntities) {
             riskIds.add(auditedEntity.getRiskItemId());
         }
-        List<Long> pdoSampleIds = new ArrayList<Long>(convertAuditedEntityIdToDataSourceEntityId(riskIds));
+        List<Long> pdoSampleIds = new ArrayList<>(convertAuditedEntityIdToDataSourceEntityId(riskIds));
         return pdoSampleDao
                 .findListByList(ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, pdoSampleIds);
     }

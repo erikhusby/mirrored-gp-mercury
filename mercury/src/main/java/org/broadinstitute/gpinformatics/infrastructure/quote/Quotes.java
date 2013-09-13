@@ -8,7 +8,7 @@ import java.util.List;
 @XmlRootElement(name="Quotes")
 public class Quotes {
 
-    private List<Quote> quotes = new ArrayList<Quote>();
+    private List<Quote> quotes = new ArrayList<>();
 
     public void addQuote(Quote q) {
         quotes.add(q);

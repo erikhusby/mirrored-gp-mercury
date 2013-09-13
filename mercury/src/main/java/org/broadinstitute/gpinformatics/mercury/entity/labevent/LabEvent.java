@@ -1,13 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
+
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -21,6 +24,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
 import java.util.Comparator;
@@ -66,13 +70,14 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(schema = "mercury",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"eventLocation", "eventDate", "disambiguator"}),
+       uniqueConstraints = @UniqueConstraint(columnNames = {"EVENT_LOCATION", "EVENT_DATE", "DISAMBIGUATOR"}),
        name = "lab_event")
 public class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
+    public static final String UI_PROGRAM_NAME = "Mercury";
 
-    public static final Comparator<LabEvent> byEventDate = new Comparator<LabEvent>() {
+    public static final Comparator<LabEvent> BY_EVENT_DATE = new Comparator<LabEvent>() {
         @Override
         public int compare(LabEvent o1, LabEvent o2) {
             int dateComparison = o1.getEventDate().compareTo(o2.getEventDate());
@@ -88,19 +93,30 @@ public class LabEvent {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_EVENT")
     private Long labEventId;
 
+    @Column(name = "EVENT_LOCATION", length = 255)
     private String eventLocation;
 
+    @Column(name = "EVENT_OPERATOR")
     private Long eventOperator;
 
+    @Column(name = "EVENT_DATE")
     private Date eventDate;
 
+    @Column(name = "DISAMBIGUATOR")
     private Long disambiguator = 0L;
+
+    /**
+     * The program name is passed into the message using the 'program' attribute and is the script or program which
+     * created this lab event (e.g., "FlowcellLoader"). Having the script name saved will help clarify how messaging,
+     * scripts and jira workflows inter-relate.
+     */
+    @Column(name = "PROGRAM_NAME", length = 255)
+    private String programName;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<>();
 
-    // todo jmt a single transfer superclass that permits all section, position, vessel combinations
     /** for transfers using a tip box, e.g. Bravo */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
@@ -119,31 +135,47 @@ public class LabEvent {
 
     /** For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
      * instrument, entry into a bucket */
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
+    // todo jmt delete productOrderId?
     /**
      * Business Key of a product order to which this event is associated
      */
+    @Column(name = "PRODUCT_ORDER_ID")
     private String productOrderId;
 
-
     @Enumerated(EnumType.STRING)
+    @Column(name = "LAB_EVENT_TYPE")
     private LabEventType labEventType;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
+
+    /** Set by transfer traversal, based on ancestor lab batches and transfers. */
+    @Transient
+    private Set<LabBatch> computedLcSets = new HashSet<>();
+
+    // todo jmt persist this
+    /**
+     * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
+     * processed in multiple technologies.
+     */
+    @Transient
+    private Set<LabBatch> manualOverrideLcSet;
 
     /** For JPA */
     protected LabEvent() {
     }
 
-    public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Long operator) {
+    public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Long operator,
+                    String programName) {
         this.labEventType = labEventType;
         this.eventDate = eventDate;
         this.eventLocation = eventLocation;
         this.disambiguator = disambiguator;
         this.eventOperator = operator;
+        this.programName = programName;
     }
 
     /**
@@ -246,9 +278,7 @@ public class LabEvent {
     }
 
     /**
-     * Machine name?  Name of the bench?
-     * GPS coordinates?
-     * @return
+     * @return Machine name?  Name of the bench? GPS coordinates?
      */
     public String getEventLocation() {
         return eventLocation;
@@ -256,6 +286,10 @@ public class LabEvent {
 
     public Long getEventOperator () {
         return eventOperator;
+    }
+
+    public String getProgramName() {
+        return programName;
     }
 
     public Date getEventDate() {
@@ -284,18 +318,6 @@ public class LabEvent {
 
     public Long getLabEventId() {
         return labEventId;
-    }
-
-    public void setEventLocation(String eventLocation) {
-        this.eventLocation = eventLocation;
-    }
-
-    public void setEventOperator( Long eventOperator) {
-        this.eventOperator = eventOperator;
-    }
-
-    public void setEventDate(Date eventDate) {
-        this.eventDate = eventDate;
     }
 
 /*
@@ -340,7 +362,6 @@ todo jmt adder methods
      * returned here.
      *
      * Most events will return null.
-     * @return
      */
     public String getProductOrderId () {
         return productOrderId;
@@ -363,4 +384,32 @@ todo jmt adder methods
         return labBatch;
     }
 
+    public Set<LabBatch> getManualOverrideLcSet() {
+        return manualOverrideLcSet;
+    }
+
+    public void setManualOverrideLcSet(Set<LabBatch> manualOverrideLcSet) {
+        this.manualOverrideLcSet = manualOverrideLcSet;
+    }
+
+    /**
+     * Gets computed LCSET(s) for this transfer, based on the source vessels.
+     * @return LCSETs, empty if the source vessels are not associated with an LCSET.
+     */
+    public Set<LabBatch> getComputedLcSets() {
+        return computedLcSets;
+    }
+
+    public void addComputedLcSets(Set<LabBatch> lcSets) {
+        computedLcSets.addAll(lcSets);
+    }
+
+    public Set<LabBatch> computeLcSets() {
+        Set<LabBatch> computedLcSets = new HashSet<>();
+        for (SectionTransfer sectionTransfer : sectionTransfers) {
+            computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                    sectionTransfer.getSourceSection()));
+        }
+        return computedLcSets;
+    }
 }

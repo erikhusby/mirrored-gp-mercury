@@ -10,9 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is a utility class for setting up PDO completion status and retrieving all information.
- *
- * @author hrafal
+ * This is a utility class for retrieving and storing PDO completion status.
  */
 public class CompletionStatusFetcher {
 
@@ -21,15 +19,14 @@ public class CompletionStatusFetcher {
     @SuppressWarnings("unchecked")
     private Map<String, ProductOrderCompletionStatus> progressByBusinessKey = new DefaultedMap(DEFAULT);
 
-
     @SuppressWarnings("unchecked")
-    public void loadProgress(ProductOrderDao productOrderDao, Collection<String> productOrderKeys) {
-        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgressByBusinessKey(productOrderKeys), DEFAULT);
+    public void loadProgress(ProductOrderDao productOrderDao, Collection<Long> productOrderIds) {
+        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgress(productOrderIds), DEFAULT);
     }
 
     @SuppressWarnings("unchecked")
     public void loadProgress(ProductOrderDao productOrderDao) {
-        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getAllProgressByBusinessKey(), DEFAULT);
+        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getAllProgress(), DEFAULT);
     }
 
     @DaoFree

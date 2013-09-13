@@ -18,15 +18,17 @@ import java.util.regex.Pattern;
  * A utility class for common BSP code.
  */
 public class BSPUtil {
-    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
+    public static final Pattern  BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
 
     /**
-     * Tests if the sampleName is in a valid BSP format.
+     * Tests if the sampleName is in a valid BSP barcode format,
+     * such as SM-4FHTK.  The "bare id" 4FHTK is not considered
+     * to be in BSP barcode format.
      * @param sampleName the name of the sample you are testing.
      *
      * @return true if the sample name is a valid BSP Sample name.
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches();
     }
 }

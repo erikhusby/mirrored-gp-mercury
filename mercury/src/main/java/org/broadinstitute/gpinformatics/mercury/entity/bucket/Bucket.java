@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Where;
 import org.hibernate.envers.Audited;
 
@@ -42,10 +43,12 @@ public class Bucket {
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
     @Where(clause = "status='Active' and entry_type='PDO_ENTRY'")
+    @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     @OneToMany(mappedBy = "bucket", cascade = CascadeType.PERSIST)
     @Where(clause = "status='Active' and entry_type='REWORK_ENTRY'")
+    @BatchSize(size = 100)
     private Set<BucketEntry> reworkEntries = new HashSet<>();
 
     @Column()
@@ -66,6 +69,13 @@ public class Bucket {
         return bucketDefinitionName;
     }
 
+    /**
+     * Returns the active bucket entries for this bucket, sorted by added date and product order ranking.
+     *
+     * @return the active bucket entries
+     *
+     * @see BucketEntry#byDate
+     */
     public Collection<BucketEntry> getBucketEntries() {
 
         List<BucketEntry> setList = new ArrayList<>(bucketEntries);
@@ -73,6 +83,13 @@ public class Bucket {
         return Collections.unmodifiableList(setList);
     }
 
+    /**
+     * Returns the active rework entries for this bucket, sorted by added date and product order ranking.
+     *
+     * @return the active rework entries
+     *
+     * @see BucketEntry#byDate
+     */
     public Collection<BucketEntry> getReworkEntries() {
         List<BucketEntry> setList = new ArrayList<>(reworkEntries);
         Collections.sort(setList, BucketEntry.byDate);
@@ -90,33 +107,21 @@ public class Bucket {
         return bucketEntries.contains(bucketEntry);
     }
 
-    /**
-     * adds a new {@link BucketEntry} to the bucket
-     *
-     * @param newEntry
-     */
-    public void addEntry(BucketEntry newEntry) {
-        newEntry.setBucket(this);
-        newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
-        newEntry.getLabVessel().addBucketEntry(newEntry);
-        bucketEntries.add(newEntry);
-
-    }
-
 
     /**
      * Helper method to add a new item into the bucket
      *
-     *
      * @param productOrderKey Business key of a Product order to associate with the new entry
      * @param vessel          Lab Vessel to enter into the bucket.
-     *
      * @param entryType
+     *
      * @return an instance of a Bucket entry which represents the lab vessel and the product order for that entry
      */
     public BucketEntry addEntry(String productOrderKey, LabVessel vessel, BucketEntry.BucketEntryType entryType) {
         BucketEntry newEntry = new BucketEntry(vessel, productOrderKey, this, entryType);
-        addEntry(newEntry);
+        newEntry.setProductOrderRanking(getBucketEntries().size() + 1);
+        bucketEntries.add(newEntry);
+        vessel.addBucketEntry(newEntry);
         return newEntry;
     }
 
@@ -146,7 +151,7 @@ public class Bucket {
 
     public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
 
-        List<BucketEntry> foundEntries = new LinkedList<BucketEntry>();
+        List<BucketEntry> foundEntries = new LinkedList<>();
         BucketEntry foundBucketItem = null;
 
         for (BucketEntry currEntry : bucketEntries) {

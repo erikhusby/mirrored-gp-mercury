@@ -3,8 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.Entity;
 @Entity
 @Audited
@@ -20,6 +22,14 @@ public class TwoDBarcodedTube extends LabVessel {
         if (twoDBarcode == null) {
             throw new IllegalArgumentException("twoDBarcode must be non-null in TwoDBarcodedTube.TwoDBarcodedTube");
         }
+    }
+
+    /**
+     * Convenience constructor that takes both a matrix barcode and single sample barcode.
+     */
+    public TwoDBarcodedTube(@Nonnull String twoDBarcode, @Nonnull String sampleBarcode) {
+        this(twoDBarcode);
+        addSample(new MercurySample(sampleBarcode));
     }
 
     protected TwoDBarcodedTube() {

@@ -14,15 +14,18 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,15 +35,18 @@ import java.util.Set;
 @UrlBinding("/workflow/CreateFCT.action")
 public class CreateFCTActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/workflow/create_fct.jsp";
-
     public static final String LOAD_ACTION = "load";
+    public static final List<IlluminaFlowcell.FlowcellType> FLOWCELL_TYPES =
+            Arrays.asList(IlluminaFlowcell.FlowcellType.MiSeqFlowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                    IlluminaFlowcell.FlowcellType.HiSeqFlowcell);
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
     @Inject
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -51,19 +57,27 @@ public class CreateFCTActionBean extends CoreActionBean {
     @Validate(required = true, on = LOAD_ACTION)
     private String lcsetName;
 
-    @Validate(required = true, on = SAVE_ACTION, minvalue = 2)
     private int numberOfLanes;
 
-    @Validate(required = true, on = SAVE_ACTION, expression = "this > 0")
-    private float loadingConc;
+    private BigDecimal loadingConc;
 
     private LabBatch labBatch;
 
-    private Map<LabVessel, LabEvent> denatureTubeToEvent = new HashMap<>();
+    private Map<LabEvent, Set<LabVessel>> denatureTubeToEvent = new HashMap<>();
 
     private List<String> selectedVesselLabels;
 
     private List<LabBatch> createdBatches;
+
+    private IlluminaFlowcell.FlowcellType selectedType;
+
+    public IlluminaFlowcell.FlowcellType getSelectedType() {
+        return selectedType;
+    }
+
+    public void setSelectedType(IlluminaFlowcell.FlowcellType selectedType) {
+        this.selectedType = selectedType;
+    }
 
     public List<LabBatch> getCreatedBatches() {
         return createdBatches;
@@ -89,11 +103,11 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.labBatch = labBatch;
     }
 
-    public Map<LabVessel, LabEvent> getDenatureTubeToEvent() {
+    public Map<LabEvent, Set<LabVessel>> getDenatureTubeToEvent() {
         return denatureTubeToEvent;
     }
 
-    public void setDenatureTubeToEvent(Map<LabVessel, LabEvent> denatureTubeToEvent) {
+    public void setDenatureTubeToEvent(Map<LabEvent, Set<LabVessel>> denatureTubeToEvent) {
         this.denatureTubeToEvent = denatureTubeToEvent;
     }
 
@@ -113,11 +127,11 @@ public class CreateFCTActionBean extends CoreActionBean {
         this.numberOfLanes = numberOfLanes;
     }
 
-    public float getLoadingConc() {
+    public BigDecimal getLoadingConc() {
         return loadingConc;
     }
 
-    public void setLoadingConc(float loadingConc) {
+    public void setLoadingConc(BigDecimal loadingConc) {
         this.loadingConc = loadingConc;
     }
 
@@ -146,7 +160,7 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(LOAD_ACTION)
     public Resolution loadLCSet() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         if (labBatch != null) {
             for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
                 denatureTubeToEvent.putAll(vessel.findVesselsForLabEventType(LabEventType.DENATURE_TRANSFER));
@@ -164,17 +178,19 @@ public class CreateFCTActionBean extends CoreActionBean {
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
-        labBatch = labBatchDAO.findByBusinessKey(lcsetName);
+        labBatch = labBatchDao.findByBusinessKey(lcsetName);
         createdBatches = new ArrayList<>();
         for (String denatureTubeBarcode : selectedVesselLabels) {
             Set<LabVessel> vesselSet = new HashSet<>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-            //create a new FCT ticket for every two lanes requested.
-            for (int i = 0; i < numberOfLanes; i += 2) {
+
+            LabBatch.LabBatchType batchType = selectedType.getBatchType();
+            int lanesPerFlowcell = selectedType.getVesselGeometry().getVesselPositions().length;
+            CreateFields.IssueType issueType = selectedType.getIssueType();
+            for (int i = 0; i < numberOfLanes; i += lanesPerFlowcell) {
                 LabBatch batch =
-                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, LabBatch.LabBatchType.FCT,
-                                loadingConc);
+                        new LabBatch(denatureTubeBarcode + " FCT ticket", vesselSet, batchType, loadingConc);
                 batch.setBatchDescription(batch.getBatchName());
-                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), CreateFields.IssueType.FLOWCELL);
+                labBatchEjb.createLabBatch(batch, userBean.getLoginUserName(), issueType);
                 createdBatches.add(batch);
                 //link tickets
                 labBatchEjb.linkJiraBatches(labBatch, batch);
@@ -189,7 +205,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             }
             createdBatchLinks.append("</ol>");
             addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}. {3}",
-                    numberOfLanes / 2, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
+                    numberOfLanes / lanesPerFlowcell, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
         }
         return new RedirectResolution(VIEW_PAGE);
     }
@@ -199,5 +215,9 @@ public class CreateFCTActionBean extends CoreActionBean {
         if (selectedVesselLabels == null || selectedVesselLabels.size() != 1) {
             addValidationError("tubeList", "You must select a single denature tube.");
         }
+    }
+
+    public List<IlluminaFlowcell.FlowcellType> getFlowcellTypes() {
+        return FLOWCELL_TYPES;
     }
 }

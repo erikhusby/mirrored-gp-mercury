@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.hamcrest.Matcher;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -78,6 +79,8 @@ public class ProductOrderSampleTest {
                 {"SM-2ACG6", inBspFormat()},
                 {"Blahblahblah", not(inBspFormat())},
                 {"12345", not(inBspFormat())},
+                {"12345.0", not(inBspFormat())}, // that's a GSSR id, not a BSP id
+                {"4FHTK", not(inBspFormat())}, // "bare ids" are not considered valid BSP barcodes
                 {"SM-ABC0", not(inBspFormat())},
                 {"SM-ABCO", inBspFormat()}
         };
@@ -104,7 +107,7 @@ public class ProductOrderSampleTest {
 
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = ProductTestFactory.createDummyProduct("Exome Express", "partNumber");
+            addOn = ProductTestFactory.createDummyProduct(Workflow.EXOME_EXPRESS, "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
@@ -119,7 +122,7 @@ public class ProductOrderSampleTest {
             }};
             sample2 = new ProductOrderSample("Sample2", new BSPSampleDTO(dataMap));
 
-            List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+            List<ProductOrderSample> samples = new ArrayList<>();
             samples.add(sample1);
             samples.add(sample2);
             order.setSamples(samples);
@@ -132,7 +135,7 @@ public class ProductOrderSampleTest {
         Product product = data.product;
         Product addOn = data.addOn;
 
-        List<PriceItem> expectedItems = new ArrayList<PriceItem>();
+        List<PriceItem> expectedItems = new ArrayList<>();
         expectedItems.add(product.getPrimaryPriceItem());
         expectedItems.add(addOn.getPrimaryPriceItem());
 
@@ -155,7 +158,7 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<LedgerEntry> ledgers = new HashSet<LedgerEntry>();
+        Set<LedgerEntry> ledgers = new HashSet<>();
         ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
         ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
 

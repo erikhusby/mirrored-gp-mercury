@@ -1,18 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bsp;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDAO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Control;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Plateable;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Well;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BSPPlatingReceiptDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  */
@@ -20,10 +25,10 @@ public class BSPSampleFactory {
 
 
 //    @Inject
-//    private BSPStartingSampleDAO bspStartingSampleDAO;
+//    private BSPStartingSampleDao bspStartingSampleDao;
 
     @Inject
-    private BSPPlatingReceiptDAO bspPlatingReceiptDAO;
+    private BSPPlatingReceiptDao bspPlatingReceiptDao;
 
     @Inject
     private BSPPlatingRequestService bspPlatingRequestService;
@@ -39,15 +44,13 @@ public class BSPSampleFactory {
     public List<BSPPlatingRequest> buildBSPPlatingRequests(Map<MercurySample, AliquotParameters> starterMap)
             throws Exception {
 
-        List<BSPPlatingRequest> bspPlatingRequests = new ArrayList<BSPPlatingRequest>();
+        List<BSPPlatingRequest> bspPlatingRequests = new ArrayList<>();
         BSPPlatingRequest platingRequest;
         if (starterMap == null || starterMap.isEmpty()) {
             throw new IllegalArgumentException("Null or empty Starter list ");
         }
 
-        Iterator<MercurySample> starterIterator = starterMap.keySet().iterator();
-        while (starterIterator.hasNext()) {
-            MercurySample starter = starterIterator.next();
+        for (MercurySample starter : starterMap.keySet()) {
             AliquotParameters parameters = starterMap.get(starter);
             platingRequest = new BSPPlatingRequest(starter.getSampleKey(), parameters);
             bspPlatingRequests.add(platingRequest);
@@ -88,7 +91,9 @@ public class BSPSampleFactory {
      * @param negControlVolume
      * @param posControlQuote
      * @param negControlQuote
+     *
      * @return
+     *
      * @throws Exception
      */
     //TODO .. Why is this here rather than in BSPPlatingRequestServiceImpl ??
@@ -98,13 +103,11 @@ public class BSPSampleFactory {
                                                String posControlQuote, String negControlQuote)
             throws Exception {
 
-        List<ControlWell> controls = new ArrayList<ControlWell>();
+        List<ControlWell> controls = new ArrayList<>();
         Character posControlRow = 'H';
         int posControlCol = 02;
         if (positiveControlMap != null) {
-            Iterator<String> posControlIterator = positiveControlMap.keySet().iterator();
-            while (posControlIterator.hasNext()) {
-                String externalID = posControlIterator.next();
+            for (String externalID : positiveControlMap.keySet()) {
                 AliquotParameters parameters = positiveControlMap.get(externalID);
 
                 Control.Positive posControl = new Control.Positive(externalID);
@@ -142,10 +145,12 @@ public class BSPSampleFactory {
 
     }
 
-    public BSPPlatingReceipt buildPlatingReceipt(List<BSPPlatingRequest> requests, BSPPlatingRequestResult platingResult) {
+    public BSPPlatingReceipt buildPlatingReceipt(List<BSPPlatingRequest> requests,
+                                                 BSPPlatingRequestResult platingResult) {
         BSPPlatingReceipt receipt = null;
 
-        if (platingResult != null && platingResult.getPlatingRequestReceipt() != null && (platingResult.getErrors() == null || platingResult.getErrors().isEmpty())) {
+        if (platingResult != null && platingResult.getPlatingRequestReceipt() != null && (
+                platingResult.getErrors() == null || platingResult.getErrors().isEmpty())) {
             //BSP work request was created
             receipt = new BSPPlatingReceipt(platingResult.getPlatingRequestReceipt());
             receipt.getPlatingRequests().addAll(requests);

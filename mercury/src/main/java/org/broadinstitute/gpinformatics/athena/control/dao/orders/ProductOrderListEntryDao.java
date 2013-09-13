@@ -174,14 +174,9 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.equal(productOrderRoot.get(ProductOrder_.orderStatus), ProductOrder.OrderStatus.Draft));
     }
 
-    private static final List<ProductOrder.LedgerStatus> fetchStatuses = new ArrayList<ProductOrder.LedgerStatus> () {{
-            add(ProductOrder.LedgerStatus.READY_FOR_REVIEW);
-            add(ProductOrder.LedgerStatus.READY_TO_BILL);
-            add(ProductOrder.LedgerStatus.BILLING);
-        }
-
-        private static final long serialVersionUID = 8853496941533002031L;
-    };
+    private static final Set<ProductOrder.LedgerStatus> FETCH_STATUSES =
+            EnumSet.of(ProductOrder.LedgerStatus.READY_FOR_REVIEW,
+                    ProductOrder.LedgerStatus.BILLING, ProductOrder.LedgerStatus.READY_TO_BILL);
 
     /**
      * This fetches the count information in some subqueries and then populates the transient counts for the appropriate
@@ -234,7 +229,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             }
         }
 
-        for (final ProductOrder.LedgerStatus ledgerStatus : fetchStatuses) {
+        for (final ProductOrder.LedgerStatus ledgerStatus : FETCH_STATUSES) {
             // Only query for the JIRA ticket keys of interest, using Splitter.
             List<ProductOrderListEntry> resultList = JPASplitter.runCriteriaQuery(
                     jiraTicketKeys,
@@ -242,26 +237,34 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         @Override
                         public Query createCriteriaInQuery(Collection<String> parameterList) {
                             CriteriaQuery<ProductOrderListEntry> query;
-                            if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                            switch (ledgerStatus) {
+                            case READY_FOR_REVIEW:
                                 // The billing session is null but the auto bill timestamp is NOT null.
-                                query = cq.where(
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                query = cq.where(cb.isNull(
+                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
+                                        cb.isNotNull(productOrderSampleLedgerEntrySetJoin
+                                                .get(LedgerEntry_.autoLedgerTimestamp)),
                                         productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                            } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                                break;
+                            case READY_TO_BILL:
                                 // The billing session is null but the auto bill timestamp is null.
-                                query = cq.where(
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                query = cq.where(cb.isNull(
+                                        productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
+                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
+                                                .get(LedgerEntry_.autoLedgerTimestamp)),
                                         productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                            } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.BILLING)) {
+                                break;
+                            case BILLING:
                                 // The session is NOT null, but the session's billed date IS null.
                                 query = cq.where(
                                         cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)),
-                                        cb.isNotNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
-                                        cb.isNull(productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.autoLedgerTimestamp)),
+                                        cb.isNotNull(
+                                                productOrderSampleLedgerEntrySetJoin.get(LedgerEntry_.billingSession)),
+                                        cb.isNull(productOrderSampleLedgerEntrySetJoin
+                                                .get(LedgerEntry_.autoLedgerTimestamp)),
                                         productOrderRoot.get(ProductOrder_.jiraTicketKey).in(parameterList));
-                            } else {
+                                break;
+                            default:
                                 throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
                             }
 
@@ -285,11 +288,16 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                             jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
                     productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
 
-                    if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_FOR_REVIEW)) {
+                    switch (ledgerStatus) {
+                    case READY_FOR_REVIEW:
                         productOrderListEntry.setReadyForReviewCount(result.getConstructedCount());
-                    } else if (ledgerStatus.equals(ProductOrder.LedgerStatus.READY_TO_BILL)) {
+                        break;
+                    case READY_TO_BILL:
                         productOrderListEntry.setReadyForBillingCount(result.getConstructedCount());
-                    } else if (!ledgerStatus.equals(ProductOrder.LedgerStatus.BILLING)) {
+                        break;
+                    case BILLING:
+                        break;
+                    default:
                         // The constructor handles billing, so if not that now, throw this exception.
                         throw new IllegalArgumentException("Can only fetch ready to bill or ready for review");
                     }
@@ -307,7 +315,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             @Nullable List<String> productKeys,
             @Nullable List<ProductOrder.OrderStatus> orderStatuses,
             @Nullable DateRangeSelector placedDate,
-            @Nullable List<Long> ownerIds, List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
+            @Nullable List<Long> ownerIds,
+            @Nullable List<ProductOrder.LedgerStatus> ledgerStatuses) {
 
         List<ProductOrderListEntry> productOrderListEntries =
                 findBaseProductOrderListEntries(null, productFamilyId, productKeys, orderStatuses, placedDate,
@@ -318,56 +327,21 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         // Since the querying here is already multi-pass and a bit confusing, adding the ledger status as a post filter.
         // Not ideal, but with the number of orders that we will typically have on these filters, it should not pose a
-        // problem for a long time. Before needing to make this work, we will probably want scrolling and paging.
-        if (CollectionUtils.isEmpty(selectedLedgerStatuses) ||
-            (selectedLedgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
+        // problem for a long time. Before needing to make this work, we will probably want scrolling and paging. This
+        // returns the whole list if there is nothing selected or if all statuses are selected.
+        if (CollectionUtils.isEmpty(ledgerStatuses) ||
+            (ledgerStatuses.size() == ProductOrder.LedgerStatus.values().length)) {
             // If there is nothing selected or all statuses are selected, just return the full list.
             return productOrderListEntries;
-        } else {
-            // Otherwise we will return the list, filtered by the user selection.
-            List<ProductOrderListEntry> filteredList = new ArrayList<>();
-            for (ProductOrderListEntry entry : productOrderListEntries) {
-                boolean add = false;
-                for (ProductOrder.LedgerStatus selectedStatus : selectedLedgerStatuses) {
-                    switch (selectedStatus) {
-
-                    case NOTHING_NEW:
-                        // Drafts are always new.
-                        if (entry.isDraft() ||
-                            (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
-                            add = true;
-                        }
-                        break;
-                    case READY_FOR_REVIEW:
-                        // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
-                        // automated ledger entry. For now, so does ready to bill, but that may change.
-                        if (entry.isReadyForReview()) {
-                            add = true;
-                        }
-                        break;
-                    case READY_TO_BILL:
-                        // Ready for review overrides ready for billing. May not come up for a while because of
-                        // lockouts, but this is the way the visual works, so using this.
-                        if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
-                            add = true;
-                        }
-                        break;
-                    case BILLING:
-                        if (entry.isBilling()) {
-                            add = true;
-                        }
-                        break;
-                    }
-                }
-
-                if (add) {
-                    filteredList.add(entry);
-                }
-            }
-
-            return filteredList;
         }
 
+        // The following code filters out only the items that have the appropriate ledger status that the user wants.
+        List<ProductOrderListEntry> filteredList = new ArrayList<>();
+        for (ProductOrderListEntry entry : productOrderListEntries) {
+            ProductOrder.LedgerStatus.addEntryBasedOnStatus(ledgerStatuses, filteredList, entry);
+        }
+
+        return filteredList;
     }
 
     /**

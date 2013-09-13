@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
@@ -72,6 +71,10 @@ public class HybridSelectionEntityBuilder {
     }
 
     public HybridSelectionEntityBuilder invoke() {
+        return invoke(true);
+    }
+
+    public HybridSelectionEntityBuilder invoke(boolean doAllGSWashes) {
         HybridSelectionJaxbBuilder
                 hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(
                 bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode, pondRegTubeBarcodes, "Bait").invoke();
@@ -129,15 +132,6 @@ public class HybridSelectionEntityBuilder {
         }
         Set<SampleInstance> sampleInstancesInPreSelPoolWell =
                 preSelPoolRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
-        if (false) {
-            TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
-            transferVisualizerFrame.renderVessel(preSelPoolRack.getContainerRole().getVesselAtPosition(VesselPosition.A01));
-            try {
-                Thread.sleep(500000L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
         Assert.assertEquals(sampleInstancesInPreSelPoolWell.size(), 2, "Wrong number of sample instances in position");
 
         // Hybridization
@@ -163,6 +157,12 @@ public class HybridSelectionEntityBuilder {
                 hybridSelectionJaxbBuilder.getBaitSetupJaxb(), baitTube, null, SBSSection.ALL96.getSectionName());
         labEventHandler.processEvent(baitSetupEntity);
         StaticPlate baitSetupPlate = (StaticPlate) baitSetupEntity.getTargetLabVessels().iterator().next();
+
+        // PostHybridizationThermoCyclerLoaded
+        LabEventTest.validateWorkflow("PostHybridizationThermoCyclerLoaded", hybridizationPlate);
+        LabEvent postHybridizationThermoCyclerLoadedEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                hybridSelectionJaxbBuilder.getPostHybridizationThermoCyclerLoadedJaxb(), hybridizationPlate);
+        labEventHandler.processEvent(postHybridizationThermoCyclerLoadedEntity);
 
         // BaitAddition
         LabEventTest.validateWorkflow("BaitAddition", hybridizationPlate);
@@ -197,35 +197,43 @@ public class HybridSelectionEntityBuilder {
                 hybridSelectionJaxbBuilder.getGsWash2Jaxb(), hybridizationPlate);
         labEventHandler.processEvent(gsWash2Entity);
 
-        // GSWash3
-        LabEventTest.validateWorkflow("GSWash3", hybridizationPlate);
-        LabEvent gsWash3Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                hybridSelectionJaxbBuilder.getGsWash3Jaxb(), hybridizationPlate);
-        labEventHandler.processEvent(gsWash3Entity);
+        if (doAllGSWashes) {
+            // GSWash3
+            LabEventTest.validateWorkflow("GSWash3", hybridizationPlate);
+            LabEvent gsWash3Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    hybridSelectionJaxbBuilder.getGsWash3Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash3Entity);
 
-        // GSWash4
-        LabEventTest.validateWorkflow("GSWash4", hybridizationPlate);
-        LabEvent gsWash4Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                hybridSelectionJaxbBuilder.getGsWash4Jaxb(), hybridizationPlate);
-        labEventHandler.processEvent(gsWash4Entity);
+            // GSWash4
+            LabEventTest.validateWorkflow("GSWash4", hybridizationPlate);
+            LabEvent gsWash4Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    hybridSelectionJaxbBuilder.getGsWash4Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash4Entity);
 
-        // GSWash5
-        LabEventTest.validateWorkflow("GSWash5", hybridizationPlate);
-        LabEvent gsWash5Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                hybridSelectionJaxbBuilder.getGsWash5Jaxb(), hybridizationPlate);
-        labEventHandler.processEvent(gsWash5Entity);
+            // GSWash5
+            LabEventTest.validateWorkflow("GSWash5", hybridizationPlate);
+            LabEvent gsWash5Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    hybridSelectionJaxbBuilder.getGsWash5Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash5Entity);
 
-        // GSWash6
-        LabEventTest.validateWorkflow("GSWash6", hybridizationPlate);
-        LabEvent gsWash6Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
-                hybridSelectionJaxbBuilder.getGsWash6Jaxb(), hybridizationPlate);
-        labEventHandler.processEvent(gsWash6Entity);
+            // GSWash6
+            LabEventTest.validateWorkflow("GSWash6", hybridizationPlate);
+            LabEvent gsWash6Entity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                    hybridSelectionJaxbBuilder.getGsWash6Jaxb(), hybridizationPlate);
+            labEventHandler.processEvent(gsWash6Entity);
+        }
 
         // CatchEnrichmentSetup
         LabEventTest.validateWorkflow("CatchEnrichmentSetup", hybridizationPlate);
         LabEvent catchEnrichmentSetupEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
                 hybridSelectionJaxbBuilder.getCatchEnrichmentSetupJaxb(), hybridizationPlate);
         labEventHandler.processEvent(catchEnrichmentSetupEntity);
+
+        // PostCatchEnrichmentThermoCycler
+        LabEventTest.validateWorkflow("PostCatchEnrichmentSetupThermoCyclerLoaded", hybridizationPlate);
+        LabEvent postCatchEnrichmentSetupThermoCyclerEntity = labEventFactory.buildFromBettaLimsPlateEventDbFree(
+                hybridSelectionJaxbBuilder.getPostCatchEnrichmentSetupThermoCyclerLoadedJaxb(), hybridizationPlate);
+        labEventHandler.processEvent(postCatchEnrichmentSetupThermoCyclerEntity);
 
         // CatchEnrichmentCleanup
         LabEventTest.validateWorkflow("CatchEnrichmentCleanup", hybridizationPlate);

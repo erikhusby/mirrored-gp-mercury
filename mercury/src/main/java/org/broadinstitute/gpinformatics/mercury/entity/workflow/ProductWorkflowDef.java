@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.io.Serializable;
@@ -28,24 +24,13 @@ public class ProductWorkflowDef implements Serializable {
     /** e.g. Exome Express */
     private String name;
 
-    /** e.g. SQUID, MERCURY or BOTH*/
-    private String routingRule;
-
-    /**
-     * True if a validation LCSET is expected in the near future.   When a product is first rolled out,
-     * routingRule be BOTH, and inValidation will be false. After a few weeks, inValidation will be
-     * set to true. After a few more weeks, inValidation will be set to false, and systemOfRecord will be set to
-     * MERCURY.
-     */
-    private Boolean inValidation;
-
     /** List of versions */
-    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
+    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<>();
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
     private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
-            new HashMap<String, ProductWorkflowDefVersion>();
+            new HashMap<>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -68,7 +53,7 @@ public class ProductWorkflowDef implements Serializable {
     /** Returns a list of all product defs sorted by decreasing effective date. */
     public List<ProductWorkflowDefVersion> getWorkflowVersionsDescEffDate() {
         if (workflowVersionsDescEffDate == null) {
-            workflowVersionsDescEffDate = new ArrayList<ProductWorkflowDefVersion>(productWorkflowDefVersions);
+            workflowVersionsDescEffDate = new ArrayList<>(productWorkflowDefVersions);
             Collections.sort(workflowVersionsDescEffDate, new Comparator<ProductWorkflowDefVersion>() {
                 @Override
                 public int compare(ProductWorkflowDefVersion o1, ProductWorkflowDefVersion o2) {
@@ -86,7 +71,8 @@ public class ProductWorkflowDef implements Serializable {
     public ProductWorkflowDefVersion getEffectiveVersion(Date eventDate) {
         ProductWorkflowDefVersion mostRecentEffWorkflowVersion = null;
         for (ProductWorkflowDefVersion productWorkflowDefVersion : getWorkflowVersionsDescEffDate()) {
-            if(productWorkflowDefVersion.getEffectiveDate().before(eventDate)) {
+            // Should select workflow when effectiveDate <= eventDate.
+            if (!productWorkflowDefVersion.getEffectiveDate().after(eventDate)) {
                 mostRecentEffWorkflowVersion = productWorkflowDefVersion;
                 break;
             }
@@ -99,34 +85,24 @@ public class ProductWorkflowDef implements Serializable {
         return productDefVersionsByVersion.get(version);
     }
 
-    /**
-     * Accessor for the routing logic associated with a workflow instance.  The routing logic helps the system determine
-     * which LIMS system ({@see MercuryOrSquid}) should be considered the primary system of record.  Based on this
-     * value, mercury will either keep all LIMS related information to itself, share that information with another
-     * system, or pass all information to another system
-     *
-     * @return String to represent the routing intent.  Values are based on enums found in
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid}
-     */
-    public String getRoutingRule() {
-        return routingRule;
+    /** Returns the unique start dates for each product-process pairing, sorted by increasing date . */
+    public List<Date> getEffectiveDates() {
+        Set<Date> startDates = new HashSet<>();
+        for (ProductWorkflowDefVersion workflow : getWorkflowVersionsDescEffDate()) {
+            // Always uses the workflow effectiveDate.
+            startDates.add(workflow.getEffectiveDate());
+            for (WorkflowProcessDef wf : workflow.getWorkflowProcessDefs()) {
+                for (WorkflowProcessDefVersion process : wf.getProcessVersionsDescEffDate()) {
+                    if (workflow.getEffectiveDate().before(process.getEffectiveDate())) {
+                        // Adds process effectiveDate if different from (after) the workflow start date.
+                        startDates.add(process.getEffectiveDate());
+                    }
+                }
+            }
+        }
+        List<Date> list = new ArrayList<>(startDates);
+        Collections.sort(list);
+        return list;
     }
 
-    /**
-     * This method is an extension of {@link #getRoutingRule()}.  Since the values defined in the routingRule are
-     * based on {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid},
-     * this method helps solidify that point.  It provides the user with an interpretation of the routing rule
-     * in the form of a MercuryOrSquid enum
-     *
-     * @return an instance of
-     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid} that
-     * corresponds to the String value found in the routing rule.
-     */
-    public MercuryOrSquidRouter.MercuryOrSquid getRouting() {
-        return MercuryOrSquidRouter.MercuryOrSquid.valueOf(getRoutingRule());
-    }
-
-    public boolean getInValidation() {
-        return inValidation == null ? false : inValidation;
-    }
 }

@@ -35,17 +35,17 @@ public class LabVesselDao extends GenericDao {
     }
 
     public List<LabVessel> findBySampleKeyList(Collection<String> sampleKeys) {
-        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        List<LabVessel> resultList = new ArrayList<>();
 
-        for(String currSample:sampleKeys) {
-            resultList.addAll(findBySampleKey(currSample));
+        for (String sampleKey : sampleKeys) {
+            resultList.addAll(findBySampleKey(sampleKey));
         }
 
         return resultList;
     }
 
     public List<LabVessel> findBySampleKey(String sampleKey) {
-        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        List<LabVessel> resultList = new ArrayList<>();
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
         Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
@@ -61,7 +61,7 @@ public class LabVesselDao extends GenericDao {
     }
 
     public List<LabVessel> findByPDOKeyList(List<String> productOrderKeys) {
-        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        List<LabVessel> resultList = new ArrayList<>();
 
         for(String currPdoKey: productOrderKeys) {
             resultList.addAll(findByPDOKey(currPdoKey));
@@ -71,7 +71,7 @@ public class LabVesselDao extends GenericDao {
     }
 
     public List<LabVessel> findByPDOKey(String productOrderKey) {
-        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        List<LabVessel> resultList = new ArrayList<>();
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
         Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
@@ -87,7 +87,7 @@ public class LabVesselDao extends GenericDao {
     }
 
     public Map<String, LabVessel> findByBarcodes(List<String> barcodes) {
-        Map<String, LabVessel> mapBarcodeToTube = new TreeMap<String, LabVessel>();
+        Map<String, LabVessel> mapBarcodeToTube = new TreeMap<>();
         for (String barcode : barcodes) {
             mapBarcodeToTube.put(barcode, null);
         }

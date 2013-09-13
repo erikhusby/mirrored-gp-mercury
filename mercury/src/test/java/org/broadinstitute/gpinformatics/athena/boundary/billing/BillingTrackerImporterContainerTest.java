@@ -132,7 +132,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
 
             // First AddOn data
-            String rnaAddonPriceItemName = "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
+            String rnaAddonPriceItemName = "DNA or RNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
             productStatData = getOrderBillSummaryStat(entries, rnaAddonPriceItemName);
             Assert.assertEquals(productStatData.getCharge(), 4.0, "Charge mismatch");
             Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
@@ -161,7 +161,7 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
                 entry = null;
             }
         }
-        Assert.assertNotNull(entry, "Could not find the matching price item");
+        Assert.assertNotNull(entry, "Could not find the matching price item for: " + rnaPriceItemName);
         return entry.getValue();
     }
 

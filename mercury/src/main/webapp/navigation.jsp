@@ -2,16 +2,6 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%--
-  ~ The Broad Institute
-  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2013 by the
-  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
-  ~
-  ~ This software is supplied without any warranty or guaranteed support
-  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
-  ~ use, misuse, or functionality.
-  --%>
 
 <header class="navbar">
     <div class="navbar-inner">
@@ -90,46 +80,51 @@
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <li>
-                            <stripes:link id="uploadQuants"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
-                                          event="view">Upload Quant</stripes:link>
-                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="addRework"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
+                                              event="view">Add Rework</stripes:link>
+                            </li>
+
+                        </security:authorizeBlock>
                         <li>
                             <stripes:link id="viewBuckets"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                           event="view">Buckets</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
+                            <li>
+                                <stripes:link id="controls"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
+                                              event="list">Controls</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="createFCT"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
+                                          event="view">Create FCT Ticket</stripes:link>
                         </li>
                         <li>
                             <stripes:link id="linkDenatureToRB"
                                           beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToReagentBlockActionBean"
                                           event="view">Link Denature Tube to Reagent Block</stripes:link>
                         </li>
-                        <li>
-                            <stripes:link id="createFCT"
-                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.CreateFCTActionBean"
-                                          event="view">Create FCT Ticket</stripes:link>
-                        </li>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
-                            <li>
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
-                                        event="list">Controls</stripes:link>
-                            </li>
-                            <li>
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
-                                        event="view">Add Rework</stripes:link>
-                            </li>
-                        </security:authorizeBlock>
                         <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li>
-                                <stripes:link
-                                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"
-                                        event="view">Link Denature Tube to Flowcell</stripes:link>
-                            </li>
-                            <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
+                            </li>
+                        </security:authorizeBlock>
+                        <li>
+                            <stripes:link id="uploadQuants"
+                                          beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.UploadQuantsActionBean"
+                                          event="view">Upload Quant</stripes:link>
+                        </li>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, Developer) %>">
+                            <li>
+                                <stripes:link id="listWorkflows"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.WorkflowActionBean"
+                                              event="List">Show Workflows</stripes:link>
                             </li>
                         </security:authorizeBlock>
                     </ul>
@@ -141,11 +136,6 @@
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
-                            <li><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                    event="startBatch">Create Batch</stripes:link></li>
-                        </security:authorizeBlock>
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.analysis.ManageAnalysisFieldsActionBean"
                                 event="showAligner">Manage Aligners</stripes:link></li>
@@ -164,30 +154,35 @@
 
         </ul>
         <ul class="nav pull-right global-search navbar-search">
+            <li style="white-space:nowrap;">
+                <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.search.SearchActionBean"
+                              name="quickSearch" method="GET">
+                    <input type="search" data-type="search" name="searchKey" placeholder="Search for a RP, PDO or P"
+                           class="search-query ui-input-text ui-body-null" autosave="unique" results="10"
+                           style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                </stripes:form>
+            </li>
             <li class="dropdown">
                 <a id="searchNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                         class="icon-search"></span> Search <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu">
                     <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
-                                event="view">Vessels</stripes:link>
+                        <stripes:link id="vesselSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
+                                      event="view">Vessels</stripes:link>
                     </li>
                     <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
-                                event="view">Samples</stripes:link>
+                        <stripes:link id="sampleSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SampleSearchActionBean"
+                                      event="view">Samples</stripes:link>
                     </li>
-
-                    <security:authorizeBlock roles="<%= roles(Developer) %>">
-                        <li class="divider"></li>
-                        <li>
-                            <stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                                    event="view">All Types</stripes:link>
-                        </li>
-                    </security:authorizeBlock>
+                    <li>
+                        <stripes:link id="lcsetSearch"
+                                      beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.LCSetSearchActionBean"
+                                      event="view">LCSets</stripes:link>
+                    </li>
                 </ul>
             </li>
+        </ul>
     </div>
 </header>

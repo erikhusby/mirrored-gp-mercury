@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.easymock.EasyMock;
@@ -22,10 +24,17 @@ import java.util.Date;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LedgerEntryEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    private static final long ledgerId = 1122334455L;
-    private static final long posId = 2233445511L;
-    private static final String quoteId = "ABCD9";
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
+    private static final long LEDGER_ID = 1122334455;
+    private static final long PRODUCT_ORDER_SAMPLE_ID = 223344551;
+    private static final String QUOTE_ID = "ABCD9";
+    private static final long PRICE_ITEM_ID = 123;
+    private static final LedgerEntry.PriceItemType PRICE_ITEM_TYPE = LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM;
+    private static final double LEDGER_QUANTITY = 1;
+    private static final long BILLING_SESSION_ID = 456;
+    private static final String BILLING_SESSION_MESSAGE = "Quote server returned:\nERROR";
+    private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');
+    private static final Date WORK_COMPLETE_DATE = new Date();
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
 
@@ -33,7 +42,10 @@ public class LedgerEntryEtlDbFreeTest {
     private final LedgerEntry ledgerEntry = EasyMock.createMock(LedgerEntry.class);
     private final LedgerEntryDao ledgerEntryDao = EasyMock.createMock(LedgerEntryDao.class);
     private final ProductOrderSample productOrderSample = EasyMock.createMock(ProductOrderSample.class);
-    private final Object[] mocks = new Object[]{auditReader, ledgerEntry, ledgerEntryDao, productOrderSample};
+    private final PriceItem priceItem = EasyMock.createMock(PriceItem.class);
+    private final BillingSession billingSession = EasyMock.createMock(BillingSession.class);
+    private final Object[] mocks = new Object[]{auditReader, ledgerEntry, ledgerEntryDao, productOrderSample,
+            priceItem, billingSession};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -53,12 +65,12 @@ public class LedgerEntryEtlDbFreeTest {
     }
 
     public void testEtlFlags() throws Exception {
-        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(ledgerId);
+        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(LEDGER_ID);
         EasyMock.replay(mocks);
 
         Assert.assertEquals(ledgerEntryEtl.entityClass, LedgerEntry.class);
         Assert.assertEquals(ledgerEntryEtl.baseFilename, "ledger_entry");
-        Assert.assertEquals(ledgerEntryEtl.entityId(ledgerEntry), (Long) ledgerId);
+        Assert.assertEquals(ledgerEntryEtl.entityId(ledgerEntry), (Long) LEDGER_ID);
 
         EasyMock.verify(mocks);
     }
@@ -74,14 +86,22 @@ public class LedgerEntryEtlDbFreeTest {
     }
 
     public void testMakeRecord() throws Exception {
-        EasyMock.expect(ledgerEntryDao.findById(LedgerEntry.class, ledgerId)).andReturn(ledgerEntry);
+        EasyMock.expect(ledgerEntryDao.findById(LedgerEntry.class, LEDGER_ID)).andReturn(ledgerEntry);
+        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(LEDGER_ID);
         EasyMock.expect(ledgerEntry.getProductOrderSample()).andReturn(productOrderSample);
-        EasyMock.expect(ledgerEntry.getLedgerId()).andReturn(ledgerId);
-        EasyMock.expect(productOrderSample.getProductOrderSampleId()).andReturn(posId);
-        EasyMock.expect(ledgerEntry.getQuoteId()).andReturn(quoteId);
+        EasyMock.expect(productOrderSample.getProductOrderSampleId()).andReturn(PRODUCT_ORDER_SAMPLE_ID);
+        EasyMock.expect(ledgerEntry.getQuoteId()).andReturn(QUOTE_ID);
+        EasyMock.expect(ledgerEntry.getPriceItem()).andReturn(priceItem);
+        EasyMock.expect(priceItem.getPriceItemId()).andReturn(PRICE_ITEM_ID);
+        EasyMock.expect(ledgerEntry.getPriceItemType()).andReturn(PRICE_ITEM_TYPE);
+        EasyMock.expect(ledgerEntry.getQuantity()).andReturn(LEDGER_QUANTITY);
+        EasyMock.expect(ledgerEntry.getBillingSession()).andReturn(billingSession);
+        EasyMock.expect(billingSession.getBillingSessionId()).andReturn(BILLING_SESSION_ID);
+        EasyMock.expect(ledgerEntry.getBillingMessage()).andReturn(BILLING_SESSION_MESSAGE);
+        EasyMock.expect(ledgerEntry.getWorkCompleteDate()).andReturn(WORK_COMPLETE_DATE);
         EasyMock.replay(mocks);
 
-        Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, ledgerId);
+        Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, LEDGER_ID);
         Assert.assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -94,11 +114,15 @@ public class LedgerEntryEtlDbFreeTest {
         String[] parts = record.split(",");
         Assert.assertEquals(parts[i++], etlDateStr);
         Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(ledgerId));
-        Assert.assertEquals(parts[i++], String.valueOf(posId));
-        Assert.assertEquals(parts[i++], quoteId);
+        Assert.assertEquals(parts[i++], String.valueOf(LEDGER_ID));
+        Assert.assertEquals(parts[i++], String.valueOf(PRODUCT_ORDER_SAMPLE_ID));
+        Assert.assertEquals(parts[i++], QUOTE_ID);
+        Assert.assertEquals(parts[i++], String.valueOf(PRICE_ITEM_ID));
+        Assert.assertEquals(parts[i++], PRICE_ITEM_TYPE.toString());
+        Assert.assertEquals(parts[i++], String.valueOf(LEDGER_QUANTITY));
+        Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_ID));
+        Assert.assertEquals(parts[i++], FORMATTED_BILLING_SESSION_MESSAGE);
+        Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
         Assert.assertEquals(parts.length, i);
     }
-
 }
-

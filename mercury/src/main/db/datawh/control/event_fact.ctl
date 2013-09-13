@@ -12,8 +12,9 @@ TRAILING NULLCOLS
  process_id,
  product_order_id,
  sample_name,
- lab_batch_id,
+ batch_name,
  station_name,
  lab_vessel_id,
- event_date DATE "YYYYMMDDHH24MISS"
+ event_date DATE "YYYYMMDDHH24MISS",
+ program_name
 )

@@ -90,6 +90,7 @@ public abstract class AbstractBatchJiraFieldFactory {
 
         switch (projectType) {
         case LCSET_PROJECT:
+        case CRSP_LCSET_PROJECT:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
             break;
         case FCT_PROJECT:
@@ -109,6 +110,7 @@ public abstract class AbstractBatchJiraFieldFactory {
         case WORKFLOW:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
             break;
+        case MISEQ:
         case FCT:
             builder = new FCTJiraFieldFactory(batch);
             break;

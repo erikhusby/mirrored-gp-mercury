@@ -40,7 +40,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         client.addFilter(new LoggingFilter(System.out));
 
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-        List<String> sampleBarcodes = new ArrayList<String>();
+        List<String> sampleBarcodes = new ArrayList<>();
         sampleBarcodes.add("SM-1001-" + timestamp);
         sampleBarcodes.add("SM-1002-" + timestamp);
         sampleBarcodes.add("SM-1003-" + timestamp);
@@ -68,17 +68,17 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         bettaLimsMessageTestFactory.advanceTime();
 
         // End of extraction - Cherry pick, 1 tube to 15 tubes
-        List<String> sourceRackBarcodes = new ArrayList<String>();
+        List<String> sourceRackBarcodes = new ArrayList<>();
         String extStartRackBarcode = "ExtStartRack" + timestamp;
         sourceRackBarcodes.add(extStartRackBarcode);
 
-        List<List<String>> sourceTubeBarcodes = new ArrayList<List<String>>();
+        List<List<String>> sourceTubeBarcodes = new ArrayList<>();
         sourceTubeBarcodes.add(sampleBarcodes);
 
         String extEndRackBarcode = "ExtEndRack" + timestamp;
-        List<String> extractionEndTubeBarcodes = new ArrayList<String>();
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageTestFactory.CherryPick>();
-        for(int i = 0; i < sampleBarcodes.size() * 15; i++){
+        List<String> extractionEndTubeBarcodes = new ArrayList<>();
+        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+        for (int i = 0; i < sampleBarcodes.size() * 15; i++) {
             extractionEndTubeBarcodes.add("2DExt" + i + timestamp);
             // todo jmt different source tube types - falcon?
             cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(extStartRackBarcode, "A0" + ((i / 15) + 1),
@@ -88,8 +88,9 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
 
         BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();
         PlateCherryPickEvent plateCherryPickEvent = bettaLimsMessageTestFactory.buildCherryPick(
-                "SamplesExtractionEndTransfer",  sourceRackBarcodes, sourceTubeBarcodes,
-                Collections.singletonList(extEndRackBarcode), Collections.singletonList(extractionEndTubeBarcodes), cherryPicks);
+                "SamplesExtractionEndTransfer", sourceRackBarcodes, sourceTubeBarcodes,
+                Collections.singletonList(extEndRackBarcode), Collections.singletonList(extractionEndTubeBarcodes),
+                cherryPicks);
         plateCherryPickEvent.setBatchId(batchId);
         extractionEndMsg.getPlateCherryPickEvent().add(plateCherryPickEvent);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(extractionEndMsg));
@@ -98,14 +99,15 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         // Pico - messages from deck
 
         // Normalization - in place dilution or rack to rack
-        List<String> normTubeBarcodes = new ArrayList<String>();
-        for(int i = 0; i < extractionEndTubeBarcodes.size(); i++) {
+        List<String> normTubeBarcodes = new ArrayList<>();
+        for (int i = 0; i < extractionEndTubeBarcodes.size(); i++) {
             normTubeBarcodes.add("2DNorm" + i + timestamp);
         }
         String normRackBarcode = "NormRack" + timestamp;
         BettaLIMSMessage normMsg = new BettaLIMSMessage();
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageTestFactory.buildRackToRack("SamplesNormalizationTransfer",
-                extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes);
+        PlateTransferEventType plateTransferEventType =
+                bettaLimsMessageTestFactory.buildRackToRack("SamplesNormalizationTransfer",
+                        extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes);
         plateTransferEventType.setBatchId(batchId);
         normMsg.getPlateTransferEvent().add(plateTransferEventType);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(normMsg));

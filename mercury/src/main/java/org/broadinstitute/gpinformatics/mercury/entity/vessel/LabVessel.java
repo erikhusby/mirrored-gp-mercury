@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -18,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -44,9 +46,11 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,9 +58,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
- * A piece of plastic or glass that holds sample, reagent or other plastic.
+ * This entity represents a piece of plastic or glass that holds sample, reagent or (if it embeds a
+ * {@link VesselContainer) other plastic.
  * In-place lab events can apply to any LabVessel, whereas SectionTransfers and CherryPickTransfers apply to
  * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
  * apply to containees (tubes and wells).
@@ -68,7 +74,7 @@ import java.util.TreeMap;
 @BatchSize(size = 50)
 public abstract class LabVessel implements Serializable {
 
-    //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
+    private static final long serialVersionUID = 2868707154970743503L;
 
     private static final Log logger = LogFactory.getLog(LabVessel.class);
 
@@ -81,21 +87,25 @@ public abstract class LabVessel implements Serializable {
 
     private Date createdOn;
 
-    // todo jmt liquid vs solid?  Not a class level role?  Large tubes can hold both.
-    private Float volume;
+    private BigDecimal volume;
 
-    private Float concentration;
+    private BigDecimal concentration;
 
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
-    private final Set<JiraTicket> ticketsCreated = new HashSet<JiraTicket>();
+    @BatchSize(size = 100)
+    private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
+    @BatchSize(size = 100)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
+
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "dilutionVessel")
+    private Set<LabBatchStartingVessel> dilutionReferences = new HashSet<>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworks")
     @BatchSize(size = 100)
-    private Set<LabBatch> reworkLabBatches = new HashSet<LabBatch>();
+    private Set<LabBatch> reworkLabBatches = new HashSet<>();
 
     // todo jmt separate role for reagents?
     @ManyToMany(cascade = CascadeType.PERSIST)
@@ -103,7 +113,7 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury", name = "lv_reagent_contents", joinColumns = @JoinColumn(name = "lab_vessel"),
             inverseJoinColumns = @JoinColumn(name = "reagent_contents"))
     @BatchSize(size = 100)
-    private Set<Reagent> reagentContents = new HashSet<Reagent>();
+    private Set<Reagent> reagentContents = new HashSet<>();
 
     /**
      * Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
@@ -117,7 +127,7 @@ public abstract class LabVessel implements Serializable {
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "mercury")
     @BatchSize(size = 100)
-    private Set<LabVessel> containers = new HashSet<LabVessel>();
+    private Set<LabVessel> containers = new HashSet<>();
 
     /**
      * Counts the number of rows in the many-to-many table.  Reference this count before fetching the collection, to
@@ -131,15 +141,15 @@ public abstract class LabVessel implements Serializable {
      * Reagent additions and machine loaded events, i.e. not transfers
      */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
-    private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
+    private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
-    private Collection<StatusNote> notes = new HashSet<StatusNote>();
+    private Collection<StatusNote> notes = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
+    private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     @Embedded
     private UserRemarks userRemarks;
@@ -147,30 +157,39 @@ public abstract class LabVessel implements Serializable {
     // todo jmt separate role for sample holder?
     @ManyToMany(cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
+    private Set<MercurySample> mercurySamples = new HashSet<>();
 
     // todo jmt set these fields db-free
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<>();
 
     @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
+    private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
-    private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<VesselToSectionTransfer>();
+    private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<>();
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
-    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
+    private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
-    private Integer sampleInstanceCount = null;
+    private Integer sampleInstanceCount;
+
+    @Transient
+    private Map<String, Set<LabMetric>> metricMap;
+
+    /**
+     * Set by {@link #preProcessEvents()}
+     */
+    @Transient
+    private Set<LabBatch> preProcessedEvents;
 
     protected LabVessel(String label) {
         createdOn = new Date();
-        if (label == null || label.equals("0")) {
+        if (label == null || label.isEmpty() || label.equals("0")) {
             throw new RuntimeException("Invalid label " + label);
         }
         this.label = label;
@@ -179,9 +198,10 @@ public abstract class LabVessel implements Serializable {
     protected LabVessel() {
     }
 
+    @SuppressWarnings("unused")
     private static Collection<String> getVesselNameList(Collection<LabVessel> vessels) {
 
-        List<String> vesselNames = new ArrayList<String>(vessels.size());
+        List<String> vesselNames = new ArrayList<>(vessels.size());
 
         for (LabVessel currVessel : vessels) {
             vesselNames.add(currVessel.getLabCentricName());
@@ -191,7 +211,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public boolean isDNA() {
-        for (SampleInstance si : this.getSampleInstances()) {
+        for (SampleInstance si : getSampleInstances()) {
             if (!si.getStartingSample().getBspSampleDTO().getMaterialType().startsWith("DNA:")) {
                 return false;
             }
@@ -205,9 +225,7 @@ public abstract class LabVessel implements Serializable {
      * of a lab vessel.  Labels are GUIDs
      * for LabVessels; no two LabVessels
      * may share this id.  It's primarily the
-     * barcode on the piece of plastic.f
-     *
-     * @return
+     * barcode on the piece of plastic.
      */
     public String getLabel() {
         return label;
@@ -235,6 +253,16 @@ public abstract class LabVessel implements Serializable {
         return labMetrics;
     }
 
+    @SuppressWarnings("unused")
+    public Map<String, Set<LabMetric>> getMetricMap() {
+        return metricMap;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMetricMap(Map<String, Set<LabMetric>> metricMap) {
+        this.metricMap = metricMap;
+    }
+
     /**
      * Reagent templates, how to register "these 40
      * plates contain adaptors laid out like
@@ -247,7 +275,7 @@ public abstract class LabVessel implements Serializable {
      * @return reagents
      */
     public Set<Reagent> getReagentContents() {
-        if (getReagentContentsCount() != null && getReagentContentsCount() > 0) {
+        if (reagentContentsCount != null && reagentContentsCount > 0) {
             return reagentContents;
         }
         return Collections.emptySet();
@@ -261,10 +289,6 @@ public abstract class LabVessel implements Serializable {
         reagentContentsCount++;
     }
 
-    public Integer getReagentContentsCount() {
-        return reagentContentsCount;
-    }
-
     public void addToContainer(VesselContainer<?> vesselContainer) {
         containers.add(vesselContainer.getEmbedder());
         if (containersCount == null) {
@@ -274,7 +298,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<VesselContainer<?>> getContainers() {
-        Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
+        Set<VesselContainer<?>> vesselContainers = new HashSet<>();
         if (containersCount != null && containersCount > 0) {
             for (LabVessel container : containers) {
                 vesselContainers.add(container.getContainerRole());
@@ -298,7 +322,7 @@ public abstract class LabVessel implements Serializable {
      * <a href="http://en.wikipedia.org/wiki/Base_36#Java_implementation" >Base 36 </a> version of the of the label.
      * This implementation assumes that the label can be converted to a long
      *
-     * @return
+     * @return the name for the lab
      */
     @Transient
     public String getLabCentricName() {
@@ -323,7 +347,7 @@ public abstract class LabVessel implements Serializable {
      */
     public Set<LabEvent> getTransfersFrom() {
         if (getContainerRole() == null) {
-            Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+            Set<LabEvent> transfersFrom = new HashSet<>();
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersFrom.addAll(vesselContainer.getTransfersFrom());
             }
@@ -340,16 +364,36 @@ public abstract class LabVessel implements Serializable {
      * @return transfers
      */
     public Set<LabEvent> getTransfersTo() {
+        Set<LabEvent> transfersTo = new HashSet<>();
         if (getContainerRole() == null) {
-            Set<LabEvent> transfersTo = new HashSet<LabEvent>();
             for (VesselContainer<?> vesselContainer : getContainers()) {
                 transfersTo.addAll(vesselContainer.getTransfersTo());
             }
-            return transfersTo;
         } else {
-            return getContainerRole().getTransfersTo();
+            transfersTo.addAll(getContainerRole().getTransfersTo());
         }
+
         // todo jmt vessel to vessel transfers
+        return transfersTo;
+    }
+
+    /**
+     * Get LabEvents that are transfers to this vessel, including re-arrays
+     *
+     * @return transfers
+     */
+    public Set<LabEvent> getTransfersToWithReArrays() {
+        Set<LabEvent> transfersTo = new HashSet<>();
+        if (getContainerRole() == null) {
+            for (VesselContainer<?> vesselContainer : getContainers()) {
+                transfersTo.addAll(vesselContainer.getTransfersToWithRearrays());
+            }
+        } else {
+            transfersTo.addAll(getContainerRole().getTransfersToWithRearrays());
+        }
+
+        // todo jmt vessel to vessel transfers
+        return transfersTo;
     }
 
     public abstract VesselGeometry getVesselGeometry();
@@ -361,8 +405,9 @@ public abstract class LabVessel implements Serializable {
      * to know all the lab work that was done for
      * a StartingSample.
      *
-     * @param jiraTicket
+     * @param jiraTicket The jira ticket
      */
+    @SuppressWarnings("unused")
     public void addJiraTicket(JiraTicket jiraTicket) {
         if (jiraTicket != null) {
             ticketsCreated.add(jiraTicket);
@@ -373,12 +418,14 @@ public abstract class LabVessel implements Serializable {
      * Get all the {@link JiraTicket jira tickets} that were started
      * with this {@link LabVessel}
      *
-     * @return
+     * @return The jira tickets
      */
+    @SuppressWarnings("unused")
     public Collection<JiraTicket> getJiraTickets() {
         return ticketsCreated;
     }
 
+    @SuppressWarnings("unused")
     public UserRemarks getUserRemarks() {
         return userRemarks;
     }
@@ -392,24 +439,23 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceEvents() {
-        Set<LabEvent> totalInPlaceEventsSet = new HashSet<LabEvent>();
+        Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
         for (LabVessel vesselContainer : containers) {
-            totalInPlaceEventsSet.addAll(vesselContainer.getInPlaceEvents());
+            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEvents());
         }
-        totalInPlaceEventsSet.addAll(inPlaceLabEvents);
         return totalInPlaceEventsSet;
     }
 
     private List<LabEvent> getAllEventsSortedByDate() {
-        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<>();
         for (LabEvent event : getEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);
         }
-        return new ArrayList<LabEvent>(sortedTreeMap.values());
+        return new ArrayList<>(sortedTreeMap.values());
     }
 
     public void addInPlaceEvent(LabEvent labEvent) {
-        this.inPlaceLabEvents.add(labEvent);
+        inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
     }
 
@@ -422,12 +468,13 @@ public abstract class LabVessel implements Serializable {
 
     public static Map<String, Set<LabVessel>> extractPdoLabVesselMap(Collection<LabVessel> labVessels) {
 
-        Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<String, Set<LabVessel>>();
+        Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<>();
 
         for (LabVessel currVessel : labVessels) {
-            Collection<String> nearestPdos = currVessel.getNearestProductOrders();
+            Set<SampleInstance> sampleInstances = currVessel.getSampleInstances(SampleType.WITH_PDO, null);
 
-            for (String pdoKey : nearestPdos) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                String pdoKey = sampleInstance.getProductOrderKey();
 
                 if (!vesselByPdoMap.containsKey(pdoKey)) {
                     vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
@@ -439,16 +486,17 @@ public abstract class LabVessel implements Serializable {
         return vesselByPdoMap;
     }
 
+    @SuppressWarnings("unused")
     public String getNearestLabBatchesString() {
         Collection<LabBatch> nearest = getNearestLabBatches();
-        if ((nearest == null) || nearest.isEmpty()) {
+        if (nearest == null) {
             return "";
         }
 
-        LabBatch[] batchArray = nearest.toArray(new LabBatch[nearest.size()]);
-        return StringUtils.join(batchArray);
+        return StringUtils.join(nearest, "");
     }
 
+    @SuppressWarnings("unused")
     public int getNearestLabBatchesCount() {
         Collection<LabBatch> nearest = getNearestLabBatches();
         if (nearest == null) {
@@ -489,6 +537,32 @@ public abstract class LabVessel implements Serializable {
         labBatches.add(labBatchStartingVessel);
     }
 
+    /**
+     * Get the sample instances unique by the vessel sample comparator's vision of uniqueness.
+     *
+     * @return the filtered samples
+     */
+    public Set<SampleInstance> getUniqueSampleInstances() {
+        //
+        Set<SampleInstance> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_COMPARATOR);
+        filteredForUI.addAll(getSampleInstances(LabVessel.SampleType.PREFER_PDO, null));
+        return filteredForUI;
+    }
+
+    /**
+     * Compare by sample, lab batch and PDO key.
+     */
+    public static final Comparator<SampleInstance> VESSEL_SAMPLE_COMPARATOR = new Comparator<SampleInstance>() {
+        @Override
+        public int compare(SampleInstance lhs, SampleInstance rhs) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(lhs.getStartingSample(), rhs.getStartingSample());
+            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
+            builder.append(lhs.getProductOrderKey(), rhs.getProductOrderKey());
+            return builder.build();
+        }
+    };
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -513,127 +587,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-
-    /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param positionName position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull String positionName) {
-        VesselPosition position = VesselPosition.getByName(positionName);
-        return getSamplesAtPosition(position);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position
-     *
-     * @param vesselPosition position in vessel, eg: A01
-     *
-     * @return
-     */
-    public Collection<SampleInstance> getSamplesAtPosition(@Nonnull VesselPosition vesselPosition) {
-        return getSamplesAtPosition(vesselPosition, SampleType.ANY);
-    }
-
-    /**
-     * Returns a Collection of SampleInstances at given position, traversing until sample type is reached.
-     */
-    public Set<SampleInstance> getSamplesAtPosition(VesselPosition position, SampleType sampleType) {
-        Set<SampleInstance> sampleInstances;
-        VesselContainer<?> vesselContainer = getContainerRole();
-        if (vesselContainer != null) {
-            sampleInstances = vesselContainer.getSampleInstancesAtPosition(position, sampleType);
-        } else {
-            sampleInstances = getSampleInstances(sampleType, null);
-        }
-        if (sampleInstances == null) {
-            sampleInstances = Collections.emptySet();
-        }
-        return sampleInstances;
-    }
-
-
-    /**
-     * This method gets all of the positions within this vessel that contain the sample instance passed in.
-     *
-     * @param sampleInstance The sample instance to search for positions of within the vessel
-     *
-     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
-     */
-    public List<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            return Collections.emptyList();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptyList();
-        }
-
-        List<VesselPosition> positionList = new ArrayList<VesselPosition>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    public Set<VesselPosition> getPositionsOfSample(@Nonnull SampleInstance sampleInstance, SampleType sampleType) {
-        if (getContainerRole() == null) {
-            return Collections.emptySet();
-        }
-
-        VesselPosition[] positions = getContainerRole().getEmbedder().getVesselGeometry().getVesselPositions();
-        if (positions == null) {
-            return Collections.emptySet();
-        }
-
-        Set<VesselPosition> positionList = new HashSet<>();
-        for (VesselPosition position : positions) {
-            for (SampleInstance curSampleInstance : getSamplesAtPosition(position, sampleType)) {
-                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
-                    positionList.add(position);
-                }
-            }
-        }
-
-        return positionList;
-    }
-
-    /**
-     * This method will get the last known position of a sample. If the sample is in a tube it will check the last rack
-     * it was in. Otherwise it will defer to the getPositionsOfSample.
-     *
-     * @param sampleInstance The sample instance to find the last position for.
-     *
-     * @return A list of vessel positions that the sample instance was last known to be at.
-     */
-    public List<VesselPosition> getLastKnownPositionsOfSample(@Nonnull SampleInstance sampleInstance) {
-        if (getContainerRole() == null) {
-            Map<Date, List<VesselPosition>> positionList = new TreeMap<Date, List<VesselPosition>>();
-            for (VesselContainer<?> container : getContainers()) {
-                List<VesselPosition> curPositionLists = positionList.get(container.getEmbedder().getCreatedOn());
-                if (curPositionLists == null) {
-                    curPositionLists = new ArrayList<VesselPosition>();
-                    positionList.put(container.getEmbedder().getCreatedOn(), curPositionLists);
-                }
-                curPositionLists.add(container.getPositionOfVessel(this));
-            }
-
-            if (positionList.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return positionList.get(positionList.keySet().iterator().next());
-        }
-        return getPositionsOfSample(sampleInstance);
-    }
 
     /**
      * Returned from getAncestors and getDescendants
@@ -675,7 +628,7 @@ public abstract class LabVessel implements Serializable {
      * on-the-fly by walking the history and applying the
      * StateChange applied during lab work.
      *
-     * @return
+     * @return All the sample instances.
      */
     public Set<SampleInstance> getSampleInstances() {
         return getSampleInstances(SampleType.ANY, null);
@@ -708,9 +661,18 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
-
+        if (preProcessedEvents == null) {
+            preProcessedEvents = preProcessEvents();
+        }
         if (getContainerRole() != null) {
-            return getContainerRole().getSampleInstances(sampleType, labBatchType);
+            Set<SampleInstance> sampleInstances = getContainerRole().getSampleInstances(sampleType, labBatchType);
+            for (SampleInstance sampleInstance : sampleInstances) {
+                if (sampleInstance.getLabBatch() == null && preProcessedEvents != null
+                    && preProcessedEvents.size() == 1) {
+                    sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+                }
+            }
+            return sampleInstances;
         }
         TraversalResults traversalResults = traverseAncestors(sampleType, labBatchType);
         Set<SampleInstance> filteredSampleInstances;
@@ -725,6 +687,14 @@ public abstract class LabVessel implements Serializable {
             filteredSampleInstances = traversalResults.getSampleInstances();
         }
 
+        // This handles the case where controls are added in a re-array of the destination of the first transfer
+        // from LCSET starting tubes.
+        if (filteredSampleInstances.size() == 1) {
+            SampleInstance sampleInstance = filteredSampleInstances.iterator().next();
+            if (sampleInstance.getLabBatch() == null && preProcessedEvents != null && preProcessedEvents.size() == 1) {
+                sampleInstance.setLabBatch(preProcessedEvents.iterator().next());
+            }
+        }
         return filteredSampleInstances;
     }
 
@@ -733,6 +703,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
+        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
         if (sampleInstanceCount == null) {
             sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
         }
@@ -740,13 +711,13 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * The results of traversing (ancestor) vessels
+     * The results of traversing (ancestor) vessels.  The main branch in the graph is likely to have (multiple)
+     * SampleInstances, while side branches add reagents.
      */
     static class TraversalResults {
 
-        private final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        private final Set<Reagent> reagents = new HashSet<Reagent>();
-        private BucketEntry bucketEntry;
+        private final Set<SampleInstance> sampleInstances = new HashSet<>();
+        private final Set<Reagent> reagents = new HashSet<>();
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -769,9 +740,21 @@ public abstract class LabVessel implements Serializable {
             reagents.add(reagent);
         }
 
+        void setBucketEntry(BucketEntry bucketEntry) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setBucketEntry(bucketEntry);
+            }
+        }
+
         void setProductOrderKey(String productOrderKey) {
             for (SampleInstance sampleInstance : sampleInstances) {
                 sampleInstance.setProductOrderKey(productOrderKey);
+            }
+        }
+
+        void setBspExportSample(MercurySample exportSample) {
+            for (SampleInstance sampleInstance : sampleInstances) {
+                sampleInstance.setBspExportSample(exportSample);
             }
         }
 
@@ -790,17 +773,47 @@ public abstract class LabVessel implements Serializable {
                 reagents.clear();
             }
         }
+
+        /**
+         * Called after an event has been traversed, sets lab batch and product order key.
+         *
+         * @param labEvent  event that was traversed
+         * @param labVessel plastic involved in the event
+         */
+        public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
+            Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
+            if (computedLcSets1.size() == 1) {
+                LabBatch labBatch = computedLcSets1.iterator().next();
+                for (SampleInstance sampleInstance : getSampleInstances()) {
+                    int foundBucketEntries = 0;
+                    for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                        if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
+                            sampleInstance.setBucketEntry(bucketEntry);
+                            foundBucketEntries++;
+                        }
+                    }
+                    if (foundBucketEntries != 1) {
+                        sampleInstance.setLabBatch(labBatch);
+                    }
+                }
+            }
+        }
     }
 
     /**
-     * Traverse all ancestors of this vessel, accumulating SampleInstances
+     * Traverse all ancestors of this vessel, accumulating SampleInstances.
      *
-     * @param sampleType
-     * @param labBatchType
+     * @param sampleType   where to stop recursion
+     * @param labBatchType which batches to accumulate
      *
      * @return accumulated sampleInstances
      */
     TraversalResults traverseAncestors(SampleType sampleType, LabBatch.LabBatchType labBatchType) {
+
+        /*
+         * Crawl up this vessel's ancestors looking for a vessel that fits the specified sampleType criteria. Once such
+         * a vessel is found, we stop crawling start accumulating the results as we crawl back down.
+         */
         TraversalResults traversalResults = new TraversalResults();
 
         boolean continueTraversing = true;
@@ -821,49 +834,77 @@ public abstract class LabVessel implements Serializable {
             List<VesselEvent> vesselEvents = getAncestors();
             for (VesselEvent vesselEvent : vesselEvents) {
                 LabVessel labVessel = vesselEvent.getLabVessel();
-                // todo jmt put this logic in VesselEvent?
                 if (labVessel == null) {
                     traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition(),
                             sampleType, labBatchType));
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.applyEvent(vesselEvent.getLabEvent(), labVessel);
                 }
             }
         }
+
+        /*
+         * Start crawling back down the traversed ancestors. We create SampleInstances for the MercurySamples only from
+         * the topmost vessel that actually has MercurySamples. Any other MercurySamples that we encounter on the way
+         * back down are not collected because they were already determined to not meet the specified sampleType
+         * criteria.
+         */
+
         if (traversalResults.getSampleInstances().isEmpty() && !mercurySamples.isEmpty()) {
             for (MercurySample mercurySample : mercurySamples) {
-                SampleInstance sampleInstance = new SampleInstance(mercurySample, null);
+                SampleInstance sampleInstance = new SampleInstance(mercurySample);
                 traversalResults.add(sampleInstance);
             }
         }
-        for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
-            sampleInstance.addLabBatches(getLabBatchesOfType(labBatchType));
+
+        /*
+         * LabBatches are accumulated during downward traversal so that we will know all of the batches that the vessel
+         * in question is somehow related to.
+         */
+
+        for (LabBatch labBatch : getLabBatches()) {
+            if (labBatchType == null || labBatch.getLabBatchType() == labBatchType) {
+                for (SampleInstance sampleInstance : traversalResults.getSampleInstances()) {
+                    sampleInstance.addLabBatches(Collections.singleton(labBatch));
+                }
+            }
+            // If this vessel is a BSP export, sets the aliquot sample.
+            // Expects one sample per vessel in the BSP export.
+            if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
+                for (MercurySample mercurySample : mercurySamples) {
+                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each
+                    // FIXME: sampleInstance.bspExportSample multiple times? I know there's a comment above about
+                    // FIXME: the expectation, but we should probably throw an exception if it's not as we expect
+                    // FIXME: instead of potentially doing the wrong thing. -BPR
+                    traversalResults.setBspExportSample(mercurySample);
+                }
+            }
         }
-        if (bucketEntries.size() > 1) {
-            Set<String> productOrderKeys = new HashSet<String>();
+
+        // FIXME: Ignore rework bucket entries when deciding whether or not there is a single entry.
+        // FIXME: There could very well be two bucket entries for different PDOs. We need to decide
+        // FIXME: which is the appropriate one in this case (either here or in getSampleInstances).
+        if (bucketEntries.size() == 1) {
+            BucketEntry bucketEntry = bucketEntries.iterator().next();
+            if (bucketEntry.getReworkDetail() == null) {
+                traversalResults.setBucketEntry(bucketEntry);
+            }
+        } else {
+            /*
+             * Even if there are multiple bucket entries (of any type, rework or not), as long as they all agree on the
+             * PDO, we can assume that is the correct PDO.
+             */
+            Set<String> productOrderKeys = new HashSet<>();
             for (BucketEntry bucketEntry : bucketEntries) {
                 productOrderKeys.add(bucketEntry.getPoBusinessKey());
             }
-            if (productOrderKeys.size() > 1) {
-                throw new RuntimeException("Unexpected multiple product orders in bucket entries");
+            if (productOrderKeys.size() == 1) {
+                traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
             }
-            traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
-/* todo jmt handle multiple product orders
-            for (BucketEntry bucketEntry : bucketEntries) {
-                for (LabVessel container : containers) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        if (bucketEntry.getLabBatch().getStartingLabVessels().equals(container.getContainerRole().getContainedVessels())) {
-                            traversalResults.setBucketEntry(bucketEntry);
-                            break;
-                        }
-                    }
-                }
-            }
-*/
-        } else if (bucketEntries.size() == 1) {
-            traversalResults.setProductOrderKey(bucketEntries.iterator().next().getPoBusinessKey());
         }
 
+        // TODO: completeLevel() simply applies reagents to the sample instances, so this code could probably be changed to look more like setting the bspExportSample and bucketEntry above.
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
@@ -885,7 +926,7 @@ public abstract class LabVessel implements Serializable {
      * @return ancestors and events
      */
     private List<VesselEvent> getAncestors() {
-        List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
+        List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
                     vesselToVesselTransfer.getLabEvent()));
@@ -902,7 +943,7 @@ public abstract class LabVessel implements Serializable {
      * @return descendant and events
      */
     private List<VesselEvent> getDescendants() {
-        List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
+        List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
                     vesselToVesselTransfer.getLabEvent()));
@@ -919,79 +960,60 @@ public abstract class LabVessel implements Serializable {
     }
 
     /**
-     * Metrics are captured on vessels, but when we
-     * look up the values, we most often want to
-     * see them related to a sample aliquot instance.
-     * <p/>
-     * The search mode tells you "how" to walk the
-     * transfer graph to find the given metric.
-     */
-    public enum MetricSearchMode {
-        /**
-         * Only look for metrics captured
-         * on this vessel directly.
-         */
-        THIS_VESSEL_ONLY,
-        /**
-         * look anywhere in the transfer graph,
-         * the first matching metric you find
-         * will be used.
-         */
-        ANY,
-        /**
-         * Look for the metric associated with
-         * nearest ancestor (including this
-         * vessel)
-         */
-        NEAREST_ANCESTOR,
-        /**
-         * Look for the metric associated
-         * with the nearest descendant (including
-         * this vessel)
-         */
-        NEAREST_DESCENDANT,
-        /**
-         * Find the metric on the nearest
-         * vessel, irrespective of
-         * ancestor or descendant.
-         */
-        NEAREST
-    }
-
-    /**
      * Get all events that have happened directly to
      * this vessel.
      *
      * @return in place events, transfers from, transfers to
      */
     public Set<LabEvent> getEvents() {
-        Set<LabEvent> events = new HashSet<LabEvent>();
-        events.addAll(getInPlaceEvents());
-        events.addAll(getTransfersFrom());
-        events.addAll(getTransfersTo());
-        return events;
+        return Sets.union(getInPlaceEvents(), Sets.union(getTransfersFrom(), getTransfersTo()));
     }
 
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
-        Set<LabEvent> events = new HashSet<LabEvent>();
-        events.addAll(getInPlaceEvents());
-        events.addAll(getTransfersTo());
-        return events;
+        return Sets.union(getInPlaceEvents(), getTransfersTo());
     }
 
-    public Float getVolume() {
+    /**
+     * Get the sample instances unique by the vessel sample event comparator's vision of uniqueness.
+     *
+     * @return The unique events
+     */
+    public Set<LabEvent> getUniqueInPlaceAndTransferToEvents() {
+        Set<LabEvent> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_EVENT_COMPARATOR);
+        filteredForUI.addAll(getInPlaceAndTransferToEvents());
+        return filteredForUI;
+
+    }
+
+    /**
+     * Compare using the lab event type, the batch, the location and operator of the event and the in place vessel.
+     */
+    public static final Comparator<LabEvent> VESSEL_SAMPLE_EVENT_COMPARATOR = new Comparator<LabEvent>() {
+        @Override
+        public int compare(LabEvent lhs, LabEvent rhs) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(lhs.getLabEventType(), rhs.getLabEventType());
+            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
+            builder.append(lhs.getEventLocation(), rhs.getEventLocation());
+            builder.append(lhs.getEventOperator(), rhs.getEventOperator());
+            builder.append(lhs.getInPlaceLabVessel(), rhs.getInPlaceLabVessel());
+            return builder.build();
+        }
+    };
+
+    public BigDecimal getVolume() {
         return volume;
     }
 
-    public void setVolume(Float volume) {
+    public void setVolume(BigDecimal volume) {
         this.volume = volume;
     }
 
-    public Float getConcentration() {
+    public BigDecimal getConcentration() {
         return concentration;
     }
 
-    public void setConcentration(Float concentration) {
+    public void setConcentration(BigDecimal concentration) {
         this.concentration = concentration;
     }
 
@@ -1000,7 +1022,17 @@ public abstract class LabVessel implements Serializable {
     }
 
     public void addBucketEntry(BucketEntry bucketEntry) {
-        bucketEntries.add(bucketEntry);
+        boolean added = bucketEntries.add(bucketEntry);
+        if (!added) {
+            /*
+             * We currently don't have any UI gestures that should allow us to violate the contract for equals/hashCode
+             * for BucketEntry (currently using bucket, labVessel, and createdDate). If this exception is ever thrown,
+             * it is because we've added such a feature and this should readily be thrown during development and
+             * testing. If that happens, BucketEntry will have to be enhanced have more inherent uniqueness, likely
+             * using some sort of artificial unique identifier such as a UUID.
+             */
+            throw new RuntimeException("Vessel already contains an entry equal to: " + bucketEntry);
+        }
     }
 
     public void addNonReworkLabBatch(LabBatch labBatch) {
@@ -1021,19 +1053,47 @@ public abstract class LabVessel implements Serializable {
         return allLabBatches;
     }
 
+    public Set<LabBatch> getReworkLabBatches() {
+        return reworkLabBatches;
+    }
+
+    @SuppressWarnings("unused")
+    public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
+        return labBatches;
+    }
+
+    public Set<LabBatchStartingVessel> getDilutionReferences() {
+        return dilutionReferences;
+    }
+
+    @SuppressWarnings("unused")
+    public void setDilutionReferences(Set<LabBatchStartingVessel> dilutionReferences) {
+        this.dilutionReferences = dilutionReferences;
+    }
+
+    public void addDilutionReferences(LabBatchStartingVessel dilutionReferences) {
+        this.dilutionReferences.add(dilutionReferences);
+    }
+
     /**
      * Get lab batches of the specified type
      *
      * @param labBatchType null to get all types
      *
      * @return filtered lab batches
+     *
+     * @deprecated this implementation is not necessary with the addition of a method that utilizes transfer entity
+     *             traverser
      */
-    public Set<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
-        Set<LabBatch> allLabBatches = getLabBatches();
+    @Deprecated
+    @SuppressWarnings("unused")
+    public Collection<LabBatch> getLabBatchesOfType(LabBatch.LabBatchType labBatchType) {
+        Collection<LabBatch> allLabBatches = getAllLabBatches(labBatchType);
+
         if (labBatchType == null) {
             return allLabBatches;
         } else {
-            Set<LabBatch> labBatchesOfType = new HashSet<LabBatch>();
+            Set<LabBatch> labBatchesOfType = new HashSet<>();
             for (LabBatch labBatch : allLabBatches) {
                 if (labBatch.getLabBatchType() == labBatchType) {
                     labBatchesOfType.add(labBatch);
@@ -1043,8 +1103,6 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    // todo jmt can the next three methods be deleted?
-
     /**
      * What {@link SampleMetadata samples} are contained in
      * this container?  Implementations are expected to
@@ -1053,10 +1111,10 @@ public abstract class LabVessel implements Serializable {
      * an external source like BSP or a spreadsheet
      * uploaded for "walk up" sequencing.
      *
-     * @return
+     * @return The mercury samples
      */
     public Set<MercurySample> getMercurySamples() {
-        Set<MercurySample> foundSamples = new HashSet<MercurySample>();
+        Set<MercurySample> foundSamples = new HashSet<>();
         if (!mercurySamples.isEmpty()) {
             foundSamples.addAll(mercurySamples);
         }
@@ -1069,12 +1127,13 @@ public abstract class LabVessel implements Serializable {
      * the list of samples.  Otherwise, the list of samples
      * is empty and is derived from a walk through event history.
      *
-     * @param mercurySample
+     * @param mercurySample The sample to add
      */
     public void addSample(MercurySample mercurySample) {
-        this.mercurySamples.add(mercurySample);
+        mercurySamples.add(mercurySample);
     }
 
+    @SuppressWarnings("unused")
     public void addAllSamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
@@ -1088,17 +1147,13 @@ public abstract class LabVessel implements Serializable {
         if (this == o) {
             return true;
         }
+
         if (!OrmUtil.proxySafeIsInstance(o, LabVessel.class)) {
             return false;
         }
 
         LabVessel labVessel = OrmUtil.proxySafeCast(o, LabVessel.class);
-
-        if (label != null ? !label.equals(labVessel.getLabel()) : labVessel.getLabel() != null) {
-            return false;
-        }
-
-        return true;
+        return !(label != null ? !label.equals(labVessel.getLabel()) : labVessel.getLabel() != null);
     }
 
     @Override
@@ -1178,6 +1233,7 @@ public abstract class LabVessel implements Serializable {
         return event;
     }
 
+    @SuppressWarnings("unused")
     public Collection<String> getNearestProductOrders() {
 
         if (getContainerRole() != null) {
@@ -1199,10 +1255,10 @@ public abstract class LabVessel implements Serializable {
      *
      * @return the batch
      */
+    @SuppressWarnings("unchecked")
     public LabBatch getPluralityLabBatch(VesselContainer container) {
         Collection<LabBatch> vesselBatches = getAllLabBatches();
-        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>) container
-                .getLabBatchCompositions()) {
+        for (LabBatchComposition labBatchComposition : (List<LabBatchComposition>) container.getLabBatchCompositions()) {
             if (vesselBatches.contains(labBatchComposition.getLabBatch())) {
                 return labBatchComposition.getLabBatch();
             }
@@ -1218,10 +1274,10 @@ public abstract class LabVessel implements Serializable {
      */
     public List<LabBatchComposition> getWorkflowLabBatchCompositions() {
 
-        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        List<SampleInstance> sampleInstances = new ArrayList<>();
         sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
 
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
         for (SampleInstance sampleInstance : sampleInstances) {
             for (LabBatch labBatch : sampleInstance.getAllWorkflowLabBatches()) {
                 LabBatchComposition batchComposition = batchMap.get(labBatch);
@@ -1233,7 +1289,7 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
-        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
         Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
@@ -1245,12 +1301,13 @@ public abstract class LabVessel implements Serializable {
      *
      * @return list of lab batches sorted by vessel count (descending).
      */
+    @SuppressWarnings("unused")
     public List<LabBatchComposition> getLabBatchCompositions() {
 
-        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        List<SampleInstance> sampleInstances = new ArrayList<>();
         sampleInstances.addAll(getSampleInstances(SampleType.WITH_PDO, null));
 
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
         for (SampleInstance sampleInstance : sampleInstances) {
             for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
                 LabBatchComposition batchComposition = batchMap.get(labBatch);
@@ -1262,7 +1319,7 @@ public abstract class LabVessel implements Serializable {
             }
         }
 
-        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
         Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
@@ -1274,6 +1331,17 @@ public abstract class LabVessel implements Serializable {
         } else {
             TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
                     new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getAllLabBatches();
+        }
+    }
+
+    public Collection<LabBatch> getAllLabBatches(LabBatch.LabBatchType type) {
+        if (getContainerRole() != null) {
+            return getContainerRole().getAllLabBatches(type);
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(type);
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getAllLabBatches();
         }
@@ -1307,32 +1375,38 @@ public abstract class LabVessel implements Serializable {
      *
      * @param type The type of event to filter the ancestors and descendants by.
      *
-     * @return A map containing the vessels (key) and the event they were used at (value) given the event type.
+     * @return A map of lab vessels keyed off the event they were present at filtered by type.
      */
-    public Map<LabVessel, LabEvent> findVesselsForLabEventType(LabEventType type) {
-        Map<LabVessel, LabEvent> foundVesselsToEvent = new HashMap<>();
-        for (LabVessel vessel : getAncestorAndDescendantVessels()) {
-            for (LabEvent event : vessel.getEvents()) {
-                if (type.equals(event.getLabEventType())) {
-                    for (LabVessel targetVessel : event.getTargetLabVessels()) {
-                        if (targetVessel.getContainerRole() != null
-                            && targetVessel.getContainerRole().getContainedVessels().contains(vessel)) {
-                            foundVesselsToEvent.put(vessel, event);
-                        } else if (targetVessel.equals(vessel)) {
-                            foundVesselsToEvent.put(vessel, event);
-                        }
-                    }
-                }
-            }
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventType(LabEventType type) {
+        List<LabEventType> eventTypeList = new ArrayList<>();
+        eventTypeList.add(type);
+        return findVesselsForLabEventTypes(eventTypeList);
+    }
+
+    /**
+     * This method iterates over all of the ancestor and descendant vessels, adding them to a map of vessel -> event
+     * when the event matches the type given.
+     *
+     * @param types A list of types of event to filter the ancestors and descendants by.
+     *
+     * @return A map of lab vessels keyed off the event they were present at filterd by types.
+     */
+    public Map<LabEvent, Set<LabVessel>> findVesselsForLabEventTypes(List<LabEventType> types) {
+        if (getContainerRole() != null) {
+            return getContainerRole().getVesselsForLabEventTypes(types);
         }
-        return foundVesselsToEvent;
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(types);
+        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        evaluateCriteria(vesselForEventTypeCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
     /**
      * This method walks the vessel transfers in both directions and returns all of the ancestor and descendant
      * vessels.
      *
-     * @return A collection contain all ancestor and descentdant vessels.
+     * @return A collection containing all ancestor and descendant vessels.
      */
     public Collection<LabVessel> getAncestorAndDescendantVessels() {
         Collection<LabVessel> allVessels;
@@ -1355,13 +1429,21 @@ public abstract class LabVessel implements Serializable {
         return ancestorCritera.getLabVesselAncestors();
     }
 
+    @SuppressWarnings("unused")
+    public Collection<IlluminaFlowcell> getDescendantFlowcells() {
+        TransferTraverserCriteria.VesselTypeDescendantCriteria<IlluminaFlowcell> flowcellDescendantCriteria =
+                new TransferTraverserCriteria.VesselTypeDescendantCriteria<>(IlluminaFlowcell.class);
+        evaluateCriteria(flowcellDescendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return flowcellDescendantCriteria.getDescendantsOfVesselType();
+    }
+
     /**
      * This method get index information for all samples in this vessel.
      *
-     * @return a set of strings representing all indexes in tQhis vessel.
+     * @return a set of strings representing all indexes in this vessel.
      */
     public List<MolecularIndexReagent> getIndexes() {
-        List<MolecularIndexReagent> indexes = new ArrayList<MolecularIndexReagent>();
+        List<MolecularIndexReagent> indexes = new ArrayList<>();
         for (SampleInstance sample : getAllSamples()) {
             for (Reagent reagent : sample.getReagents()) {
                 if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
@@ -1380,7 +1462,7 @@ public abstract class LabVessel implements Serializable {
      * @return A set of unique indexes in this vessel.
      */
     public Set<MolecularIndexReagent> getUniqueIndexes() {
-        return new HashSet<MolecularIndexReagent>(getIndexes());
+        return new HashSet<>(getIndexes());
     }
 
     /**
@@ -1391,7 +1473,7 @@ public abstract class LabVessel implements Serializable {
      * @return A set of indexes for the mercury sample passed in.
      */
     public Set<MolecularIndexReagent> getIndexesForSample(MercurySample sample) {
-        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
+        Set<MolecularIndexReagent> indexes = new HashSet<>();
         for (SampleInstance sampleInstance : getAllSamplesOfType(SampleType.ANY)) {
             if (sampleInstance.getStartingSample().equals(sample)) {
                 indexes.addAll(getIndexesForSampleInstance(sampleInstance));
@@ -1408,7 +1490,7 @@ public abstract class LabVessel implements Serializable {
      * @return A set of indexes for the sample instance passed in.
      */
     public Set<MolecularIndexReagent> getIndexesForSampleInstance(SampleInstance sampleInstance) {
-        Set<MolecularIndexReagent> indexes = new HashSet<MolecularIndexReagent>();
+        Set<MolecularIndexReagent> indexes = new HashSet<>();
         for (Reagent reagent : sampleInstance.getReagents()) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
@@ -1432,6 +1514,7 @@ public abstract class LabVessel implements Serializable {
         if ((indexes == null) || indexes.isEmpty()) {
             return "";
         }
+
         StringBuilder indexInfo = new StringBuilder();
         for (MolecularIndexReagent indexReagent : indexes) {
             indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
@@ -1443,6 +1526,7 @@ public abstract class LabVessel implements Serializable {
                 indexInfo.append("\n");
             }
         }
+
         return indexInfo.toString();
     }
 
@@ -1451,10 +1535,12 @@ public abstract class LabVessel implements Serializable {
      *
      * @return A string containing information about all the indexes.
      */
+    @SuppressWarnings("unused")
     public String getIndexesString() {
         return getIndexesString(null);
     }
 
+    @SuppressWarnings("unused")
     public int getIndexesCount() {
         Collection<MolecularIndexReagent> indexes = getIndexes();
         if ((indexes == null) || indexes.isEmpty()) {
@@ -1482,12 +1568,14 @@ public abstract class LabVessel implements Serializable {
         return pdoKeys;
     }
 
+    @SuppressWarnings("unused")
     public String getPdoKeysString() {
         Collection<String> keys = getPdoKeys();
         String[] batchArray = keys.toArray(new String[keys.size()]);
         return StringUtils.join(batchArray);
     }
 
+    @SuppressWarnings("unused")
     public int getPdoKeysCount() {
         Collection<String> keys = getPdoKeys();
         if (keys == null) {
@@ -1504,7 +1592,7 @@ public abstract class LabVessel implements Serializable {
      * @return a set of sample instances contained in this vessel.
      */
     public Set<SampleInstance> getAllSamples() {
-        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
+        Set<SampleInstance> allSamples = new HashSet<>();
         allSamples.addAll(getSampleInstances(SampleType.ANY, null));
         if (getContainerRole() != null) {
             allSamples.addAll(getContainerRole().getSampleInstances(SampleType.ANY, null));
@@ -1513,7 +1601,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<SampleInstance> getAllSamplesOfType(SampleType sampleType) {
-        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
+        Set<SampleInstance> allSamples = new HashSet<>();
         allSamples.addAll(getSampleInstances(sampleType, null));
         if (getContainerRole() != null) {
             allSamples.addAll(getContainerRole().getSampleInstances(sampleType, null));
@@ -1525,10 +1613,10 @@ public abstract class LabVessel implements Serializable {
      * Goes through all the {@link #getSampleInstances()} and creates
      * a collection of the unique String sample names from {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample#getSampleKey()}
      *
-     * @return
+     * @return The names
      */
     public Collection<String> getSampleNames() {
-        List<String> sampleNames = new ArrayList<String>();
+        List<String> sampleNames = new ArrayList<>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
             if (sampleInstance.getStartingSample() != null) {
                 String sampleKey = sampleInstance.getStartingSample().getSampleKey();
@@ -1552,12 +1640,13 @@ public abstract class LabVessel implements Serializable {
      *
      * @return boolean indicating whether an ancestor of the current vessel has been in a bucket.
      */
+    @SuppressWarnings("unused")
     public boolean isAncestorInBucket(@Nonnull String pdoKey, @Nonnull String bucketName) {
 
-        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<>();
 
         vesselHierarchy.add(this);
-        vesselHierarchy.addAll(this.getAncestorVessels());
+        vesselHierarchy.addAll(getAncestorVessels());
 
         for (LabVessel currentAncestor : vesselHierarchy) {
             for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
@@ -1577,20 +1666,21 @@ public abstract class LabVessel implements Serializable {
      *
      * @param pdoKey     PDO Key with which a vessel may be associated in a bucket
      * @param bucketName Name of the bucket to search for associations
-     * @param active
+     * @param compareStatus Status to compare each entry to
      *
-     * @return
+     * @return true if the entry is in the bucket with the specified status
      */
-    public boolean checkCurrentBucketStatus(@Nonnull String pdoKey, @Nonnull String bucketName,
-                                            BucketEntry.Status active) {
+    public boolean checkCurrentBucketStatus(
+            @Nonnull String pdoKey, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
 
         for (BucketEntry currentEntry : getBucketEntries()) {
             if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
                 bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
-                active == currentEntry.getStatus()) {
+                compareStatus == currentEntry.getStatus()) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -1600,11 +1690,11 @@ public abstract class LabVessel implements Serializable {
      *
      * @param bucketName Name of the bucket to search for associations
      *
-     * @return
+     * @return true if there is an ancestor in a bucket
      */
     public boolean hasAncestorBeenInBucket(@Nonnull String bucketName) {
 
-        List<LabVessel> vesselHierarchy = new ArrayList<LabVessel>();
+        List<LabVessel> vesselHierarchy = new ArrayList<>();
 
         vesselHierarchy.add(this);
         vesselHierarchy.addAll(this.getAncestorVessels());
@@ -1618,5 +1708,71 @@ public abstract class LabVessel implements Serializable {
         }
 
         return false;
+    }
+
+    /**
+     * This method gets a map of all of the metrics from this vessel and all ancestor/descendant vessels.
+     * TODO jac should this be a traversal criteria?
+     *
+     * @return Returns a map of lab metrics keyed by the metric display name.
+     */
+    public Map<String, Set<LabMetric>> getMetricsForVesselAndDescendants() {
+        Set<LabMetric> allMetrics = new HashSet<>();
+        if (metricMap == null) {
+            metricMap = new HashMap<>();
+            allMetrics.addAll(getMetrics());
+            for (LabVessel curVessel : getAncestorAndDescendantVessels()) {
+                allMetrics.addAll(curVessel.getMetrics());
+            }
+            Set<LabMetric> metricSet;
+            for (LabMetric metric : allMetrics) {
+                metricSet = metricMap.get(metric.getName().getDisplayName());
+                if (metricSet == null) {
+                    metricSet = new TreeSet<>();
+                    metricMap.put(metric.getName().getDisplayName(), metricSet);
+                }
+                metricSet.add(metric);
+            }
+        }
+        return metricMap;
+    }
+
+    /**
+     * In preparation for getSampleInstances recursion, sets the computed LCSETs in each ancestor lab event.  This is
+     * necessary because a control doesn't have a {@link BucketEntry}; controls become associated with LCSETs by being
+     * in the same transfer as vessels with BucketEntries.
+     */
+    public Set<LabBatch> preProcessEvents() {
+        Set<LabEvent> visitedLabEvents = new HashSet<>();
+        return recurseEvents(visitedLabEvents, getTransfersToWithReArrays());
+    }
+
+    /**
+     * Recurses ancestor transfers, setting computed LCSETs.
+     *
+     * @param visitedLabEvents avoid visiting event twice
+     * @param currentTransfers the transfers at the current point in the recursion
+     *
+     * @return results of recursion
+     */
+    Set<LabBatch> recurseEvents(Set<LabEvent> visitedLabEvents, Set<LabEvent> currentTransfers) {
+        Set<LabBatch> returnLcSets = new HashSet<>();
+        for (LabEvent labEvent : currentTransfers) {
+            if (visitedLabEvents.add(labEvent)) {
+                Set<LabBatch> lcSetsFromRecursion = new HashSet<>();
+                for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                    lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
+                }
+                Set<LabBatch> computedLcSets = labEvent.computeLcSets();
+                if (computedLcSets.isEmpty()) {
+                    returnLcSets.addAll(lcSetsFromRecursion);
+                    labEvent.addComputedLcSets(lcSetsFromRecursion);
+                } else {
+                    returnLcSets.addAll(computedLcSets);
+                    labEvent.addComputedLcSets(computedLcSets);
+                }
+            }
+        }
+        return returnLcSets;
     }
 }

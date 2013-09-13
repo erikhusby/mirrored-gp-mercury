@@ -147,12 +147,6 @@ CREATE TABLE lab_vessel (
   etl_date        DATE         NOT NULL
 );
 
-CREATE TABLE lab_batch (
-  lab_batch_id NUMERIC(19)  NOT NULL PRIMARY KEY,
-  batch_name   VARCHAR2(40) NOT NULL,
-  etl_date     DATE         NOT NULL
-);
-
 CREATE TABLE workflow (
   workflow_id      NUMERIC(19)   NOT NULL PRIMARY KEY,
   workflow_name    VARCHAR2(255) NOT NULL,
@@ -176,11 +170,12 @@ CREATE TABLE event_fact (
   process_id       NUMERIC(19),
   product_order_id NUMERIC(19),
   sample_name      VARCHAR(40),
-  lab_batch_id     NUMERIC(19),
+  batch_name       VARCHAR(40),
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
   event_date       DATE        NOT NULL,
-  etl_date         DATE        NOT NULL
+  etl_date         DATE        NOT NULL,
+  program_name     VARCHAR2(255)
 );
 
 CREATE TABLE sequencing_sample_fact (
@@ -193,7 +188,8 @@ CREATE TABLE sequencing_sample_fact (
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
   loaded_library_barcode      VARCHAR2(255),
-  loaded_library_create_date  DATE ,
+  loaded_library_create_date  DATE,
+  batch_name       	      VARCHAR(40),
   etl_date                    DATE          NOT NULL
 );
 
@@ -208,6 +204,40 @@ CREATE TABLE sequencing_run (
   etl_date              DATE        NOT NULL
 );
 
+CREATE TABLE ledger_entry (
+  ledger_id               NUMERIC(19) NOT NULL PRIMARY KEY,
+  product_order_sample_id NUMERIC(19),
+  quote_id                VARCHAR2(255),
+  price_item_id           NUMERIC(19),
+  price_item_type         VARCHAR2(50),
+  quantity                NUMBER(15,4),
+  billing_session_id      NUMERIC(19),
+  billing_message         VARCHAR2(500),
+  work_complete_date      DATE,
+  etl_date                DATE        NOT NULL
+);
+
+CREATE TABLE billing_session (
+  billing_session_id      NUMERIC(19) NOT NULL PRIMARY KEY,
+  billed_date             DATE,
+  billing_session_type    VARCHAR2(50),
+  etl_date                DATE        NOT NULL
+);
+
+CREATE TABLE lab_metric (
+  lab_metric_id    NUMERIC(19) NOT NULL PRIMARY KEY,
+  sample_name      VARCHAR(40) NOT NULL,
+  lab_vessel_id    NUMERIC(19) NOT NULL,
+  product_order_id NUMERIC(19),
+  batch_name       VARCHAR(40),
+  quant_type       VARCHAR2(255),
+  quant_units      VARCHAR2(255),
+  quant_value      NUMBER(19,2),
+  run_name         VARCHAR2(255),
+  run_date         DATE,
+  vessel_position  VARCHAR2(255),
+  etl_date         DATE NOT NULL
+);
 
 --   Creates the import tables
 
@@ -372,14 +402,6 @@ CREATE TABLE im_lab_vessel (
   lab_vessel_type VARCHAR2(40)
 );
 
-CREATE TABLE im_lab_batch (
-  line_number  NUMERIC(9)  NOT NULL,
-  etl_date     DATE        NOT NULL,
-  is_delete    CHAR(1)     NOT NULL,
-  lab_batch_id NUMERIC(19) NOT NULL,
-  batch_name   VARCHAR2(40)
-);
-
 CREATE TABLE im_workflow (
   line_number      NUMERIC(9)  NOT NULL,
   etl_date         DATE        NOT NULL,
@@ -409,9 +431,10 @@ CREATE TABLE im_event_fact (
   process_id       NUMERIC(19),
   product_order_id NUMERIC(19),
   sample_name      VARCHAR(40),
-  lab_batch_id     NUMERIC(19),
+  batch_name       VARCHAR(40),
   station_name     VARCHAR2(255),
   lab_vessel_id    NUMERIC(19),
+  program_name     VARCHAR2(255),
   event_date       DATE,
   event_fact_id    NUMERIC(28) --this gets populated by merge_import.sql
 );
@@ -440,7 +463,22 @@ CREATE TABLE im_ledger_entry (
   is_delete               CHAR(1)     NOT NULL,
   ledger_id               NUMERIC(19) NOT NULL,
   product_order_sample_id NUMERIC(19),
-  quote_id                VARCHAR2(255)
+  quote_id                VARCHAR2(255),
+  price_item_id           NUMERIC(19),
+  price_item_type         VARCHAR2(50),
+  quantity                NUMBER(15,4),
+  billing_session_id      NUMERIC(19),
+  billing_message         VARCHAR2(500),
+  work_complete_date      DATE
+);
+
+CREATE TABLE im_billing_session (
+  line_number             NUMERIC(9)  NOT NULL,
+  etl_date                DATE        NOT NULL,
+  is_delete               CHAR(1)     NOT NULL,
+  billing_session_id      NUMERIC(19) NOT NULL,
+  billed_date             DATE,
+  billing_session_type    VARCHAR2(50)
 );
 
 CREATE TABLE im_sequencing_sample_fact (
@@ -456,7 +494,8 @@ CREATE TABLE im_sequencing_sample_fact (
   sample_name                 VARCHAR2(40),
   research_project_id         NUMERIC(19),
   loaded_library_barcode      VARCHAR2(255),
-  loaded_library_create_date  DATE
+  loaded_library_create_date  DATE,
+  batch_name                  VARCHAR(40)
 );
 
 CREATE TABLE im_sequencing_run (
@@ -471,6 +510,25 @@ CREATE TABLE im_sequencing_run (
   setup_read_structure  VARCHAR2(255),
   actual_read_structure VARCHAR2(255)
 );
+
+CREATE TABLE im_lab_metric (
+  line_number      NUMERIC(9)  NOT NULL,
+  etl_date         DATE        NOT NULL,
+  is_delete        CHAR(1)     NOT NULL,
+  lab_metric_id    NUMERIC(19) NOT NULL,
+  sample_name      VARCHAR(40),
+  lab_vessel_id    NUMERIC(19),
+  product_order_id NUMERIC(19),
+  batch_name       VARCHAR(40),
+  quant_type       VARCHAR2(255),
+  quant_units      VARCHAR2(255),
+  quant_value      NUMBER(19,2),
+  run_name         VARCHAR2(255),
+  run_date         DATE,
+  vessel_position  VARCHAR2(255)
+);
+
+
 
 CREATE SEQUENCE event_fact_id_seq START WITH 1;
 CREATE SEQUENCE sequencing_sample_id_seq START WITH 1;
@@ -520,9 +578,6 @@ REFERENCES price_item (price_item_id) ON DELETE CASCADE;
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id)
 REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
 
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id)
-REFERENCES lab_batch (lab_batch_id) ON DELETE CASCADE;
-
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id)
 REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 
@@ -540,6 +595,12 @@ REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 
 ALTER TABLE sequencing_sample_fact ADD CONSTRAINT fk_seq_sample_rpid FOREIGN KEY (research_project_id)
 REFERENCES research_project (research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_vessel_id FOREIGN KEY (lab_vessel_id)
+REFERENCES lab_vessel (lab_vessel_id) ON DELETE CASCADE;
+
+ALTER TABLE lab_metric ADD CONSTRAINT fk_lab_metric_pdo_id FOREIGN KEY (product_order_id)
+REFERENCES product_order (product_order_id) ON DELETE CASCADE;
 
 --  Creates indexes
 
@@ -563,5 +624,6 @@ CREATE INDEX ix_root_project ON research_project (root_research_project_id);
 CREATE UNIQUE INDEX seq_sample_fact_idx1 ON sequencing_sample_fact (flowcell_barcode, lane, molecular_indexing_scheme);
 CREATE INDEX seq_sample_fact_idx2 ON sequencing_sample_fact (product_order_id, sample_name);
 CREATE INDEX seq_sample_fact_idx3 ON sequencing_sample_fact (sequencing_run_id);
+CREATE INDEX lab_metric_idx1 ON lab_metric (product_order_id, sample_name, batch_name);
 
 COMMIT;

@@ -137,7 +137,7 @@ public class ControlDaoTest extends ContainerTest {
         Control testCtrl4 = new Control(testId4, Control.ControlType.NEGATIVE);
         Control testCtrl5 = new Control(testId5, Control.ControlType.POSITIVE);
 
-        List<Control> listOfOriginals = new ArrayList<Control>(5);
+        List<Control> listOfOriginals = new ArrayList<>(5);
         Collections.addAll(listOfOriginals, testCtrl1, testCtrl2, testCtrl3, testCtrl4, testCtrl5);
 
         controlDao.persistAll(listOfOriginals);

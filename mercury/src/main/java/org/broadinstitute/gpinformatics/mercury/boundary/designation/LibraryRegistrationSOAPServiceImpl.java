@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;

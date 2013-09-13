@@ -67,7 +67,7 @@ public class ProductTokenInput extends TokenInput<Product> {
     public List<String> getBusinessKeyList() {
         List<Product> products = getTokenObjects();
 
-        List<String> businessKeyList = new ArrayList<String> ();
+        List<String> businessKeyList = new ArrayList<>();
         for (Product product : products) {
             businessKeyList.add(product.getBusinessKey());
         }

@@ -38,15 +38,16 @@ import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class EventEtlDbFreeTest {
-    private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateStr = ExtractTransform.formatTimestamp(new Date());
     private final long entityId = 1122334455L;
     private final long workflowId = -1234123412341234123L;
     private final long processId = 3412341234123412312L;
     private final String pdoKey = "PDO-0000";
     private final long pdoId = 3344551122L;
     private final String sampleKey = "SMID-000000";
-    private final long labBatchId = 4455112233L;
+    private final String labBatchName = "LCSET-123";
     private final String location = "Machine-XYZ";
+    private final String programName = "FlowcellLoader";
     private final long vesselId = 5511223344L;
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
@@ -64,6 +65,7 @@ public class EventEtlDbFreeTest {
     private final SampleInstance sampleInst = EasyMock.createMock(SampleInstance.class);
     private final MercurySample sample = EasyMock.createMock(MercurySample.class);
     private final LabBatch labBatch = EasyMock.createMock(LabBatch.class);
+    private final LabBatch bspBatch = EasyMock.createMock(LabBatch.class);
     private final SequencingSampleFactEtl sequencingSampleFactEtl = EasyMock.createNiceMock(SequencingSampleFactEtl.class);
     private final LabEvent modEvent = EasyMock.createNiceMock(LabEvent.class);
     private final LabVessel denature = EasyMock.createNiceMock(LabVessel.class);
@@ -75,9 +77,9 @@ public class EventEtlDbFreeTest {
             sampleInst, sample, labBatch, sequencingSampleFactEtl, modEvent, denature, cartridge, cartridgeEvent,
             flowcell};
 
-    private final Set<LabVessel> vesselList = new HashSet<LabVessel>();
-    private final Set<SampleInstance> sampleInstList = new HashSet<SampleInstance>();
-    private final Set<LabBatch> workflowLabBatches = new HashSet<LabBatch>();
+    private final Set<LabVessel> vesselList = new HashSet<>();
+    private final Set<SampleInstance> sampleInstList = new HashSet<>();
+    private final Set<LabBatch> workflowLabBatches = new HashSet<>();
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -143,7 +145,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).
+        EasyMock.expect(vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW)).
                 andReturn(new HashSet<SampleInstance>());
 
         EasyMock.replay(mocks);
@@ -158,7 +160,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        EasyMock.expect(vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(null);
         EasyMock.expect(vessel.getIndexesString(sampleInst)).andReturn("dummy string");
@@ -175,12 +177,12 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
-        EasyMock.expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        EasyMock.expect(vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
-        EasyMock.expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -190,6 +192,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
 
@@ -202,17 +205,48 @@ public class EventEtlDbFreeTest {
         EasyMock.verify(mocks);
     }
 
+    public void testSampleImport() throws Exception {
+        EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
+        EasyMock.expect(obj.getLabEventType()).andReturn(LabEventType.SAMPLE_IMPORT).times(2);
+        EasyMock.expect(obj.getTargetLabVessels()).andReturn(vesselList);
+        EasyMock.expect(vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
+        EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(Collections.<LabBatch>emptyList());
+        EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
+
+        EasyMock.expect(bspBatch.getBatchName()).andReturn(labBatchName);
+        EasyMock.expect(bspBatch.getWorkflowName()).andReturn(workflowName);
+        EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
+        EasyMock.expect(wfLookup.lookupWorkflowConfig(LabEventType.SAMPLE_IMPORT.getName(), null, eventDate))
+                .andReturn(wfConfig);
+        EasyMock.expect(wfConfig.isProductOrderNeeded()).andReturn(false);
+        EasyMock.expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
+        EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
+        EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
+        EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
+        EasyMock.expect(obj.getEventDate()).andReturn(eventDate).times(2);
+
+        EasyMock.replay(mocks);
+
+        Collection<String> records = tst.dataRecords(etlDateStr, false, entityId);
+        EasyMock.verify(mocks);
+
+        Assert.assertEquals(records.size(), 1);
+    }
+
     public void testInPlaceLabVessel() throws Exception {
         EasyMock.expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabEventType()).andReturn(eventType).times(2);
         EasyMock.expect(obj.getTargetLabVessels()).andReturn(new HashSet<LabVessel>());
         EasyMock.expect(obj.getInPlaceLabVessel()).andReturn(vessel).times(2);
-        EasyMock.expect(vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
+        EasyMock.expect(vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW)).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
 
-        EasyMock.expect(labBatch.getLabBatchId()).andReturn(labBatchId);
+        EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
         EasyMock.expect(labBatch.getWorkflowName()).andReturn(workflowName);
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -223,6 +257,7 @@ public class EventEtlDbFreeTest {
         EasyMock.expect(wfConfig.getProcessId()).andReturn(processId);
         EasyMock.expect(obj.getLabEventId()).andReturn(entityId);
         EasyMock.expect(obj.getEventLocation()).andReturn(location);
+        EasyMock.expect(obj.getProgramName()).andReturn(programName);
         EasyMock.expect(vessel.getLabVesselId()).andReturn(vesselId);
         EasyMock.expect(obj.getEventDate()).andReturn(eventDate);
 
@@ -302,20 +337,9 @@ public class EventEtlDbFreeTest {
 
 
     private void verifyRecord(String record) {
-        int i = 0;
-        String[] parts = record.split(",");
-        Assert.assertEquals(parts[i++], etlDateStr);
-        Assert.assertEquals(parts[i++], "F");
-        Assert.assertEquals(parts[i++], String.valueOf(entityId));
-        Assert.assertEquals(parts[i++], String.valueOf(workflowId));
-        Assert.assertEquals(parts[i++], String.valueOf(processId));
-        Assert.assertEquals(parts[i++], String.valueOf(pdoId));
-        Assert.assertEquals(parts[i++], sampleKey);
-        Assert.assertEquals(parts[i++], String.valueOf(labBatchId));
-        Assert.assertEquals(parts[i++], location);
-        Assert.assertEquals(parts[i++], String.valueOf(vesselId));
-        Assert.assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
-        Assert.assertEquals(parts.length, i);
+        EtlTestUtilities.verifyRecord(record, etlDateStr,"F", String.valueOf(entityId), String.valueOf(workflowId),
+                String.valueOf(processId), String.valueOf(pdoId), sampleKey, String.valueOf(labBatchName), location,
+                String.valueOf(vesselId), ExtractTransform.formatTimestamp(eventDate), programName);
     }
 }
 

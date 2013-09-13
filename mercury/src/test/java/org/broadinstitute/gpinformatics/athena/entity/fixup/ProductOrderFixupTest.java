@@ -6,15 +6,18 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -66,6 +69,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private ResearchProjectDao projectDao;
 
     // When you run this on prod, change to PROD and prod
     @Deployment
@@ -275,7 +281,7 @@ public class ProductOrderFixupTest extends Arquillian {
         @SuppressWarnings("unchecked")
         List<Object[]> resultList = query.getResultList();
 
-        Map<String, Date> keyToDateMap = new HashMap<String, Date>();
+        Map<String, Date> keyToDateMap = new HashMap<>();
 
         for (Object[] row : resultList) {
             String key = (String) row[0];
@@ -318,11 +324,43 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
+    public void changeProjectForPdo(String pdoKey, String newProjectKey) throws IOException {
+        ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+        Assert.assertNotNull(order, "Could not find " + pdoKey);
+
+        ResearchProject oldProject = order.getResearchProject();
+        ResearchProject newProject = projectDao.findByBusinessKey(newProjectKey);
+
+        order.setResearchProject(newProject);
+
+        log.info("Updating " + order.getBusinessKey() + "/" + order.getName() + " from project " +
+                 oldProject.getBusinessKey() + " to " + newProject.getBusinessKey() + "/" + newProject.getName());
+
+        JiraIssue issue = jiraService.getIssue(pdoKey);
+
+        // Note that this adds the link...BUT YOU MUST DELETE THE PREVIOUS RP LINK MANUALLY!
+        issue.addLink(AddIssueLinkRequest.LinkType.Related, newProject.getBusinessKey());
+
+        productOrderDao.persist(order);
+    }
+
+    @Test(enabled = false)
+    public void changeProjectForPdo() throws Exception {
+        changeProjectForPdo("PDO-1621", "RP-317");
+    }
+
+    @Test(enabled = false)
+    public void changePdoName() throws Exception {
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-1928");
+        if (order != null) {
+            order.setTitle("TB-ARC_CDRCAlland_SKorea_ProductionBatch1");
+            productOrderDao.persist(order);
+        }
+    }
+
     private void changeJiraKey(String oldKey, String newKey) {
         ProductOrder order = productOrderDao.findByBusinessKey(newKey);
-        if (order != null) {
-             Assert.fail("Should be no " + newKey + " in the database!");
-        }
+        Assert.assertNull(order, "Should be no " + newKey + " in the database!");
         order = productOrderDao.findByBusinessKey(oldKey);
         order.setJiraTicketKey(newKey);
         productOrderDao.persist(order);
@@ -333,5 +371,33 @@ public class ProductOrderFixupTest extends Arquillian {
         // Fix DB error caused by clicking Place Order too many times. We need to update a PDO to use a different
         // JIRA key.
         changeJiraKey("PDO-1043", "PDO-1042");
+    }
+
+    @Test(enabled = false)
+    public void unAbandonPDOSample() throws Exception {
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-190");
+        List<ProductOrderSample> pdoSamples = productOrderSampleDao.findByOrderAndName(order, "SM-1ISV5");
+        for (ProductOrderSample pdoSample : pdoSamples) {
+            pdoSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
+        }
+        List<String> samplesToUnAbandon = Arrays.asList(
+                "SM-2HJ9A",
+                "SM-2HMML",
+                "SM-2HMH9",
+                "SM-2IJBV",
+                "SM-2IJEK",
+                "SM-2LK3J");
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-652");
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
+
+        for (ProductOrderSample sample : sampleList) {
+            if (samplesToUnAbandon.contains(sample.getSampleName())) {
+                sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
+            }
+        }
+
+        productOrderSampleDao.persistAll(sampleList);
+        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey());
     }
 }

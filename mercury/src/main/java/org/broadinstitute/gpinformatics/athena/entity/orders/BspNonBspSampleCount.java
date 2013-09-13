@@ -14,7 +14,7 @@ public class BspNonBspSampleCount {
     private ImmutablePair<Integer,Integer> pair;
 
     public BspNonBspSampleCount(int bspSampleCount, int nonBspSampleCount) {
-        pair = new ImmutablePair<Integer, Integer>(bspSampleCount, nonBspSampleCount);
+        pair = new ImmutablePair<>(bspSampleCount, nonBspSampleCount);
     }
 
     /**

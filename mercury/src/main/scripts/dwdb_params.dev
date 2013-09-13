@@ -4,3 +4,4 @@ servername: vmgpinform
 port: 1521
 sid: gpinfdev
 rootDir: /seq/lims/datawh/dev
+serverLogDir:

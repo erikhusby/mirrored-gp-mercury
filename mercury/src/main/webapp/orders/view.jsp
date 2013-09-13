@@ -27,11 +27,13 @@
 
                 var sampleNameFields = $j(".sampleName");
 
+                var CHUNK_SIZE = 100;
+
                 // If there are no samples, set up the filter, otherwise kick off some javascript
                 if (sampleNameFields.length > 0) {
-                    var i,j,tempArray,chunk = 50;
-                    for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
-                        tempArray = sampleNameFields.slice(i,i+chunk);
+                    var i, j, tempArray;
+                    for (i=0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
+                        tempArray = sampleNameFields.slice(i, i + CHUNK_SIZE);
 
                         updateBspInformation(tempArray);
                     }
@@ -217,9 +219,9 @@
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[1, 'asc']],
                         "aoColumns": [
-                            {"bSortable": false},                          // Checkbox
+                            {"bSortable": false},                           // Checkbox
                             {"bSortable": true, "sType": "numeric"},        // Position
-                            {"bSortable": true},                            // ID
+                            {"bSortable": true, "sType": "html"},           // ID
                             {"bSortable": true},                            // Collaborator Sample ID
                             {"bSortable": true},                            // Participant ID
                             {"bSortable": true},                            // Collaborator Participant ID
@@ -409,7 +411,6 @@
                         <%--'Validate' is also under that same security tag since that has the power to alter 'On-Riskedness' --%>
                         <%-- for PDO samples. --%>
                         <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
-
                             <stripes:submit name="placeOrder" value="Validate and Place Order"
                                             disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                             <stripes:submit name="validate" value="Validate" style="margin-left: 3px;" class="btn"/>
@@ -446,8 +447,20 @@
                                             onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
                                             class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
                         </security:authorizeBlock>
+
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                            <stripes:param name="selectedProductOrderBusinessKeys" value="${actionBean.editOrder.businessKey}"/>
+                            <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
+                        </security:authorizeBlock>
+
+                        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
+                                Upload Billing Tracker
+                            </stripes:link>
+                        </security:authorizeBlock>
                     </c:otherwise>
                 </c:choose>
+
             </div>
         </stripes:form>
 

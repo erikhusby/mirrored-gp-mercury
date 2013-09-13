@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -29,21 +29,20 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
 public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
-                                                       WorkflowName workflowName,
-                                                       long creatorId, String rpTitle, String rpSynopsis,
-                                                       boolean irbNotEngaged, String productPartNumber) {
+            Workflow workflow, long creatorId, String rpTitle, String rpSynopsis, boolean irbNotEngaged,
+            String productPartNumber, String sampleSuffix) {
 
         PriceItem exExPriceItem =
                 new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
                         PriceItem.NAME_EXOME_EXPRESS);
         Product dummyProduct =
-                ProductTestFactory.createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
+                ProductTestFactory.createDummyProduct(workflow, productPartNumber);
         dummyProduct.setPrimaryPriceItem(exExPriceItem);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
-                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
+                              String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2) + sampleSuffix;
             productOrderSamples.add(new ProductOrderSample(bspStock, new BSPSampleDTO()));
         }
 
@@ -58,7 +57,7 @@ public class ProductOrderTestFactory {
         productOrder.setOrderStatus(Submitted);
 
         Product dummyAddOnProduct =
-                ProductTestFactory.createDummyProduct("DNA Extract from FFPE or Slides", "partNumber");
+                ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
         productOrder.updateAddOnProducts(Collections.singletonList(dummyAddOnProduct));
 
         return productOrder;
@@ -73,13 +72,13 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
-        return createDummyProductOrder(1, jiraTicketKey, WorkflowName.EXOME_EXPRESS, 10950, "MyResearchProject",
-                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber");
+        return createDummyProductOrder(1, jiraTicketKey, Workflow.EXOME_EXPRESS, 10950, "MyResearchProject",
+                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", "A");
     }
 
     public static Map<String, ProductOrder> buildTestProductOrderMap() {
 
-        Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
+        Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<>();
         ProductOrder tempPO = createDummyProductOrder("PDO-" + (new Random().nextInt() * 11));
 
         productOrderByBusinessKeyMap.put(tempPO.getBusinessKey(), tempPO);
@@ -87,7 +86,7 @@ public class ProductOrderTestFactory {
         ProductOrder tempPO2 = buildExExProductOrder(96);
         productOrderByBusinessKeyMap.put(tempPO2.getBusinessKey(), tempPO2);
 
-        ProductOrder tempPO3 = buildHybridSelectionProductOrder(96);
+        ProductOrder tempPO3 = buildHybridSelectionProductOrder(96, "A");
         productOrderByBusinessKeyMap.put(tempPO3.getBusinessKey(), tempPO3);
 
         ProductOrder tempPO4 = buildWholeGenomeProductOrder(96);
@@ -97,22 +96,22 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", WorkflowName.EXOME_EXPRESS, 101, "Test RP",
+        return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.EXOME_EXPRESS, 101, "Test RP",
                 AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
+                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", "A");
     }
 
-    public static ProductOrder buildHybridSelectionProductOrder(int maxSamples) {
+    public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
         return createDummyProductOrder(maxSamples, "PD0-1HS",
-                WorkflowName.HYBRID_SELECTION, 101,
+                Workflow.HYBRID_SELECTION, 101,
                 "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
+                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix);
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-2WGS", WorkflowName.WHOLE_GENOME,
+        return createDummyProductOrder(maxSamples, "PD0-2WGS", Workflow.WHOLE_GENOME,
                 301, "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-WGS-9294");
+                ResearchProject.IRB_ENGAGED, "P-WGS-9294", "A");
     }
 
 
@@ -127,14 +126,14 @@ public class ProductOrderTestFactory {
         ProductFamily productFamily = new ProductFamily("Product Family " + uuid);
         Product product =
                 new Product("Product Name " + uuid, productFamily, "Product Description " + uuid, "P-" + uuid,
-                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, "Workflow name",
+                        new Date(), null, 0, 0, 0, 1, "Input requirements", "Deliverables", true, Workflow.NONE,
                         false, "Aggregation Data Type");
 
 
         ResearchProject researchProject = new ResearchProject(-1L, "Research Project " + uuid, "Synopsis", false);
         researchProject.setJiraTicketKey("RP-" + uuid);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sampleName : sampleNames) {
             productOrderSamples.add(new ProductOrderSample(sampleName));
         }

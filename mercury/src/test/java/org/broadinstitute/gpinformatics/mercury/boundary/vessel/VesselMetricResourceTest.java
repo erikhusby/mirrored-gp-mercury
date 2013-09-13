@@ -22,12 +22,12 @@ public class VesselMetricResourceTest {
     public void testBuildLabMetricRun() {
         VesselMetricResource vesselMetricResource = new VesselMetricResource();
 
-        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<>();
         String barcode = "1234";
         vesselMetricBeans.add(new VesselMetricBean(barcode, "1.2", "ng/uL"));
         VesselMetricRunBean vesselMetricRunBean = new VesselMetricRunBean("TestRun", new Date(),  "BSP Pico", vesselMetricBeans);
 
-        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>();
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(barcode, new TwoDBarcodedTube(barcode));
         LabMetricRun labMetricRun = vesselMetricResource.buildLabMetricRun(vesselMetricRunBean, mapBarcodeToVessel);
 

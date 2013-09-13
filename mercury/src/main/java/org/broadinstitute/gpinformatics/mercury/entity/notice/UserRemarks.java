@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.notice;
 
 
 import javax.persistence.Embeddable;
-import java.util.Collection;
-import java.util.Date;
 
 /**
  * Anything that is PMRemarkable is visible

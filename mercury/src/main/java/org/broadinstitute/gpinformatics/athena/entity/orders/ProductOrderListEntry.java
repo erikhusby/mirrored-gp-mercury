@@ -15,43 +15,38 @@ public class ProductOrderListEntry implements Serializable {
 
     private static final long serialVersionUID = 6343514424527232374L;
 
-    private Long orderId;
+    private final Long orderId;
 
-    private String title;
+    private final String title;
 
-    private String jiraTicketKey;
+    private final String jiraTicketKey;
 
-    private String productName;
+    private final String productName;
 
-    private String productFamilyName;
+    private final String productFamilyName;
 
-    private ProductOrder.OrderStatus orderStatus;
+    private final ProductOrder.OrderStatus orderStatus;
 
-    private String researchProjectTitle;
+    private final String researchProjectTitle;
 
-    private Long ownerId;
+    private final Long ownerId;
 
-    private Date placedDate;
+    private final Date placedDate;
 
-    private String quoteId;
+    private final String quoteId;
 
     private Long billingSessionId;
 
     private final long constructedCount;
 
-    private long readyForReviewCount = 0L;
+    private long readyForReviewCount;
 
-    private long readyForBillingCount = 0L;
+    private long readyForBillingCount;
 
-    /**
-     * Version of the constructor called by the non-ledger aware first pass query.
-     *
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    // This is called through reflection and only appears to be unused.
-    public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                 String productName, String productFamilyName, String researchProjectTitle,
-                                 Long ownerId, Date placedDate, String quoteId) {
+    private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
+                                  String productName, String productFamilyName, String researchProjectTitle,
+                                  Long ownerId, Date placedDate, String quoteId, Long billingSessionId,
+                                  long constructedCount) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -62,30 +57,41 @@ public class ProductOrderListEntry implements Serializable {
         this.ownerId = ownerId;
         this.placedDate = placedDate;
         this.quoteId = quoteId;
-
-        // The query that generates this does not update counts, so this value is not used here.
-        this.constructedCount = 0L;
-    }
-
-    /**
-     * Version of the constructor called by the ledger-aware second pass query, these objects are merged
-     * into the objects from the first query.
-     */
-    @SuppressWarnings("UnusedDeclaration")
-    // This is called through reflection and only appears to be unused.
-    public ProductOrderListEntry(
-        Long orderId, String jiraTicketKey, Long billingSessionId, Long constructedCount) {
-
-        this.orderId = orderId;
-        this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
 
         // This count is used by the query that needs to populate one of the two other counts.
         this.constructedCount = constructedCount;
     }
 
+    /**
+     * Version of the constructor called by the non-ledger aware first pass query.
+     *
+     */
+    @SuppressWarnings("UnusedDeclaration")
+    // This is called through reflection and only appears to be unused.
+    public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
+                                 String productName, String productFamilyName, String researchProjectTitle,
+                                 Long ownerId, Date placedDate, String quoteId) {
+
+        // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
+        this(orderId, title, jiraTicketKey, orderStatus, productName, productFamilyName, researchProjectTitle, ownerId,
+                placedDate, quoteId, null, 0);
+    }
+
+    /**
+     * Version of the constructor called by the ledger-aware second pass query, these objects are merged
+     * into the objects from the first query.
+     */
+    // This is called through reflection and only appears to be unused.
+    @SuppressWarnings("UnusedDeclaration")
+    public ProductOrderListEntry(
+        Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
+        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
+                constructedCount);
+    }
+
     private ProductOrderListEntry() {
-        constructedCount = 0L;
+        this(null, null, null, 0);
     }
 
     public static ProductOrderListEntry createDummy() {
@@ -187,8 +193,12 @@ public class ProductOrderListEntry implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ProductOrderListEntry)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ProductOrderListEntry)) {
+            return false;
+        }
 
         ProductOrderListEntry that = (ProductOrderListEntry) o;
 
@@ -205,12 +215,12 @@ public class ProductOrderListEntry implements Serializable {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
 
-    public static Collection<String> getBusinessKeyList(List<ProductOrderListEntry> productOrderListEntries) {
-        Collection<String> pdoKeys = new ArrayList<> (productOrderListEntries.size());
+    public static Collection<Long> getProductOrderIDs(List<ProductOrderListEntry> productOrderListEntries) {
+        Collection<Long> pdoIds = new ArrayList<>(productOrderListEntries.size());
         for (ProductOrderListEntry entry : productOrderListEntries){
-            pdoKeys.add(entry.getBusinessKey());
+            pdoIds.add(entry.orderId);
         }
 
-        return pdoKeys;
+        return pdoIds;
     }
 }

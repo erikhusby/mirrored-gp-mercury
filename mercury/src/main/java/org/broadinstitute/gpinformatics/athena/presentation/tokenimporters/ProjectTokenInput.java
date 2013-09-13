@@ -56,7 +56,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
         projects.removeAll(omitProjects);
 
-        return createItemListString(new ArrayList<ResearchProject>(projects));
+        return createItemListString(new ArrayList<>(projects));
     }
 
     @Override

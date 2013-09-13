@@ -1,16 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.google.common.base.Predicate;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
@@ -21,6 +24,7 @@ import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,12 +37,26 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
+ * This class represents A role of a vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a
+ * flowcell of lanes.
+ * This class does not stand alone, it is embedded in a {@link LabVessel}.  This is re-use through delegation, rather than
+ * through inheritance.  Delegation is preferable, because a LabVessel could have multiple roles, but multiple
+ * inheritance is not supported.  As an example of multiple roles, A Cryo straw is held in a visotube, which is held
+ * in a goblet; a visotube is both a container and a containee.
  */
+@SuppressWarnings("UnusedDeclaration")
 @Embeddable
 public class VesselContainer<T extends LabVessel> {
 
-//    private static final Log LOG = LogFactory.getLog(VesselContainer.class);
+    /**
+     * Predicate that determines whether its argument represents a rack of tubes.
+     */
+    public static final Predicate<LabVessel> IS_LAB_VESSEL_A_RACK = new Predicate<LabVessel>() {
+        @Override
+        public boolean apply(@Nullable LabVessel labVessel) {
+            return labVessel != null && labVessel.getType() == LabVessel.ContainerType.TUBE_FORMATION;
+        }
+    };
 
     /* rack holds tubes, tubes have barcodes and can be removed.
     * plate holds wells, wells can't be removed.
@@ -52,27 +70,26 @@ public class VesselContainer<T extends LabVessel> {
     @MapKeyEnumerated(EnumType.STRING)
     // hbm2ddl always uses mapkey
     @MapKeyColumn(name = "mapkey")
-    // todo jmt get Hibernate to sort this
     // the map value has to be LabVessel, not T, because JPAMetaModelEntityProcessor can't handle type parameters
-    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<VesselPosition, LabVessel>();
+    private final Map<VesselPosition, LabVessel> mapPositionToVessel = new LinkedHashMap<>();
 
     @Transient
-    private Map<LabVessel, VesselPosition> vesselToMapPosition = null;
+    private Map<LabVessel, VesselPosition> vesselToMapPosition;
 
     @OneToMany(mappedBy = "sourceVessel")
-    private Set<SectionTransfer> sectionTransfersFrom = new HashSet<SectionTransfer>();
+    private Set<SectionTransfer> sectionTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<SectionTransfer> sectionTransfersTo = new HashSet<SectionTransfer>();
+    private Set<SectionTransfer> sectionTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceVessel")
-    private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<CherryPickTransfer>();
+    private Set<CherryPickTransfer> cherryPickTransfersFrom = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<CherryPickTransfer>();
+    private Set<CherryPickTransfer> cherryPickTransfersTo = new HashSet<>();
 
     @OneToMany(mappedBy = "targetVessel")
-    private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<VesselToSectionTransfer>();
+    private Set<VesselToSectionTransfer> vesselToSectionTransfersTo = new HashSet<>();
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
@@ -85,13 +102,14 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
+    @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
         return (T) mapPositionToVessel.get(position);
     }
 
     public Set<LabEvent> getTransfersFrom() {
-        Set<LabEvent> transfersFrom = new HashSet<LabEvent>();
+        Set<LabEvent> transfersFrom = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
             transfersFrom.add(sectionTransfer.getLabEvent());
         }
@@ -101,8 +119,35 @@ public class VesselContainer<T extends LabVessel> {
         return transfersFrom;
     }
 
+    /**
+     * Gets transfers to this container.  Includes re-arrays.
+     *
+     * @return transfers to
+     */
+    public Set<LabEvent> getTransfersToWithRearrays() {
+        Set<LabEvent> transfersTo = getTransfersTo();
+        // Need to follow Re-arrays, otherwise the chain of custody is broken.  Ignore re-arrays that add tubes
+        for (LabVessel labVessel : mapPositionToVessel.values()) {
+            for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+                Set<T> containedVessels = getContainedVessels();
+                Set<? extends LabVessel> containedVesselsOther = vesselContainer.getContainedVessels();
+                if (!vesselContainer.equals(this) && (containedVessels.containsAll(containedVesselsOther) ||
+                                                      containedVesselsOther.containsAll(containedVessels))) {
+                    transfersTo.addAll(vesselContainer.getTransfersTo());
+                }
+            }
+        }
+
+        return transfersTo;
+    }
+
+    /**
+     * Gets transfers to this container.  Does not include re-arrays, to avoid recursion.
+     *
+     * @return transfers to
+     */
     public Set<LabEvent> getTransfersTo() {
-        Set<LabEvent> transfersTo = new HashSet<LabEvent>();
+        Set<LabEvent> transfersTo = new HashSet<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
             transfersTo.add(sectionTransfer.getLabEvent());
         }
@@ -115,28 +160,38 @@ public class VesselContainer<T extends LabVessel> {
         return transfersTo;
     }
 
-    public Collection<LabBatch> getNearestLabBatches(VesselPosition position, @Nullable LabBatch.LabBatchType type) {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder(type);
-        evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
-        return batchCriteria.getNearestLabBatches();
+    /**
+     * This method gets all of the positions within this vessel that contain the sample instance passed in.
+     *
+     * @param sampleInstance The sample instance to search for positions of within the vessel
+     *
+     * @return This returns a list of vessel positions within this vessel that contain the sample instances passed in.
+     */
+    public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance) {
+        Set<VesselPosition> positions = getPositions();
+        Set<VesselPosition> positionList = new HashSet<>();
+        for (VesselPosition position : positions) {
+            for (SampleInstance curSampleInstance : getSampleInstancesAtPosition(position)) {
+                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
+                    positionList.add(position);
+                }
+            }
+        }
+        return positionList;
     }
 
-    /**
-     * Traverses transfer history to find the single sample libraries, as defined
-     * by the WorkflowAnnotation for the WorkflowDescription
-     *
-     * @param position
-     *
-     * @return
-     */
-    public Map<MercurySample, Collection<LabVessel>> getSingleSampleAncestors(VesselPosition position) {
-        TransferTraverserCriteria.SingleSampleLibraryCriteria singleSampleLibraryCriteria =
-                new TransferTraverserCriteria.SingleSampleLibraryCriteria();
-
-        evaluateCriteria(position, singleSampleLibraryCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors,
-                null, 0);
-        return singleSampleLibraryCriteria.getSingleSampleLibraries();
+    public Set<VesselPosition> getPositionsOfSampleInstance(@Nonnull SampleInstance sampleInstance,
+                                                            LabVessel.SampleType sampleType) {
+        Set<VesselPosition> positions = getPositions();
+        Set<VesselPosition> positionList = new HashSet<>();
+        for (VesselPosition position : positions) {
+            for (SampleInstance curSampleInstance : getSampleInstancesAtPosition(position, sampleType)) {
+                if (curSampleInstance.getStartingSample().equals(sampleInstance.getStartingSample())) {
+                    positionList.add(position);
+                }
+            }
+        }
+        return positionList;
     }
 
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position, LabVessel.SampleType sampleType,
@@ -168,6 +223,7 @@ public class VesselContainer<T extends LabVessel> {
                             sampleType, labBatchType));
                 } else {
                     traversalResults.add(labVessel.traverseAncestors(sampleType, labBatchType));
+                    traversalResults.applyEvent(ancestor.getLabEvent(), labVessel);
                 }
             }
         } else {
@@ -296,7 +352,7 @@ public class VesselContainer<T extends LabVessel> {
     public VesselPosition getPositionOfVessel(LabVessel vesselAtPosition) {
         //construct the reverse lookup map if it doesn't exist
         if (vesselToMapPosition == null) {
-            vesselToMapPosition = new HashMap<LabVessel, VesselPosition>();
+            vesselToMapPosition = new HashMap<>();
             for (Map.Entry<VesselPosition, LabVessel> stringTEntry : mapPositionToVessel.entrySet()) {
                 vesselToMapPosition.put(stringTEntry.getValue(), stringTEntry.getKey());
             }
@@ -313,7 +369,7 @@ public class VesselContainer<T extends LabVessel> {
     @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                    Set<LabVessel> sourceVessels) {
-        Set<SampleInstance> sampleInstances = new LinkedHashSet<SampleInstance>();
+        Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
         for (VesselPosition position : mapPositionToVessel.keySet()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position, sampleType, labBatchType));
         }
@@ -327,8 +383,6 @@ public class VesselContainer<T extends LabVessel> {
                             //noinspection unchecked
                             sampleInstances.addAll(
                                     vesselContainer.getSampleInstances(sampleType, labBatchType, sourceVessels));
-                            // todo arz fix this, probably by using LabBatch properly
-//                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
                         } else {
                             sampleInstances.addAll(sourceLabVessel.getSampleInstances(sampleType, labBatchType));
                         }
@@ -352,7 +406,7 @@ public class VesselContainer<T extends LabVessel> {
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
-        return new HashSet<T>((Collection<? extends T>) mapPositionToVessel.values());
+        return new HashSet<>((Collection<? extends T>) mapPositionToVessel.values());
     }
 
     public void addContainedVessel(T child, VesselPosition position) {
@@ -362,7 +416,16 @@ public class VesselContainer<T extends LabVessel> {
 
     @Transient
     public Set<VesselPosition> getPositions() {
-        return mapPositionToVessel.keySet();
+        if (hasAnonymousVessels()) {
+            Set<VesselPosition> positions = new HashSet<>();
+            VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
+            if (vesselPositions != null) {
+                positions.addAll(Arrays.asList(vesselPositions));
+            }
+            return positions;
+        } else {
+            return mapPositionToVessel.keySet();
+        }
     }
 
     public Map<VesselPosition, T> getMapPositionToVessel() {
@@ -400,7 +463,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabVessel.VesselEvent> getAncestors(VesselPosition position) {
-        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
+        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersTo) {
             // todo jmt replace indexOf with map lookup
             int targetWellIndex = sectionTransfer.getTargetSection().getWells().indexOf(position);
@@ -442,7 +505,7 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabVessel.VesselEvent> getDescendants(VesselPosition position) {
-        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<LabVessel.VesselEvent>();
+        List<LabVessel.VesselEvent> vesselEvents = new ArrayList<>();
         for (SectionTransfer sectionTransfer : sectionTransfersFrom) {
             // todo jmt replace indexOf with map lookup
             int targetWellIndex = sectionTransfer.getSourceSection().getWells().indexOf(position);
@@ -523,12 +586,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public List<LabBatchComposition> getLabBatchCompositions() {
-        List<SampleInstance> sampleInstances = new ArrayList<SampleInstance>();
+        List<SampleInstance> sampleInstances = new ArrayList<>();
         for (VesselPosition position : getEmbedder().getVesselGeometry().getVesselPositions()) {
             sampleInstances.addAll(getSampleInstancesAtPosition(position));
         }
 
-        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<LabBatch, LabBatchComposition>();
+        Map<LabBatch, LabBatchComposition> batchMap = new HashMap<>();
         for (SampleInstance sampleInstance : sampleInstances) {
             for (LabBatch labBatch : sampleInstance.getAllLabBatches()) {
                 LabBatchComposition batchComposition = batchMap.get(labBatch);
@@ -540,17 +603,83 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        List<LabBatchComposition> batchList = new ArrayList<LabBatchComposition>(batchMap.values());
+        List<LabBatchComposition> batchList = new ArrayList<>(batchMap.values());
         Collections.sort(batchList, LabBatchComposition.HIGHEST_COUNT_FIRST);
 
         return batchList;
     }
 
-    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType quantType) {
+    /**
+     * This method returns a collection of the closest lab metrics given the metric type.
+     *
+     * @param metricType The type of metrics to return.
+     *
+     * @return A collection of the nearest metrics of the given type.
+     */
+    public Collection<LabMetric> getNearestMetricOfType(LabMetric.MetricType metricType) {
         TransferTraverserCriteria.NearestLabMetricOfTypeCriteria metricTypeCriteria =
-                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(quantType);
+                new TransferTraverserCriteria.NearestLabMetricOfTypeCriteria(metricType);
         applyCriteriaToAllPositions(metricTypeCriteria);
         return metricTypeCriteria.getNearestMetrics();
+    }
+
+    /**
+     * Computes the LCSET(s) that all contained vessels have in common.  Contained vessels that don't have references
+     * to LCSETs (e.g. controls) don't disturb the calculation, but they are inferred to be part of the LCSET by being
+     * part of the transfer, i.e. controls are "guilty by association".
+     *
+     * @param section the section of interest for a transfer
+     *
+     * @return LCSETs, empty if no contained vessels are associated with LCSETs
+     */
+    public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
+        Set<LabBatch> computedLcSets = new HashSet<>();
+        // find lab batch that is used by every vessel in section
+        Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
+        int numVesselsWithBucketEntries = 0;
+        for (VesselPosition vesselPosition : section.getWells()) {
+            T vesselAtPosition = getVesselAtPosition(vesselPosition);
+            if (vesselAtPosition != null) {
+                Set<BucketEntry> bucketEntries = vesselAtPosition.getBucketEntries();
+                if (!bucketEntries.isEmpty()) {
+                    numVesselsWithBucketEntries++;
+                }
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        LabBatch labBatch = bucketEntry.getLabBatch();
+                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                            Integer count = mapLabBatchToCount.get(labBatch);
+                            if (count == null) {
+                                count = 1;
+                            } else {
+                                count = count + 1;
+                            }
+                            mapLabBatchToCount.put(labBatch, count);
+                        }
+                    }
+                }
+            }
+        }
+        for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
+            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+                computedLcSets.add(labBatchIntegerEntry.getKey());
+            }
+        }
+        return computedLcSets;
+    }
+
+    /**
+     * This method gets all of the target lab vessels for the given event types.
+     *
+     * @param eventTypes The event types to search for vessels at.
+     *
+     * @return All of the lab vessels for each event type passed in keyed on event.
+     */
+    public Map<LabEvent, Set<LabVessel>> getVesselsForLabEventTypes(List<LabEventType> eventTypes) {
+        TransferTraverserCriteria.VesselForEventTypeCriteria vesselForEventTypeCriteria =
+                new TransferTraverserCriteria.VesselForEventTypeCriteria(eventTypes);
+        applyCriteriaToAllPositions(vesselForEventTypeCriteria);
+        return vesselForEventTypeCriteria.getVesselsForLabEventType();
     }
 
     /**
@@ -566,4 +695,79 @@ public class VesselContainer<T extends LabVessel> {
         applyCriteriaToAllPositions(criteria);
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
+
+
+    /**
+     * Returns the shortest paths of LabEvents from this VesselContainer to source vessels satisfying the predicate.
+     * In the event that multiple paths of equal length are found, all paths will be returned.
+     *
+     * The Lists of LabEvents in the returned List are ordered with the most recent LabEvents first
+     * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
+     */
+    public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
+
+        List<List<LabEvent>> foundEventLists = new ArrayList<>();
+
+        // Keep track of the List of LabEvents that lead to a source potentially satisfying the predicate.
+        List<Map<LabVessel, List<LabEvent>>> currentTransfers = new ArrayList<>();
+
+        for (LabEvent labEvent : getTransfersTo()) {
+            for (LabVessel vessel : labEvent.getSourceLabVessels()) {
+                Map<LabVessel, List<LabEvent>> currentTransfer = new HashMap<>();
+                currentTransfer.put(vessel, Collections.singletonList(labEvent));
+                currentTransfers.add(currentTransfer);
+            }
+        }
+
+        // Continue until finding LabVessels satisfying the predicate or running out of LabVessels to test.
+        while (true) {
+            // Search for LabVessels satisfying the predicate.
+            for (Map<LabVessel, List<LabEvent>> currentTransfer : currentTransfers) {
+                for (Map.Entry<LabVessel, List<LabEvent>> entry : currentTransfer.entrySet()) {
+                    if (predicate.apply(entry.getKey())) {
+                        foundEventLists.add(entry.getValue());
+                    }
+                }
+            }
+
+            // If any satisfying LabVessels at this depth were found, terminate the search.
+            if (!foundEventLists.isEmpty()) {
+                return foundEventLists;
+            }
+
+            // Search for transfers one level deeper from the current set of transfers.
+            List<Map<LabVessel, List<LabEvent>>> previousTransfers = currentTransfers;
+            currentTransfers = new ArrayList<>();
+
+            for (Map<LabVessel, List<LabEvent>> previousTransfer : previousTransfers) {
+
+                for (Map.Entry<LabVessel, List<LabEvent>> entry : previousTransfer.entrySet()) {
+                    LabVessel vessel = entry.getKey();
+                    List<LabEvent> labEvents = entry.getValue();
+                    Map<LabVessel, List<LabEvent>> vesselMap = new HashMap<>();
+
+                    for (LabEvent labEvent : vessel.getTransfersTo()) {
+                        for (LabVessel sourceVessel : labEvent.getSourceLabVessels()) {
+                            if (!vesselMap.containsKey(sourceVessel)) {
+                                vesselMap.put(sourceVessel, new ArrayList<>(labEvents));
+                            }
+                            vesselMap.get(sourceVessel).add(labEvent);
+                        }
+                    }
+
+                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the List of current transfers.
+                    if (!vesselMap.isEmpty()) {
+                        currentTransfers.add(vesselMap);
+                    }
+                }
+            }
+
+            // If there are no transfers left to search, terminate.
+            if (currentTransfers.isEmpty()) {
+                return foundEventLists;
+            }
+        }
+
+    }
+
 }

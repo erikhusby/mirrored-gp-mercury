@@ -22,9 +22,7 @@
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [1, 'asc']
-                ],
+                "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
                     {"bSortable":false},
                     {"bSortable":true},
@@ -33,7 +31,12 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true, "sType":"date"}
+                    {"bSortable":true, "sType":"date"},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true}
                 ]
             });
 
@@ -41,32 +44,6 @@
                 checkAllClass:'bucket-checkAll',
                 countDisplayClass:'bucket-checkedCount',
                 checkboxClass:'bucket-checkbox'});
-
-            $j('#reworkEntryView').dataTable({
-                "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [1, 'asc']
-                ],
-                "aoColumns":[
-                    {"bSortable":false},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true},
-                    {"bSortable":true, "sType":"date"}
-                ]
-            });
-
-
-            $j('.rework-checkbox').enableCheckboxRangeSelection({
-                checkAllClass:'rework-checkAll',
-                countDisplayClass:'rework-checkedCount',
-                checkboxClass:'rework-checkbox'});
 
             $j("#dueDate").datepicker();
         });
@@ -78,228 +55,180 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-<stripes:form id="bucketForm" class="form-horizontal"
-              action="/view/bucketView.action?viewBucket">
-    <div class="form-horizontal">
-        <div class="control-group">
-            <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                    <stripes:options-collection collection="${actionBean.buckets}" label="name"
-                                                value="name"/>
-                </stripes:select>
+    <stripes:form id="bucketForm" class="form-horizontal"
+                  action="/view/bucketView.action?viewBucket">
+        <div class="form-horizontal">
+            <div class="control-group">
+                <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
+                <div class="controls">
+                    <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
+                        <stripes:options-collection collection="${actionBean.buckets}" label="name"
+                                                    value="name"/>
+                    </stripes:select>
+                </div>
             </div>
         </div>
-    </div>
-</stripes:form>
-<stripes:form beanclass="${actionBean.class.name}"
-              id="bucketEntryForm" class="form-horizontal">
-<div class="form-horizontal">
-<stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-<stripes:hidden name="selectedProductWorkflowDef" value="${actionBean.selectedProductWorkflowDef}"/>
-<c:if test="${actionBean.jiraEnabled}">
-    <div id="newTicketDiv">
-        <div class="control-group">
-            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="workflowSelect" name="selectedProductWorkflowDef">
-                    <stripes:options-collection collection="${actionBean.allProductWorkflowDefs}" label="name"
-                                                value="name"/>
-                </stripes:select>
+    </stripes:form>
+    <stripes:form beanclass="${actionBean.class.name}"
+                  id="bucketEntryForm" class="form-horizontal">
+        <div class="form-horizontal">
+        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
+        <stripes:hidden name="selectedProductWorkflowDef" value="${actionBean.selectedProductWorkflowDef}"/>
+        <c:if test="${actionBean.jiraEnabled}">
+            <div id="newTicketDiv">
+                <div class="control-group">
+                    <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
+                    <div class="controls">
+                        <stripes:select id="workflowSelect" name="selectedProductWorkflowDef">
+                            <stripes:options-collection collection="${actionBean.allProductWorkflowDefs}" label="name"
+                                                        value="name"/>
+                        </stripes:select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
+                                      title="Enter if you are adding to a batch"/>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <stripes:label for="summary" name="Summary" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text name="summary" class="defaultText"
+                                      title="Enter a summary for a new batch ticket" id="summary"
+                                      value="${actionBean.summary}"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="description" name="Description" class="control-label"/>
+                    <div class="controls">
+                        <stripes:textarea name="description" class="defaultText"
+                                          title="Enter a description for a new batch ticket"
+                                          id="description" value="${actionBean.description}"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="important" name="Important Information"
+                                   class="control-label"/>
+                    <div class="controls">
+                        <stripes:textarea name="important" class="defaultText"
+                                          title="Enter important info for a new batch ticket"
+                                          id="important"
+                                          value="${actionBean.important}"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="dueDate" name="Due Date" class="control-label"/>
+                    <div class="controls">
+                        <stripes:text id="dueDate" name="dueDate" class="defaultText"
+                                      title="enter date (MM/dd/yyyy)"
+                                      value="${actionBean.dueDate}"
+                                      formatPattern="MM/dd/yyyy"><fmt:formatDate
+                                value="${actionBean.dueDate}"
+                                dateStyle="short"/></stripes:text>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="control-group">
-            <stripes:label for="summary" name="Summary" class="control-label"/>
-            <div class="controls">
-                <stripes:text name="summary" class="defaultText"
-                              title="Enter a summary for a new batch ticket" id="summary"
-                              value="${actionBean.summary}"/>
             </div>
+        </c:if>
+        <div class="borderHeader"><h4>Samples</h4></div>
+        <br/>
+
+        <div class="actionButtons">
+            <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
+            <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>
         </div>
+        <table id="bucketEntryView" class="table simple">
+            <thead>
+            <tr>
+                <th width="10">
+                    <input type="checkbox" class="bucket-checkAll"/><span id="count"
+                                                                          class="bucket-checkedCount"></span>
+                </th>
+                <th width="60">Vessel Name</th>
+                <th width="50">Sample Name</th>
+                <th width="50">PDO</th>
+                <th width="300">PDO Name</th>
+                <th width="200">PDO Owner</th>
+                <th>Batch Name</th>
+                <th width="100">Created Date</th>
+                <th>Bucket Entry Type</th>
+                <th>Rework Reason</th>
+                <th>Rework Comment</th>
+                <th>Rework User</th>
+                <th>Rework Date</th>
+            </tr>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.collectiveEntries}" var="entry">
+                <tr>
+                    <td>
+                        <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
+                                          value="${entry.bucketEntryId}"/>
+                    </td>
+                    <td>
+                        <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
+                                ${entry.labVessel.label}
+                        </a></td>
 
-        <div class="control-group">
-            <stripes:label for="description" name="Description" class="control-label"/>
-            <div class="controls">
-                <stripes:textarea name="description" class="defaultText"
-                                  title="Enter a description for a new batch ticket"
-                                  id="description" value="${actionBean.description}"/>
-            </div>
-        </div>
+                    <td>
+                        <c:forEach items="${entry.labVessel.mercurySamples}"
+                                   var="mercurySample"
+                                   varStatus="stat">
+                            <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
+                                    ${mercurySample.sampleKey}
+                            </a>
 
-        <div class="control-group">
-            <stripes:label for="important" name="Important Information"
-                           class="control-label"/>
-            <div class="controls">
-                <stripes:textarea name="important" class="defaultText"
-                                  title="Enter important info for a new batch ticket"
-                                  id="important"
-                                  value="${actionBean.important}"/>
-            </div>
-        </div>
+                            <c:if test="${!stat.last}">&nbsp;</c:if>
+                        </c:forEach>
+                    </td>
+                    <td>
 
-        <div class="control-group">
-            <stripes:label for="dueDate" name="Due Date" class="control-label"/>
-            <div class="controls">
-                <stripes:text id="dueDate" name="dueDate" class="defaultText"
-                              title="enter date (MM/dd/yyyy)"
-                              value="${actionBean.dueDate}"
-                              formatPattern="MM/dd/yyyy"><fmt:formatDate
-                        value="${actionBean.dueDate}"
-                        dateStyle="short"/></stripes:text>
-            </div>
-        </div>
-    </div>
-    <div class="control-group">
-        <div class="controls">
-            <stripes:submit name="createBatch" value="Create Batch" class="btn btn-primary"/>
-        </div>
-    </div>
-    </div>
-</c:if>
-<div class="borderHeader"><h4>Samples</h4></div>
-<br/>
-<table id="bucketEntryView" class="table simple">
-    <thead>
-    <tr>
-        <th width="10">
-            <input type="checkbox" class="bucket-checkAll"/><span id="count"
-                                                                  class="bucket-checkedCount"></span>
-        </th>
-        <th width="60">Vessel Name</th>
-        <th width="50">Sample Name</th>
-        <th width="50">PDO</th>
-        <th width="300">PDO Name</th>
-        <th width="200">PDO Owner</th>
-        <th>Batch Name</th>
-        <th width="100">Created Date</th>
-    </tr>
-    </thead>
-    <tbody>
-    <c:forEach items="${actionBean.bucketEntries}" var="entry">
-        <tr>
-            <td>
-                <stripes:checkbox class="bucket-checkbox" name="selectedVesselLabels"
-                                  value="${entry.labVessel.label}"/>
-            </td>
-            <td>
-                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${entry.labVessel.label}">
-                        ${entry.labVessel.label}
-                </a></td>
+                            ${entry.poBusinessKey}
+                    </td>
+                    <td>
+                        <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                    </td>
+                    <td>
+                            ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
+                    </td>
+                    <td>
+                        <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
+                                   varStatus="stat">
 
-            <td>
-                <c:forEach items="${entry.labVessel.mercurySamples}"
-                           var="mercurySample"
-                           varStatus="stat">
-                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
-                            ${mercurySample.sampleKey}
-                    </a>
+                            ${batch.businessKey}
+                            <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
-                    <c:if test="${!stat.last}">&nbsp;</c:if>
-                </c:forEach>
-            </td>
-            <td>
-
-                    ${entry.poBusinessKey}
-            </td>
-            <td>
-                <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
-            </td>
-            <td>
-                    ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
-            </td>
-            <td>
-                <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"
-                           varStatus="stat">
-
-                    ${batch.businessKey}
-                    <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
-
-            </td>
-            <td>
-                <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
-            </td>
-        </tr>
-    </c:forEach>
-    </tbody>
-</table>
-
-<div class="borderHeader"><h4>Samples for Rework</h4></div>
-<br/>
-<table id="reworkEntryView" class="table simple">
-    <thead>
-    <tr>
-        <th width="10">
-            <input type="checkbox" class="rework-checkAll"/>
-        </th>
-        <th width="60">Vessel Name</th>
-        <th width="50">Sample Name</th>
-        <th width="50">PDO</th>
-        <th width="300">PDO Name</th>
-        <th width="200">PDO Owner</th>
-        <th>Batch Name</th>
-        <th>Rework Reason</th>
-        <th>Rework Comment</th>
-        <th>Rework User</th>
-        <th>Rework Date</th>
-    </tr>
-    </thead>
-    <tbody>
-    <c:forEach items="${actionBean.reworkEntries}" var="reworkVessel">
-        <tr>
-            <td>
-                <stripes:checkbox class="bucket-checkbox" name="selectedReworks"
-                                  value="${reworkVessel.labVessel.label}"/>
-            </td>
-            <td>
-
-                <a href="${ctxpath}/search/vessel.action?vesselSearch=&searchKey=${reworkVessel.labVessel.label}">
-                        ${reworkVessel.labVessel.label}
-                </a>
-            </td>
-            <td>
-                <c:forEach items="${reworkVessel.labVessel.mercurySamples}"
-                           var="mercurySample"
-                           varStatus="stat">
-                    <a href="${ctxpath}/search/sample.action?sampleSearch=&searchKey=${mercurySample.sampleKey}">
-                            ${mercurySample.sampleKey}
-                    </a>
-
-                    <c:if test="${!stat.last}">&nbsp;</c:if>
-                </c:forEach>
-            </td>
-            <td>
-                    ${actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)}
-            </td>
-            <td>
-                <div class="tdfield">${actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).title}</div>
-            </td>
-            <td>
-                    ${actionBean.getUserFullName(actionBean.getPDODetails(actionBean.getSinglePDOBusinessKey(reworkVessel.labVessel)).createdBy)}
-            </td>
-            <td>
-                <c:forEach items="${reworkVessel.labVessel.nearestWorkflowLabBatches}" var="batch"
-                           varStatus="stat">
-                    ${batch.businessKey}
-                    <c:if test="${!stat.last}">&nbsp;</c:if>
-                </c:forEach>
-
-            </td>
-            <td>
-                ${reworkVessel.reworkDetail.reworkReason.value}
-            </td>
-            <td>
-                ${reworkVessel.reworkDetail.comment}
-            </td>
-            <td>
-                ${actionBean.getUserFullName(reworkVessel.reworkDetail.addToReworkBucketEvent.eventOperator)}
-            </td>
-            <td>
-                <fmt:formatDate value="${reworkVessel.reworkDetail.addToReworkBucketEvent.eventDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
-            </td>
-        </tr>
-    </c:forEach>
-    </tbody>
-</table>
-</stripes:form>
+                    </td>
+                    <td>
+                        <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
+                    </td>
+                    <td>
+                            ${entry.entryType.name}
+                    </td>
+                    <td>
+                            ${entry.reworkDetail.reworkReason.value}
+                    </td>
+                    <td>
+                            ${entry.reworkDetail.comment}
+                    </td>
+                    <td>
+                        <c:if test="${entry.reworkDetail != null}">
+                            ${actionBean.getUserFullName(entry.reworkDetail.addToReworkBucketEvent.eventOperator)}
+                        </c:if>
+                    </td>
+                    <td>
+                        <fmt:formatDate value="${entry.reworkDetail.addToReworkBucketEvent.eventDate}"
+                                        pattern="MM/dd/yyyy HH:mm:ss"/>
+                    </td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </stripes:form>
 </stripes:layout-component>
 </stripes:layout-render>

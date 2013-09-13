@@ -19,10 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**

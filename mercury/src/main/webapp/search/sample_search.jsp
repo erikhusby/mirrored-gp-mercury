@@ -71,7 +71,7 @@
                                                    sample="${sampleToVessels.key}"/>
                         </div>
 
-                        <div id="sampleList-${sampleToVessels.key}">
+                        <div id="sampleList-${sampleToVessels.key.sampleKey}">
                             <div>
                                 <stripes:layout-render name="/sample/sample_event_list.jsp"
                                                        vessels="${sampleToVessels.value}"

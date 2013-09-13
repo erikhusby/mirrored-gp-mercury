@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 /**
@@ -60,14 +61,17 @@ public class LimsQueryObjectFactory {
      * @param laneName             the lane name.
      * @param loadingConcentration loading concentration.
      * @param loadingVesselLabel   barcode/label of the tube that should be used to load the lane.
+     * @param startingVesselLabel
      */
     public static SequencingTemplateLaneType createSequencingTemplateLaneType(@Nonnull String laneName,
-                                                                              @Nullable Double loadingConcentration,
-                                                                              @Nonnull String loadingVesselLabel) {
+                                                                              @Nullable BigDecimal loadingConcentration,
+                                                                              @Nonnull String loadingVesselLabel,
+                                                                              String startingVesselLabel) {
         SequencingTemplateLaneType lane = new SequencingTemplateLaneType();
         lane.setLaneName(laneName);
         lane.setLoadingConcentration(loadingConcentration);
         lane.setLoadingVesselLabel(loadingVesselLabel);
+        lane.setDerivedVesselLabel(startingVesselLabel);
         return lane;
     }
 }

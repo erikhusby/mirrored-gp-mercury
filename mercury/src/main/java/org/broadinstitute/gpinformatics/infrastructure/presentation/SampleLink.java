@@ -51,7 +51,7 @@ public class SampleLink {
     }
 
     public boolean getHasLink() {
-        return sample.isInBspFormat() || sample.isInCrspFormat();
+        return format != Format.UNKNOWN;
     }
 
     public String getTarget() {

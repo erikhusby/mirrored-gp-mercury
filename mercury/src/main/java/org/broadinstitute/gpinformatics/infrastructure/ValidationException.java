@@ -3,10 +3,9 @@ package org.broadinstitute.gpinformatics.infrastructure;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class ValidationException extends Exception {
 
-    private final List<String> validationMessages = new ArrayList<String>();
+    private final List<String> validationMessages = new ArrayList<>();
 
     public ValidationException(String s) {
         super(s);

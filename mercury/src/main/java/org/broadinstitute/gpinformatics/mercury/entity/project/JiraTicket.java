@@ -11,7 +11,8 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
-import java.util.regex.Matcher;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @Entity
@@ -35,11 +36,8 @@ public class JiraTicket {
     @Id
     private String ticketId;
 
-//    @OneToMany(mappedBy = "jiraTicket")
-//    private Set<Project> projects = new HashSet<Project>();
-
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
-    private LabBatch labBatch;
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "jiraTicket")
+    private Set<LabBatch> labBatch = new HashSet<>();
 
     /*
     SGM -- Doesn't make sense to store the URL.  Can be derived on the front end using the Jira config
@@ -49,7 +47,7 @@ public class JiraTicket {
     @Transient
     private JiraService jiraService;
 
-    JiraTicket() {
+    protected JiraTicket() {
         jiraService = ServiceAccessUtility.getBean(JiraService.class);
     }
 
@@ -142,15 +140,11 @@ public class JiraTicket {
         return result;
     }
 
-//    public Set<Project> getProjects() {
-//        return projects;
-//    }
-
     public LabBatch getLabBatch() {
-        return labBatch;
+        return labBatch.iterator().next();
     }
 
     public void setLabBatch(LabBatch labBatch) {
-        this.labBatch = labBatch;
+        this.labBatch.add(labBatch);
     }
 }

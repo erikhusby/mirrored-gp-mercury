@@ -3,6 +3,35 @@
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
+<script type="text/javascript">
+    $j(document).ready(function () {
+        $j('#reworkCandidates').dataTable({
+            "sDom": sDomNoTableToolsButtons,
+            "bSort": false
+        }).rowGrouping({
+            iGroupingColumnIndex: 1,
+            sGroupLabelPrefix: 'Barcode: ',
+            iGroupingColumnIndex2: 2,
+            sGroupLabelPrefix2: 'Sample(s): '
+        });
+
+        $j('.rework-checkbox').enableCheckboxRangeSelection({
+            checkAllClass: 'rework-checkAll',
+            countDisplayClass: 'rework-checkedCount',
+            checkboxClass: 'rework-checkbox'
+        });
+
+        // Cause checkbox toggle when clicking on the row
+        $j('.candidate-row').click(function(event) {
+            $j(':checkbox', this).click();
+        });
+
+        // Prevent the above click handler on the row from being invoked and causing another toggle
+        $j('.rework-checkbox').click(function(event) {
+            event.stopPropagation();
+        })
+    });
+</script>
 
 <stripes:form partial="true" beanclass="${actionBean.class}">
 <c:choose>
@@ -17,27 +46,38 @@
     <c:otherwise>
         <div class="control-group">
             <div class="controls">
+                <div>
+                    Showing results for ${actionBean.numQueryInputs - actionBean.noResultQueryTerms.size()} of ${actionBean.numQueryInputs} terms.
+                    <c:if test="${!empty actionBean.noResultQueryTerms}">
+                        <br>No results found for: ${actionBean.noResultQueryTerms}
+                    </c:if>
+                </div>
                 <table id="reworkCandidates" class="table simple">
                     <thead>
                     <tr>
-                        <th></th>
+                        <th width="30px">
+                            <input type="checkbox" class="rework-checkAll"/>
+                            <span id="count" class="rework-checkedCount"/>
+                        </th>
                         <th>Barcode</th>
                         <th>Sample</th>
                         <th>PDO</th>
+                        <th>Product</th>
                         <th>Batches</th>
                         <th>Workflow</th>
-                        <th>Sample Count</th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.reworkCandidates}" var="candidate">
-                        <tr>
+                        <tr class="candidate-row">
                             <td>
-                                <stripes:radio name="reworkCandidate" value="${candidate}"/>
+                                <stripes:checkbox class="rework-checkbox" name="selectedReworkCandidates"
+                                                  value="${candidate}"/>
                             </td>
                             <td>${candidate.tubeBarcode}</td>
                             <td>${candidate.sampleKey}</td>
                             <td>${candidate.productOrderKey}</td>
+                            <td>${candidate.productOrder.product.productName}</td>
                             <td>
                                 <c:forEach items="${candidate.labVessel.nearestWorkflowLabBatches}" var="batch">
                                     <stripes:link target="_new"
@@ -45,8 +85,7 @@
                                                   class="external">${batch.batchName}</stripes:link>
                                 </c:forEach>
                             </td>
-                            <td>${candidate.productOrder.product.workflowName}</td>
-                            <td>${candidate.labVessel.sampleInstanceCount}</td>
+                            <td>${candidate.productOrder.product.workflow.workflowName}</td>
                         </tr>
                     </c:forEach>
                     </tbody>

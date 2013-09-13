@@ -60,7 +60,7 @@ public class PriceItemDao extends GenericDao {
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<PriceItem> cq = cb.createQuery(PriceItem.class);
-        List<Predicate> predicateList = new ArrayList<Predicate>();
+        List<Predicate> predicateList = new ArrayList<>();
 
         Root<PriceItem> priceItem = cq.from(PriceItem.class);
 

@@ -31,7 +31,9 @@ public class UserBean implements Serializable {
      */
     private static final String CRSP_ROLE_PREFIX = "CRSP-";
 
-    public static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
+    public static final String LOGIN_WARNING = "Your account needs to connect to JIRA and BSP before you can {0}.  " +
+                                               "The application is currently having problems reaching at least one " +
+                                               "of them, please try again later.";
 
     private BspUser bspUser;
 

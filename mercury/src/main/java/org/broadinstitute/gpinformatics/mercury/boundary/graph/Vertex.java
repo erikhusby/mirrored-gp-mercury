@@ -13,27 +13,38 @@ import java.util.Map;
 public class Vertex implements Serializable {
     private static final long serialVersionUID = 20110104L;
 
-    private String id;
-    private String idType;
-    private String title;
-    private List<String> details = new ArrayList<String>();
-    private Map<String, List<String>> alternativeIds = new HashMap<String, List<String>>();
-    private Vertex[][] childVertices;
-    private Vertex parentVertex;
-    private boolean hasMoreEdges;
-    private boolean rendered = false;
+    private final String id;
+    private final String idType;
+    private final String title;
+    private final List<String> details = new ArrayList<>();
+    private Map<String, List<String>> alternativeIds = new HashMap<>();
+    private final Vertex[][] childVertices;
+    private final Vertex parentVertex;
 
-    public Vertex(String id, String idType, String title) {
+    private boolean hasMoreEdges;
+    private boolean rendered;
+
+    public Vertex(String id, String idType, String title, Vertex parentVertex, Map<String, List<String>> alternativeIds,
+                  Vertex[][] childVertices) {
         this.id = id;
         this.idType = idType;
         this.title = title;
+        this.parentVertex = parentVertex;
+        this.alternativeIds = alternativeIds;
+        this.childVertices = childVertices;
+    }
+
+    public Vertex(String id, String idType, String title, Map<String, List<String>> alternativeIds) {
+        this(id, idType, title, null, alternativeIds, null);
+    }
+
+    public Vertex(String id, String idType, String title, Vertex parentVertex,
+                  Map<String, List<String>> alternativeIds) {
+        this(id, idType, title, parentVertex, alternativeIds, null);
     }
 
     public Vertex(String id, String idType, String title, int numChildRows, int numChildColumns) {
-        this.id = id;
-        this.idType = idType;
-        this.title = title;
-        this.childVertices = new Vertex[numChildRows][numChildColumns];
+        this(id, idType, title, null, new HashMap<String, List<String>>(), new Vertex[numChildRows][numChildColumns]);
     }
 
     public String getId() {
@@ -56,13 +67,9 @@ public class Vertex implements Serializable {
         return parentVertex;
     }
 
-    public void setParentVertex(Vertex parentVertex) {
-        this.parentVertex = parentVertex;
-    }
-
     @Override
     public String toString() {
-        return this.title;
+        return title;
     }
 
     public boolean getHasMoreEdges() {
@@ -89,14 +96,10 @@ public class Vertex implements Serializable {
         return alternativeIds;
     }
 
-    public void setAlternativeIds(Map<String, List<String>> alternativeIds) {
-        this.alternativeIds = alternativeIds;
-    }
-
     public static void addAlternativeId(Map<String, List<String>> alternativeIds, String type, String id) {
         List<String> idList = alternativeIds.get(type);
         if(idList == null) {
-            idList = new ArrayList<String>();
+            idList = new ArrayList<>();
             alternativeIds.put(type, idList);
         }
         idList.add(id);

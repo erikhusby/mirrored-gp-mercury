@@ -29,7 +29,7 @@ import static org.testng.Assert.assertEquals;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RiskItemEtlDbFreeTest {
-    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private final String etlDateString = ExtractTransform.formatTimestamp(new Date());
     private long posId = 2233445511L;
     private String datafileDir;
     private RiskItemEtl tst;
@@ -77,7 +77,7 @@ public class RiskItemEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.dataRecords(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -90,7 +90,7 @@ public class RiskItemEtlDbFreeTest {
         expect(pos.getRiskString()).andReturn(riskMessage);
         replay(mocks);
 
-        Collection<String> records = tst.dataRecords(etlDateStr, false, posId);
+        Collection<String> records = tst.dataRecords(etlDateString, false, posId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
@@ -103,7 +103,7 @@ public class RiskItemEtlDbFreeTest {
 
         // Get record data splitting on commas that are not inside surrounding quotes.
         String[] parts = EtlTestUtilities.splitRecords(record);
-        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], etlDateString);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(posId));
         assertEquals(parts[i++], "T");

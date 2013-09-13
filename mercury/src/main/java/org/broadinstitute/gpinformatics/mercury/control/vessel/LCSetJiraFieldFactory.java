@@ -6,15 +6,20 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -41,9 +46,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
 
 
-    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<String, ResearchProject>();
-    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<String, Set<LabVessel>>();
-    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<String, ProductWorkflowDef>();
+    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<>();
+    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<>();
+    private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<>();
 //    private final Collection<String> pdos;
 
     private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
@@ -64,8 +69,27 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
 
+        if (!batch.getBucketEntries().isEmpty()) {
+            for (BucketEntry bucketEntry : batch.getBucketEntries()) {
+                String pdoKey = bucketEntry.getPoBusinessKey();
+                if (!pdoToVesselMap.containsKey(pdoKey)) {
+                    pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                pdoToVesselMap.get(pdoKey).add(bucketEntry.getLabVessel());
+            }
+            for (LabVessel rework : batch.getReworks()) {
+                for (SampleInstance sampleInstance : rework.getSampleInstances(LabVessel.SampleType.WITH_PDO, null)) {
+                    String pdoKey = sampleInstance.getProductOrderKey();
+                    if (!pdoToVesselMap.containsKey(pdoKey)) {
+                        pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
+                    }
+                    pdoToVesselMap.get(pdoKey).add(rework);
+                }
+            }
+        } else {
+            pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingBatchLabVessels());
+        }
 
         for (String currPdo : pdoToVesselMap.keySet()) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
@@ -92,10 +116,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      *
      * @return sample list
      */
-    public static String buildSamplesListString(LabBatch labBatch) {
+    public static String buildSamplesListString(LabBatch labBatch, @Nullable Bucket bucket) {
         StringBuilder samplesText = new StringBuilder();
-        Set<String> newSamples = new HashSet<String>();
-        Set<String> reworkSamples = new HashSet<String>();
+        Set<String> newSamples = new HashSet<>();
+        Set<String> reworkSamples = new HashSet<>();
         for (LabVessel labVessel : labBatch.getNonReworkStartingLabVessels()) {
             Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
             if (samplesNamesForVessel.size() > 1) {
@@ -122,7 +146,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         if (!reworkSamples.isEmpty()) {
             samplesText.append("\n");
             for (String reworkSample : reworkSamples) {
-                samplesText.append(reworkSample).append(" (rework)\n");
+                if (bucket == null) {
+                    samplesText.append(reworkSample).append(" (rework)\n");
+                } else {
+                    samplesText.append(reworkSample).append(" (rework from ").append(bucket.getBucketDefinitionName())
+                            .append(
+                                    ")\n");
+                }
             }
         }
         return samplesText.toString();
@@ -133,49 +163,54 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
 
-        Set<CustomField> customFields = new HashSet<CustomField>();
+        Set<CustomField> customFields = new HashSet<>();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, "N/A"));
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
+                batch.getBatchDescription()));
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS,
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.WORK_REQUEST_IDS, "N/A"));
+
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROGRESS_STATUS,
                 new CustomField.ValueContainer(PROGRESS_STATUS)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
+                submissionFields.get(LabBatch.TicketFields.LIBRARY_QC_SEQUENCING_REQUIRED.getName()),
                 new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
-        int sampleCount = batch.getReworks().size() + batch.getStartingBatchLabVessels().size();
+        int sampleCount = batch.getStartingBatchLabVessels().size();
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
-                buildSamplesListString(batch)));
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
+                buildSamplesListString(batch, null)));
 
         customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount));
+                submissionFields.get(LabBatch.TicketFields.NUMBER_OF_SAMPLES.getName()), sampleCount));
 
         if (batch.getDueDate() != null) {
 
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DUE_DATE,
                     JiraService.JIRA_DATE_FORMAT.format(batch.getDueDate())));
         }
 
         if (batch.getImportant() != null) {
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.IMPORTANT, batch
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.IMPORTANT, batch
                     .getImportant()));
         }
 
         if (!workflowDefs.isEmpty()) {
-            String builtProtocol = "";
+            StringBuilder builtProtocol = new StringBuilder();
             for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
-                    builtProtocol += ", ";
+                    builtProtocol.append(", ");
                 }
-                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion().getVersion();
+                builtProtocol.append(currWorkflowDef.getName());
+                builtProtocol.append(":");
+                builtProtocol.append(currWorkflowDef.getEffectiveVersion(batch.getCreatedOn()).getVersion());
             }
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL,
-                    builtProtocol));
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL,
+                    builtProtocol.toString()));
         } else {
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL, "N/A"));
+            customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.PROTOCOL, "N/A"));
         }
 
         return customFields;
@@ -224,7 +259,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.LCSET_PROJECT;
+        return Deployment.isCRSP ? CreateFields.ProjectType.CRSP_LCSET_PROJECT : CreateFields.ProjectType.LCSET_PROJECT;
     }
 
 }

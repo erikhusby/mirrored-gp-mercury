@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
@@ -21,7 +21,7 @@ public class ThriftServiceProducer {
     // TODO: make selection dynamic to avoid error from ThriftConfigProducer when deploying to a STUBBY container
     @Produces
     @Default
-    @SessionScoped
+    @RequestScoped
     public ThriftService produce(@New OfflineThriftService stub, @New LiveThriftService impl) {
 
         if ( deployment == STUBBY )

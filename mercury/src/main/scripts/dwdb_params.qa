@@ -4,3 +4,4 @@ servername: gpinfqa
 port: 1521
 sid: gpinfqa 
 rootDir: /seq/lims/datawh/qa
+serverLogDir:

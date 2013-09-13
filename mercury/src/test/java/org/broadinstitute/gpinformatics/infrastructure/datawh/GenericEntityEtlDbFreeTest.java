@@ -2,9 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.RevisionType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -18,7 +18,13 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -28,19 +34,20 @@ import static org.testng.Assert.assertEquals;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class GenericEntityEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    String batchName = "LCSET-1235";
+    private String etlDateStr = ExtractTransform.formatTimestamp(new Date());
+    private final long entityId = 1122334455L;
+    private final String label = "012345678";
+    private final LabVessel.ContainerType type = LabVessel.ContainerType.TUBE;
 
-    String datafileDir = System.getProperty("java.io.tmpdir");
+    private final String datafileDir = System.getProperty("java.io.tmpdir");
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    LabBatch obj = createMock(LabBatch.class);
-    LabBatchDAO dao = createMock(LabBatchDAO.class);
-    Object[] mocks = new Object[]{auditReader, dao, obj};
+    private final AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private final LabVessel obj = createMock(LabVessel.class);
+    private final LabVesselDao dao = createMock(LabVesselDao.class);
+    private final Object[] mocks = new Object[]{auditReader, dao, obj};
     
-    LabBatchEtl tst = new LabBatchEtl(dao);
-    RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
+    private final LabVesselEtl tst = new LabVesselEtl(dao);
+    private final RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void beforeClass() {
@@ -65,17 +72,18 @@ public class GenericEntityEtlDbFreeTest {
 
 
     public void testEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<Long>();
+        Collection<Long> revIds = new ArrayList<>();
         revIds.add(entityId);
 
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
+        List<Object[]> dataChanges = new ArrayList<>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
 
         expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(dataChanges);
-        expect(dao.findById(LabBatch.class, entityId)).andReturn(obj);
+        expect(dao.findById(LabVessel.class, entityId)).andReturn(obj);
 
-        expect(obj.getLabBatchId()).andReturn(entityId).times(2);
-        expect(obj.getBatchName()).andReturn(batchName);
+        expect(obj.getLabVesselId()).andReturn(entityId).times(2);
+        expect(obj.getLabel()).andReturn(label);
+        expect(obj.getType()).andReturn(type);
 
         replay(mocks);
 
@@ -92,17 +100,17 @@ public class GenericEntityEtlDbFreeTest {
     }
 
     public void testDeletionEtl() throws Exception {
-        Collection<Long> revIds = new ArrayList<Long>();
+        Collection<Long> revIds = new ArrayList<>();
         revIds.add(entityId);
 
         // Three changes to one entity result in one deletion record.
-        List<Object[]> dataChanges = new ArrayList<Object[]>();
+        List<Object[]> dataChanges = new ArrayList<>();
         dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
         dataChanges.add(new Object[]{obj, revInfo[1], RevisionType.MOD});
         dataChanges.add(new Object[]{obj, revInfo[2], RevisionType.DEL});
 
         expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject())).andReturn(dataChanges);
-        expect(obj.getLabBatchId()).andReturn(entityId).times(3);
+        expect(obj.getLabVesselId()).andReturn(entityId).times(3);
 
         replay(mocks);
 
@@ -122,15 +130,16 @@ public class GenericEntityEtlDbFreeTest {
         Collection<Long> deletes = new ArrayList<>();
         Collection<Long> mods = new ArrayList<>();
         Collection<Long> adds = new ArrayList<>();
-        Collection<LabBatchEtl.RevInfoPair<LabBatch>> revInfoPairs = new ArrayList<>();
+        Collection<LabVesselEtl.RevInfoPair<LabVessel>> revInfoPairs = new ArrayList<>();
 
         deletes.add(entityId);
         adds.add(entityId);
         mods.add(entityId);
 
-        expect(dao.findById(LabBatch.class, entityId)).andReturn(obj).times(2);
-        expect(obj.getLabBatchId()).andReturn(entityId).times(2);
-        expect(obj.getBatchName()).andReturn(batchName).times(2);
+        expect(dao.findById(LabVessel.class, entityId)).andReturn(obj).times(2);
+        expect(obj.getLabVesselId()).andReturn(entityId).times(2);
+        expect(obj.getLabel()).andReturn(label).times(2);
+        expect(obj.getType()).andReturn(type).times(2);
         replay(mocks);
 
         tst.setAuditReaderDao(auditReader);

@@ -12,7 +12,7 @@ public class TumorNormalCount {
     private ImmutablePair<Integer,Integer> pair;
 
     public TumorNormalCount(int tumorCount, int normalCount) {
-        pair = new ImmutablePair<Integer, Integer>(tumorCount, normalCount);
+        pair = new ImmutablePair<>(tumorCount, normalCount);
     }
 
     public int getTumorCount() {

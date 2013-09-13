@@ -6,14 +6,18 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.List;
-
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType;
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.BOOLEAN;
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.NUMERIC;
 
 /**
  * This class handles all the needs for defining an item of a criteria list. Each item has a type, which defines
@@ -24,7 +28,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
-public class RiskCriterion {
+public class RiskCriterion implements Serializable {
 
     @Id
     @SequenceGenerator(name = "SEQ_RISK_CRITERIA", schema = "ATHENA", sequenceName = "SEQ_RISK_CRITERIA")
@@ -124,14 +128,14 @@ public class RiskCriterion {
      * @return The string form of the criterion.
      */
     public String getCalculationString() {
-        if (operator.getType() == BOOLEAN) {
+        if (operator.getType() == Operator.OperatorType.BOOLEAN) {
             return MessageFormat.format("{0}", type.getLabel());
         }
 
         return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
     }
 
-    public OperatorType getOperatorType() {
+    public Operator.OperatorType getOperatorType() {
         return operator.getType();
     }
 
@@ -140,7 +144,7 @@ public class RiskCriterion {
      * displayable (default in base class) it will be shown in the Product create page UI.
      */
     public enum RiskCriteriaType {
-        VOLUME("Volume", NUMERIC, new ValueProvider() {
+        VOLUME("Volume", Operator.OperatorType.NUMERIC, new ValueProvider() {
             private static final long serialVersionUID = -5141795597813734321L;
 
             @Override
@@ -148,7 +152,7 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getVolume());
             }
         }),
-        CONCENTRATION("Concentration", NUMERIC, new ValueProvider() {
+        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new ValueProvider() {
             private static final long serialVersionUID = -6601133301434326498L;
 
             @Override
@@ -156,7 +160,7 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getConcentration());
             }
         }),
-        WGA("Is WGA", BOOLEAN, new ValueProvider() {
+        WGA("Is WGA", Operator.OperatorType.BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = -4849732345451486536L;
 
             @Override
@@ -164,7 +168,7 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getMaterialType().contains("WGA"));
             }
         }),
-        FFPE("Is FFPE", BOOLEAN, new ValueProvider() {
+        FFPE("Is FFPE", Operator.OperatorType.BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = -8406086522548244907L;
 
             @Override
@@ -172,7 +176,7 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getFfpeStatus());
             }
         }),
-        MANUAL("Manual", BOOLEAN, new ValueProvider() {
+        MANUAL("Manual", Operator.OperatorType.BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = 1909671711388135931L;
 
             @Override
@@ -187,7 +191,7 @@ public class RiskCriterion {
             }
 
         }),
-        TOTAL_DNA("Total DNA", NUMERIC, new ValueProvider() {
+        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, new ValueProvider() {
             private static final long serialVersionUID = 5755357964417458956L;
 
             @Override
@@ -195,7 +199,7 @@ public class RiskCriterion {
                 return String.valueOf(sample.getBspSampleDTO().getTotal());
             }
         }),
-        PICO_AGE("Last Pico over a year ago", BOOLEAN, new ValueProvider() {
+        PICO_AGE("Last Pico over a year ago", Operator.OperatorType.BOOLEAN, new ValueProvider() {
             private static final long serialVersionUID = 1601375635726290926L;
 
             @Override
@@ -207,7 +211,7 @@ public class RiskCriterion {
                         sampleDTO.getPicoRunDate().before(sample.getProductOrder().getOneYearAgo())));
             }
         }),
-        RIN("RIN", NUMERIC, new ValueProvider() {
+        RIN("RIN", Operator.OperatorType.NUMERIC, new ValueProvider() {
 
             private static final long serialVersionUID = -6022452431986609118L;
 
@@ -217,17 +221,17 @@ public class RiskCriterion {
             }
         });
 
-        private final OperatorType operatorType;
+        private final Operator.OperatorType operatorType;
         private final String label;
         private final ValueProvider valueProvider;
 
-        RiskCriteriaType(String label, OperatorType operatorType, ValueProvider valueProvider) {
+        RiskCriteriaType(String label, Operator.OperatorType operatorType, ValueProvider valueProvider) {
             this.label = label;
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
         }
 
-        public OperatorType getOperatorType() {
+        public Operator.OperatorType getOperatorType() {
             return operatorType;
         }
 

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
 import javax.inject.Inject;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +40,15 @@ import java.util.TreeSet;
 public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, SequencingRun> {
     private ProductOrderDao pdoDao;
     private Collection<SequencingRunDto> loggingDtos = new ArrayList<>();
+    public static final String NONE = "NONE";
+    public static final String MULTIPLE = "MULTIPLE";
 
     public SequencingSampleFactEtl() {
     }
 
     @Inject
     public SequencingSampleFactEtl(IlluminaSequencingRunDao dao, ProductOrderDao pdoDao) {
-        super(SequencingRun.class, "sequencing_sample_fact", dao);
+        super(SequencingRun.class, "sequencing_sample_fact", "sequencing_run_aud", "sequencing_run_id", dao);
         this.pdoDao = pdoDao;
     }
 
@@ -70,28 +74,37 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, SequencingRun entity) {
-        Collection<String> records = new ArrayList<String>();
-
-        Collection<SequencingRunDto> dtos = makeSequencingRunDtos(entity);
-        for (SequencingRunDto dto : dtos) {
-            if (dto.isComplete()) {
-                // Turns "LANE1" to "LANE8" into "1" to "8".
-                String position = dto.getPosition().replaceAll("LANE", "");
-
-                records.add(genericRecord(etlDateStr, isDelete,
-                        entity.getSequencingRunId(),
-                        format(dto.getFlowcellBarcode()),
-                        format(position),
-                        format(dto.getMolecularIndexingSchemeName()),
-                        format(dto.getProductOrderId()),
-                        format(dto.getSampleKey()),
-                        format(dto.getResearchProjectId()),
-                        (dto.getLoadingVessel() != null) ? format(dto.getLoadingVessel().getLabel()) : null,
-                        (dto.getLoadingVessel() != null) ? format(ExtractTransform.secTimestampFormat
-                                .format(dto.getLoadingVessel().getCreatedOn())) : null
-
-                ));
+        Collection<String> records = new ArrayList<>();
+        try {
+            // De-duplicate based on flowcell barcode, lane, and molecular index (GPLIM-1618).
+            Map<String, SequencingRunDto> uniqueFlowcellLaneIndex = new HashMap<>();
+            for (SequencingRunDto dto : makeSequencingRunDtos(entity)) {
+                uniqueFlowcellLaneIndex.put(dto.getFlowcellLaneIndexKey(), dto);
             }
+            for (SequencingRunDto dto : uniqueFlowcellLaneIndex.values()) {
+                if (dto.canEtl()) {
+                    // Turns "LANE1" to "LANE8" into "1" to "8".
+                    String position = dto.getPosition().replaceAll("LANE", "");
+
+                    LabVessel loadingVessel = dto.getLoadingVessel();
+                    records.add(genericRecord(etlDateStr, isDelete,
+                            entity.getSequencingRunId(),
+                            format(dto.getFlowcellBarcode()),
+                            format(position),
+                            format(dto.getMolecularIndexingSchemeName()),
+                            format(dto.getProductOrderId()),
+                            format(dto.getSampleKey()),
+                            format(dto.getResearchProjectId()),
+                            (loadingVessel != null) ? format(loadingVessel.getLabel()) : null,
+                            (loadingVessel != null) ?
+                                    format(ExtractTransform.formatTimestamp(loadingVessel.getCreatedOn())) : null,
+                            format(dto.getBatchName())
+                    ));
+                }
+            }
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
+            logger.error("Error doing ETL of sequencingRun", e);
         }
 
         return records;
@@ -105,7 +118,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         private String productOrderId;
         private String sampleKey;
         private String researchProjectId;
-        private boolean isComplete;
+        private boolean canEtl;
+        private String batchName;
 
         private LabVessel loadingVessel;
 
@@ -117,8 +131,9 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 String productOrderId,
                 String sampleKey,
                 String researchProjectId,
-                boolean isComplete,
-                LabVessel loadingVessel) {
+                boolean canEtl,
+                LabVessel loadingVessel,
+                String batchName) {
             this.sequencingRun = sequencingRun;
             this.flowcellBarcode = flowcellBarcode;
             this.position = position;
@@ -126,22 +141,27 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             this.productOrderId = productOrderId;
             this.sampleKey = sampleKey;
             this.researchProjectId = researchProjectId;
-            this.isComplete = isComplete;
+            this.canEtl = canEtl;
             this.loadingVessel = loadingVessel;
+            this.batchName = batchName;
         }
 
-        private final static String NULLS_LAST = "zzzzzzzzzz";
+        public static final Comparator<SequencingRunDto> BY_SAMPLE_KEY = new Comparator<SequencingRunDto>() {
+            // Sorting a null sample key will put it after non-null sample keys.
+            private final static String NULLS_LAST = "zzzzzzzzzz";
 
-        public static Comparator sampleKeyComparator() {
-            return new Comparator<SequencingRunDto>() {
-                @Override
-                public int compare(SequencingRunDto o1, SequencingRunDto o2) {
-                    String s1 = o1.getSampleKey() == null ? NULLS_LAST : o1.getSampleKey();
-                    String s2 = o2.getSampleKey() == null ? NULLS_LAST : o2.getSampleKey();
-                    return s1.compareTo(s2);
-                }
-            };
-        }
+            @Override
+            public int compare(SequencingRunDto lhs, SequencingRunDto rhs) {
+                String s1 = lhs.getSampleKey() == null ? NULLS_LAST : lhs.getSampleKey();
+                String s2 = rhs.getSampleKey() == null ? NULLS_LAST : rhs.getSampleKey();
+                return s1.compareTo(s2);
+            }
+        };
+
+        public String getFlowcellLaneIndexKey() {
+            final String delimiter = "_____";
+            return StringUtils.join(new String[]{molecularIndexingSchemeName, position, flowcellBarcode}, delimiter);
+        };
 
         public String getFlowcellBarcode() {
             return flowcellBarcode;
@@ -171,12 +191,16 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             return sequencingRun;
         }
 
-        public boolean isComplete() {
-            return isComplete;
+        public boolean canEtl() {
+            return canEtl;
         }
 
         public LabVessel getLoadingVessel() {
             return loadingVessel;
+        }
+
+        public String getBatchName() {
+            return batchName;
         }
 
         @Override
@@ -190,7 +214,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             SequencingRunDto that = OrmUtil.proxySafeCast(o, SequencingRunDto.class);
 
-            return new EqualsBuilder().append(isComplete(), that.isComplete())
+            return new EqualsBuilder().append(canEtl(), that.canEtl())
                     .append(getFlowcellBarcode(), that.getFlowcellBarcode())
                     .append(getMolecularIndexingSchemeName(), that.getMolecularIndexingSchemeName())
                     .append(getPosition(), that.getPosition())
@@ -199,13 +223,14 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     .append(getSampleKey(), that.getSampleKey())
                     .append(getSequencingRun(), that.getSequencingRun())
                     .append(getLoadingVessel(), that.getLoadingVessel())
+                    .append(getBatchName(), that.getBatchName())
                     .isEquals();
         }
 
         @Override
         public int hashCode() {
             return new HashCodeBuilder()
-                    .append(isComplete())
+                    .append(canEtl())
                     .append(getProductOrderId())
                     .append(getSampleKey())
                     .append(getResearchProjectId())
@@ -214,6 +239,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     .append(getMolecularIndexingSchemeName())
                     .append(getSequencingRun())
                     .append(getLoadingVessel())
+                    .append(getBatchName())
                     .toHashCode();
         }
     }
@@ -225,74 +251,96 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
     private static final Map<String, String> pdoKeyToResearchProjectId = new LRUMap<>(CACHE_SIZE);
 
     public List<SequencingRunDto> makeSequencingRunDtos(long sequencingRunId) {
-        SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
-        return makeSequencingRunDtos(sequencingRun);
+        try {
+            SequencingRun sequencingRun = dao.findById(SequencingRun.class, sequencingRunId);
+            return makeSequencingRunDtos(sequencingRun);
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected SequencingSampleFactEtl in ExtractTransform.
+            logger.error("Error doing ETL sequencingRunId " + sequencingRunId, e);
+            return Collections.<SequencingRunDto>emptyList();
+        }
     }
 
+    /** This is used by diagnostics (ExtractTransformResource class) so do not suppress error data in this method. */
     public List<SequencingRunDto> makeSequencingRunDtos(SequencingRun entity) {
         List<SequencingRunDto> dtos = new ArrayList<>();
         if (entity != null) {
-
             RunCartridge cartridge = entity.getSampleCartridge();
             String flowcellBarcode = cartridge.getCartridgeName();
-
+            Collection<LabBatch> fctBatches = cartridge.getAllLabBatches(LabBatch.LabBatchType.FCT);
+            LabBatch fctBatch = fctBatches.size() == 1 ? fctBatches.iterator().next() : null;
             Map<VesselPosition, LabVessel> vesselsWithPositions = cartridge.getNearestTubeAncestorsForLanes();
-            VesselPosition[] vesselPositions = cartridge.getVesselGeometry().getVesselPositions();
-            for (VesselPosition position : vesselPositions) {
-                Collection<SampleInstance> sampleInstances =
-                        cartridge.getSamplesAtPosition(position, SampleType.WITH_PDO);
-                for (SampleInstance si : sampleInstances) {
-                    String productOrderId = null;
-                    String researchProjectId = null;
-
-                    String pdoKey = si.getProductOrderKey();
-                    if (pdoKey != null) {
-                        // Does cache lookup and fills cache as needed.
-                        if (pdoKeyToPdoId.containsKey(pdoKey)) {
-                            productOrderId = pdoKeyToPdoId.get(pdoKey);
-                            researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
-                        } else {
-                            ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
-                            if (pdo != null) {
-                                productOrderId = String.valueOf(pdo.getProductOrderId());
-                                researchProjectId = (pdo.getResearchProject() != null) ?
-                                        String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+            for (Map.Entry<VesselPosition, LabVessel> entry : vesselsWithPositions.entrySet()) {
+                VesselPosition position = entry.getKey();
+                LabVessel tube = entry.getValue();
+                if (tube != null) {
+                    LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
+                    Collection<SampleInstance> sampleInstances =
+                            tube.getSampleInstances(SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW);
+                    for (SampleInstance si : sampleInstances) {
+                        String productOrderId = null;
+                        String researchProjectId = null;
+                        Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
+                        String batchName = batches.size() == 0 ? NONE :
+                                batches.size() == 1 ? batches.iterator().next().getBatchName() : MULTIPLE;
+                        String pdoKey = si.getProductOrderKey();
+                        if (pdoKey != null) {
+                            // Does cache lookup and fills cache as needed.
+                            synchronized (pdoKeyToPdoId) {
+                                if (pdoKeyToPdoId.containsKey(pdoKey)) {
+                                    productOrderId = pdoKeyToPdoId.get(pdoKey);
+                                    researchProjectId = pdoKeyToResearchProjectId.get(pdoKey);
+                                } else {
+                                    ProductOrder pdo = pdoDao.findByBusinessKey(pdoKey);
+                                    if (pdo != null) {
+                                        productOrderId = String.valueOf(pdo.getProductOrderId());
+                                        researchProjectId = (pdo.getResearchProject() != null) ?
+                                                String.valueOf(pdo.getResearchProject().getResearchProjectId()) : null;
+                                    }
+                                    pdoKeyToPdoId.put(pdoKey, productOrderId);
+                                    pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
+                                }
                             }
-                            pdoKeyToPdoId.put(pdoKey, productOrderId);
-                            pdoKeyToResearchProjectId.put(pdoKey, researchProjectId);
                         }
-                    }
 
-                    MercurySample sample = si.getStartingSample();
-                    String sampleKey = (sample != null ? sample.getSampleKey() : null);
+                        MercurySample sample = si.getStartingSample();
+                        String sampleKey = (sample != null ? sample.getSampleKey() : null);
 
-                    // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited concatenation
-                    // if multiple are found.
-                    SortedSet<String> names = new TreeSet<>();
-                    for (Reagent reagent : si.getReagents()) {
-                        if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
-                            names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                        // Finds the molecular barcode, or "NONE" if not found, or a sorted comma-delimited
+                        // concatenation if multiple are found.
+                        SortedSet<String> names = new TreeSet<>();
+                        for (Reagent reagent : si.getReagents()) {
+                            if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                                names.add(((MolecularIndexReagent) reagent).getMolecularIndexingScheme().getName());
+                            }
                         }
-                    }
-                    String molecularIndexingSchemeName = (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
+                        String molecularIndexingSchemeName =
+                                (names.size() == 0 ? "NONE" : StringUtils.join(names, " "));
 
-                    boolean isComplete = !StringUtils.isBlank(flowcellBarcode)
+                        boolean canEtl = !StringUtils.isBlank(flowcellBarcode)
                                          && !StringUtils.isBlank(productOrderId)
                                          && !StringUtils.isBlank(researchProjectId);
 
-                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
-                            molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, isComplete,
-                            vesselsWithPositions.get(position)));
-                }
-                if (sampleInstances.size() == 0) {
-                    dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
-                            vesselsWithPositions.get(position)));
+                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, position.name(),
+                                molecularIndexingSchemeName, productOrderId, sampleKey, researchProjectId, canEtl,
+                                fctVessel, batchName));
+                    }
+                    if (sampleInstances.size() == 0) {
+                        // Use of the full constructor which in this case has multiple nulls is intentional
+                        // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                        // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
+                        dtos.add(new SequencingRunDto(entity, flowcellBarcode, null, null, null, null, null, false,
+                                fctVessel, null));
+                    }
                 }
             }
         } else {
-            dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false, null));
+            // Use of the full constructor which in this case has multiple nulls is intentional
+            // since exactly which fields are null is used as indicator in postEtlLogging, and this
+            // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
+            dtos.add(new SequencingRunDto(null, null, null, null, null, null, null, false, null, null));
         }
-        Collections.sort(dtos, SequencingRunDto.sampleKeyComparator());
+        Collections.sort(dtos, SequencingRunDto.BY_SAMPLE_KEY);
 
         synchronized (loggingDtos) {
             loggingDtos.clear();
@@ -313,7 +361,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
             // No event.
             int count = 0;
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     dto.getSequencingRun() == null) {
                     reportedErrors.add(dto);
                     ++count;
@@ -326,7 +374,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             // No sampleInstance on vessel.
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     StringUtils.isBlank(dto.getFlowcellBarcode())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
@@ -340,7 +388,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             // No position.
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     StringUtils.isBlank(dto.getPosition())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
@@ -353,7 +401,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             // No sample instances or molecular barcodes.
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     StringUtils.isBlank(dto.getMolecularIndexingSchemeName())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
@@ -367,7 +415,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             // No pdo on sampleInstance, or no pdo entity for pdoKey.
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     StringUtils.isBlank(dto.getProductOrderId())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());
@@ -381,7 +429,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
             // No starting sample.
             for (SequencingRunDto dto : loggingDtos) {
-                if (!dto.isComplete() && !reportedErrors.contains(dto) &&
+                if (!dto.canEtl() && !reportedErrors.contains(dto) &&
                     StringUtils.isBlank(dto.getSampleKey())) {
                     reportedErrors.add(dto);
                     errorIds.add(dto.getSequencingRun().getSequencingRunId());

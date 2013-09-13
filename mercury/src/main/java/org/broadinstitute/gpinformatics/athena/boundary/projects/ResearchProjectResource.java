@@ -6,25 +6,36 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
- * Restful webservice to list research projects.
+ * Restful webservice to list and create research projects.
  */
 @Path("researchProjects")
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -34,15 +45,23 @@ public class ResearchProjectResource {
     @XmlRootElement
     public static class ResearchProjectData {
         public final String title;
+
         public final String id;
+
         public final String synopsis;
+
         public final Date modifiedDate;
+
+        public final String username;
+
         @XmlElementWrapper
         @XmlElement(name = "projectManager")
         public final List<String> projectManagers;
+
         @XmlElementWrapper
         @XmlElement(name = "broadPI")
         public final List<String> broadPIs;
+
         @XmlElementWrapper
         @XmlElement(name = "order")
         public final List<String> orders;
@@ -56,10 +75,11 @@ public class ResearchProjectResource {
             broadPIs = null;
             orders = null;
             modifiedDate = null;
+            username = null;
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
-            List<String> names = new ArrayList<String>(ids.length);
+            List<String> names = new ArrayList<>(ids.length);
             for (Long id : ids) {
                 BspUser user = bspUserList.getById(id);
                 if (user != null) {
@@ -83,7 +103,13 @@ public class ResearchProjectResource {
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
-            orders = new ArrayList<String>(researchProject.getProductOrders().size());
+            orders = new ArrayList<>(researchProject.getProductOrders().size());
+            BspUser user = bspUserList.getById(researchProject.getCreatedBy());
+            if (user != null) {
+                username = user.getUsername();
+            } else {
+                username = null;
+            }
             for (ProductOrder order : researchProject.getProductOrders()) {
                 // We omit draft orders from the report. At this point there is no requirement to expose draft
                 // orders to client of this web service.
@@ -97,7 +123,6 @@ public class ResearchProjectResource {
 
     @XmlRootElement
     public static class ResearchProjects {
-
         @XmlElement(name = "project")
         public final List<ResearchProjectData> projects;
 
@@ -106,7 +131,7 @@ public class ResearchProjectResource {
         }
 
         public ResearchProjects(BSPUserList bspUserList, List<ResearchProject> projects) {
-            this.projects = new ArrayList<ResearchProjectData>(projects.size());
+            this.projects = new ArrayList<>(projects.size());
             for (ResearchProject project : projects) {
                 this.projects.add(new ResearchProjectData(bspUserList, project));
             }
@@ -127,8 +152,9 @@ public class ResearchProjectResource {
      * <p/>
      * Only one filter can be applied at a time. If no filters are provided, all research projects are returned.
      *
-     * @param projectIds one or more RP IDs, separated by commas
+     * @param projectIds  one or more RP IDs, separated by commas
      * @param pmUserNames one or more PM user names, separated by commas. Names must match the user name in BSP.
+     *
      * @return The research projects that match
      */
     @GET
@@ -144,7 +170,7 @@ public class ResearchProjectResource {
             for (int i = 0; i < userNames.length; i++) {
                 BspUser bspUser = bspUserList.getByUsername(userNames[i]);
                 if (bspUser == null) {
-                    throw new RuntimeException("No user name found for " + userNames[i]);
+                    throw new InformaticsServiceException("No user name found for " + userNames[i]);
                 }
                 ids[i] = bspUser.getUserId();
             }
@@ -153,5 +179,43 @@ public class ResearchProjectResource {
             projects = researchProjectDao.findAllResearchProjectsWithOrders();
         }
         return new ResearchProjects(bspUserList, projects);
+    }
+
+    /**
+     * Method to create a new research project with the given title and synopsis.
+     *
+     * @param data Object containing the relevant information needed to create a research project.
+     *
+     * @return Returns the research project data for the project created.
+     */
+    @POST
+    @Path("create")
+    @Consumes(MediaType.APPLICATION_XML)
+    @Produces(MediaType.APPLICATION_XML)
+    public ResearchProjectData create(@Nonnull ResearchProjectData data) {
+        if (data == null) {
+            throw new InformaticsServiceException(("No data found to define the new Research Project"));
+        }
+
+        if (researchProjectDao.findByTitle(data.title) != null) {
+            throw new InformaticsServiceException(
+                    "Cannot create a project that already exists - the project name is already being used.");
+        }
+
+        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
+        BspUser user = bspUserList.getByUsername(data.username);
+        project.setCreatedBy(user.getUserId());
+
+        try {
+            project.submitToJira();
+        } catch (IOException e) {
+            throw new InformaticsServiceException("Could not submit new research project to JIRA.");
+        }
+
+        // Save and flush to persist and make sure all DB constraints are met.
+        researchProjectDao.persist(project);
+        researchProjectDao.flush();
+
+        return new ResearchProjectData(bspUserList, project);
     }
 }

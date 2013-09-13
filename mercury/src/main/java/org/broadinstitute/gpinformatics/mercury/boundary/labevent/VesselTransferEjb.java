@@ -15,10 +15,10 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -35,22 +35,24 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FlowcellType.MiSeqFlowcell;
 
 /**
- * This class has methods for transferring stuff from one Vessel to Another One.
+ * This class has methods for transferring stuff from one Vessel to another One.
  */
 @Stateful
 @RequestScoped
 public class VesselTransferEjb {
     @Inject
     private LabEventDao labEventDao;
+    @Inject
+    private MiSeqReagentKitDao miSeqReagentKitDao;
     @Inject
     private LabEventHandler labEventHandler;
     @Inject
@@ -81,7 +83,6 @@ public class VesselTransferEjb {
                                                          Map<String, VesselPosition> denatureBarcodeMap,
                                                          String reagentKitBarcode, String username,
                                                          String stationName) {
-
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
 
         PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
@@ -108,70 +109,59 @@ public class VesselTransferEjb {
             denatureRackBarcode = "DenatureRack" + reagentKitBarcode;
         }
 
-        transferEvent.getSourcePlate().add(buildRackPlateType(denatureRackBarcode));
-        PositionMapType positionMap = new PositionMapType();
-        positionMap.setBarcode(denatureRackBarcode);
+        PlateType sourceTubeRack = BettaLimsObjectFactory.createPlateType(
+                denatureRackBarcode, LabEventFactory.PHYS_TYPE_TUBE_RACK, LabEventFactory.SECTION_ALL_96, null);
+
+        // source plate: denature rack
+        transferEvent.getSourcePlate().add(sourceTubeRack);
+        List<ReceptacleType> sourceReceptacles = new ArrayList<>();
 
         for (Map.Entry<String, VesselPosition> entry : denatureBarcodeMap.entrySet()) {
-            ReceptacleType receptacleType = BettalimsObjectFactory.createReceptacleType(
-                    entry.getKey(), "tube", entry.getValue().toString(), null, null, null, null, null, null);
-
-            positionMap.getReceptacle().add(receptacleType);
-
-            CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(
+            String sourceBarcode = entry.getKey();
+            String sourcePositionName = entry.getValue().name();
+            ReceptacleType sourceReceptacle = BettaLimsObjectFactory.createReceptacleType(
+                    sourceBarcode, "tube", sourcePositionName);
+            sourceReceptacles.add(sourceReceptacle);
+            CherryPickSourceType cherryPickSource = BettaLimsObjectFactory.createCherryPickSourceType(
                     denatureRackBarcode,
-                    entry.getValue().toString(),
+                    sourcePositionName,
                     reagentKitBarcode,
                     MiSeqReagentKit.LOADING_WELL.name());
-
             transferEvent.getSource().add(cherryPickSource);
         }
-        transferEvent.getSourcePositionMap().add(positionMap);
-        transferEvent.getPlate().add(buildReagentKitPlateType(reagentKitBarcode));
+        // where on rack is tube?
+        transferEvent.getSourcePositionMap().add(BettaLimsObjectFactory.createPositionMapType(
+                denatureRackBarcode, sourceReceptacles));
+        // target plate
+        PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
+                LabEventFactory.PHYS_TYPE_REAGENT_BLOCK, MiSeqReagentKit.LOADING_WELL.name(), null);
+        transferEvent.getPlate().add(reagentKitType);
         bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
         return bettaLIMSMessage;
     }
 
 
     /**
-     * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell
+     * Transfer contents of MiSeq Reagent Kit to a MiSeq Flowcell.  THis method builds a reagent kit to flowcell
+     * transfer message and utilizes the LabEvent Factory to build and persist a labEvent for that transfer.
      *
      * @param reagentKitBarcode barcode of the reagent kit
      * @param flowcellBarcode   flowcell barcode
      * @param username          user performing action.
      * @param stationName       where the transfer occurred (UI, robot, etc)
+     *
      * @return fully persisted labEvent
      */
     public LabEvent reagentKitToFlowcell(@Nonnull String reagentKitBarcode, @Nonnull String flowcellBarcode,
                                          @Nonnull String username, @Nonnull String stationName) {
-        PlateCherryPickEvent transferEvent = new PlateCherryPickEvent();
-        transferEvent.setEventType(LabEventType.FLOWCELL_TRANSFER.getName());
-        GregorianCalendar gregorianCalendar = new GregorianCalendar();
-        try {
-            transferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
-        } catch (DatatypeConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-        transferEvent.setDisambiguator(1L);
-        transferEvent.setOperator(username);
-        transferEvent.setStation(stationName);
 
-        ReceptacleType receptacleType = BettalimsObjectFactory.createReceptacleType(
-                reagentKitBarcode, "plate", MiSeqReagentKit.LOADING_WELL.name(), null, null, null, null, null, null);
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        PlateCherryPickEvent transferEvent =
+                labEventFactory
+                        .getReagentToFlowcellEventDBFree(reagentKitBarcode, flowcellBarcode, username, stationName);
+        bettaLIMSMessage.getPlateCherryPickEvent().add(transferEvent);
 
-        PositionMapType positionMap =
-                BettalimsObjectFactory.createPositionMapType(reagentKitBarcode, Arrays.asList(receptacleType));
-
-        transferEvent.getSourcePositionMap().add(positionMap);
-
-        // yes, yes, miSeq flowcell has one lane.
-        for (VesselPosition vesselPosition : MiSeqFlowcell.getVesselGeometry().getVesselPositions()) {
-            CherryPickSourceType cherryPickSource = BettalimsObjectFactory.createCherryPickSourceType(reagentKitBarcode,
-                    MiSeqReagentKit.LOADING_WELL.name(), flowcellBarcode, vesselPosition.name());
-            transferEvent.getSource().add(cherryPickSource);
-        }
-
-        LabEvent labEvent = labEventFactory.buildFromBettaLims(transferEvent);
+        LabEvent labEvent = labEventFactory.buildFromBettaLims(bettaLIMSMessage).iterator().next();
         labEventHandler.processEvent(labEvent);
         labEventDao.persist(labEvent);
         return labEvent;
@@ -204,35 +194,5 @@ public class VesselTransferEjb {
         event.setDestinationPlate(flowcell);
 
         return event;
-    }
-
-    /**
-     * Create and populate a new MiSeqReagentKit PlateType.
-     *
-     * @param reagentKitBarcode miSeqReagentKit barcode.
-     *
-     * @return Returns a new fully populated PlateType.
-     */
-    private PlateType buildReagentKitPlateType(String reagentKitBarcode) {
-        PlateType kit = new PlateType();
-        kit.setBarcode(reagentKitBarcode);
-        kit.setPhysType(LabEventFactory.PHYS_TYPE_REAGENT_BLOCK);
-        kit.setSection(MiSeqReagentKit.LOADING_WELL.name());
-        return kit;
-    }
-
-    /**
-     * Create and populate anew Rack PlateType
-     *
-     * @param rackBarcode The barcode of the Rack.
-     *
-     * @return Returns a new fully populated PlateType.
-     */
-    private PlateType buildRackPlateType(String rackBarcode) {
-        PlateType rack = new PlateType();
-        rack.setBarcode(rackBarcode);
-        rack.setPhysType(LabEventFactory.PHYS_TYPE_TUBE_RACK);
-        rack.setSection(LabEventFactory.SECTION_ALL_96);
-        return rack;
     }
 }

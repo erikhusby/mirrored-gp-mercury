@@ -19,10 +19,13 @@ public interface ColumnHeader {
      */
     String getText();
 
+    // Index should NOT be used for parsing. It is only available for positioning in generated files. We want to parse
+    // any file that comes with columns in any order.
     int getIndex();
 
-    boolean isRequredHeader();
+    boolean isRequiredHeader();
     boolean isRequiredValue();
 
     boolean isDateColumn();
+    boolean isStringColumn();
 }

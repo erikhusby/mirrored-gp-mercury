@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -41,6 +42,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     private final Collection<EventFactDto> loggingDtos = new ArrayList<>();
     private final Set<Long> loggingDeletedEventIds = new HashSet<>();
     private SequencingSampleFactEtl sequencingSampleFactEtl;
+    public static final String NONE = "NONE";
+    public static final String MULTIPLE = "MULTIPLE";
 
     public LabEventEtl() {
     }
@@ -48,7 +51,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     @Inject
     public LabEventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao,
                        SequencingSampleFactEtl sequencingSampleFactEtl) {
-        super(LabEvent.class, "event_fact", dao);
+        super(LabEvent.class, "event_fact", "lab_event_aud", "lab_event_id", dao);
         this.workflowConfigLookup = workflowConfigLookup;
         this.pdoDao = pdoDao;
         this.sequencingSampleFactEtl = sequencingSampleFactEtl;
@@ -78,22 +81,27 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
     Collection<String> dataRecords(String etlDateStr, boolean isDelete, LabEvent entity) {
 
         Collection<String> records = new ArrayList<>();
-
-        for (EventFactDto fact : makeEventFacts(entity)) {
-            if (fact.isComplete()) {
-                ProductOrder pdo = fact.getProductOrder();
-                records.add(genericRecord(etlDateStr, isDelete,
-                        fact.getLabEvent().getLabEventId(),
-                        format(fact.getWfDenorm().getWorkflowId()),
-                        format(fact.getWfDenorm().getProcessId()),
-                        format(pdo != null ? pdo.getProductOrderId() : null),
-                        format(fact.getSample().getSampleKey()),
-                        format(fact.getLabBatchId()),
-                        format(fact.getLabEvent().getEventLocation()),
-                        format(fact.getLabVessel().getLabVesselId()),
-                        format(ExtractTransform.secTimestampFormat.format(fact.getLabEvent().getEventDate()))
-                ));
+        try {
+            for (EventFactDto fact : makeEventFacts(entity)) {
+                if (fact.canEtl()) {
+                    ProductOrder pdo = fact.getProductOrder();
+                    records.add(genericRecord(etlDateStr, isDelete,
+                            fact.getLabEvent().getLabEventId(),
+                            format(fact.getWfDenorm().getWorkflowId()),
+                            format(fact.getWfDenorm().getProcessId()),
+                            format(pdo != null ? pdo.getProductOrderId() : null),
+                            format(fact.getSample().getSampleKey()),
+                            format(fact.getBatchName()),
+                            format(fact.getLabEvent().getEventLocation()),
+                            format(fact.getLabVessel().getLabVesselId()),
+                            format(ExtractTransform.formatTimestamp(fact.getLabEvent().getEventDate())),
+                            format(fact.getLabEvent().getProgramName())
+                    ));
+                }
             }
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected LabEventEtl in ExtractTransform.
+            logger.error("Error doing lab event etl", e);
         }
         return records;
     }
@@ -128,9 +136,15 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
         }
 
-        Set<LabVessel> directAndDescendantVessels = new HashSet<>(firstLevelVessels);
+        Set<LabVessel> directAndDescendantVessels = new HashSet<>();
         for (LabVessel vessel : firstLevelVessels) {
-            directAndDescendantVessels.addAll(vessel.getDescendantVessels());
+            if (vessel != null) {
+                directAndDescendantVessels.add(vessel);
+                Collection<LabVessel> vessels = vessel.getDescendantVessels();
+                if (!CollectionUtils.isEmpty(vessels)) {
+                    directAndDescendantVessels.addAll(vessels);
+                }
+            }
         }
 
         Set<Long> descendantEventIds = new HashSet<>();
@@ -172,41 +186,40 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         private LabEvent labEvent;
         private LabVessel labVessel;
         private String sampleInstanceIndexes;
-        private LabBatch labBatch;
-        private Long labBatchId;
+        private String batchName;
+        private String workflowName;
         private MercurySample sample;
         private ProductOrder productOrder;
         private WorkflowConfigDenorm wfDenorm;
-        boolean isComplete;
+        boolean canEtl;
 
-        EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, LabBatch labBatch,
-                     MercurySample sample, ProductOrder productOrder, WorkflowConfigDenorm wfDenorm,
-                     boolean isComplete) {
+        EventFactDto(LabEvent labEvent, LabVessel labVessel, String sampleInstanceIndexes, String batchName,
+                     String workflowName, MercurySample sample, ProductOrder productOrder,
+                     WorkflowConfigDenorm wfDenorm, boolean canEtl) {
             this.labEvent = labEvent;
             this.labVessel = labVessel;
             this.sampleInstanceIndexes = sampleInstanceIndexes;
-            this.labBatch = labBatch;
-            this.labBatchId = labBatch == null ? null : labBatch.getLabBatchId();
+            this.batchName = batchName;
+            this.workflowName = workflowName;
             this.sample = sample;
             this.productOrder = productOrder;
             this.wfDenorm = wfDenorm;
-            this.isComplete = isComplete;
+            this.canEtl = canEtl;
         }
 
-        private final static String NULLS_LAST = "zzzzzzzzzz";
 
-        public static Comparator<LabEventEtl.EventFactDto> sampleKeyComparator() {
-            return new Comparator<EventFactDto>() {
-                @Override
-                public int compare(EventFactDto o1, EventFactDto o2) {
-                    String s1 = o1.getSample() == null || o1.getSample().getSampleKey() == null ?
-                            NULLS_LAST : o1.getSample().getSampleKey();
-                    String s2 = o2.getSample() == null || o2.getSample().getSampleKey() == null ?
-                            NULLS_LAST : o2.getSample().getSampleKey();
+        public static final Comparator<EventFactDto> BY_SAMPLE_KEY = new Comparator<EventFactDto>() {
+            // Sorting a null sample key will put it after non-null sample keys.
+            private final static String NULLS_LAST = "zzzzzzzzzz";
+            @Override
+            public int compare(EventFactDto lhs, EventFactDto rhs) {
+                String s1 = lhs.getSample() == null || lhs.getSample().getSampleKey() == null ?
+                            NULLS_LAST : lhs.getSample().getSampleKey();
+                    String s2 = rhs.getSample() == null || rhs.getSample().getSampleKey() == null ?
+                            NULLS_LAST : rhs.getSample().getSampleKey();
                     return s1.compareTo(s2);
-                }
-            };
-        }
+            }
+        };
 
         public LabEvent getLabEvent() {
             return labEvent;
@@ -220,12 +233,12 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return sampleInstanceIndexes;
         }
 
-        public LabBatch getLabBatch() {
-            return labBatch;
+        public String getBatchName() {
+            return batchName;
         }
 
-        public Long getLabBatchId() {
-            return labBatchId;
+        public String getWorkflowName() {
+            return workflowName;
         }
 
         public MercurySample getSample() {
@@ -240,8 +253,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             return wfDenorm;
         }
 
-        public boolean isComplete() {
-            return isComplete;
+        public boolean canEtl() {
+            return canEtl;
         }
 
     }
@@ -250,7 +263,13 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
      * Makes one or more DTOs representing Event Fact records.  DTOs may have missing values.
      */
     public List<EventFactDto> makeEventFacts(long labEventId) {
-        return makeEventFacts(dao.findById(LabEvent.class, labEventId));
+        try {
+            return makeEventFacts(dao.findById(LabEvent.class, labEventId));
+        } catch (Exception e) {
+            // Uncaught RuntimeExceptions kill the injected LabEventEtl in ExtractTransform.
+            logger.error("Error making eventFact dto", e);
+            return Collections.<EventFactDto>emptyList();
+        }
     }
 
     private List<EventFactDto> makeEventFacts(LabEvent entity) {
@@ -265,71 +284,76 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             }
 
             if (vessels.isEmpty()) {
-                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, false));
+                // Use of the full constructor which in this case has multiple nulls is intentional
+                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
+                dtos.add(new EventFactDto(entity, null, null, null, null, null, null, null, false));
             }
 
             for (LabVessel vessel : vessels) {
                 try {
                     Set<SampleInstance> sampleInstances =
-                            vessel.getSampleInstances(SampleType.WITH_PDO, LabBatchType.WORKFLOW);
+                            vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
 
                     if (!sampleInstances.isEmpty()) {
                         for (SampleInstance si : sampleInstances) {
 
                             String pdoKey = si.getProductOrderKey();
-                            if (pdoKey != null) {
-                                ProductOrder pdo;
-
+                            // null pdo is ok for BSP events.
+                            ProductOrder pdo = null;
+                            synchronized (cachedPdo) {
                                 if (cachedPdo.containsKey(pdoKey)) {
                                     pdo = cachedPdo.get(pdoKey);
                                 } else {
-                                    pdo = pdoDao.findByBusinessKey(pdoKey);
+                                    if (pdoKey != null) {
+                                        pdo = pdoDao.findByBusinessKey(pdoKey);
+                                    }
                                     cachedPdo.put(pdoKey, pdo);
                                 }
+                            }
 
-                                MercurySample sample = si.getStartingSample();
-                                if (sample != null) {
+                            MercurySample sample = si.getStartingSample();
+                            if (sample != null) {
 
-                                    Collection<LabBatch> labBatches = si.getAllWorkflowLabBatches();
-                                    if (labBatches != null && labBatches.size() > 0) {
-                                        for (LabBatch labBatch : labBatches) {
-                                            String workflowName = labBatch.getWorkflowName();
-                                            if (StringUtils.isBlank(workflowName)) {
-                                                workflowName = pdo.getProduct().getWorkflowName();
-                                            }
-                                            WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
-                                                    eventName, workflowName, entity.getEventDate());
+                                Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
+                                LabBatch labBatch = batches.size() == 1 ? batches.iterator().next() : null;
+                                String batchName = labBatch != null ? labBatch.getBatchName() :
+                                        batches.size() == 0 ? NONE : MULTIPLE;
 
-                                            boolean canExportToEtl =
-                                                    wfDenorm != null &&
-                                                    (pdo != null || !wfDenorm.isProductOrderNeeded());
-
-                                            dtos.add(new EventFactDto(entity, vessel, null, labBatch, sample, pdo,
-                                                    wfDenorm, canExportToEtl));
-                                        }
-                                    } else {
-                                        dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                                null, sample, pdo, null, false));
-                                    }
-                                } else {
-                                    dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                            null, null, pdo, null, false));
+                                String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
+                                if (StringUtils.isBlank(workflowName) && pdo != null) {
+                                    workflowName = pdo.getProduct().getWorkflow().getWorkflowName();
                                 }
+                                WorkflowConfigDenorm wfDenorm = workflowConfigLookup.lookupWorkflowConfig(
+                                        eventName, workflowName, entity.getEventDate());
+
+                                boolean canEtl = wfDenorm != null &&
+                                                 (pdo != null || !wfDenorm.isProductOrderNeeded());
+
+                                dtos.add(new EventFactDto(entity, vessel, null, batchName, workflowName,
+                                        sample, pdo, wfDenorm, canEtl));
                             } else {
+                                // Use of the full constructor which in this case has multiple nulls is intentional
+                                // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                                // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
                                 dtos.add(new EventFactDto(entity, vessel, vessel.getIndexesString(si),
-                                        null, null, null, null, false));
+                                        null, null, null, pdo, null, false));
                             }
                         }
                     } else {
-                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, false));
+                        // Use of the full constructor which in this case has multiple nulls is intentional
+                        // since exactly which fields are null is used as indicator in postEtlLogging, and this
+                        // pattern is used in other fact table etl that are exposed in ExtractTransformResource.
+                        dtos.add(new EventFactDto(entity, vessel, null, null, null, null, null, null, false));
                     }
                 } catch (RuntimeException e) {
                     logger.debug("Skipping ETL on labEvent " + entity.getLabEventId() +
                                  " on vessel " + vessel.getLabel(), e);
                 }
             }
+
         }
-        Collections.sort(dtos, EventFactDto.sampleKeyComparator());
+        Collections.sort(dtos, EventFactDto.BY_SAMPLE_KEY);
 
         synchronized (loggingDtos) {
             loggingDtos.addAll(dtos);
@@ -351,7 +375,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         //  Only logs dtos that did not get exported.  Only logs each dto once.  Attempts to show the most basic flaw.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.isComplete()) {
+            if (fact.canEtl()) {
                 iter.remove();
             }
         }
@@ -421,13 +445,27 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
         // No lab batch.
         for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
             EventFactDto fact = iter.next();
-            if (fact.getLabBatch() == null) {
+            if (fact.getBatchName() == null || fact.getBatchName().equals(NONE)) {
                 errorIds.add(fact.getLabEvent().getLabEventId());
                 iter.remove();
             }
         }
         if (errorIds.size() > 0) {
             logger.debug("Missing labBatch for labEvents: " + StringUtils.join(errorIds, ", "));
+        }
+        errorIds.clear();
+        otherIds.clear();
+
+        // Multiple lab batch.
+        for (Iterator<EventFactDto> iter = dtos.iterator(); iter.hasNext(); ) {
+            EventFactDto fact = iter.next();
+            if (fact.getBatchName().equals(MULTIPLE)) {
+                errorIds.add(fact.getLabEvent().getLabEventId());
+                iter.remove();
+            }
+        }
+        if (errorIds.size() > 0) {
+            logger.debug("Multiple labBatch for labEvents: " + StringUtils.join(errorIds, ", "));
         }
         errorIds.clear();
         otherIds.clear();

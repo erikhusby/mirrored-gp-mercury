@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.collections15.Factory;
+import org.apache.commons.collections15.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -12,11 +16,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LCSetJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -27,7 +34,10 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +58,7 @@ public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
 
-    private LabBatchDAO labBatchDao;
+    private LabBatchDao labBatchDao;
 
     private AthenaClientService athenaClientService;
 
@@ -56,9 +66,11 @@ public class LabBatchEjb {
 
     private JiraTicketDao jiraTicketDao;
 
-    private LabVesselDao tubeDAO;
+    private LabVesselDao tubeDao;
 
     private BucketDao bucketDao;
+
+    private BucketEntryDao bucketEntryDao;
 
     private BucketEjb bucketEjb;
 
@@ -80,7 +92,7 @@ public class LabBatchEjb {
         Set<LabVessel> vesselsForBatch = new HashSet<>(labVesselNames.size());
 
         for (String currVesselLabel : labVesselNames) {
-            vesselsForBatch.add(tubeDAO.findByIdentifier(currVesselLabel));
+            vesselsForBatch.add(tubeDao.findByIdentifier(currVesselLabel));
         }
 
         return createLabBatch(vesselsForBatch, reporter, batchName, labBatchType, issueType);
@@ -114,6 +126,8 @@ public class LabBatchEjb {
 
     /**
      * This method will create a batch entity and a new JIRA Ticket for that entity.
+     * <p/>
+     * TODO: consider making this private; seems strange to take a batch object, persist it, then return the same object
      *
      * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
      *                    to persist a new batch.
@@ -121,6 +135,8 @@ public class LabBatchEjb {
      * @param issueType   The type of issue to create in JIRA for this lab batch.
      *
      * @return The lab batch that was created.
+     *
+     * @see #createLabBatch(org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType, String, String, String, java.util.Date, String, String, java.util.Set, java.util.Set)
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
@@ -154,10 +170,120 @@ public class LabBatchEjb {
                                                       @Nonnull LabBatch.LabBatchType labBatchType,
                                                       @Nonnull CreateFields.IssueType issueType) {
         Set<LabVessel> vessels =
-                new HashSet<>(tubeDAO.findByListIdentifiers(vesselLabels));
+                new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
         bucketEjb.start(operator, vessels, bucket, location);
+        return batch;
+    }
+
+    /**
+     * Creates a new lab batch and archives the bucket entries used to create the batch.
+     *
+     * @param labBatchType         the type of lab batch to create
+     * @param workflowName         the workflow that the batch is to run through
+     * @param bucketEntryIds       the IDs of the bucket entries to include in the batch
+     * @param reworkBucketEntryIds the vessels being reworked to include in the batch
+     * @param batchName            the name for the batch (also the summary for JIRA)
+     * @param description          the description for the batch (for JIRA)
+     * @param dueDate              the due date for the batch (for JIRA)
+     * @param important            the important notes for the batch (for JIRA)
+     * @param username             the user creating the batch (for JIRA)
+     * @param location             the machine location where the batch was created
+     *
+     * @return The lab batch that was created.
+     */
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
+                                                      @Nonnull String workflowName,
+                                                      @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull List<Long> reworkBucketEntryIds,
+                                                      @Nonnull String batchName, @Nonnull String description,
+                                                      @Nonnull Date dueDate, @Nonnull String important,
+                                                      @Nonnull String username,
+                                                      @Nonnull String location) throws ValidationException {
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
+        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
+        Set<String> pdoKeys = new HashSet<>();
+
+        Map<String, Integer> tubeBarcodeCounts =
+                LazyMap.decorate(new HashMap<String, Integer>(), new Factory<Integer>() {
+                    @Override
+                    public Integer create() {
+                        return 0;
+                    }
+                });
+        Set<LabVessel> vessels = new HashSet<>();
+        for (BucketEntry bucketEntry : bucketEntries) {
+            vessels.add(bucketEntry.getLabVessel());
+            String tubeBarcode = bucketEntry.getLabVessel().getLabel();
+            tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
+            pdoKeys.add(bucketEntry.getPoBusinessKey());
+        }
+
+        Set<LabVessel> reworkVessels = new HashSet<>();
+        for (BucketEntry bucketEntry : reworkBucketEntries) {
+            reworkVessels.add(bucketEntry.getLabVessel());
+            String tubeBarcode = bucketEntry.getLabVessel().getLabel();
+            tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
+            pdoKeys.add(bucketEntry.getPoBusinessKey());
+        }
+
+        // Validate that no tubes appear in the proposed batch more than once
+        List<String> repeatedTubeBarcodes = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : tubeBarcodeCounts.entrySet()) {
+            if (entry.getValue() > 1) {
+                repeatedTubeBarcodes.add(entry.getKey());
+            }
+        }
+        if (!repeatedTubeBarcodes.isEmpty()) {
+            throw new ValidationException(
+                    "The following tubes were selected more than once for the batch, which is not allowed: "
+                    + repeatedTubeBarcodes);
+        }
+
+        LabBatch batch =
+                createLabBatch(labBatchType, workflowName, batchName, description, dueDate, important, username,
+                        vessels, reworkVessels);
+
+        Set<BucketEntry> allBucketEntries = new HashSet<>(bucketEntries);
+        allBucketEntries.addAll(reworkBucketEntries);
+        bucketEjb.start(allBucketEntries, batch);
+
+        CreateFields.IssueType issueType = CreateFields.IssueType.valueForJiraName(workflowName);
+        batchToJira(username, null, batch, issueType);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : pdoKeys) {
+            linkJiraBatchToTicket(pdoKey, batch);
+        }
+
+        return batch;
+    }
+
+    /**
+     * Creates a lab batch for a set of lab vessels (and reworks).
+     *
+     * @param labBatchType  the type of lab batch to create
+     * @param workflowName  the workflow that the batch is to run through
+     * @param batchName     the name for the batch (also the summary for JIRA)
+     * @param description   the description for the batch (for JIRA)
+     * @param dueDate       the due date for the batch (for JIRA)
+     * @param important     the important notes for the batch (for JIRA)
+     * @param username      the user creating the batch (for JIRA)
+     * @param vessels       the vessels to include in the batch
+     * @param reworkVessels the vessels being reworked to include in the batch
+     *
+     * @return a new lab batch
+     */
+    public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String workflowName,
+                                   @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
+                                   @Nonnull String important, @Nonnull String username,
+                                   @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
+        LabBatch batch =
+                new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
+                        important);
+        labBatchDao.persist(batch);
+
         return batch;
     }
 
@@ -176,8 +302,8 @@ public class LabBatchEjb {
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
                                                       @Nonnull String bucketName, @Nonnull String location,
                                                       @Nonnull CreateFields.IssueType issueType) {
-        Bucket bucket = bucketDao.findByName(bucketName);
         batch = createLabBatch(batch, operator, issueType);
+        Bucket bucket = bucketDao.findByName(bucketName);
         bucketEjb.start(operator, batch.getStartingBatchLabVessels(), bucket, location);
         return batch;
     }
@@ -315,11 +441,68 @@ public class LabBatchEjb {
         return result;
     }
 
+    /**
+     * This method adds bucket entries, from PDO creation or rework, to an existing lab batch.
+     *
+     * @param businessKey       the business key for the lab batch we are adding samples to
+     * @param bucketEntryIds    the bucket entries whose vessel are being added to the batch
+     * @param reworkEntries     the rework bucket entries whose vessels are being added to the batch
+     * @throws IOException This exception is thrown when the JIRA service can not be contacted.
+     */
+    public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries)
+            throws IOException {
+        LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
+        Set<LabVessel> labVessels = new HashSet<>();
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labVessels.add(bucketEntry.getLabVessel());
+            bucketEntry.getBucket().removeEntry(bucketEntry);
+        }
+        batch.addLabVessels(labVessels);
+        bucketEjb.start(bucketEntries, batch);
+
+        List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
+        Set<LabVessel> reworkVessels = new HashSet<>();
+        Bucket reworkFromBucket = null;
+        for (BucketEntry entry : reworkBucketEntries) {
+            reworkVessels.add(entry.getLabVessel());
+            entry.getBucket().removeEntry(entry);
+            reworkFromBucket = entry.getBucket();
+        }
+        batch.addReworks(reworkVessels);
+        bucketEjb.start(reworkBucketEntries, batch);
+
+        Set<CustomField> customFields = new HashSet<>();
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.GSSR_IDS,
+                LCSetJiraFieldFactory.buildSamplesListString(batch, reworkFromBucket)));
+
+        int sampleCount = batch.getStartingBatchLabVessels().size();
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.NUMBER_OF_SAMPLES,
+                sampleCount));
+
+        AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
+                .getInstance(batch, athenaClientService);
+
+        if (StringUtils.isBlank(batch.getBatchDescription())) {
+            batch.setBatchDescription(fieldBuilder.generateDescription());
+        } else {
+            batch.setBatchDescription(
+                    fieldBuilder.generateDescription() + "\n\n" + batch.getBatchDescription());
+        }
+
+        customFields.add(new CustomField(submissionFields, LabBatch.TicketFields.DESCRIPTION,
+                batch.getBatchDescription()));
+
+        jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
+    }
+
     /*
        To Support DBFree Tests
     */
     @Inject
-    public void setLabBatchDao(LabBatchDAO labBatchDao) {
+    public void setLabBatchDao(LabBatchDao labBatchDao) {
         this.labBatchDao = labBatchDao;
     }
 
@@ -339,8 +522,8 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setTubeDAO(LabVesselDao tubeDAO) {
-        this.tubeDAO = tubeDAO;
+    public void setTubeDao(LabVesselDao tubeDao) {
+        this.tubeDao = tubeDao;
     }
 
     @Inject
@@ -351,5 +534,10 @@ public class LabBatchEjb {
     @Inject
     public void setBucketEjb(BucketEjb bucketEjb) {
         this.bucketEjb = bucketEjb;
+    }
+
+    @Inject
+    public void setBucketEntryDao(BucketEntryDao bucketEntryDao) {
+        this.bucketEntryDao = bucketEntryDao;
     }
 }

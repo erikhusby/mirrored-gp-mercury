@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
@@ -11,7 +12,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -43,44 +43,49 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
     @RunAsClient
     public void testAnalyze(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
-        String result = resource.get(String.class);
-        assertTrue(result.contains("flowcellBarcode"));
+        ClientResponse response = resource.type("text/html").get(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
+        String result = response.getEntity(String.class);
+        assertTrue(result.contains("canEtl"));
 
-        WebResource resource2 = makeWebResource(baseUrl, "analyze/event/136213");
-        String result2 = resource2.get(String.class);
-        assertTrue(result2.contains("canEtl"));
+        resource = makeWebResource(baseUrl, "analyze/event/136213");
+        response = resource.type("text/html").get(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
+        result = response.getEntity(String.class);
+        assertTrue(result.contains("canEtl"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testIncrementalAndBackup(@ArquillianResource URL baseUrl) {
-        String endTimestamp = "20121121000000";
 
-        // Tests that incremental produces a .dat file
-        WebResource resource = makeWebResource(baseUrl, "incremental/20121120000000/" + endTimestamp);
-        resource.put();
+        // Tests incremental.
+        WebResource resource = makeWebResource(baseUrl, "incremental/20121120000000/20121120000001");
+        ClientResponse response = resource.type("text/plain").put(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
 
-        boolean found = false;
-        for (File file : EtlTestUtilities.getEtlFiles(datafileDir)) {
-            Assert.assertFalse(file.getName().contains("event_fact"));
-            if (file.getName().contains(endTimestamp)) {
-                found = true;
-            }
-        }
-        Assert.assertTrue(found);
+        // Tests incremental.
+        resource = makeWebResource(baseUrl, "incremental/20121120000001/20121120000000");
+        response = resource.type("text/plain").put(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.INTERNAL_SERVER_ERROR);
 
-        // Tests that backfill produces a .dat file
-        WebResource resource2 = makeWebResource(baseUrl,
+        // Tests backfill.
+        resource = makeWebResource(baseUrl,
                 "backfill/org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent/136213/136213");
-        resource2.put();
+        response = resource.type("text/plain").put(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.OK);
 
-        found = false;
-        for (File file : EtlTestUtilities.getEtlFiles(datafileDir)) {
-            if (file.getName().contains("event_fact")) {
-                found = true;
-            }
-        }
-        Assert.assertTrue(found);
+        // Tests invalid class.
+        resource = makeWebResource(baseUrl,
+                "backfill/org.broadinstitute.gpinformatics.shouldNotHaveThisClassName/136213/136213");
+        response = resource.type("text/plain").put(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.NOT_FOUND);
 
+        // Tests invalid range.
+        resource = makeWebResource(baseUrl,
+                "backfill/org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent/2/1");
+        response = resource.type("text/plain").put(ClientResponse.class);
+        Assert.assertEquals(response.getClientResponseStatus(), ClientResponse.Status.BAD_REQUEST);
+        Assert.assertTrue(response.getEntity(String.class).startsWith("Invalid"));
     }
 }

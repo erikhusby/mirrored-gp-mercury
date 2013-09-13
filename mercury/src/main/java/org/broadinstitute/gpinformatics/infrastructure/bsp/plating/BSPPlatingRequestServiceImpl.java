@@ -111,9 +111,9 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         String wrBarcode = bspWorkRequest.getBarCode();
 
         result.setPlatingRequestReceipt(wrBarcode);
-        result.setErrors(bspWorkRequest.getErrors() == null ? null : new ArrayList<String>(bspWorkRequest.getErrors()));
-        result.setWarnings(bspWorkRequest.getWarnings() == null ? null : new ArrayList<String>(bspWorkRequest.getWarnings()));
-        result.setInfos(bspWorkRequest.getInfo() == null ? null : new ArrayList<String>(bspWorkRequest.getInfo()));
+        result.setErrors(bspWorkRequest.getErrors() == null ? null : new ArrayList<>(bspWorkRequest.getErrors()));
+        result.setWarnings(bspWorkRequest.getWarnings() == null ? null : new ArrayList<>(bspWorkRequest.getWarnings()));
+        result.setInfos(bspWorkRequest.getInfo() == null ? null : new ArrayList<>(bspWorkRequest.getInfo()));
 
         // assume the worst, that we will ultimately fail submitting this WR
         result.setPlatingRequestSubmitted(false);
@@ -183,7 +183,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
         // TODO Splitterize
         GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
-                new GroupingIterable<SeqWorkRequestAliquot>(SAMPLES_PER_PLATE, seqAliquots);
+                new GroupingIterable<>(SAMPLES_PER_PLATE, seqAliquots);
 
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
 
@@ -230,7 +230,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         int plateNumber = 1;
 
         // mapping from 1-based plate numbers to our generated barcodes
-        Map<Integer, String> plateNameMap = new HashMap<Integer, String>();
+        Map<Integer, String> plateNameMap = new HashMap<>();
         if (humanReadableBarcode != null && !humanReadableBarcode.isEmpty()) {
             //assumes only 1 plate is created per plating request
             plateNameMap.put(plateNumber, humanReadableBarcode);
@@ -247,7 +247,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         workRequest.setLabelOption(options.getLabelOption());
         workRequest.setPlatingStyle(options.getPlatingStyle());
 
-        List<SamplePlateInfo> platingInfo = new ArrayList<SamplePlateInfo>();
+        List<SamplePlateInfo> platingInfo = new ArrayList<>();
         workRequest.setPlatingInfo(platingInfo);
 
         workRequest.setNotes(comments);
@@ -281,7 +281,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         // we don't set the quote for the overall work request since samples can/will be
         // scrambled into LCSETs from various PASSes with differing quotes and then plated
         // to parallel the LCSETs
-        Map<String, String> sampleQuoteMap = new HashMap<String, String>();
+        Map<String, String> sampleQuoteMap = new HashMap<>();
         workRequest.setSampleQuoteMap(sampleQuoteMap);
 
         // work request demands 2 of 3 of volume, concentration, and mass to be set at the WR level
@@ -502,7 +502,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
             throws Exception {
         //Assert.fail("failed from impl on purpose");
 
-        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
+        List<SeqWorkRequestAliquot> bspStocks = new ArrayList<>();
         BSPPlatingRequestResult result = null;
         for (BSPPlatingRequest request : requests) {
             SeqWorkRequestAliquot aliquot = new SeqWorkRequestAliquot(request.getSampleName(),

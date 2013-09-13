@@ -18,17 +18,19 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResourceTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
@@ -40,12 +42,13 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
@@ -78,11 +81,15 @@ public class SolexaRunRestResourceTest extends Arquillian {
     @Inject
     private AppConfig appConfig;
 
+    @Inject
+    private SolexaRunResource solexaRunResource;
+
     private Date runDate;
     private String flowcellBarcode;
     private IlluminaFlowcell newFlowcell;
     private boolean result;
     private String runBarcode;
+    private String reagentKitBarcode;
     private String runFileDirectory;
     private String pdoKey;
     private ProductOrder exexOrder;
@@ -102,18 +109,20 @@ public class SolexaRunRestResourceTest extends Arquillian {
          *
          */
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(AUTO_BUILD, AthenaClientServiceStub.class, BSPSampleSearchServiceStub.class);
+                .buildMercuryWarWithAlternatives(DEV, AthenaClientServiceStub.class,
+                        BSPSampleSearchServiceStub.class);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+        runBarcode = "RunBarcode" + System.currentTimeMillis();
 
         if (flowcellDao == null) {
             return;
         }
 
         runDate = new Date();
-
+        reagentKitBarcode = "ReagentKitBarcode-" + runDate.getTime();
         String testPrefix = "runResourceTst";
 
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
@@ -123,7 +132,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettalimsMessageResourceTest.mapWorkflowToPartNum.get(WorkflowName.EXOME_EXPRESS.getWorkflowName()));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 
@@ -186,7 +195,6 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
 
-        runBarcode = flowcellBarcode + dateFormat.format(runDate);
         runName = "testRunName" + testPrefix + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
@@ -234,51 +242,65 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    public void testCreate2500Run() {
+
+        Assert.assertTrue(result);
+
+
+        Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, reagentKitBarcode)).post(Response.class);
+
+
+        Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
+        System.out.println(response.getStatus());
+
+        String runName = new File(runFileDirectory).getName();
+
+        IlluminaSequencingRun sequencingRun = runDao.findByRunName(runName);
+
+        IlluminaFlowcell createdFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
+
+        Assert.assertEquals(sequencingRun.getSampleCartridge(), createdFlowcell);
+
+        Assert.assertEquals(createdFlowcell.getSequencingRuns().iterator().next(), sequencingRun);
+
+    }
+
     @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    public void testSetReadStructure() {
+            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @RunAsClient
+    public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
+        String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
+
+        ReadStructureRequest readStructureData = new ReadStructureRequest();
+        readStructureData.setRunBarcode(runBarcode);
+        readStructureData.setImagedArea(20.23932);
+        readStructureData.setLanesSequenced("2,5");
+        readStructureData.setActualReadStructure("71T8B8B101T");
+        readStructureData.setActualReadStructure("76T8B8B76T");
+
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);
 
-        ReadStructureRequest readStructure = new ReadStructureRequest();
-        readStructure.setRunBarcode(runBarcode);
-        readStructure.setSetupReadStructure("71T8B8B101T");
 
-        IlluminaSequencingRun run =
-                new IlluminaSequencingRun(newFlowcell, runName, runBarcode, "SL-HAL",
-                        bspUserList.getByUsername("scottmat").getUserId(), true, runDate, runFileDirectory);
-
-        runDao.persist(run);
-
-        ReadStructureRequest readstructureResult =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
+        Response readStructureResult =
+                Client.create(clientConfig).resource(wsUrl)
                         .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructure).post(ReadStructureRequest.class);
+                        .entity(readStructureData).post(Response.class);
 
-        runDao.clear();
-        run = runDao.findByBarcode(runBarcode);
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getSetupReadStructure(),
+                readStructureData.getSetupReadStructure());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getActualReadStructure(),
+                readStructureData.getActualReadStructure());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getLanesSequenced(),
+                readStructureData.getLanesSequenced());
+        Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getImagedArea(),
+                readStructureData.getImagedArea());
 
-        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
-        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
-        Assert.assertNull(readstructureResult.getActualReadStructure());
-
-        readStructure.setActualReadStructure("101T8B8B101T");
-
-        readstructureResult =
-                Client.create(clientConfig).resource(appConfig.getUrl() + "rest/solexarun/storeRunReadStructure")
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructure).post(ReadStructureRequest.class);
-
-        runDao.clear();
-        run = runDao.findByBarcode(runBarcode);
-
-        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
-        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
-        Assert.assertNotNull(readstructureResult.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
     }
-
 }

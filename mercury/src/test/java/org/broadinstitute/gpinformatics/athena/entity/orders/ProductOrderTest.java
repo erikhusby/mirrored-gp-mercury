@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -82,7 +84,7 @@ public class ProductOrderTest {
             public ProductOrder create() {
 
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, "Exome Express", false, "agg type");
+                        1814400, 1814400, 184, null, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 
@@ -99,8 +101,8 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-        assertThat(productOrder.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.PRODUCT_ORDER)));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.PRODUCT_ORDERING)));
+        assertThat(productOrder.fetchJiraIssueType(), is(equalTo((Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER)));
+        assertThat(productOrder.fetchJiraProject(), is(equalTo((Deployment.isCRSP)?CreateFields.ProjectType.CRSP_PRODUCT_ORDERING:CreateFields.ProjectType.PRODUCT_ORDERING)));
         assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }

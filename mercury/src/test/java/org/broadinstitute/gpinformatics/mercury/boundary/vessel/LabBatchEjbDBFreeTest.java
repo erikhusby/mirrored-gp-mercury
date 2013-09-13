@@ -9,14 +9,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -43,12 +42,11 @@ public class LabBatchEjbDBFreeTest {
 
     private LabBatchEjb labBatchEJB;
 
-    private LabBatchDAO labBatchDAO;
+    private LabBatchDao labBatchDao;
 
     private LabVesselDao tubeDao;
 
-    private LinkedHashMap<String, LabVessel> mapBarcodeToTube = new LinkedHashMap<String, LabVessel>();
-    private String workflowName;
+    private LinkedHashMap<String, LabVessel> mapBarcodeToTube = new LinkedHashMap<>();
     private ArrayList<String> pdoNames;
     private String scottmat;
     private String testLCSetKey;
@@ -61,7 +59,7 @@ public class LabBatchEjbDBFreeTest {
         testLCSetKey = "LCSet-tst932";
         testFCTKey = "FCT-tst932";
 
-        vesselSampleList = new HashSet<String>(6);
+        vesselSampleList = new HashSet<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
@@ -92,7 +90,7 @@ public class LabBatchEjbDBFreeTest {
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-143"))).andReturn(mapBarcodeToTube.get("R444444"));
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-9243"))).andReturn(mapBarcodeToTube.get("R555555"));
         EasyMock.expect(tubeDao.findByIdentifier(EasyMock.eq("SM-118"))).andReturn(mapBarcodeToTube.get("R666666"));
-        labBatchEJB.setTubeDAO(tubeDao);
+        labBatchEJB.setTubeDao(tubeDao);
 
         mockJira = EasyMock.createMock(JiraTicketDao.class);
         EasyMock.expect(mockJira.fetchByName(testLCSetKey))
@@ -101,22 +99,20 @@ public class LabBatchEjbDBFreeTest {
                 .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testFCTKey)).times(0, 1);
         labBatchEJB.setJiraTicketDao(mockJira);
 
-        labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
-        labBatchEJB.setLabBatchDao(labBatchDAO);
+        labBatchDao = EasyMock.createNiceMock(LabBatchDao.class);
+        labBatchEJB.setLabBatchDao(labBatchDao);
 
-        pdoNames = new ArrayList<String>();
+        pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
-        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
-
-        EasyMock.replay(mockJira, labBatchDAO, tubeDao);
+        EasyMock.replay(mockJira, labBatchDao, tubeDao);
 
         scottmat = "scottmat";
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
     public void tearDown() throws Exception {
-        EasyMock.verify(labBatchDAO);
+        EasyMock.verify(labBatchDao);
     }
 
     @Test
@@ -124,7 +120,7 @@ public class LabBatchEjbDBFreeTest {
 
         final String batchName = "Test create batch basic";
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                .createLabBatch(new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
                         LabBatch.LabBatchType.WORKFLOW), "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
 
         Assert.assertNotNull(testBatch);
@@ -193,7 +189,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithVessels() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), "scottmat", testLCSetKey,
+                labBatchEJB.createLabBatch(new HashSet<>(mapBarcodeToTube.values()), "scottmat", testLCSetKey,
                         LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
         EasyMock.verify(mockJira);
 
@@ -217,7 +213,7 @@ public class LabBatchEjbDBFreeTest {
 
         final String batchName = "second Test batch name";
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                .createLabBatch(new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
                         LabBatch.LabBatchType.WORKFLOW), scottmat, CreateFields.IssueType.EXOME_EXPRESS);
 
         Assert.assertNotNull(testBatch);
@@ -241,7 +237,7 @@ public class LabBatchEjbDBFreeTest {
         final String description =
                 "New User defined description set here at the Create LabBatch call level.  SHould be useful when giving users the ability to set their own description for the LCSET or whatever ticket";
         final String batchName = "Third test of batch name.";
-        LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+        LabBatch batchInput = new LabBatch(batchName, new HashSet<>(mapBarcodeToTube.values()),
                 LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
 
@@ -280,7 +276,7 @@ public class LabBatchEjbDBFreeTest {
 
         Assert.assertFalse(labBatchEJB.validatePriorBatch(mapBarcodeToTube.values()));
 
-        Set<LabVessel> workingVessels = new HashSet<LabVessel>(mapBarcodeToTube.values());
+        Set<LabVessel> workingVessels = new HashSet<>(mapBarcodeToTube.values());
 
 
         LabBatch testBatch = new LabBatch("Test Batch for vessel Validation", workingVessels,

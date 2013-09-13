@@ -41,9 +41,24 @@ app:
 
 # Stubbed out so that the MercuryConfiguration doesn't throw a big fat exception and halts the Mercury WAR deployment.
 bsp:
+
     DEV:
-    QA:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-dev-bsp.broadinstitute.org
+      port:     8080
+
+    RC:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-qa-bsp.broadinstitute.org
+      port:     8080
+
     PROD:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-bsp.broadinstitute.org
+      port:
 
 squid:
     DEV:
@@ -58,15 +73,15 @@ datawhEtl:
 jira:
 
     TEST:
-      login:    squid
-      password: squid
+      login:    crspuser
+      password: crspuser
       host:     crsptestjira.broadinstitute.org
       port:     8443
       urlBase:      https://crsptestjira.broadinstitute.org:8443
 
     PROD:
-      login:    squid
-      password: squid
+      login:    crspuser
+      password: crspuser
       host:     crspjira.broadinstitute.org
 #      port:     8020
       urlBase:      https://crspjira.broadinstitute.org
@@ -166,7 +181,7 @@ mercury:
     DEV:
 
       app:      DEV
-      bsp:      DISABLED
+      bsp:      DEV
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -180,7 +195,7 @@ mercury:
     AUTO_BUILD:
 
       app:      AUTO_BUILD
-      bsp:      DISABLED
+      bsp:      DEV
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -194,7 +209,7 @@ mercury:
     TEST:
 
       app:      TEST
-      bsp:      DISABLED
+      bsp:      DEV
       jira:     TEST
       quote:    DEV
       squid:    DISABLED
@@ -208,7 +223,7 @@ mercury:
     QA:
 
       app:      QA
-      bsp:      DISABLED
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -222,7 +237,7 @@ mercury:
     RC:
 
       app:      RC
-      bsp:      DISABLED
+      bsp:      RC
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -236,7 +251,7 @@ mercury:
     PROD:
 
       app:      PROD
-      bsp:      DISABLED
+      bsp:      PROD
       jira:     PROD
       quote:    PROD
       squid:    DISABLED

@@ -39,6 +39,8 @@ public class QuantificationEJB {
 
             for (LabMetric metric : labMetrics) {
                 LabVessel labVessel = metric.getLabVessel();
+
+                // Do not need to add an error for no lab vessel because the parser will already have that.
                 if (labVessel != null) {
                     for (LabMetric persistedMetric : labVessel.getMetrics()) {
                         if (persistedMetric.getName().equals(metricType)) {
@@ -47,8 +49,6 @@ public class QuantificationEJB {
                                     .getLabel());
                         }
                     }
-                } else {
-                    validationErrors.add("Could not find lab vessel for metric: " + metric.getName().getDisplayName());
                 }
             }
             for (String message : labMetricProcessor.getMessages()) {

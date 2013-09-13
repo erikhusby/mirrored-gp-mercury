@@ -12,7 +12,7 @@
         $j(document).ready(function () {
             $j(".accordion").on("accordionactivate", function (event, ui) {
                 var active = $j('.accordion').accordion('option', 'active');
-                var resultsId = "#sampleEventListView" + active;
+                var resultsId = "#sampleEventListView-${sample.sampleKey}";
                 $j(resultsId).dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[
@@ -27,6 +27,7 @@
                         {"bSortable":true},
                         {"bSortable":true},
                         {"bSortable":true},
+                        {"bSortable":true},
                         {"bSortable":true, "sType":"html"}
                     ],
                     "bRetrieve":true,
@@ -36,7 +37,7 @@
         });
     </script>
 
-    <table id="sampleEventListView${index - 1}" class="table simple" style="margin: 0 0; width: 100%;">
+    <table id="sampleEventListView-${sample.sampleKey}" class="table simple" style="margin: 0 0; width: 100%;">
         <thead>
         <tr>
             <th>Event Vessel</th>
@@ -45,6 +46,7 @@
             <th>Event</th>
             <th>Date</th>
             <th>Location</th>
+            <th>Script</th>
             <th>Operator</th>
             <th>Index</th>
             <th>JIRAs + PDOs</th>
@@ -52,7 +54,7 @@
         </thead>
         <tbody>
         <c:forEach items="${vessels}" var="vessel">
-            <c:forEach items="${vessel.inPlaceAndTransferToEvents}" var="event">
+            <c:forEach items="${vessel.uniqueInPlaceAndTransferToEvents}" var="event">
                 <tr>
                     <td>
                         <stripes:link
@@ -65,9 +67,13 @@
                     <td>
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
                                    var="sampleInstance">
-                            <c:forEach items="${vessel.getLastKnownPositionsOfSample(sampleInstance)}" var="position">
-                                ${position}
-                            </c:forEach>
+                            <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
+                            <c:if test="${vessel.containerRole != null}">
+                                <c:forEach items="${vessel.containerRole.getPositionsOfSampleInstance(sampleInstance)}"
+                                           var="position">
+                                    ${position}
+                                </c:forEach>
+                            </c:if>
                         </c:forEach>
                     </td>
                     <td>
@@ -98,6 +104,9 @@
                             ${event.eventLocation}
                     </td>
                     <td>
+                            ${event.programName}
+                    </td>
+                    <td>
                             ${bean.getUserFullName(event.eventOperator)}
                     </td>
                     <td style="padding: 0;">
@@ -116,6 +125,7 @@
                     <td style="padding: 0;">
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'WITH_PDO')}"
                                    var="sampleInstance">
+                            <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
                             <c:forEach items="${sampleInstance.getLabBatchCompositionInVesselContext(vessel)}"
                                        var="batchComposition">
                                 <c:if test="${not empty batchComposition.labBatch.businessKey}">
@@ -123,7 +133,7 @@
                                        class="external" target="JIRA">
                                             ${batchComposition.labBatch.businessKey}
                                         (${batchComposition.count}/${batchComposition.denominator})
-                                    </a>
+                                    </a>&nbsp;&nbsp;
                                 </c:if>
 
                                 <c:if test="${not empty sampleInstance.productOrderKey}">

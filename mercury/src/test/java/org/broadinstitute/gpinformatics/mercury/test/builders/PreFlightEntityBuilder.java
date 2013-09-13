@@ -41,7 +41,7 @@ public class PreFlightEntityBuilder {
     public PreFlightEntityBuilder invoke() {
         PreFlightJaxbBuilder
                 preFlightJaxbBuilder = new PreFlightJaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                new ArrayList<String>(
+                new ArrayList<>(
                         mapBarcodeToTube.keySet()));
         preFlightJaxbBuilder.invoke();
         rackBarcode = preFlightJaxbBuilder.getRackBarcode();

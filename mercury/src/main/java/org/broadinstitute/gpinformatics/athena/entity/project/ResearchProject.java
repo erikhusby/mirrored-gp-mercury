@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -643,7 +644,8 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      */
     @Transient
     public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.Research_Projects;
+        return (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_RESEARCH_PROJECTS :
+                CreateFields.ProjectType.RESEARCH_PROJECTS;
     }
 
     /**
@@ -656,7 +658,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      */
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.RESEARCH_PROJECT;
+        return Deployment.isCRSP?CreateFields.IssueType.CLIA_RESEARCH_PROJECT:CreateFields.IssueType.RESEARCH_PROJECT;
     }
 
     /**
@@ -681,7 +683,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }

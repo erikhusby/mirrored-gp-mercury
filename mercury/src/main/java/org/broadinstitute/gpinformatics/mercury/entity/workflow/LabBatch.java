@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -29,6 +30,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -79,7 +81,7 @@ public class LabBatch {
 
     // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
-    private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
+    private Set<LabEvent> labEvents = new LinkedHashSet<>();
 
     /**
      * Vessels in the batch that were added as rework from a previous batch.
@@ -87,14 +89,14 @@ public class LabBatch {
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "lab_batch_reworks", joinColumns = @JoinColumn(name = "lab_batch"),
             inverseJoinColumns = @JoinColumn(name = "reworks"))
-    private Collection<LabVessel> reworks = new HashSet<LabVessel>();
+    private Collection<LabVessel> reworks = new HashSet<>();
 
     private Date createdOn;
 
     private Boolean isValidationBatch;
 
+    // If we store this as Workflow in the database, we need to determine the best way to store 'no workflow'.
     private String workflowName;
-
 
     /**
      * needed for fix-up test
@@ -123,7 +125,11 @@ public class LabBatch {
         /**
          * Flowcell Tracking batch (FCT)
          */
-        FCT
+        FCT,
+        /**
+         * MISEQ FCT Batch
+         */
+        MISEQ
     }
 
     @Enumerated(EnumType.STRING)
@@ -140,14 +146,18 @@ public class LabBatch {
     private String important;
 
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
-    private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
+    private Set<BucketEntry> bucketEntries = new HashSet<>();
 
-    public LabBatch(String batchName, Set<LabVessel> starterVessels, LabBatchType labBatchType) {
+    protected LabBatch() {
+    }
+
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
+                    @Nonnull LabBatchType labBatchType) {
         this(batchName, starterVessels, labBatchType, null);
     }
 
     public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> starterVessels,
-                    @Nonnull LabBatchType labBatchType, @Nullable Float concentration) {
+                    @Nonnull LabBatchType labBatchType, @Nullable BigDecimal concentration) {
         this.batchName = batchName;
         this.labBatchType = labBatchType;
         for (LabVessel starter : starterVessels) {
@@ -156,7 +166,8 @@ public class LabBatch {
         createdOn = new Date();
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingBatchLabVessels, LabBatchType labBatchType,
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingBatchLabVessels,
+                    @Nonnull LabBatchType labBatchType,
                     String batchDescription, Date dueDate, String important) {
 
         this(batchName, startingBatchLabVessels, labBatchType);
@@ -165,6 +176,14 @@ public class LabBatch {
         this.important = important;
     }
 
+    public LabBatch(@Nonnull String batchName, @Nonnull Set<LabVessel> startingLabVessels,
+                    Set<LabVessel> reworkLabVessels,
+                    @Nonnull LabBatchType labBatchType, String workflowName, String batchDescription, Date dueDate,
+                    String important) {
+        this(batchName, startingLabVessels, labBatchType, batchDescription, dueDate, important);
+        this.workflowName = workflowName;
+        addReworks(reworkLabVessels);
+    }
 
     /**
      * Adds the given rework vessels to the list of reworks for the batch.
@@ -180,9 +199,6 @@ public class LabBatch {
 
     public Collection<LabVessel> getReworks() {
         return reworks;
-    }
-
-    protected LabBatch() {
     }
 
     /**
@@ -205,11 +221,15 @@ public class LabBatch {
         return staringBatchVessels;
     }
 
+    public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
+        return startingBatchLabVessels;
+    }
+
     public void addLabVessel(@Nonnull LabVessel labVessel) {
         addLabVessel(labVessel, null);
     }
 
-    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable Float concentration) {
+    public void addLabVessel(@Nonnull LabVessel labVessel, @Nullable BigDecimal concentration) {
         LabBatchStartingVessel labBatchStartingVessel = new LabBatchStartingVessel(labVessel, this, concentration);
         startingBatchLabVessels.add(labBatchStartingVessel);
         labVessel.addNonReworkLabBatchStartingVessel(labBatchStartingVessel);
@@ -269,11 +289,11 @@ public class LabBatch {
     }
 
     private List<LabEvent> getAllEventsSortedByDate() {
-        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<>();
         for (LabEvent event : getLabEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);
         }
-        return new ArrayList<LabEvent>(sortedTreeMap.values());
+        return new ArrayList<>(sortedTreeMap.values());
     }
 
     public LabEvent getLatestEvent() {
@@ -307,6 +327,10 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
+    public void setWorkflow(@Nonnull Workflow workflow) {
+        workflowName = workflow.getWorkflowName();
+    }
+
     public String getBatchDescription() {
         return batchDescription;
     }
@@ -332,21 +356,16 @@ public class LabBatch {
     }
 
     /**
-     * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
+     * Helper method to dynamically create batch names based on Input from PDMs.  The format for the Names of the
      * batches, when not manually defined, will be:
      * <p/>
-     * [Product name] [Product workflow Version]: [comma separated list of PDO names]
-     *
-     * @param workflowName
-     * @param pdoNames
-     *
-     * @return
+     * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
-    public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
+    public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
 
-        batchName.append(workflowName).append(": ");
+        batchName.append(workflow.getWorkflowName()).append(": ");
         boolean first = true;
 
         for (String currentPdo : pdoNames) {
@@ -374,48 +393,50 @@ public class LabBatch {
     }
 
     /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * TicketFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
      */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
+    public enum TicketFields implements CustomField.SubmissionField {
         PROTOCOL("Protocol", true),
 
-        //Will not have WR ID info in Mercury.  Set to a Blank string
+        // Will not have WR ID info in Mercury.  Set to a Blank string
         WORK_REQUEST_IDS("Work Request ID(s)", true),
         POOLING_STATUS("Pooling Status", true),
         PRIORITY("Priority", false),
         DUE_DATE("Due Date", false),
 
-        //User comments at batch creation (Post Dec 1 addition)
+        // User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),
         DESCRIPTION("Description", true),
-        // ??
+
         NUMBER_OF_CONTROLS("Number of Controls", true),
         NUMBER_OF_SAMPLES("Number of Samples", true),
 
-        //        DO not set this value.  Leave at its default (for now).
+        // DO not set this value.  Leave at its default (for now).
         LIBRARY_QC_SEQUENCING_REQUIRED("Library QC Sequencing Required?", true),
 
-        //Radio Button custom field
+        // Radio Button custom field
         PROGRESS_STATUS("Progress Status", true),
 
-        //List of Sample names
+        // List of Sample names
         GSSR_IDS("GSSR ID(s)", true),
 
-        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
+        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true),
+        SUMMARY("Summary", false),
+        SEQUENCING_STATION("Sequencing Station", true);
 
 
         private final String fieldName;
         private final boolean customField;
 
-        private RequiredSubmissionFields(String fieldNameIn, boolean customFieldInd) {
+        private TicketFields(String fieldNameIn, boolean customFieldInd) {
             fieldName = fieldNameIn;
             customField = customFieldInd;
         }
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }
@@ -430,6 +451,11 @@ public class LabBatch {
 
     public void addBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.add(bucketEntry);
+        bucketEntry.setLabBatch(this);
+    }
+
+    public void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn;
     }
 
     @Override
@@ -481,5 +507,33 @@ public class LabBatch {
         }
 
         return result;
+    }
+
+    /**
+     * Future implementation of this method would get a starting vessel based on its specified position (Lane) defined
+     * during the creation of an FCT/MiSeq ticket.
+     * <p/>
+     * For now (Exome Express Launch) this method will return the one designated vessel for this batch.
+     *
+     * @param position position (lane) by which the targeted lab vessel is referenced
+     *
+     * @return Lab Vessel referenced by the given position.
+     */
+    public LabVessel getStartingVesselByPosition(VesselPosition position) {
+        if (labBatchType != LabBatchType.FCT &&
+            labBatchType != LabBatchType.MISEQ) {
+            throw new RuntimeException("Vessel by Position is only supported for Flowcell Tickets");
+        }
+
+        if (startingBatchLabVessels.size() > 1) {
+            throw new RuntimeException("more than one starting vessel for a flowcell is not currently supported");
+        }
+
+        return startingBatchLabVessels.iterator().next().getLabVessel();
+    }
+
+    @Override
+    public String toString() {
+        return batchName;
     }
 }

@@ -5,23 +5,19 @@ import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.BOOLEAN;
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.NUMERIC;
-import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.STRING;
-
 /**
  * This is a generic comparator used for operations AND for billing
  */
 
 public enum Operator {
-    GREATER_THAN(">", NUMERIC),
-    GREATER_THAN_OR_EQUAL_TO(">=", NUMERIC),
-    LESS_THAN("<", NUMERIC),
-    LESS_THAN_OR_EQUAL_TO("<=", NUMERIC),
-    EQUALS("=", NUMERIC),
-    EXACT_MATCH("=", STRING),
-    IS_IN("is in", STRING),
-    IS("is On Risk", BOOLEAN);
+    GREATER_THAN(">", OperatorType.NUMERIC),
+    GREATER_THAN_OR_EQUAL_TO(">=", OperatorType.NUMERIC),
+    LESS_THAN("<", OperatorType.NUMERIC),
+    LESS_THAN_OR_EQUAL_TO("<=", OperatorType.NUMERIC),
+    EQUALS("=", OperatorType.NUMERIC),
+    EXACT_MATCH("=", OperatorType.STRING),
+    IS_IN("is in", OperatorType.STRING),
+    IS("is On Risk", OperatorType.BOOLEAN);
 
     private final String label;
     private final OperatorType type;
@@ -135,7 +131,7 @@ public enum Operator {
     }
 
     public static List<Operator> findOperatorsByType(OperatorType type) {
-        List<Operator> operators = new ArrayList<Operator>();
+        List<Operator> operators = new ArrayList<>();
         for (Operator value : values()) {
             if (type == value.type) {
                 operators.add(value);

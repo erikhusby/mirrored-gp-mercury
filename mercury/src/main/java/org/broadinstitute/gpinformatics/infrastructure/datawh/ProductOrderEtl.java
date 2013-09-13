@@ -22,7 +22,7 @@ public class ProductOrderEtl extends GenericEntityAndStatusEtl<ProductOrder, Pro
 
     @Inject
     public ProductOrderEtl(ProductOrderDao dao, BSPUserList userList) {
-        super(ProductOrder.class, "product_order", "product_order_status", dao);
+        super(ProductOrder.class, "product_order", "product_order_status", "athena.product_order_aud", "product_order_id", dao);
         this.userList = userList;
     }
 

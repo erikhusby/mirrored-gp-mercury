@@ -39,13 +39,13 @@ public class JiraCommentUtilTest extends Arquillian {
     public void testMessaging() {
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("1234");
 
-        HashSet<LabVessel> starters = new HashSet<LabVessel>();
+        HashSet<LabVessel> starters = new HashSet<>();
         starters.add(twoDBarcodedTube);
         LabBatch labBatch = new LabBatch("LCSET-2690", starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setJiraTicket(new JiraTicket(jiraService, "LCSET-2690"));
         twoDBarcodedTube.addNonReworkLabBatch(labBatch);
 
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        List<LabVessel> labVessels = new ArrayList<>();
         labVessels.add(twoDBarcodedTube);
         jiraCommentUtil.postUpdate("test", labVessels);
     }

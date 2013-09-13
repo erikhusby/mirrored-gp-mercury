@@ -80,7 +80,7 @@ public abstract class TableProcessor implements Serializable {
     public final boolean validateHeaders(List<String> headers) {
         // If any of the required headers are NOT in the header list, then return false.
         for (ColumnHeader header : getColumnHeaders()) {
-            if (header.isRequredHeader() && !headers.contains(header.getText())) {
+            if (header.isRequiredHeader() && !headers.contains(header.getText())) {
                 validationMessages.add("Required header: " + header.getText() + " is missing");
                 return false;
             }
@@ -128,8 +128,32 @@ public abstract class TableProcessor implements Serializable {
     }
 
     public boolean isDateColumn(int columnIndex) {
-        // Do not support columns dates for columns that are not set up as column headers.
-        return (columnIndex < getColumnHeaders().length) && getColumnHeaders()[columnIndex].isDateColumn();
+        String headerNameAtIndex = getHeaderNames().get(columnIndex);
+        ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
+        return columnHeader != null && columnHeader.isDateColumn();
+    }
 
+    /**
+     * This is used for columns that might show up as numeric but REALLY MUST be treated as a string. This is to
+     * get around odd formatting problems of scientific notation that Excel may cause.
+     *
+     * @param columnIndex The index of the column being checked.
+     *
+     * @return Whether this MUST be a string.
+     */
+    public boolean isStringColumn(int columnIndex) {
+        String headerNameAtIndex = getHeaderNames().get(columnIndex);
+        ColumnHeader columnHeader = findColumnHeaderByName(headerNameAtIndex);
+        return columnHeader != null && columnHeader.isStringColumn();
+    }
+    
+    private ColumnHeader findColumnHeaderByName(String headerName) {
+        for (ColumnHeader columnHeader : getColumnHeaders()) {
+            if (headerName.equals(columnHeader.getText())) {
+                return columnHeader;
+            }
+        }
+
+        return null;
     }
 }

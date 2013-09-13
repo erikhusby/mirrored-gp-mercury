@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
@@ -12,6 +14,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A class that stores data fetched from BSP. In the case of Plastic Barcodes and FFPE, the data will be retrieved
@@ -26,6 +30,8 @@ import java.util.Map;
  */
 public class BSPSampleDTO {
 
+    private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
+
     public static final String TUMOR_IND = "Tumor";
     public static final String NORMAL_IND = "Normal";
 
@@ -34,10 +40,17 @@ public class BSPSampleDTO {
 
     public static final String ACTIVE_IND = "Active Stock";
 
+    // Regular expression for RIN range patterns used when there isn't a clear RIN reading.  These will look like
+    // "1.5 - 2.5" or "3-4".  The actual pattern used here defensively allows for whitespace around the numbers and
+    // captures the beginning and ending numbers of the range.  There are optional non-capturing groups for decimal
+    // points and digits after the decimal point (corresponding to the "1.5 - 2.5" example above), although examples
+    // with decimal points and digits after the decimal points have not been observed in the wild.
+    private static final Pattern RIN_RANGE = Pattern.compile("\\s*(\\d+(?:\\.\\d+)?)\\s*-\\s*(\\d+(?:\\.\\d+)?)\\s*");
+
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
-    //This is the BSP sample receipt date formatter. (ex. 11/18/2010)
-    public static final SimpleDateFormat BSP_DATE_FORMAT = new SimpleDateFormat("MM/DD/yyyy");
+    // This is the BSP sample receipt date format string. (ex. 11/18/2010)
+    public static final String BSP_DATE_FORMAT_STRING = "MM/dd/yyyy";
 
     public boolean hasData() {
         return !columnToValue.isEmpty();
@@ -96,6 +109,7 @@ public class BSPSampleDTO {
      * the clients of this API expect.
      *
      * @param column column to look up
+     *
      * @return value at column, or empty string if missing
      */
     @Nonnull
@@ -112,17 +126,39 @@ public class BSPSampleDTO {
         if (StringUtils.isNotBlank(s)) {
             return Double.parseDouble(s);
         }
-        return 0;
+        return 0.0;
     }
+
+    /**
+     * Returns an array of one double if this is a regular non-range (e.g. "3.14159") or an array of two doubles if
+     * this is a range ("2.71828 - 3.14159").
+     */
+    private double[] getDoubleOrRangeOfDoubles(BSPSampleSearchColumn column) {
+        try {
+            return new double[]{getDouble(column)};
+        } catch (NumberFormatException e) {
+            // The data did not parse as a double; how about as a range of doubles?
+            Matcher matcher = RIN_RANGE.matcher(getValue(column));
+            if (!matcher.matches()) {
+                // Not a range either.
+                throw new NumberFormatException(getValue(column));
+            }
+            return new double[]{Double.parseDouble(matcher.group(1)), Double.parseDouble(matcher.group(2))};
+        }
+    }
+
 
     private Date getDate(BSPSampleSearchColumn column) {
         String dateString = getValue(column);
 
-        if (StringUtils.isNotBlank(dateString)){
+        if (StringUtils.isNotBlank(dateString)) {
             try {
-                return BSP_DATE_FORMAT.parse(dateString);
-            } catch (ParseException e) {
+                return new SimpleDateFormat(BSP_DATE_FORMAT_STRING).parse(dateString);
+            } catch (Exception e) {
                 // Fall through to return.
+                logger.warn(
+                        "column: " + column.columnName() + " for sample: " + getSampleId() +
+                        " had a bad value of " + dateString, e);
             }
         }
 
@@ -138,14 +174,20 @@ public class BSPSampleDTO {
     }
 
     public double getRin() {
-        return getDouble(BSPSampleSearchColumn.RIN);
+        double[] doubles = getDoubleOrRangeOfDoubles(BSPSampleSearchColumn.RIN);
+        if (doubles.length == 1) {
+            return doubles[0];
+        } else {
+            // The logic for RIN is to take the lower of the two numbers.
+            return Math.min(doubles[0], doubles[1]);
+        }
     }
 
     public double getVolume() {
         return getDouble(BSPSampleSearchColumn.VOLUME);
     }
 
-    public double getConcentration() {
+    public Double getConcentration() {
         return getDouble(BSPSampleSearchColumn.CONCENTRATION);
     }
 
@@ -230,8 +272,10 @@ public class BSPSampleDTO {
     public boolean isSampleReceived() {
         try {
             return !getRootSample().equals(getSampleId()) || getReceiptDate() != null;
-        } catch (ParseException e) {
-            //In the case of a parsing exception we assume there is a date, however the date can not be parsed which isn't important for this logic.
+        } catch (Exception e) {
+            //In the case of a parsing exception we assume there is a date, however the date can not be parsed which
+            // isn't important for this logic.
+            logger.warn("Receipt Date for sample: " + getSampleId() + " was bad", e);
             return true;
         }
     }

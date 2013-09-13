@@ -90,7 +90,7 @@ public class BSPCohortList extends AbstractCache {
     public List<Cohort> findActive(String query) {
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
-        List<Cohort> results = new ArrayList<Cohort>();
+        List<Cohort> results = new ArrayList<>();
         if (getCohorts() != null) {
             for (Cohort cohort : getCohorts()) {
                 if (!cohort.isArchived()) {
@@ -122,7 +122,7 @@ public class BSPCohortList extends AbstractCache {
     public List<Cohort> find(String query) {
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
-        List<Cohort> results = new ArrayList<Cohort>();
+        List<Cohort> results = new ArrayList<>();
         if (getCohorts() != null) {
             for (Cohort cohort : getCohorts()) {
                 addCohortIfMatches(lowerQueryItems, results, cohort);

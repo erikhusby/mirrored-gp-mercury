@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -52,7 +53,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER_SAMPLE", schema = "athena")
-public class ProductOrderSample extends AbstractSample implements Serializable {
+public class ProductOrderSample extends AbstractSample implements BusinessObject, Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
 
     /**
@@ -163,6 +164,20 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return false;
     }
 
+    /**
+     * A sample is 'any' billed if any of its price items have been billed.
+     *
+     * @return true if this sample has been billed at least once.
+     */
+    public boolean isAnyBilled() {
+        for (LedgerEntry entry : ledgerItems) {
+            if (entry.isBilled()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public enum DeliveryStatus implements StatusType {
         NOT_STARTED(""),
         DELIVERED("Delivered"),
@@ -212,7 +227,28 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         this.sampleName = sampleName;
     }
 
+    /**
+     * @deprecated
+     * @see #getBusinessKey
+     * @return the business key
+     */
+    @Deprecated
     public String getSampleName() {
+        return sampleName;
+    }
+
+    @Override
+    public String getName() {
+        return sampleName;
+    }
+
+    /**
+     * Returns the public name of the key that should be used for display purposes.
+     *
+     * @return the name of the sample
+     */
+    @Override
+    public String getBusinessKey() {
         return sampleName;
     }
 
@@ -241,6 +277,11 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return ledgerItems;
     }
 
+    /**
+     * Returns the internal database key, not to be used for display purposes (use #getBusinessKey() instead).
+     *
+     * @return the database ID for the {@link ProductOrderSample}
+     */
     public Long getProductOrderSampleId() {
         return productOrderSampleId;
     }
@@ -330,12 +371,11 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         List<PriceItem> itemsToBill = getBillablePriceItems();
         Map<PriceItem, LedgerQuantities> ledgerQuantitiesMap = getLedgerQuantities();
 
-        Date currentDate = new Date();
         for (PriceItem priceItem : itemsToBill) {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
                 // No ledger item exists for this price item, create it using the current order's price item
-                addAutoLedgerItem(completedDate, priceItem, quantity, currentDate);
+                addAutoLedgerItem(completedDate, priceItem, quantity, now);
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.

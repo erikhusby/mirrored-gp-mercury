@@ -158,7 +158,7 @@
                         Ledger Status
                     </stripes:label>
                     <div class="controls">
-                        <c:forEach items="<%=ProductOrder.LedgerStatus.values()%>" var="ledgerStatus">
+                        <c:forEach items="${actionBean.ledgerStatuses}" var="ledgerStatus">
                             <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
                                 <stripes:checkbox class="search-checkbox selectedStatuses" name="selectedLedgerStatuses" value="${ledgerStatus}" id="${ledgerStatus}-id"/>
                                 <stripes:label class="search-checkbox-label" for="${ledgerStatus}-id">
@@ -174,7 +174,7 @@
                         Order Status
                     </stripes:label>
                     <div class="controls">
-                        <c:forEach items="<%=ProductOrder.OrderStatus.values()%>" var="orderStatus">
+                        <c:forEach items="${actionBean.orderStatuses}" var="orderStatus">
                             <div style="margin-top: 5px; margin-right: 15px; float: left; width: auto;">
                                 <stripes:checkbox onchange="statusChange()" class="search-checkbox selectedStatuses" name="selectedStatuses" value="${orderStatus}" id="${orderStatus}-id"/>
                                 <stripes:label class="search-checkbox-label" for="${orderStatus}-id">
@@ -211,7 +211,7 @@
                 </div>
 
                 <div class="control-group">
-                    <div class="control-label">&nbsp;</div>
+                    <div class="control-label">&#160;</div>
                     <div class="controls actionButtons">
                         <stripes:submit name="list" value="Search" style="margin-right: 10px;margin-top:10px;" class="btn btn-mini"/>
                     </div>
@@ -253,16 +253,16 @@
                             <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                         </th>
                         <th>Name</th>
-                        <th width="100">ID</th>
+                        <th style="min-width: 55px;">ID</th>
                         <th style="min-width: 80px;">Product</th>
                         <th>Product Family</th>
                         <th width="80">Status</th>
                         <th width="150">Research Project</th>
                         <th width="120">Owner</th>
                         <th width="70">Placed</th>
-                        <th width="80">%&nbsp;Complete</th>
+                        <th width="80">Complete</th>
                         <th width="25">Sample Count</th>
-                        <th width="75">Quote</th>
+                        <th style="min-width: 60px;">Quote</th>
                         <th width="35">Ledger Status</th>
                     </tr>
                 </thead>
@@ -288,7 +288,7 @@
                                 <c:choose>
                                     <%-- draft PDO --%>
                                     <c:when test="${order.draft}">
-                                        <span title="DRAFT">&nbsp;</span>
+                                        <span title="DRAFT">&#160;</span>
                                     </c:when>
                                     <c:otherwise>
                                         <a target="JIRA" title="${order.jiraTicketKey}"

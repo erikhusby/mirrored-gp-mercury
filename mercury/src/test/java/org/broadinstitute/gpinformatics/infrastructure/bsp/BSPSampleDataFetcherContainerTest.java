@@ -23,7 +23,6 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
-
     @Test(enabled = true)
     public void testFFPE() {
         BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
@@ -55,5 +54,11 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
 
         Assert.assertNotNull(rootSample.getPlasticBarcodes());
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
+    }
+
+    @Test
+    public void testGetSampleDetails() {
+        List<String> barcodes = Arrays.asList("0156343673");
+        bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(barcodes);
     }
 }

@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.analysis;
 
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.AnalysisDataTestFactory;
@@ -12,13 +11,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.analysis.Aligner;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.AnalysisType;
 import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.jboss.arquillian.testng.Arquillian;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * This test class works the analysis ejb and the associated DAOs to cover the kinds of queries and saves that

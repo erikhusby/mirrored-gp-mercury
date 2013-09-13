@@ -13,7 +13,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependency;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenImporter;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolutionFilter;
 
-import javax.enterprise.inject.Alternative;
 import java.io.File;
 import java.util.Collection;
 
@@ -23,7 +22,6 @@ import java.util.Collection;
 public class DeploymentBuilder {
 
     private static final String MERCURY_WAR = "Mercury-Arquillian.war";
-
 
     /**
      * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an
@@ -45,13 +43,15 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/mercury-" + dataSourceEnvironment + "-ds.xml"))
+                .addAsWebInfResource(new File("src/test/resources/" + ((Deployment.isCRSP) ? "crsp-" : "") + "mercury-"
+                                              + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
                 .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                         //TODO  Cherry Picking resources is not Ideal.  When we have more auto front end tests, we will need everything in resources.
                 .addAsResource(new File("src/main/resources/WorkflowConfig.xml"), "WorkflowConfig.xml")
-                .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"), "templates/WorkflowValidation.ftl")
+                .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
+                        "templates/WorkflowValidation.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),
                         "classes/jndi.properties");
@@ -70,12 +70,10 @@ public class DeploymentBuilder {
         return archive;
     }
 
-
     public static WebArchive buildMercuryWar() {
 
         return buildMercuryWar(Deployment.STUBBY);
     }
-
 
     public static WebArchive buildMercuryWar(String beansXml) {
         return ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
@@ -108,7 +106,6 @@ public class DeploymentBuilder {
         return buildMercuryWar(sb.toString());
     }
 
-
     public static WebArchive buildMercuryWarWithAlternatives(Class... alternatives) {
         return buildMercuryWarWithAlternatives(null, null, alternatives);
     }
@@ -117,7 +114,9 @@ public class DeploymentBuilder {
         return buildMercuryWarWithAlternatives(deployment, null, alternatives);
     }
 
-    /** Uses the alternative data source e.g. "prod" or "dev", and adds the @Alternative classes. */
+    /**
+     * Uses the alternative data source e.g. "prod" or "dev", and adds the @Alternative classes.
+     */
     public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment,
                                                              String dataSourceEnvironment,
                                                              Class... alternatives) {

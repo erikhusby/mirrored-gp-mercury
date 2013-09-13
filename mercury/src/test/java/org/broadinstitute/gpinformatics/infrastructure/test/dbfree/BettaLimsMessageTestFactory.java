@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -24,6 +25,7 @@ import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -36,10 +38,14 @@ import java.util.Map;
 @SuppressWarnings("FeatureEnvy")
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
+    public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
+    public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
-    /** True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
-     * routing logic and be processed by Mercury. */
+    /**
+     * True if the mode element in the messages should be set to Mercury. This causes all messages to bypass
+     * routing logic and be processed by Mercury.
+     */
     private final boolean mercuryMode;
 
     public BettaLimsMessageTestFactory(boolean mercuryMode) {
@@ -65,8 +71,10 @@ public class BettaLimsMessageTestFactory {
     /**
      * Adds one or more station events to a list of bettalims messages.  Advances the time, to avoid unique
      * constraint violations.
-     * @param messageList list of bettalims messages, typically sent to the BettaLIMS web service, in a loop
+     *
+     * @param messageList       list of bettalims messages, typically sent to the BettaLIMS web service, in a loop
      * @param stationEventTypes one or more station events
+     *
      * @return the created BettaLIMS message
      */
     public BettaLIMSMessage addMessage(List<BettaLIMSMessage> messageList, StationEventType... stationEventTypes) {
@@ -106,11 +114,14 @@ public class BettaLimsMessageTestFactory {
     }
 
     public enum WellNameType {
-        /** long form of well name, e.g. A01 */
-        LONG, /**
+        /**
          * long form of well name, e.g. A01
          */
-        SHORT 
+        LONG,
+        /**
+         * short form of well name, e.g. A01
+         */
+        SHORT
     }
 
     public String buildWellName(int positionNumber, WellNameType wellNameType) {
@@ -131,7 +142,7 @@ public class BettaLimsMessageTestFactory {
     }
 
     public PlateTransferEventType buildRackToPlate(String eventType, String rackBarcode, List<String> tubeBarcodes,
-            String plateBarcode) {
+                                                   String plateBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
 
@@ -154,7 +165,7 @@ public class BettaLimsMessageTestFactory {
     }
 
     public PlateTransferEventType buildPlateToRack(String eventType, String plateBarcode, String rackBarcode,
-            List<String> tubeBarcodes) {
+                                                   List<String> tubeBarcodes) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
 
@@ -166,8 +177,9 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
-    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode, List<String> sourceTubeBarcodes,
-            String targetRackBarcode, List<String> targetTubeBarcodes) {
+    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode,
+                                                  List<String> sourceTubeBarcodes,
+                                                  String targetRackBarcode, List<String> targetTubeBarcodes) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
 
@@ -181,9 +193,13 @@ public class BettaLimsMessageTestFactory {
     }
 
     public ReceptaclePlateTransferEvent buildTubeToPlate(String eventType, String sourceTubeBarcode,
-            String targetPlateBarcode, String physType, String section, String receptacleType) {
+                                                         String targetPlateBarcode, String physType, String section,
+                                                         String receptacleType) {
         ReceptaclePlateTransferEvent receptaclePlateTransferEvent = new ReceptaclePlateTransferEvent();
         setStationEventData(eventType, receptaclePlateTransferEvent);
+        if (physType.equals(LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE)) {
+            receptaclePlateTransferEvent.setStation(HISEQ_SEQUENCING_STATION_MACHINE_NAME);
+        }
 
         ReceptacleType sourceReceptacle = new ReceptacleType();
         sourceReceptacle.setBarcode(sourceTubeBarcode);
@@ -232,24 +248,25 @@ public class BettaLimsMessageTestFactory {
     /**
      * Create a PlateCherryPickEvent for transferring from a rack of tubes to a ReagentKit.
      *
-     * @param eventType                     Event type of transfer
-     * @param rackOfTubes                   List of RackOfTubes entities in the rack;
-     *                                      newly created RackOfTubes will NOT be added to this map
-     * @param reagentKitBarcode             barcode of the reagentKit.
+     * @param eventType         Event type of transfer
+     * @param rackOfTubes       List of RackOfTubes entities in the rack;
+     *                          newly created RackOfTubes will NOT be added to this map
+     * @param reagentKitBarcode barcode of the reagentKit.
      *
      * @return the LabEvent object
      */
     public Collection<PlateCherryPickEvent> buildCherryPickToReagentKit(String eventType,
-                                                            RackOfTubes rackOfTubes,
-                                                            String reagentKitBarcode) {
+                                                                        RackOfTubes rackOfTubes,
+                                                                        String reagentKitBarcode) {
         PlateCherryPickEvent stationEvent = new PlateCherryPickEvent();
 
         setStationEventData(eventType, stationEvent);
-        Map<String, VesselPosition> denatureBarcodeMap=new HashMap<>();
+        Map<String, VesselPosition> denatureBarcodeMap = new HashMap<>();
         VesselTransferEjb transferBean = new VesselTransferEjb();
 
         for (TubeFormation tubeFormation : rackOfTubes.getTubeFormations()) {
-            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPosition : tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPosition : tubeFormation.getContainerRole()
+                    .getMapPositionToVessel().entrySet()) {
                 denatureBarcodeMap.put(vesselPosition.getValue().getLabel(), vesselPosition.getKey());
             }
         }
@@ -259,8 +276,9 @@ public class BettaLimsMessageTestFactory {
     }
 
     public PlateCherryPickEvent buildCherryPick(String eventType, List<String> sourceRackBarcodes,
-            List<List<String>> sourceTubeBarcodes, List<String> targetRackBarcodes, List<List<String>> targetTubeBarcodes,
-            List<CherryPick> cherryPicks) {
+                                                List<List<String>> sourceTubeBarcodes, List<String> targetRackBarcodes,
+                                                List<List<String>> targetTubeBarcodes,
+                                                List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -295,8 +313,10 @@ public class BettaLimsMessageTestFactory {
     }
 
     public PlateCherryPickEvent buildCherryPickToStripTube(String eventType, List<String> sourceRackBarcodes,
-            List<List<String>> sourceTubeBarcodes, String targetRackBarcode, List<String> targetStripTubeBarcodes,
-            List<CherryPick> cherryPicks) {
+                                                           List<List<String>> sourceTubeBarcodes,
+                                                           String targetRackBarcode,
+                                                           List<String> targetStripTubeBarcodes,
+                                                           List<CherryPick> cherryPicks) {
         PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
         setStationEventData(eventType, plateCherryPickEvent);
 
@@ -340,7 +360,8 @@ public class BettaLimsMessageTestFactory {
         return plateCherryPickEvent;
     }
 
-    public PlateTransferEventType buildPlateToPlate(String eventType, String sourcePlateBarcode, String targetPlateBarcode) {
+    public PlateTransferEventType buildPlateToPlate(String eventType, String sourcePlateBarcode,
+                                                    String targetPlateBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
 
@@ -351,9 +372,11 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
-    public PlateTransferEventType buildStripTubeToFlowcell(String eventType, String stripTubeBarcode, String flowcellBarcode) {
+    public PlateTransferEventType buildStripTubeToFlowcell(String eventType, String stripTubeBarcode,
+                                                           String flowcellBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
+        plateTransferEvent.setStation(HISEQ_SEQUENCING_STATION_MACHINE_NAME);
 
         PlateType stripTube = new PlateType();
         stripTube.setBarcode(stripTubeBarcode);
@@ -418,7 +441,7 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setDisambiguator(1L);
         plateTransferEvent.setOperator("pdunlea");
         plateTransferEvent.setStation("ZAN");
-        plateTransferEvent.setProgram("Bravo");
+        plateTransferEvent.setProgram(eventType + "-testProgram");
     }
 
     private PlateType buildRack(String rackBarcode) {
@@ -453,6 +476,8 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setBarcode(barcode);
         receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
         receptacleType.setReceptacleType("tube");
+        receptacleType.setConcentration(BigDecimal.valueOf(12.2));
+        receptacleType.setVolume(BigDecimal.valueOf(8.3));
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 
@@ -462,7 +487,8 @@ public class BettaLimsMessageTestFactory {
         private final String destinationRackBarcode;
         private final String destinationWell;
 
-        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
+        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode,
+                          String destinationWell) {
             this.sourceRackBarcode = sourceRackBarcode;
             this.sourceWell = sourceWell;
             this.destinationRackBarcode = destinationRackBarcode;

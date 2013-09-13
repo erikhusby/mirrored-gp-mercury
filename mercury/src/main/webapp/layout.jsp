@@ -25,7 +25,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
         <meta http-equiv="Content-Language" content="en"/>
 
-        <script src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery-1.10.1.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
         <script src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
@@ -38,9 +38,10 @@
         <script src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
+        <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/RowGrouping/media/js/jquery.dataTables.rowGrouping.js"></script>
         <script src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/dataTables.fnSetFilteringDelay.js"></script>
         <script src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
-        <script src="${ctxpath}/resources/scripts/json.js"></script>
+        <script src="${ctxpath}/resources/scripts/json2.js"></script>
 
         <script src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
@@ -57,7 +58,7 @@
 
         <script src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
-        <script src="${ctxpath}/resources/scripts/jquery.sparkline.js"></script>
+        <script src="${ctxpath}/resources/scripts/jquery.sparkline-2.1.2.min.js"></script>
 
         <script src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
         <script>window.ATL_JQ_PAGE_PROPS = {
@@ -140,7 +141,7 @@
                     |
                          <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
-                               data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
+                               data-content="<b class='${bean.userBean.bspStatusClass}'>${bean.userBean.bspStatus}</b><br/><b class='${bean.userBean.jiraStatusClass}'>${bean.userBean.jiraStatus}</b><br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                     &#160;
                     <stripes:link
@@ -169,7 +170,7 @@
                     <h3 style="display:inline;">${sectionTitle}</h3>
                     <c:if test="${showCreate && actionBean.createAllowed}">
                         <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="Click to ${actionBean.createTitle}" class="pull-right">
-                            <i class="icon-plus"></i>
+                            <span class="icon-plus"></span>
                             ${actionBean.createTitle}
                         </stripes:link>
                     </c:if>
@@ -177,7 +178,7 @@
                     <c:if test="${not empty businessKeyValue && actionBean.editAllowed}">
                         <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.editAction}" title="Click to ${actionBean.editTitle}" class="pull-right">
                             <stripes:param name="${actionBean.editBusinessKeyName}" value="${businessKeyValue}"/>
-                            <i class="icon-pencil"></i>
+                            <span class="icon-pencil"></span>
                             ${actionBean.editTitle}
                         </stripes:link>
                     </c:if>

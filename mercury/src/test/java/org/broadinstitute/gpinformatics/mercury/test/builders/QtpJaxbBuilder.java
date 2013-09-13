@@ -4,9 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,20 +21,15 @@ public class QtpJaxbBuilder {
 
     private String poolRackBarcode;
     private List<String> poolTubeBarcodes = new ArrayList<>();
-    private PlateCherryPickEvent   poolingTransferJaxb;
+    private PlateCherryPickEvent poolingTransferJaxb;
     private String denatureRackBarcode;
     private PlateCherryPickEvent denatureJaxb;
-    private String stripTubeHolderBarcode;
-    private PlateCherryPickEvent stripTubeTransferJaxb;
-    private PlateTransferEventType flowcellTransferJaxb;
-    private ReceptacleEventType    flowcellLoad;
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
-    private String flowcellBarcode;
-    private String stripTubeBarcode;
-    private final String workflowName;
     private String denatureTubeBarcode;
     private String ecoPlateBarcode;
     private PlateTransferEventType ecoTransferJaxb;
+    private String viia7PlateBarcode;
+    private PlateTransferEventType viia7TransferJaxb;
     private String normalizationTubeBarcode;
     private String normalizationRackBarcode;
     private PlateCherryPickEvent normalizationJaxb;
@@ -46,19 +38,21 @@ public class QtpJaxbBuilder {
 
     private BettaLIMSMessage poolingTransferMessage;
     private BettaLIMSMessage ecoTransferMessage;
+    private BettaLIMSMessage viia7TransferMessage;
     private BettaLIMSMessage denatureMessage;
     private BettaLIMSMessage stripTubeTransferMessage;
     private BettaLIMSMessage flowcellTransferMessage;
     private BettaLIMSMessage flowcellLoadMessage;
+    private final boolean doEco;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
                           List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
-                          String workflowName) {
+                          boolean doEco) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageFactory;
         this.testPrefix = testPrefix;
         this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
         this.normCatchRackBarcodes = normCatchRackBarcodes;
-        this.workflowName = workflowName;
+        this.doEco = doEco;
     }
 
     public String getPoolRackBarcode() {
@@ -73,12 +67,12 @@ public class QtpJaxbBuilder {
         return poolingTransferJaxb;
     }
 
-    public String getEcoPlateBarcode() {
-        return ecoPlateBarcode;
-    }
-
     public PlateTransferEventType getEcoTransferJaxb() {
         return ecoTransferJaxb;
+    }
+
+    public PlateTransferEventType getViia7TransferJaxb() {
+        return viia7TransferJaxb;
     }
 
     public String getDenatureRackBarcode() {
@@ -89,32 +83,8 @@ public class QtpJaxbBuilder {
         return denatureJaxb;
     }
 
-    public String getStripTubeHolderBarcode() {
-        return stripTubeHolderBarcode;
-    }
-
-    public PlateCherryPickEvent getStripTubeTransferJaxb() {
-        return stripTubeTransferJaxb;
-    }
-
-    public PlateTransferEventType getFlowcellTransferJaxb() {
-        return flowcellTransferJaxb;
-    }
-
-    public ReceptacleEventType getFlowcellLoad() {
-        return flowcellLoad;
-    }
-
-    public String getFlowcellBarcode() {
-        return flowcellBarcode;
-    }
-
     public List<BettaLIMSMessage> getMessageList() {
         return messageList;
-    }
-
-    public String getStripTubeBarcode() {
-        return stripTubeBarcode;
     }
 
     public String getDenatureTubeBarcode() {
@@ -135,9 +105,9 @@ public class QtpJaxbBuilder {
 
     public QtpJaxbBuilder invoke() {
         int i = 0;
+        // PoolingTransfer
+        poolRackBarcode = "PoolRack" + testPrefix;
         for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
-            // PoolingTransfer
-            poolRackBarcode = "PoolRack" + testPrefix;
             List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
                     new ArrayList<>();
             for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
@@ -159,7 +129,16 @@ public class QtpJaxbBuilder {
         ecoPlateBarcode = "EcoPlate" + testPrefix;
         ecoTransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("EcoTransfer", poolRackBarcode,
                 poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
-        ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferJaxb);
+        if (doEco) {
+            ecoTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, ecoTransferJaxb);
+        }
+
+        // Viia7Transfer reuses the eco barcode since they are interchangable from workflow point of view.
+        viia7TransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("Viia7Transfer", poolRackBarcode,
+                poolTubeBarcodes, ecoPlateBarcode, "Eco48", "3BY6A1", "8BY6A3ALTROWS");
+        if (!doEco) {
+            viia7TransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, viia7TransferJaxb);
+        }
 
         // NormalizationTransfer
         normalizationRackBarcode = "NormalizationRack" + testPrefix;
@@ -175,7 +154,8 @@ public class QtpJaxbBuilder {
         }
         normalizationJaxb = bettaLimsMessageTestFactory.buildCherryPick("NormalizationTransfer",
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
-                Collections.singletonList(normalizationRackBarcode), Collections.singletonList(normalizationTubeBarcodes),
+                Collections.singletonList(normalizationRackBarcode),
+                Collections.singletonList(normalizationTubeBarcodes),
                 normaliztionCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, normalizationJaxb);
 
@@ -199,40 +179,6 @@ public class QtpJaxbBuilder {
                 denatureCherryPicks);
         denatureMessage = bettaLimsMessageTestFactory.addMessage(messageList, denatureJaxb);
 
-        if (!workflowName.equals("Exome Express")) {
-            // StripTubeBTransfer
-            stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
-            List<BettaLimsMessageTestFactory.CherryPick> stripTubeCherryPicks = new ArrayList<>();
-            int sourcePosition = 0;
-            // Transfer column 1 to 8 rows, using non-empty source rows
-            for (int destinationPosition = 0; destinationPosition < 8; destinationPosition++) {
-                stripTubeCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(
-                        denatureRackBarcode, Character.toString((char) ('A' + sourcePosition)) + "01",
-                        stripTubeHolderBarcode, Character.toString((char) ('A' + destinationPosition)) + "01"));
-                if (sourcePosition + 1 < poolTubeBarcodes.size()) {
-                    sourcePosition++;
-                }
-            }
-            stripTubeBarcode = "StripTube" + testPrefix + "1";
-
-            stripTubeTransferJaxb = bettaLimsMessageTestFactory.buildCherryPickToStripTube("StripTubeBTransfer",
-                    Arrays.asList(denatureRackBarcode),
-                    Arrays.asList(denatureTubeBarcodes),
-                    stripTubeHolderBarcode,
-                    Arrays.asList(stripTubeBarcode),
-                    stripTubeCherryPicks);
-            stripTubeTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, stripTubeTransferJaxb);
-
-            // FlowcellTransfer
-            flowcellBarcode = "Flowcell" + testPrefix;
-            flowcellTransferJaxb = bettaLimsMessageTestFactory.buildStripTubeToFlowcell("FlowcellTransfer",
-                    stripTubeBarcode, flowcellBarcode);
-            flowcellTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, flowcellTransferJaxb);
-
-            flowcellLoad = bettaLimsMessageTestFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
-                    flowcellBarcode, LabEventFactory.PHYS_TYPE_FLOWCELL);
-            flowcellLoadMessage = bettaLimsMessageTestFactory.addMessage(messageList, flowcellLoad);
-        }
         return this;
     }
 
@@ -242,6 +188,10 @@ public class QtpJaxbBuilder {
 
     public BettaLIMSMessage getStep02EcoTransferMessage() {
         return ecoTransferMessage;
+    }
+
+    public BettaLIMSMessage getStep02Viia7TransferMessage() {
+        return viia7TransferMessage;
     }
 
     public BettaLIMSMessage getStep03DenatureMessage() {

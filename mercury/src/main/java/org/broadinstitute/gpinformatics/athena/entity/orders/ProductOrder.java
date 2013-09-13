@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -64,6 +65,10 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     private static final String DRAFT_PREFIX = "Draft-";
 
+    public static final boolean IS_CREATING = true;
+
+    public static final boolean IS_UPDATING = false;
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -87,7 +92,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * Unique title for the order
      */
-    @Column(name = "TITLE", unique = true)
+    @Column(name = "TITLE", unique = true, length = 255)
     private String title = "";
 
     @ManyToOne
@@ -126,6 +131,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "count")
     /** Counts the number of lanes, the default value is one lane. */
     private int laneCount = 1;
+
+    @Column(name = "REQUISITION_KEY")
+    private String requisitionKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -203,8 +211,10 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return The number of samples calculated to be on risk.
      */
     public int calculateRisk(List<ProductOrderSample> selectedSamples) {
-        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
+        // Load the bsp data for the selected samples
+        loadBspData(selectedSamples);
 
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
         for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
                 uniqueSampleNamesOnRisk.add(sample.getSampleName());
@@ -515,7 +525,7 @@ public class ProductOrder implements BusinessObject, Serializable {
                 formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
-            if (getProduct().isSupportsPico()) {
+            if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",
                         lastPicoCount);
             }
@@ -825,6 +835,14 @@ public class ProductOrder implements BusinessObject, Serializable {
         return placedDate;
     }
 
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
+    }
+
     /**
      * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
      * when an order is placed.
@@ -839,27 +857,27 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
-        // Can't use SampleCounts here, it calls this recursively.
-        Set<String> uniqueNames = new HashSet<>(samples.size());
-        for (ProductOrderSample sample : samples) {
-            if (sample.needsBspMetaData()) {
-                uniqueNames.add(sample.getSampleName());
+        loadBspData(samples);
+    }
+
+    public static void loadBspData(List<ProductOrderSample> samples) {
+
+        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
+        Set<String> bspSampleNames = new HashSet<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            if (productOrderSample.needsBspMetaData()) {
+                bspSampleNames.add(productOrderSample.getSampleName());
             }
         }
-
-        if (uniqueNames.isEmpty()) {
+        if (bspSampleNames.isEmpty()) {
             // This early return is needed to avoid making a unnecessary injection, which could cause
             // DB Free automated tests to fail.
             return;
         }
 
-        loadBspData(uniqueNames, getSamples());
-    }
-
-    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
-
+        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleNames);
 
         // The non-null DTOs which we use to look up FFPE status.
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
@@ -1118,7 +1136,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Project for Product Orders
      */
     public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.PRODUCT_ORDERING;
+        return (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING :
+                CreateFields.ProjectType.PRODUCT_ORDERING;
     }
 
     /**
@@ -1128,7 +1147,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Issue Type for Product Orders
      */
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.PRODUCT_ORDER;
+        return (Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER;
     }
 
     /**
@@ -1144,7 +1163,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         FUNDING_DEADLINE("Funding Deadline"),
         PUBLICATION_DEADLINE("Publication Deadline"),
         DESCRIPTION("Description"),
-        STATUS("Status");
+        STATUS("Status"),
+        REQUISITION_ID("Requisition ID");
 
         private final String fieldName;
 
@@ -1154,7 +1174,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         @Nonnull
         @Override
-        public String getFieldName() {
+        public String getName() {
             return fieldName;
         }
     }
@@ -1190,13 +1210,20 @@ public class ProductOrder implements BusinessObject, Serializable {
             return statuses;
         }
 
-        public static List<String> getStrings(List<OrderStatus> selectedStatuses) {
-            if (CollectionUtils.isEmpty(selectedStatuses)) {
+        /**
+         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
+         *
+         * @param statuses The status enums that were selected.
+         *
+         * @return The string list.
+         */
+        public static List<String> getStrings(List<OrderStatus> statuses) {
+            if (CollectionUtils.isEmpty(statuses)) {
                 return Collections.emptyList();
             }
 
-            List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.OrderStatus status : selectedStatuses) {
+            List<String> statusStrings = new ArrayList<>(statuses.size());
+            for (ProductOrder.OrderStatus status : statuses) {
                 statusStrings.add(status.name());
             }
 
@@ -1287,7 +1314,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         private String displayName;
 
-        private LedgerStatus(String displayName) {
+        LedgerStatus(String displayName) {
             this.displayName = displayName;
         }
 
@@ -1315,17 +1342,66 @@ public class ProductOrder implements BusinessObject, Serializable {
             return statuses;
         }
 
-        public static List<String> getStrings(List<LedgerStatus> selectedStatuses) {
-            if (CollectionUtils.isEmpty(selectedStatuses)) {
+        /**
+         * Get the status item names from the ledger statuses.
+         *
+         * @param statuses The statuses
+         *
+         * @return The list of strings
+         */
+        public static List<String> getStrings(List<LedgerStatus> statuses) {
+            if (CollectionUtils.isEmpty(statuses)) {
                 return Collections.emptyList();
             }
 
             List<String> statusStrings = new ArrayList<>();
-            for (ProductOrder.LedgerStatus status : selectedStatuses) {
+            for (ProductOrder.LedgerStatus status : statuses) {
                 statusStrings.add(status.name());
             }
 
             return statusStrings;
+        }
+
+        public static void addEntryBasedOnStatus(
+                List<ProductOrder.LedgerStatus> ledgerStatuses,
+                List<ProductOrderListEntry> filteredList,
+                ProductOrderListEntry entry) {
+
+            for (ProductOrder.LedgerStatus selectedStatus : ledgerStatuses) {
+                switch (selectedStatus) {
+
+                case NOTHING_NEW:
+                    // Drafts are always new.
+                    if (entry.isDraft() ||
+                        (!entry.isReadyForBilling() && !entry.isReadyForReview() && !entry.isBilling())) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case READY_FOR_REVIEW:
+                    // Ready for review is ALWAYS indicated when there are ledger entries. Billing locks out
+                    // automated ledger entry. For now, so does ready to bill, but that may change.
+                    if (entry.isReadyForReview()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case READY_TO_BILL:
+                    // Ready for review overrides ready for billing. May not come up for a while because of
+                    // lockouts, but this is the way the visual works, so using this.
+                    if (entry.isReadyForBilling() && !entry.isReadyForReview()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                case BILLING:
+                    if (entry.isBilling()) {
+                        filteredList.add(entry);
+                        return;
+                    }
+                    break;
+                }
+            }
         }
     }
 }

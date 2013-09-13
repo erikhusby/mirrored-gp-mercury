@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -44,70 +44,18 @@ public class BucketEjb {
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
+    private BucketDao bucketDao;
+
     public BucketEjb() {
     }
 
     @Inject
-    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb) {
+    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, LabBatchEjb batchEjb,
+                     BucketDao bucketDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.batchEjb = batchEjb;
-    }
-
-    /**
-     * Put a {@link LabVessel vessel} into the bucket
-     * and remember that the work is for the given {@link String product order}
-     * <p/>
-     * TODO SGM Rethink the return.  Doesn't seem to add any value
-     *
-     * @param vessel        single vessel to add to the bucket
-     * @param operator      Represents the user that initiated adding the vessels to the bucket
-     * @param eventType     Type of the Lab Event that initiated this bucket add request
-     * @param eventLocation Machine location from which operator initiated this action
-     *
-     * @return New bucket entry that was created
-     */
-    public BucketEntry add(@Nonnull LabVessel vessel, @Nonnull Bucket bucket, @Nonnull String operator,
-                           LabEventType eventType, String eventLocation) {
-
-        Collection<String> productOrderBusinessKeys = vessel.getNearestProductOrders();
-
-        if (productOrderBusinessKeys.size() > 1) {
-            logger.error("Vessel " + vessel.getLabel() +
-                         " has more than one PDO's associated with it, Using the first found: " +
-                         StringUtils.join(productOrderBusinessKeys, ", "));
-        }
-
-        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel,
-                BucketEntry.BucketEntryType.PDO_ENTRY);
-
-        labEventFactory.createFromBatchItems(productOrderBusinessKeys.iterator().next(), vessel, 1L, operator,
-                eventType, eventLocation);
-        try {
-            jiraService.addComment(productOrderBusinessKeys.iterator().next(), vessel.getLabCentricName() +
-                                                                               " added to bucket " + bucket
-                    .getBucketDefinitionName());
-        } catch (IOException ioe) {
-            logger.error("error attempting to add a jira comment for adding " +
-                         productOrderBusinessKeys.iterator().next() + ":" + vessel.getLabCentricName() +
-                         " to bucket " + bucket.getBucketDefinitionName(), ioe);
-        }
-        return newEntry;
-    }
-
-    /**
-     * adds a pre-defined collection of {@link LabVessel}s to a given bucket
-     *
-     * @param entriesToAdd     Collection of LabVessels to be added to a bucket
-     * @param bucket           instance of a bucket entity associated with a workflow bucket step
-     * @param operator         Represents the user that initiated adding the vessels to the bucket
-     * @param labEventLocation Machine location from which operator initiated this action
-     * @param eventType        Type of the Lab Event that initiated this bucket add request
-     */
-    public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
-
-        add(entriesToAdd, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, operator, labEventLocation, eventType, null);
+        this.bucketDao = bucketDao;
     }
 
     /**
@@ -119,56 +67,34 @@ public class BucketEjb {
      * @param entryType            the type of bucket entry to add
      * @param operator             Represents the user that initiated adding the vessels to the bucket
      * @param labEventLocation     Machine location from which operator initiated this action
+     * @param programName          Name of the program that initiated this action
      * @param eventType            Type of the Lab Event that initiated this bucket add request
      * @param singlePdoBusinessKey Product order key for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    BucketEntry.BucketEntryType entryType, @Nonnull String operator, @Nonnull String labEventLocation,
-                    LabEventType eventType,
-                    String singlePdoBusinessKey) {
+                                       BucketEntry.BucketEntryType entryType, @Nonnull String operator,
+                                       @Nonnull String labEventLocation,
+                                       @Nonnull String programName, LabEventType eventType,
+                                       @Nonnull String singlePdoBusinessKey) {
 
-        List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
-        Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
+        List<BucketEntry> listOfNewEntries = new LinkedList<>();
+        // TODO: is pdoKeyToVesselMap needed? doesn't look like it's used for anything
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<>();
 
         for (LabVessel currVessel : entriesToAdd) {
-            String pdoBusinessKey;
-            if (singlePdoBusinessKey == null) {
-                Collection<String> productOrderBusinessKeys = currVessel.getNearestProductOrders();
+            listOfNewEntries.add(bucket.addEntry(singlePdoBusinessKey, currVessel, entryType));
 
-                if (productOrderBusinessKeys.size() > 1) {
-                    logger.error("Vessel " + currVessel.getLabel() +
-                                 " has more than one PDO's associated with it, Using the first found: " +
-                                 StringUtils.join(productOrderBusinessKeys, ", "));
-                }
-                pdoBusinessKey = productOrderBusinessKeys.iterator().next();
-            } else {
-                pdoBusinessKey = singlePdoBusinessKey;
+            if (!pdoKeyToVesselMap.containsKey(singlePdoBusinessKey)) {
+                pdoKeyToVesselMap.put(singlePdoBusinessKey, new LinkedList<LabVessel>());
             }
-            listOfNewEntries.add(bucket.addEntry(pdoBusinessKey, currVessel, entryType));
-
-            if (!pdoKeyToVesselMap.containsKey(pdoBusinessKey)) {
-                pdoKeyToVesselMap.put(pdoBusinessKey, new LinkedList<LabVessel>());
-            }
-            pdoKeyToVesselMap.get(pdoBusinessKey).add(currVessel);
+            pdoKeyToVesselMap.get(singlePdoBusinessKey).add(currVessel);
         }
 
-        Set<LabEvent> eventList = new HashSet<LabEvent>();
+        Set<LabEvent> eventList = new HashSet<>();
 
         //TODO SGM: Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
-                eventType));
-
-        for (String pdo : pdoKeyToVesselMap.keySet()) {
-            try {
-                jiraService.addComment(pdo, "Vessels: " +
-                                            StringUtils.join(pdoKeyToVesselMap.get(pdo), ',') +
-                                            " added to bucket " + bucket.getBucketDefinitionName());
-            } catch (IOException ioe) {
-                logger.error("error attempting to add a jira comment for adding " +
-                             pdo + ":" + StringUtils.join(pdoKeyToVesselMap.get(pdo), ',') + " to bucket " +
-                             bucket.getBucketDefinitionName(), ioe);
-            }
-        }
+                programName, eventType));
 
         return listOfNewEntries;
     }
@@ -186,6 +112,21 @@ public class BucketEjb {
     public void start(@Nonnull String operator, @Nonnull Collection<LabVessel> vesselsToBatch,
                       @Nonnull Bucket workingBucket, String batchInitiationLocation) {
         start(operator, vesselsToBatch, workingBucket, batchInitiationLocation, null);
+    }
+
+    /**
+     * Start work on the specified bucket entries by archiving them (removing them from the bucket view) and associating
+     * them with the given lab batch.
+     *
+     * @param bucketEntries the bucket entries being batched
+     * @param labBatch      the lab batch that the entries are being added to
+     */
+    public void start(@Nonnull Collection<BucketEntry> bucketEntries, LabBatch labBatch) {
+        archiveEntries(bucketEntries);
+
+        for (BucketEntry bucketEntry : bucketEntries) {
+            labBatch.addBucketEntry(bucketEntry);
+        }
     }
 
     /**
@@ -245,7 +186,7 @@ public class BucketEjb {
      * @return
      */
     public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketEntrySet = new HashSet<>();
 
         for (LabVessel workingVessel : vesselsToBatch) {
 
@@ -338,9 +279,9 @@ public class BucketEjb {
      *         numberOfBatchSamples
      */
     public Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
+        Set<BucketEntry> bucketEntrySet = new HashSet<>();
 
-        List<BucketEntry> sortedBucketEntries = new ArrayList<BucketEntry>(workingBucket.getBucketEntries());
+        List<BucketEntry> sortedBucketEntries = new ArrayList<>(workingBucket.getBucketEntries());
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator();
 
@@ -410,10 +351,10 @@ public class BucketEjb {
      * @return Either a newly created batch object, or the most recent one found that incorporates all
      *         lab vessels being processed in this request.
      */
-//    @DaoFree
-    private LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
+    @DaoFree
+    public LabBatch startBucketDrain(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                                       String batchInitiationLocation, boolean autoBatch) {
-        Set<LabVessel> batchVessels = new HashSet<LabVessel>();
+        Set<LabVessel> batchVessels = new HashSet<>();
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
@@ -421,7 +362,7 @@ public class BucketEjb {
 
         LabBatch bucketBatch = null;
         if (!batchVessels.isEmpty()) {
-            for (LabBatch currBatch : batchVessels.iterator().next().getNearestLabBatches()) {
+            for (LabBatch currBatch : batchVessels.iterator().next().getNearestWorkflowLabBatches()) {
                 if (LabBatch.isCommonBatch(currBatch, batchVessels)) {
                     bucketBatch = currBatch;
                 }
@@ -455,7 +396,7 @@ public class BucketEjb {
     //TODO SGM  Move to a bucket factory class
     private void archiveEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         for (BucketEntry currEntry : bucketEntries) {
-            logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
+            logger.debug("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
             currEntry.getBucket().removeEntry(currEntry);
@@ -523,11 +464,11 @@ public class BucketEjb {
      * @param reason  captures the information about why this entry is being removed from the bucket
      */
     private void jiraRemovalUpdate(@Nonnull Collection<BucketEntry> entries, String reason) {
-        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<String, Collection<BucketEntry>>();
+        Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
             Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
             if (pdoEntries == null) {
-                pdoEntries = new ArrayList<BucketEntry>();
+                pdoEntries = new ArrayList<>();
                 pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
             }
             pdoEntries.add(entry);
@@ -557,7 +498,7 @@ public class BucketEjb {
      *         processed
      */
     private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
-        Set<String> pdoSet = new HashSet<String>();
+        Set<String> pdoSet = new HashSet<>();
 
         for (BucketEntry currEntry : entries) {
             pdoSet.add(currEntry.getPoBusinessKey());
@@ -576,7 +517,7 @@ public class BucketEjb {
      * @return
      */
     private static Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
-        List<LabVessel> labVessels = new LinkedList<LabVessel>();
+        List<LabVessel> labVessels = new LinkedList<>();
 
         for (BucketEntry currEntry : entries) {
             if (currEntry.getPoBusinessKey().equals(pdo)) {
@@ -585,6 +526,16 @@ public class BucketEjb {
         }
 
         return labVessels;
+    }
+
+    public Bucket findOrCreateBucket(String bucketName) {
+        Bucket bucket = bucketDao.findByName(bucketName);
+        if (bucket == null) {
+            bucket = new Bucket(bucketName);
+            bucketDao.persist(bucket);
+            logger.debug("Created new bucket " + bucketName);
+        }
+        return bucket;
     }
 
 }

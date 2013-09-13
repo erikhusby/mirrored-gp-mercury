@@ -3,7 +3,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -14,6 +17,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +37,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private RackOfTubesDao rackOfTubesDao;
+
+    @Inject
+    private StaticPlateDao staticPlateDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -158,5 +165,39 @@ public class LabVesselFixupTest extends Arquillian {
         tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.addRackOfTubes(new RackOfTubes("CO-3468604", RackOfTubes.RackType.Matrix96));
         labVesselDao.persist(tubeFormation);
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp581() {
+        // The physTypes in the message were Eppendorf96, but should have been TubeRack.
+        String[] rackBarcodes = {
+                "CO-6584145",
+                "CO-6940995",
+                "CO-6940991",
+                "CO-6661848",
+                "CO-6940992",
+                "CO-6656416",
+                "CO-6641388",
+                "CO-6630669",
+                "CO-6629602",
+                "CO-6665938",
+                "CO-6660878",
+                "CO-6661363",
+                "CO-4405034",
+                "CO-4301567"};
+        for (String rackBarcode : rackBarcodes) {
+            StaticPlate staticPlate = staticPlateDao.findByBarcode(rackBarcode);
+            Iterator<SectionTransfer> iterator = staticPlate.getContainerRole().getSectionTransfersFrom().iterator();
+            while (iterator.hasNext()) {
+                SectionTransfer sectionTransfer = iterator.next();
+                LabEvent labEvent = sectionTransfer.getLabEvent();
+                labEvent.getReagents().clear();
+                labEvent.getSectionTransfers().clear();
+                staticPlateDao.remove(labEvent);
+                iterator.remove();
+            }
+            staticPlateDao.remove(staticPlate);
+        }
+        staticPlateDao.flush();
     }
 }
