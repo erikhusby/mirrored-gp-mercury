@@ -11,10 +11,7 @@ import javax.inject.Inject;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
-/**
- */
 public class BSPSampleReceiptServiceProducer {
-
 
     @Inject
     private Deployment deployment;
@@ -37,7 +34,7 @@ public class BSPSampleReceiptServiceProducer {
 
 
     /**
-     * Creates a BSPCohortSearchService with plain old new operator for container-free testing,
+     * Creates a BSPSampleReceiptService with plain old new operator for container-free testing,
      * not a managed bean!
      *
      * @return A new BSPCohortSearchService to be used for testing.

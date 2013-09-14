@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import clover.retrotranslator.edu.emory.mathcs.backport.java.util.Arrays;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -12,9 +13,11 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ReceiveSamplesEjb
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Action bean for receiving samples. This can be done either via a rackscan or via a list of sample ids.
+ */
 @UrlBinding(ReceiveSamplesActionBean.URL)
 public class ReceiveSamplesActionBean extends RackScanActionBean {
 
@@ -28,15 +31,28 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     @Inject
     private ReceiveSamplesEjb receiveSamplesEjb;
 
+    /** List of sample ids from the page to pull out and return. */
+    private String sampleIds;
+
+    /** List of sample ids to receive. This is algorithmically filled in. */
     private List<String> samplesToReceive;
+
+    /** Response from Bsp for the sample kit receipt. */
     private SampleKitReceiptResponse response;
 
+    /**
+     * Shows the receipt page.
+     */
     @DefaultHandler
     @HandlesEvent(SHOW_RECEIPT_ACTION)
     public Resolution showReceipt() {
         return new ForwardResolution(SHOW_RECEIPT_JSP);
     }
 
+    /**
+     * Utilizes a rack scanner to preform the receipt and find out which samples are being received.
+     * @throws ScannerException
+     */
     @Override
     @HandlesEvent(SCAN_EVENT)
     public Resolution scan() throws ScannerException {
@@ -44,16 +60,34 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
         super.scan();
 
         // Prep the Ids to receive.
-        samplesToReceive = new ArrayList<>(rackScan.values());
+        samplesToReceive = rackScannerEjb.obtainSampleIdsFromRackscan(rackScan);
 
         return receiveSamples(RACKSCAN_RECEIPT_JSP);
     }
 
+    @Override
+    public String getRackScanPageUrl() {
+        return URL;
+    }
+
+    /**
+     * Receives sample by the sample Ids passed in.
+     */
     @HandlesEvent(RECEIVE_SAMPLES_EVENT)
     public Resolution receiveSamplesById() {
+
+        // TODO: Find the logic which is used to split by either a space or a \n - hopefully it is in a simple
+        //       place to call.
+        samplesToReceive = Arrays.asList(sampleIds.split("\n"));
+
         return receiveSamples(SAMPLE_ID_RECEIPT_JSP);
     }
 
+    /**
+     * Actually preforms the receipt based on the sample ids passed in and pushed into the samplesToReceived variable.
+     *
+     * @param receiptJsp JSP to pass the resolution to.
+     */
     private Resolution receiveSamples(String receiptJsp) {
         MessageCollection messageCollection = new MessageCollection();
 
@@ -69,12 +103,12 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
         return new ForwardResolution(receiptJsp);
     }
 
-    public List<String> getSamplesToReceive() {
-        return samplesToReceive;
+    public String getSampleIds() {
+        return sampleIds;
     }
 
-    public void setSamplesToReceive(List<String> samplesToReceive) {
-        this.samplesToReceive = samplesToReceive;
+    public void setSampleIds(String sampleIds) {
+        this.sampleIds = sampleIds;
     }
 
     public SampleKitReceiptResponse getResponse() {

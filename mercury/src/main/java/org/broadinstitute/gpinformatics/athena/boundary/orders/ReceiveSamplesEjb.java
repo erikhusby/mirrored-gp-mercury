@@ -9,10 +9,8 @@ import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.ejb.Stateful;
@@ -25,13 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * EJB for receiving samples within BSP.
  */
 @Stateful
 @RequestScoped
 public class ReceiveSamplesEjb {
-
-    @Inject
-    private BSPSampleDataFetcher sampleDataFetcherService;
 
     @Inject
     private BSPSampleReceiptService receiptService;
@@ -45,22 +41,30 @@ public class ReceiveSamplesEjb {
     @Inject
     private BSPUserList bspUserList;
 
-    public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username,
+    /**
+     * Handles the receipt validation, and the receiving of the samples passed in.  Utilizes the current user's username
+     * to make sure they have the correct BSP privileges to do the receipt.
+     *
+     * @param sampleIds         Barcodes of the samples to receive.
+     * @param username          Username of the currently logged in user.
+     * @param messageCollection Messages to send back to the user.
+     * @return SampleKitReceiptResponse received from BSP.
+     */
+    public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, String username,
                                                    MessageCollection messageCollection) {
 
         SampleKitReceiptResponse receiptResponse = null;
-        Map<String,SampleInfo> sampleInfoMap = sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(barcodes);
 
-        List<String> sampleIds = new ArrayList<>();
-        for (SampleInfo sampleInfo : sampleInfoMap.values()) {
-            sampleIds.add(sampleInfo.getSampleId());
-        }
-
+        // Validate first, if there are no errors receive first in BSP, then do the mercury receit work.
         validateForReceipt(sampleIds, messageCollection, username);
 
         if (!messageCollection.hasErrors()) {
 
-            receiptResponse = receiptService.receiveSamples(sampleInfoMap.keySet(), username);
+            receiptResponse = receiptService.receiveSamples(sampleIds, username);
+
+            if (receiptResponse.isSuccess()) {
+                // TODO: Call the Mercury receipt registration code for the samples.
+            }
         }
 
         return receiptResponse;
@@ -68,7 +72,6 @@ public class ReceiveSamplesEjb {
 
     private void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
                                     String operator) {
-
 
         SampleManager bspSampleManager = managerFactory.createSampleManager();
         SampleKitListResponse sampleKitsBySampleIds = bspSampleManager.getSampleKitsBySampleIds(

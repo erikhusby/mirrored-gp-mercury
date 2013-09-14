@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Impl
 public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPSampleReceiptService {
@@ -33,7 +32,7 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
     }
 
     @Override
-    public SampleKitReceiptResponse receiveSamples(Set<String> barcodes, String username) {
+    public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username) {
 
         List<String> parameters = new ArrayList<>();
         parameters.add("username=" + username);
