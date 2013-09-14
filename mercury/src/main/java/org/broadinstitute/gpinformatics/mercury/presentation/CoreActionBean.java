@@ -295,10 +295,7 @@ public class CoreActionBean implements ActionBean {
      */
     protected void addMessages(MessageCollection messages) {
         for (String error : messages.getErrors()) {
-            SimpleError simpleError = createSafeErrorMessage("{2}", error);
-
-            getContext().getValidationErrors().addGlobalError(simpleError);
-            flashErrorMessage(simpleError);
+            addGlobalValidationError(error);
         }
         for (String warn : messages.getWarnings()) {
             getContext().getMessages().add(createSafeMessage("{0}", warn));

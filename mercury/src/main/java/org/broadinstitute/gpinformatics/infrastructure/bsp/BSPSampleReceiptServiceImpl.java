@@ -10,6 +10,9 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Implementation of the Bsp sample receipt service.
+ */
 @Impl
 public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPSampleReceiptService {
 
@@ -34,18 +37,18 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
     @Override
     public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username) {
 
+        // Prepare the parameters.
         List<String> parameters = new ArrayList<>();
         parameters.add("username=" + username);
         parameters.add("barcodes=" + StringUtils.join(barcodes, ","));
 
         String parameterString = StringUtils.join(parameters, "&");
 
+        // Change to the URL string and fire off the web service.
         String urlString = getUrl(WEB_SERVICE_URL + "?" + parameterString);
 
         WebResource webResource = getJerseyClient().resource(urlString);
-        SampleKitReceiptResponse receiptResource =
-                webResource.type(MediaType.APPLICATION_XML_TYPE).post(SampleKitReceiptResponse.class, urlString);
 
-        return receiptResource;
+        return webResource.type(MediaType.APPLICATION_XML_TYPE).post(SampleKitReceiptResponse.class, urlString);
     }
 }
