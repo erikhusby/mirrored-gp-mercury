@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.sample;
+package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryImpl;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -37,7 +37,7 @@ public class ReceiveSamplesEjb {
     private BSPSampleReceiptService receiptService;
 
     @Inject
-    private BSPManagerFactoryImpl managerFactory;
+    private BSPManagerFactory managerFactory;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -45,11 +45,11 @@ public class ReceiveSamplesEjb {
     @Inject
     private BSPUserList bspUserList;
 
-    public MessageCollection receiveSamples(List<String> barcodes, String username) {
+    public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username,
+                                                   MessageCollection messageCollection) {
 
-        MessageCollection messageCollection = new MessageCollection();
-
-        Map<String, SampleInfo> sampleInfoMap = sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(barcodes);
+        SampleKitReceiptResponse receiptResponse = null;
+        Map<String,SampleInfo> sampleInfoMap = sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(barcodes);
 
         List<String> sampleIds = new ArrayList<>();
         for (SampleInfo sampleInfo : sampleInfoMap.values()) {
@@ -60,10 +60,10 @@ public class ReceiveSamplesEjb {
 
         if (!messageCollection.hasErrors()) {
 
-            SampleKitReceiptResponse receiptResponse = receiptService.receiveSamples(sampleInfoMap.keySet(), username);
+            receiptResponse = receiptService.receiveSamples(sampleInfoMap.keySet(), username);
         }
 
-        return messageCollection;
+        return receiptResponse;
     }
 
     private void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
