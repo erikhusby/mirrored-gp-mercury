@@ -4,12 +4,17 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Collections;
@@ -192,15 +197,17 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         Map<String, SampleInfo> map = new HashMap<>();
 
         WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
-        Details details = resource.accept(MediaType.APPLICATION_XML).get(new GenericType<Details>() {});
+        Details details = resource.accept(MediaType.TEXT_XML).get(new GenericType<Details>() {});
         // Initialize all map values to null.
         for (String matrixBarcode : matrixBarcodes) {
             map.put(matrixBarcode, null);
         }
 
         // Overwrite the map values that were found in BSP with the SampleDetails objects.
-        for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
-            map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+        if (details.getSampleDetails().getSampleInfo() != null) {
+            for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
+                map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+            }
         }
 
         return map;

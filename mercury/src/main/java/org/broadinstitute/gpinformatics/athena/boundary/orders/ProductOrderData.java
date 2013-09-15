@@ -1,8 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -20,15 +25,62 @@ public class ProductOrderData {
     private Date modifiedDate;
     private String product;
     private String status;
+
+    /**
+     * This is really a list of sample IDs.
+     */
     private List<String> samples;
+
     private String aggregationDataType;
     private String researchProjectId;
     private String productName;
     private String quoteId;
+    public String username;
+    private String requisitionKey;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
     ProductOrderData() {
+    }
+
+    /**
+     * Constructor with the {@link ProductOrder} passed in for initialization.
+     *
+     * @param productOrder the {@link ProductOrder}
+     */
+    public  ProductOrderData(@Nonnull ProductOrder productOrder) {
+        title = productOrder.getTitle();
+
+        if (productOrder.getProductOrderId() != null) {
+            id = productOrder.getProductOrderId().toString();
+        }
+
+        comments = productOrder.getComments();
+        placedDate = productOrder.getPlacedDate();
+        modifiedDate = productOrder.getModifiedDate();
+        quoteId = productOrder.getQuoteId();
+        status = productOrder.getOrderStatus().name();
+        aggregationDataType = null;  // productOrder.?
+
+        if (productOrder.getProduct() != null) {
+            product = productOrder.getProduct().getBusinessKey();
+            productName = productOrder.getProduct().getProductName();
+        }
+
+        samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
+
+        if (productOrder.getResearchProject() != null) {
+            researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
+        }
+    }
+
+    private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
+        List<String> sampleIdList = new ArrayList<>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            sampleIdList.add(productOrderSample.getSampleKey());
+        }
+
+        return sampleIdList;
     }
 
     public String getTitle() {
@@ -88,15 +140,19 @@ public class ProductOrderData {
     }
 
     @XmlElementWrapper
-    @XmlElement(name = "sample")
+    @XmlElement(name = "sampleId")
     public List<String> getSamples() {
         return samples;
     }
 
+    /**
+     * Really passing in a list of sample IDs.
+     *
+     * @param samples the list of sample IDs
+     */
     public void setSamples(List<String> samples) {
         this.samples = samples;
     }
-
 
     public void setAggregationDataType(String aggregationDataType) {
         this.aggregationDataType = aggregationDataType;
@@ -129,4 +185,21 @@ public class ProductOrderData {
     public String getQuoteId() {
         return quoteId;
     }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
+    }
+
 }

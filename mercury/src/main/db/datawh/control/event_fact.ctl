@@ -15,5 +15,6 @@ TRAILING NULLCOLS
  batch_name,
  station_name,
  lab_vessel_id,
- event_date DATE "YYYYMMDDHH24MISS"
+ event_date DATE "YYYYMMDDHH24MISS",
+ program_name
 )

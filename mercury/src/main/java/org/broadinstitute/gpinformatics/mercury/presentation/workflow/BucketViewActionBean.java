@@ -419,7 +419,7 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     private void seperateEntriesByType() {
-        //iterate through the selected entries and seperate the pdo entries from rework entries
+        // Iterate through the selected entries and separate the pdo entries from rework entries.
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         for (BucketEntry entry : selectedEntries) {
             if (BucketEntry.BucketEntryType.PDO_ENTRY.equals(entry.getEntryType())) {

@@ -65,6 +65,10 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     private static final String DRAFT_PREFIX = "Draft-";
 
+    public static final boolean IS_CREATING = true;
+
+    public static final boolean IS_UPDATING = false;
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -88,7 +92,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     /**
      * Unique title for the order
      */
-    @Column(name = "TITLE", unique = true)
+    @Column(name = "TITLE", unique = true, length = 255)
     private String title = "";
 
     @ManyToOne
@@ -127,6 +131,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "count")
     /** Counts the number of lanes, the default value is one lane. */
     private int laneCount = 1;
+
+    @Column(name = "REQUISITION_KEY")
+    private String requisitionKey;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -826,6 +833,14 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public Date getPlacedDate() {
         return placedDate;
+    }
+
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
     }
 
     /**

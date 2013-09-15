@@ -5,15 +5,31 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This handles the billing session.
@@ -185,19 +201,13 @@ public class BillingSession implements Serializable {
         return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
-    public List<String> getProductOrderBusinessKeys() {
-        // Get all unique product Orders across all ledger items.
-        Set<ProductOrder> productOrders = new HashSet<>();
+    public Set<String> getProductOrderBusinessKeys() {
+        // Get all product order keys across all ledger items, removing duplicates.
+        Set<String> orderKeys = new HashSet<>();
         for (LedgerEntry ledgerEntry : ledgerEntryItems) {
-            productOrders.add(ledgerEntry.getProductOrderSample().getProductOrder());
+            orderKeys.add(ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey());
         }
-
-        List<String> ret = new ArrayList<>(productOrders.size());
-        for (ProductOrder productOrder : productOrders) {
-            ret.add(productOrder.getBusinessKey());
-        }
-
-        return ret;
+        return orderKeys;
     }
 
     public List<LedgerEntry> getLedgerEntryItems() {
@@ -219,7 +229,7 @@ public class BillingSession implements Serializable {
     /**
      * The session type supplies the method for rolling up a date into an appropriate bucket.
      */
-    public static enum BillingSessionType {
+    public enum BillingSessionType {
         ROLLUP_SEMI_MONTHLY(new DateRollupCalculator() {
             @Override
             public Date getBucketDate(Date workCompleteDate) {
@@ -235,7 +245,7 @@ public class BillingSession implements Serializable {
                     endOfPeriod.set(Calendar.DAY_OF_MONTH, endOfPeriod.getActualMaximum(Calendar.DAY_OF_MONTH));
                 }
 
-                return endOfDay(endOfPeriod);
+                return DateUtils.getEndOfDay(endOfPeriod.getTime());
             }
         }),
         ROLLUP_DAILY(new DateRollupCalculator() {
@@ -245,19 +255,9 @@ public class BillingSession implements Serializable {
                 endOfPeriod.setTime(workCompleteDate);
 
                 // Set to the end of the day so anything that is ever sent with time will normalize to the same bucket.
-                return endOfDay(endOfPeriod);
+                return DateUtils.getEndOfDay(endOfPeriod.getTime());
             }
         });
-
-        private static Date endOfDay(Calendar endOfPeriod) {
-            // Set the calendar item to be the last millisecond of the day so that all dates on that day will be the same.
-            endOfPeriod.set(Calendar.HOUR_OF_DAY, 23);
-            endOfPeriod.set(Calendar.MINUTE, 59);
-            endOfPeriod.set(Calendar.SECOND, 59);
-            endOfPeriod.set(Calendar.MILLISECOND, 999);
-
-            return endOfPeriod.getTime();
-        }
 
         private final DateRollupCalculator rollupCalculator;
 

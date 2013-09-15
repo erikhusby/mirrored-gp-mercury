@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -29,13 +30,12 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Restful webservice to list research projects.
+ * Restful webservice to list and create research projects.
  */
 @Path("researchProjects")
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -45,16 +45,23 @@ public class ResearchProjectResource {
     @XmlRootElement
     public static class ResearchProjectData {
         public final String title;
+
         public final String id;
+
         public final String synopsis;
+
         public final Date modifiedDate;
-        public final String userName;
+
+        public final String username;
+
         @XmlElementWrapper
         @XmlElement(name = "projectManager")
         public final List<String> projectManagers;
+
         @XmlElementWrapper
         @XmlElement(name = "broadPI")
         public final List<String> broadPIs;
+
         @XmlElementWrapper
         @XmlElement(name = "order")
         public final List<String> orders;
@@ -68,7 +75,7 @@ public class ResearchProjectResource {
             broadPIs = null;
             orders = null;
             modifiedDate = null;
-            userName = null;
+            username = null;
         }
 
         private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
@@ -99,9 +106,9 @@ public class ResearchProjectResource {
             orders = new ArrayList<>(researchProject.getProductOrders().size());
             BspUser user = bspUserList.getById(researchProject.getCreatedBy());
             if (user != null) {
-                userName = user.getUsername();
+                username = user.getUsername();
             } else {
-                userName = null;
+                username = null;
             }
             for (ProductOrder order : researchProject.getProductOrders()) {
                 // We omit draft orders from the report. At this point there is no requirement to expose draft
@@ -116,7 +123,6 @@ public class ResearchProjectResource {
 
     @XmlRootElement
     public static class ResearchProjects {
-
         @XmlElement(name = "project")
         public final List<ResearchProjectData> projects;
 
@@ -183,22 +189,33 @@ public class ResearchProjectResource {
      * @return Returns the research project data for the project created.
      */
     @POST
-    @Path("createResearchProject")
+    @Path("create")
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
-    public ResearchProjectData createResearchProject(ResearchProjectData data) {
-        ResearchProject newProject = new ResearchProject(null, data.title, data.synopsis, false);
-        ResearchProject dupProject = researchProjectDao.findByTitle(data.title);
-        newProject.setCreatedBy(bspUserList.getByUsername(data.userName).getUserId());
-        if (dupProject != null) {
-            throw new InformaticsServiceException("Can not create a project that already exists.");
+    public ResearchProjectData create(@Nonnull ResearchProjectData data) {
+        if (data == null) {
+            throw new InformaticsServiceException(("No data found to define the new Research Project"));
         }
+
+        if (researchProjectDao.findByTitle(data.title) != null) {
+            throw new InformaticsServiceException(
+                    "Cannot create a project that already exists - the project name is already being used.");
+        }
+
+        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
+        BspUser user = bspUserList.getByUsername(data.username);
+        project.setCreatedBy(user.getUserId());
+
         try {
-            newProject.submitToJira();
+            project.submitToJira();
         } catch (IOException e) {
             throw new InformaticsServiceException("Could not submit new research project to JIRA.");
         }
-        researchProjectDao.persist(newProject);
-        return new ResearchProjectData(bspUserList, newProject);
+
+        // Save and flush to persist and make sure all DB constraints are met.
+        researchProjectDao.persist(project);
+        researchProjectDao.flush();
+
+        return new ResearchProjectData(bspUserList, project);
     }
 }

@@ -40,7 +40,7 @@
         </tr>
         </thead>
         <tbody>
-        <c:forEach items="${vessel.getSampleInstances('WITH_PDO', null)}" var="sample">
+        <c:forEach items="${vessel.uniqueSampleInstances}" var="sample">
             <%--@elvariable id="sample" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
             <tr>
                 <td>
@@ -86,7 +86,7 @@
                                class="external" target="JIRA">
                                     ${batchComposition.labBatch.businessKey}
                                 (${batchComposition.count}/${batchComposition.denominator})
-                            </a>
+                            </a>&nbsp;&nbsp;
                         </c:if>
 
                         <c:if test="${not empty sample.productOrderKey}">

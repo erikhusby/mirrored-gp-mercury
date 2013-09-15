@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -39,11 +38,9 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
         BigDecimal newVolume = getRandomBigDecimal();
         BigDecimal newConcentration = getRandomBigDecimal();
 
-        bspSetVolumeConcentration.setVolumeAndConcentration(TEST_SAMPLE_ID, newVolume, newConcentration);
-        String[] result = bspSetVolumeConcentration.getResult();
-        Assert.assertTrue(result.length > 0);
-        Assert.assertFalse(StringUtils.isBlank(result[0]));
-        Assert.assertTrue(bspSetVolumeConcentration.isValidResult());
+        String result =
+                bspSetVolumeConcentration.setVolumeAndConcentration(TEST_SAMPLE_ID, newVolume, newConcentration);
+        Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
         BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
         Double currentVolume = bspSampleDTO.getVolume();

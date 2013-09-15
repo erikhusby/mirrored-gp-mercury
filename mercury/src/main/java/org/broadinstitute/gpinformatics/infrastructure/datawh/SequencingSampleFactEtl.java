@@ -159,7 +159,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
         };
 
         public String getFlowcellLaneIndexKey() {
-            return molecularIndexingSchemeName + position + flowcellBarcode;
+            final String delimiter = "_____";
+            return StringUtils.join(new String[]{molecularIndexingSchemeName, position, flowcellBarcode}, delimiter);
         };
 
         public String getFlowcellBarcode() {

@@ -337,14 +337,18 @@ public class LabEventFactory implements Serializable {
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+            if (plateEventType.getPositionMap() != null) {
+                updateReceptacles.addAll(plateEventType.getPositionMap().getReceptacle());
+            }
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
             LabEvent labEvent = buildFromBettaLims(plateTransferEventType);
             eventHandlerSelector.applyEventSpecificHandling(labEvent, plateTransferEventType);
             persistLabEvent(uniqueEvents, labEvent, true);
             labEvents.add(labEvent);
-            updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
+            if (plateTransferEventType.getPositionMap() != null) {
+                updateReceptacles.addAll(plateTransferEventType.getPositionMap().getReceptacle());
+            }
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
                 bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
@@ -1021,9 +1025,10 @@ public class LabEventFactory implements Serializable {
 
             // volume or concentration can be null but not both.
             if (volume != null || concentration != null) {
-                bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
-                if (!bspSetVolumeConcentration.isValidResult()) {
-                    logger.error(bspSetVolumeConcentration.getResult()[0]);
+                String result = bspSetVolumeConcentration
+                        .setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
+                if (result != BSPSetVolumeConcentration.RESULT_OK) {
+                    logger.error(result);
                 }
             }
         }
