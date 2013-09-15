@@ -27,6 +27,7 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     public static final String SAMPLE_ID_RECEIPT_JSP = "/samples/sample_receipt_results.jsp";
     public static final String SHOW_RECEIPT_ACTION = "showRecept";
     public static final String RECEIVE_SAMPLES_EVENT = "receiveSamplesById";
+    public static final String PAGE_TITLE = "Receive Samples";
 
     @Inject
     private ReceiveSamplesEjb receiveSamplesEjb;
@@ -55,7 +56,7 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
      */
     @Override
     @HandlesEvent(SCAN_EVENT)
-    public Resolution scan() throws ScannerException {
+    public Resolution scan() {
         // Run the rack scanner, ignore the returned resolution.
         super.scan();
 
@@ -68,6 +69,11 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     @Override
     public String getRackScanPageUrl() {
         return URL;
+    }
+
+    @Override
+    public String getPageTitle() {
+        return PAGE_TITLE;
     }
 
     /**

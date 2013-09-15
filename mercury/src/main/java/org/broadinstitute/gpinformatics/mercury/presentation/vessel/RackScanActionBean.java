@@ -6,7 +6,11 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import org.broadinstitute.bsp.client.rackscan.ScannerException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
+import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
+import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackScanner;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -14,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -25,15 +30,14 @@ import java.util.TreeSet;
  * that as your results.  Or you can ignore that resolution and return your own (as the ReceiveSamplesActionBean does).
  */
 public abstract class RackScanActionBean extends CoreActionBean {
+    private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
-    public static final String SHOW_SCANNING_JSP = "/vessel/rack_scan_summary.jsp";
+    public static final String SHOW_SCANNING_JSP = "/vessel/rack_scanner_list.jsp";
     public static final String SCAN_RESULTS_JSP = "/vessel/rack_scan_results.jsp";
-    public static final String SHOW_LAB_SELECTION_JSP = "/vessel/rack_scan_lab.jsp";
+    public static final String SHOW_LAB_SELECTION_JSP = "/vessel/rack_scan_lab_select.jsp";
     public static final String SCAN_EVENT = "scan";
     public static final String SHOW_SCAN_SELECTION_EVENT = "showScanSelection";
     public static final String SHOW_LAB_SELECTION_EVENT = "showLabSelection";
-
-    private SortedSet<RackScanner> rackScanners = new TreeSet<>(RackScanner.BY_NAME);
 
     /**
      * Loads the rack scanners based upon the lab to filter by.
@@ -51,6 +55,8 @@ public abstract class RackScanActionBean extends CoreActionBean {
             }
         }
     }
+
+    private SortedSet<RackScanner> rackScanners = new TreeSet<>(RackScanner.BY_NAME);
 
     @Inject
     protected RackScannerEjb rackScannerEjb;
@@ -85,9 +91,19 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     /** Does a rack scan and sets the rackScan variable. Returns a default results jsp. */
     @HandlesEvent(SCAN_EVENT)
-    public Resolution scan() throws ScannerException {
+    public Resolution scan()  {
 
-        rackScan = rackScannerEjb.runRackScanner(rackScanner);
+        try {
+            rackScan = rackScannerEjb.runRackScanner(rackScanner);
+        } catch (Exception e) {
+            log.error(e);
+            addGlobalValidationError("Error connecting to the rack scanner. " +e.getMessage());
+
+            rackScan = new LinkedHashMap<>();
+            for (String position : getMatrixPositions()) {
+                rackScan.put(position, position + position + position);
+            }
+        }
 
         return new ForwardResolution(SCAN_RESULTS_JSP);
     }
@@ -97,8 +113,26 @@ public abstract class RackScanActionBean extends CoreActionBean {
         return RackScanner.RackScannerLab.values();
     }
 
+    public List<String> getMatrixPositions() {
+        Geometry geometry = new Geometry();
+        geometry.setDimension(new Dimension(8, 12));
+        geometry.setIndexing(new AlphaNumeric('A',1));
+        return geometry.getPositions();
+    }
+
+    /** Event for the lab selection. */
+    public String getShowScanSelectionEvent() {
+        return SHOW_SCAN_SELECTION_EVENT;
+    }
+
+    public String getScanEvent() {
+        return SCAN_EVENT;
+    }
+
     /** Url for the rack scanning page.  */
     public abstract String getRackScanPageUrl();
+
+    public abstract String getPageTitle();
 
     public RackScanner.RackScannerLab getLabToFilterBy() {
         return labToFilterBy;
