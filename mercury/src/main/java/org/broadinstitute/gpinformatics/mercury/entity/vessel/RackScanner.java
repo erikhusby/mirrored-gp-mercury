@@ -51,6 +51,7 @@ public enum RackScanner {
                         String scannerInternalName, RackScannerType scannerType, boolean archived,
                         boolean withLinearScanner, String ipAddress, Long port) {
 
+        this.rackScannerLab = rackScannerLab;
         this.scannerUID = scannerUID;
         this.scannerName = scannerName;
         this.scannerInternalName = scannerInternalName;
@@ -79,6 +80,10 @@ public enum RackScanner {
         return rackScannerLab;
     }
 
+    public String getName() {
+        return name();
+    }
+
     /**
      * Lab the rack scanner is in for sorting and selection purposes.
      */
@@ -95,6 +100,11 @@ public enum RackScanner {
 
         public String getLabName() {
             return labName;
+        }
+
+        /** Allows us to use this enum as part of a JSP for the value of a option. */
+        public String getName() {
+            return name();
         }
     }
 
