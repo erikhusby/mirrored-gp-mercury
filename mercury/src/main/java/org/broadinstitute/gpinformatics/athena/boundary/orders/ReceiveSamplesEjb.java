@@ -179,7 +179,7 @@ public class ReceiveSamplesEjb {
                         productOrderSampleDao.findMapBySamples(secondCloneSampleKitMembers);
 
                 //add warning
-                for (Map.Entry<String, List<ProductOrderSample>> entries : notFoundProductOrderSamples.entrySet()) {
+                for (Map.Entry<String, List<ProductOrderSample>> entries : notReceivedProductOrderSamples.entrySet()) {
                     for (ProductOrderSample currentPOSample : entries.getValue()) {
                         currentPOSample
                                 .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),

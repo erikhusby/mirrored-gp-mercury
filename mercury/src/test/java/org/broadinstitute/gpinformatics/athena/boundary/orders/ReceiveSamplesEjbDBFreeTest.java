@@ -8,6 +8,7 @@ import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -70,12 +71,10 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         sampleKit1.setSamples(kit1Samples);
 
-
         sample1Kit2 = "CSM-1SK2";
         sample2Kit2 = "CSM-2SK2";
         sample3Kit2 = "CSM-3SK2";
         sample4Kit2 = "CSM-4SK2";
-
 
         sampleKit2 = new SampleKit();
         sampleKit2.setSampleKitId(sampleKit2ID);
@@ -94,9 +93,13 @@ public class ReceiveSamplesEjbDBFreeTest {
         pos2Kit2 = new ProductOrderSample(sample2Kit2);
         pos3Kit2 = new ProductOrderSample(sample3Kit2);
         pos4Kit2 = new ProductOrderSample(sample4Kit2);
-
     }
 
+    /**
+     * Tests the case where exactly the same samples that are in a sample kit come in for receipt.  This is the "Happy"
+     * test case
+     * @throws Exception
+     */
     public void testAllSamplesKit1Validation() throws Exception {
 
         List<String> test1RequestList = new ArrayList<>();
@@ -137,6 +140,54 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertFalse(validationResults.hasWarnings());
 
+        Assert.assertTrue(pos1Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos2Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos3Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
+    }
+
+    public void testPartialSamplesKit1Validation() throws Exception {
+
+        List<String> test1RequestList = new ArrayList<>();
+
+        test1RequestList.add(sample1Kit1);
+        test1RequestList.add(sample2Kit1);
+        test1RequestList.add(sample3Kit1);
+
+        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
+        SampleManager mockSampManager = Mockito.mock(SampleManager.class);
+
+        SampleKitListResponse mockResponse = new SampleKitListResponse();
+        mockResponse.setResult(Collections.singletonList(sampleKit1));
+        mockResponse.setSuccess(true);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
+        ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
+
+        Map<String, List<ProductOrderSample>> posResult = new HashMap<>();
+        posResult.put(sample1Kit1, Collections.singletonList(pos1Kit1));
+        posResult.put(sample2Kit1, Collections.singletonList(pos2Kit1));
+        posResult.put(sample3Kit1, Collections.singletonList(pos3Kit1));
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult);
+
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+
+        ReceiveSamplesEjb testEjb =
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList);
+
+        MessageCollection validationResults = new MessageCollection();
+
+        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+
+        Assert.assertFalse(validationResults.hasErrors());
+        Assert.assertFalse(validationResults.hasInfos());
+        Assert.assertTrue(validationResults.hasWarnings());
+
+        Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
+        Assert.assertFalse(pos2Kit1.getValidations().isEmpty());
+        Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
