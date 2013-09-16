@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -85,6 +86,21 @@ public class CreateFields extends UpdateFields {
             this.keyPrefix = keyPrefix;
         }
 
+        public static ProjectType getLcsetProjectType() {
+            return Deployment.isCRSP ? CRSP_LCSET_PROJECT :
+                    LCSET_PROJECT ;
+        }
+
+        public static ProjectType getProductOrderingProductType() {
+            return (Deployment.isCRSP) ? CRSP_PRODUCT_ORDERING :
+                    PRODUCT_ORDERING;
+        }
+
+        public static ProjectType getResearchProjectType() {
+            return ((Deployment.isCRSP) ? CRSP_RESEARCH_PROJECTS :
+                    RESEARCH_PROJECTS);
+        }
+
         public String getProjectName() {
             return projectName;
         }
@@ -109,6 +125,16 @@ public class CreateFields extends UpdateFields {
 
         private IssueType(String jiraName) {
             this.jiraName = jiraName;
+        }
+
+        public static IssueType getProductOrderIssueType() {
+            return (Deployment.isCRSP) ? CLIA_PRODUCT_ORDER :
+                    PRODUCT_ORDER;
+        }
+
+        public static IssueType getResearchProjectIssueType() {
+            return (Deployment.isCRSP) ? CLIA_RESEARCH_PROJECT :
+                    RESEARCH_PROJECT;
         }
 
         public String getJiraName() {

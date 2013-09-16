@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -54,8 +53,7 @@ public class JiraCustomFieldsUtil {
         final Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields(
                         new CreateFields.Project(
-                                Deployment.isCRSP ? CreateFields.ProjectType.CRSP_LCSET_PROJECT.getKeyPrefix() :
-                                        CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
+                                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
         final Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions =
@@ -79,4 +77,5 @@ public class JiraCustomFieldsUtil {
 
         return requiredCustomFieldDefinitions;
     }
+
 }

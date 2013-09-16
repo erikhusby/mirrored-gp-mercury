@@ -112,13 +112,10 @@ public class ResearchProjectTest {
 
         assertThat(researchProject.getJiraTicketKey(), is(nullValue()));
 
-        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(
-                (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_RESEARCH_PROJECT :
-                        CreateFields.IssueType.RESEARCH_PROJECT)));
+        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.getResearchProjectIssueType())));
 
         assertThat(researchProject.fetchJiraProject(), is(equalTo(
-                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_RESEARCH_PROJECTS :
-                        CreateFields.ProjectType.RESEARCH_PROJECTS)));
+                CreateFields.ProjectType.getResearchProjectType())));
 
         assertThat(researchProject.getProjectManagers(), is(arrayWithSize(greaterThan(0))));
         assertThat(researchProject.getBroadPIs(), is(arrayWithSize(greaterThan(0))));
