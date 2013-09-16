@@ -53,6 +53,7 @@ public class ReceiveSamplesEjbDBFreeTest {
     private String sample4Kit2;
     private SampleKit sampleKit1;
     private String sample5Kit1;
+    private ProductOrderSample pos5Kit1;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
@@ -96,6 +97,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         pos2Kit2 = new ProductOrderSample(sample2Kit2);
         pos3Kit2 = new ProductOrderSample(sample3Kit2);
         pos4Kit2 = new ProductOrderSample(sample4Kit2);
+        pos5Kit1 = new ProductOrderSample(sample5Kit1);
     }
 
     /**
@@ -219,8 +221,6 @@ public class ReceiveSamplesEjbDBFreeTest {
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
-        ProductOrderSample pos5Kit1 = new ProductOrderSample(sample5Kit1);
-
         Map<String, List<ProductOrderSample>> posResult = new HashMap<>();
         posResult.put(sample5Kit1, Collections.singletonList(pos5Kit1));
         Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(Collections.singletonList(sample5Kit1)))).thenReturn(posResult);
@@ -246,6 +246,85 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP,
                 pos5Kit1.getValidations().iterator().next().getReason());
     }
+
+    public void testMultipleSamplesKit1Validation() throws Exception {
+
+        List<String> test1RequestList = new ArrayList<>();
+
+        test1RequestList.add(sample1Kit1);
+        test1RequestList.add(sample2Kit1);
+        test1RequestList.add(sample3Kit1);
+        test1RequestList.add(sample4Kit1);
+        test1RequestList.add(sample1Kit2);
+        test1RequestList.add(sample2Kit2);
+        test1RequestList.add(sample3Kit2);
+        test1RequestList.add(sample4Kit2);
+
+        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
+        SampleManager mockSampManager = Mockito.mock(SampleManager.class);
+
+        SampleKitListResponse mockResponse = new SampleKitListResponse();
+        List<SampleKit> skResponseKits = new ArrayList<>();
+        skResponseKits.add(sampleKit1);
+        skResponseKits.add(sampleKit2);
+        mockResponse.setResult(skResponseKits);
+        mockResponse.setSuccess(true);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
+        ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
+
+        Map<String, List<ProductOrderSample>> posResult = new HashMap<>();
+        posResult.put(sample1Kit1, Collections.singletonList(pos1Kit1));
+        posResult.put(sample2Kit1, Collections.singletonList(pos2Kit1));
+        posResult.put(sample3Kit1, Collections.singletonList(pos3Kit1));
+        posResult.put(sample4Kit1, Collections.singletonList(pos4Kit1));
+        posResult.put(sample1Kit2, Collections.singletonList(pos1Kit2));
+        posResult.put(sample2Kit2, Collections.singletonList(pos2Kit2));
+        posResult.put(sample3Kit2, Collections.singletonList(pos3Kit2));
+        posResult.put(sample4Kit2, Collections.singletonList(pos4Kit2));
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult);
+
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+
+        ReceiveSamplesEjb testEjb =
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList);
+
+        MessageCollection validationResults = new MessageCollection();
+
+        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+
+        Assert.assertTrue(validationResults.hasErrors());
+        Assert.assertFalse(validationResults.hasInfos());
+        Assert.assertFalse(validationResults.hasWarnings());
+
+        Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos1Kit1.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos2Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos2Kit1.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos3Kit1.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos4Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos4Kit1.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos1Kit2.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos1Kit2.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos2Kit2.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos2Kit2.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos3Kit2.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos3Kit2.getValidations().iterator().next().getReason());
+        Assert.assertFalse(pos4Kit2.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                pos4Kit2.getValidations().iterator().next().getReason());
+    }
+
+
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
     public void tearDown() throws Exception {
