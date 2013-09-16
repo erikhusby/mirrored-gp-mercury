@@ -34,9 +34,9 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final String TEST_SAMPLE_KIT_ID = "SK-TST1";
 
     public static final String TEST_SK_SAMPLE_1 = "SM-SK11";
-    public static final String TEST_SK_SAMPLE_2 = "SM-SK11";
-    public static final String TEST_SK_SAMPLE_3 = "SM-SK11";
-    public static final String TEST_SK_SAMPLE_4 = "SM-SK11";
+    public static final String TEST_SK_SAMPLE_2 = "SM-SK12";
+    public static final String TEST_SK_SAMPLE_3 = "SM-SK13";
+    public static final String TEST_SK_SAMPLE_4 = "SM-SK14";
 
     @Override
     public WorkRequestManager createWorkRequestManager() {
@@ -137,9 +137,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 kitForResponse.setSampleKitId(TEST_SAMPLE_KIT_ID);
 
                 List<Sample> kitSamples = new ArrayList<>();
-                for(String currentSampleId:strings) {
-                    kitSamples.add(new Sample(currentSampleId));
-                }
+                Collections.addAll(kitSamples, new Sample(TEST_SK_SAMPLE_1), new Sample(TEST_SK_SAMPLE_2), new Sample(TEST_SK_SAMPLE_3), new Sample(TEST_SK_SAMPLE_4));
 
                 kitForResponse.setSamples(kitSamples);
                 response.setResult(Collections.singletonList(kitForResponse));
