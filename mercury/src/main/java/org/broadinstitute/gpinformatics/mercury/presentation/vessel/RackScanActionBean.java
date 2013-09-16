@@ -134,6 +134,10 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     public abstract String getPageTitle();
 
+    public String getRackScanPageJsp() {
+        return SHOW_LAB_SELECTION_JSP;
+    }
+
     public RackScanner.RackScannerLab getLabToFilterBy() {
         return labToFilterBy;
     }

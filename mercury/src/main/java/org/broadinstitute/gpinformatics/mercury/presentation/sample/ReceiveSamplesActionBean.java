@@ -86,7 +86,11 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
         //       place to call.
         samplesToReceive = Arrays.asList(sampleIds.split("\n"));
 
-        return receiveSamples(SAMPLE_ID_RECEIPT_JSP);
+        Resolution resolution = receiveSamples(SAMPLE_ID_RECEIPT_JSP);
+
+        addMessage(" samples have been received.", response.getResult().size());
+
+        return resolution;
     }
 
     /**
@@ -107,6 +111,10 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
         addMessages(messageCollection);
 
         return new ForwardResolution(receiptJsp);
+    }
+
+    public String getReceiveSamplesEvent() {
+        return RECEIVE_SAMPLES_EVENT;
     }
 
     public String getSampleIds() {
