@@ -1027,7 +1027,7 @@ public class LabEventFactory implements Serializable {
             if (volume != null || concentration != null) {
                 String result = bspSetVolumeConcentration
                         .setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
-                if (result != BSPSetVolumeConcentration.RESULT_OK) {
+                if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
                     logger.error(result);
                 }
             }
