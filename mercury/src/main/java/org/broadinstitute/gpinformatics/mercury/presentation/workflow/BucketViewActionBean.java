@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@UrlBinding(value = "/view/bucketView.action")
+@UrlBinding(value = "/view/bucketView.action?{$event}")
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
@@ -299,6 +299,7 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent("setBucket")
     public Resolution setBucket() {
         if (selectedBucket != null) {
             // Sets the workflow selection list for this bucket.
@@ -307,6 +308,7 @@ public class BucketViewActionBean extends CoreActionBean {
         return view();
     }
 
+    @HandlesEvent("viewBucket")
     public Resolution viewBucket() {
         if (selectedBucket != null && selectedWorkflowDef != null) {
             possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
@@ -323,7 +325,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 collectiveEntries.addAll(bucketEntries);
                 collectiveEntries.addAll(reworkEntries);
 
-                // Filters out entries that are incompatible with selected workflow.
+                // Filters out entries whose product workflow doesn't match the selected workflow.
                 Set<String> pdoKeys = new HashSet<>();
                 for (BucketEntry entry : collectiveEntries) {
                     pdoKeys.add(entry.getPoBusinessKey());
@@ -373,6 +375,14 @@ public class BucketViewActionBean extends CoreActionBean {
             addValidationError("selectedLcset", String.format("Could not find %s.", selectedLcset));
             return new ForwardResolution(VIEW_PAGE);
         }
+        // Cannot mix workfows in an LCSET.
+        Set<String> batchWorkflows = getWorkflowNames(batch);
+        if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
+            addValidationError("incompatibleWorkflows",
+                    "The selected workflow (" + selectedWorkflowDef.getName() +
+                    ") is different than LCSET's workflow (" + StringUtils.join(batchWorkflows, ", ") + ")");
+            return new ForwardResolution(VIEW_PAGE);
+        }
         return new ForwardResolution(CONFIRMATION_PAGE);
     }
 
@@ -383,6 +393,21 @@ public class BucketViewActionBean extends CoreActionBean {
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         seperateEntriesByType();
+    }
+
+
+    // Returns the workflow name for entries in the batch.
+    private Set<String> getWorkflowNames(LabBatch batch) {
+        Set<String> pdoKeys = new HashSet<>();
+        for (BucketEntry entry : batch.getBucketEntries()) {
+            pdoKeys.add(entry.getPoBusinessKey());
+        }
+        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+        Set<String> workflowNames = new HashSet<>();
+        for (ProductOrder pdo : pdos) {
+            workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
+        }
+        return workflowNames;
     }
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
