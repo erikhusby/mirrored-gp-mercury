@@ -78,7 +78,7 @@ public class SampleReceiptValidation {
     @Column(name = "MODIFIED_BY")
     private long modifiedBy;
 
-    @Column(name = "reason", nullable = false)
+    @Column(name = "REASON", nullable = false)
     @Enumerated(EnumType.STRING)
     private SampleValidationReason reason;
 
@@ -108,6 +108,10 @@ public class SampleReceiptValidation {
         this.reason = reason;
 
         this.createdDate = new Date();
+    }
+
+    public Long getValidationId() {
+        return validationId;
     }
 
     public ProductOrderSample getProductOrderSample() {
