@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -86,6 +87,10 @@ public class ProductOrderData {
     }
 
     public String getTitle() {
+        if (title == null) {
+            return "";
+        }
+
         return title;
     }
 
@@ -94,6 +99,10 @@ public class ProductOrderData {
     }
 
     public String getId() {
+        if (id == null) {
+            return "";
+        }
+
         return id;
     }
 
@@ -102,6 +111,10 @@ public class ProductOrderData {
     }
 
     public String getComments() {
+        if (comments == null) {
+            return "";
+        }
+
         return comments;
     }
 
@@ -128,6 +141,10 @@ public class ProductOrderData {
     }
 
     public String getProduct() {
+        if (product == null) {
+            return "";
+        }
+
         return product;
     }
 
@@ -136,6 +153,10 @@ public class ProductOrderData {
     }
 
     public String getStatus() {
+        if (status == null) {
+            return "";
+        }
+
         return status;
     }
 
@@ -146,6 +167,10 @@ public class ProductOrderData {
     @XmlElementWrapper
     @XmlElement(name = "sampleId")
     public List<String> getSamples() {
+        if (samples == null) {
+            return Collections.emptyList();
+        }
+
         return samples;
     }
 
@@ -163,6 +188,10 @@ public class ProductOrderData {
     }
 
     public String getAggregationDataType() {
+        if (aggregationDataType == null) {
+            return "";
+        }
+
         return aggregationDataType;
     }
 
@@ -171,6 +200,10 @@ public class ProductOrderData {
     }
 
     public String getResearchProjectId() {
+        if (researchProjectId == null) {
+            return "";
+        }
+
         return researchProjectId;
     }
 
@@ -179,6 +212,10 @@ public class ProductOrderData {
     }
 
     public String getProductName() {
+        if (productName == null) {
+            return "";
+        }
+
         return productName;
     }
 
@@ -187,10 +224,18 @@ public class ProductOrderData {
     }
 
     public String getQuoteId() {
+        if (quoteId == null) {
+            return "";
+        }
+
         return quoteId;
     }
 
     public String getUsername() {
+        if (username == null) {
+            return "";
+        }
+
         return username;
     }
 
@@ -199,6 +244,10 @@ public class ProductOrderData {
     }
 
     public String getRequisitionKey() {
+        if (requisitionKey == null) {
+            return "";
+        }
+
         return requisitionKey;
     }
 

@@ -12,6 +12,10 @@ public class LongDateTimeAdapter extends XmlAdapter<String, Date> {
 
     @Override
     public String marshal(Date v) throws Exception {
+        if (v == null) {
+            return "";
+        }
+
         return dateFormat.format(v);
     }
 
