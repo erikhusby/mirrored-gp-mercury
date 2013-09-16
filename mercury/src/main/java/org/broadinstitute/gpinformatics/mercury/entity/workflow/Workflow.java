@@ -10,6 +10,7 @@ public enum Workflow {
     EXOME_EXPRESS("Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
+    ICE("ICE"),
     /** Use this to indicate that no workflow is associated. */
     NONE(null);
 
@@ -26,6 +27,14 @@ public enum Workflow {
      */
     public static boolean isExomeExpress(@Nullable String workflowName) {
         return workflowName != null && workflowName.equals(EXOME_EXPRESS.name);
+    }
+
+    /** Returns true if Mercury can support this workflow. */
+    public static boolean isSupportedWorkflow(@Nullable String workflowName) {
+        return workflowName != null && (
+                workflowName.equals(EXOME_EXPRESS.name) |
+                workflowName.equals(ICE.name)
+        );
     }
 
     @Nullable

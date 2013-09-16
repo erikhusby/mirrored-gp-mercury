@@ -339,8 +339,7 @@ public class ExomeExpressEndToEndTest {
 //            EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
 //                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
 //                            .getName()), jiraTicket.getTicketName()));
-            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
-                    bucketDao);
+            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao);
 
             EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
 

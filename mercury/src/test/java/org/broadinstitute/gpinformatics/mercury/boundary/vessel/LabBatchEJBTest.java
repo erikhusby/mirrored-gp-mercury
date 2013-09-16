@@ -211,7 +211,7 @@ public class LabBatchEJBTest extends ContainerTest {
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
         LabBatch savedBatch = labBatchEJB
                 .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
-                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW,
+                        expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
                         CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDao.flush();

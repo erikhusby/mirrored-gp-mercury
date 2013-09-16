@@ -156,7 +156,7 @@ public class BaseEventTest {
                         flowcellMessageHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
-        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, null);
     }
 
     /**
@@ -241,7 +241,7 @@ public class BaseEventTest {
     }
 
     public void drainBucket(Bucket workingBucket) {
-        bucketEjb.startBucketDrain(workingBucket.getBucketEntries(), "pdunlea", null, false);
+        bucketEjb.moveFromBucketToCommonBatch(workingBucket.getBucketEntries());
     }
 
     public void archiveBucketEntries(Bucket bucket) {

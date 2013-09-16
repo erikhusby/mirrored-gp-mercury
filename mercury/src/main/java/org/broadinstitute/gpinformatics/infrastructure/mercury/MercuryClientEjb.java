@@ -66,10 +66,18 @@ public class MercuryClientEjb {
         return addFromProductOrder(pdo, pdo.getSamples());
     }
 
+    /**
+     * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
+     *
+     * @param order
+     * @param samples
+     * @return the samples that were actually added to the bucket
+     */
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
                                                               Collection<ProductOrderSample> samples) {
-        // Limited to ExomeExpress pdos.
-        if (order.getProduct() == null || order.getProduct().getWorkflow() != Workflow.EXOME_EXPRESS) {
+
+        String workflowName = order.getProduct() != null ? order.getProduct().getWorkflow().getWorkflowName() : null;
+        if (!Workflow.isSupportedWorkflow(workflowName)) {
             return Collections.emptyList();
         }
 

@@ -158,22 +158,20 @@ public class LabBatchEjb {
      * @param operator     The person creating the batch.
      * @param batchName    The name of the batch being created. This can be an existing JIRA ticket id.
      * @param bucketName   The name of the bucket to add the vessels to.
-     * @param location     The machine location of the operation for the bucket event.
      * @param labBatchType The type of batch to create.
      * @param issueType    The type of issue to create in JIRA for this lab batch.
      *
      * @return The lab batch that was created.
      */
-    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull List<String> vesselLabels,
-                                                      @Nonnull String operator, @Nonnull String batchName,
-                                                      @Nonnull String bucketName, @Nonnull String location,
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull List<String> vesselLabels, @Nonnull String operator,
+                                                      @Nonnull String batchName, @Nonnull String bucketName,
                                                       @Nonnull LabBatch.LabBatchType labBatchType,
                                                       @Nonnull CreateFields.IssueType issueType) {
-        Set<LabVessel> vessels =
-                new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
+
+        Set<LabVessel> vessels = new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
-        bucketEjb.start(operator, vessels, bucket, location);
+        bucketEjb.makeEntriesAndBatchThem(vessels, bucket);
         return batch;
     }
 
@@ -189,18 +187,16 @@ public class LabBatchEjb {
      * @param dueDate              the due date for the batch (for JIRA)
      * @param important            the important notes for the batch (for JIRA)
      * @param username             the user creating the batch (for JIRA)
-     * @param location             the machine location where the batch was created
      *
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch.LabBatchType labBatchType,
-                                                      @Nonnull String workflowName,
-                                                      @Nonnull List<Long> bucketEntryIds,
+                                                      @Nonnull String workflowName, @Nonnull List<Long> bucketEntryIds,
                                                       @Nonnull List<Long> reworkBucketEntryIds,
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
-                                                      @Nonnull String username,
-                                                      @Nonnull String location) throws ValidationException {
+                                                      @Nonnull String username) throws ValidationException {
+
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -247,9 +243,10 @@ public class LabBatchEjb {
 
         Set<BucketEntry> allBucketEntries = new HashSet<>(bucketEntries);
         allBucketEntries.addAll(reworkBucketEntries);
-        bucketEjb.start(allBucketEntries, batch);
+        bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        CreateFields.IssueType issueType = CreateFields.IssueType.valueForJiraName(workflowName);
+        CreateFields.IssueType issueType = CreateFields.IssueType.mapWorkflowToIssueType.get(workflowName);
+
         batchToJira(username, null, batch, issueType);
 
         //link the JIRA tickets for the batch created to the pdo batches.
@@ -304,7 +301,7 @@ public class LabBatchEjb {
                                                       @Nonnull CreateFields.IssueType issueType) {
         batch = createLabBatch(batch, operator, issueType);
         Bucket bucket = bucketDao.findByName(bucketName);
-        bucketEjb.start(operator, batch.getStartingBatchLabVessels(), bucket, location);
+        bucketEjb.makeEntriesAndBatchThem(batch.getStartingBatchLabVessels(), bucket);
         return batch;
     }
 
@@ -360,7 +357,9 @@ public class LabBatchEjb {
 
             if (jiraTicket == null) {
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
+                if (issueType == null) {
+                    throw new InformaticsServiceException("JIRA issue type must be specified");
+                }
                 JiraIssue jiraIssue = jiraService
                         .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), reporter,
                                 issueType, fieldBuilder.getSummary(), fieldBuilder.getCustomFields(submissionFields));
@@ -460,7 +459,7 @@ public class LabBatchEjb {
             bucketEntry.getBucket().removeEntry(bucketEntry);
         }
         batch.addLabVessels(labVessels);
-        bucketEjb.start(bucketEntries, batch);
+        bucketEjb.moveFromBucketToBatch(bucketEntries, batch);
 
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
@@ -471,7 +470,7 @@ public class LabBatchEjb {
             reworkFromBucket = entry.getBucket();
         }
         batch.addReworks(reworkVessels);
-        bucketEjb.start(reworkBucketEntries, batch);
+        bucketEjb.moveFromBucketToBatch(reworkBucketEntries, batch);
 
         Set<CustomField> customFields = new HashSet<>();
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
