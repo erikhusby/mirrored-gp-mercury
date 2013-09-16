@@ -102,6 +102,14 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 philDunleaUser.setEmail("pdunlea@broadinstitute.org");
                 testList.add(philDunleaUser);
 
+                BspUser scottmatUser = new BspUser();
+                scottmatUser.setUserId(17794L);
+                scottmatUser.setUsername("scottmat");
+                scottmatUser.setFirstName("Scott");
+                scottmatUser.setLastName("Matthews");
+                scottmatUser.setEmail("scottmat@broadinstitute.org");
+                testList.add(scottmatUser);
+
                 return testList;
             }
         };

@@ -29,17 +29,27 @@ import java.util.Map;
 @RequestScoped
 public class ReceiveSamplesEjb {
 
-    @Inject
     private BSPSampleReceiptService receiptService;
 
-    @Inject
     private BSPManagerFactory managerFactory;
 
-    @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
-    @Inject
     private BSPUserList bspUserList;
+
+    public ReceiveSamplesEjb() {
+    }
+
+    @Inject
+    public ReceiveSamplesEjb(BSPSampleReceiptService receiptService,
+                             BSPManagerFactory managerFactory,
+                             ProductOrderSampleDao productOrderSampleDao,
+                             BSPUserList bspUserList) {
+        this.receiptService = receiptService;
+        this.managerFactory = managerFactory;
+        this.productOrderSampleDao = productOrderSampleDao;
+        this.bspUserList = bspUserList;
+    }
 
     /**
      * Handles the receipt validation, and the receiving of the samples passed in.  Utilizes the current user's username
@@ -83,7 +93,7 @@ public class ReceiveSamplesEjb {
      * @param messageCollection     collection of errors and/or warnings to be returned to the user
      * @param operator              username of the person scanning in the received samples
      */
-    private void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
+    protected void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
                                     String operator) {
 
         SampleManager bspSampleManager = managerFactory.createSampleManager();
