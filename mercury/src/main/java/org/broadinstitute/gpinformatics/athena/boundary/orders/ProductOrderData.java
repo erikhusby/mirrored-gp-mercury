@@ -3,15 +3,12 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -40,7 +37,7 @@ public class ProductOrderData {
     private String researchProjectId;
     private String productName;
     private String quoteId;
-    public String username;
+    private String username;
     private String requisitionKey;
 
     @SuppressWarnings("UnusedDeclaration")
@@ -72,7 +69,7 @@ public class ProductOrderData {
             productName = productOrder.getProduct().getProductName();
         }
 
-        samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
+        samples = getSampleList(productOrder.getSamples());
 
         if (productOrder.getResearchProject() != null) {
             researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
