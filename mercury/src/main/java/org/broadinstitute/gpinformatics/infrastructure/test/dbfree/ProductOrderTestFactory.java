@@ -101,6 +101,12 @@ public class ProductOrderTestFactory {
                 ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", "A");
     }
 
+    public static ProductOrder buildIceProductOrder(int maxSamples) {
+        return createDummyProductOrder(maxSamples, "PD0-1IC", Workflow.ICE, 101, "Test RP",
+                AthenaClientServiceStub.rpSynopsis,
+                ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", "A");
+    }
+
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
         return createDummyProductOrder(maxSamples, "PD0-1HS",
                 Workflow.HYBRID_SELECTION, 101,
