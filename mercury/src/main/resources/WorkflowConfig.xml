@@ -46,6 +46,7 @@
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
+
     <workflowProcessDefs>
         <name>Pico/Plating</name>
         <workflowProcessDefVersions>
@@ -748,6 +749,16 @@
             <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
             <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
             <routingRule>MERCURY</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+      <name>ICE</name>
+        <productWorkflowDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2013-09-12T15:28:00.001-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <routingRule>SQUID</routingRule>
             <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>

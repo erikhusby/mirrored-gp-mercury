@@ -277,7 +277,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
 
-        resource.start(bucketBatch, howieTest, LabEvent.UI_EVENT_LOCATION);
+        resource.moveFromBucketToCommonBatch(bucketBatch);
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
@@ -303,8 +303,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
 
-        resource.cancel(testEntry4, howieTest,
-                "Because the test told me to!!!");
+        resource.removeEntry(testEntry4, "Because the test told me to!!!");
 
         Assert.assertFalse(bucket.contains(testEntry4));
 
@@ -381,7 +380,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, vessel4.getInPlaceEvents().size());
 
-        resource.start(howieTest, vesselBucketBatch, bucket, LabEvent.UI_EVENT_LOCATION);
+        resource.makeEntriesAndBatchThem(vesselBucketBatch, bucket);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -426,8 +425,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(bucket.contains(testEntry4));
 
         testEntry4 = bucketEntryDao.findByVesselAndBucket(vessel4, bucket);
-        resource.cancel(testEntry4, howieTest,
-                "Because the test told me to!!!");
+        resource.removeEntry(testEntry4, "Because the test told me to!!!");
 
         bucketDao.flush();
         bucketDao.clear();
@@ -503,7 +501,7 @@ public class BucketEjbTest extends ContainerTest {
 
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
-        resource.start(howieTest, 3, bucket);
+        resource.selectEntriesAndBatchThem(3, bucket);
 
         logger.info("After the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
@@ -532,8 +530,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(bucket.contains(testEntry3));
         Assert.assertTrue(bucket.contains(testEntry4));
 
-        resource.cancel(testEntry4, howieTest,
-                "Because the test told me to!!!");
+        resource.removeEntry(testEntry4, "Because the test told me to!!!");
 
         Assert.assertFalse(bucket.contains(testEntry4));
 
