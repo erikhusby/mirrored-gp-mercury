@@ -28,8 +28,8 @@ public class SampleReceiptValidation {
 
     public enum SampleValidationReason {
         SAMPLE_NOT_IN_BSP("The sample is not recognized in BSP"),
-        MISSING_SAMPLE_FROM_SAMPLE_KIT("Not all of the Samples for the Sample kit came back"),
-        SAMPLES_FROM_MULTIPLE_KITS("");
+        MISSING_SAMPLE_FROM_SAMPLE_KIT("Not all of the samples for the sample kit came back"),
+        SAMPLES_FROM_MULTIPLE_KITS("The samples being received span multiple sample kits");
 
         private final String reasonMessage;
 
@@ -87,13 +87,13 @@ public class SampleReceiptValidation {
     }
 
     public SampleReceiptValidation(@Nonnull Long createdBy, @Nonnull SampleValidationType validationType,
-                                   SampleValidationReason reason) {
-        this(null, createdBy, null, validationType, reason);
+                                   @Nonnull SampleValidationReason reason) {
+        this(null, createdBy, validationType, reason);
     }
 
     public SampleReceiptValidation(ProductOrderSample productOrderSample, @Nonnull Long createdBy,
                                    @Nonnull SampleValidationType validationType,
-                                   SampleValidationReason reason) {
+                                   @Nonnull SampleValidationReason reason) {
         this(productOrderSample,createdBy,SampleValidationStatus.PENDING,validationType, reason);
     }
 
