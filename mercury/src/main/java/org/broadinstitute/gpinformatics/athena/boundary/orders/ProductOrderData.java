@@ -2,11 +2,16 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -107,6 +112,7 @@ public class ProductOrderData {
         this.comments = comments;
     }
 
+    @XmlJavaTypeAdapter(LongDateTimeAdapter.class)
     public Date getPlacedDate() {
         return placedDate;
     }
@@ -115,6 +121,7 @@ public class ProductOrderData {
         this.placedDate = placedDate;
     }
 
+    @XmlJavaTypeAdapter(LongDateTimeAdapter.class)
     public Date getModifiedDate() {
         return modifiedDate;
     }
@@ -188,6 +195,5 @@ public class ProductOrderData {
     public void setUserName(String username) {
         this.username = username;
     }
-
 
 }

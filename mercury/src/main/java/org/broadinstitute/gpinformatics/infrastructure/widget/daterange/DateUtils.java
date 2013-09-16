@@ -41,6 +41,8 @@ public class DateUtils {
 
     private static final String DATE_TIME_PATTERN_YYYYMMDD_DASH = "yyyy-MMM-dd hh:mm a";
 
+    public static final String LONG_DATE_TIME_MILLIS = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+
     // private static String TIME_PATTERN_DASH = DATE_PATTERN_DASH + " HH:MM a";
 
     /** Cached default date format for performance. */
