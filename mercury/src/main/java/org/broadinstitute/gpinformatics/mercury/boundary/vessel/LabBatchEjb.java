@@ -245,11 +245,8 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        CreateFields.IssueType issueType = CreateFields.IssueType.valueForJiraName(workflowName);
-        //todo remove this override when JIRA has type=ICE
-        if (issueType == CreateFields.IssueType.ICE) {
-            issueType = CreateFields.IssueType.EXOME_EXPRESS;
-        }
+        CreateFields.IssueType issueType = CreateFields.IssueType.mapWorkflowToIssueType.get(workflowName);
+
         batchToJira(username, null, batch, issueType);
 
         //link the JIRA tickets for the batch created to the pdo batches.

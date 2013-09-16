@@ -7,6 +7,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * We use a custom serializer here because custom fields are not
@@ -96,7 +98,6 @@ public class CreateFields extends UpdateFields {
     public enum IssueType {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS(Workflow.EXOME_EXPRESS.getWorkflowName()),
-        ICE(Workflow.ICE.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         CLIA_PRODUCT_ORDER("CLIA Product Order"),
         RESEARCH_PROJECT("Research Project"),
@@ -114,14 +115,11 @@ public class CreateFields extends UpdateFields {
             return jiraName;
         }
 
-        public static IssueType valueForJiraName(String jiraName) {
-            for (IssueType issueType : IssueType.values()) {
-                if (issueType.getJiraName().equals(jiraName)) {
-                    return issueType;
-                }
-            }
-            return null;
-        }
+        /** Contains the IssueType to use for a given workflow. */
+        public static final Map<String, IssueType> mapWorkflowToIssueType = new HashMap<String, IssueType>() {{
+            put(Workflow.EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
+            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
+        }};
     }
 
 
