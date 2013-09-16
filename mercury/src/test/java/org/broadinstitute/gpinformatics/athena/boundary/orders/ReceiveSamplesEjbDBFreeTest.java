@@ -243,6 +243,8 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertTrue(pos3Kit1.getValidations().isEmpty());
         Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
         Assert.assertFalse(pos5Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP,
+                pos5Kit1.getValidations().iterator().next().getReason());
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
