@@ -8,6 +8,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
@@ -91,7 +92,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
 
     /** Does a rack scan and sets the rackScan variable. Returns a default results jsp. */
     @HandlesEvent(SCAN_EVENT)
-    public Resolution scan()  {
+    public Resolution scan() throws ScannerException {
 
         try {
             rackScan = rackScannerEjb.runRackScanner(rackScanner);

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 /**
@@ -17,5 +18,6 @@ public interface BSPSampleReceiptService extends Serializable {
      * @param username Username of the operator
      * @return SampleKitReceiptResponse returned from BSP.
      */
-    public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username);
+    public SampleKitReceiptResponse receiveSamples(List<String> barcodes, String username)
+            throws UnsupportedEncodingException;
 }

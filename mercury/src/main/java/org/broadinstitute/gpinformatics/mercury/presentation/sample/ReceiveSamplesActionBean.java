@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import clover.retrotranslator.edu.emory.mathcs.backport.java.util.Arrays;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -10,9 +9,11 @@ import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ReceiveSamplesEjb;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.vessel.RackScanActionBean;
 
 import javax.inject.Inject;
+import javax.xml.bind.JAXBException;
 import java.util.List;
 
 /**
@@ -24,7 +25,6 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     public static final String URL = "/sample/receiveSamples.action";
     public static final String SHOW_RECEIPT_JSP = "/sample/sample_receipt.jsp";
     public static final String RACKSCAN_RECEIPT_JSP = "/samples/sample_receipt_rackscan_results.jsp";
-    public static final String SAMPLE_ID_RECEIPT_JSP = "/samples/sample_receipt_results.jsp";
     public static final String SHOW_RECEIPT_ACTION = "showRecept";
     public static final String RECEIVE_SAMPLES_EVENT = "receiveSamplesById";
     public static final String PAGE_TITLE = "Receive Samples";
@@ -56,14 +56,18 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
      */
     @Override
     @HandlesEvent(SCAN_EVENT)
-    public Resolution scan() {
+    public Resolution scan() throws ScannerException {
         // Run the rack scanner, ignore the returned resolution.
         super.scan();
 
         // Prep the Ids to receive.
         samplesToReceive = rackScannerEjb.obtainSampleIdsFromRackscan(rackScan);
 
-        return receiveSamples(RACKSCAN_RECEIPT_JSP);
+        try {
+            return receiveSamples(RACKSCAN_RECEIPT_JSP);
+        } catch (JAXBException e) {
+            throw new ScannerException(e);
+        }
     }
 
     @Override
@@ -80,15 +84,15 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
      * Receives sample by the sample Ids passed in.
      */
     @HandlesEvent(RECEIVE_SAMPLES_EVENT)
-    public Resolution receiveSamplesById() {
+    public Resolution receiveSamplesById() throws JAXBException {
 
-        // TODO: Find the logic which is used to split by either a space or a \n - hopefully it is in a simple
-        //       place to call.
-        samplesToReceive = Arrays.asList(sampleIds.split("\n"));
+        samplesToReceive = SearchActionBean.cleanInputStringForSamples(sampleIds);
 
-        Resolution resolution = receiveSamples(SAMPLE_ID_RECEIPT_JSP);
+        Resolution resolution = receiveSamples(SHOW_RECEIPT_JSP);
 
-        addMessage(" samples have been received.", response.getResult().size());
+        if (!hasErrors()) {
+            addMessage("{0} sample(s) have been received.", response.getResult().size());
+        }
 
         return resolution;
     }
@@ -98,7 +102,7 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
      *
      * @param receiptJsp JSP to pass the resolution to.
      */
-    private Resolution receiveSamples(String receiptJsp) {
+    private Resolution receiveSamples(String receiptJsp) throws JAXBException {
         MessageCollection messageCollection = new MessageCollection();
 
         response = receiveSamplesEjb.receiveSamples(samplesToReceive,

@@ -12,15 +12,22 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValid
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.xml.bind.JAXBException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * EJB for receiving samples within BSP.
@@ -37,6 +44,8 @@ public class ReceiveSamplesEjb {
 
     private BSPUserList bspUserList;
 
+    private SampleReceiptResource sampleReceiptResource;
+
     public ReceiveSamplesEjb() {
     }
 
@@ -44,11 +53,13 @@ public class ReceiveSamplesEjb {
     public ReceiveSamplesEjb(BSPSampleReceiptService receiptService,
                              BSPManagerFactory managerFactory,
                              ProductOrderSampleDao productOrderSampleDao,
-                             BSPUserList bspUserList) {
+                             BSPUserList bspUserList,
+                             SampleReceiptResource sampleReceiptResource) {
         this.receiptService = receiptService;
         this.managerFactory = managerFactory;
         this.productOrderSampleDao = productOrderSampleDao;
         this.bspUserList = bspUserList;
+        this.sampleReceiptResource = sampleReceiptResource;
     }
 
     /**
@@ -61,19 +72,37 @@ public class ReceiveSamplesEjb {
      * @return SampleKitReceiptResponse received from BSP.
      */
     public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, String username,
-                                                   MessageCollection messageCollection) {
+                                                   MessageCollection messageCollection) throws JAXBException {
 
         SampleKitReceiptResponse receiptResponse = null;
 
-        // Validate first, if there are no errors receive first in BSP, then do the mercury receit work.
+        // Validate first, if there are no errors receive first in BSP, then do the mercury receipt work.
         validateForReceipt(sampleIds, messageCollection, username);
 
         if (!messageCollection.hasErrors()) {
 
-            receiptResponse = receiptService.receiveSamples(sampleIds, username);
+            try {
+                receiptResponse = receiptService.receiveSamples(sampleIds, username);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
 
             if (receiptResponse.isSuccess()) {
-                // TODO: Call the Mercury receipt registration code for the samples.
+
+                for (Map.Entry<String, Set<SampleKitReceiptResponse.Barcodes>> entry :
+                                receiptResponse.getReceivedSamplesPerKit().entrySet()) {
+
+                    List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+                    for (SampleKitReceiptResponse.Barcodes barcodes : entry.getValue()) {
+                        parentVesselBeans.add(new ParentVesselBean(barcodes.getExternalBarcode(),
+                                    barcodes.getSampleBarcode(),
+                                    receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
+                                    null));
+                    }
+                    SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), entry.getKey(),
+                            parentVesselBeans, username);
+                    sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
+                }
             }
         }
 

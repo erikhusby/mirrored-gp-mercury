@@ -1,8 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
-<%-- Specifically not using use action bean, as the class named is abstract and this JSP is meant to be used by multiple
-     action beans. --%>
 <stripes:useActionBean beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"
                        var="actionBean"/>
 
@@ -12,7 +10,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"
-                      onsubmit="return false;" id="bspSampleReceiptForm">
+                      id="bspSampleReceiptForm">
             <stripes:hidden name="" />
 
             <div class="form-horizontal">
