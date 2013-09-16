@@ -105,6 +105,7 @@ public class SampleReceiptValidation {
         this.createdBy = createdBy;
         this.status = status;
         this.validationType = validationType;
+        this.reason = reason;
 
         this.createdDate = new Date();
     }

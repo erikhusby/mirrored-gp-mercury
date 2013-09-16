@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptServi
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
@@ -51,16 +52,18 @@ public class ReceiveSamplesEjbDBFreeTest {
     private String sample3Kit2;
     private String sample4Kit2;
     private SampleKit sampleKit1;
+    private String sample5Kit1;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
         sampleKit1ID = "SK-tst1";
         sampleKit2ID = "SK-tst2";
 
-        sample1Kit1 = "CSM-1SK1";
-        sample2Kit1 = "CSM-2SK1";
-        sample3Kit1 = "CSM-3SK1";
-        sample4Kit1 = "CSM-4SK1";
+        sample1Kit1 = (Deployment.isCRSP?"CSM":"SM") +"-1SK1";
+        sample2Kit1 = (Deployment.isCRSP?"CSM":"SM") +"-2SK1";
+        sample3Kit1 = (Deployment.isCRSP?"CSM":"SM") +"-3SK1";
+        sample4Kit1 = (Deployment.isCRSP?"CSM":"SM") +"-4SK1";
+        sample5Kit1 = (Deployment.isCRSP?"CSM":"SM") +"-5SK1";
 
         sampleKit1 = new SampleKit();
         sampleKit1.setSampleKitId(sampleKit1ID);
@@ -71,10 +74,10 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         sampleKit1.setSamples(kit1Samples);
 
-        sample1Kit2 = "CSM-1SK2";
-        sample2Kit2 = "CSM-2SK2";
-        sample3Kit2 = "CSM-3SK2";
-        sample4Kit2 = "CSM-4SK2";
+        sample1Kit2 = (Deployment.isCRSP?"CSM":"SM") +"-1SK2";
+        sample2Kit2 = (Deployment.isCRSP?"CSM":"SM") +"-2SK2";
+        sample3Kit2 = (Deployment.isCRSP?"CSM":"SM") +"-3SK2";
+        sample4Kit2 = (Deployment.isCRSP?"CSM":"SM") +"-4SK2";
 
         sampleKit2 = new SampleKit();
         sampleKit2.setSampleKitId(sampleKit2ID);
@@ -185,9 +188,61 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertTrue(validationResults.hasWarnings());
 
         Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
+                pos1Kit1.getValidations().iterator().next().getReason());
         Assert.assertFalse(pos2Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
+                pos2Kit1.getValidations().iterator().next().getReason());
         Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
+                pos3Kit1.getValidations().iterator().next().getReason());
         Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
+    }
+    public void testUnrecognizedSamplesKit1Validation() throws Exception {
+
+        List<String> test1RequestList = new ArrayList<>();
+
+        test1RequestList.add(sample1Kit1);
+        test1RequestList.add(sample2Kit1);
+        test1RequestList.add(sample3Kit1);
+        test1RequestList.add(sample4Kit1);
+        test1RequestList.add(sample5Kit1);
+
+        BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
+        BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
+        SampleManager mockSampManager = Mockito.mock(SampleManager.class);
+
+        SampleKitListResponse mockResponse = new SampleKitListResponse();
+        mockResponse.setResult(Collections.singletonList(sampleKit1));
+        mockResponse.setSuccess(true);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
+        ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
+
+        ProductOrderSample pos5Kit1 = new ProductOrderSample(sample5Kit1);
+
+        Map<String, List<ProductOrderSample>> posResult = new HashMap<>();
+        posResult.put(sample5Kit1, Collections.singletonList(pos5Kit1));
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(Collections.singletonList(sample5Kit1)))).thenReturn(posResult);
+
+        BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+
+        ReceiveSamplesEjb testEjb =
+                new ReceiveSamplesEjb(stubReceiptService, mockManagerFactory, mockPosDao, testUserList);
+
+        MessageCollection validationResults = new MessageCollection();
+
+        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+
+        Assert.assertTrue(validationResults.hasErrors());
+        Assert.assertFalse(validationResults.hasInfos());
+        Assert.assertFalse(validationResults.hasWarnings());
+
+        Assert.assertTrue(pos1Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos2Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos3Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
+        Assert.assertFalse(pos5Kit1.getValidations().isEmpty());
     }
 
     @AfterMethod(groups = TestGroups.DATABASE_FREE)
