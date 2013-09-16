@@ -93,7 +93,7 @@ public class ReceiveSamplesEjb {
      * @param messageCollection     collection of errors and/or warnings to be returned to the user
      * @param operator              username of the person scanning in the received samples
      */
-    protected void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
+    public void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
                                     String operator) {
 
         SampleManager bspSampleManager = managerFactory.createSampleManager();
