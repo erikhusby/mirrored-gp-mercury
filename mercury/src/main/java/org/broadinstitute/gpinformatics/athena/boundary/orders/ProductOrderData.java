@@ -30,12 +30,18 @@ public class ProductOrderData {
     private Date modifiedDate;
     private String product;
     private String status;
+
+    /**
+     * This is really a list of sample IDs.
+     */
     private List<String> samples;
+
     private String aggregationDataType;
     private String researchProjectId;
     private String productName;
     private String quoteId;
     public String username;
+    private String requisitionKey;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -48,41 +54,35 @@ public class ProductOrderData {
      * @param productOrder the {@link ProductOrder}
      */
     public  ProductOrderData(@Nonnull ProductOrder productOrder) {
-        this.title = productOrder.getTitle();
+        title = productOrder.getTitle();
 
         if (productOrder.getProductOrderId() != null) {
-            this.id = productOrder.getProductOrderId().toString();
+            id = productOrder.getProductOrderId().toString();
         }
 
-        this.comments = productOrder.getComments();
-        this.placedDate = productOrder.getPlacedDate();
-        this.modifiedDate = productOrder.getModifiedDate();
+        comments = productOrder.getComments();
+        placedDate = productOrder.getPlacedDate();
+        modifiedDate = productOrder.getModifiedDate();
+        quoteId = productOrder.getQuoteId();
+        status = productOrder.getOrderStatus().name();
+        aggregationDataType = null;  // productOrder.?
 
         if (productOrder.getProduct() != null) {
-            // TODO: How is this different than productName?
-            this.product = productOrder.getProduct().getProductName();
+            product = productOrder.getProduct().getBusinessKey();
+            productName = productOrder.getProduct().getProductName();
         }
-        this.status = productOrder.getOrderStatus().name();
 
-        this.samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
-
-        this.aggregationDataType = null;  // productOrder.?
+        samples = getSampleList(productOrder.getSamples()); // TODO: Confirm this is sample ID not name
 
         if (productOrder.getResearchProject() != null) {
-            this.researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
+            researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
         }
-
-        if (productOrder.getProduct() != null) {
-            this.productName = productOrder.getProduct().getProductName();
-        }
-
-        this.quoteId = productOrder.getQuoteId();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
         List<String> sampleIdList = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            sampleIdList.add(productOrderSample.getProductOrderSampleId().toString());
+            sampleIdList.add(productOrderSample.getSampleKey());
         }
 
         return sampleIdList;
@@ -147,11 +147,16 @@ public class ProductOrderData {
     }
 
     @XmlElementWrapper
-    @XmlElement(name = "sample")
+    @XmlElement(name = "sampleId")
     public List<String> getSamples() {
         return samples;
     }
 
+    /**
+     * Really passing in a list of sample IDs.
+     *
+     * @param samples the list of sample IDs
+     */
     public void setSamples(List<String> samples) {
         this.samples = samples;
     }
@@ -192,8 +197,16 @@ public class ProductOrderData {
         return username;
     }
 
-    public void setUserName(String username) {
+    public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
     }
 
 }

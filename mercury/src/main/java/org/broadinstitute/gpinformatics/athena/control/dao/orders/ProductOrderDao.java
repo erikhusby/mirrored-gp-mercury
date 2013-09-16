@@ -152,14 +152,14 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
+     * Return the {@link ProductOrder}s specified by the List of business keys, applying optional fetches.
      *
      * @param businessKeyList List of business keys.
      * @param fs Varargs array of Fetch Specs.
      *
      * @return List of ProductOrders.
      */
-    public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
+    public List<ProductOrder> findListByBusinessKeyList(Collection<String> businessKeyList, FetchSpec... fs) {
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
                 new ProductOrderDaoCallback(fs));
     }

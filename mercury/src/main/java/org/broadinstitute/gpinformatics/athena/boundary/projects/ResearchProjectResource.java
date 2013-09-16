@@ -36,7 +36,6 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
-
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -124,7 +123,6 @@ public class ResearchProjectResource {
 
     @XmlRootElement
     public static class ResearchProjects {
-
         @XmlElement(name = "project")
         public final List<ResearchProjectData> projects;
 
@@ -204,18 +202,20 @@ public class ResearchProjectResource {
                     "Cannot create a project that already exists - the project name is already being used.");
         }
 
-        ResearchProject newProject = new ResearchProject(null, data.title, data.synopsis, false);
+        ResearchProject project = new ResearchProject(null, data.title, data.synopsis, false);
         BspUser user = bspUserList.getByUsername(data.username);
-        newProject.setCreatedBy(user.getUserId());
+        project.setCreatedBy(user.getUserId());
 
         try {
-            newProject.submitToJira();
+            project.submitToJira();
         } catch (IOException e) {
             throw new InformaticsServiceException("Could not submit new research project to JIRA.");
         }
 
-        researchProjectDao.persist(newProject);
+        // Save and flush to persist and make sure all DB constraints are met.
+        researchProjectDao.persist(project);
+        researchProjectDao.flush();
 
-        return new ResearchProjectData(bspUserList, newProject);
+        return new ResearchProjectData(bspUserList, project);
     }
 }

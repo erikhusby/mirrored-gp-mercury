@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -34,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Restful webservice to list product orders.
+ * Restful webservice to list and create product orders.
  */
 @Path("productOrders")
 @Stateful
@@ -51,6 +53,9 @@ public class ProductOrderResource {
 
     @Inject
     ResearchProjectDao researchProjectDao;
+
+    @Inject
+    ProductDao productDao;
 
     @Context
     private UriInfo uriInfo;
@@ -91,8 +96,10 @@ public class ProductOrderResource {
         productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
 
-        // Not supplying samples and add-ons at this point, just saving what we defined above.
+        // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
+        // sure any DB constraints have been enforced.
         productOrderDao.persist(productOrder);
+        productOrderDao.flush();
 
         /*
         // If returning the URI to the resource we made, then return type needs to be Response.
@@ -101,8 +108,7 @@ public class ProductOrderResource {
         return Response.created(productOrderUri).build();
         */
 
-        ProductOrderData newProductOrderData = new ProductOrderData(productOrder);
-        return newProductOrderData;
+        return new ProductOrderData(productOrder);
     }
 
     /**
@@ -122,13 +128,23 @@ public class ProductOrderResource {
         productOrder.setComments(productOrderData.getComments());
         productOrder.setQuoteId(productOrderData.getQuoteId());
 
-        if (productOrderData.getResearchProjectId() != null) {
+        if (!StringUtils.isBlank(productOrderData.getProduct())) {
+            Product product = productDao.findByBusinessKey(productOrderData.getProduct());
+            productOrder.setProduct(product);
+        }
+
+        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
             ResearchProject researchProject =
                     researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
-            if (researchProject != null) {
                 productOrder.setResearchProject(researchProject);
-            }
         }
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        for (String sample : productOrderData.getSamples()) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        productOrder.setRequisitionKey(productOrderData.getRequisitionKey());
 
         return productOrder;
     }
