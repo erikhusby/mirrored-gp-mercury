@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -75,7 +76,7 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderJaxB)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException {
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
         if (productOrderJaxB == null) {
             throw new InformaticsServiceException(("No data found to define the new Product Order"));
         }
@@ -113,26 +114,40 @@ public class ProductOrderResource {
      *
      * @return the populated {@link ProductOrder}
      */
-    private ProductOrder convert(ProductOrderData productOrderData) {
+    private ProductOrder convert(ProductOrderData productOrderData)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
         //QName qname = new QName("http://mercury.broadinstitute.org/Mercury", "productOrder");
         //JAXBElement<ProductOrder> productOrderJaxB = new JAXBElement(qname, ProductOrderData.class, productOrderData);
         //return productOrderJaxB.getValue();
 
         ProductOrder productOrder = new ProductOrder();
+
+        // Make sure the title/name is supplied and unique
+        if (StringUtils.isBlank(productOrderData.getTitle())) {
+            throw new ApplicationValidationException("Title required for Product Order");
+        }
+
+        // Make sure the title
+        if (productOrderDao.findByTitle(productOrderData.getTitle()) != null) {
+            throw new DuplicateTitleException();
+        }
+
         productOrder.setTitle(productOrderData.getTitle());
+
+
         productOrder.setComments(productOrderData.getComments());
         productOrder.setQuoteId(productOrderData.getQuoteId());
 
         // Find the product by the product name.
-        if (!StringUtils.isBlank(productOrderData.getProduct())) {
-            Product product = productDao.findByName(productOrderData.getProduct());
+        if (!StringUtils.isBlank(productOrderData.getProductName())) {
+            Product product = productDao.findByName(productOrderData.getProductName());
             productOrder.setProduct(product);
         }
 
         if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
             ResearchProject researchProject =
                     researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
-                productOrder.setResearchProject(researchProject);
+            productOrder.setResearchProject(researchProject);
         }
 
         // Find and add the product order samples.

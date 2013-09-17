@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -109,12 +110,12 @@ public class ReceiveSamplesEjbDBFreeTest {
      */
     public void testAllSamplesKit1Validation() throws Exception {
 
-        List<String> test1RequestList = new ArrayList<>();
+        Set<String> test1RequestSMIds = new HashSet<>();
 
-        test1RequestList.add(sample1Kit1);
-        test1RequestList.add(sample2Kit1);
-        test1RequestList.add(sample3Kit1);
-        test1RequestList.add(sample4Kit1);
+        test1RequestSMIds.add(sample1Kit1);
+        test1RequestSMIds.add(sample2Kit1);
+        test1RequestSMIds.add(sample3Kit1);
+        test1RequestSMIds.add(sample4Kit1);
 
         BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
@@ -124,7 +125,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
         mockResponse.setSuccess(true);
-        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestSMIds))).thenReturn(mockResponse);
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
@@ -133,7 +134,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult.put(sample2Kit1, Collections.singleton(pos2Kit1));
         posResult.put(sample3Kit1, Collections.singleton(pos3Kit1));
         posResult.put(sample4Kit1, Collections.singleton(pos4Kit1));
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestSMIds))).thenReturn(posResult);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -142,7 +143,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         MessageCollection validationResults = new MessageCollection();
 
-        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+        testEjb.validateForReceipt(test1RequestSMIds, validationResults, "scottmat");
 
         Assert.assertFalse(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
@@ -161,11 +162,11 @@ public class ReceiveSamplesEjbDBFreeTest {
      */
     public void testPartialSamplesKit1Validation() throws Exception {
 
-        List<String> test1RequestList = new ArrayList<>();
+        Set<String> test2RequestSMIds = new HashSet<>();
 
-        test1RequestList.add(sample1Kit1);
-        test1RequestList.add(sample2Kit1);
-        test1RequestList.add(sample3Kit1);
+        test2RequestSMIds.add(sample1Kit1);
+        test2RequestSMIds.add(sample2Kit1);
+        test2RequestSMIds.add(sample3Kit1);
 
         BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
@@ -175,7 +176,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
         mockResponse.setSuccess(true);
-        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test2RequestSMIds))).thenReturn(mockResponse);
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
@@ -183,7 +184,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult.put(sample1Kit1, Collections.singleton(pos1Kit1));
         posResult.put(sample2Kit1, Collections.singleton(pos2Kit1));
         posResult.put(sample3Kit1, Collections.singleton(pos3Kit1));
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test2RequestSMIds))).thenReturn(posResult);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -192,7 +193,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         MessageCollection validationResults = new MessageCollection();
 
-        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+        testEjb.validateForReceipt(test2RequestSMIds, validationResults, "scottmat");
 
         Assert.assertFalse(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
@@ -223,13 +224,13 @@ public class ReceiveSamplesEjbDBFreeTest {
      */
     public void testUnrecognizedSamplesKit1Validation() throws Exception {
 
-        List<String> test1RequestList = new ArrayList<>();
+        Set<String> test3RequestSMIds = new HashSet<>();
 
-        test1RequestList.add(sample1Kit1);
-        test1RequestList.add(sample2Kit1);
-        test1RequestList.add(sample3Kit1);
-        test1RequestList.add(sample4Kit1);
-        test1RequestList.add(sample5Kit1);
+        test3RequestSMIds.add(sample1Kit1);
+        test3RequestSMIds.add(sample2Kit1);
+        test3RequestSMIds.add(sample3Kit1);
+        test3RequestSMIds.add(sample4Kit1);
+        test3RequestSMIds.add(sample5Kit1);
 
         BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
@@ -239,22 +240,17 @@ public class ReceiveSamplesEjbDBFreeTest {
         SampleKitListResponse mockResponse = new SampleKitListResponse();
         mockResponse.setResult(Collections.singletonList(sampleKit1));
         mockResponse.setSuccess(true);
-        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test3RequestSMIds))).thenReturn(mockResponse);
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
-//        Map<String, List<ProductOrderSample>> posResult1 = new HashMap<>();
-//        posResult1.put(sample5Kit1, Collections.singletonList(pos5Kit1));
-//        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(Collections.singletonList(sample5Kit1))))
-//                .thenReturn(posResult1);
-//
         Map<String, Set<ProductOrderSample>> posResult2 = new HashMap<>();
         posResult2.put(sample1Kit1, Collections.singleton(pos1Kit1));
         posResult2.put(sample2Kit1, Collections.singleton(pos2Kit1));
         posResult2.put(sample3Kit1, Collections.singleton(pos3Kit1));
         posResult2.put(sample4Kit1, Collections.singleton(pos4Kit1));
         posResult2.put(sample5Kit1, Collections.singleton(pos5Kit1));
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult2);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test3RequestSMIds))).thenReturn(posResult2);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -263,7 +259,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         MessageCollection validationResults = new MessageCollection();
 
-        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+        testEjb.validateForReceipt(test3RequestSMIds, validationResults, "scottmat");
 
         Assert.assertTrue(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
@@ -287,16 +283,16 @@ public class ReceiveSamplesEjbDBFreeTest {
      */
     public void testMultipleSamplesKitsValidation() throws Exception {
 
-        List<String> test1RequestList = new ArrayList<>();
+        Set<String> test4RequestSMIds = new HashSet<>();
 
-        test1RequestList.add(sample1Kit1);
-        test1RequestList.add(sample2Kit1);
-        test1RequestList.add(sample3Kit1);
-        test1RequestList.add(sample4Kit1);
-        test1RequestList.add(sample1Kit2);
-        test1RequestList.add(sample2Kit2);
-        test1RequestList.add(sample3Kit2);
-        test1RequestList.add(sample4Kit2);
+        test4RequestSMIds.add(sample1Kit1);
+        test4RequestSMIds.add(sample2Kit1);
+        test4RequestSMIds.add(sample3Kit1);
+        test4RequestSMIds.add(sample4Kit1);
+        test4RequestSMIds.add(sample1Kit2);
+        test4RequestSMIds.add(sample2Kit2);
+        test4RequestSMIds.add(sample3Kit2);
+        test4RequestSMIds.add(sample4Kit2);
 
         BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
@@ -309,7 +305,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         skResponseKits.add(sampleKit2);
         mockResponse.setResult(skResponseKits);
         mockResponse.setSuccess(true);
-        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test4RequestSMIds))).thenReturn(mockResponse);
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
@@ -323,7 +319,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult1.put(sample3Kit2, Collections.singleton(pos3Kit2));
         posResult1.put(sample4Kit2, Collections.singleton(pos4Kit2));
 
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult1);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test4RequestSMIds))).thenReturn(posResult1);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -332,7 +328,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         MessageCollection validationResults = new MessageCollection();
 
-        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+        testEjb.validateForReceipt(test4RequestSMIds, validationResults, "scottmat");
 
         Assert.assertFalse(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
@@ -388,15 +384,15 @@ public class ReceiveSamplesEjbDBFreeTest {
      */
     public void testMultipleIncompleteSampleKitsValidation() throws Exception {
 
-        List<String> test1RequestList = new ArrayList<>();
+        Set<String> test5RequestSMIds = new HashSet<>();
 
-        test1RequestList.add(sample1Kit1);
-        test1RequestList.add(sample3Kit1);
-        test1RequestList.add(sample4Kit1);
-        test1RequestList.add(sample5Kit1);
-        test1RequestList.add(sample1Kit2);
-        test1RequestList.add(sample2Kit2);
-        test1RequestList.add(sample4Kit2);
+        test5RequestSMIds.add(sample1Kit1);
+        test5RequestSMIds.add(sample3Kit1);
+        test5RequestSMIds.add(sample4Kit1);
+        test5RequestSMIds.add(sample5Kit1);
+        test5RequestSMIds.add(sample1Kit2);
+        test5RequestSMIds.add(sample2Kit2);
+        test5RequestSMIds.add(sample4Kit2);
 
         BSPSampleReceiptService stubReceiptService = BSPSampleReceiptServiceProducer.stubInstance();
         BSPManagerFactory mockManagerFactory = Mockito.mock(BSPManagerFactory.class);
@@ -409,7 +405,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         skResponseKits.add(sampleKit2);
         mockResponse.setResult(skResponseKits);
         mockResponse.setSuccess(true);
-        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test1RequestList))).thenReturn(mockResponse);
+        Mockito.when(mockSampManager.getSampleKitsBySampleIds(Mockito.eq(test5RequestSMIds))).thenReturn(mockResponse);
         Mockito.when(mockManagerFactory.createSampleManager()).thenReturn(mockSampManager);
         ProductOrderSampleDao mockPosDao = Mockito.mock(ProductOrderSampleDao.class);
 
@@ -422,7 +418,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult1.put(sample2Kit2, Collections.singleton(pos2Kit2));
         posResult1.put(sample4Kit2, Collections.singleton(pos4Kit2));
 
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult1);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test5RequestSMIds))).thenReturn(posResult1);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -431,9 +427,9 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         MessageCollection validationResults = new MessageCollection();
 
-        testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
+        testEjb.validateForReceipt(test5RequestSMIds, validationResults, "scottmat");
 
-        List<SampleReceiptValidation.SampleValidationReason> expectedReasons = new ArrayList<>();
+        Set<SampleReceiptValidation.SampleValidationReason> expectedReasons = new HashSet<>();
         expectedReasons.add(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT);
         expectedReasons.add(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS);
 
