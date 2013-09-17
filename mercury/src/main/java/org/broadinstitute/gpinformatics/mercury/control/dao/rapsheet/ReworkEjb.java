@@ -145,10 +145,10 @@ public class ReworkEjb {
                 sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
 
-            for (Map.Entry<String, List<ProductOrderSample>> entryMap : athenaClientService
+            for (Map.Entry<String, Set<ProductOrderSample>> entryMap : athenaClientService
                     .findMapSampleNameToPoSample(sampleIds).entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                List<ProductOrderSample> productOrderSamples = entryMap.getValue();
+                Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
 
@@ -170,9 +170,9 @@ public class ReworkEjb {
 
         // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (reworkCandidates.isEmpty()) {
-            Map<String, List<ProductOrderSample>> samplesById =
+            Map<String, Set<ProductOrderSample>> samplesById =
                     athenaClientService.findMapSampleNameToPoSample(query);
-            for (List<ProductOrderSample> samples : samplesById.values()) {
+            for (Set<ProductOrderSample> samples : samplesById.values()) {
                 Collection<String> sampleIDs = new ArrayList<>();
                 for (ProductOrderSample sample : samples) {
                     sampleIDs.add(sample.getSampleName());

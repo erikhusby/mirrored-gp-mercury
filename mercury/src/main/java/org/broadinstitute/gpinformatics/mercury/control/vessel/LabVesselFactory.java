@@ -75,7 +75,7 @@ public class LabVesselFactory implements Serializable {
 
         Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         Map<String, List<MercurySample>> mapIdToListMercurySample = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapSampleNameToPoSample(sampleIds);
+        Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapSampleNameToPoSample(sampleIds);
         return buildLabVesselDaoFree(mapBarcodeToVessel, mapIdToListMercurySample,
                 mapIdToListPdoSamples, userName, eventDate,
                 parentVesselBeans, labEventType);
@@ -99,7 +99,7 @@ public class LabVesselFactory implements Serializable {
         sampleIds.add(sampleName);
         Map<String, List<MercurySample>> mapIdToListMercurySample =
                 mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples =
+        Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples =
                 athenaClientService.findMapSampleNameToPoSample(sampleIds);
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
@@ -111,6 +111,7 @@ public class LabVesselFactory implements Serializable {
 
     /**
      * For each piece of plastic being received: find or create plastic; find or create a corresponding Mercury sample
+     *
      * @param mapBarcodeToVessel plastic entities
      * @param mapIdToListMercurySample Mercury samples
      * @param mapIdToListPdoSamples from Athena
@@ -124,7 +125,7 @@ public class LabVesselFactory implements Serializable {
     public List<LabVessel> buildLabVesselDaoFree(
             Map<String, LabVessel> mapBarcodeToVessel,
             Map<String, List<MercurySample>> mapIdToListMercurySample,
-            Map<String, List<ProductOrderSample>> mapIdToListPdoSamples,
+            Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
             String userName,
             Date eventDate,
             List<ParentVesselBean> parentVesselBeans,
@@ -218,6 +219,7 @@ public class LabVesselFactory implements Serializable {
     /**
      * Find or create a Mercury Sample for a given sampleId.  If MercurySample exists, use it; else if
      * ProductOrderSample exists, use its ProductOrder; else create MercurySample without ProductOrder key.
+     *
      * @param mapIdToListMercurySample Mercury samples
      * @param mapIdToListPdoSamples Athena samples
      * @param sampleId ID for which to create the Mercury Sample
@@ -225,15 +227,15 @@ public class LabVesselFactory implements Serializable {
      */
     @DaoFree
     private MercurySample getMercurySample(Map<String, List<MercurySample>> mapIdToListMercurySample,
-                                           Map<String, List<ProductOrderSample>> mapIdToListPdoSamples,
+                                           Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples,
                                            String sampleId) {
         List<MercurySample> mercurySamples = mapIdToListMercurySample.get(sampleId);
         if (mercurySamples == null) {
             mercurySamples = Collections.emptyList();
         }
-        List<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);
+        Set<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);
         if (productOrderSamples == null) {
-            productOrderSamples = Collections.emptyList();
+            productOrderSamples = Collections.emptySet();
         }
 
         MercurySample mercurySample = null;

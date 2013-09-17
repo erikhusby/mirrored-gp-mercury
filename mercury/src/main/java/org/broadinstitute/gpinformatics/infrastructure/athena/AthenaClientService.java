@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -38,9 +39,10 @@ public interface AthenaClientService extends Serializable {
 
     /**
      * For a list of sample names, return corresponding ProductOrderSamples
+     *
      * @param sampleNames list of sample names
      * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
      * the key.
      */
-    Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames);
+    Map<String,Set<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames);
 }

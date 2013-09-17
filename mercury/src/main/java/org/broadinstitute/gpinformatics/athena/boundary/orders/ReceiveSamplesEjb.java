@@ -141,7 +141,7 @@ public class ReceiveSamplesEjb {
             }
         }
 
-        Map<String, List<ProductOrderSample>> associatedProductOrderSamples =
+        Map<String, Set<ProductOrderSample>> associatedProductOrderSamples =
                 productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleIds));
 
         /*
@@ -152,7 +152,7 @@ public class ReceiveSamplesEjb {
 
             //Get all associated Product order samples
             //add blocker errors
-            for (Map.Entry<String, List<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
+            for (Map.Entry<String, Set<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
                 for (ProductOrderSample currentPOSample : entries.getValue()) {
                     //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
                     currentPOSample

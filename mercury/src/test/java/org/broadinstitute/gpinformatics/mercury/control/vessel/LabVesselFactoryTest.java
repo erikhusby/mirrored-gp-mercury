@@ -46,7 +46,7 @@ public class LabVesselFactoryTest {
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
-                new HashMap<String, List<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
+                new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
 
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
@@ -64,13 +64,13 @@ public class LabVesselFactoryTest {
         labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<>();
+        Map<String, Set<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<>();
         ProductOrderSample productOrderSample = new ProductOrderSample(SAMPLE1);
         ProductOrder productOrder = new ProductOrder();
         String pdoKey = "PDO-1234";
         productOrder.setJiraTicketKey(pdoKey);
         productOrder.addSamples(Collections.singletonList(productOrderSample));
-        mapIdToListPdoSamples.put(SAMPLE1, Collections.singletonList(productOrderSample));
+        mapIdToListPdoSamples.put(SAMPLE1, Collections.singleton(productOrderSample));
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
@@ -107,7 +107,7 @@ public class LabVesselFactoryTest {
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
-                new HashMap<String, List<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
+                new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
         Assert.assertEquals(labVessels.size(), 1, "Wrong number of vessels");
         StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
