@@ -144,78 +144,90 @@ public class ReceiveSamplesEjb {
         Map<String, Set<ProductOrderSample>> associatedProductOrderSamples =
                 productOrderSampleDao.findMapBySamples(sampleIds);
 
-        /*
-            Check to see if received samples span more than one sample kit
-        */
+        // Check to see if received samples span more than one sample kit
+
         if (sampleKitsBySampleIds.getResult().size() > 1) {
-            //Samples span multiple sample kits
+            // Samples span multiple sample kits
 
-            //Get all associated Product order samples
-            //add blocker errors
-            for (Map.Entry<String, Set<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
-                for (ProductOrderSample currentPOSample : entries.getValue()) {
-                    //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
-                    currentPOSample
-                            .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
-                                    SampleReceiptValidation.SampleValidationType.WARNING,
-                                    SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS));
-
-                    messageCollection.addWarning(
-                            "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
-                                    .getReasonMessage(), entries.getKey());
-                }
+            // Get all associated Product order samples
+            // add blocker errors
+            for (Map.Entry<String, Set<ProductOrderSample>> entry : associatedProductOrderSamples.entrySet()) {
+                //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
+                addValidation(messageCollection, operator, entry.getValue(),
+                        SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
+                        SampleReceiptValidation.SampleValidationType.WARNING, String.format(
+                        "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
+                                .getReasonMessage(), entry.getKey()));
             }
         }
 
-        /*
-            Check to see if any samples received are not currently recognized by BSP
-         */
+        // Check to see if any samples received are not currently recognized by BSP
         Set<String> requestedIdsLessFoundIds = new HashSet<>(sampleIds);
         requestedIdsLessFoundIds.removeAll(allFoundSampleIds);
 
-        //add blocker errors for unrecognized samples
+        // add blocker errors for unrecognized samples
         for (String currentSampleIdNotFound : requestedIdsLessFoundIds) {
-            for (ProductOrderSample currentPOSample : associatedProductOrderSamples.get(currentSampleIdNotFound)) {
-                currentPOSample
-                        .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
-                                SampleReceiptValidation.SampleValidationType.BLOCKING,
-                                SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP));
-                messageCollection.addError(
-                        "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP
-                                .getReasonMessage(), currentSampleIdNotFound);
-            }
+            addValidation(messageCollection, operator, associatedProductOrderSamples.get(currentSampleIdNotFound),
+                    SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP,
+                    SampleReceiptValidation.SampleValidationType.BLOCKING,
+                    currentSampleIdNotFound + ": " + SampleReceiptValidation.SampleValidationReason
+                            .SAMPLE_NOT_IN_BSP
+                            .getReasonMessage());
         }
 
-        //List warnings for all samples received which do not complete
+        // List warnings for all samples received which do not complete
         for (Map.Entry<SampleKit, Set<String>> currentSampleKit : sampleIDsBySampleKit.entrySet()) {
 
             List<String> cloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
             List<String> secondCloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
 
-            //Remove all sample IDs from the sample ID's of the found sample kit
+            // Remove all sample IDs from the sample ID's of the found sample kit
             cloneSampleKitMembers.removeAll(sampleIds);
 
-            //If there are any samples left over, they were in the kit but not in the receipt scan
+            // If there are any samples left over, they were in the kit but not in the receipt scan
             if (!cloneSampleKitMembers.isEmpty()) {
                 secondCloneSampleKitMembers.removeAll(cloneSampleKitMembers);
-                //Get all associated Product order samples for missing samples
+                // Get all associated Product order samples for missing samples
 
-                //add warning
+                // add warning
                 for (String currentSampleId : secondCloneSampleKitMembers) {
-                    for (ProductOrderSample currentPOSample : associatedProductOrderSamples.get(currentSampleId)) {
-                        currentPOSample
-                                .addValidation(
-                                        new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
-                                                SampleReceiptValidation.SampleValidationType.WARNING,
-                                                SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT));
-
-                        messageCollection.addWarning(
-                                "%s: kit %s " + SampleReceiptValidation.SampleValidationReason
-                                        .MISSING_SAMPLE_FROM_SAMPLE_KIT
-                                        .getReasonMessage(), currentSampleId,
-                                currentSampleKit.getKey().getSampleKitId());
-                    }
+                    addValidation(messageCollection, operator, associatedProductOrderSamples.get(currentSampleId),
+                            SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
+                            SampleReceiptValidation.SampleValidationType.WARNING,
+                            currentSampleId + ": kit " + currentSampleKit.getKey().getSampleKitId() + " "
+                            + SampleReceiptValidation.SampleValidationReason
+                                    .MISSING_SAMPLE_FROM_SAMPLE_KIT
+                                    .getReasonMessage());
                 }
+            }
+        }
+    }
+
+
+    /**
+     * Helper method to apply validation errors based on a set of parameters defined at call time.
+     * @param messageCollection collection of errors and/or warnings to be returned to the user
+     * @param operator          username of the person scanning in the received samples
+     * @param sampleCollection  collection of ProductOrderSamples to be processed
+     * @param validationReason  Reason that this validation is being applied
+     * @param validationType    type of validation to apply
+     * @param message           readable message to associate with the Validation error
+     */
+    private void addValidation(MessageCollection messageCollection, String operator,
+                               Collection<ProductOrderSample> sampleCollection,
+                               SampleReceiptValidation.SampleValidationReason validationReason,
+                               SampleReceiptValidation.SampleValidationType validationType, String message) {
+        for (ProductOrderSample sample : sampleCollection) {
+            sample.addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
+                            validationType,
+                            validationReason));
+            switch (validationType) {
+            case WARNING:
+                messageCollection.addWarning(message);
+                break;
+            case BLOCKING:
+                messageCollection.addError(message);
+                break;
             }
         }
     }
