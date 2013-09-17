@@ -12,6 +12,7 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Impl
 @Default
@@ -38,7 +39,7 @@ public class AthenaClientServiceImpl implements AthenaClientService {
      * see interface
      */
     @Override
-    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+    public Map<String,Set<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
         return productOrderSampleDao.findMapBySamples(sampleNames);
     }
 

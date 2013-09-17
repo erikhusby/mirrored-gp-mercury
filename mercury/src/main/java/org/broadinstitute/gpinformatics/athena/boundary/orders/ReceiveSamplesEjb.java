@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -124,15 +125,14 @@ public class ReceiveSamplesEjb {
                                    String operator) {
 
         SampleManager bspSampleManager = managerFactory.createSampleManager();
-        SampleKitListResponse sampleKitsBySampleIds = bspSampleManager.getSampleKitsBySampleIds(
-                new ArrayList<>(sampleIds));
+        SampleKitListResponse sampleKitsBySampleIds = bspSampleManager.getSampleKitsBySampleIds(sampleIds);
 
-        Map<SampleKit, List<String>> sampleIDsBySampleKit = new HashMap<>();
-        List<String> allFoundSampleIds = new ArrayList<>();
+        Map<SampleKit, Set<String>> sampleIDsBySampleKit = new HashMap<>();
+        Set<String> allFoundSampleIds = new HashSet<>();
 
         for (SampleKit currentKit : sampleKitsBySampleIds.getResult()) {
             if (sampleIDsBySampleKit.get(currentKit) == null) {
-                sampleIDsBySampleKit.put(currentKit, new ArrayList<String>());
+                sampleIDsBySampleKit.put(currentKit, new HashSet<String>());
             }
 
             for (Sample currentKitSample : currentKit.getSamples()) {
@@ -141,8 +141,8 @@ public class ReceiveSamplesEjb {
             }
         }
 
-        Map<String, List<ProductOrderSample>> associatedProductOrderSamples =
-                productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleIds));
+        Map<String, Set<ProductOrderSample>> associatedProductOrderSamples =
+                productOrderSampleDao.findMapBySamples(sampleIds);
 
         /*
             Check to see if received samples span more than one sample kit
@@ -152,7 +152,7 @@ public class ReceiveSamplesEjb {
 
             //Get all associated Product order samples
             //add blocker errors
-            for (Map.Entry<String, List<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
+            for (Map.Entry<String, Set<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
                 for (ProductOrderSample currentPOSample : entries.getValue()) {
                     //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
                     currentPOSample
@@ -170,7 +170,7 @@ public class ReceiveSamplesEjb {
         /*
             Check to see if any samples received are not currently recognized by BSP
          */
-        List<String> requestedIdsLessFoundIds = new ArrayList<>(sampleIds);
+        Set<String> requestedIdsLessFoundIds = new HashSet<>(sampleIds);
         requestedIdsLessFoundIds.removeAll(allFoundSampleIds);
 
         //add blocker errors for unrecognized samples
@@ -187,7 +187,7 @@ public class ReceiveSamplesEjb {
         }
 
         //List warnings for all samples received which do not complete
-        for (Map.Entry<SampleKit, List<String>> currentSampleKit : sampleIDsBySampleKit.entrySet()) {
+        for (Map.Entry<SampleKit, Set<String>> currentSampleKit : sampleIDsBySampleKit.entrySet()) {
 
             List<String> cloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
             List<String> secondCloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());

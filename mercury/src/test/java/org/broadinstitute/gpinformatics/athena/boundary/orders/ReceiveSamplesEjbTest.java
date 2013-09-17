@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ReceiveSamplesEjbTest extends ContainerTest {
@@ -62,8 +63,8 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         testProductOrder = new ProductOrder(bspUserList.getByUsername("scottmat"),testProject);
         testProductOrder.setTitle("Test PO for sampleReceipt" + (new Date()).getTime());
 
-        Map<String, List<ProductOrderSample>> mapBySamples = productOrderSampleDao.findMapBySamples(sampleList);
-        for (Map.Entry<String, List<ProductOrderSample>> foundSamples : mapBySamples.entrySet()) {
+        Map<String, Set<ProductOrderSample>> mapBySamples = productOrderSampleDao.findMapBySamples(sampleList);
+        for (Map.Entry<String, Set<ProductOrderSample>> foundSamples : mapBySamples.entrySet()) {
             if (foundSamples.getValue().isEmpty()) {
                 ProductOrderSample newTestSample = new ProductOrderSample(foundSamples.getKey());
                 newTestSample.setProductOrder(testProductOrder);
@@ -124,10 +125,10 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         Assert.assertFalse(results.hasInfos());
         Assert.assertTrue(results.hasWarnings());
 
-        Map<String, List<ProductOrderSample>> mapBySamples =
+        Map<String, Set<ProductOrderSample>> mapBySamples =
                 productOrderSampleDao.findMapBySamples(testSampleRequestList);
 
-        for (Map.Entry<String, List<ProductOrderSample>> foundPosAffected : mapBySamples.entrySet()) {
+        for (Map.Entry<String, Set<ProductOrderSample>> foundPosAffected : mapBySamples.entrySet()) {
             Assert.assertFalse(foundPosAffected.getValue().isEmpty());
             for (ProductOrderSample currentPOS : foundPosAffected.getValue()) {
                 Assert.assertFalse(currentPOS.getSampleReceiptValidations().isEmpty());
@@ -156,10 +157,10 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         Assert.assertFalse(results.hasInfos());
         Assert.assertFalse(results.hasWarnings());
 
-        Map<String, List<ProductOrderSample>> mapBySamples =
+        Map<String, Set<ProductOrderSample>> mapBySamples =
                 productOrderSampleDao.findMapBySamples(testSampleRequestList);
 
-        for (Map.Entry<String, List<ProductOrderSample>> foundPosAffected : mapBySamples.entrySet()) {
+        for (Map.Entry<String, Set<ProductOrderSample>> foundPosAffected : mapBySamples.entrySet()) {
 
             Assert.assertFalse(foundPosAffected.getValue().isEmpty());
             for (ProductOrderSample currentPOS : foundPosAffected.getValue()) {
