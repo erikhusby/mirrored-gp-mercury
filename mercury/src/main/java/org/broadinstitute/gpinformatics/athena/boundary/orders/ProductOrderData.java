@@ -164,11 +164,17 @@ public class ProductOrderData {
         this.status = status;
     }
 
+    /**
+     * We return an empty array and not a CollectionUtils.emptyList() because JaxRS wants to be able to add to the
+     * list and it uses this method internally when reconstructing the object.  For this reason we MUST have it
+     * return the empty ArrayList that it mutable.
+     *
+     * @return a mutable {@link List} of samples
+     */
     @XmlElementWrapper
-    @XmlElement(name = "sampleId")
     public List<String> getSamples() {
         if (samples == null) {
-            return Collections.emptyList();
+            return new ArrayList<>();
         }
 
         return samples;
