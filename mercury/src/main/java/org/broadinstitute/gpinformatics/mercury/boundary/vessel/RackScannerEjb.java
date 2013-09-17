@@ -37,11 +37,11 @@ public class RackScannerEjb {
      */
     public LinkedHashMap<String, String> runRackScanner(RackScanner rackScanner) throws ScannerException {
 
-        RackScannerConfig config = rackScanner.getConfig();
+        RackScannerConfig config = rackScanner.getRackScannerConfig();
 
         NetworkRackScanner networkRackScanner;
 
-        // Based on the selected scanner, create the rackscanner object
+        // Based on the selected scanner, create the rack scanner object
         switch (config.getScannerType()) {
             case AGBENE:
                 networkRackScanner = new AbgeneNetworkRackScanner(config.getIpAddress(), config.getPort());
@@ -66,7 +66,7 @@ public class RackScannerEjb {
     public List<String> obtainSampleIdsFromRackscan(LinkedHashMap<String, String> rackScan) {
 
         // Utilizes a service in BSP which takes any type of barcode and returns SampleInfo objects
-        Map<String,SampleInfo> sampleInfoMap =
+        Map<String, SampleInfo> sampleInfoMap =
                 sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(rackScan.values());
 
         // Just return the sample ids.

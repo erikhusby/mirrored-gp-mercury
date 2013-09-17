@@ -98,7 +98,7 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
     }
 
     /**
-     * Actually preforms the receipt based on the sample ids passed in and pushed into the samplesToReceived variable.
+     * Actually performs the receipt based on the sample ids passed in and pushed into the samplesToReceive variable.
      *
      * @param receiptJsp JSP to pass the resolution to.
      */
@@ -106,7 +106,7 @@ public class ReceiveSamplesActionBean extends RackScanActionBean {
         MessageCollection messageCollection = new MessageCollection();
 
         response = receiveSamplesEjb.receiveSamples(samplesToReceive,
-                        getUserBean().getBspUser().getUsername(), messageCollection);
+                        getUserBean().getBspUser(), messageCollection);
 
         for (String error : response.getMessages()) {
             addGlobalValidationError(error);

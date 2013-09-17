@@ -27,7 +27,7 @@ import java.util.TreeSet;
  * Action bean for rack scanning things.  This can be extended so as to avoid code duplication.
  * @see org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean
  *
- * Additionally, this is setup for AJAX usage and retunrs the scan results jsp on a normal scan if you want to show
+ * Additionally, this is setup for AJAX usage and returns the scan results jsp on a normal scan if you want to show
  * that as your results.  Or you can ignore that resolution and return your own (as the ReceiveSamplesActionBean does).
  */
 public abstract class RackScanActionBean extends CoreActionBean {
@@ -98,11 +98,11 @@ public abstract class RackScanActionBean extends CoreActionBean {
             rackScan = rackScannerEjb.runRackScanner(rackScanner);
         } catch (Exception e) {
             log.error(e);
-            addGlobalValidationError("Error connecting to the rack scanner. " +e.getMessage());
+            addGlobalValidationError("Error connecting to the rack scanner. " + e.getMessage());
 
             rackScan = new LinkedHashMap<>();
             for (String position : getMatrixPositions()) {
-                rackScan.put(position, position + position + position);
+                rackScan.put(position, "");
             }
         }
 
@@ -117,7 +117,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
     public List<String> getMatrixPositions() {
         Geometry geometry = new Geometry();
         geometry.setDimension(new Dimension(8, 12));
-        geometry.setIndexing(new AlphaNumeric('A',1));
+        geometry.setIndexing(new AlphaNumeric('A', 1));
         return geometry.getPositions();
     }
 

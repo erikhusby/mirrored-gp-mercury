@@ -11,7 +11,6 @@
 
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"
                       id="bspSampleReceiptForm">
-            <stripes:hidden name="" />
 
             <div class="form-horizontal">
                 <div class="control-group">

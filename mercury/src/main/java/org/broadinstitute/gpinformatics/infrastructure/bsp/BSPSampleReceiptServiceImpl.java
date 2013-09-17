@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.thoughtworks.xstream.XStream;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -74,17 +75,8 @@ public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPS
             throw new RuntimeException(e);
         } finally {
 
-            try {
-
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (reader != null) {
-                    reader.close();
-                }
-            } catch (Exception e) {
-                // no worries!
-            }
+            IOUtils.closeQuietly(inputStream);
+            IOUtils.closeQuietly(reader);
         }
         return (SampleKitReceiptResponse) resultObject;
     }

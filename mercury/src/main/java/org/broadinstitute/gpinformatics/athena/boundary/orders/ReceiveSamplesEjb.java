@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.bsp.client.sample.Sample;
 import org.broadinstitute.bsp.client.sample.SampleKit;
 import org.broadinstitute.bsp.client.sample.SampleManager;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -63,24 +64,25 @@ public class ReceiveSamplesEjb {
      * Handles the receipt validation, and the receiving of the samples passed in.  Utilizes the current user's username
      * to make sure they have the correct BSP privileges to do the receipt.
      *
-     * @param sampleIds         Barcodes of the samples to receive.
-     * @param username          Username of the currently logged in user.
+     *
+     * @param sampleIds         SampleIds of the samples to receive.
+     * @param bspUser           The currently logged in user.
      * @param messageCollection Messages to send back to the user.
      *
      * @return SampleKitReceiptResponse received from BSP.
      */
-    public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, String username,
+    public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, BspUser bspUser,
                                                    MessageCollection messageCollection) throws JAXBException {
 
         SampleKitReceiptResponse receiptResponse = null;
 
         // Validate first, if there are no errors receive first in BSP, then do the mercury receipt work.
-        validateForReceipt(sampleIds, messageCollection, username);
+        validateForReceipt(sampleIds, messageCollection, bspUser.getUsername());
 
         if (!messageCollection.hasErrors()) {
 
             try {
-                receiptResponse = receiptService.receiveSamples(sampleIds, username);
+                receiptResponse = receiptService.receiveSamples(sampleIds, bspUser.getUsername());
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
@@ -98,7 +100,7 @@ public class ReceiveSamplesEjb {
                                 null));
                     }
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), entry.getKey(),
-                            parentVesselBeans, username);
+                            parentVesselBeans, bspUser.getUsername());
                     sampleReceiptResource.notifyOfReceipt(sampleReceiptBean);
                 }
             }
@@ -108,8 +110,8 @@ public class ReceiveSamplesEjb {
     }
 
     /**
-     * Run at the time of receipt, this method validates that samples receive meet a certain criteria.  If any of the
-     * criteria fails, the user will receive either a warning or an error.  This criteria includes:
+     * Run at the time of receipt, this method validates that samples received meet a certain criteria.  If any of the
+     * criteria fail, the user will receive either a warning or an error.  These criteria includes:
      * <ul>
      * <li>Of the sample kits that encompass the collection of samples given, not all samples came back
      * together -- Warning.</li>
