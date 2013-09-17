@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,13 +38,9 @@ import java.util.Set;
 public class ReceiveSamplesEjb {
 
     private BSPSampleReceiptService receiptService;
-
     private BSPManagerFactory managerFactory;
-
     private ProductOrderSampleDao productOrderSampleDao;
-
     private BSPUserList bspUserList;
-
     private SampleReceiptResource sampleReceiptResource;
 
     public ReceiveSamplesEjb() {
@@ -69,6 +66,7 @@ public class ReceiveSamplesEjb {
      * @param sampleIds         Barcodes of the samples to receive.
      * @param username          Username of the currently logged in user.
      * @param messageCollection Messages to send back to the user.
+     *
      * @return SampleKitReceiptResponse received from BSP.
      */
     public SampleKitReceiptResponse receiveSamples(List<String> sampleIds, String username,
@@ -90,14 +88,14 @@ public class ReceiveSamplesEjb {
             if (receiptResponse.isSuccess()) {
 
                 for (Map.Entry<String, Set<SampleKitReceiptResponse.Barcodes>> entry :
-                                receiptResponse.getReceivedSamplesPerKit().entrySet()) {
+                        receiptResponse.getReceivedSamplesPerKit().entrySet()) {
 
                     List<ParentVesselBean> parentVesselBeans = new ArrayList<>();
                     for (SampleKitReceiptResponse.Barcodes barcodes : entry.getValue()) {
                         parentVesselBeans.add(new ParentVesselBean(barcodes.getExternalBarcode(),
-                                    barcodes.getSampleBarcode(),
-                                    receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
-                                    null));
+                                barcodes.getSampleBarcode(),
+                                receiptResponse.getTubeTypePerSample().get(barcodes.getSampleBarcode()),
+                                null));
                     }
                     SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), entry.getKey(),
                             parentVesselBeans, username);
@@ -113,24 +111,25 @@ public class ReceiveSamplesEjb {
      * Run at the time of receipt, this method validates that samples receive meet a certain criteria.  If any of the
      * criteria fails, the user will receive either a warning or an error.  This criteria includes:
      * <ul>
-     *     <li>Of the sample kits that encompass the collection of samples given, not all samples came back
-     *     together -- Warning.</li>
-     *     <li>Some of the samples returned are not found in BSP -- Error.</li>
-     *     <li>The collection of samples received represents more than one sample kit -- Error.</li>
+     * <li>Of the sample kits that encompass the collection of samples given, not all samples came back
+     * together -- Warning.</li>
+     * <li>Some of the samples returned are not found in BSP -- Error.</li>
+     * <li>The collection of samples received represents more than one sample kit -- Error.</li>
      * </ul>
-     * @param sampleInfos           IDs of the samples to be validated
-     * @param messageCollection     collection of errors and/or warnings to be returned to the user
-     * @param operator              username of the person scanning in the received samples
+     *
+     * @param sampleIds         IDs of the samples to be validated
+     * @param messageCollection collection of errors and/or warnings to be returned to the user
+     * @param operator          username of the person scanning in the received samples
      */
-    public void validateForReceipt(Collection<String> sampleInfos, MessageCollection messageCollection,
-                                    String operator) {
+    public void validateForReceipt(Collection<String> sampleIds, MessageCollection messageCollection,
+                                   String operator) {
 
         SampleManager bspSampleManager = managerFactory.createSampleManager();
         SampleKitListResponse sampleKitsBySampleIds = bspSampleManager.getSampleKitsBySampleIds(
-                new ArrayList<>(sampleInfos));
+                new ArrayList<>(sampleIds));
 
         Map<SampleKit, List<String>> sampleIDsBySamplekit = new HashMap<>();
-        List<String> totalSamplesFound = new ArrayList<>();
+        List<String> allFoundSampleIds = new ArrayList<>();
 
         for (SampleKit currentKit : sampleKitsBySampleIds.getResult()) {
             if (sampleIDsBySamplekit.get(currentKit) == null) {
@@ -139,7 +138,7 @@ public class ReceiveSamplesEjb {
 
             for (Sample currentKitSample : currentKit.getSamples()) {
                 sampleIDsBySamplekit.get(currentKit).add(currentKitSample.getSampleId());
-                totalSamplesFound.add(currentKitSample.getSampleId());
+                allFoundSampleIds.add(currentKitSample.getSampleId());
             }
         }
 
@@ -151,7 +150,7 @@ public class ReceiveSamplesEjb {
 
             //Get all associated Product order samples
             Map<String, List<ProductOrderSample>> associatedProductOrderSamples =
-                    productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleInfos));
+                    productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleIds));
 
             //add blocker errors
             for (Map.Entry<String, List<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
@@ -168,16 +167,15 @@ public class ReceiveSamplesEjb {
             }
         }
 
-
         /*
             Check to see if any samples received are not currently recognized by BSP
          */
-        List<String> sourceIdsClone = new ArrayList<>(sampleInfos);
+        List<String> requestedIdsLessFoundIds = new ArrayList<>(sampleIds);
+        requestedIdsLessFoundIds.removeAll(allFoundSampleIds);
 
-        sourceIdsClone.removeAll(totalSamplesFound);
         //Get all associated Product order samples
         Map<String, List<ProductOrderSample>> notFoundProductOrderSamples =
-                productOrderSampleDao.findMapBySamples(sourceIdsClone);
+                productOrderSampleDao.findMapBySamples(requestedIdsLessFoundIds);
         //add blocker errors for unrecognized samples
         for (Map.Entry<String, List<ProductOrderSample>> entries : notFoundProductOrderSamples.entrySet()) {
             for (ProductOrderSample currentPOSample : entries.getValue()) {
@@ -198,7 +196,7 @@ public class ReceiveSamplesEjb {
             List<String> secondCloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
 
             //Remove all sample IDs from the sample ID's of the found sample kit
-            cloneSampleKitMembers.removeAll(sampleInfos);
+            cloneSampleKitMembers.removeAll(sampleIds);
 
             //If there are any samples left over, they were in the kit but not in the receipt scan
             if (!cloneSampleKitMembers.isEmpty()) {
@@ -211,13 +209,16 @@ public class ReceiveSamplesEjb {
                 for (Map.Entry<String, List<ProductOrderSample>> entries : notReceivedProductOrderSamples.entrySet()) {
                     for (ProductOrderSample currentPOSample : entries.getValue()) {
                         currentPOSample
-                                .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
-                                        SampleReceiptValidation.SampleValidationType.WARNING,
-                                        SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT));
+                                .addValidation(
+                                        new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
+                                                SampleReceiptValidation.SampleValidationType.WARNING,
+                                                SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT));
 
                         messageCollection.addWarning(
-                                "%s: kit %s " + SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT
-                                        .getReasonMessage(), entries.getKey(), currentSampleKit.getKey().getSampleKitId());
+                                "%s: kit %s " + SampleReceiptValidation.SampleValidationReason
+                                        .MISSING_SAMPLE_FROM_SAMPLE_KIT
+                                        .getReasonMessage(), entries.getKey(),
+                                currentSampleKit.getKey().getSampleKitId());
                     }
                 }
             }

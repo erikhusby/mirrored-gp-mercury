@@ -103,7 +103,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     private String aliquotId;
 
     @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
-    Set<SampleReceiptValidation> validations = new HashSet<>();
+    Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -604,16 +604,16 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return null;
     }
 
-    public Set<SampleReceiptValidation> getValidations() {
-        return validations;
+    public Set<SampleReceiptValidation> getSampleReceiptValidations() {
+        return sampleReceiptValidations;
     }
 
-    public void setValidations(Set<SampleReceiptValidation> validations) {
-        this.validations = validations;
+    public void setSampleReceiptValidations(Set<SampleReceiptValidation> validations) {
+        this.sampleReceiptValidations = validations;
     }
 
     public void addValidation(SampleReceiptValidation validation) {
         validation.setProductOrderSample(this);
-        this.validations.add(validation);
+        this.sampleReceiptValidations.add(validation);
     }
 }

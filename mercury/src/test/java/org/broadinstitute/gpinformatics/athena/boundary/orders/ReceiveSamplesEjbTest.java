@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.AfterMethod;
@@ -88,12 +87,12 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
 
         for (ProductOrderSample candidate : samplesToDelete) {
             ProductOrderSample candidateToRemove = productOrderSampleDao.findById(ProductOrderSample.class, candidate.getProductOrderSampleId());
-            for(SampleReceiptValidation validation:candidateToRemove.getValidations()) {
+            for(SampleReceiptValidation validation:candidateToRemove.getSampleReceiptValidations()) {
 
                 SampleReceiptValidation foundvalidation = sampleReceiptValidationDao.findById(SampleReceiptValidation.class, validation.getValidationId());
                 sampleReceiptValidationDao.remove(validation);
             }
-            candidateToRemove.getValidations().clear();
+            candidateToRemove.getSampleReceiptValidations().clear();
             productOrderSampleDao.remove(candidateToRemove);
         }
         productOrderSampleDao.flush();
@@ -131,11 +130,11 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         for (Map.Entry<String, List<ProductOrderSample>> foundPosAffected : mapBySamples.entrySet()) {
             Assert.assertFalse(foundPosAffected.getValue().isEmpty());
             for (ProductOrderSample currentPOS : foundPosAffected.getValue()) {
-                Assert.assertFalse(currentPOS.getValidations().isEmpty());
+                Assert.assertFalse(currentPOS.getSampleReceiptValidations().isEmpty());
                 Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
-                        currentPOS.getValidations().iterator().next().getReason());
+                        currentPOS.getSampleReceiptValidations().iterator().next().getReason());
                 Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
-                        currentPOS.getValidations().iterator().next().getValidationType());
+                        currentPOS.getSampleReceiptValidations().iterator().next().getValidationType());
             }
         }
     }
@@ -164,7 +163,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
 
             Assert.assertFalse(foundPosAffected.getValue().isEmpty());
             for (ProductOrderSample currentPOS : foundPosAffected.getValue()) {
-                Assert.assertTrue(currentPOS.getValidations().isEmpty());
+                Assert.assertTrue(currentPOS.getSampleReceiptValidations().isEmpty());
             }
         }
     }

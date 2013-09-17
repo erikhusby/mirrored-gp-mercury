@@ -148,10 +148,10 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertFalse(validationResults.hasWarnings());
 
-        Assert.assertTrue(pos1Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos2Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos3Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos1Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos2Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos3Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos4Kit1.getSampleReceiptValidations().isEmpty());
     }
 
     /**
@@ -198,22 +198,22 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertTrue(validationResults.hasWarnings());
 
-        Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
+        Assert.assertFalse(pos1Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
-                pos1Kit1.getValidations().iterator().next().getReason());
+                pos1Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
-                pos1Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos2Kit1.getValidations().isEmpty());
+                pos1Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos2Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
-                pos2Kit1.getValidations().iterator().next().getReason());
+                pos2Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
-                pos2Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
+                pos2Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos3Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT,
-                pos3Kit1.getValidations().iterator().next().getReason());
+                pos3Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
-                pos3Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
+                pos3Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertTrue(pos4Kit1.getSampleReceiptValidations().isEmpty());
     }
 
     /**
@@ -271,15 +271,15 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertFalse(validationResults.hasWarnings());
 
-        Assert.assertTrue(pos1Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos2Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos3Kit1.getValidations().isEmpty());
-        Assert.assertTrue(pos4Kit1.getValidations().isEmpty());
-        Assert.assertFalse(pos5Kit1.getValidations().isEmpty());
+        Assert.assertTrue(pos1Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos2Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos3Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertTrue(pos4Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertFalse(pos5Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP,
-                pos5Kit1.getValidations().iterator().next().getReason());
+                pos5Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos5Kit1.getValidations().iterator().next().getValidationType());
+                pos5Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
     }
 
     /**
@@ -364,46 +364,46 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertFalse(validationResults.hasWarnings());
 
-        Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
+        Assert.assertFalse(pos1Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos1Kit1.getValidations().iterator().next().getReason());
+                pos1Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos1Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos2Kit1.getValidations().isEmpty());
+                pos1Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos2Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos2Kit1.getValidations().iterator().next().getReason());
+                pos2Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos2Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
+                pos2Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos3Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos3Kit1.getValidations().iterator().next().getReason());
+                pos3Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos3Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos4Kit1.getValidations().isEmpty());
+                pos3Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos4Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos4Kit1.getValidations().iterator().next().getReason());
+                pos4Kit1.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos4Kit1.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos1Kit2.getValidations().isEmpty());
+                pos4Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos1Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos1Kit2.getValidations().iterator().next().getReason());
+                pos1Kit2.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos1Kit2.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos2Kit2.getValidations().isEmpty());
+                pos1Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos2Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos2Kit2.getValidations().iterator().next().getReason());
+                pos2Kit2.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos2Kit2.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos3Kit2.getValidations().isEmpty());
+                pos2Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos3Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos3Kit2.getValidations().iterator().next().getReason());
+                pos3Kit2.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos3Kit2.getValidations().iterator().next().getValidationType());
-        Assert.assertFalse(pos4Kit2.getValidations().isEmpty());
+                pos3Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
+        Assert.assertFalse(pos4Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
-                pos4Kit2.getValidations().iterator().next().getReason());
+                pos4Kit2.getSampleReceiptValidations().iterator().next().getReason());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
-                pos4Kit2.getValidations().iterator().next().getValidationType());
+                pos4Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
     }
 
     /**
@@ -518,24 +518,24 @@ public class ReceiveSamplesEjbDBFreeTest {
         Assert.assertFalse(validationResults.hasInfos());
         Assert.assertTrue(validationResults.hasWarnings());
 
-        Assert.assertFalse(pos1Kit1.getValidations().isEmpty());
-        Assert.assertEquals(2, pos1Kit1.getValidations().size());
-        Assert.assertTrue(pos2Kit1.getValidations().isEmpty());
-        Assert.assertFalse(pos3Kit1.getValidations().isEmpty());
-        Assert.assertEquals(2, pos3Kit1.getValidations().size());
-        Assert.assertFalse(pos4Kit1.getValidations().isEmpty());
-        Assert.assertEquals(2, pos4Kit1.getValidations().size());
+        Assert.assertFalse(pos1Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos1Kit1.getSampleReceiptValidations().size());
+        Assert.assertTrue(pos2Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertFalse(pos3Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos3Kit1.getSampleReceiptValidations().size());
+        Assert.assertFalse(pos4Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos4Kit1.getSampleReceiptValidations().size());
 
-        Assert.assertFalse(pos5Kit1.getValidations().isEmpty());
-        Assert.assertEquals(2, pos5Kit1.getValidations().size());
+        Assert.assertFalse(pos5Kit1.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos5Kit1.getSampleReceiptValidations().size());
 
-        Assert.assertFalse(pos1Kit2.getValidations().isEmpty());
-        Assert.assertEquals(2, pos1Kit2.getValidations().size());
-        Assert.assertFalse(pos2Kit2.getValidations().isEmpty());
-        Assert.assertEquals(2, pos2Kit2.getValidations().size());
-        Assert.assertTrue(pos3Kit2.getValidations().isEmpty());
-        Assert.assertFalse(pos4Kit2.getValidations().isEmpty());
-        Assert.assertEquals(2, pos4Kit2.getValidations().size());
+        Assert.assertFalse(pos1Kit2.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos1Kit2.getSampleReceiptValidations().size());
+        Assert.assertFalse(pos2Kit2.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos2Kit2.getSampleReceiptValidations().size());
+        Assert.assertTrue(pos3Kit2.getSampleReceiptValidations().isEmpty());
+        Assert.assertFalse(pos4Kit2.getSampleReceiptValidations().isEmpty());
+        Assert.assertEquals(2, pos4Kit2.getSampleReceiptValidations().size());
 
         int notInBspCounter = 0;
         int missingSampleCounter = 0;
@@ -543,7 +543,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         for (Map.Entry<String, List<ProductOrderSample>> posForValidaiton : posResult5.entrySet()) {
             for (ProductOrderSample currentPOS : posForValidaiton.getValue()) {
-                for (SampleReceiptValidation currentValidation : currentPOS.getValidations()) {
+                for (SampleReceiptValidation currentValidation : currentPOS.getSampleReceiptValidations()) {
                     if (!currentPOS.getName().equals(sample5Kit1)) {
                         Assert.assertTrue(expectedReasons.contains(currentValidation.getReason()));
                     }
