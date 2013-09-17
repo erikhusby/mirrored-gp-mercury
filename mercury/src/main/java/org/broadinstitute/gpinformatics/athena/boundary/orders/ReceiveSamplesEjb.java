@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,19 +127,22 @@ public class ReceiveSamplesEjb {
         SampleKitListResponse sampleKitsBySampleIds = bspSampleManager.getSampleKitsBySampleIds(
                 new ArrayList<>(sampleIds));
 
-        Map<SampleKit, List<String>> sampleIDsBySamplekit = new HashMap<>();
+        Map<SampleKit, List<String>> sampleIDsBySampleKit = new HashMap<>();
         List<String> allFoundSampleIds = new ArrayList<>();
 
         for (SampleKit currentKit : sampleKitsBySampleIds.getResult()) {
-            if (sampleIDsBySamplekit.get(currentKit) == null) {
-                sampleIDsBySamplekit.put(currentKit, new ArrayList<String>());
+            if (sampleIDsBySampleKit.get(currentKit) == null) {
+                sampleIDsBySampleKit.put(currentKit, new ArrayList<String>());
             }
 
             for (Sample currentKitSample : currentKit.getSamples()) {
-                sampleIDsBySamplekit.get(currentKit).add(currentKitSample.getSampleId());
+                sampleIDsBySampleKit.get(currentKit).add(currentKitSample.getSampleId());
                 allFoundSampleIds.add(currentKitSample.getSampleId());
             }
         }
+
+        Map<String, List<ProductOrderSample>> associatedProductOrderSamples =
+                productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleIds));
 
         /*
             Check to see if received samples span more than one sample kit
@@ -149,9 +151,6 @@ public class ReceiveSamplesEjb {
             //Samples span multiple sample kits
 
             //Get all associated Product order samples
-            Map<String, List<ProductOrderSample>> associatedProductOrderSamples =
-                    productOrderSampleDao.findMapBySamples(new ArrayList<>(sampleIds));
-
             //add blocker errors
             for (Map.Entry<String, List<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
                 for (ProductOrderSample currentPOSample : entries.getValue()) {
@@ -173,24 +172,21 @@ public class ReceiveSamplesEjb {
         List<String> requestedIdsLessFoundIds = new ArrayList<>(sampleIds);
         requestedIdsLessFoundIds.removeAll(allFoundSampleIds);
 
-        //Get all associated Product order samples
-        Map<String, List<ProductOrderSample>> notFoundProductOrderSamples =
-                productOrderSampleDao.findMapBySamples(requestedIdsLessFoundIds);
         //add blocker errors for unrecognized samples
-        for (Map.Entry<String, List<ProductOrderSample>> entries : notFoundProductOrderSamples.entrySet()) {
-            for (ProductOrderSample currentPOSample : entries.getValue()) {
+        for (String currentSampleIdNotFound : requestedIdsLessFoundIds) {
+            for (ProductOrderSample currentPOSample : associatedProductOrderSamples.get(currentSampleIdNotFound)) {
                 currentPOSample
                         .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
                                 SampleReceiptValidation.SampleValidationType.BLOCKING,
                                 SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP));
                 messageCollection.addError(
                         "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLE_NOT_IN_BSP
-                                .getReasonMessage(), entries.getKey());
+                                .getReasonMessage(), currentSampleIdNotFound);
             }
         }
 
         //List warnings for all samples received which do not complete
-        for (Map.Entry<SampleKit, List<String>> currentSampleKit:sampleIDsBySamplekit.entrySet()) {
+        for (Map.Entry<SampleKit, List<String>> currentSampleKit : sampleIDsBySampleKit.entrySet()) {
 
             List<String> cloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
             List<String> secondCloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
@@ -202,12 +198,10 @@ public class ReceiveSamplesEjb {
             if (!cloneSampleKitMembers.isEmpty()) {
                 secondCloneSampleKitMembers.removeAll(cloneSampleKitMembers);
                 //Get all associated Product order samples for missing samples
-                Map<String, List<ProductOrderSample>> notReceivedProductOrderSamples =
-                        productOrderSampleDao.findMapBySamples(secondCloneSampleKitMembers);
 
                 //add warning
-                for (Map.Entry<String, List<ProductOrderSample>> entries : notReceivedProductOrderSamples.entrySet()) {
-                    for (ProductOrderSample currentPOSample : entries.getValue()) {
+                for (String currentSampleId : secondCloneSampleKitMembers) {
+                    for (ProductOrderSample currentPOSample : associatedProductOrderSamples.get(currentSampleId)) {
                         currentPOSample
                                 .addValidation(
                                         new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
@@ -217,7 +211,7 @@ public class ReceiveSamplesEjb {
                         messageCollection.addWarning(
                                 "%s: kit %s " + SampleReceiptValidation.SampleValidationReason
                                         .MISSING_SAMPLE_FROM_SAMPLE_KIT
-                                        .getReasonMessage(), entries.getKey(),
+                                        .getReasonMessage(), currentSampleId,
                                 currentSampleKit.getKey().getSampleKitId());
                     }
                 }

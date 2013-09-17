@@ -254,9 +254,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult2.put(sample3Kit1, Collections.singletonList(pos3Kit1));
         posResult2.put(sample4Kit1, Collections.singletonList(pos4Kit1));
         posResult2.put(sample5Kit1, Collections.singletonList(pos5Kit1));
-        List<String> productOrderSampleRequest2 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest2, sample1Kit1, sample2Kit1, sample3Kit1, sample4Kit1, sample5Kit1);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest2))).thenReturn(posResult2);
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult2);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -320,36 +318,12 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult1.put(sample2Kit1, Collections.singletonList(pos2Kit1));
         posResult1.put(sample3Kit1, Collections.singletonList(pos3Kit1));
         posResult1.put(sample4Kit1, Collections.singletonList(pos4Kit1));
+        posResult1.put(sample1Kit2, Collections.singletonList(pos1Kit2));
+        posResult1.put(sample2Kit2, Collections.singletonList(pos2Kit2));
+        posResult1.put(sample3Kit2, Collections.singletonList(pos3Kit2));
+        posResult1.put(sample4Kit2, Collections.singletonList(pos4Kit2));
 
-        List<String> productOrderSampleRequest1 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest1, sample1Kit1, sample2Kit1, sample3Kit1, sample4Kit1);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest1))).thenReturn(posResult1);
-
-        Map<String, List<ProductOrderSample>> posResult2 = new HashMap<>();
-        posResult2.put(sample1Kit2, Collections.singletonList(pos1Kit2));
-        posResult2.put(sample2Kit2, Collections.singletonList(pos2Kit2));
-        posResult2.put(sample3Kit2, Collections.singletonList(pos3Kit2));
-        posResult2.put(sample4Kit2, Collections.singletonList(pos4Kit2));
-
-        List<String> productOrderSampleRequest2 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest2, sample1Kit2, sample2Kit2, sample3Kit2, sample4Kit2);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest2))).thenReturn(posResult2);
-
-        Map<String, List<ProductOrderSample>> posResult3 = new HashMap<>();
-        posResult3.put(sample1Kit1, Collections.singletonList(pos1Kit1));
-        posResult3.put(sample2Kit1, Collections.singletonList(pos2Kit1));
-        posResult3.put(sample3Kit1, Collections.singletonList(pos3Kit1));
-        posResult3.put(sample4Kit1, Collections.singletonList(pos4Kit1));
-        posResult3.put(sample1Kit2, Collections.singletonList(pos1Kit2));
-        posResult3.put(sample2Kit2, Collections.singletonList(pos2Kit2));
-        posResult3.put(sample3Kit2, Collections.singletonList(pos3Kit2));
-        posResult3.put(sample4Kit2, Collections.singletonList(pos4Kit2));
-
-        List<String> productOrderSampleRequest3 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest3, sample1Kit1, sample2Kit1, sample3Kit1, sample4Kit1, sample1Kit2,
-                sample2Kit2, sample3Kit2, sample4Kit2);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest3))).thenReturn(posResult3);
-
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult1);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -443,62 +417,12 @@ public class ReceiveSamplesEjbDBFreeTest {
         posResult1.put(sample1Kit1, Collections.singletonList(pos1Kit1));
         posResult1.put(sample3Kit1, Collections.singletonList(pos3Kit1));
         posResult1.put(sample4Kit1, Collections.singletonList(pos4Kit1));
+        posResult1.put(sample5Kit1, Collections.singletonList(pos5Kit1));
+        posResult1.put(sample1Kit2, Collections.singletonList(pos1Kit2));
+        posResult1.put(sample2Kit2, Collections.singletonList(pos2Kit2));
+        posResult1.put(sample4Kit2, Collections.singletonList(pos4Kit2));
 
-        List<String> productOrderSampleRequest1 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest1, sample1Kit1, sample3Kit1, sample4Kit1);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest1))).thenReturn(posResult1);
-
-        Map<String, List<ProductOrderSample>> posResult2 = new HashMap<>();
-
-        posResult2.put(sample1Kit1, Collections.singletonList(pos1Kit1));
-        posResult2.put(sample2Kit1, Collections.singletonList(pos2Kit1));
-        posResult2.put(sample3Kit1, Collections.singletonList(pos3Kit1));
-        posResult2.put(sample4Kit1, Collections.singletonList(pos4Kit1));
-        posResult2.put(sample5Kit1, Collections.singletonList(pos5Kit1));
-
-        List<String> productOrderSampleRequest2 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest2, sample1Kit1, sample2Kit1, sample3Kit1, sample4Kit1, sample5Kit1);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest2))).thenReturn(posResult2);
-
-        Map<String, List<ProductOrderSample>> posResult3 = new HashMap<>();
-        posResult3.put(sample1Kit2, Collections.singletonList(pos1Kit2));
-        posResult3.put(sample2Kit2, Collections.singletonList(pos2Kit2));
-        posResult3.put(sample4Kit2, Collections.singletonList(pos4Kit2));
-
-        List<String> productOrderSampleRequest3 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest3, sample1Kit2, sample2Kit2, sample4Kit2);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest3))).thenReturn(posResult3);
-
-        Map<String, List<ProductOrderSample>> posResult4 = new HashMap<>();
-        posResult4.put(sample1Kit2, Collections.singletonList(pos1Kit2));
-        posResult4.put(sample2Kit2, Collections.singletonList(pos2Kit2));
-        posResult4.put(sample3Kit2, Collections.singletonList(pos3Kit2));
-        posResult4.put(sample4Kit2, Collections.singletonList(pos4Kit2));
-
-        List<String> productOrderSampleRequest4 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest4, sample1Kit2, sample2Kit2, sample3Kit2, sample4Kit2);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest4))).thenReturn(posResult4);
-
-        Map<String, List<ProductOrderSample>> posResult5 = new HashMap<>();
-        posResult5.put(sample1Kit1, Collections.singletonList(pos1Kit1));
-        posResult5.put(sample3Kit1, Collections.singletonList(pos3Kit1));
-        posResult5.put(sample4Kit1, Collections.singletonList(pos4Kit1));
-        posResult5.put(sample5Kit1, Collections.singletonList(pos5Kit1));
-        posResult5.put(sample1Kit2, Collections.singletonList(pos1Kit2));
-        posResult5.put(sample2Kit2, Collections.singletonList(pos2Kit2));
-        posResult5.put(sample4Kit2, Collections.singletonList(pos4Kit2));
-
-        List<String> productOrderSampleRequest5 = new ArrayList<>();
-        Collections.addAll(productOrderSampleRequest5, sample1Kit1, sample3Kit1, sample4Kit1, sample5Kit1, sample1Kit2,
-                sample2Kit2,
-                sample4Kit2);
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(productOrderSampleRequest5))).thenReturn(posResult5);
-
-        Map<String, List<ProductOrderSample>> posResult6 = new HashMap<>();
-        posResult6.put(sample5Kit1, Collections.singletonList(pos5Kit1));
-        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(Collections.singletonList(sample5Kit1))))
-                .thenReturn(posResult6);
-
+        Mockito.when(mockPosDao.findMapBySamples(Mockito.eq(test1RequestList))).thenReturn(posResult1);
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
@@ -512,7 +436,6 @@ public class ReceiveSamplesEjbDBFreeTest {
         List<SampleReceiptValidation.SampleValidationReason> expectedReasons = new ArrayList<>();
         expectedReasons.add(SampleReceiptValidation.SampleValidationReason.MISSING_SAMPLE_FROM_SAMPLE_KIT);
         expectedReasons.add(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS);
-
 
         Assert.assertTrue(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
@@ -540,8 +463,8 @@ public class ReceiveSamplesEjbDBFreeTest {
         int notInBspCounter = 0;
         int missingSampleCounter = 0;
         int multipleKitCounter = 0;
-
-        for (Map.Entry<String, List<ProductOrderSample>> posForValidaiton : posResult5.entrySet()) {
+        for (Map.Entry<String, List<ProductOrderSample>> posForValidaiton : posResult1.entrySet()) {
+//        for (Map.Entry<String, List<ProductOrderSample>> posForValidaiton : posResult5.entrySet()) {
             for (ProductOrderSample currentPOS : posForValidaiton.getValue()) {
                 for (SampleReceiptValidation currentValidation : currentPOS.getSampleReceiptValidations()) {
                     if (!currentPOS.getName().equals(sample5Kit1)) {

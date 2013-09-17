@@ -60,10 +60,10 @@ public class SampleLink {
 
         static Format fromSample(AbstractSample sample) {
             if (sample.isInBspFormat()) {
-                if (!Deployment.isCRSP) {
-                    return Format.BSP;
-                } else {
+                if (Deployment.isCRSP) {
                     return Format.CRSP;
+                } else {
+                    return Format.BSP;
                 }
             }
             return Format.UNKNOWN;
