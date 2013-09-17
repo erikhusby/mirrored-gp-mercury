@@ -64,7 +64,7 @@ public class JiraServiceTest {
 
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), null,
+                    service.createIssue(CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix(), null,
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                             "Summary created from Mercury",
                             customFieldList);
@@ -83,11 +83,9 @@ public class JiraServiceTest {
 
         try {
             CreateFields.ProjectType productOrdering =
-                    (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING :
-                            CreateFields.ProjectType.PRODUCT_ORDERING;
+                    CreateFields.ProjectType.getProductOrderingProductType();
 
-            CreateFields.IssueType productOrder = (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_PRODUCT_ORDER :
-                    CreateFields.IssueType.PRODUCT_ORDER;
+            CreateFields.IssueType productOrder = CreateFields.IssueType.getProductOrderIssueType();
 
             Map<String, CustomFieldDefinition> requiredFields =
                     service.getRequiredFields(
@@ -119,18 +117,14 @@ public class JiraServiceTest {
         Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(
                         new CreateFields.Project(
-                                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING.getKeyPrefix() :
-                                        CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
-                        (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_PRODUCT_ORDER :
-                                CreateFields.IssueType.PRODUCT_ORDER);
+                                CreateFields.ProjectType.getProductOrderingProductType().getKeyPrefix()),
+                        CreateFields.IssueType.getProductOrderIssueType());
         Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
-                (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_RESEARCH_PROJECTS.getKeyPrefix() :
-                        CreateFields.ProjectType.RESEARCH_PROJECTS.getKeyPrefix(), "breilly",
-                (Deployment.isCRSP) ? CreateFields.IssueType.CLIA_RESEARCH_PROJECT :
-                        CreateFields.IssueType.RESEARCH_PROJECT,
+                CreateFields.ProjectType.getResearchProjectType().getKeyPrefix(), "breilly",
+                CreateFields.IssueType.getResearchProjectIssueType(),
                 "JiraServiceTest.testUpdateTicket", customFieldList);
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
@@ -197,7 +191,7 @@ public class JiraServiceTest {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateFields.Project(
-                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
+                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;

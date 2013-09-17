@@ -61,98 +61,198 @@ import java.util.Set;
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, Serializable {
-    private static final long serialVersionUID = 2712946561792445251L;
-
-    private static final String DRAFT_PREFIX = "Draft-";
-
     public static final boolean IS_CREATING = true;
-
     public static final boolean IS_UPDATING = false;
-
-    @Id
-    @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
-    private Long productOrderId;
-
-    @Column(name = "CREATED_DATE")
-    private Date createdDate;
-
-    @Column(name = "CREATED_BY")
-    private Long createdBy;
-
-    @Column(name = "PLACED_DATE")
-    private Date placedDate;
-
-    @Column(name = "MODIFIED_DATE")
-    private Date modifiedDate;
-
-    @Column(name = "MODIFIED_BY", nullable = false)
-    private long modifiedBy;
-
-    /**
-     * Unique title for the order
-     */
-    @Column(name = "TITLE", unique = true, length = 255)
-    private String title = "";
-
-    @ManyToOne
-    private ResearchProject researchProject;
-
-    @OneToOne
-    private Product product;
-
-    @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus = OrderStatus.Draft;
-
-    /**
-     * Alphanumeric Id
-     */
-    @Column(name = "QUOTE_ID")
-    private String quoteId = "";
-
-    /**
-     * Additional comments on the order.
-     */
-    @Column(length = 2000)
-    private String comments;
-
-    @Column(name = "FUNDING_DEADLINE")
-    private Date fundingDeadline;
-
-    @Column(name = "PUBLICATION_DEADLINE")
-    private Date publicationDeadline;
-
-    /**
-     * Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft.
-     */
-    @Column(name = "JIRA_TICKET_KEY", nullable = true)
-    private String jiraTicketKey;
-
-    @Column(name = "count")
-    /** Counts the number of lanes, the default value is one lane. */
-    private int laneCount = 1;
-
-    @Column(name = "REQUISITION_KEY")
-    private String requisitionKey;
-
+    private static final long serialVersionUID = 2712946561792445251L;
+    private static final String DRAFT_PREFIX = "Draft-";
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private final List<ProductOrderSample> samples = new ArrayList<>();
-
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
-
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private final Set<ProductOrderAddOn> addOns = new HashSet<>();
-
+    @Id
+    @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
+    private Long productOrderId;
+    @Column(name = "CREATED_DATE")
+    private Date createdDate;
+    @Column(name = "CREATED_BY")
+    private Long createdBy;
+    @Column(name = "PLACED_DATE")
+    private Date placedDate;
+    @Column(name = "MODIFIED_DATE")
+    private Date modifiedDate;
+    @Column(name = "MODIFIED_BY", nullable = false)
+    private long modifiedBy;
+    /**
+     * Unique title for the order
+     */
+    @Column(name = "TITLE", unique = true, length = 255)
+    private String title = "";
+    @ManyToOne
+    private ResearchProject researchProject;
+    @OneToOne
+    private Product product;
+    @Enumerated(EnumType.STRING)
+    private OrderStatus orderStatus = OrderStatus.Draft;
+    /**
+     * Alphanumeric Id
+     */
+    @Column(name = "QUOTE_ID")
+    private String quoteId = "";
+    /**
+     * Additional comments on the order.
+     */
+    @Column(length = 2000)
+    private String comments;
+    @Column(name = "FUNDING_DEADLINE")
+    private Date fundingDeadline;
+    @Column(name = "PUBLICATION_DEADLINE")
+    private Date publicationDeadline;
+    /**
+     * Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft.
+     */
+    @Column(name = "JIRA_TICKET_KEY", nullable = true)
+    private String jiraTicketKey;
+    @Column(name = "count")
+    /** Counts the number of lanes, the default value is one lane. */
+    private int laneCount = 1;
+    @Column(name = "REQUISITION_KEY")
+    private String requisitionKey;
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
-
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
+
+    /**
+     * Default no-arg constructor, also used when creating a new ProductOrder.
+     */
+    public ProductOrder() {
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
+    }
+
+    /**
+     * Constructor called when creating a new ProductOrder.
+     */
+    public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
+        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
+    }
+
+    /**
+     * Used for test purposes only.
+     */
+    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
+                        @Nonnull List<ProductOrderSample> samples, String quoteId,
+                        Product product, ResearchProject researchProject) {
+
+        // Set the dates and modified values so that tests don't have to call prepare and will never create bogus
+        // data. Before adding this, tests were being created with null values, which caused problems, so taking out
+        // the requirement on prepare.
+        Date now = new Date();
+        createdBy = creatorId;
+        createdDate = now;
+        modifiedBy = creatorId;
+        modifiedDate = now;
+
+        this.title = title;
+        setSamples(samples);
+        this.quoteId = quoteId;
+        this.product = product;
+        this.researchProject = researchProject;
+
+        // Do stuff that needs to happen after serialization and here.
+        readResolve();
+    }
+
+    /**
+     * Utility method to create a PDO business key given an order ID and a JIRA ticket.
+     *
+     * @param productOrderId the order ID
+     * @param jiraTicketKey  the JIRA ticket, can be null
+     *
+     * @return the business key for the PDO
+     */
+    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
+        return jiraTicketKey;
+    }
+
+    /**
+     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     *
+     * @param businessKey the key to convert
+     *
+     * @return either a JIRA ID or a product order ID.
+     */
+    public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
+        // This is currently happening in DEV at least, not sure why.
+        //noinspection ConstantConditions
+        if (businessKey == null) {
+            return null;
+        }
+
+        if (businessKey.startsWith(DRAFT_PREFIX)) {
+            return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
+        }
+
+        return new JiraOrId(0, businessKey);
+    }
+
+    private static Object formatCountTotal(int count, int compareCount) {
+        if (count == 0) {
+            return "None";
+        }
+
+        if (count == compareCount) {
+            return "All";
+        }
+
+        return count;
+    }
+
+    public static void loadBspData(List<ProductOrderSample> samples) {
+
+        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
+        Set<String> bspSampleNames = new HashSet<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            if (productOrderSample.needsBspMetaData()) {
+                bspSampleNames.add(productOrderSample.getSampleName());
+            }
+        }
+        if (bspSampleNames.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
+            return;
+        }
+
+        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
+        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleNames);
+
+        // The non-null DTOs which we use to look up FFPE status.
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
+        for (ProductOrderSample sample : samples) {
+            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
+
+            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
+            if (bspSampleDTO != null) {
+                sample.setBspSampleDTO(bspSampleDTO);
+                nonNullDTOs.add(bspSampleDTO);
+            }
+        }
+
+        // Fill out all the non-null DTOs with FFPE status in one shot.
+        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
+    }
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -234,22 +334,6 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Utility method to create a PDO business key given an order ID and a JIRA ticket.
-     *
-     * @param productOrderId the order ID
-     * @param jiraTicketKey  the JIRA ticket, can be null
-     *
-     * @return the business key for the PDO
-     */
-    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
-        if (jiraTicketKey == null) {
-            return DRAFT_PREFIX + productOrderId;
-        }
-
-        return jiraTicketKey;
-    }
-
-    /**
      * Count the number of unique samples on risk on the product order. This is calculated on the summary page, but
      * for this call, we only want to do the calculation without going to BSP.
      *
@@ -267,341 +351,6 @@ public class ProductOrder implements BusinessObject, Serializable {
         }
 
         return count;
-    }
-
-    public static class JiraOrId {
-        @Nullable
-        public final String jiraTicketKey;
-        public final long productOrderId;
-
-        public JiraOrId(long productOrderId, @Nullable String jiraTicketKey) {
-            this.jiraTicketKey = jiraTicketKey;
-            this.productOrderId = productOrderId;
-        }
-    }
-
-    /**
-     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
-     *
-     * @param businessKey the key to convert
-     *
-     * @return either a JIRA ID or a product order ID.
-     */
-    public static JiraOrId convertBusinessKeyToJiraOrId(@Nonnull String businessKey) {
-        // This is currently happening in DEV at least, not sure why.
-        //noinspection ConstantConditions
-        if (businessKey == null) {
-            return null;
-        }
-
-        if (businessKey.startsWith(DRAFT_PREFIX)) {
-            return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
-        }
-
-        return new JiraOrId(0, businessKey);
-    }
-
-    private static class Counter implements Serializable {
-        private static final long serialVersionUID = 4354572758557412220L;
-
-        private final Map<String, Integer> countMap = new HashMap<>();
-
-        private void clear() {
-            countMap.clear();
-        }
-
-        private void increment(@Nonnull String key) {
-            if (!StringUtils.isEmpty(key)) {
-                Integer count = countMap.get(key);
-                if (count == null) {
-                    count = 0;
-                }
-                countMap.put(key, count + 1);
-            }
-        }
-
-        private int get(@Nonnull String key) {
-            Integer count = countMap.get(key);
-            return count == null ? 0 : count;
-        }
-
-        private void output(List<String> output, @Nonnull String label, int compareCount) {
-            for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-                output.add(MessageFormat.format(
-                        "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
-            }
-        }
-    }
-
-    private static Object formatCountTotal(int count, int compareCount) {
-        if (count == 0) {
-            return "None";
-        }
-
-        if (count == compareCount) {
-            return "All";
-        }
-
-        return count;
-    }
-
-    /**
-     * Class that encapsulates counting samples and storing the results.
-     */
-    private class SampleCounts implements Serializable {
-        private static final long serialVersionUID = -6031146789417566007L;
-        private boolean countsValid;
-        private int totalSampleCount;
-        private int onRiskCount;
-        private int bspSampleCount;
-        private int lastPicoCount;
-        private int receivedSampleCount;
-        private int activeSampleCount;
-        private int hasFPCount;
-        private int hasSampleKitUploadRackscanMismatch;
-        private int missingBspMetaDataCount;
-        private final Counter stockTypeCounter = new Counter();
-        private final Counter primaryDiseaseCounter = new Counter();
-        private final Counter genderCounter = new Counter();
-        private final Counter sampleTypeCounter = new Counter();
-        private int uniqueSampleCount;
-        private int uniqueParticipantCount;
-
-        /**
-         * Go through all the samples and tabulate statistics.
-         */
-        private void generateCounts() {
-            if (countsValid) {
-                return;
-            }
-
-            // This gets the BSP data for every sample in the order.
-            loadBspData();
-
-            // Initialize all counts.
-            clearAllData();
-
-            Set<String> sampleSet = new HashSet<>(samples.size());
-            Set<String> participantSet = new HashSet<>();
-
-            for (ProductOrderSample sample : samples) {
-                if (sampleSet.add(sample.getSampleName())) {
-                    // This is a unique sample name, so do any counts that are only needed for unique names. Since
-                    // BSP looks up samples by name, it would always get the same data, so only counting unique values.
-                    if (sample.isInBspFormat()) {
-                        bspSampleCount++;
-
-                        if (sample.bspMetaDataMissing()) {
-                            missingBspMetaDataCount++;
-                        } else {
-                            updateDTOCounts(participantSet, sample.getBspSampleDTO());
-                        }
-                    }
-                }
-
-                // We can calculate on risk for any sample on the product and it can be done differently for each
-                // sample of the same name. Therefore, we want to calculate this for each item.
-                if (sample.isOnRisk()) {
-                    onRiskCount++;
-                }
-            }
-
-            uniqueSampleCount = sampleSet.size();
-            uniqueParticipantCount = participantSet.size();
-            countsValid = true;
-        }
-
-        /**
-         * initialize all the counters.
-         */
-        private void clearAllData() {
-            totalSampleCount = samples.size();
-            bspSampleCount = 0;
-            receivedSampleCount = 0;
-            activeSampleCount = 0;
-            hasFPCount = 0;
-            hasSampleKitUploadRackscanMismatch = 0;
-            missingBspMetaDataCount = 0;
-            onRiskCount = 0;
-            stockTypeCounter.clear();
-            primaryDiseaseCounter.clear();
-            genderCounter.clear();
-        }
-
-        /**
-         * Update all the counts related to BSP information.
-         *
-         * @param participantSet The unique collection of participants by Id.
-         * @param bspDTO         The BSP DTO.
-         */
-        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
-            if (bspDTO.isSampleReceived()) {
-                receivedSampleCount++;
-            }
-
-            if (bspDTO.isActiveStock()) {
-                activeSampleCount++;
-            }
-
-            // If the pico has never been run then it is not warned in the last pico date highlighting.
-            Date picoRunDate = bspDTO.getPicoRunDate();
-            if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
-                lastPicoCount++;
-            }
-
-            stockTypeCounter.increment(bspDTO.getStockType());
-
-            String participantId = bspDTO.getPatientId();
-            if (StringUtils.isNotBlank(participantId)) {
-                participantSet.add(participantId);
-            }
-
-            primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
-            genderCounter.increment(bspDTO.getGender());
-            if (bspDTO.getHasFingerprint()) {
-                hasFPCount++;
-            }
-
-            if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
-                hasSampleKitUploadRackscanMismatch++;
-            }
-
-            sampleTypeCounter.increment(bspDTO.getSampleType());
-        }
-
-        /**
-         * Format the number to say None if the value is zero.
-         *
-         * @param count The number to format
-         */
-        private void formatSummaryNumber(List<String> output, String message, int count) {
-            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
-        }
-
-        /**
-         * Format the number to say None if the value is zero, or All if it matches the comparison number.
-         *
-         * @param count        The number to format
-         * @param compareCount The number to compare to
-         */
-        private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
-            output.add(MessageFormat.format(message, formatCountTotal(count, compareCount)));
-        }
-
-        public List<String> sampleSummary() {
-            generateCounts();
-
-            List<String> output = new ArrayList<>();
-            if (totalSampleCount == 0) {
-                output.add("Total: None");
-            } else {
-                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
-
-                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
-                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
-
-                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
-
-                if (bspSampleCount == uniqueSampleCount) {
-                    output.add("From BSP: All");
-                } else if (bspSampleCount != 0) {
-                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
-                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
-                } else {
-                    output.add("From BSP: None");
-                }
-            }
-
-            if (uniqueParticipantCount != 0) {
-                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
-            }
-
-            stockTypeCounter.output(output, "Stock Type", totalSampleCount);
-            primaryDiseaseCounter.output(output, "Disease", totalSampleCount);
-            genderCounter.output(output, "Gender", totalSampleCount);
-            sampleTypeCounter.output(output, "Sample Type", totalSampleCount);
-
-            if (hasFPCount != 0) {
-                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
-            }
-
-            if (product != null && product.isSupportsPico()) {
-                formatSummaryNumber(output, "Last Pico over a year ago: {0}",
-                        lastPicoCount);
-            }
-
-            if (hasSampleKitUploadRackscanMismatch != 0) {
-                formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
-                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
-            }
-
-            return output;
-        }
-
-        private void checkCount(int count, String message, List<String> output) {
-            if (count != 0) {
-                output.add(MessageFormat.format(message, count));
-            }
-        }
-
-        /**
-         * Check to see if the samples are valid.
-         * - for all BSP formatted sample IDs, do we have BSP data?
-         * - all BSP samples are RECEIVED
-         * - all BSP samples' stock is ACTIVE
-         */
-        public List<String> sampleValidation() {
-            List<String> output = new ArrayList<>();
-            checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
-            checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
-            checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
-            return output;
-        }
-
-        public void invalidate() {
-            countsValid = false;
-        }
-    }
-
-    /**
-     * Default no-arg constructor, also used when creating a new ProductOrder.
-     */
-    public ProductOrder() {
-        // Do stuff that needs to happen after serialization and here.
-        readResolve();
-    }
-
-    /**
-     * Constructor called when creating a new ProductOrder.
-     */
-    public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
-        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
-    }
-
-    /**
-     * Used for test purposes only.
-     */
-    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
-                        @Nonnull List<ProductOrderSample> samples, String quoteId,
-                        Product product, ResearchProject researchProject) {
-
-        // Set the dates and modified values so that tests don't have to call prepare and will never create bogus
-        // data. Before adding this, tests were being created with null values, which caused problems, so taking out
-        // the requirement on prepare.
-        Date now = new Date();
-        createdBy = creatorId;
-        createdDate = now;
-        modifiedBy = creatorId;
-        modifiedDate = now;
-
-        this.title = title;
-        setSamples(samples);
-        this.quoteId = quoteId;
-        this.product = product;
-        this.researchProject = researchProject;
-
-        // Do stuff that needs to happen after serialization and here.
-        readResolve();
     }
 
     /**
@@ -639,13 +388,13 @@ public class ProductOrder implements BusinessObject, Serializable {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     @Override
     public String getName() {
         return getTitle();
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public List<ProductOrderAddOn> getAddOns() {
@@ -724,15 +473,6 @@ public class ProductOrder implements BusinessObject, Serializable {
         return samples;
     }
 
-    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
-        for (ProductOrderSample sample : newSamples) {
-            sample.setProductOrder(this);
-            sample.setSamplePosition(samplePos++);
-            samples.add(sample);
-        }
-        sampleCounts.invalidate();
-    }
-
     public void setSamples(@Nonnull List<ProductOrderSample> samples) {
         if (samples.isEmpty()) {
             // FIXME: This seems incorrect in the case where current sample list is non-empty and incoming samples are empty.
@@ -745,6 +485,15 @@ public class ProductOrder implements BusinessObject, Serializable {
 
             addSamplesInternal(samples, 0);
         }
+    }
+
+    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
+        for (ProductOrderSample sample : newSamples) {
+            sample.setProductOrder(this);
+            sample.setSamplePosition(samplePos++);
+            samples.add(sample);
+        }
+        sampleCounts.invalidate();
     }
 
     public void addSamples(@Nonnull List<ProductOrderSample> newSamples) {
@@ -835,14 +584,6 @@ public class ProductOrder implements BusinessObject, Serializable {
         return placedDate;
     }
 
-    public String getRequisitionKey() {
-        return requisitionKey;
-    }
-
-    public void setRequisitionKey(String requisitionKey) {
-        this.requisitionKey = requisitionKey;
-    }
-
     /**
      * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
      * when an order is placed.
@@ -853,46 +594,19 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.placedDate = placedDate;
     }
 
+    public String getRequisitionKey() {
+        return requisitionKey;
+    }
+
+    public void setRequisitionKey(String requisitionKey) {
+        this.requisitionKey = requisitionKey;
+    }
+
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
         loadBspData(samples);
-    }
-
-    public static void loadBspData(List<ProductOrderSample> samples) {
-
-        // Create a subset of the samples so we only call BSP for BSP samples that aren't already cached.
-        Set<String> bspSampleNames = new HashSet<>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            if (productOrderSample.needsBspMetaData()) {
-                bspSampleNames.add(productOrderSample.getSampleName());
-            }
-        }
-        if (bspSampleNames.isEmpty()) {
-            // This early return is needed to avoid making a unnecessary injection, which could cause
-            // DB Free automated tests to fail.
-            return;
-        }
-
-        // This gets all the sample names. We could get unique sample names from BSP as a future optimization.
-        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(bspSampleNames);
-
-        // The non-null DTOs which we use to look up FFPE status.
-        List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
-        for (ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
-
-            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
-            if (bspSampleDTO != null) {
-                sample.setBspSampleDTO(bspSampleDTO);
-                nonNullDTOs.add(bspSampleDTO);
-            }
-        }
-
-        // Fill out all the non-null DTOs with FFPE status in one shot.
-        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     // Return the sample counts object to allow call chaining.
@@ -1136,8 +850,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Project for Product Orders
      */
     public CreateFields.ProjectType fetchJiraProject() {
-        return (Deployment.isCRSP) ? CreateFields.ProjectType.CRSP_PRODUCT_ORDERING :
-                CreateFields.ProjectType.PRODUCT_ORDERING;
+        return CreateFields.ProjectType.getProductOrderingProductType();
     }
 
     /**
@@ -1147,88 +860,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @return An enum that represents the Jira Issue Type for Product Orders
      */
     public CreateFields.IssueType fetchJiraIssueType() {
-        return (Deployment.isCRSP)?CreateFields.IssueType.CLIA_PRODUCT_ORDER:CreateFields.IssueType.PRODUCT_ORDER;
-    }
-
-    /**
-     * This is used to help create or update a PDO's Jira ticket.
-     */
-    public enum JiraField implements CustomField.SubmissionField {
-        PRODUCT_FAMILY("Product Family"),
-        PRODUCT("Product"),
-        QUOTE_ID("Quote ID"),
-        MERCURY_URL("Mercury URL"),
-        SAMPLE_IDS("Sample IDs"),
-        REPORTER("Reporter"),
-        FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline"),
-        DESCRIPTION("Description"),
-        STATUS("Status"),
-        REQUISITION_ID("Requisition ID");
-
-        private final String fieldName;
-
-        private JiraField(String fieldNameIn) {
-            fieldName = fieldNameIn;
-        }
-
-        @Nonnull
-        @Override
-        public String getName() {
-            return fieldName;
-        }
-    }
-
-    public enum OrderStatus implements StatusType {
-        Draft,
-        Submitted,
-        Abandoned,
-        Completed;
-
-        @Override
-        public String getDisplayName() {
-            return name();
-        }
-
-        /**
-         * Get all status values using the name strings.
-         *
-         * @param statusStrings The desired list of statuses.
-         *
-         * @return The statuses that are listed.
-         */
-        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
-            if (CollectionUtils.isEmpty(statusStrings)) {
-                return Collections.emptyList();
-            }
-
-            List<OrderStatus> statuses = new ArrayList<>();
-            for (String statusString : statusStrings) {
-                statuses.add(OrderStatus.valueOf(statusString));
-            }
-
-            return statuses;
-        }
-
-        /**
-         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
-         *
-         * @param statuses The status enums that were selected.
-         *
-         * @return The string list.
-         */
-        public static List<String> getStrings(List<OrderStatus> statuses) {
-            if (CollectionUtils.isEmpty(statuses)) {
-                return Collections.emptyList();
-            }
-
-            List<String> statusStrings = new ArrayList<>(statuses.size());
-            for (ProductOrder.OrderStatus status : statuses) {
-                statusStrings.add(status.name());
-            }
-
-            return statusStrings;
-        }
+        return CreateFields.IssueType.getProductOrderIssueType();
     }
 
     @Override
@@ -1294,6 +926,86 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
+     * This is used to help create or update a PDO's Jira ticket.
+     */
+    public enum JiraField implements CustomField.SubmissionField {
+        PRODUCT_FAMILY("Product Family"),
+        PRODUCT("Product"),
+        QUOTE_ID("Quote ID"),
+        MERCURY_URL("Mercury URL"),
+        SAMPLE_IDS("Sample IDs"),
+        REPORTER("Reporter"),
+        FUNDING_DEADLINE("Funding Deadline"),
+        PUBLICATION_DEADLINE("Publication Deadline"),
+        DESCRIPTION("Description"),
+        STATUS("Status"),
+        REQUISITION_ID("Requisition ID");
+        private final String fieldName;
+
+        private JiraField(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return fieldName;
+        }
+    }
+
+    public enum OrderStatus implements StatusType {
+        Draft,
+        Submitted,
+        Abandoned,
+        Completed;
+
+        /**
+         * Get all status values using the name strings.
+         *
+         * @param statusStrings The desired list of statuses.
+         *
+         * @return The statuses that are listed.
+         */
+        public static List<OrderStatus> getFromNames(@Nonnull List<String> statusStrings) {
+            if (CollectionUtils.isEmpty(statusStrings)) {
+                return Collections.emptyList();
+            }
+
+            List<OrderStatus> statuses = new ArrayList<>();
+            for (String statusString : statusStrings) {
+                statuses.add(OrderStatus.valueOf(statusString));
+            }
+
+            return statuses;
+        }
+
+        /**
+         * This is a utility function to pull out the names of the statuses so that items can be used in queries.
+         *
+         * @param statuses The status enums that were selected.
+         *
+         * @return The string list.
+         */
+        public static List<String> getStrings(List<OrderStatus> statuses) {
+            if (CollectionUtils.isEmpty(statuses)) {
+                return Collections.emptyList();
+            }
+
+            List<String> statusStrings = new ArrayList<>(statuses.size());
+            for (ProductOrder.OrderStatus status : statuses) {
+                statusStrings.add(status.name());
+            }
+
+            return statusStrings;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return name();
+        }
+    }
+
+    /**
      * This enum defines the different states that the PDO is in based on the ledger status of all samples in the order.
      * This status does not included 'Billed' because that is orthogonal to this status. Once something is billed, it
      * is, essentially in NOTHING_NEW state again and new billing can happen at any time. When something is auto billed,
@@ -1311,15 +1023,10 @@ public class ProductOrder implements BusinessObject, Serializable {
         READY_FOR_REVIEW("Review"),
         READY_TO_BILL("Ready to Bill"),
         BILLING("Billing Started");
-
         private String displayName;
 
         LedgerStatus(String displayName) {
             this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
         }
 
         /**
@@ -1402,6 +1109,270 @@ public class ProductOrder implements BusinessObject, Serializable {
                     break;
                 }
             }
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    public static class JiraOrId {
+        @Nullable
+        public final String jiraTicketKey;
+        public final long productOrderId;
+
+        public JiraOrId(long productOrderId, @Nullable String jiraTicketKey) {
+            this.jiraTicketKey = jiraTicketKey;
+            this.productOrderId = productOrderId;
+        }
+    }
+
+    private static class Counter implements Serializable {
+        private static final long serialVersionUID = 4354572758557412220L;
+        private final Map<String, Integer> countMap = new HashMap<>();
+
+        private void clear() {
+            countMap.clear();
+        }
+
+        private void increment(@Nonnull String key) {
+            if (!StringUtils.isEmpty(key)) {
+                Integer count = countMap.get(key);
+                if (count == null) {
+                    count = 0;
+                }
+                countMap.put(key, count + 1);
+            }
+        }
+
+        private int get(@Nonnull String key) {
+            Integer count = countMap.get(key);
+            return count == null ? 0 : count;
+        }
+
+        private void output(List<String> output, @Nonnull String label, int compareCount) {
+            for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
+                output.add(MessageFormat.format(
+                        "{0} ''{1}'': {2}", label, entry.getKey(), formatCountTotal(entry.getValue(), compareCount)));
+            }
+        }
+    }
+
+    /**
+     * Class that encapsulates counting samples and storing the results.
+     */
+    private class SampleCounts implements Serializable {
+        private static final long serialVersionUID = -6031146789417566007L;
+        private final Counter stockTypeCounter = new Counter();
+        private final Counter primaryDiseaseCounter = new Counter();
+        private final Counter genderCounter = new Counter();
+        private final Counter sampleTypeCounter = new Counter();
+        private boolean countsValid;
+        private int totalSampleCount;
+        private int onRiskCount;
+        private int bspSampleCount;
+        private int lastPicoCount;
+        private int receivedSampleCount;
+        private int activeSampleCount;
+        private int hasFPCount;
+        private int hasSampleKitUploadRackscanMismatch;
+        private int missingBspMetaDataCount;
+        private int uniqueSampleCount;
+        private int uniqueParticipantCount;
+
+        /**
+         * Go through all the samples and tabulate statistics.
+         */
+        private void generateCounts() {
+            if (countsValid) {
+                return;
+            }
+
+            // This gets the BSP data for every sample in the order.
+            loadBspData();
+
+            // Initialize all counts.
+            clearAllData();
+
+            Set<String> sampleSet = new HashSet<>(samples.size());
+            Set<String> participantSet = new HashSet<>();
+
+            for (ProductOrderSample sample : samples) {
+                if (sampleSet.add(sample.getSampleName())) {
+                    // This is a unique sample name, so do any counts that are only needed for unique names. Since
+                    // BSP looks up samples by name, it would always get the same data, so only counting unique values.
+                    if (sample.isInBspFormat()) {
+                        bspSampleCount++;
+
+                        if (sample.bspMetaDataMissing()) {
+                            missingBspMetaDataCount++;
+                        } else {
+                            updateDTOCounts(participantSet, sample.getBspSampleDTO());
+                        }
+                    }
+                }
+
+                // We can calculate on risk for any sample on the product and it can be done differently for each
+                // sample of the same name. Therefore, we want to calculate this for each item.
+                if (sample.isOnRisk()) {
+                    onRiskCount++;
+                }
+            }
+
+            uniqueSampleCount = sampleSet.size();
+            uniqueParticipantCount = participantSet.size();
+            countsValid = true;
+        }
+
+        /**
+         * initialize all the counters.
+         */
+        private void clearAllData() {
+            totalSampleCount = samples.size();
+            bspSampleCount = 0;
+            receivedSampleCount = 0;
+            activeSampleCount = 0;
+            hasFPCount = 0;
+            hasSampleKitUploadRackscanMismatch = 0;
+            missingBspMetaDataCount = 0;
+            onRiskCount = 0;
+            stockTypeCounter.clear();
+            primaryDiseaseCounter.clear();
+            genderCounter.clear();
+        }
+
+        /**
+         * Update all the counts related to BSP information.
+         *
+         * @param participantSet The unique collection of participants by Id.
+         * @param bspDTO         The BSP DTO.
+         */
+        private void updateDTOCounts(Set<String> participantSet, BSPSampleDTO bspDTO) {
+            if (bspDTO.isSampleReceived()) {
+                receivedSampleCount++;
+            }
+
+            if (bspDTO.isActiveStock()) {
+                activeSampleCount++;
+            }
+
+            // If the pico has never been run then it is not warned in the last pico date highlighting.
+            Date picoRunDate = bspDTO.getPicoRunDate();
+            if ((picoRunDate == null) || picoRunDate.before(oneYearAgo)) {
+                lastPicoCount++;
+            }
+
+            stockTypeCounter.increment(bspDTO.getStockType());
+
+            String participantId = bspDTO.getPatientId();
+            if (StringUtils.isNotBlank(participantId)) {
+                participantSet.add(participantId);
+            }
+
+            primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
+            genderCounter.increment(bspDTO.getGender());
+            if (bspDTO.getHasFingerprint()) {
+                hasFPCount++;
+            }
+
+            if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
+                hasSampleKitUploadRackscanMismatch++;
+            }
+
+            sampleTypeCounter.increment(bspDTO.getSampleType());
+        }
+
+        /**
+         * Format the number to say None if the value is zero.
+         *
+         * @param count The number to format
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count) {
+            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
+        }
+
+        /**
+         * Format the number to say None if the value is zero, or All if it matches the comparison number.
+         *
+         * @param count        The number to format
+         * @param compareCount The number to compare to
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
+            output.add(MessageFormat.format(message, formatCountTotal(count, compareCount)));
+        }
+
+        public List<String> sampleSummary() {
+            generateCounts();
+
+            List<String> output = new ArrayList<>();
+            if (totalSampleCount == 0) {
+                output.add("Total: None");
+            } else {
+                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
+
+                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
+
+                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
+
+                if (bspSampleCount == uniqueSampleCount) {
+                    output.add("From BSP: All");
+                } else if (bspSampleCount != 0) {
+                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
+                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
+                } else {
+                    output.add("From BSP: None");
+                }
+            }
+
+            if (uniqueParticipantCount != 0) {
+                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
+            }
+
+            stockTypeCounter.output(output, "Stock Type", totalSampleCount);
+            primaryDiseaseCounter.output(output, "Disease", totalSampleCount);
+            genderCounter.output(output, "Gender", totalSampleCount);
+            sampleTypeCounter.output(output, "Sample Type", totalSampleCount);
+
+            if (hasFPCount != 0) {
+                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
+            }
+
+            if (product != null && product.isSupportsPico()) {
+                formatSummaryNumber(output, "Last Pico over a year ago: {0}",
+                        lastPicoCount);
+            }
+
+            if (hasSampleKitUploadRackscanMismatch != 0) {
+                formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
+                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
+            }
+
+            return output;
+        }
+
+        private void checkCount(int count, String message, List<String> output) {
+            if (count != 0) {
+                output.add(MessageFormat.format(message, count));
+            }
+        }
+
+        /**
+         * Check to see if the samples are valid.
+         * - for all BSP formatted sample IDs, do we have BSP data?
+         * - all BSP samples are RECEIVED
+         * - all BSP samples' stock is ACTIVE
+         */
+        public List<String> sampleValidation() {
+            List<String> output = new ArrayList<>();
+            checkCount(missingBspMetaDataCount, "No BSP Data: {0}", output);
+            checkCount(bspSampleCount - activeSampleCount, "Not ACTIVE: {0}", output);
+            checkCount(bspSampleCount - receivedSampleCount, "Not RECEIVED: {0}", output);
+            return output;
+        }
+
+        public void invalidate() {
+            countsValid = false;
         }
     }
 }

@@ -26,9 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -56,9 +54,6 @@ public class ProductOrderResource {
 
     @Inject
     ProductDao productDao;
-
-    @Context
-    private UriInfo uriInfo;
 
     /**
      * Return the information on the newly created {@link ProductOrder} that has Draft status.
@@ -128,8 +123,9 @@ public class ProductOrderResource {
         productOrder.setComments(productOrderData.getComments());
         productOrder.setQuoteId(productOrderData.getQuoteId());
 
+        // Find the product by the product name.
         if (!StringUtils.isBlank(productOrderData.getProduct())) {
-            Product product = productDao.findByBusinessKey(productOrderData.getProduct());
+            Product product = productDao.findByName(productOrderData.getProduct());
             productOrder.setProduct(product);
         }
 
@@ -139,11 +135,15 @@ public class ProductOrderResource {
                 productOrder.setResearchProject(researchProject);
         }
 
+        // Find and add the product order samples.
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         for (String sample : productOrderData.getSamples()) {
             productOrderSamples.add(new ProductOrderSample(sample));
         }
 
+        productOrder.addSamples(productOrderSamples);
+
+        // Set the requisition key so one can look up the requisition in the Portal.
         productOrder.setRequisitionKey(productOrderData.getRequisitionKey());
 
         return productOrder;
@@ -244,7 +244,7 @@ public class ProductOrderResource {
             if (includeSamples) {
                 List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    sampleNames.add(sample.getSampleName());
+                    sampleNames.add(sample.getName());
                 }
                 productOrderData.setSamples(sampleNames);
             } else {

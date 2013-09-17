@@ -117,7 +117,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
+                .getInstance(CreateFields.ProjectType.getLcsetProjectType(), testBatch, AthenaClientProducer.stubInstance());
 
         Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBuilder.generateDescription());
 
