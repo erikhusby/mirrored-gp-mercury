@@ -65,67 +65,89 @@ public class ProductOrder implements BusinessObject, Serializable {
     public static final boolean IS_UPDATING = false;
     private static final long serialVersionUID = 2712946561792445251L;
     private static final String DRAFT_PREFIX = "Draft-";
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private final List<ProductOrderSample> samples = new ArrayList<>();
+
     @Transient
     private final SampleCounts sampleCounts = new SampleCounts();
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private final Set<ProductOrderAddOn> addOns = new HashSet<>();
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
     private Long productOrderId;
+
     @Column(name = "CREATED_DATE")
     private Date createdDate;
+
     @Column(name = "CREATED_BY")
     private Long createdBy;
+
     @Column(name = "PLACED_DATE")
     private Date placedDate;
+
     @Column(name = "MODIFIED_DATE")
     private Date modifiedDate;
+
     @Column(name = "MODIFIED_BY", nullable = false)
     private long modifiedBy;
+
     /**
-     * Unique title for the order
+     * Unique title for the order.
      */
-    @Column(name = "TITLE", unique = true, length = 255)
+    @Column(name = "TITLE", unique = true, length = 255, nullable = false)
     private String title = "";
+
     @ManyToOne
     private ResearchProject researchProject;
+
     @OneToOne
     private Product product;
+
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
+
     /**
      * Alphanumeric Id
      */
     @Column(name = "QUOTE_ID")
     private String quoteId = "";
+
     /**
      * Additional comments on the order.
      */
     @Column(length = 2000)
     private String comments;
+
     @Column(name = "FUNDING_DEADLINE")
     private Date fundingDeadline;
+
     @Column(name = "PUBLICATION_DEADLINE")
     private Date publicationDeadline;
+
     /**
      * Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft.
      */
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
-    @Column(name = "count")
+
     /** Counts the number of lanes, the default value is one lane. */
+    @Column(name = "count")
     private int laneCount = 1;
+
     @Column(name = "REQUISITION_KEY")
     private String requisitionKey;
+
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
+
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
