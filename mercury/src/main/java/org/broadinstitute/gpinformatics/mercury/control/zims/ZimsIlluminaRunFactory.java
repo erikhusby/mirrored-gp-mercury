@@ -456,9 +456,16 @@ public class ZimsIlluminaRunFactory {
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder().append(laneNumber) .append(labVessel) .append(sampleInstance) .append(sampleId)
-                    .append(productOrderKey) .append(sequencedLibraryName) .append(sequencedLibraryDate)
-                    .append(pdoSampleName).toHashCode();
+            return new HashCodeBuilder()
+                    .append(laneNumber)
+                    .append(labVessel)
+                    .append(productOrderKey)
+                    .append(sequencedLibraryName)
+                    .append(sequencedLibraryDate)
+                    .append(sampleId)
+                    .append(sampleInstance)
+                    .append(pdoSampleName)
+                    .toHashCode();
         }
     }
 
