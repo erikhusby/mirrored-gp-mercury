@@ -32,10 +32,9 @@ import java.util.Map;
 public class ReceiveSamplesEjbDBFreeTest {
 
 
-    private String sampleKit1ID;
-    private String sampleKit2ID;
-    private List<Sample> kit1Samples;
+    private SampleKit sampleKit1;
     private SampleKit sampleKit2;
+
     private ProductOrderSample pos1Kit1;
     private ProductOrderSample pos2Kit1;
     private ProductOrderSample pos3Kit1;
@@ -44,6 +43,8 @@ public class ReceiveSamplesEjbDBFreeTest {
     private ProductOrderSample pos2Kit2;
     private ProductOrderSample pos3Kit2;
     private ProductOrderSample pos4Kit2;
+    private ProductOrderSample pos5Kit1;
+
     private String sample1Kit1;
     private String sample2Kit1;
     private String sample3Kit1;
@@ -52,14 +53,12 @@ public class ReceiveSamplesEjbDBFreeTest {
     private String sample2Kit2;
     private String sample3Kit2;
     private String sample4Kit2;
-    private SampleKit sampleKit1;
     private String sample5Kit1;
-    private ProductOrderSample pos5Kit1;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
-        sampleKit1ID = "SK-tst1";
-        sampleKit2ID = "SK-tst2";
+        String sampleKit1ID = "SK-tst1";
+        String sampleKit2ID = "SK-tst2";
 
         sample1Kit1 = (Deployment.isCRSP ? "CSM" : "SM") + "-1SK1";
         sample2Kit1 = (Deployment.isCRSP ? "CSM" : "SM") + "-2SK1";
@@ -70,7 +69,7 @@ public class ReceiveSamplesEjbDBFreeTest {
         sampleKit1 = new SampleKit();
         sampleKit1.setSampleKitId(sampleKit1ID);
 
-        kit1Samples = new ArrayList<>();
+        List<Sample> kit1Samples = new ArrayList<>();
         Collections.addAll(kit1Samples, new Sample(sample1Kit1), new Sample(sample2Kit1), new Sample(sample3Kit1),
                 new Sample(sample4Kit1));
 
@@ -334,49 +333,49 @@ public class ReceiveSamplesEjbDBFreeTest {
 
         testEjb.validateForReceipt(test1RequestList, validationResults, "scottmat");
 
-        Assert.assertTrue(validationResults.hasErrors());
+        Assert.assertFalse(validationResults.hasErrors());
         Assert.assertFalse(validationResults.hasInfos());
-        Assert.assertFalse(validationResults.hasWarnings());
+        Assert.assertTrue(validationResults.hasWarnings());
 
         Assert.assertFalse(pos1Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos1Kit1.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos1Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos2Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos2Kit1.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos2Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos3Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos3Kit1.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos3Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos4Kit1.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos4Kit1.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos4Kit1.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos1Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos1Kit2.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos1Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos2Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos2Kit2.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos2Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos3Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos3Kit2.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos3Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
         Assert.assertFalse(pos4Kit2.getSampleReceiptValidations().isEmpty());
         Assert.assertEquals(SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS,
                 pos4Kit2.getSampleReceiptValidations().iterator().next().getReason());
-        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                 pos4Kit2.getSampleReceiptValidations().iterator().next().getValidationType());
     }
 
@@ -490,7 +489,7 @@ public class ReceiveSamplesEjbDBFreeTest {
 
                     case SAMPLES_FROM_MULTIPLE_KITS:
                         multipleKitCounter++;
-                        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.BLOCKING,
+                        Assert.assertEquals(SampleReceiptValidation.SampleValidationType.WARNING,
                                 currentValidation.getValidationType());
                         break;
                     }

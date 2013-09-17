@@ -154,12 +154,13 @@ public class ReceiveSamplesEjb {
             //add blocker errors
             for (Map.Entry<String, List<ProductOrderSample>> entries : associatedProductOrderSamples.entrySet()) {
                 for (ProductOrderSample currentPOSample : entries.getValue()) {
+                    //TODO SGM: Temporarily setting this to a warning since the ability to clear blocking errors will not be ready for this sprint
                     currentPOSample
                             .addValidation(new SampleReceiptValidation(bspUserList.getByUsername(operator).getUserId(),
-                                    SampleReceiptValidation.SampleValidationType.BLOCKING,
+                                    SampleReceiptValidation.SampleValidationType.WARNING,
                                     SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS));
 
-                    messageCollection.addError(
+                    messageCollection.addWarning(
                             "%s: " + SampleReceiptValidation.SampleValidationReason.SAMPLES_FROM_MULTIPLE_KITS
                                     .getReasonMessage(), entries.getKey());
                 }
