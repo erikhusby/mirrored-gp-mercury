@@ -958,7 +958,7 @@ public class LabEventTest extends BaseEventTest {
                     }
 
                     @Override
-                    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                    public Map<String, Set<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
                         return null;
                     }
 

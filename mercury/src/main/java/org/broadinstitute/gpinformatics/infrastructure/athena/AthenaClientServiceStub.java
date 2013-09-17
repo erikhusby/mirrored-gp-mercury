@@ -42,13 +42,13 @@ public class AthenaClientServiceStub implements AthenaClientService {
     }
 
     @Override
-    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
-        Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<>();
+    public Map<String, Set<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+        Map<String, Set<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<>();
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         List<ProductOrderSample> samples = productOrder.getSamples();
         for (ProductOrderSample productOrderSample : samples) {
             mapSampleIdToPdoSample.put(productOrderSample.getSampleName(),
-                    new ArrayList<>(Collections.singletonList(productOrderSample)));
+                    new HashSet<>(Collections.singleton(productOrderSample)));
         }
         return mapSampleIdToPdoSample;
     }

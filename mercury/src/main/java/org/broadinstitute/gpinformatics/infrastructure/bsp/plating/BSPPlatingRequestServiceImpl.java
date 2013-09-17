@@ -281,8 +281,8 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         // we don't set the quote for the overall work request since samples can/will be
         // scrambled into LCSETs from various PASSes with differing quotes and then plated
         // to parallel the LCSETs
-        Map<String, String> sampleQuoteMap = new HashMap<>();
-        workRequest.setSampleQuoteMap(sampleQuoteMap);
+        Map<String, String> samplePdoMap = new HashMap<>();
+        workRequest.setSamplePdoMap(samplePdoMap);
 
         // work request demands 2 of 3 of volume, concentration, and mass to be set at the WR level
         // even if we set volume and concentration on each sample individually
@@ -320,8 +320,9 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
                 platingInfo.add(samplePlateInfo);
 
-                if (plateable.getPlatingQuote() != null)
-                    sampleQuoteMap.put(plateable.getSampleId(), plateable.getPlatingQuote());
+                // TODO: Replace the commented code below with the PDO equiv.
+//                if (plateable.getPlatingQuote() != null)
+//                    samplePdoMap.put(plateable.getSampleId(), plateable.getPlatingQuote());
 
             }
 

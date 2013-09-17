@@ -108,6 +108,28 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
+    <changeSet id="GPLIM-2036-3" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sample_receipt_validation" columnName="reason" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sample_receipt_validation" schemaName="athena">
+            <column name="reason" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2036-4" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="sample_receipt_validation_aud" columnName="reason" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="sample_receipt_validation_aud" schemaName="athena">
+            <column name="reason" type="varchar(255)" />
+        </addColumn>
+    </changeSet>
 
 
     <changeSet id="GPLIM-1957-1" author="dinsmore">

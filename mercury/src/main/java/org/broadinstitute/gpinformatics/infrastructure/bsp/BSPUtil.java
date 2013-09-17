@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+
 import javax.annotation.Nonnull;
 import java.util.regex.Pattern;
 
@@ -19,6 +21,7 @@ import java.util.regex.Pattern;
  */
 public class BSPUtil {
     public static final Pattern  BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("S[MP]-[A-Z1-9]{4,6}");
+    public static final Pattern  CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN = Pattern.compile("CS[MP]-[A-Z1-9]{4,6}");
 
     /**
      * Tests if the sampleName is in a valid BSP barcode format,
@@ -29,6 +32,8 @@ public class BSPUtil {
      * @return true if the sample name is a valid BSP Sample name.
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches();
+        return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() ||
+                (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && Deployment.isCRSP);
     }
+
 }
