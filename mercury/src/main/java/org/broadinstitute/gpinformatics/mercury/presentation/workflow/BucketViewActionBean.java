@@ -115,7 +115,6 @@ public class BucketViewActionBean extends CoreActionBean {
     public List<String> getBuckets() {
         List<String> list = new ArrayList<>(buckets);
         Collections.sort(list);
-        list.add(0, "");
         return list;
     }
 
@@ -247,7 +246,6 @@ public class BucketViewActionBean extends CoreActionBean {
                 List<ProductWorkflowDef> bucketWorkflows;
                 if (buckets.add(bucketName)) {
                     bucketWorkflows = new ArrayList<>();
-                    bucketWorkflows.add(new ProductWorkflowDef(""));
                     mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
                 } else {
                     bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
