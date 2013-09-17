@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,11 +127,9 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
     @Override
     public SampleManager createSampleManager() {
-
         return new SampleManager() {
-
             @Override
-            public SampleKitListResponse getSampleKitsBySampleIds(List<String> strings) {
+            public SampleKitListResponse getSampleKitsBySampleIds(Collection<String> strings) {
                 SampleKitListResponse response = new SampleKitListResponse();
 
                 SampleKit kitForResponse = new SampleKit();
