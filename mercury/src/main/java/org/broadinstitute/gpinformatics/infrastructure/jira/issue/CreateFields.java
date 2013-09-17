@@ -116,7 +116,7 @@ public class CreateFields extends UpdateFields {
         }
 
         /** Contains the IssueType to use for a given workflow. */
-        public static final Map<String, IssueType> mapWorkflowToIssueType = new HashMap<String, IssueType>() {{
+        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
             put(Workflow.EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};

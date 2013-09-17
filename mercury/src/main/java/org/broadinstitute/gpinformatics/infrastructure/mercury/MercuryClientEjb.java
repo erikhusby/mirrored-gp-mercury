@@ -69,15 +69,13 @@ public class MercuryClientEjb {
     /**
      * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
      *
-     * @param order
-     * @param samples
      * @return the samples that were actually added to the bucket
      */
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
                                                               Collection<ProductOrderSample> samples) {
 
-        String workflowName = order.getProduct() != null ? order.getProduct().getWorkflow().getWorkflowName() : null;
-        if (!Workflow.isSupportedWorkflow(workflowName)) {
+        Workflow workflow = order.getProduct() != null ? order.getProduct().getWorkflow() : null;
+        if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
             return Collections.emptyList();
         }
 

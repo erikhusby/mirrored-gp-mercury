@@ -88,8 +88,6 @@
     <stripes:form beanclass="${actionBean.class.name}"
                   id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
-        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
                 <div class="control-group">

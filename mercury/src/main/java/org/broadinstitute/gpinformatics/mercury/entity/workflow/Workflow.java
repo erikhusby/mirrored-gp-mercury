@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * This represents the workflow associated with a product.
@@ -29,13 +32,11 @@ public enum Workflow {
         return workflowName != null && workflowName.equals(EXOME_EXPRESS.name);
     }
 
-    /** Returns true if Mercury can support this workflow. */
-    public static boolean isSupportedWorkflow(@Nullable String workflowName) {
-        return workflowName != null && (
-                workflowName.equals(EXOME_EXPRESS.name) |
-                workflowName.equals(ICE.name)
-        );
-    }
+    /** Workflow processes that Mercury supports. */
+    public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
+        add(EXOME_EXPRESS);
+        add(ICE);
+    }};
 
     @Nullable
     public String getWorkflowName() {

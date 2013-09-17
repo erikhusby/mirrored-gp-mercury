@@ -32,8 +32,6 @@ import java.util.Set;
 @RequestScoped
 public class BucketEjb {
 
-    // todo jmt rename to BucketEjb?
-
     private LabEventFactory labEventFactory;
 
     private JiraService jiraService;
@@ -70,7 +68,7 @@ public class BucketEjb {
                                        @Nonnull String programName, LabEventType eventType,
                                        @Nonnull String pdoKey) {
 
-        List<BucketEntry> listOfNewEntries = new LinkedList<>();
+        List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
             listOfNewEntries.add(bucket.addEntry(pdoKey, currVessel, entryType));
         }
@@ -118,18 +116,13 @@ public class BucketEjb {
 
             BucketEntry entry = bucket.findEntry(vessel);
             if (entry != null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(
-                            "Adding entry " + entry.getBucketEntryId() + " for vessel " + entry.getLabVessel()
-                                    .getLabCentricName() +
-                            " and PDO " + entry.getPoBusinessKey() + " to be popped from bucket.");
-                }
+                logger.debug("Adding entry " + entry.getBucketEntryId() + " for vessel " +
+                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getPoBusinessKey() +
+                             " to be popped from bucket.");
                 entries.add(entry);
             } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Attempting to pull a vessel, " + vessel.getLabel() + ", from a bucket, " +
-                                 bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
-                }
+                logger.debug("Attempting to pull a vessel, " + vessel.getLabel() + ", from a bucket, " +
+                        bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
             }
         }
         return entries;
@@ -224,7 +217,6 @@ public class BucketEjb {
 
         boolean isSingleEntry = (entries.size() == 1);
 
-
         Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
             Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
@@ -246,7 +238,7 @@ public class BucketEjb {
             } else {
                 comment = mapEntry.getKey() + ":" +
                           mapEntry.getValue().size() +
-                          " sample(s) removed from bucket " +
+                          " samples removed from bucket " +
                           firstBucketEntry.getBucket().getBucketDefinitionName() + ":: " +
                           reason;
             }

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +82,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     private String jiraTicketId;
 
-    private final List<String> buckets = new ArrayList<>();
+    private final Set<String> buckets = new HashSet<>();
     private final List<Long> bucketEntryIds = new ArrayList<>();
     private final List<Long> reworkEntryIds = new ArrayList<>();
     private final List<BucketEntry> bucketEntries = new ArrayList<>();
@@ -112,7 +113,10 @@ public class BucketViewActionBean extends CoreActionBean {
     }
 
     public List<String> getBuckets() {
-        return buckets;
+        List<String> list = new ArrayList<>(buckets);
+        Collections.sort(list);
+        list.add(0, "");
+        return list;
     }
 
     public String getSelectedBucket() {
@@ -233,31 +237,22 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        if (buckets.size() == 0) {
-            buckets.add("");
-        }
         WorkflowConfig workflowConfig = workflowLoader.load();
-        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
-        for (ProductWorkflowDef workflowDef : workflowDefs) {
-            // Gets bucket names for supported products (workflows), and gets workflows for each bucket.
-            if (Workflow.isSupportedWorkflow(workflowDef.getName())) {
-                ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-                for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
-                    // Bucket and Workflow lists are ordered by their WorkflowConfig.xml order.
-                    String bucketName = bucket.getName();
-                    if (!buckets.contains(bucketName)) {
-                        buckets.add(bucketName);
-                    }
-                    List<ProductWorkflowDef> bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
-                    if (bucketWorkflows == null) {
-                        bucketWorkflows = new ArrayList<>();
-                        bucketWorkflows.add(new ProductWorkflowDef(""));
-                        mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
-                    }
-                    if (!bucketWorkflows.contains(workflowDef)) {
-                        bucketWorkflows.add(workflowDef);
-                    }
+        // Gets bucket names for supported products (workflows), and associates workflow(s) for each bucket.
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            for (WorkflowBucketDef bucket : workflowVersion.getCreationBuckets()) {
+                String bucketName = bucket.getName();
+                List<ProductWorkflowDef> bucketWorkflows;
+                if (buckets.add(bucketName)) {
+                    bucketWorkflows = new ArrayList<>();
+                    bucketWorkflows.add(new ProductWorkflowDef(""));
+                    mapBucketToWorkflowDefs.put(bucketName, bucketWorkflows);
+                } else {
+                    bucketWorkflows = mapBucketToWorkflowDefs.get(bucketName);
                 }
+                bucketWorkflows.add(workflowDef);
             }
         }
     }
