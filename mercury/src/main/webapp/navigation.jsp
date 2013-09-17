@@ -127,6 +127,13 @@
                                               event="List">Show Workflows</stripes:link>
                             </li>
                         </security:authorizeBlock>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>">
+                            <li>
+                                <stripes:link id="receiveSamples"
+                                              beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"
+                                              event="showReceipt">Receive Samples</stripes:link>
+                            </li>
+                        </security:authorizeBlock>
                     </ul>
                 </li>
             </security:authorizeBlock>
