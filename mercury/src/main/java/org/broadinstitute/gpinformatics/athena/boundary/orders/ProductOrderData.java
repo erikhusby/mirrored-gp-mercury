@@ -254,5 +254,4 @@ public class ProductOrderData {
     public void setRequisitionKey(String requisitionKey) {
         this.requisitionKey = requisitionKey;
     }
-
 }

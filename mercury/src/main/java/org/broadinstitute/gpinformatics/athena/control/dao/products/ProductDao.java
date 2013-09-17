@@ -123,12 +123,23 @@ public class ProductDao extends GenericDao implements Serializable {
         return findSingle(Product.class, Product_.partNumber, partNumber);
     }
 
+    /**
+     * Find a Product by the specified product name.  Currently not fetching through to addOns or PriceItems since
+     * there probably aren't enough of them to really bog things down, but that decision can be revisited if needed.
+     *
+     * @param productName The product name
+     *
+     * @return The matching {@link Product}
+     */
+    public Product findByName(String productName) {
+        return findSingle(Product.class, Product_.productName, productName);
+    }
 
     /**
      * Find a Product by part number, eagerly fetching the Product Family.
      *
-     * @param partNumber
-     * @return
+     * @param partNumber the part number
+     * @return the matching {@link Product}
      */
     public Product findByPartNumberEagerProductFamily(String partNumber) {
         // mlc temporarily changed Product to EAGER fetch its ProductFamily until I get fetch profiles working
