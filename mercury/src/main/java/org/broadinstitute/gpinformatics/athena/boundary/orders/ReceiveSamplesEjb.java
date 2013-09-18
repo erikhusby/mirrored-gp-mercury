@@ -108,7 +108,7 @@ public class ReceiveSamplesEjb {
     }
 
     /**
-     * Run at the time of receipt, this method validates that samples receive meet a certain criteria.  If any of the
+     * Run at the time of receipt, this method validates that samples received meet a certain criteria.  If any of the
      * criteria fails, the user will receive either a warning or an error.  This criteria includes:
      * <ul>
      * <li>Of the sample kits that encompass the collection of samples given, not all samples came back
