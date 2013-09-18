@@ -15,8 +15,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,7 +49,12 @@ public class VesselResource {
 
         // Determine which tubes are already known to Mercury.  This call creates map entries for all parameters
         // but leaves values null for unknown vessels.
-        Map<String, TwoDBarcodedTube> barcodeToTubeMap = twoDBarcodedTubeDao.findByBarcodes(matrixBarcodes);
+        List<TwoDBarcodedTube> previouslyRegisteredTubes = twoDBarcodedTubeDao.findListByBarcodes(matrixBarcodes);
+        Set<String> previouslyRegisteredBarcodes = new HashSet<>();
+        for (TwoDBarcodedTube tube : previouslyRegisteredTubes) {
+            previouslyRegisteredBarcodes.add(tube.getLabel());
+        }
+        List<TwoDBarcodedTube> newTubes = new ArrayList<>();
 
         boolean allBarcodesInBsp = true;
         RegisterTubesBean responseBean = new RegisterTubesBean();
@@ -62,10 +69,10 @@ public class VesselResource {
             if (sampleInfo != null) {
                 well = sampleInfo.getWellPosition();
                 sampleBarcode = sampleInfo.getSampleId();
-                // If the barcode is not previously know to Mercury, create a TwoDBarcoded tube in the map
-                // corresponding to this matrix barcode.
-                if (barcodeToTubeMap.get(matrixBarcode) == null) {
-                    barcodeToTubeMap.put(matrixBarcode, new TwoDBarcodedTube(matrixBarcode, sampleBarcode));
+                // If the barcode is not previously known to Mercury, create a TwoDBarcoded tube in the newTubes
+                // List to be registered.
+                if (!previouslyRegisteredBarcodes.contains(matrixBarcode)) {
+                    newTubes.add(new TwoDBarcodedTube(matrixBarcode, sampleBarcode));
                 }
             } else {
                 // Keep going even if error is true, we just won't do the registration.  We still want to return
@@ -79,7 +86,7 @@ public class VesselResource {
         if (allBarcodesInBsp) {
             // Flush to make sure we encounter any errors with database constraints prior to returning a
             // response to the client.
-            twoDBarcodedTubeDao.persistAll(barcodeToTubeMap.values());
+            twoDBarcodedTubeDao.persistAll(newTubes);
             twoDBarcodedTubeDao.flush();
         }
 

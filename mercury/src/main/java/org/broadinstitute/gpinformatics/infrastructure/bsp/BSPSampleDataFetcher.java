@@ -4,17 +4,12 @@ import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Collections;
