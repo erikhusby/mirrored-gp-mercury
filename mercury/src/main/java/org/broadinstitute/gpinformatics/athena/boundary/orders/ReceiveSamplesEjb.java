@@ -163,23 +163,22 @@ public class ReceiveSamplesEjb {
                 requestedIdsLessFoundIds);
 
         // List warnings for all samples received which do not complete
-        for (Map.Entry<SampleKit, Set<String>> currentSampleKit : sampleIDsBySampleKit.entrySet()) {
+        for (Map.Entry<SampleKit, Set<String>> currentSampleKitEntry : sampleIDsBySampleKit.entrySet()) {
 
-            List<String> cloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
-            List<String> secondCloneSampleKitMembers = new ArrayList<>(currentSampleKit.getValue());
+            List<String> sampleKitIdsMinusRequestedIds = new ArrayList<>(currentSampleKitEntry.getValue());
+            List<String> unionSampleKitAndRequestedSampleIDs = new ArrayList<>(currentSampleKitEntry.getValue());
 
             // Remove all sample IDs from the sample ID's of the found sample kit
-            cloneSampleKitMembers.removeAll(sampleIds);
+            sampleKitIdsMinusRequestedIds.removeAll(sampleIds);
 
             // If there are any samples left over, they were in the kit but not in the receipt scan
-            if (!cloneSampleKitMembers.isEmpty()) {
-                secondCloneSampleKitMembers.removeAll(cloneSampleKitMembers);
+            if (!sampleKitIdsMinusRequestedIds.isEmpty()) {
+                unionSampleKitAndRequestedSampleIDs.removeAll(sampleKitIdsMinusRequestedIds);
                 // Get all associated Product order samples for missing samples
 
                 // add warning
                 addMissingSampleFromKitValidationViolations(messageCollection, operator, associatedProductOrderSamples,
-                        currentSampleKit,
-                        secondCloneSampleKitMembers);
+                        currentSampleKitEntry, unionSampleKitAndRequestedSampleIDs);
             }
         }
     }
