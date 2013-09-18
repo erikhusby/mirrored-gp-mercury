@@ -19,7 +19,7 @@ import java.util.Date;
 
 /**
  * This class represents a validation error associated with a Product Order Sample that is created at the time of a
- * mercury initiated sample receipt
+ * mercury initiated sample receipt.
  */
 @Entity
 @Audited

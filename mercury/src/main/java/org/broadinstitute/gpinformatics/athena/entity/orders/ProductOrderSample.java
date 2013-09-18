@@ -608,10 +608,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return sampleReceiptValidations;
     }
 
-    public void setSampleReceiptValidations(Set<SampleReceiptValidation> validations) {
-        this.sampleReceiptValidations = validations;
-    }
-
     public void addValidation(SampleReceiptValidation validation) {
         validation.setProductOrderSample(this);
         this.sampleReceiptValidations.add(validation);
