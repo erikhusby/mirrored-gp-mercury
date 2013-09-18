@@ -424,21 +424,23 @@ todo jmt adder methods
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
             LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer()
                     .getVesselAtPosition(cherryPickTransfer.getSourcePosition());
-            Set<BucketEntry> bucketEntries = sourceVessel.getBucketEntries();
-            if (!bucketEntries.isEmpty()) {
-                numVesselsWithBucketEntries++;
-            }
-            for (BucketEntry bucketEntry : bucketEntries) {
-                if (bucketEntry.getLabBatch() != null) {
-                    LabBatch labBatch = bucketEntry.getLabBatch();
-                    if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                        Integer count = mapLabBatchToCount.get(labBatch);
-                        if (count == null) {
-                            count = 1;
-                        } else {
-                            count = count + 1;
+            if (sourceVessel != null) {
+                Set<BucketEntry> bucketEntries = sourceVessel.getBucketEntries();
+                if (!bucketEntries.isEmpty()) {
+                    numVesselsWithBucketEntries++;
+                }
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        LabBatch labBatch = bucketEntry.getLabBatch();
+                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                            Integer count = mapLabBatchToCount.get(labBatch);
+                            if (count == null) {
+                                count = 1;
+                            } else {
+                                count = count + 1;
+                            }
+                            mapLabBatchToCount.put(labBatch, count);
                         }
-                        mapLabBatchToCount.put(labBatch, count);
                     }
                 }
             }
