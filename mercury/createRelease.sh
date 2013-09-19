@@ -35,7 +35,7 @@ PRODVERSION=${VERSION%-RC}
 
 git checkout --track -b $PRODVERSION
 mvn versions:set -DnewVersion="$PRODVERSION"
-git commit -m "REL-000 Setting Production Release version $PRODVERSION" pom.xml
+git commit -m "REL-714 Setting Production Release version $PRODVERSION" pom.xml
 git push origin :PROD
 git tag -a -m "Current Production" --force PROD HEAD
 git push origin $PRODVERSION
@@ -45,7 +45,7 @@ git checkout $RCBRANCH
 
 NEXTRCVERSION="$MAJOR.$MINOR.$REV-RC"
 mvn versions:set -DnewVersion="$NEXTRCVERSION"
-git commit -m "REL-000 Setting RC Version $NEXTRCVERSION" pom.xml
+git commit -m "REL-714 Setting RC Version $NEXTRCVERSION" pom.xml
 git push origin :RCBUILD
 git tag -a -m "Current RC" --force RCBUILD $RCBRANCH
 git push origin $RCBRANCH

@@ -37,7 +37,7 @@ EOF
 # Make the RC Branch a remote tracking branch
 git checkout  --track -b $RCBRANCH
 mvn versions:set -DnewVersion=$RCVERSION
-git commit -m "REL-000 Setting RC version to $RCVERSION" pom.xml
+git commit -m "REL-714 Setting RC version to $RCVERSION" pom.xml
 # Create the RCBUILD floating tag (but get rid of previous version first)
 git push origin :RCBUILD
 git tag -a -m "Current RC " --force RCBUILD $RCBRANCH
@@ -49,7 +49,7 @@ git checkout master
 mvn versions:set -DnewVersion=$NEXTVERSION
 # Commit the master
 # push the master
-git commit -m "REL-000 Setting master version to $NEXTVERSION" pom.xml
+git commit -m "REL-714 Setting master version to $NEXTVERSION" pom.xml
 git fetch origin +master
 git push origin master
 
