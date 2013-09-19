@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -33,8 +34,6 @@ public class VesselResource {
     @Inject
     private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
-    private static final String BARCODES_PARAMETER_KEY = "barcodes";
-
     /**
      * Register a collection of tubes by Matrix barcodes, associated with their samples IDs as recorded in BSP.
      * This will query BSP for the Matrix barcodes to retrieve sample IDs and register LabVessels only if all
@@ -43,8 +42,7 @@ public class VesselResource {
     @Path("/registerTubes")
     @Produces(MediaType.APPLICATION_XML)
     @POST
-    public Response registerTubes(@Nonnull MultivaluedMap<String, String> parameters) {
-        Collection<String> matrixBarcodes = extractMatrixBarcodes(parameters);
+    public Response registerTubes(@Nonnull @FormParam("barcodes") List<String> matrixBarcodes) {
         Map<String, SampleInfo> sampleInfoMap = bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
 
         // Determine which tubes are already known to Mercury.  This call creates map entries for all parameters
@@ -94,16 +92,4 @@ public class VesselResource {
         return Response.status(status).entity(responseBean).type(MediaType.APPLICATION_XML_TYPE).build();
     }
 
-    /**
-     * Extract the unique Set of Matrix barcodes from the request parameters.
-     */
-    private Collection<String> extractMatrixBarcodes(@Nonnull MultivaluedMap<String, String> map) {
-        Set<String> barcodes = new HashSet<>();
-
-        if (map.containsKey(BARCODES_PARAMETER_KEY)) {
-            barcodes.addAll(map.get(BARCODES_PARAMETER_KEY));
-        }
-
-        return barcodes;
-    }
 }
