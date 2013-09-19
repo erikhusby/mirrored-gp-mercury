@@ -56,6 +56,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
@@ -369,7 +370,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+        if (!Deployment.isCRSP) {
+            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+        }
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
