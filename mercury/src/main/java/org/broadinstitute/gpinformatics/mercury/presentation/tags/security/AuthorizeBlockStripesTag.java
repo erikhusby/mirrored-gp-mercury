@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
 import net.sourceforge.stripes.util.Log;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -65,9 +64,7 @@ public class AuthorizeBlockStripesTag extends TagSupport {
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 
-            if (StringUtils.isBlank(context) ||
-                (StringUtils.equals(ApplicationContext.RESEARCH.name(), context) && !Deployment.isCRSP) ||
-                (StringUtils.equals(ApplicationContext.CRSP.name(), context) && Deployment.isCRSP)) {
+            if (StringUtils.isBlank(context) || ApplicationContext.isContextSupported(context)) {
                 // Now check the roles to include the jsp code block.
                 for (String role : roles) {
                     if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
@@ -82,4 +79,6 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
         return super.doStartTag();
     }
+
+
 }
