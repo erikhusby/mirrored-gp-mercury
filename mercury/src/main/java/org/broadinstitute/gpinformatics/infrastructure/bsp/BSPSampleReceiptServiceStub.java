@@ -56,7 +56,7 @@ public class BSPSampleReceiptServiceStub implements BSPSampleReceiptService {
 
         for (String sampleId : sampleIds) {
             // Instead of generating a real 2d matrix barcode, we're using sampleId + sampleId as a string.
-            barcodes.add(new SampleKitReceiptResponse.Barcodes(sampleId, sampleId + sampleId));
+            barcodes.add(new SampleKitReceiptResponse.Barcodes(sampleId, "STUB-" +sampleId));
         }
 
         return barcodes;

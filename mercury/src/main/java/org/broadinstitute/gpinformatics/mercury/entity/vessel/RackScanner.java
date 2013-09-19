@@ -30,23 +30,23 @@ public enum RackScanner {
     private static final boolean ACTIVE = false;
     private static final boolean NOT_LINEAR = false;
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName, String ipAddress,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName, String ipAddress,
                         Long port) {
-        this(rackScannerLab, scannerUID, scannerName, "", RackScannerType.AGBENE, ACTIVE, NOT_LINEAR, ipAddress, port);
+        this(rackScannerLab, scannerUid, scannerName, "", RackScannerType.AGBENE, ACTIVE, NOT_LINEAR, ipAddress, port);
     }
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName,
                         String scannerInternalName, String ipAddress, Long port) {
-        this(rackScannerLab, scannerUID, scannerName, scannerInternalName, RackScannerType.ZAITH, ACTIVE, NOT_LINEAR,
+        this(rackScannerLab, scannerUid, scannerName, scannerInternalName, RackScannerType.ZAITH, ACTIVE, NOT_LINEAR,
                 ipAddress, port);
     }
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName,
                         String scannerInternalName, RackScannerType scannerType, boolean archived,
                         boolean withLinearScanner, String ipAddress, Long port) {
 
         this.rackScannerLab = rackScannerLab;
-        rackScannerConfig = new RackScannerConfig(scannerUID, scannerName,
+        rackScannerConfig = new RackScannerConfig(scannerUid, scannerName,
                 scannerInternalName, scannerType, archived,
                 withLinearScanner, ipAddress, port);
     }

@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValid
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleReceiptService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
@@ -84,7 +85,7 @@ public class ReceiveSamplesEjb {
             try {
                 receiptResponse = receiptService.receiveSamples(sampleIds, bspUser.getUsername());
             } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
+                throw new InformaticsServiceException(e);
             }
 
             if (receiptResponse.isSuccess()) {
