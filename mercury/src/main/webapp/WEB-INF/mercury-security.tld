@@ -31,7 +31,7 @@
             </description>
             <required>false</required>
             <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.String</type>
+            <type>org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance</type>
         </attribute>
     </tag>
 </taglib>

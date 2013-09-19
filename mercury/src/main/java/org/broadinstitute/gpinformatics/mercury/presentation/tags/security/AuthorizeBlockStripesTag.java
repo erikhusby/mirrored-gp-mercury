@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
 import net.sourceforge.stripes.util.Log;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationContext;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
@@ -32,7 +31,7 @@ public class AuthorizeBlockStripesTag extends TagSupport {
     @Inject
     UserBean userBean;
     private String[] roles;
-    private String context;
+    private ApplicationInstance context;
 
     public String[] getRoles() {
         return roles;
@@ -42,11 +41,11 @@ public class AuthorizeBlockStripesTag extends TagSupport {
         this.roles = roles;
     }
 
-    public String getContext() {
+    public ApplicationInstance getContext() {
         return context;
     }
 
-    public void setContext(String context) {
+    public void setContext(ApplicationInstance context) {
         this.context = context;
     }
 
@@ -64,7 +63,7 @@ public class AuthorizeBlockStripesTag extends TagSupport {
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 
-            if (StringUtils.isBlank(context) || ApplicationContext.isContextSupported(context)) {
+            if (context == null || context.isContextSupported()) {
                 // Now check the roles to include the jsp code block.
                 for (String role : roles) {
                     if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
@@ -79,6 +78,4 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
         return super.doStartTag();
     }
-
-
 }
