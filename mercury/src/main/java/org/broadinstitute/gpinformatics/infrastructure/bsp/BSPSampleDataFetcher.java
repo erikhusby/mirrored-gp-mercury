@@ -183,7 +183,8 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
     }
 
     /**
-     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
+     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.  Unrecognized
+     * manufacturer barcodes will have keys in the Map but null values.
      */
     public Map<String, SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
         String queryString = makeQueryString("barcodes", matrixBarcodes);
