@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,15 +42,8 @@ public class VesselResourceTest extends Arquillian {
         matrixToSample.put("0101584604", "SM-1TNRT");
         matrixToSample.put("0097401641", "SM-1TNRR");
 
-        // This does not actually call the webservice but provides a MultiValuedMap that looks like what the
-        // VesselResource should be receiving.
-        MultivaluedMap<String, String> parameterMap = new MultivaluedMapImpl();
-        for (String barcode : matrixToSample.keySet()) {
-            parameterMap.add("barcodes", barcode);
-        }
-
         // Check the HTTP Status.
-        Response response = vesselResource.registerTubes(parameterMap);
+        Response response = vesselResource.registerTubes(new ArrayList<>(matrixToSample.keySet()));
         assertThat(response.getStatus(), is(equalTo(Response.Status.OK.getStatusCode())));
 
         // Make sure the returned entity is not null and of the expected type.
