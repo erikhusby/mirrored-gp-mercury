@@ -2,6 +2,7 @@
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationContext" %>
 
 <header class="navbar">
     <div class="navbar-inner">
@@ -127,7 +128,7 @@
                                               event="List">Show Workflows</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>">
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationContext.CRSP.name() %>">
                             <li>
                                 <stripes:link id="receiveSamples"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"

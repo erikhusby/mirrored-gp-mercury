@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
 import net.sourceforge.stripes.util.Log;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationContext;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
@@ -17,23 +20,20 @@ import javax.servlet.jsp.tagext.TagSupport;
  * {@code
  * <%@ taglib uri="http://www.broadinstitute.org/Mercury/AuthorizeBlock"" prefix="security"%>
  * <security:authorizeBlock roles={"Administrator", "Project Manager"}>
- *      Secured content goes in here
+ * Secured content goes in here
  * </security:authorizeBlock>
  * }
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
 public class AuthorizeBlockStripesTag extends TagSupport {
-    private static final Log log = Log.getInstance(AuthorizeBlockStripesTag.class);
-
-    private static final long serialVersionUID = 201300107L;
-
-    private String[] roles;
-
     public static final String ALLOW_ALL_ROLES = "All";
-
+    private static final Log log = Log.getInstance(AuthorizeBlockStripesTag.class);
+    private static final long serialVersionUID = 201300107L;
     @Inject
     UserBean userBean;
+    private String[] roles;
+    private String context;
 
     public String[] getRoles() {
         return roles;
@@ -41,6 +41,14 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
     public void setRoles(String[] roles) {
         this.roles = roles;
+    }
+
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 
     /**
@@ -57,11 +65,15 @@ public class AuthorizeBlockStripesTag extends TagSupport {
         try {
             HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
 
-            // Now check the roles to include the jsp code block.
-            for (String role : roles) {
-                if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
-                    // User in role or all roles allowed.
-                    return EVAL_BODY_INCLUDE;
+            if (StringUtils.isBlank(context) ||
+                (StringUtils.equals(ApplicationContext.RESEARCH.name(), context) && !Deployment.isCRSP) ||
+                (StringUtils.equals(ApplicationContext.CRSP.name(), context) && Deployment.isCRSP)) {
+                // Now check the roles to include the jsp code block.
+                for (String role : roles) {
+                    if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
+                        // User in role or all roles allowed.
+                        return EVAL_BODY_INCLUDE;
+                    }
                 }
             }
         } catch (Exception e) {
