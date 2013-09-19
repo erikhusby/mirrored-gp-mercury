@@ -380,7 +380,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, vessel4.getInPlaceEvents().size());
 
-        resource.makeEntriesAndBatchThem(vesselBucketBatch, bucket);
+        resource.createEntriesAndBatchThem(vesselBucketBatch, bucket);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -501,7 +501,7 @@ public class BucketEjbTest extends ContainerTest {
 
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
-        resource.selectEntriesAndBatchThem(3, bucket);
+        resource.selectEntriesAndBatchThem(3, bucket, Workflow.EXOME_EXPRESS);
 
         logger.info("After the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 

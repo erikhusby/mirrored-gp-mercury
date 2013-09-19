@@ -8,6 +8,8 @@ import java.util.Comparator;
 
 /**
  * This represents the workflow associated with a product.
+ *
+ * The enun names must exactly match WorkflowConfig.xml productDef elements.
  */
 public enum Workflow {
     EXOME_EXPRESS("Exome Express"),

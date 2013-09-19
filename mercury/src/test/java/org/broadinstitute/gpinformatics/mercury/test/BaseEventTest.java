@@ -156,7 +156,7 @@ public class BaseEventTest {
                         flowcellMessageHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
-        bucketEjb = new BucketEjb(labEventFactory, jiraService, null);
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, null, AthenaClientProducer.stubInstance());
     }
 
     /**
