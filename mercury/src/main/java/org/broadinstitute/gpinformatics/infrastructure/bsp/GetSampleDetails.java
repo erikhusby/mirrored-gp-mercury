@@ -13,23 +13,20 @@ public class GetSampleDetails {
      * This wraps the sample details so that other information can be added in the future and to hold multiple sets.
      * Copied from BSP.
      */
+    @SuppressWarnings("UnusedDeclaration")
     @XmlRootElement(name = "details")
     public static class Details implements Serializable {
 
-        private final String batchId;
+        private String batchId;
 
         private SampleDetails sampleDetails;
 
-        public Details() {
-            this.batchId = "";
-        }
-
-        public Details(String batchId) {
-            this.batchId = batchId;
-        }
-
         public String getBatchId() {
             return batchId;
+        }
+
+        public void setBatchId(String batchId) {
+            this.batchId = batchId;
         }
 
         public SampleDetails getSampleDetails() {
@@ -62,6 +59,7 @@ public class GetSampleDetails {
     /**
      * The details for a particular sample.
      */
+    @SuppressWarnings("UnusedDeclaration")
     public static class SampleInfo implements Cloneable, Serializable {
 
         private String sampleId;
