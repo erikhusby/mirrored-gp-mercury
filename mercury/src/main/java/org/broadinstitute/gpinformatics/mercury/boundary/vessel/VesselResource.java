@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
@@ -14,10 +14,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +41,7 @@ public class VesselResource {
     @Produces(MediaType.APPLICATION_XML)
     @POST
     public Response registerTubes(@Nonnull @FormParam("barcodes") List<String> matrixBarcodes) {
-        Map<String, SampleInfo> sampleInfoMap = bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
+        Map<String, GetSampleDetails.SampleInfo> sampleInfoMap = bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
 
         // Determine which tubes are already known to Mercury.  This call creates map entries for all parameters
         // but leaves values null for unknown vessels.
@@ -58,9 +56,9 @@ public class VesselResource {
         RegisterTubesBean responseBean = new RegisterTubesBean();
 
         // Iterate the sample infos to determine which barcodes are known to BSP.
-        for (Map.Entry<String, SampleInfo> entry : sampleInfoMap.entrySet()) {
+        for (Map.Entry<String, GetSampleDetails.SampleInfo> entry : sampleInfoMap.entrySet()) {
             String matrixBarcode = entry.getKey();
-            SampleInfo sampleInfo = entry.getValue();
+            GetSampleDetails.SampleInfo sampleInfo = entry.getValue();
 
             String well = null;
             String sampleBarcode = null;

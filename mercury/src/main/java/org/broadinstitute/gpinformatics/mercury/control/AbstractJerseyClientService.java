@@ -8,9 +8,13 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 
 import javax.annotation.Nonnull;
 import javax.net.ssl.*;
@@ -147,7 +151,12 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * Returns a query string of the form key=value1&key=value2 etc.
      */
     protected String makeQueryString(@Nonnull String parameterKey, Collection<String> parameters) {
-        return parameterKey + "=" + StringUtils.join(parameters, "&" + parameterKey + "=");
+        List<NameValuePair> pairs = new ArrayList<>();
+        for (String parameter : parameters) {
+            pairs.add(new BasicNameValuePair(parameterKey, parameter));
+        }
+
+        return URLEncodedUtils.format(pairs, CharEncoding.UTF_8);
     }
 
     /**

@@ -6,7 +6,7 @@ import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.abgene.AbgeneNetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.zaith.ZaithNetworkRackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackScanner;
 
 import javax.ejb.Stateful;
@@ -66,12 +66,12 @@ public class RackScannerEjb {
     public List<String> obtainSampleIdsFromRackscan(LinkedHashMap<String, String> rackScan) {
 
         // Utilizes a service in BSP which takes any type of barcode and returns SampleInfo objects
-        Map<String,SampleInfo> sampleInfoMap =
+        Map<String,GetSampleDetails.SampleInfo> sampleInfoMap =
                 sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(rackScan.values());
 
         // Just return the sample ids.
         List<String> sampleIds = new ArrayList<>();
-        for (SampleInfo sampleInfo : sampleInfoMap.values()) {
+        for (GetSampleDetails.SampleInfo sampleInfo : sampleInfoMap.values()) {
             sampleIds.add(sampleInfo.getSampleId());
         }
 
