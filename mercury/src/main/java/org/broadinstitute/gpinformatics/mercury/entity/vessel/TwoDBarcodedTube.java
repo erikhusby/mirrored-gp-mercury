@@ -24,14 +24,6 @@ public class TwoDBarcodedTube extends LabVessel {
         }
     }
 
-    /**
-     * Convenience constructor that takes both a matrix barcode and single sample barcode.
-     */
-    public TwoDBarcodedTube(@Nonnull String twoDBarcode, @Nonnull String sampleBarcode) {
-        this(twoDBarcode);
-        addSample(new MercurySample(sampleBarcode));
-    }
-
     protected TwoDBarcodedTube() {
     }
 

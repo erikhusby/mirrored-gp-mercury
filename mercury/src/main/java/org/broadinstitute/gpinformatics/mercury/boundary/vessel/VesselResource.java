@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -15,11 +13,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Path("/vessel")
 @Stateful
@@ -30,64 +25,55 @@ public class VesselResource {
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private VesselEjb vesselEjb;
 
     /**
-     * Register a collection of tubes by Matrix barcodes, associated with their samples IDs as recorded in BSP.
+     * Register a collection of tubes by Matrix barcodes, associated with their sample IDs as recorded in BSP.
      * This will query BSP for the Matrix barcodes to retrieve sample IDs and register LabVessels only if all
-     * Matrix barcodes are known to BSP.
+     * Matrix barcodes are known to BSP.  MercurySamples will be associated with these LabVessels and created
+     * only if there is not an already existing MercurySample with the same sample barcode.
      */
     @Path("/registerTubes")
     @Produces(MediaType.APPLICATION_XML)
     @POST
     public Response registerTubes(@Nonnull @FormParam("barcodes") List<String> matrixBarcodes) {
-        Map<String, GetSampleDetails.SampleInfo> sampleInfoMap = bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
 
-        // Determine which tubes are already known to Mercury.  This call creates map entries for all parameters
-        // but leaves values null for unknown vessels.
-        List<TwoDBarcodedTube> previouslyRegisteredTubes = twoDBarcodedTubeDao.findListByBarcodes(matrixBarcodes);
-        Set<String> previouslyRegisteredBarcodes = new HashSet<>();
-        for (TwoDBarcodedTube tube : previouslyRegisteredTubes) {
-            previouslyRegisteredBarcodes.add(tube.getLabel());
-        }
-        List<TwoDBarcodedTube> newTubes = new ArrayList<>();
+        // The call to BSP happens for all barcodes since there is well information returned to the caller
+        // of this webservice that is not available in Mercury.  However it's not clear this well information
+        // is being used, perhaps this could be optimized to not call BSP unless the Matrix barcodes are not
+        // registered with Mercury.
+        Map<String, GetSampleDetails.SampleInfo> sampleInfoMap =
+                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(matrixBarcodes);
 
-        boolean allBarcodesInBsp = true;
         RegisterTubesBean responseBean = new RegisterTubesBean();
 
-        // Iterate the sample infos to determine which barcodes are known to BSP.
-        for (Map.Entry<String, GetSampleDetails.SampleInfo> entry : sampleInfoMap.entrySet()) {
-            String matrixBarcode = entry.getKey();
-            GetSampleDetails.SampleInfo sampleInfo = entry.getValue();
-
+        for (String matrixBarcode : matrixBarcodes) {
             String well = null;
             String sampleBarcode = null;
-            if (sampleInfo != null) {
+
+            if (sampleInfoMap.containsKey(matrixBarcode)) {
+                GetSampleDetails.SampleInfo sampleInfo = sampleInfoMap.get(matrixBarcode);
                 well = sampleInfo.getWellPosition();
                 sampleBarcode = sampleInfo.getSampleId();
-                // If the barcode is not previously known to Mercury, create a TwoDBarcoded tube in the newTubes
-                // List to be registered.
-                if (!previouslyRegisteredBarcodes.contains(matrixBarcode)) {
-                    newTubes.add(new TwoDBarcodedTube(matrixBarcode, sampleBarcode));
-                }
-            } else {
-                // Keep going even if error is true, we just won't do the registration.  We still want to return
-                // results to the caller (a deck script) so it could show the user what's wrong.
-                allBarcodesInBsp = false;
             }
-            RegisterTubeBean tubeBean = new RegisterTubeBean(matrixBarcode, well, sampleBarcode);
-            responseBean.getRegisterTubeBeans().add(tubeBean);
+
+            RegisterTubeBean registerTubeBean = new RegisterTubeBean(matrixBarcode, well, sampleBarcode);
+            responseBean.getRegisterTubeBeans().add(registerTubeBean);
         }
 
+        // Flag for whether to persist the tube and sample registrations and what status code to return.
+        boolean allBarcodesInBsp = sampleInfoMap.keySet().containsAll(matrixBarcodes);
+
+        Response.Status status;
+        // Only write out these MercurySamples if all Matrix barcodes were recognized by BSP.
         if (allBarcodesInBsp) {
-            // Flush to make sure we encounter any errors with database constraints prior to returning a
-            // response to the client.
-            twoDBarcodedTubeDao.persistAll(newTubes);
-            twoDBarcodedTubeDao.flush();
+            status = Response.Status.OK;
+            vesselEjb.registerSamplesAndTubes(matrixBarcodes, sampleInfoMap);
+        } else {
+            // No tube or sample registration.
+            status = Response.Status.PRECONDITION_FAILED;
         }
 
-        Response.Status status = allBarcodesInBsp ? Response.Status.OK : Response.Status.PRECONDITION_FAILED;
         return Response.status(status).entity(responseBean).type(MediaType.APPLICATION_XML_TYPE).build();
     }
-
 }

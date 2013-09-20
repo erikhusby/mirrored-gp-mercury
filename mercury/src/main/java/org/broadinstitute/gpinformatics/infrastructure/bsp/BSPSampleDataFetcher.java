@@ -181,8 +181,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
     }
 
     /**
-     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.  Unrecognized
-     * manufacturer barcodes will have keys in the Map but null values.
+     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
         String queryString = makeQueryString("barcodes", matrixBarcodes);
@@ -192,10 +191,6 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
         GetSampleDetails.Details
                 details = resource.accept(MediaType.TEXT_XML).get(new GenericType<GetSampleDetails.Details>() {});
-        // Initialize all map values to null.
-        for (String matrixBarcode : matrixBarcodes) {
-            map.put(matrixBarcode, null);
-        }
 
         // Overwrite the map values that were found in BSP with the SampleDetails objects.
         if (details.getSampleDetails().getSampleInfo() != null) {

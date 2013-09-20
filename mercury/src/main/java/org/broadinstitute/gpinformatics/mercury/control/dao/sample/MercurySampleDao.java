@@ -4,9 +4,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ public class MercurySampleDao extends GenericDao {
      * @param sampleKeys list of sample key strings to search for.
      * @return list of mercury samples from sample key lookup
      */
-    public List<MercurySample> findBySampleKeys(List<String> sampleKeys) {
+    public List<MercurySample> findBySampleKeys(@Nonnull Collection<String> sampleKeys) {
         return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
     }
 
