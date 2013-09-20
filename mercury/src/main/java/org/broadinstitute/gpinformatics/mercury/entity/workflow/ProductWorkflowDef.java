@@ -32,7 +32,7 @@ public class ProductWorkflowDef implements Serializable {
     private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
             new HashMap<>();
 
-    public static transient Comparator<ProductWorkflowDef> BY_NAME = new Comparator<ProductWorkflowDef>() {
+    public static Comparator<ProductWorkflowDef> BY_NAME = new Comparator<ProductWorkflowDef>() {
         @Override
         public int compare(ProductWorkflowDef o1, ProductWorkflowDef o2) {
             return o1.getName().compareTo(o2.getName());

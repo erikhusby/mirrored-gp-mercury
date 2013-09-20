@@ -19,7 +19,6 @@ public enum RackScanner {
     BSP_5076_7(RackScannerLab.BSP_5076, "5076-7", "Lab 5076 Bench 7 (Tecan)", "fuj", "192.168.98.145", 2222L),
     BSP_123_1(RackScannerLab.BSP_123, "123-1", "Lab 123 Anteroom Scanner", "fuj1", "192.168.97.235", 2222L),
     BSP_123_2(RackScannerLab.BSP_123, "123-2", "Lab 123 Pre-PCR Scanner", "fuj", "192.168.3.125", 2222L),
-    BSP_5076_14(RackScannerLab.BSP_5076, "5076-14", "Lab 5076 Bench 14", "fuj", "69.173.120.119", 2222L),
     BSP_5076_6(RackScannerLab.BSP_5076, "5076-6", "Lab 5076 Bench 6 (Plating)", "fuj", "192.168.98.102", 2222L),
     BSP_5076_13_2(RackScannerLab.BSP_5076, "5076-13-2", "Lab 5076 Bench 13 (Dory)", "fuj", "192.168.98.237", 2222L),
     BSP_5076_13_3(RackScannerLab.BSP_5076, "5076-13-3", "Lab 5076 Bench 13 (Nemo)", "fuj", "192.168.98.236", 2222L),

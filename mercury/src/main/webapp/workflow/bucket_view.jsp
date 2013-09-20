@@ -66,6 +66,7 @@
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
+                        <stripes:option value="">Select a Bucket</stripes:option>
                         <stripes:options-collection collection="${actionBean.buckets}"/>
                     </stripes:select>
                 </div>
@@ -80,6 +81,7 @@
             <div class="controls">
                 <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
                                 value="${actionBean.selectedWorkflowDef}">
+                    <stripes:option value="">Select a Workflow</stripes:option>
                     <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
                 </stripes:select>
             </div>

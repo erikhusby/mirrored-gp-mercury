@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -12,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -23,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +35,6 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class BucketEjb {
-
-    // todo jmt rename to BucketEjb?
 
     private LabEventFactory labEventFactory;
 
@@ -42,14 +44,18 @@ public class BucketEjb {
 
     private BucketDao bucketDao;
 
+    private AthenaClientService athenaClientService;
+
     public BucketEjb() {
     }
 
     @Inject
-    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, BucketDao bucketDao) {
+    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, BucketDao bucketDao,
+                     AthenaClientService athenaClientService) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
+        this.athenaClientService = athenaClientService;
     }
 
     /**
@@ -70,7 +76,7 @@ public class BucketEjb {
                                        @Nonnull String programName, LabEventType eventType,
                                        @Nonnull String pdoKey) {
 
-        List<BucketEntry> listOfNewEntries = new LinkedList<>();
+        List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
             listOfNewEntries.add(bucket.addEntry(pdoKey, currVessel, entryType));
         }
@@ -91,9 +97,8 @@ public class BucketEjb {
      * @param vesselsToBatch  the vessels to be processed
      * @param bucket   the bucket containing the vessels
      */
-    public void makeEntriesAndBatchThem(@Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket bucket) {
-        Set<BucketEntry> bucketEntrySet = selectEntries(vesselsToBatch, bucket);
-        moveFromBucketToCommonBatch(bucketEntrySet);
+    public void createEntriesAndBatchThem(@Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket bucket) {
+        moveFromBucketToCommonBatch(selectEntries(vesselsToBatch, bucket));
     }
 
     /**
@@ -118,48 +123,59 @@ public class BucketEjb {
 
             BucketEntry entry = bucket.findEntry(vessel);
             if (entry != null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(
-                            "Adding entry " + entry.getBucketEntryId() + " for vessel " + entry.getLabVessel()
-                                    .getLabCentricName() +
-                            " and PDO " + entry.getPoBusinessKey() + " to be popped from bucket.");
-                }
+                logger.debug("Adding entry " + entry.getBucketEntryId() + " for vessel " +
+                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getPoBusinessKey() +
+                             " to be popped from bucket.");
                 entries.add(entry);
             } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Attempting to pull a vessel, " + vessel.getLabel() + ", from a bucket, " +
-                                 bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
-                }
+                logger.debug("Attempting to pull a vessel, " + vessel.getLabel() + ", from a bucket, " +
+                        bucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
             }
         }
         return entries;
     }
 
     /**
-     * Takes the given number of samples from the bucket and moves them into a new batch.
+     * Used for test purposes.  Takes the given number of samples from the bucket having the given product
+     * workflow and moves them into a new batch.  The batch may end up having fewer samples if the bucket
+     * runs out of suitable entries.
      *
      * @param numberOfSamples the number of samples to be taken.
      * @param bucket the bucket containing the samples.
+     * @param workflow the product workflow desired
      * @return the batch that contains the samples.
      */
     @DaoFree
-    public LabBatch selectEntriesAndBatchThem(int numberOfSamples, @Nonnull Bucket bucket) {
-        Set<BucketEntry> bucketEntrySet = selectEntries(numberOfSamples, bucket);
-        return moveFromBucketToCommonBatch(bucketEntrySet);
-    }
-
-    /** Returns the specified number of bucket entries from the given bucket. */
-    public Set<BucketEntry> selectEntries(int numberOfSamples, Bucket bucket) {
+    public LabBatch selectEntriesAndBatchThem(int numberOfSamples, @Nonnull Bucket bucket, Workflow workflow) {
         Set<BucketEntry> bucketEntrySet = new HashSet<>();
         int count = 0;
+
+        // Selects entries whose product workflow matched the specified workflow.
+        Set<String> pdoKeys = new HashSet<>();
         for (BucketEntry entry : bucket.getBucketEntries()) {
-            if (count < numberOfSamples) {
+            pdoKeys.add(entry.getPoBusinessKey());
+        }
+        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+        for (ProductOrder pdo : pdos) {
+            if (workflow != null && pdo.getProduct() == null ||
+                workflow == null && pdo.getProduct() != null ||
+                workflow != pdo.getProduct().getWorkflow()) {
+                    pdoKeys.remove(pdo.getBusinessKey());
+            }
+        }
+
+        for (BucketEntry entry : bucket.getBucketEntries()) {
+            if (pdoKeys.contains(entry.getPoBusinessKey())) {
                 bucketEntrySet.add(entry);
                 ++count;
             }
+            if (count >= numberOfSamples) {
+                break;
+            }
         }
-        return bucketEntrySet;
+        return moveFromBucketToCommonBatch(bucketEntrySet);
     }
+
 
     /**
      * Selects the appropriate batch for the given bucket entries and moves the entries from the bucket to the batch.
@@ -224,7 +240,6 @@ public class BucketEjb {
 
         boolean isSingleEntry = (entries.size() == 1);
 
-
         Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
             Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
@@ -246,7 +261,7 @@ public class BucketEjb {
             } else {
                 comment = mapEntry.getKey() + ":" +
                           mapEntry.getValue().size() +
-                          " sample(s) removed from bucket " +
+                          " samples removed from bucket " +
                           firstBucketEntry.getBucket().getBucketDefinitionName() + ":: " +
                           reason;
             }

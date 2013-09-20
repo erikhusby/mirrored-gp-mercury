@@ -171,7 +171,7 @@ public class LabBatchEjb {
         Set<LabVessel> vessels = new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
-        bucketEjb.makeEntriesAndBatchThem(vessels, bucket);
+        bucketEjb.createEntriesAndBatchThem(vessels, bucket);
         return batch;
     }
 
@@ -245,7 +245,7 @@ public class LabBatchEjb {
         allBucketEntries.addAll(reworkBucketEntries);
         bucketEjb.moveFromBucketToBatch(allBucketEntries, batch);
 
-        CreateFields.IssueType issueType = CreateFields.IssueType.mapWorkflowToIssueType.get(workflowName);
+        CreateFields.IssueType issueType = CreateFields.IssueType.MAP_WORKFLOW_TO_ISSUE_TYPE.get(workflowName);
 
         batchToJira(username, null, batch, issueType);
 
@@ -301,7 +301,7 @@ public class LabBatchEjb {
                                                       @Nonnull CreateFields.IssueType issueType) {
         batch = createLabBatch(batch, operator, issueType);
         Bucket bucket = bucketDao.findByName(bucketName);
-        bucketEjb.makeEntriesAndBatchThem(batch.getStartingBatchLabVessels(), bucket);
+        bucketEjb.createEntriesAndBatchThem(batch.getStartingBatchLabVessels(), bucket);
         return batch;
     }
 

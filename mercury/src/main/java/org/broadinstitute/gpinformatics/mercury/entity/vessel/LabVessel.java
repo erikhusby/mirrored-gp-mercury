@@ -537,32 +537,6 @@ public abstract class LabVessel implements Serializable {
         labBatches.add(labBatchStartingVessel);
     }
 
-    /**
-     * Get the sample instances unique by the vessel sample comparator's vision of uniqueness.
-     *
-     * @return the filtered samples
-     */
-    public Set<SampleInstance> getUniqueSampleInstances() {
-        //
-        Set<SampleInstance> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_COMPARATOR);
-        filteredForUI.addAll(getSampleInstances(LabVessel.SampleType.PREFER_PDO, null));
-        return filteredForUI;
-    }
-
-    /**
-     * Compare by sample, lab batch and PDO key.
-     */
-    public static final Comparator<SampleInstance> VESSEL_SAMPLE_COMPARATOR = new Comparator<SampleInstance>() {
-        @Override
-        public int compare(SampleInstance lhs, SampleInstance rhs) {
-            CompareToBuilder builder = new CompareToBuilder();
-            builder.append(lhs.getStartingSample(), rhs.getStartingSample());
-            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
-            builder.append(lhs.getProductOrderKey(), rhs.getProductOrderKey());
-            return builder.build();
-        }
-    };
-
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -972,34 +946,6 @@ public abstract class LabVessel implements Serializable {
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
         return Sets.union(getInPlaceEvents(), getTransfersTo());
     }
-
-    /**
-     * Get the sample instances unique by the vessel sample event comparator's vision of uniqueness.
-     *
-     * @return The unique events
-     */
-    public Set<LabEvent> getUniqueInPlaceAndTransferToEvents() {
-        Set<LabEvent> filteredForUI = new TreeSet<>(VESSEL_SAMPLE_EVENT_COMPARATOR);
-        filteredForUI.addAll(getInPlaceAndTransferToEvents());
-        return filteredForUI;
-
-    }
-
-    /**
-     * Compare using the lab event type, the batch, the location and operator of the event and the in place vessel.
-     */
-    public static final Comparator<LabEvent> VESSEL_SAMPLE_EVENT_COMPARATOR = new Comparator<LabEvent>() {
-        @Override
-        public int compare(LabEvent lhs, LabEvent rhs) {
-            CompareToBuilder builder = new CompareToBuilder();
-            builder.append(lhs.getLabEventType(), rhs.getLabEventType());
-            builder.append(lhs.getLabBatch(), rhs.getLabBatch());
-            builder.append(lhs.getEventLocation(), rhs.getEventLocation());
-            builder.append(lhs.getEventOperator(), rhs.getEventOperator());
-            builder.append(lhs.getInPlaceLabVessel(), rhs.getInPlaceLabVessel());
-            return builder.build();
-        }
-    };
 
     public BigDecimal getVolume() {
         return volume;

@@ -2,19 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.Details;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.getsampledetails.SampleInfo;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Collections;
@@ -188,16 +181,17 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
     }
 
     /**
-     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
+     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.  Unrecognized
+     * manufacturer barcodes will have keys in the Map but null values.
      */
-    public Map<String, SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
+    public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
         String queryString = makeQueryString("barcodes", matrixBarcodes);
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
-        Map<String, SampleInfo> map = new HashMap<>();
-
+        Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
         WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
-        Details details = resource.accept(MediaType.TEXT_XML).get(new GenericType<Details>() {});
+        GetSampleDetails.Details
+                details = resource.accept(MediaType.TEXT_XML).get(new GenericType<GetSampleDetails.Details>() {});
         // Initialize all map values to null.
         for (String matrixBarcode : matrixBarcodes) {
             map.put(matrixBarcode, null);
@@ -205,7 +199,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
 
         // Overwrite the map values that were found in BSP with the SampleDetails objects.
         if (details.getSampleDetails().getSampleInfo() != null) {
-            for (SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
+            for (GetSampleDetails.SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
                 map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
             }
         }
