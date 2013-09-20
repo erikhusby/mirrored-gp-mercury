@@ -24,7 +24,7 @@ import java.util.List;
 @Impl
 public class BSPSampleReceiptServiceImpl extends BSPJerseyClient implements BSPSampleReceiptService {
 
-    private static final String WEB_SERVICE_URL = "sample/receivesample";
+    private static final String WEB_SERVICE_URL = "sample/receivesamples";
     private static final XStream XSTREAM = new XStream();
 
     /**
