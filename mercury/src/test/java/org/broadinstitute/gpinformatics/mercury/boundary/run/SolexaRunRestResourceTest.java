@@ -132,7 +132,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         researchProjectDao.persist(researchProject);
 
         exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.AGILENT_EXOME_EXPRESS));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 

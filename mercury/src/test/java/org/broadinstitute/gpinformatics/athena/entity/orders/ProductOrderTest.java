@@ -106,7 +106,7 @@ public class ProductOrderTest {
             public ProductOrder create() {
 
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type");
+                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 

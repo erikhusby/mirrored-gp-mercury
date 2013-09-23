@@ -92,7 +92,7 @@ public class MercuryClientEjbDbFreeTest {
         reset(mocks);
 
         switch (workflow) {
-        case EXOME_EXPRESS:
+        case AGILENT_EXOME_EXPRESS:
             labBatch = new LabBatch("ExEx Batch", new HashSet<LabVessel>(), LabBatch.LabBatchType.SAMPLES_RECEIPT);
             bucket = new Bucket(new WorkflowStepDef("Pico/Plating Bucket"));
             pdo = ProductOrderTestFactory.buildExExProductOrder(SAMPLE_SIZE);
@@ -172,7 +172,7 @@ public class MercuryClientEjbDbFreeTest {
 
 
     public void testSamplesToPicoBucket() throws Exception {
-        for (Workflow workflow : (new Workflow[] {Workflow.EXOME_EXPRESS, Workflow.ICE})) {
+        for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             setUp(workflow);
 
             WorkflowConfig workflowConfig = workflowLoader.load();

@@ -89,7 +89,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
+                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         String jiraTicketKey = "PD0-1";
@@ -179,7 +179,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder1, workflowBatch, "1");

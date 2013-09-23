@@ -57,7 +57,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
-        origBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        origBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
@@ -83,7 +83,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
 
-        reworkBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder2 = runPicoPlatingProcess(
@@ -176,7 +176,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
-        origBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        origBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         origBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         bucketBatchAndDrain(origRackMap, productOrder, origBatch, origLcsetSuffix);
         PicoPlatingEntityBuilder pplatingEntityBuilder1 = runPicoPlatingProcess(
@@ -208,7 +208,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                 LabBatch.LabBatchType.WORKFLOW);
-        reworkBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(reworkRackMap, productOrder, reworkBatch, reworkLcsetSuffix);
@@ -268,9 +268,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
-                Workflow.EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
+                Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
-                Workflow.EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
+                Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
         AthenaClientServiceStub.addProductOrder(productOrder1);
         AthenaClientServiceStub.addProductOrder(productOrder2);
         final Date runDate = new Date();
@@ -283,12 +283,12 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                 new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch1.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch1.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                 new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch2.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");

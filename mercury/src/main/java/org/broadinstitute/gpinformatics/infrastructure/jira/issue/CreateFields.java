@@ -113,7 +113,7 @@ public class CreateFields extends UpdateFields {
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum IssueType {
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(Workflow.EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         CLIA_PRODUCT_ORDER("CLIA Product Order"),
         RESEARCH_PROJECT("Research Project"),
@@ -143,7 +143,7 @@ public class CreateFields extends UpdateFields {
 
         /** Contains the IssueType to use for a given workflow. */
         public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
-            put(Workflow.EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
+            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
             put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
         }};
     }

@@ -73,7 +73,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
         workflowBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), "LCSET-tst123"));
 
@@ -95,7 +95,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
 
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
@@ -180,7 +180,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
@@ -273,7 +273,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.never()).getWorkflowValidationEmail();
@@ -365,7 +365,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -454,7 +454,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -544,7 +544,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
@@ -623,7 +623,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
 
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
@@ -701,7 +701,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FLOWCELL_2500_TICKET_KEY,
                         ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, null,
-                        Workflow.EXOME_EXPRESS);
+                        Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
                 .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();

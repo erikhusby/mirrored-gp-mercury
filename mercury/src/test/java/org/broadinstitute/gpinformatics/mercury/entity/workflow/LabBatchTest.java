@@ -48,7 +48,7 @@ public class LabBatchTest {
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflow = Workflow.EXOME_EXPRESS;
+        workflow = Workflow.AGILENT_EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();

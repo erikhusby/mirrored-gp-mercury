@@ -62,7 +62,7 @@ public class LCSetJiraFieldFactoryTest {
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflow = Workflow.EXOME_EXPRESS;
+        workflow = Workflow.AGILENT_EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
@@ -106,7 +106,7 @@ public class LCSetJiraFieldFactoryTest {
     public void testLCSetFieldGeneration() throws IOException {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflow, pdoNames),
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
-        testBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        testBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
 
         Set<LabVessel> reworks = new HashSet<>();

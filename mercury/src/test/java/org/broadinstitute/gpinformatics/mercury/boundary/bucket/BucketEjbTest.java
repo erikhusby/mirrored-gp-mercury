@@ -102,17 +102,17 @@ public class BucketEjbTest extends ContainerTest {
 
         productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
+                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         productOrder2 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
+                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
         productOrder3 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type"),
+                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
                 new ResearchProject(101L, "Test RP", "Test synopsis",
                         false));
 
@@ -501,7 +501,7 @@ public class BucketEjbTest extends ContainerTest {
 
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
-        resource.selectEntriesAndBatchThem(3, bucket, Workflow.EXOME_EXPRESS);
+        resource.selectEntriesAndBatchThem(3, bucket, Workflow.AGILENT_EXOME_EXPRESS);
 
         logger.info("After the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 

@@ -4,15 +4,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * This represents the workflow associated with a product.
  *
- * The enun names must exactly match WorkflowConfig.xml productDef elements.
+ * The enun name field must exactly match WorkflowConfig.xml productWorkflowDef name value.
  */
 public enum Workflow {
-    EXOME_EXPRESS("Exome Express"),
+    AGILENT_EXOME_EXPRESS("Agilent Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
@@ -26,17 +25,9 @@ public enum Workflow {
         this.name = name;
     }
 
-    /**
-     * @param workflowName the workflow name to check
-     * @return true if this is the exome express workflow
-     */
-    public static boolean isExomeExpress(@Nullable String workflowName) {
-        return workflowName != null && workflowName.equals(EXOME_EXPRESS.name);
-    }
-
     /** Workflow processes that Mercury supports. */
     public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
-        add(EXOME_EXPRESS);
+        add(AGILENT_EXOME_EXPRESS);
         add(ICE);
     }};
 

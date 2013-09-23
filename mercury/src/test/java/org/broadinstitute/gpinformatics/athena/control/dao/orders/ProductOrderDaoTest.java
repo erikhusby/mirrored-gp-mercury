@@ -113,7 +113,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         productOrderDao.flush();
         productOrderDao.clear();
 
-        Collection<ProductOrder> orders = productOrderDao.findByWorkflow(Workflow.EXOME_EXPRESS);
+        Collection<ProductOrder> orders = productOrderDao.findByWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         Assert.assertFalse(orders.isEmpty());
     }

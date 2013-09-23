@@ -405,7 +405,7 @@ public class BaseEventTest {
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, Workflow workflow) {
         int flowcellLanes=8;
-        if (workflow == Workflow.EXOME_EXPRESS){
+        if (workflow == Workflow.AGILENT_EXOME_EXPRESS){
             flowcellLanes=2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";

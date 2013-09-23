@@ -77,7 +77,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
-                Workflow.EXOME_EXPRESS, false, "agg type");
+                Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockBSPSampleDataFetcher, mockAthenaClientService,
                 mockControlDao);
@@ -168,7 +168,7 @@ public class ZimsIlluminaRunFactoryTest {
             if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                 JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
                 batch.setJiraTicket(lcSetTicket);
-                batch.setWorkflow(Workflow.EXOME_EXPRESS);
+                batch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
                 batch.addBucketEntry(bucketEntry);
                 bucketEntry.setLabBatch(batch);
             }

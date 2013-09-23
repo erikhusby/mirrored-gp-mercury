@@ -34,7 +34,7 @@ public class ProductEtlDbFreeTest {
     private static final int GUARANTEED_CYCLE_TIME_SECONDS = 99999;
     private static final int SAMPLES_PER_WEEK = 200;
     private static final boolean IS_TOP_LEVEL_PRODUCT = true;
-    private static final Workflow WORKFLOW = Workflow.EXOME_EXPRESS;
+    private static final Workflow WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
     private ProductEtl productEtl;

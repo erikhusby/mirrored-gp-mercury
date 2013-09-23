@@ -72,7 +72,7 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
-        return createDummyProductOrder(1, jiraTicketKey, Workflow.EXOME_EXPRESS, 10950, "MyResearchProject",
+        return createDummyProductOrder(1, jiraTicketKey, Workflow.AGILENT_EXOME_EXPRESS, 10950, "MyResearchProject",
                 AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", "A");
     }
 
@@ -96,7 +96,7 @@ public class ProductOrderTestFactory {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.EXOME_EXPRESS, 101, "Test RP",
+        return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.AGILENT_EXOME_EXPRESS, 101, "Test RP",
                 AthenaClientServiceStub.rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", "A");
     }
