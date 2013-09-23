@@ -764,9 +764,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         // Update the modified by and created by, if necessary.
-        ProductOrder.SaveType saveType = ProductOrder.SaveType.updating;
+        ProductOrder.SaveType saveType = ProductOrder.SaveType.UPDATING;
         if (isCreating()) {
-            saveType = ProductOrder.SaveType.creating;
+            saveType = ProductOrder.SaveType.CREATING;
         }
         editOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -1250,7 +1250,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if Save is a valid operation.
      */
     public boolean getCanSave() {
-        // Unless we're in draft mode, or creating a new order, user must be logged into JIRA to
+        // Unless we're in draft mode, or CREATING a new order, user must be logged into JIRA to
         // change fields in an order.
         return editOrder.isDraft() || isCreating() || userBean.isValidUser();
     }

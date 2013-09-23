@@ -89,7 +89,7 @@ public class ProductOrderResource {
             productOrder.setCreatedBy(user.getUserId());
         }
 
-        productOrder.prepareToSave(user, ProductOrder.SaveType.creating);
+        productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make

@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -65,7 +64,7 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     private static final String DRAFT_PREFIX = "Draft-";
 
-    public enum SaveType {creating, updating};
+    public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -384,7 +383,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @param user the user doing the save operation.
      */
     public void prepareToSave(BspUser user) {
-        prepareToSave(user, SaveType.updating);
+        prepareToSave(user, SaveType.UPDATING);
     }
 
     /**
@@ -398,7 +397,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         Date now = new Date();
         long userId = user.getUserId();
 
-        if (saveType.equals(SaveType.creating)) {
+        if (saveType == SaveType.CREATING) {
             // createdBy is now set in the UI.
             if (createdBy == null) {
                 // Used by tests only.
@@ -892,7 +891,6 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     @Override
     public boolean equals(Object other) {
-
         if (this == other) {
             return true;
         }

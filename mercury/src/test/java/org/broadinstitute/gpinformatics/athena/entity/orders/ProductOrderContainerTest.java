@@ -66,7 +66,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
-        testOrder.prepareToSave(bspUser, ProductOrder.SaveType.creating);
+        testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
         testOrder.placeOrder();
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
