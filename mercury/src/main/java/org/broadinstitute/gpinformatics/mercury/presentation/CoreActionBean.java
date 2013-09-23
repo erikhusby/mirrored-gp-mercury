@@ -298,10 +298,10 @@ public class CoreActionBean implements ActionBean {
             addGlobalValidationError(error);
         }
         for (String warn : messages.getWarnings()) {
-            getContext().getMessages().add(createSafeMessage("{0}", warn));
+            addMessage("Warning: " + warn);
         }
         for (String info : messages.getInfos()) {
-            getContext().getMessages().add(createSafeMessage("{0}", info));
+            addMessage(info);
         }
     }
 

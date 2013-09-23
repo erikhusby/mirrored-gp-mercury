@@ -8,7 +8,7 @@
 
 <div class="rackScanResults">
     <c:forEach items="${actionBean.matrixPositions}" var="position">
-        Position: ${position} &nbsp; &nbsp; Barcode: ${actionBean.rackScan[position]} <br />
+        Position: ${position} &#160; &#160; Barcode: ${actionBean.rackScan[position]} <br />
     </c:forEach>
 </div>
 

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.broadinstitute.bsp.client.response.SampleKitReceiptResponse;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Stub of the bsp sample receipt service specifically setup to mark all of the samples as received.
+ * Stub of the bsp sample receipt service specifically set up to mark all of the samples as received.
  */
 @Stub
 public class BSPSampleReceiptServiceStub implements BSPSampleReceiptService {
@@ -49,12 +50,13 @@ public class BSPSampleReceiptServiceStub implements BSPSampleReceiptService {
      * @return HashSet of generated barcodes. We're using a single sampleId as the sample Id, and SampleId+sampleId as
      *         the external id (2d matrix barcode).
      */
-    private HashSet<SampleKitReceiptResponse.Barcodes> generateBarcodes(List<String> sampleIds) {
-        HashSet<SampleKitReceiptResponse.Barcodes> barcodes = new HashSet<>();
+    private Set<SampleKitReceiptResponse.Barcodes> generateBarcodes(Collection<String> sampleIds) {
 
-        for (String sampleId: sampleIds) {
+        Set<SampleKitReceiptResponse.Barcodes> barcodes = new HashSet<>();
+
+        for (String sampleId : sampleIds) {
             // Instead of generating a real 2d matrix barcode, we're using sampleId + sampleId as a string.
-            barcodes.add(new SampleKitReceiptResponse.Barcodes(sampleId, sampleId + sampleId));
+            barcodes.add(new SampleKitReceiptResponse.Barcodes(sampleId, "STUB-" +sampleId));
         }
 
         return barcodes;

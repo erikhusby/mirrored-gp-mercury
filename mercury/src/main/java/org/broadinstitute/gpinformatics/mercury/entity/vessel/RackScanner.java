@@ -4,8 +4,6 @@ import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
 import org.broadinstitute.bsp.client.rackscan.RackScannerType;
 
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * RackScanner enum which holds all the connection info necessary to preform a rack scan.
@@ -31,44 +29,32 @@ public enum RackScanner {
     private static final boolean ACTIVE = false;
     private static final boolean NOT_LINEAR = false;
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName, String ipAddress,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName, String ipAddress,
                         Long port) {
-        this(rackScannerLab, scannerUID, scannerName, "", RackScannerType.AGBENE, ACTIVE, NOT_LINEAR, ipAddress, port);
+        this(rackScannerLab, scannerUid, scannerName, "", RackScannerType.AGBENE, ACTIVE, NOT_LINEAR, ipAddress, port);
     }
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName,
                         String scannerInternalName, String ipAddress, Long port) {
-        this(rackScannerLab, scannerUID, scannerName, scannerInternalName, RackScannerType.ZAITH, ACTIVE, NOT_LINEAR,
+        this(rackScannerLab, scannerUid, scannerName, scannerInternalName, RackScannerType.ZAITH, ACTIVE, NOT_LINEAR,
                 ipAddress, port);
     }
 
-    private RackScanner(RackScannerLab rackScannerLab, String scannerUID, String scannerName,
+    private RackScanner(RackScannerLab rackScannerLab, String scannerUid, String scannerName,
                         String scannerInternalName, RackScannerType scannerType, boolean archived,
                         boolean withLinearScanner, String ipAddress, Long port) {
 
         this.rackScannerLab = rackScannerLab;
-        this.scannerUID = scannerUID;
-        this.scannerName = scannerName;
-        this.scannerInternalName = scannerInternalName;
-        this.scannerType = scannerType;
-        this.archived = archived;
-        this.withLinearScanner = withLinearScanner;
-        this.ipAddress = ipAddress;
-        this.port = port;
+        rackScannerConfig = new RackScannerConfig(scannerUid, scannerName,
+                scannerInternalName, scannerType, archived,
+                withLinearScanner, ipAddress, port);
     }
 
-    private RackScannerLab rackScannerLab;
-    private String scannerUID;
-    private String scannerName;
-    private String scannerInternalName;
-    private RackScannerType scannerType;
-    private boolean archived;
-    private boolean withLinearScanner;
-    private String ipAddress;
-    private Long port;
+    private final RackScannerLab rackScannerLab;
+    private RackScannerConfig rackScannerConfig;
 
     public String getScannerName() {
-        return scannerName;
+        return rackScannerConfig.getScannerName();
     }
 
     public RackScannerLab getRackScannerLab() {
@@ -104,23 +90,11 @@ public enum RackScanner {
         }
     }
 
-    /** Map containing all the rack scanners as the key, and the configs as the value. */
-    private static final Map<RackScanner, RackScannerConfig> allConfigs = new HashMap<>();
-
-    // Preps a config for each rackscanner.
-    static {
-        for (RackScanner rackScanner : values()) {
-            allConfigs.put(rackScanner, new RackScannerConfig(rackScanner.scannerUID, rackScanner.scannerName,
-                    rackScanner.scannerInternalName, rackScanner.scannerType, rackScanner.archived,
-                    rackScanner.withLinearScanner, rackScanner.ipAddress, rackScanner.port));
-        }
-    }
-
     /**
      * @return The config specific to the RackScanner.
      */
-    public RackScannerConfig getConfig() {
-        return allConfigs.get(this);
+    public RackScannerConfig getRackScannerConfig() {
+        return rackScannerConfig;
     }
 
     /**
