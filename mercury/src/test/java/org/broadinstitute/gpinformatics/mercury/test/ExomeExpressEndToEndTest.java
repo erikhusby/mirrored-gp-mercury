@@ -29,10 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProduce
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
-import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPService;
-import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
-import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -97,8 +94,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 @SuppressWarnings("OverlyCoupledClass")
 public class ExomeExpressEndToEndTest {
 
-    private LibraryRegistrationSOAPService registrationSOAPService =
-            LibraryRegistrationSOAPServiceProducer.stubInstance();
+
 
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
@@ -446,10 +442,6 @@ public class ExomeExpressEndToEndTest {
 
             final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
-            final SequelLibrary registerLibrary =
-                    null; //RegistrationJaxbConverter.squidify(currEntry/*, projectPlan*/);
-
-            //            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
             final Collection<String> aliquotsFromProjectPlan = new HashSet<>();
@@ -508,9 +500,6 @@ public class ExomeExpressEndToEndTest {
             // todo add call to quote server to get all work done during the time period and verify
             // that our work was included: https://iwww.broadinstitute.org/blogs/quote/?page_id=210
 
-            registrationSOAPService.registerSequeLLibrary(registerLibrary);
-
-            registrationSOAPService.registerForDesignation(registerLibrary.getLibraryName(), /*projectPlan, */true);
 
             // Designation in Squid (7 lanes Squid + 1 lane Mercury)
             // Call Squid web service to add to queue (lanes, read length)

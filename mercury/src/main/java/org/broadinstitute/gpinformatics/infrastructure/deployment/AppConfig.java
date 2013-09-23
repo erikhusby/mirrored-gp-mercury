@@ -59,6 +59,20 @@ public class AppConfig extends AbstractConfig implements Serializable {
         return port;
     }
 
+    /**
+     * Should we send emails in this deployment?
+     * @return
+     */
+    public boolean shouldSendEmail() {
+        boolean shouldSend = false;
+        if (workflowValidationEmail != null) {
+            if (StringUtils.isBlank(workflowValidationEmail)) {
+                shouldSend = true;
+            }
+        }
+        return shouldSend;
+    }
+
     public String getWorkflowValidationEmail() {
         return workflowValidationEmail;
     }

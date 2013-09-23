@@ -8,6 +8,9 @@ import java.util.Date;
 /**
  * Mock that returns you a new quote with some
  * funds remaining when you call #getQuoteByAlphaId.
+ * DO NOT DELETE THIS CLASS!  YOU WILL NEED THIS CLASS
+ * AS AN ALTERNATIVE IN BEANS.XML TO TEST THE APP
+ * WHEN THE QUOTE SERVERS ARE DOWN.
  */
 @Alternative
 public class HappyQuoteServiceMock implements QuoteService {

@@ -78,7 +78,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         if (flowcellBatches.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
         }
@@ -90,7 +90,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
                 final String emptyBatchListMessage = "There are two many MiSeq Flowcell batch tickets for " +
                                                      flowcell.getLabel() + " to determine which one to update";
                 logger.error(emptyBatchListMessage);
-                emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
+                emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                         emptyBatchListMessage);
                 return;
             } else {
@@ -115,7 +115,7 @@ public class FlowcellMessageHandler extends AbstractEventHandler {
         if (batchesToUpdate.isEmpty()) {
             final String emptyBatchListMessage = "Unable to find any Flowcell batch tickets for " + flowcell.getLabel();
             logger.error(emptyBatchListMessage);
-            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed update FCT Ticket",
                     emptyBatchListMessage);
             return;
         } else {

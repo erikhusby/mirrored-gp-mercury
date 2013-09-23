@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.template;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 
 import javax.annotation.Resource;
 import javax.mail.Message;
@@ -25,23 +26,30 @@ public class EmailSender implements Serializable {
 
     /**
      * Send an email in HTML format
+     * @param appConfig The configuration for the deployed app.  This determines
+     *                  whether email will actually be sent.
      * @param to address
      * @param subject subject line
      * @param body HTML
      */
-    public void sendHtmlEmail(String to, String subject, String body) {
-        if (mailSession != null) {
-            try {
-                Message message = new MimeMessage(mailSession);
-                message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
-                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
-                message.setSubject(subject);
-                message.setContent(body, "text/html; charset=utf-8");
-                message.setSentDate(new Date());
-                Transport.send(message);
-            } catch (MessagingException e) {
-                LOG.error("Failed to send email", e);
-                // Don't rethrow, not fatal
+    public void sendHtmlEmail(AppConfig appConfig, String to, String subject, String body) {
+        if (appConfig == null) {
+            throw new RuntimeException("No appConfig was passed in for email to " + to + " regarding " + subject + "; the system does not know whether to it should really send the email.");
+        }
+        if (appConfig.shouldSendEmail()) {
+            if (mailSession != null) {
+                try {
+                    Message message = new MimeMessage(mailSession);
+                    message.setFrom(new InternetAddress("gplims@broadinstitute.org"));
+                    message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to, false));
+                    message.setSubject(subject);
+                    message.setContent(body, "text/html; charset=utf-8");
+                    message.setSentDate(new Date());
+                    Transport.send(message);
+                } catch (MessagingException e) {
+                    LOG.error("Failed to send email", e);
+                    // Don't rethrow, not fatal
+                }
             }
         }
     }
