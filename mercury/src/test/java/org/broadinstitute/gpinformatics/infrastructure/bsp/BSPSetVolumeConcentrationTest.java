@@ -17,6 +17,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 
 @Test(groups = EXTERNAL_INTEGRATION)
 public class BSPSetVolumeConcentrationTest extends Arquillian {
+    private static final double ERROR_BAND = 0.00001;
 
     @Deployment
     public static WebArchive getDeployment() {
@@ -35,19 +36,21 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
 
         String TEST_SAMPLE_ID = "SM-1234";
-        BigDecimal newVolume = getRandomBigDecimal();
-        BigDecimal newConcentration = getRandomBigDecimal();
+        BigDecimal[] newVolume = new BigDecimal[] {getRandomBigDecimal(), new BigDecimal("43.068215")};
+        BigDecimal[] newConcentration = new BigDecimal[] {getRandomBigDecimal(),  new BigDecimal("43.068225")};
 
-        String result =
-                bspSetVolumeConcentration.setVolumeAndConcentration(TEST_SAMPLE_ID, newVolume, newConcentration);
-        Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
+        for (int i = 0; i < newVolume.length; ++i) {
+            String result = bspSetVolumeConcentration.setVolumeAndConcentration(
+                    TEST_SAMPLE_ID, newVolume[i], newConcentration[i]);
+            Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-        BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
-        Double currentVolume = bspSampleDTO.getVolume();
-        Double currentConcentration = bspSampleDTO.getConcentration();
+            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
+            Double currentVolume = bspSampleDTO.getVolume();
+            Double currentConcentration = bspSampleDTO.getConcentration();
 
-        Assert.assertEquals(scaleResult(newVolume), currentVolume);
-        Assert.assertEquals(scaleResult(newConcentration), currentConcentration);
+            Assert.assertTrue(scaleResult(newVolume[i]) - currentVolume <= ERROR_BAND);
+            Assert.assertTrue(scaleResult(newConcentration[i]) - currentConcentration <= ERROR_BAND);
+        }
     }
 
     /**
