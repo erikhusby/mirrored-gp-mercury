@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube_;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -18,13 +20,20 @@ import java.util.TreeMap;
 public class TwoDBarcodedTubeDao extends GenericDao {
 
     /**
+     * Returns a simple List of {@code TwoDBarcodedTube}s for the input {@code barcodes}.
+     */
+    public List<TwoDBarcodedTube> findListByBarcodes(@Nonnull Collection<String> barcodes) {
+        return findListByList(TwoDBarcodedTube.class, TwoDBarcodedTube_.label, barcodes);
+    }
+
+    /**
      * Finds tube entities for given barcodes
      *
      * @param barcodes tube barcodes
      *
      * @return map from barcode to tube, tube is null if not found
      */
-    public Map<String, TwoDBarcodedTube> findByBarcodes(List<String> barcodes) {
+    public Map<String, TwoDBarcodedTube> findByBarcodes(@Nonnull Collection<String> barcodes) {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new TreeMap<>();
         for (String barcode : barcodes) {
             mapBarcodeToTube.put(barcode, null);
@@ -36,7 +45,7 @@ public class TwoDBarcodedTubeDao extends GenericDao {
         return mapBarcodeToTube;
     }
 
-    public TwoDBarcodedTube findByBarcode(String barcode) {
+    public TwoDBarcodedTube findByBarcode(@Nonnull String barcode) {
         return findSingle(TwoDBarcodedTube.class, TwoDBarcodedTube_.label, barcode);
     }
 }

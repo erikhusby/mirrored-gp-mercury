@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -7,6 +8,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * We use a custom serializer here because custom fields are not
@@ -17,9 +20,7 @@ import javax.annotation.Nullable;
  */
 @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
 public class CreateFields extends UpdateFields {
-
     public static class Project {
-
         public Project() {
 
         }
@@ -43,7 +44,6 @@ public class CreateFields extends UpdateFields {
     }
 
     public static class Reporter {
-
         public Reporter() {
         }
 
@@ -70,11 +70,13 @@ public class CreateFields extends UpdateFields {
 
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum ProjectType {
-
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
+        CRSP_LCSET_PROJECT("Illumina Library Construction Tracking", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO"),
-        Research_Projects("Research Projects", "RP");
+        CRSP_PRODUCT_ORDERING("Product Ordering", "CPDO"),
+        RESEARCH_PROJECTS("Research Projects", "RP"),
+        CRSP_RESEARCH_PROJECTS("Research Projects", "CRP");
 
         private final String projectName;
         private final String keyPrefix;
@@ -82,6 +84,21 @@ public class CreateFields extends UpdateFields {
         private ProjectType(String projectName, String keyPrefix) {
             this.projectName = projectName;
             this.keyPrefix = keyPrefix;
+        }
+
+        public static ProjectType getLcsetProjectType() {
+            return Deployment.isCRSP ? CRSP_LCSET_PROJECT :
+                    LCSET_PROJECT ;
+        }
+
+        public static ProjectType getProductOrderingProductType() {
+            return (Deployment.isCRSP) ? CRSP_PRODUCT_ORDERING :
+                    PRODUCT_ORDERING;
+        }
+
+        public static ProjectType getResearchProjectType() {
+            return ((Deployment.isCRSP) ? CRSP_RESEARCH_PROJECTS :
+                    RESEARCH_PROJECTS);
         }
 
         public String getProjectName() {
@@ -93,14 +110,14 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum IssueType {
-
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(Workflow.EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
+        CLIA_PRODUCT_ORDER("CLIA Product Order"),
         RESEARCH_PROJECT("Research Project"),
+        CLIA_RESEARCH_PROJECT("CLIA Research Project"),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq");
 
@@ -110,18 +127,25 @@ public class CreateFields extends UpdateFields {
             this.jiraName = jiraName;
         }
 
+        public static IssueType getProductOrderIssueType() {
+            return (Deployment.isCRSP) ? CLIA_PRODUCT_ORDER :
+                    PRODUCT_ORDER;
+        }
+
+        public static IssueType getResearchProjectIssueType() {
+            return (Deployment.isCRSP) ? CLIA_RESEARCH_PROJECT :
+                    RESEARCH_PROJECT;
+        }
+
         public String getJiraName() {
             return jiraName;
         }
 
-        public static IssueType valueForJiraName(String jiraName) {
-            for (IssueType issueType : IssueType.values()) {
-                if (issueType.getJiraName().equals(jiraName)) {
-                    return issueType;
-                }
-            }
-            return null;
-        }
+        /** Contains the IssueType to use for a given workflow. */
+        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
+            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
+            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
+        }};
     }
 
 

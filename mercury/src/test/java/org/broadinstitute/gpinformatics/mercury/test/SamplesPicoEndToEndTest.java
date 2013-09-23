@@ -184,8 +184,8 @@ public class SamplesPicoEndToEndTest {
 
             BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
             ReworkEjb reworkEjb = EasyMock.createNiceMock(ReworkEjb.class);
-            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB,
-                    bucketDao);
+            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao,
+                    AthenaClientProducer.stubInstance());
             EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao, bucketDao);
 
             TemplateEngine templateEngine = new TemplateEngine();

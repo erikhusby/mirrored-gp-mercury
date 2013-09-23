@@ -1,16 +1,28 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -23,52 +35,133 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Restful webservice to list product orders.
+ * Restful webservice to list and create product orders.
  */
 @Path("productOrders")
 @Stateful
 @RequestScoped
 public class ProductOrderResource {
-
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    ProductOrderEjb productOrderEjb;
 
-    private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
-                                                     boolean includeSamples) {
+    @Inject
+    private BSPUserList bspUserList;
 
-        List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
+    @Inject
+    ResearchProjectDao researchProjectDao;
 
-        for (ProductOrder productOrder : productOrderList) {
-            ProductOrderData productOrderData = new ProductOrderData();
-            productOrderData.setTitle(productOrder.getTitle());
-            productOrderData.setId(productOrder.getBusinessKey());
-            productOrderData.setComments(productOrder.getComments());
-            productOrderData.setPlacedDate(productOrder.getPlacedDate());
-            productOrderData.setModifiedDate(productOrder.getModifiedDate());
-            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
-            productOrderData.setProductName(productOrder.getProduct().getName());
-            productOrderData.setStatus(productOrder.getOrderStatus().name());
-            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
-            productOrderData.setQuoteId(productOrder.getQuoteId());
+    @Inject
+    ProductDao productDao;
 
-            if (includeSamples) {
-                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
-                for (ProductOrderSample sample : productOrder.getSamples()) {
-                    sampleNames.add(sample.getSampleName());
-                }
-                productOrderData.setSamples(sampleNames);
-            } else {
-                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
-                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
-                productOrderData.setSamples(null);
-            }
-
-            productOrderDataList.add(productOrderData);
+    /**
+     * Return the information on the newly created {@link ProductOrder} that has Draft status.
+     * <p/>
+     * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
+     * as defined in the class (although I can't seem to be able to use the enum for the annotation.
+     *
+     * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
+     *
+     * @return the reference for the newly created {@link ProductOrder}
+     *
+     * @throws DuplicateTitleException
+     * @throws NoSamplesException
+     * @throws QuoteNotFoundException
+     */
+    @POST
+    @Path("create")
+    //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
+    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_XML)
+    public ProductOrderData create(@Nonnull ProductOrderData productOrderJaxB)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+        if (productOrderJaxB == null) {
+            throw new InformaticsServiceException(("No data found to define the new Product Order"));
         }
 
-        return new ProductOrders(productOrderDataList);
+        ProductOrder productOrder = convert(productOrderJaxB);
+
+        // Figure out who called this so we can record the owner.
+        BspUser user = bspUserList.getByUsername(productOrderJaxB.getUsername());
+        if (user != null) {
+            productOrder.setCreatedBy(user.getUserId());
+        }
+
+        productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+
+        // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
+        // sure any DB constraints have been enforced.
+        productOrderDao.persist(productOrder);
+        productOrderDao.flush();
+
+        /*
+        // If returning the URI to the resource we made, then return type needs to be Response.
+        URI productOrderUri =
+                uriInfo.getAbsolutePathBuilder().path(productOrder.getProductOrderId().toString()).build();
+        return Response.created(productOrderUri).build();
+        */
+
+        return new ProductOrderData(productOrder);
+    }
+
+    /**
+     * Try to convert the JAXB XML data into a {@link ProductOrder}.
+     *
+     * @param productOrderData The JAXB XML element
+     *
+     * @return the populated {@link ProductOrder}
+     */
+    private ProductOrder convert(ProductOrderData productOrderData)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+        //QName qname = new QName("http://mercury.broadinstitute.org/Mercury", "productOrder");
+        //JAXBElement<ProductOrder> productOrderJaxB = new JAXBElement(qname, ProductOrderData.class, productOrderData);
+        //return productOrderJaxB.getValue();
+
+        ProductOrder productOrder = new ProductOrder();
+
+        // Make sure the title/name is supplied and unique
+        if (StringUtils.isBlank(productOrderData.getTitle())) {
+            throw new ApplicationValidationException("Title required for Product Order");
+        }
+
+        // Make sure the title
+        if (productOrderDao.findByTitle(productOrderData.getTitle()) != null) {
+            throw new DuplicateTitleException();
+        }
+
+        productOrder.setTitle(productOrderData.getTitle());
+
+
+        productOrder.setComments(productOrderData.getComments());
+        productOrder.setQuoteId(productOrderData.getQuoteId());
+
+        // Find the product by the product name.
+        if (!StringUtils.isBlank(productOrderData.getProductName())) {
+            Product product = productDao.findByName(productOrderData.getProductName());
+            productOrder.setProduct(product);
+        }
+
+        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
+            ResearchProject researchProject =
+                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
+            productOrder.setResearchProject(researchProject);
+        }
+
+        // Find and add the product order samples.
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        for (String sample : productOrderData.getSamples()) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        productOrder.addSamples(productOrderSamples);
+
+        // Set the requisition key so one can look up the requisition in the Portal.
+        productOrder.setRequisitionKey(productOrderData.getRequisitionKey());
+
+        return productOrder;
     }
 
     /**
@@ -84,7 +177,6 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     public ProductOrders findByIds(@PathParam("productOrderIds") String productOrderIds,
                                    @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
-
         List<String> businessKeyList = Arrays.asList(productOrderIds.split(","));
 
         List<ProductOrder> productOrderList = includeSamples ?
@@ -144,5 +236,41 @@ public class ProductOrderResource {
         }
 
         return buildProductOrdersFromList(orders, includeSamples);
+    }
+
+    private ProductOrders buildProductOrdersFromList(@Nonnull List<ProductOrder> productOrderList,
+                                                     boolean includeSamples) {
+        List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
+
+        for (ProductOrder productOrder : productOrderList) {
+            ProductOrderData productOrderData = new ProductOrderData();
+            productOrderData.setTitle(productOrder.getTitle());
+            productOrderData.setId(productOrder.getBusinessKey());
+            productOrderData.setComments(productOrder.getComments());
+            productOrderData.setPlacedDate(productOrder.getPlacedDate());
+            productOrderData.setModifiedDate(productOrder.getModifiedDate());
+            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
+            productOrderData.setProductName(productOrder.getProduct().getName());
+            productOrderData.setStatus(productOrder.getOrderStatus().name());
+            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
+            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setQuoteId(productOrder.getQuoteId());
+
+            if (includeSamples) {
+                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
+                for (ProductOrderSample sample : productOrder.getSamples()) {
+                    sampleNames.add(sample.getName());
+                }
+                productOrderData.setSamples(sampleNames);
+            } else {
+                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
+                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
+                productOrderData.setSamples(null);
+            }
+
+            productOrderDataList.add(productOrderData);
+        }
+
+        return new ProductOrders(productOrderDataList);
     }
 }

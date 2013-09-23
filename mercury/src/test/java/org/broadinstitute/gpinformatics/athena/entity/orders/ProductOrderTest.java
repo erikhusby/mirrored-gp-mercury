@@ -28,16 +28,39 @@ import java.util.Random;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormatSample.inBspFormat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderTest {
 
     private static final Long TEST_CREATOR = 1111L;
-
     private static final String PDO_JIRA_KEY = "PDO-1";
+    private final List<ProductOrderSample> sixBspSamplesNoDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+    private final List<ProductOrderSample> fourBspSamplesWithDupes =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
+    private final List<ProductOrderSample> sixMixedSampleProducts =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList("SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
+    private final List<ProductOrderSample> nonBspSampleProducts =
+            ProductOrderSampleTestFactory
+                    .createDBFreeSampleList("SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
+                            "SM-SM-SM");
     private ProductOrder productOrder;
+
+    public static ProductOrder createOrderWithSamples(List<ProductOrderSample> samples, OrderStatus status) {
+        ProductOrder order = new ProductOrder();
+        order.addSamples(samples);
+        order.setOrderStatus(status);
+        return order;
+    }
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -56,7 +79,7 @@ public class ProductOrderTest {
         Configuration configuration = new ConfigurationBuilder()
                 .ignoreProperty("samples")
                 .ignoreProperty("title")
-                // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
+                        // TODO: jiraTicketKey is part of businessKey which is what equals() uses. should it really be ignored?
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("laneCount")
@@ -71,6 +94,7 @@ public class ProductOrderTest {
                 .ignoreProperty("comments")
                 .ignoreProperty("sampleList")
                 .ignoreProperty("fundingDeadline")
+                .ignoreProperty("requisitionKey")
                 .ignoreProperty("publicationDeadline").build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -82,7 +106,7 @@ public class ProductOrderTest {
             public ProductOrder create() {
 
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
-                        1814400, 1814400, 184, null, null, null, true, Workflow.EXOME_EXPRESS, false, "agg type");
+                        1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =
                         new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 
@@ -99,28 +123,13 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-        assertThat(productOrder.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.PRODUCT_ORDER)));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(CreateFields.ProjectType.PRODUCT_ORDERING)));
+        assertThat(productOrder.fetchJiraIssueType(), is(equalTo(
+                CreateFields.IssueType.getProductOrderIssueType())));
+        assertThat(productOrder.fetchJiraProject(), is(equalTo(
+                CreateFields.ProjectType.getProductOrderingProductType())));
         assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }
-
-    private final List<ProductOrderSample> sixBspSamplesNoDupes =
-            ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
-
-    private final List<ProductOrderSample> fourBspSamplesWithDupes =
-            ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACGC", "SM-2AB1B", "SM-2ACJC", "SM-2ACGC");
-
-    private final List<ProductOrderSample> sixMixedSampleProducts =
-            ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SM-2ACGC", "SM2ABDD", "SM2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
-
-    private final List<ProductOrderSample> nonBspSampleProducts =
-            ProductOrderSampleTestFactory
-                    .createDBFreeSampleList("SSM-2ACGC1", "SM--2ABDDD", "SM-2AB", "SM-2AB1B-", "SM-2ACJCACB",
-                            "SM-SM-SM");
 
     @Test
     public void testGetUniqueSampleCount() throws Exception {
@@ -154,13 +163,6 @@ public class ProductOrderTest {
         assertThat(sixMixedSampleProducts, not(everyItem(is(inBspFormat()))));
     }
 
-    public static ProductOrder createOrderWithSamples(List<ProductOrderSample> samples, OrderStatus status) {
-        ProductOrder order = new ProductOrder();
-        order.addSamples(samples);
-        order.setOrderStatus(status);
-        return order;
-    }
-
     @DataProvider(name = "testUpdateOrderStatus")
     public Object[][] createUpdateOrderStatusData() {
         List<ProductOrderSample> billedSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
@@ -174,7 +176,7 @@ public class ProductOrderTest {
                 new ProductOrderSample("ZZZ"));
         List<ProductOrderSample> billedToAddOnSamples = Arrays.asList(ProductOrderSampleTest.createBilledSample("ABC"),
                 ProductOrderSampleTest.createBilledSample("ZZZ", LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM));
-        return new Object[][] {
+        return new Object[][]{
                 // Can't transition from Draft or Abandoned, regardless of the sample state.
                 {createOrderWithSamples(billedSamples, OrderStatus.Draft), false, OrderStatus.Draft},
                 {createOrderWithSamples(billedSamples, OrderStatus.Abandoned), false, OrderStatus.Abandoned},

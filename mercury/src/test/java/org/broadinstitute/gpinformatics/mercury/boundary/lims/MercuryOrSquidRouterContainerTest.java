@@ -121,7 +121,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         utx.begin();
 
-        testExExOrder = poDao.findByWorkflow(Workflow.EXOME_EXPRESS).iterator().next();
+        testExExOrder = poDao.findByWorkflow(Workflow.AGILENT_EXOME_EXPRESS).iterator().next();
         exExJiraKey = testExExOrder.getBusinessKey();
 
         squidProductOrder = poDao.findByWorkflow(Workflow.WHOLE_GENOME).iterator().next();
@@ -927,9 +927,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         //THis will automatically add the batch to the tubes via the internal set methods
         LabBatch labBatch = new LabBatch("testBatch" + testSuffix.getTime(), tubes, LabBatch.LabBatchType.WORKFLOW);
-        labBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
-//        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch,"scottmat",bucketName,"HOME", CreateFields.IssueType.EXOME_EXPRESS);
+//        labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch,"scottmat",bucketName,"HOME", CreateFields.IssueType.AGILENT_EXOME_EXPRESS);
         for (LabVessel currTube : tubes) {
             for (BucketEntry currentEntry : currTube.getBucketEntries()) {
                 currentEntry.setStatus(BucketEntry.Status.Archived);

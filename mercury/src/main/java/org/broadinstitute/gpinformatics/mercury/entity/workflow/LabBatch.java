@@ -327,7 +327,7 @@ public class LabBatch {
         this.workflowName = workflowName;
     }
 
-    public void setWorkflow(Workflow workflow) {
+    public void setWorkflow(@Nonnull Workflow workflow) {
         workflowName = workflow.getWorkflowName();
     }
 
@@ -356,15 +356,10 @@ public class LabBatch {
     }
 
     /**
-     * Helper method to dynamically create batch names based on Input from PDM's.  The format for the Names of the
+     * Helper method to dynamically create batch names based on Input from PDMs.  The format for the Names of the
      * batches, when not manually defined, will be:
      * <p/>
-     * [Product name] [Product workflow Version]: [comma separated list of PDO names]
-     *
-     * @param workflow
-     * @param pdoNames
-     *
-     * @return
+     * {@code [Product name] [Product workflow Version]: [comma separated list of PDO names]}
      */
     public static String generateBatchName(@Nonnull Workflow workflow, @Nonnull Collection<String> pdoNames) {
 

@@ -27,6 +27,7 @@
                         {"bSortable":true},
                         {"bSortable":true},
                         {"bSortable":true},
+                        {"bSortable":true},
                         {"bSortable":true, "sType":"html"}
                     ],
                     "bRetrieve":true,
@@ -45,6 +46,7 @@
             <th>Event</th>
             <th>Date</th>
             <th>Location</th>
+            <th>Script</th>
             <th>Operator</th>
             <th>Index</th>
             <th>JIRAs + PDOs</th>
@@ -102,6 +104,9 @@
                             ${event.eventLocation}
                     </td>
                     <td>
+                            ${event.programName}
+                    </td>
+                    <td>
                             ${bean.getUserFullName(event.eventOperator)}
                     </td>
                     <td style="padding: 0;">
@@ -128,7 +133,7 @@
                                        class="external" target="JIRA">
                                             ${batchComposition.labBatch.businessKey}
                                         (${batchComposition.count}/${batchComposition.denominator})
-                                    </a>
+                                    </a>&nbsp;&nbsp;
                                 </c:if>
 
                                 <c:if test="${not empty sampleInstance.productOrderKey}">

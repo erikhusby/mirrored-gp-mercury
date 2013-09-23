@@ -2,10 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
+import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleResponse;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.sample.Sample;
+import org.broadinstitute.bsp.client.sample.SampleKit;
 import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
@@ -15,6 +17,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,6 +31,13 @@ import java.util.List;
 @Alternative
 public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
+
+    public static final String TEST_SAMPLE_KIT_ID = "SK-TST1";
+
+    public static final String TEST_SK_SAMPLE_1 = "SM-SK11";
+    public static final String TEST_SK_SAMPLE_2 = "SM-SK12";
+    public static final String TEST_SK_SAMPLE_3 = "SM-SK13";
+    public static final String TEST_SK_SAMPLE_4 = "SM-SK14";
 
     @Override
     public WorkRequestManager createWorkRequestManager() {
@@ -101,6 +112,14 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 philDunleaUser.setEmail("pdunlea@broadinstitute.org");
                 testList.add(philDunleaUser);
 
+                BspUser scottmatUser = new BspUser();
+                scottmatUser.setUserId(17794L);
+                scottmatUser.setUsername("scottmat");
+                scottmatUser.setFirstName("Scott");
+                scottmatUser.setLastName("Matthews");
+                scottmatUser.setEmail("scottmat@broadinstitute.org");
+                testList.add(scottmatUser);
+
                 return testList;
             }
         };
@@ -108,22 +127,49 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
     @Override
     public SampleManager createSampleManager() {
-
         return new SampleManager() {
+            @Override
+            public SampleKitListResponse getSampleKitsBySampleIds(Collection<String> strings) {
+                SampleKitListResponse response = new SampleKitListResponse();
+
+                SampleKit kitForResponse = new SampleKit();
+                kitForResponse.setSampleKitId(TEST_SAMPLE_KIT_ID);
+
+                List<Sample> kitSamples = new ArrayList<>();
+                Collections.addAll(kitSamples, new Sample(TEST_SK_SAMPLE_1), new Sample(TEST_SK_SAMPLE_2), new Sample(TEST_SK_SAMPLE_3), new Sample(TEST_SK_SAMPLE_4));
+
+                kitForResponse.setSamples(kitSamples);
+                response.setResult(Collections.singletonList(kitForResponse));
+                response.setSuccess(true);
+
+                return response;
+            }
 
             @Override
             public SampleKitResponse getSampleKit(String s) {
-                throw new IllegalStateException("Not Yet Implemented");
+                SampleKitResponse response = new SampleKitResponse();
+                SampleKit kitForResponse = new SampleKit();
+                kitForResponse.setSampleKitId(TEST_SAMPLE_KIT_ID);
+                kitForResponse.setSamples(Collections.singletonList(new Sample(s)));
+                response.setResult(kitForResponse);
+
+                return response;
             }
 
             @Override
             public SampleResponse updateSample(Sample sample) {
-                throw new IllegalStateException("Not Yet Implemented");
+                SampleResponse response = new SampleResponse();
+                response.setResult(sample);
+                response.setSuccess(true);
+                return response;
             }
 
             @Override
             public SampleResponse getSample(String s) {
-                throw new IllegalStateException("Not Yet Implemented");
+                SampleResponse response = new SampleResponse();
+                response.setResult(new Sample(s));
+                response.setSuccess(true);
+                return response;
             }
 
             @Override

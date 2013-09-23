@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
@@ -37,7 +38,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.
  * Defines the notion of a vessel belonging to either Mercury or Squid.
  * <p>
  * The current definition of "belonging" to Mercury is that all vessels upstream of the specified vessel (or set of
- * vessels) have been batched for Exome Express.
+ * vessels) have been batched for a Mercury-supported workflow.
  *
  */
 public class SystemRouter implements Serializable {
@@ -187,8 +188,7 @@ public class SystemRouter implements Serializable {
      *
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
-     *
-     * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
+     *  * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
      * that, for system-of-record determination, controls defer to their travel partners.
      *
      * @param vessels a collection of LabVessels for which system routing is to be determined
@@ -224,7 +224,8 @@ public class SystemRouter implements Serializable {
                                     if (productWorkflowDef.getInValidation()) {
                                         LabBatch labBatch = sampleInstance.getLabBatch();
                                         if(labBatch == null) {
-                                            throw new RuntimeException("No lab batch for sample " + sampleInstance.getStartingSample().getSampleKey());
+                                            throw new RuntimeException("No lab batch for sample " +
+                                                                     sampleInstance.getStartingSample().getSampleKey());
                                         }
                                         // Per Andrew, we can assume that validation plastic has only one LCSET
                                         if(labBatch.isValidationBatch()) {
@@ -342,17 +343,7 @@ public class SystemRouter implements Serializable {
         return result;
     }
 
-    /**
-     * getWorkflowVersion will, based on the BusinessKey of a product order, find the defined Workflow Version.  It
-     * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
-     * workflow definition based on the workflow name defined on the ProductOrder
-     *
-     *
-     * @param workflowName e.g. Exome Express
-     *
-     * @param effectiveDate
-     * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
-     */
+    /** Returns the workflowDef for the given workflowName and date. */
     private ProductWorkflowDefVersion getWorkflowVersion(@Nonnull String workflowName, @Nonnull Date effectiveDate) {
 
         WorkflowConfig workflowConfig = workflowLoader.load();

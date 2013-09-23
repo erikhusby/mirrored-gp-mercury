@@ -111,9 +111,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Inject
     private IlluminaSequencingRunFactory illuminaSequencingRunFactory;
 
-    //    @Inject
-//    private BSPSampleSearchService bspSampleSearchService;
-//
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -133,7 +130,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Inject
-    AppConfig appConfig;
+    private AppConfig appConfig;
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
@@ -190,7 +187,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         researchProject = researchProjectDao.findByTitle("ADHD");
 
         exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.EXOME_EXPRESS));
+                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.AGILENT_EXOME_EXPRESS));
 
         final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
 
@@ -216,7 +213,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
             throw new RuntimeException(e);
         }
         pdo1JiraKey = exexOrder.getJiraTicketKey();
-//        productOrderDao.persist(exexOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, twoDBarcodedTubeDao);
@@ -225,7 +221,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest.sendMessagesUptoCatch(
                 testPrefix,
-                mapBarcodeToTube, bettaLimsMessageFactory, Workflow.EXOME_EXPRESS, bettaLimsMessageResource,
+                mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
                 reagentDesignDao, twoDBarcodedTubeDao,
                 appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
@@ -488,7 +484,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setValidationBatch(true);
-        labBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
                 LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);

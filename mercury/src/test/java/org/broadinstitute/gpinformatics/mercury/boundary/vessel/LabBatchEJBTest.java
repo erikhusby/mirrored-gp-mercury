@@ -193,7 +193,7 @@ public class LabBatchEJBTest extends ContainerTest {
         bucket = bucketDao.findByName(BUCKET_NAME);
 
         String expectedTicketId =
-                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
+                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix() + JiraServiceStub.getCreatedIssueSuffix();
         Assert.assertEquals(expectedTicketId, savedBatch.getBatchName());
         savedBatch = labBatchDao.findByName(expectedTicketId);
 
@@ -211,7 +211,7 @@ public class LabBatchEJBTest extends ContainerTest {
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
         LabBatch savedBatch = labBatchEJB
                 .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
-                        expectedTicketId, BUCKET_NAME, LabEvent.UI_EVENT_LOCATION, LabBatch.LabBatchType.WORKFLOW,
+                        expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
                         CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDao.flush();

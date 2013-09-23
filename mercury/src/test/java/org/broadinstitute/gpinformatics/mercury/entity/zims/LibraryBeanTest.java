@@ -51,7 +51,7 @@ public class LibraryBeanTest {
         LibraryBean libraryBean =
             new LibraryBean(
                 gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
+                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
@@ -64,7 +64,7 @@ public class LibraryBeanTest {
         // new up sans bsp DTO to confirm gssr fields work.
         libraryBean =
                 new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies, gssrStrain,
-                        gssrParticipant, null, Workflow.EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
+                        gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);

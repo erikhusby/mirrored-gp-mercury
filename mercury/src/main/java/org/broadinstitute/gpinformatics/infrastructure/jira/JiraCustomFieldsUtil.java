@@ -52,7 +52,8 @@ public class JiraCustomFieldsUtil {
             throws IOException {
         final Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields(
-                        new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
+                        new CreateFields.Project(
+                                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
         final Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions =
@@ -76,4 +77,5 @@ public class JiraCustomFieldsUtil {
 
         return requiredCustomFieldDefinitions;
     }
+
 }

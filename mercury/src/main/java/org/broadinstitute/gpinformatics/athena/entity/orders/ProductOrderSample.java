@@ -9,9 +9,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -52,7 +54,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER_SAMPLE", schema = "athena")
-public class ProductOrderSample extends AbstractSample implements Serializable {
+public class ProductOrderSample extends AbstractSample implements BusinessObject, Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
 
     /**
@@ -100,6 +102,8 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
     @Column(name = "ALIQUOT_ID")
     private String aliquotId;
 
+    @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
+    Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -226,7 +230,28 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         this.sampleName = sampleName;
     }
 
+    /**
+     * @deprecated
+     * @see #getBusinessKey
+     * @return the business key
+     */
+    @Deprecated
     public String getSampleName() {
+        return sampleName;
+    }
+
+    @Override
+    public String getName() {
+        return sampleName;
+    }
+
+    /**
+     * Returns the public name of the key that should be used for display purposes.
+     *
+     * @return the name of the sample
+     */
+    @Override
+    public String getBusinessKey() {
         return sampleName;
     }
 
@@ -255,6 +280,11 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         return ledgerItems;
     }
 
+    /**
+     * Returns the internal database key, not to be used for display purposes (use #getBusinessKey() instead).
+     *
+     * @return the database ID for the {@link ProductOrderSample}
+     */
     public Long getProductOrderSampleId() {
         return productOrderSampleId;
     }
@@ -572,5 +602,14 @@ public class ProductOrderSample extends AbstractSample implements Serializable {
         }
 
         return null;
+    }
+
+    public Set<SampleReceiptValidation> getSampleReceiptValidations() {
+        return sampleReceiptValidations;
+    }
+
+    public void addValidation(SampleReceiptValidation validation) {
+        validation.setProductOrderSample(this);
+        this.sampleReceiptValidations.add(validation);
     }
 }

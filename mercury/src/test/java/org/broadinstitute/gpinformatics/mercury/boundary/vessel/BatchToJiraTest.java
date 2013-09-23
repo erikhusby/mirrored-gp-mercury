@@ -110,7 +110,8 @@ public class BatchToJiraTest extends Arquillian {
         tube1 = labVesselDao.findByIdentifier(tube1Label);
         tube2 = labVesselDao.findByIdentifier(tube2Label);
 
-        LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L);
+        LabEvent event = new LabEvent(LabEventType.DENATURE_TO_FLOWCELL_TRANSFER, new Date(), "TEST-LAND", 0L, 101L,
+                "batchToJiraTest");
         tube2.addInPlaceEvent(event);
         LabBatch batch = new LabBatch("Test batch 2", startingVessels, LabBatch.LabBatchType.WORKFLOW);
 

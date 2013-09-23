@@ -15,9 +15,12 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -65,15 +68,18 @@ public class ProductOrderSampleDao extends GenericDao {
 
     /**
      * For a list of sample names, return corresponding ProductOrderSamples
+     *
+     *
+     *
      * @param sampleNames list of sample names
      * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
      * the key.
      */
-    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
-        Map<String, List<ProductOrderSample>> mapSampleNameToProductOrderSampleList =
+    public Map<String,Set<ProductOrderSample>> findMapBySamples(Collection<String> sampleNames) {
+        Map<String, Set<ProductOrderSample>> mapSampleNameToProductOrderSampleList =
                 new HashMap<>();
         for (String sampleName : sampleNames) {
-            mapSampleNameToProductOrderSampleList.put(sampleName, new ArrayList<ProductOrderSample>());
+            mapSampleNameToProductOrderSampleList.put(sampleName, new HashSet<ProductOrderSample>());
         }
         List<ProductOrderSample> productOrderSamples = findListByList(ProductOrderSample.class,
                 ProductOrderSample_.sampleName, sampleNames);

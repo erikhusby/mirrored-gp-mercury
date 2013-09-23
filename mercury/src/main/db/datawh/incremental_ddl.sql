@@ -1,5 +1,7 @@
 -------------------------------------------------------
--- For release 1.30
+-- For release 1.31
 -------------------------------------------------------
-alter table lab_metric add vessel_position  VARCHAR2(255);
-alter table im_lab_metric add vessel_position  VARCHAR2(255);
+alter table event_fact add program_name  VARCHAR2(255);
+alter table im_event_fact add program_name  VARCHAR2(255);
+
+

@@ -37,8 +37,8 @@ public class LabVesselDao extends GenericDao {
     public List<LabVessel> findBySampleKeyList(Collection<String> sampleKeys) {
         List<LabVessel> resultList = new ArrayList<>();
 
-        for(String currSample:sampleKeys) {
-            resultList.addAll(findBySampleKey(currSample));
+        for (String sampleKey : sampleKeys) {
+            resultList.addAll(findBySampleKey(sampleKey));
         }
 
         return resultList;

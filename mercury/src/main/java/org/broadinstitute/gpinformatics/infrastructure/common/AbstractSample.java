@@ -16,9 +16,6 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractSample {
 
-    // FIXME: replace with real sample name pattern when CRSP jira is configured.
-    public static final Pattern CRSP_SAMPLE_NAME_PATTERN = Pattern.compile("PDO-[A-Z1-9]{4,6}");
-
     // TODO: replace BSP specific sample data support with a generic API that can support other platforms.
     @Transient
     private BSPSampleDTO bspSampleDTO = new BSPSampleDTO();
@@ -98,13 +95,6 @@ public abstract class AbstractSample {
      */
     public boolean isInBspFormat() {
         return BSPUtil.isInBspFormat(getSampleKey());
-    }
-
-    /**
-     * @return true if the sample is a CRSP sample
-     */
-    public boolean isInCrspFormat() {
-        return CRSP_SAMPLE_NAME_PATTERN.matcher(getSampleKey()).matches();
     }
 
     /**

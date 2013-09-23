@@ -37,11 +37,15 @@ public class ProductFixupTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = false)
+    // Required for Arquillian tests so it should remain enabled for sprint4.
+    @Test(enabled = true)
     public void addExomeExpressWorkflowName() {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
-            exExProduct.setWorkflow(Workflow.EXOME_EXPRESS);
+
+        if (exExProduct.getWorkflow() != Workflow.AGILENT_EXOME_EXPRESS) {
+            exExProduct.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        }
 
         productDao.persist(exExProduct);
     }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -18,10 +19,10 @@ import java.util.Map;
 public class WorkflowConfig {
 
     /** List of processes, or lab teams */
-    private final List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<>();
+    private final List<WorkflowProcessDef> workflowProcessDefs;
 
     /** List of product workflows, each composed of process definitions */
-    private final List<ProductWorkflowDef> productWorkflowDefs = new ArrayList<>();
+    private final List<ProductWorkflowDef> productWorkflowDefs;
     @XmlTransient
     private Map<String, ProductWorkflowDef> mapNameToWorkflow;
 
@@ -30,20 +31,18 @@ public class WorkflowConfig {
     @XmlTransient
     private Map<String, SequencingConfigDef> mapNameToSequencingConfig;
 
-    public List<WorkflowProcessDef> getWorkflowProcessDefs() {
-        return workflowProcessDefs;
+    public WorkflowConfig() {
+        this(new ArrayList<WorkflowProcessDef>(), new ArrayList<ProductWorkflowDef>());
+    }
+
+    // Only called directly from test code.
+    public WorkflowConfig(List<WorkflowProcessDef> workflowProcessDefs, List<ProductWorkflowDef> productWorkflowDefs) {
+        this.workflowProcessDefs = workflowProcessDefs;
+        this.productWorkflowDefs = productWorkflowDefs;
     }
 
     public List<ProductWorkflowDef> getProductWorkflowDefs() {
         return productWorkflowDefs;
-    }
-
-    void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {
-        workflowProcessDefs.add(workflowProcessDef);
-    }
-
-    void addProductWorkflowDef(ProductWorkflowDef productWorkflowDef) {
-        productWorkflowDefs.add(productWorkflowDef);
     }
 
     public SequencingConfigDef getSequencingConfigByName(String sequencingConfigName) {
@@ -60,7 +59,7 @@ public class WorkflowConfig {
         return sequencingConfigDef;
     }
 
-    public ProductWorkflowDef getWorkflow(Workflow workflow) {
+    public ProductWorkflowDef getWorkflow(@Nonnull Workflow workflow) {
         return getWorkflowByName(workflow.getWorkflowName());
     }
 

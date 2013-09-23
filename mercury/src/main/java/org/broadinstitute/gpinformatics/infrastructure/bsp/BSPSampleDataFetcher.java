@@ -1,15 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.sun.jersey.api.client.Client;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,11 +23,15 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
 
     private static final long serialVersionUID = -1432207534876411738L;
 
+    // Many versions of this service written only for tests are considered as options by IntelliJ.
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     BSPSampleSearchService service;
 
     private static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
-    private static final String WS_SAMPLE_DETAILS = "sample/getdetails";
+    private static final String WS_DETAILS = "sample/getdetails";
+    // Used for mapping Matrix barcodes to Sample short barcodes, forces xml output format.
+    private static final String WS_SAMPLE_DETAILS = "sample/getsampledetails?format=xml";
 
     public BSPSampleDataFetcher() {
     }
@@ -119,7 +122,7 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         // Check to see if BSP is supported before trying to get data.
         if (AbstractConfig.isSupported(getBspConfig())) {
             String urlString = getUrl(WS_FFPE_DERIVED);
-            String queryString = "barcodes=" + StringUtils.join(barcodeToDTOMap.keySet(), "&barcodes=");
+            String queryString = makeQueryString("barcodes", barcodeToDTOMap.keySet());
             final int SAMPLE_BARCODE = 0;
             final int FFPE = 1;
 
@@ -147,8 +150,8 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
             lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
         }
 
-        String urlString = getUrl(WS_SAMPLE_DETAILS);
-        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
+        String urlString = getUrl(WS_DETAILS);
+        String queryString = makeQueryString("sample_lsid", lsidToDTOMap.keySet());
         final int LSID = 1;
         final int PLASTIC_BARCODE = 16;
         post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
@@ -175,5 +178,27 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         }
 
         return results.get(0).get(BSPSampleSearchColumn.STOCK_SAMPLE);
+    }
+
+    /**
+     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
+     */
+    public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
+        String queryString = makeQueryString("barcodes", matrixBarcodes);
+        String urlString = getUrl(WS_SAMPLE_DETAILS);
+
+        Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
+        WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
+        GetSampleDetails.Details
+                details = resource.accept(MediaType.TEXT_XML).get(new GenericType<GetSampleDetails.Details>() {});
+
+        // Overwrite the map values that were found in BSP with the SampleDetails objects.
+        if (details.getSampleDetails().getSampleInfo() != null) {
+            for (GetSampleDetails.SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
+                map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+            }
+        }
+
+        return map;
     }
 }

@@ -19,12 +19,15 @@
             showJiraInfo();
         }
 
+        function submitWorkflow() {
+            $j('#bucketWorkflowForm').submit();
+            showJiraInfo();
+        }
+
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
-                "aaSorting":[
-                    [1, 7, 'asc']
-                ],
+                "aaSorting": [[1,'asc'], [7,'asc']],
                 "aoColumns":[
                     {"bSortable":false},
                     {"bSortable":true},
@@ -57,17 +60,30 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <stripes:form id="bucketForm" class="form-horizontal"
-                  action="/view/bucketView.action?viewBucket">
+    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
                 <div class="controls">
                     <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                        <stripes:options-collection collection="${actionBean.buckets}" label="name"
-                                                    value="name"/>
+                        <stripes:option value="">Select a Bucket</stripes:option>
+                        <stripes:options-collection collection="${actionBean.buckets}"/>
                     </stripes:select>
                 </div>
+            </div>
+        </div>
+    </stripes:form>
+    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
+        <div class="form-horizontal">
+        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
+        <div class="control-group">
+            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
+            <div class="controls">
+                <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
+                                value="${actionBean.selectedWorkflowDef}">
+                    <stripes:option value="">Select a Workflow</stripes:option>
+                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
+                </stripes:select>
             </div>
         </div>
     </stripes:form>
@@ -75,18 +91,9 @@
                   id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <stripes:hidden name="selectedProductWorkflowDef" value="${actionBean.selectedProductWorkflowDef}"/>
+        <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <div id="newTicketDiv">
-                <div class="control-group">
-                    <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-                    <div class="controls">
-                        <stripes:select id="workflowSelect" name="selectedProductWorkflowDef">
-                            <stripes:options-collection collection="${actionBean.allProductWorkflowDefs}" label="name"
-                                                        value="name"/>
-                        </stripes:select>
-                    </div>
-                </div>
                 <div class="control-group">
                     <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
                     <div class="controls">
@@ -148,8 +155,8 @@
             <thead>
             <tr>
                 <th width="10">
-                    <input type="checkbox" class="bucket-checkAll"/><span id="count"
-                                                                          class="bucket-checkedCount"></span>
+                    <input type="checkbox" class="bucket-checkAll"/>
+                    <span id="count" class="bucket-checkedCount"></span>
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
@@ -189,7 +196,6 @@
                         </c:forEach>
                     </td>
                     <td>
-
                             ${entry.poBusinessKey}
                     </td>
                     <td>

@@ -156,7 +156,7 @@ public class BaseEventTest {
                         flowcellMessageHandler);
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
-        bucketEjb = new BucketEjb(labEventFactory, jiraService, labBatchEJB, null);
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, null, AthenaClientProducer.stubInstance());
     }
 
     /**
@@ -241,7 +241,7 @@ public class BaseEventTest {
     }
 
     public void drainBucket(Bucket workingBucket) {
-        bucketEjb.startBucketDrain(workingBucket.getBucketEntries(), "pdunlea", null, false);
+        bucketEjb.moveFromBucketToCommonBatch(workingBucket.getBucketEntries());
     }
 
     public void archiveBucketEntries(Bucket bucket) {
@@ -405,7 +405,7 @@ public class BaseEventTest {
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, Workflow workflow) {
         int flowcellLanes=8;
-        if (workflow == Workflow.EXOME_EXPRESS){
+        if (workflow == Workflow.AGILENT_EXOME_EXPRESS){
             flowcellLanes=2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
@@ -519,11 +519,13 @@ public class BaseEventTest {
             // "More Transfers" buttons won't work when there's no server, so render all vessels in first "request"
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
             Graph graph = new Graph();
-            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph,
-                    new ArrayList<TransferVisualizer.AlternativeId>());
+            ArrayList<TransferVisualizer.AlternativeId> alternativeIds = new ArrayList<>();
+//            alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
+//            alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, alternativeIds);
 
             TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
-                    labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+                    labVessel.getLabel(), alternativeIds);
             transferVisualizerClient.setGraph(graph);
 
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();

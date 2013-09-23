@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -30,9 +29,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -84,7 +84,7 @@ public class LabEventResource {
     /**
      * Find all LabEvents for the specified batch ID.
      */
-    public LabEventResponseBean transfersByBatchId(@PathParam("batchId") String batchId) {
+    public LabEventResponseBean labEventsByBatchId(@PathParam("batchId") String batchId) {
         LabBatch labBatch = labBatchDao.findByName(batchId);
         if (labBatch == null) {
             throw new RuntimeException("Batch not found: " + batchId);
@@ -97,20 +97,51 @@ public class LabEventResource {
     }
 
 
-    @Path("/transfersToFirstAncestorRack/{plateBarcodes}")
+    /**
+     * Return any in-place LabEvents that correspond to reagent additions for any of the specified plate barcodes.
+     * This does <b>not</b> return reagents that are part of transfer events.  This is added specifically to support
+     * batchless Pico where the Pico reagent is not part of a transfer and events are not grouped by a batch.
+     */
+    @Path("/inPlaceReagentEvents")
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    public LabEventResponseBean inPlaceReagentEventsByPlateBarcodes(
+            @QueryParam("plateBarcodes") @Nonnull List<String> plateBarcodes) {
+
+        Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(plateBarcodes).values();
+
+        List<LabEvent> labEvents = new ArrayList<>();
+
+        for (LabVessel labVessel : labVessels) {
+            for (LabEvent labEvent : labVessel.getInPlaceEvents()) {
+                if (!labEvent.getReagents().isEmpty()) {
+                    labEvents.add(labEvent);
+                }
+            }
+        }
+
+        Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);
+
+        List<LabEventBean> labEventBeans =
+                buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
+
+        return new LabEventResponseBean(labEventBeans);
+    }
+
+
+    @Path("/transfersToFirstAncestorRack")
     @GET
     @Produces(MediaType.APPLICATION_XML)
     /**
      * Find all LabEvents for transfers from the specified plate barcodes back to ancestor Matrix racks.
      */
     public LabEventResponseBean transfersToFirstAncestorRack(
-            @PathParam("plateBarcodes") @Nonnull String plateBarcodes) {
-        String[] barcodes = StringUtils.split(plateBarcodes, ",");
-        Map<String, LabVessel> byBarcodes = labVesselDao.findByBarcodes(Arrays.asList(barcodes));
+            @QueryParam("plateBarcodes") @Nonnull List<String> plateBarcodes) {
+        Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(plateBarcodes).values();
 
         List<LabEvent> labEvents = new ArrayList<>();
 
-        for (LabVessel labVessel : byBarcodes.values()) {
+        for (LabVessel labVessel : labVessels) {
             // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
             if (labVessel == null || labVessel.getContainerRole() == null) {
                 continue;
@@ -118,12 +149,12 @@ public class LabEventResource {
 
             VesselContainer<?> vesselContainer = labVessel.getContainerRole();
 
-            List<List<LabEvent>> setOfLabEventLists =
+            List<List<LabEvent>> listOfLabEventLists =
                     vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
 
             // Flatten the result as the current caller does not expect more than one List of transfers to be found
             // per query barcode.
-            for (List<LabEvent> labEventList : setOfLabEventLists) {
+            for (List<LabEvent> labEventList : listOfLabEventLists) {
                 labEvents.addAll(labEventList);
             }
         }
@@ -152,7 +183,8 @@ public class LabEventResource {
                 labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
             }
 
-            labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
+            LabBatch labBatch = labEvent.getLabBatch();
+            labEventBean.setBatchId(labBatch != null ? labBatch.getBatchName() : null);
 
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {

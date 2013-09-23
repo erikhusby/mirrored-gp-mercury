@@ -349,6 +349,15 @@ public class ProductOrderFixupTest extends Arquillian {
         changeProjectForPdo("PDO-1621", "RP-317");
     }
 
+    @Test(enabled = false)
+    public void changePdoName() throws Exception {
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-1928");
+        if (order != null) {
+            order.setTitle("TB-ARC_CDRCAlland_SKorea_ProductionBatch1");
+            productOrderDao.persist(order);
+        }
+    }
+
     private void changeJiraKey(String oldKey, String newKey) {
         ProductOrder order = productOrderDao.findByBusinessKey(newKey);
         Assert.assertNull(order, "Should be no " + newKey + " in the database!");

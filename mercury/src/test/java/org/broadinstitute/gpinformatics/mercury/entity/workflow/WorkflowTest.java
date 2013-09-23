@@ -16,6 +16,8 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -158,8 +160,7 @@ public class WorkflowTest {
         new WorkflowProcessDef("QTP");
         new WorkflowProcessDef("HiSeq");
 
-        workflowConfig = new WorkflowConfig();
-        exomeExpressProductName = Workflow.EXOME_EXPRESS.getWorkflowName();
+        exomeExpressProductName = Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName();
         exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
         exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
         exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);
@@ -168,11 +169,9 @@ public class WorkflowTest {
         exomeExpressProductVersion.addWorkflowProcessDef(libraryConstructionProcess);
         exomeExpressProductVersion.addWorkflowProcessDef(hybridSelectionProcess);
 
-        workflowConfig.addProductWorkflowDef(exomeExpressProduct);
-        workflowConfig.addWorkflowProcessDef(picoProcess);
-        workflowConfig.addWorkflowProcessDef(preLcProcess);
-        workflowConfig.addWorkflowProcessDef(libraryConstructionProcess);
-        workflowConfig.addWorkflowProcessDef(hybridSelectionProcess);
+        workflowConfig = new WorkflowConfig(
+                Arrays.asList(picoProcess, preLcProcess, libraryConstructionProcess, hybridSelectionProcess),
+                Collections.singletonList(exomeExpressProduct));
 
         try {
             // Have to explicitly include WorkflowStepDef subclasses, otherwise JAXB doesn't find them
@@ -206,7 +205,7 @@ public class WorkflowTest {
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
-        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.EXOME_EXPRESS);
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         boolean meetsCriteria = false;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
@@ -234,7 +233,7 @@ public class WorkflowTest {
 
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig1 = workflowLoader.load();
-        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.EXOME_EXPRESS);
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         boolean meetsCriteria = true;
         for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
             if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {

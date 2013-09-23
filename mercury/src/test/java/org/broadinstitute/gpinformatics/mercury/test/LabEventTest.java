@@ -392,7 +392,7 @@ public class LabEventTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
@@ -419,7 +419,7 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
 
         final LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -430,7 +430,7 @@ public class LabEventTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
 
         runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
 
@@ -547,7 +547,7 @@ public class LabEventTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
@@ -566,10 +566,10 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
-                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                        ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
 
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
@@ -681,7 +681,7 @@ public class LabEventTest extends BaseEventTest {
             LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                     new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-            workflowBatch1.setWorkflow(Workflow.EXOME_EXPRESS);
+            workflowBatch1.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube1,
@@ -701,7 +701,7 @@ public class LabEventTest extends BaseEventTest {
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-            workflowBatch2.setWorkflow(Workflow.EXOME_EXPRESS);
+            workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
@@ -720,10 +720,10 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder2.getPondRegTubeBarcodes(), "2");
             QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "2");
+                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", "squidDesignationName",
-                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -735,10 +735,10 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
-                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                    ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -804,7 +804,7 @@ public class LabEventTest extends BaseEventTest {
             LabBatch workflowBatch1 = new LabBatch("Exome Express Pico Batch 1",
                     new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-            workflowBatch1.setWorkflow(Workflow.EXOME_EXPRESS);
+            workflowBatch1.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
             bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
@@ -824,7 +824,7 @@ public class LabEventTest extends BaseEventTest {
             LabBatch workflowBatch2 = new LabBatch("Exome Express Pico Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
             workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
-            workflowBatch2.setWorkflow(Workflow.EXOME_EXPRESS);
+            workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
             bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
@@ -865,10 +865,10 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder2.getPondRegTubeBarcodes(), "2");
             QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "2");
+                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", null,
-                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.EXOME_EXPRESS);
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.AGILENT_EXOME_EXPRESS);
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -880,10 +880,10 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
-                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.EXOME_EXPRESS);
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.AGILENT_EXOME_EXPRESS);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -958,7 +958,7 @@ public class LabEventTest extends BaseEventTest {
                     }
 
                     @Override
-                    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
+                    public Map<String, Set<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
                         return null;
                     }
 

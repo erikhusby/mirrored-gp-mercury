@@ -77,14 +77,14 @@ import static org.mockito.Mockito.when;
 /**
  * Test of logic to route messages and queries to Mercury or Squid as appropriate.
  * <p/>
- * The current logic is that vessels or batches of vessels containing any references to samples that are part of an
- * Exome Express product orders should be processed by Mercury. Everything else should go to Squid. (This definition
+ * The current logic is that vessels or batches of vessels containing any references to samples that are part of a
+ * Mercury-supported workflow should be processed by Mercury. Everything else should go to Squid. (This definition
  * should match the documentation for {@link SystemRouter}.)
  * <p/>
  * There are a multitude of scenarios tested here. While many of them may seem redundant due to the relative simplicity
- * of the implementation, we know that we are going to have to tweak the implementation over time (at least once, to
- * remove the Exome Express restriction). The test cases will need to be tweaked along with changes to the business
- * rules but should remain complete enough to fully test any changes to the implementation.
+ * of the implementation, we know that we are going to have to tweak the implementation over time.  The test cases will
+ * need to be tweaked along with changes to the business rules but should remain complete enough to fully test any
+ * changes to the implementation.
  * <p/>
  * Tests are grouped by method under test and expected routing result.
  * <p/>
@@ -223,10 +223,9 @@ public class SystemRouterTest extends BaseEventTest {
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
                 0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false, "agg type");
 
-        //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
                 0, 0, 0, 0, "Test exome express samples only", "None", true,
-                Workflow.EXOME_EXPRESS, false, "agg type");
+                Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
         picoBucket = new Bucket("Pico/Plating Bucket");
     }
@@ -506,7 +505,7 @@ public class SystemRouterTest extends BaseEventTest {
             workflowBatch.setCreatedOn(postMercuryOnlyLaunchCalendarDate.getTime());
         }
 
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -565,7 +564,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -575,7 +574,7 @@ public class SystemRouterTest extends BaseEventTest {
         String denatureTubeBarcode = denatureTube.getLabel();
         MiSeqReagentKit reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                "ZLAB", 1L, 1L);
+                "ZLAB", 1L, 1L, "systemRouterTest");
         final VesselToSectionTransfer sectionTransfer =
                 new VesselToSectionTransfer(denatureTube,
                         SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
@@ -592,7 +591,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
@@ -632,7 +631,7 @@ public class SystemRouterTest extends BaseEventTest {
             workflowBatch.setCreatedOn(preJuly25CalendarDate.getTime());
         }
 
-        workflowBatch.setWorkflow(Workflow.EXOME_EXPRESS);
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
@@ -691,7 +690,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -701,7 +700,7 @@ public class SystemRouterTest extends BaseEventTest {
         String denatureTubeBarcode = denatureTube.getLabel();
         MiSeqReagentKit reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                "ZLAB", 1L, 1L);
+                "ZLAB", 1L, 1L, "systemRouterTest");
         final VesselToSectionTransfer sectionTransfer =
                 new VesselToSectionTransfer(denatureTube,
                         SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
@@ -719,7 +718,7 @@ public class SystemRouterTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.EXOME_EXPRESS);
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton

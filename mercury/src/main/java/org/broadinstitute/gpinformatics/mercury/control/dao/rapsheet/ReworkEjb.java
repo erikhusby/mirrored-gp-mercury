@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -59,7 +58,7 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType.PREFER_PDO;
 
 /**
- * Encapsulates the business logic related to {@link RapSheet}s and rework. This includes the creation of a new batch
+ * Encapsulates the business logic related to rework. This includes the creation of a new batch
  * entity and saving that to Jira.
  * <p/>
  * More information about Rework can be found here:
@@ -146,10 +145,10 @@ public class ReworkEjb {
                 sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
 
-            for (Map.Entry<String, List<ProductOrderSample>> entryMap : athenaClientService
+            for (Map.Entry<String, Set<ProductOrderSample>> entryMap : athenaClientService
                     .findMapSampleNameToPoSample(sampleIds).entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                List<ProductOrderSample> productOrderSamples = entryMap.getValue();
+                Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
 
@@ -171,9 +170,9 @@ public class ReworkEjb {
 
         // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (reworkCandidates.isEmpty()) {
-            Map<String, List<ProductOrderSample>> samplesById =
+            Map<String, Set<ProductOrderSample>> samplesById =
                     athenaClientService.findMapSampleNameToPoSample(query);
-            for (List<ProductOrderSample> samples : samplesById.values()) {
+            for (Set<ProductOrderSample> samples : samplesById.values()) {
                 Collection<String> sampleIDs = new ArrayList<>();
                 for (ProductOrderSample sample : samples) {
                     sampleIDs.add(sample.getSampleName());
@@ -224,7 +223,7 @@ public class ReworkEjb {
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
-                        LabEvent.UI_EVENT_LOCATION, reworkFromStep, productOrderKey);
+                        LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, reworkFromStep, productOrderKey);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         for (BucketEntry bucketEntry : bucketEntries) {
@@ -347,7 +346,7 @@ public class ReworkEjb {
         return validationMessages;
     }
 
-    private WorkflowBucketDef findWorkflowBucketDef(Workflow workflow, String bucketName) {
+    private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Workflow workflow, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
                 .getEffectiveVersion();

@@ -1,8 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,7 +26,7 @@ import java.util.Map;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class LabMetric {
+public class LabMetric implements Comparable<LabMetric> {
 
     public enum LabUnit {
         NG_PER_UL("ng/uL"),
@@ -31,6 +41,7 @@ public class LabMetric {
 
         private String displayName;
         private static final Map<String, LabUnit> mapNameToUnit = new HashMap<>();
+
         static {
             for (LabUnit unit : LabUnit.values()) {
                 mapNameToUnit.put(unit.getDisplayName(), unit);
@@ -47,7 +58,7 @@ public class LabMetric {
 
         public static LabUnit getByDisplayName(String displayName) {
             LabUnit mappedUnit = mapNameToUnit.get(displayName);
-            if(mappedUnit == null) {
+            if (mappedUnit == null) {
                 throw new RuntimeException("Failed to find LabUnit for name " + displayName);
             }
             return mappedUnit;
@@ -63,11 +74,12 @@ public class LabMetric {
         FINAL_LIBRARY_SIZE("Final Library Size", false),
         POST_NORMALIZATION_PICO("Post-Normalization Pico", false),
         TSCA_PICO("TSCA Pico", false),
-        ECO_QPCR("ECO QPCR",true);
+        ECO_QPCR("ECO QPCR", true);
 
         private String displayName;
         private boolean uploadEnabled;
         private static final Map<String, MetricType> mapNameToType = new HashMap<>();
+
         static {
             for (MetricType metricType : MetricType.values()) {
                 mapNameToType.put(metricType.getDisplayName(), metricType);
@@ -85,13 +97,13 @@ public class LabMetric {
 
         public static MetricType getByDisplayName(String displayName) {
             MetricType mappedMetricType = mapNameToType.get(displayName);
-            if(mappedMetricType == null) {
+            if (mappedMetricType == null) {
                 throw new RuntimeException("Failed to find MetricType for name " + displayName);
             }
             return mappedMetricType;
         }
 
-        public static List<MetricType> getUploadSupportedMetrics(){
+        public static List<MetricType> getUploadSupportedMetrics() {
             List<MetricType> metricTypes = new ArrayList<>();
             for (MetricType value : values()) {
                 if (value.uploadEnabled) {
@@ -109,30 +121,41 @@ public class LabMetric {
     @Id
     private Long labMetricId;
 
-    /** The run that generated this metric */
+    /**
+     * The run that generated this metric
+     */
     @ManyToOne
     private LabMetricRun labMetricRun;
 
-    /** The value of the metric */
+    /**
+     * The value of the metric
+     */
     private BigDecimal value;
 
-    /** The type of the value.  This could be in LabMetricRun, rather than denormalized here, but having it here allows
-     * for metrics that are generated without runs */
+    /**
+     * The type of the value.  This could be in LabMetricRun, rather than denormalized here, but having it here allows
+     * for metrics that are generated without runs
+     */
     @Enumerated(EnumType.STRING)
-     private MetricType metricType;
+    private MetricType metricType;
 
-    /** The unit of the value */
+    /**
+     * The unit of the value
+     */
     @Enumerated(EnumType.STRING)
     private LabUnit labUnit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
+
     private String vesselPosition;
 
     private Date createdDate;
 
-    /** For JPA */
+    /**
+     * For JPA
+     */
     protected LabMetric() {
     }
 
@@ -189,4 +212,14 @@ public class LabMetric {
         this.createdDate = createdDate;
     }
 
+    @Override
+    public int compareTo(LabMetric labMetric) {
+        CompareToBuilder compareToBuilder = new CompareToBuilder();
+        if (getCreatedDate() != null) {
+            compareToBuilder.append(getCreatedDate(), labMetric.getCreatedDate());
+        } else {
+            compareToBuilder.append(getLabMetricId(), labMetric.getLabMetricId());
+        }
+        return compareToBuilder.build();
+    }
 }

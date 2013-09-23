@@ -55,7 +55,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private LabVessel labVessel;
     private List<ReworkEjb.ReworkCandidate> reworkCandidates = new ArrayList<>();
-    private List<WorkflowBucketDef> buckets = new ArrayList<>();
+    private Set<WorkflowBucketDef> buckets = new HashSet<>();
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION})
     private String vesselLabel;
@@ -94,7 +94,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
         try {
             Collection<String> validationMessages = reworkEjb.addAndValidateReworks(reworkCandidates, reworkReason,
-                    commentText, getUserBean().getLoginUserName(), Workflow.EXOME_EXPRESS, bucketName);
+                    commentText, getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", reworkCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
@@ -128,17 +128,15 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
-        // Currently only do ExEx.
-        for (ProductWorkflowDef workflowDef : workflowDefs) {
+        // Only does supported workflows.
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (Workflow.isExomeExpress(workflowDef.getName())) {
-                buckets.addAll(workflowVersion.getBuckets());
-            }
+            buckets.addAll(workflowVersion.getBuckets());
         }
         // Set the initial bucket to the first in the list and load it.
         if (!buckets.isEmpty()) {
-            bucketName = buckets.get(0).getName();
+            bucketName = buckets.iterator().next().getName();
         }
     }
 
@@ -209,11 +207,11 @@ public class AddReworkActionBean extends CoreActionBean {
         this.noResultQueryTerms = noResultQueryTerms;
     }
 
-    public List<WorkflowBucketDef> getBuckets() {
+    public Set<WorkflowBucketDef> getBuckets() {
         return buckets;
     }
 
-    public void setBuckets(List<WorkflowBucketDef> buckets) {
+    public void setBuckets(Set<WorkflowBucketDef> buckets) {
         this.buckets = buckets;
     }
 

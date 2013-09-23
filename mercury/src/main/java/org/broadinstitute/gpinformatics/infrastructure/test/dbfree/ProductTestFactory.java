@@ -10,7 +10,7 @@ import java.util.UUID;
 public class ProductTestFactory {
     public static Product createTestProduct() {
         String uuid = UUID.randomUUID().toString();
-        return createDummyProduct(Workflow.EXOME_EXPRESS, "partNumber " + uuid);
+        return createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber " + uuid);
     }
 
     public static Product createDummyProduct(Workflow workflow, String partNumber) {

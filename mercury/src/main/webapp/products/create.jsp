@@ -397,6 +397,21 @@
                         </div>
                     </div>
                 </security:authorizeBlock>
+
+                <security:authorizeBlock roles="<%= roles(Developer)%>">
+                <div class="control-group">
+                    <stripes:label for="workflow" class="control-label">
+                        Workflow
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:select name="workflow" id="workflow">
+                            <stripes:option value="">Select a Workflow</stripes:option>
+                            <stripes:options-collection collection="${actionBean.workflowList}"/>
+                        </stripes:select>
+                    </div>
+                    </security:authorizeBlock>
+                </div>
+
             </div>
 
                 <div class="form-horizontal span5">

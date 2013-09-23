@@ -66,10 +66,16 @@ public class MercuryClientEjb {
         return addFromProductOrder(pdo, pdo.getSamples());
     }
 
+    /**
+     * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
+     *
+     * @return the samples that were actually added to the bucket
+     */
     public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
                                                               Collection<ProductOrderSample> samples) {
-        // Limited to ExomeExpress pdos.
-        if (order.getProduct() == null || order.getProduct().getWorkflow() != Workflow.EXOME_EXPRESS) {
+
+        Workflow workflow = order.getProduct() != null ? order.getProduct().getWorkflow() : null;
+        if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
             return Collections.emptyList();
         }
 
@@ -129,7 +135,9 @@ public class MercuryClientEjb {
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         bucketEjb.add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-                LabEvent.UI_EVENT_LOCATION, initialBucketDef.getBucketEventType(), order.getBusinessKey());
+                LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
+                order.getBusinessKey()
+        );
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);

@@ -159,6 +159,17 @@
                 </c:if>
             </security:authorizeBlock>
 
+            <security:authorizeBlock roles="<%= roles(Developer) %>">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Workflow</label>
+                    <div class="controls">
+                        <div class="form-value">
+                        ${actionBean.editProduct.workflow.workflowName}
+                        </div>
+                    </div>
+                </div>
+            </security:authorizeBlock>
+
         </div>
 
         <div class="form-horizontal span5">

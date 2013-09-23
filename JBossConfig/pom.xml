@@ -1,47 +1,77 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>Mercury</groupId>
-  <artifactId>JBossConfig</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+    <groupId>Mercury</groupId>
+    <artifactId>JBossConfig</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-  <name>JBossConfig</name>
+    <name>JBossConfig</name>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <oracle.version>6-11.2.0.1.0</oracle.version>
-      <postgresql.version>9.1-901.jdbc4</postgresql.version>
-      <crowdJass.version>1.3.1.4</crowdJass.version>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <oracle.version>6-11.2.0.1.0</oracle.version>
+        <postgresql.version>9.1-901.jdbc4</postgresql.version>
+        <crowdJass.version>1.3.1.4</crowdJass.version>
+        <crowd.applicaiton.name>mercury</crowd.applicaiton.name>
+        <crowd.application.password>vx2hUJP4xB</crowd.application.password>
+        <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
+    </properties>
 
-<repositories>
-    <repository>
-        <id>Prodinfo</id>
-        <name>Prodinfo Maven Repository</name>
-        <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
-    </repository>
-</repositories>
+    <repositories>
+        <repository>
+            <id>Prodinfo</id>
+            <name>Prodinfo Maven Repository</name>
+            <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
+        </repository>
+    </repositories>
 
-  <dependencies>
-      <dependency>
-          <groupId>com.oracle</groupId>
-          <artifactId>ojdbc</artifactId>
-          <version>${oracle.version}</version>
-      </dependency>
-      <dependency>
-          <groupId>postgresql</groupId>
-          <artifactId>postgresql</artifactId>
-          <version>${postgresql.version}</version>
-      </dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc</artifactId>
+            <version>${oracle.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+        </dependency>
 
-      <dependency>
-          <groupId>com.atlassian.crowd.application</groupId>
-          <artifactId>CrowdJaasLoginModule</artifactId>
-          <version>${crowdJass.version}</version>
-      </dependency>
-  </dependencies>
+        <dependency>
+            <groupId>com.atlassian.crowd.application</groupId>
+            <artifactId>CrowdJaasLoginModule</artifactId>
+            <version>${crowdJass.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>CRSP-DEV</id>
+            <properties>
+                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
+                <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>CRSP-PROD</id>
+            <properties>
+                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
+                <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>CRSP-QA</id>
+            <properties>
+                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
+                <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+            </properties>
+        </profile>
+
+    </profiles>
 
     <build>
         <resources>
@@ -52,6 +82,7 @@
             </resource>
             <resource>
                 <directory>src/main/resources/standalone</directory>
+                <filtering>true</filtering>
                 <targetPath>${project.build.directory}/standalone</targetPath>
             </resource>
         </resources>
@@ -83,19 +114,22 @@
                                     <groupId>com.atlassian.crowd.application</groupId>
                                     <artifactId>CrowdJaasLoginModule</artifactId>
                                     <version>${crowdJass.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main
+                                    </outputDirectory>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>com.oracle</groupId>
                                     <artifactId>ojdbc</artifactId>
                                     <version>${oracle.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/com/oracle/main</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/modules/com/oracle/main
+                                    </outputDirectory>
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>postgresql</groupId>
                                     <artifactId>postgresql</artifactId>
                                     <version>${postgresql.version}</version>
-                                    <outputDirectory>${project.build.directory}/modules/org/postgresql/main</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/modules/org/postgresql/main
+                                    </outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -118,7 +152,8 @@
                         <configuration>
                             <target>
                                 <property environment="env"/>
-                                <fail unless="env.JBOSS_HOME" message="Please define the environment variable JBOSS_HOME"/>
+                                <fail unless="env.JBOSS_HOME"
+                                      message="Please define the environment variable JBOSS_HOME"/>
                                 <!-- Copy the modules -->
                                 <echo message="Copying modules"/>
                                 <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">
@@ -128,23 +163,27 @@
                                 <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
-                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true" file="src/main/resources/keystore/.keystore"/>
-                                    
+                                <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
+                                      file="src/main/resources/keystore/.keystore"/>
+
                                 <echo>
 
-Your JBoss has been updated with the Mercury configurations.
+                                    Your JBoss has been updated with the Mercury configurations.
 
-It is recommended that you increase the memory settings, in particular PERMGEN.
-Put the heap to at least 1G. For example:
-   JAVA_OPTS="-Xms64m -Xmx4096M -XX:MaxPermSize=1G"
+                                    It is recommended that you increase the memory settings, in particular PERMGEN.
+                                    Put the heap to at least 1G. For example:
+                                    JAVA_OPTS="-Xms64m -Xmx4096M -XX:MaxPermSize=1G"
 
-Edit ${env.JBOSS_HOME}/bin/standalone.conf (or ${env.JBOSS_HOME}/bin/standalone.conf.bat )
-   * Change the value of JAVA_OPTS for memory.
-   * Change the value of jboss.server.default.conf to be standalone-full.xml
-   * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
+                                    Edit ${env.JBOSS_HOME}/bin/standalone.conf (or
+                                    ${env.JBOSS_HOME}/bin/standalone.conf.bat )
+                                    * Change the value of JAVA_OPTS for memory.
+                                    * Change the value of jboss.server.default.conf to be standalone-full.xml
+                                    * Add the contents of src/main/resources/keystore/keystoreOptions.conf (or
+                                    keystoreOptions.conf.bat ) to enable use of the GPInfo keystore.
 
-If you've made server configuration changes that need to be applied to the Mercury Production, QA, RC and DEV servers, please create or update a
-GPInfoJira Mercury (GPLIM) issue and assign it to the Release Engineer.
+                                    If you've made server configuration changes that need to be applied to the Mercury
+                                    Production, QA, RC and DEV servers, please create or update a
+                                    GPInfoJira Mercury (GPLIM) issue and assign it to the Release Engineer.
 
                                 </echo>
                             </target>

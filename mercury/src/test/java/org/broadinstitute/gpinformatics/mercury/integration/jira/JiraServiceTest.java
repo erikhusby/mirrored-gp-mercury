@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -63,7 +64,7 @@ public class JiraServiceTest {
 
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), null,
+                    service.createIssue(CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix(), null,
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                             "Summary created from Mercury",
                             customFieldList);
@@ -81,10 +82,15 @@ public class JiraServiceTest {
         Collection<CustomField> customFieldList = new LinkedList<>();
 
         try {
+            CreateFields.ProjectType productOrdering =
+                    CreateFields.ProjectType.getProductOrderingProductType();
+
+            CreateFields.IssueType productOrder = CreateFields.IssueType.getProductOrderIssueType();
+
             Map<String, CustomFieldDefinition> requiredFields =
                     service.getRequiredFields(
-                            new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
-                            CreateFields.IssueType.PRODUCT_ORDER);
+                            new CreateFields.Project(productOrdering.getKeyPrefix()),
+                            productOrder);
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
 
@@ -96,8 +102,8 @@ public class JiraServiceTest {
                     "Athena Test Case:  Test description setting"));
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix(), "hrafal",
-                            CreateFields.IssueType.PRODUCT_ORDER,
+                    service.createIssue(productOrdering.getKeyPrefix(), "hrafal",
+                            productOrder,
                             "Athena Test case:::  Test new Summary Addition", customFieldList);
 
             Assert.assertNotNull(jiraIssue.getKey());
@@ -110,14 +116,15 @@ public class JiraServiceTest {
     public void testUpdateTicket() throws IOException {
         Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(
-                        new CreateFields.Project(CreateFields.ProjectType.PRODUCT_ORDERING.getKeyPrefix()),
-                        CreateFields.IssueType.PRODUCT_ORDER);
+                        new CreateFields.Project(
+                                CreateFields.ProjectType.getProductOrderingProductType().getKeyPrefix()),
+                        CreateFields.IssueType.getProductOrderIssueType());
         Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
-                CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
-                CreateFields.IssueType.RESEARCH_PROJECT,
+                CreateFields.ProjectType.getResearchProjectType().getKeyPrefix(), "breilly",
+                CreateFields.IssueType.getResearchProjectIssueType(),
                 "JiraServiceTest.testUpdateTicket", customFieldList);
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
@@ -184,7 +191,7 @@ public class JiraServiceTest {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateFields.Project(
-                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
+                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;

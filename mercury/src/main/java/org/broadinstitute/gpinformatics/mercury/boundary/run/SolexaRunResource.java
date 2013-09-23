@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
-import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,10 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
-import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
-import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -35,7 +29,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
 import java.util.Collections;
@@ -209,7 +206,7 @@ public class SolexaRunResource {
 
         IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
 
-        if(run != null) {
+        if (run != null) {
             route = router.routeForVessels(Collections.<LabVessel>singletonList(run.getSampleCartridge()));
         }
 
@@ -219,8 +216,9 @@ public class SolexaRunResource {
                 String squidUrl = squidConfig.getUrl() + "/resources/solexarunsynopsis";
                 try {
 
-                    SquidConnector.SquidResponse structureResponse = connector.saveReadStructure(readStructureRequest, squidUrl);
-                    if(structureResponse.getCode() == Response.Status.CREATED.getStatusCode()) {
+                    SquidConnector.SquidResponse structureResponse =
+                            connector.saveReadStructure(readStructureRequest, squidUrl);
+                    if (structureResponse.getCode() == Response.Status.CREATED.getStatusCode()) {
                         callerResponse = Response.ok(requestToReturn).entity(requestToReturn).build();
                     } else {
                         callerResponse = Response.status(structureResponse.getCode()).entity(requestToReturn).build();
@@ -237,7 +235,7 @@ public class SolexaRunResource {
 
         if (EnumSet.of(SystemRouter.System.MERCURY, SystemRouter.System.BOTH)
                 .contains(route)) {
-            if (null == run) {
+            if (run == null) {
                 throw new ResourceException("There is no run found in mercury for " + runBarcode,
                         Response.Status.NOT_FOUND);
             }

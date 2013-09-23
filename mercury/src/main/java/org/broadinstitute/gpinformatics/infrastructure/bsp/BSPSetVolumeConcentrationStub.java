@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
+import java.math.BigDecimal;
 
 /**
  * Stubbed version of the set volume and concentration service.
@@ -16,17 +17,7 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
     private String[] result;
 
     @Override
-    public void setVolumeAndConcentration(String barcode, double volume, double concentration) {
-        result = new String[] { VALID_COMMUNICATION_PREFIX + " " + barcode };
-    }
-
-    @Override
-    public String[] getResult() {
-        return result;
-    }
-
-    @Override
-    public boolean isValidResult() {
-        return result[0].startsWith(BSPSetVolumeConcentration.VALID_COMMUNICATION_PREFIX);
+    public String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
+        return RESULT_OK;
     }
 }

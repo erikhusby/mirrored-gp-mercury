@@ -258,7 +258,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.LCSET_PROJECT;
+        return CreateFields.ProjectType.getLcsetProjectType();
     }
 
 }

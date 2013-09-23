@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -63,127 +64,81 @@ import java.util.TreeSet;
 public class ResearchProject implements BusinessObject, Comparable<ResearchProject>, Serializable {
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
-
-    public boolean hasJiraTicketKey() {
-        return !StringUtils.isBlank(jiraTicketKey);
-    }
-
-    public enum Status implements StatusType {
-        Open, Archived;
-
+    /**
+     * Compare by modified date.
+     */
+    public static final Comparator<ResearchProject> BY_DATE = new Comparator<ResearchProject>() {
         @Override
-        public String getDisplayName() {
-            return name();
+        public int compare(ResearchProject lhs, ResearchProject rhs) {
+            return rhs.getModifiedDate().compareTo(lhs.getModifiedDate());
         }
-
-        public static List<String> getNames() {
-            List<String> names = new ArrayList<>();
-            for (Status status : Status.values()) {
-                names.add(status.name());
-            }
-
-            return names;
-        }
-    }
-
+    };
+    // People related to the project
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ProjectPerson> associatedPeople = new HashSet<>();
+    // Information about externally managed items
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<>();
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<>();
     @Id
     @SequenceGenerator(name = "seq_research_project_index", schema = "athena",
             sequenceName = "seq_research_project_index")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_research_project_index")
     private Long researchProjectId;
-
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
-
     // creation/modification information
     @Column(name = "CREATED_DATE", nullable = false)
     private Date createdDate;
-
     @Column(name = "CREATED_BY", nullable = false)
     private Long createdBy;
-
     @Column(name = "MODIFIED_DATE", nullable = false)
     private Date modifiedDate;
-
     @Column(name = "MODIFIED_BY", nullable = false)
     private Long modifiedBy;
-
     @Column(name = "TITLE", unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
-
     @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
-
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
-
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
     @Index(name = "ix_parent_research_project")
     private ResearchProject parentResearchProject;
-
     @Column(name = "SEQUENCE_ALIGNER_KEY", nullable = true)
     private String sequenceAlignerKey;
-
     @Column(name = "REFERENCE_SEQUENCE_KEY", nullable = true)
     private String referenceSequenceKey;
-
     /**
      * Set of ResearchProjects that belong under this one.
      */
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentResearchProject")
     private Set<ResearchProject> childProjects = new HashSet<>();
-
-    // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ProjectPerson> associatedPeople = new HashSet<>();
-
-    // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<>();
-
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectFunding> projectFunding = new HashSet<>();
-
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<>();
-
     private String irbNotes;
-
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<ProductOrder> productOrders = new ArrayList<>();
-
     /**
      * True if access to this Project's data should be restricted based on user.
      */
     @Column(name = "ACCESS_CONTROL_ENABLED")
     private boolean accessControlEnabled;
-
     // Reference to the Jira Ticket associated to this Research Project.
     @Index(name = "ix_rp_jira")
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
-
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
-
-    // Initialize our transient data after the object has been loaded from the database.
-    @PostLoad
-    private void initialize() {
-        originalTitle = title;
-    }
-
-    @Override
-    public String getBusinessKey() {
-        return jiraTicketKey;
-    }
 
     /**
      * no arg constructor.
@@ -219,8 +174,27 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
     }
 
+    public boolean hasJiraTicketKey() {
+        return !StringUtils.isBlank(jiraTicketKey);
+    }
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
+    @Override
+    public String getBusinessKey() {
+        return jiraTicketKey;
+    }
+
     public String getTitle() {
         return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     @Override
@@ -230,6 +204,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     public String getSynopsis() {
         return synopsis;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
     }
 
     public boolean getIrbNotEngaged() {
@@ -248,6 +226,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return createdBy;
     }
 
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
     public Date getModifiedDate() {
         return modifiedDate;
     }
@@ -258,6 +240,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     public String getIrbNotes() {
         return irbNotes;
+    }
+
+    public void setIrbNotes(String irbNotes) {
+        this.irbNotes = irbNotes;
     }
 
     public void addIrbNotes(String irbNotes) {
@@ -272,28 +258,16 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return sequenceAlignerKey;
     }
 
+    public void setSequenceAlignerKey(String sequenceAlignerKey) {
+        this.sequenceAlignerKey = sequenceAlignerKey;
+    }
+
     public String getReferenceSequenceKey() {
         return referenceSequenceKey;
     }
 
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setSynopsis(String synopsis) {
-        this.synopsis = synopsis;
-    }
-
-    public void setIrbNotEngaged(boolean irbNotEngaged) {
-        this.irbNotEngaged = irbNotEngaged;
-    }
-
-    public void setIrbNotes(String irbNotes) {
-        this.irbNotes = irbNotes;
+    public void setReferenceSequenceKey(String referenceSequenceKey) {
+        this.referenceSequenceKey = referenceSequenceKey;
     }
 
     public boolean isAccessControlEnabled() {
@@ -302,14 +276,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
-    }
-
-    public void setSequenceAlignerKey(String sequenceAlignerKey) {
-        this.sequenceAlignerKey = sequenceAlignerKey;
-    }
-
-    public void setReferenceSequenceKey(String referenceSequenceKey) {
-        this.referenceSequenceKey = referenceSequenceKey;
     }
 
     /**
@@ -378,6 +344,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
     public boolean isIrbNotEngaged() {
         return irbNotEngaged;
+    }
+
+    public void setIrbNotEngaged(boolean irbNotEngaged) {
+        this.irbNotEngaged = irbNotEngaged;
     }
 
     public String[] getIrbNumbers() {
@@ -609,18 +579,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return parentResearchProject;
     }
 
-    /**
-     * Traverse through all the potential parent projects until we get to the root parent.  If the parent research
-     * project is null, then it returns itself as the root node.
-     */
-    public ResearchProject getRootResearchProject() {
-        if (parentResearchProject == null) {
-            return this;
-        }
-
-        return parentResearchProject.getRootResearchProject();
-    }
-
     public void setParentResearchProject(ResearchProject parentResearchProject) {
         // Update parent/child relationships so they are correct. Hibernate will create the correct set of children
         // the next time the objects are retrieved from the database.
@@ -634,6 +592,18 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     }
 
     /**
+     * Traverse through all the potential parent projects until we get to the root parent.  If the parent research
+     * project is null, then it returns itself as the root node.
+     */
+    public ResearchProject getRootResearchProject() {
+        if (parentResearchProject == null) {
+            return this;
+        }
+
+        return parentResearchProject.getRootResearchProject();
+    }
+
+    /**
      * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
@@ -643,7 +613,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      */
     @Transient
     public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.Research_Projects;
+        return CreateFields.ProjectType.getResearchProjectType();
     }
 
     /**
@@ -656,34 +626,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      */
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.RESEARCH_PROJECT;
-    }
-
-    /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
-     * for Research Projects
-     */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
-        //        Sponsoring_Scientist("Sponsoring Scientist"),
-        COHORTS("Cohort(s)"),
-        FUNDING_SOURCE("Funding Source"),
-        IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
-        MERCURY_URL("Mercury URL"),
-        DESCRIPTION("Description"),
-        BROAD_PIS("Broad PI(s)"),;
-
-        private final String fieldName;
-
-        private RequiredSubmissionFields(String fieldNameIn) {
-            fieldName = fieldNameIn;
-        }
-
-        @Nonnull
-        @Override
-        public String getName() {
-            return fieldName;
-        }
+        return CreateFields.IssueType.getResearchProjectIssueType();
     }
 
     public Collection<ResearchProject> getAllChildren() {
@@ -811,13 +754,47 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
     }
 
-    /**
-     * Compare by modified date.
-     */
-    public static final Comparator<ResearchProject> BY_DATE = new Comparator<ResearchProject>() {
-        @Override
-        public int compare(ResearchProject lhs, ResearchProject rhs) {
-            return rhs.getModifiedDate().compareTo(lhs.getModifiedDate());
+    public enum Status implements StatusType {
+        Open, Archived;
+
+        public static List<String> getNames() {
+            List<String> names = new ArrayList<>();
+            for (Status status : Status.values()) {
+                names.add(status.name());
+            }
+
+            return names;
         }
-    };
+
+        @Override
+        public String getDisplayName() {
+            return name();
+        }
+    }
+
+    /**
+     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
+     * for Research Projects
+     */
+    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
+        //        Sponsoring_Scientist("Sponsoring Scientist"),
+        COHORTS("Cohort(s)"),
+        FUNDING_SOURCE("Funding Source"),
+        IRB_IACUC_NUMBER("IRB/IACUCs"),
+        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
+        MERCURY_URL("Mercury URL"),
+        DESCRIPTION("Description"),
+        BROAD_PIS("Broad PI(s)"),;
+        private final String fieldName;
+
+        private RequiredSubmissionFields(String fieldNameIn) {
+            fieldName = fieldNameIn;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return fieldName;
+        }
+    }
 }

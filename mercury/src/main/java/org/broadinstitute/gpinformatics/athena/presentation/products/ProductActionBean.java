@@ -28,9 +28,12 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +99,8 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="availabilityDate", required = true, on={SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
+
+    private Workflow workflow;
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
@@ -301,6 +306,7 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
+        editProduct.setWorkflow(workflow == null ? Workflow.NONE : workflow);
         productEjb.saveProduct(
                 editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
                 allLengthsMatch(), criteria, operators, values);
@@ -453,5 +459,17 @@ public class ProductActionBean extends CoreActionBean {
      */
     public Collection<DisplayableItem> getAnalysisTypes() {
         return mercuryClientService.getAnalysisTypes();
+    }
+
+    public Workflow[] getWorkflowList() {
+        return Workflow.values();
+    }
+
+    public Workflow getWorkflow() {
+        return workflow;
+    }
+
+    public void setWorkflow(Workflow workflow) {
+        this.workflow = workflow;
     }
 }
