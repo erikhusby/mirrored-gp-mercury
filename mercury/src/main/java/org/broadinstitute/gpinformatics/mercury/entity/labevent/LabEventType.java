@@ -334,6 +334,12 @@ public enum LabEventType {
     ICE_CATCH_PICO("IceCatchPico", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_POOL_TEST("IcePoolTest", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    // PCRFree
+    PCR_FREE_ADAPTER_LIGATION_CLEANUP("PCRFreeAdapterLigationCleanup", false, true, SystemOfRecord.SQUID, false,
+                PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    PCR_FREE_POND_REGISTRATION("PCRFreePondRegistration", false, true, SystemOfRecord.SQUID, false,
+                PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
