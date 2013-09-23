@@ -229,7 +229,7 @@ public class BettaLimsMessageResource {
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
             LOG.error("Failed to process run", e);
-            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
                     e.getMessage());
             throw e;
         }

@@ -170,7 +170,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
             Assert.assertEquals(tube.getLabel(), denatureTube.getLabel());
         }
 
-        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -182,7 +182,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -249,7 +249,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -275,7 +275,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.never())
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService2, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService2, Mockito.times(2)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -343,7 +343,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -367,7 +367,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -432,7 +432,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -456,7 +456,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -522,7 +522,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.times(1)).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -546,7 +546,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender2, Mockito.times(1))
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig2, Mockito.times(1)).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService2, Mockito.never()).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService2, Mockito.never()).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -614,7 +614,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -626,7 +626,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         Workflow.AGILENT_EXOME_EXPRESS);
 
         Mockito.verify(mockEmailSender, Mockito.never())
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());
@@ -692,7 +692,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         getLabEventFactory().getEventHandlerSelector()
                 .applyEventSpecificHandling(reagentToFlowcellEvent, reagentToFlowcellJaxb);
 
-        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail(Mockito.anyString(), Mockito.anyString(),
+        Mockito.verify(mockEmailSender, Mockito.never()).sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(),
                 Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(1)).getCustomFields(Mockito.anyString(), Mockito.anyString());
@@ -703,7 +703,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                         ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, null,
                         Workflow.AGILENT_EXOME_EXPRESS);
         Mockito.verify(mockEmailSender, Mockito.never())
-                .sendHtmlEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+                .sendHtmlEmail((AppConfig)Mockito.anyObject(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockAppConfig, Mockito.never()).getWorkflowValidationEmail();
         Mockito.verify(mockJiraService, Mockito.times(2)).getCustomFields(Mockito.anyString(), Mockito.anyString());
         Mockito.verify(mockJiraService, Mockito.times(4)).updateIssue(Mockito.anyString(), Mockito.anyCollection());

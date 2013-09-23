@@ -7,31 +7,31 @@ app:
       host:     localhost
       port:     8080
       jmsPort:  5445
-      workflowValidationEmail: andrew@broadinstitute.org
+      workflowValidationEmail:
 
     AUTO_BUILD:
       host:     mercurydev.broadinstitute.org
       port:     8081
       jmsPort:  5446
-      workflowValidationEmail: andrew@broadinstitute.org
+      workflowValidationEmail:
 
     TEST:
       host:     mercurydev.broadinstitute.org
       port:     8080
       jmsPort:  5445
-      workflowValidationEmail: andrew@broadinstitute.org
+      workflowValidationEmail:
 
     QA:
       host:     mercuryqa.broadinstitute.org
       port:     8081
       jmsPort:  5445
-      workflowValidationEmail: smcdonou@broadinstitute.org
+      workflowValidationEmail:
 
     RC:
       host:     mercuryrc.broadinstitute.org
       port:     8082
       jmsPort:  5447
-      workflowValidationEmail: smcdonou@broadinstitute.org
+      workflowValidationEmail:
 
     PROD:
       host:     mercury.broadinstitute.org

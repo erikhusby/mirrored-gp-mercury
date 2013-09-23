@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +197,7 @@ public class WorkflowValidator {
             rootMap.put("validationErrors", validationErrors);
             StringWriter stringWriter = new StringWriter();
             templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-            emailSender.sendHtmlEmail(appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
                                                                               stationEventType.getEventType(),
                     stringWriter.toString());
         }
