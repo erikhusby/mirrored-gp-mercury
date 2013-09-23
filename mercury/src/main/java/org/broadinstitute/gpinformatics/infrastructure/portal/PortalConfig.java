@@ -8,6 +8,9 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
+/**
+ * The YAML config associated object that gets populated from the YAML files.
+ */
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("portal")
 public class PortalConfig extends AbstractConfig implements Serializable {
