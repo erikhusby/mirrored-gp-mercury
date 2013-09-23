@@ -47,7 +47,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         List<ProductOrderSample> samples = productOrder.getSamples();
         for (ProductOrderSample productOrderSample : samples) {
-            mapSampleIdToPdoSample.put(productOrderSample.getSampleName(),
+            mapSampleIdToPdoSample.put(productOrderSample.getName(),
                     new HashSet<>(Collections.singleton(productOrderSample)));
         }
         return mapSampleIdToPdoSample;

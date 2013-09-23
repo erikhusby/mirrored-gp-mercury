@@ -154,7 +154,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         if (pdoSummaryStatsMap == null) {
             // Update the charges map.
             addSummaryToChargesMap(dataRowIndex, rowPdoIdStr);
-            if (getMessages().size() > 0) {
+            if (!getMessages().isEmpty()) {
                 return;
             }
 
@@ -176,7 +176,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Verify the sample information.
         checkSample(dataRowIndex, rowPdoIdStr, currentSampleName,
                 dataRow.get(BillingTrackerHeader.AUTO_LEDGER_TIMESTAMP.getText()));
-        if (getMessages().size() > 0) {
+        if (!getMessages().isEmpty()) {
             return;
         }
 
@@ -196,11 +196,11 @@ public class BillingTrackerProcessor extends TableProcessor {
         }
 
         // The order in the spreadsheet is the same as returned in the productOrder.
-        if (!currentSamples.get(sampleIndexInOrder).getSampleName().equals(currentSampleName)) {
+        if (!currentSamples.get(sampleIndexInOrder).getName().equals(currentSampleName)) {
             String error = "Sample " + currentSampleName + " is not in the expected position. " +
                            "The Order <" + currentProductOrder.getTitle() +
                            " (Id: " + rowPdoIdStr + ")> has sample name " +
-                           currentSamples.get(sampleIndexInOrder).getSampleName() +
+                           currentSamples.get(sampleIndexInOrder).getName() +
                            " at position: " + sampleIndexInOrder;
             addDataMessage(error, dataRowIndex);
             return;
@@ -208,10 +208,10 @@ public class BillingTrackerProcessor extends TableProcessor {
 
         // Make sure the product order sample name in the current position matches the sample list.
         ProductOrderSample productOrderSample = currentSamples.get(sampleIndexInOrder);
-        if (!productOrderSample.getSampleName().equals(currentSampleName)) {
+        if (!productOrderSample.getName().equals(currentSampleName)) {
             String error = "Sample " + currentSampleName +
                            " is in different position than expected. Expected value from Order is " +
-                           productOrderSample.getSampleName();
+                           productOrderSample.getName();
             addDataMessage(error, dataRowIndex);
             return;
         }
@@ -222,7 +222,7 @@ public class BillingTrackerProcessor extends TableProcessor {
             Date currentSampleTimestamp = productOrderSample.getLatestAutoLedgerTimestamp();
             if (!areTimestampsEqual(uploadedTimestamp, currentSampleTimestamp)) {
                 String error = "Sample " + currentSampleName + " was auto billed after this tracker was downloaded. " +
-                               "Download the tracker again to validate " + productOrderSample.getSampleName();
+                               "Download the tracker again to validate " + productOrderSample.getName();
                 addDataMessage(error, dataRowIndex);
             }
         } catch (ParseException ex) {

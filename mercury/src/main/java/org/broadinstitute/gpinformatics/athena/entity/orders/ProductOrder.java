@@ -61,10 +61,11 @@ import java.util.Set;
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, Serializable {
-    public static final boolean IS_CREATING = true;
-    public static final boolean IS_UPDATING = false;
     private static final long serialVersionUID = 2712946561792445251L;
+
     private static final String DRAFT_PREFIX = "Draft-";
+
+    public enum SaveType {creating, updating};
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -137,7 +138,9 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
-    /** Counts the number of lanes, the default value is one lane. */
+    /**
+     * Counts the number of lanes, the default value is one lane.
+     */
     @Column(name = "count")
     private int laneCount = 1;
 
@@ -247,7 +250,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         Set<String> bspSampleNames = new HashSet<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
             if (productOrderSample.needsBspMetaData()) {
-                bspSampleNames.add(productOrderSample.getSampleName());
+                bspSampleNames.add(productOrderSample.getName());
             }
         }
         if (bspSampleNames.isEmpty()) {
@@ -263,7 +266,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         // The non-null DTOs which we use to look up FFPE status.
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<>();
         for (ProductOrderSample sample : samples) {
-            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
+            BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample.
             if (bspSampleDTO != null) {
@@ -339,7 +342,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         Set<String> uniqueSampleNamesOnRisk = new HashSet<>();
         for (ProductOrderSample sample : selectedSamples) {
             if (sample.calculateRisk()) {
-                uniqueSampleNamesOnRisk.add(sample.getSampleName());
+                uniqueSampleNamesOnRisk.add(sample.getName());
             }
         }
 
@@ -366,8 +369,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         Set<String> uniqueKeys = new HashSet<>();
 
         for (ProductOrderSample sample : samples) {
-            if (sample.isOnRisk() && (!uniqueKeys.contains(sample.getSampleName()))) {
-                uniqueKeys.add(sample.getSampleName());
+            if (sample.isOnRisk() && (!uniqueKeys.contains(sample.getName()))) {
+                uniqueKeys.add(sample.getName());
                 count++;
             }
         }
@@ -381,7 +384,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      * @param user the user doing the save operation.
      */
     public void prepareToSave(BspUser user) {
-        prepareToSave(user, false);
+        prepareToSave(user, SaveType.updating);
     }
 
     /**
@@ -389,12 +392,13 @@ public class ProductOrder implements BusinessObject, Serializable {
      * and sets the create date and create user if these haven't been set yet.
      *
      * @param user       the user doing the save operation.
-     * @param isCreating true if creating a new PDO
+     * @param  saveType  a {@link SaveType} enum to define if creating or just updating
      */
-    public void prepareToSave(BspUser user, boolean isCreating) {
+    public void prepareToSave(BspUser user, SaveType saveType) {
         Date now = new Date();
         long userId = user.getUserId();
-        if (isCreating) {
+
+        if (saveType.equals(SaveType.creating)) {
             // createdBy is now set in the UI.
             if (createdBy == null) {
                 // Used by tests only.
@@ -402,6 +406,7 @@ public class ProductOrder implements BusinessObject, Serializable {
             }
             createdDate = now;
         }
+
         modifiedBy = userId;
         modifiedDate = now;
     }
@@ -1220,7 +1225,7 @@ public class ProductOrder implements BusinessObject, Serializable {
             Set<String> participantSet = new HashSet<>();
 
             for (ProductOrderSample sample : samples) {
-                if (sampleSet.add(sample.getSampleName())) {
+                if (sampleSet.add(sample.getName())) {
                     // This is a unique sample name, so do any counts that are only needed for unique names. Since
                     // BSP looks up samples by name, it would always get the same data, so only counting unique values.
                     if (sample.isInBspFormat()) {

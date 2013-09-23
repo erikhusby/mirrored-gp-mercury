@@ -300,7 +300,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
-            this.addGlobalValidationError("No product order was specified.");
+            addGlobalValidationError("No product order was specified.");
         } else {
             // Since just getting the one item, get all the lazy data.
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RiskItems);
@@ -658,7 +658,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             return errorResolution;
         }
 
-        if ((editOrder != null) && editOrder.isDraft()) {
+        if (editOrder.isDraft()) {
             validateUser("place");
         }
         return new ForwardResolution(ORDER_VIEW_PAGE);
@@ -764,7 +764,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         // Update the modified by and created by, if necessary.
-        editOrder.prepareToSave(userBean.getBspUser(), isCreating());
+        ProductOrder.SaveType saveType = ProductOrder.SaveType.updating;
+        if (isCreating()) {
+            saveType = ProductOrder.SaveType.creating;
+        }
+        editOrder.prepareToSave(userBean.getBspUser(), saveType);
 
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
@@ -996,7 +1000,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample sample : selectedProductOrderSamples) {
             if (!sample.getLedgerItems().isEmpty()) {
                 addGlobalValidationError("Cannot delete sample {2} because billing has started.",
-                        sample.getSampleName());
+                        sample.getName());
             }
         }
     }
