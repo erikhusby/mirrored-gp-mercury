@@ -112,8 +112,9 @@ public class CreateFields extends UpdateFields {
 
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum IssueType {
+        // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS("Exome Express"),
         PRODUCT_ORDER("Product Order"),
         CLIA_PRODUCT_ORDER("CLIA Product Order"),
         RESEARCH_PROJECT("Research Project"),

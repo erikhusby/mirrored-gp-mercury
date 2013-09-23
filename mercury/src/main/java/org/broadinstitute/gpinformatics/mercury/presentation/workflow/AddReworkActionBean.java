@@ -32,6 +32,7 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private LabVessel labVessel;
     private List<ReworkEjb.ReworkCandidate> reworkCandidates = new ArrayList<>();
-    private Set<WorkflowBucketDef> buckets = new HashSet<>();
+    private LinkedHashSet<WorkflowBucketDef> buckets = new LinkedHashSet<>();
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION})
     private String vesselLabel;
@@ -209,10 +210,6 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public Set<WorkflowBucketDef> getBuckets() {
         return buckets;
-    }
-
-    public void setBuckets(Set<WorkflowBucketDef> buckets) {
-        this.buckets = buckets;
     }
 
     public WorkflowBucketDef getBucket() {
