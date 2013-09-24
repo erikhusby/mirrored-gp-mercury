@@ -126,4 +126,20 @@ public class LabBatchFixUpTest extends Arquillian {
         labBatch.setCreatedOn(gregorianCalendar.getTime());
         labBatchDao.flush();
     }
+
+    /** Rename Exome Express to Agilent Exome Express. */
+    @Test(enabled = true)
+    public void updateWorkflowName() {
+        List<LabBatch> updates = new ArrayList<>();
+        for (LabBatch batch : labBatchDao.findAll(LabBatch.class)) {
+            if ("Exome Express".equals(batch.getWorkflowName())) {
+                batch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+                updates.add(batch);
+            }
+        }
+        if (!updates.isEmpty()) {
+            labBatchDao.persistAll(updates);
+        }
+    }
+
 }
