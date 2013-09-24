@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.JiraLink;
+import org.broadinstitute.gpinformatics.infrastructure.presentation.PortalLink;
 import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
@@ -92,6 +93,9 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private JiraLink jiraLink;
+
+    @Inject
+    private PortalLink portalLink;
 
     @Inject
     private SampleLink.Factory sampleLinkFactory;
@@ -195,7 +199,7 @@ public class CoreActionBean implements ActionBean {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
-        return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
+        return !(getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
     }
 
     /**
@@ -242,8 +246,9 @@ public class CoreActionBean implements ActionBean {
      * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
      * patterns, such as {, }, or '.
      *
-     * @param message the message to format safely
+     * @param message   the message to format safely
      * @param arguments the arguments to the message format string
+     *
      * @return the stripes message object
      */
     protected static Message createSafeMessage(String message, Object... arguments) {
@@ -258,8 +263,9 @@ public class CoreActionBean implements ActionBean {
      * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
      * patterns, such as {, }, or '.
      *
-     * @param message the message to format safely
+     * @param message   the message to format safely
      * @param arguments the arguments to the message format string
+     *
      * @return the stripes message object
      */
     protected static SimpleError createSafeErrorMessage(String message, Object... arguments) {
@@ -310,7 +316,7 @@ public class CoreActionBean implements ActionBean {
      * formatted using MessageFormat.format().
      *
      * @param errorMessage The message to put into a SimpleError
-     * @param arguments optional message parameters
+     * @param arguments    optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
         getContext().getValidationErrors().addGlobalError(createSafeErrorMessage(errorMessage, arguments));
@@ -408,6 +414,7 @@ public class CoreActionBean implements ActionBean {
      * Given a list of user IDs, return a comma separated list of full user names.
      *
      * @param userIds list of user IDs
+     *
      * @return string representation of named users in CSV format
      */
     // Argument type must be Long, not long, to work with Stripes.
@@ -430,12 +437,12 @@ public class CoreActionBean implements ActionBean {
     /**
      * Set HTTP response headers appropriately for a file download
      * (as opposed to a normal HTTP response).
-     *
+     * <p/>
      * The content type may be null, in which case we default it
      * to application/octet-stream, which will typically cause the
      * receiving browser to offer to save the file or allow the
      * user to pick an application to use to open it.
-     *
+     * <p/>
      * The file name argument specifies the default file name the
      * browser should give the file on the client.  If the file
      * name is null, we do not send a file name in the headers.
@@ -443,7 +450,7 @@ public class CoreActionBean implements ActionBean {
      * name based on the URL used to download the file.
      *
      * @param contentType The MIME type of the response or null.
-     * @param fileName The name of the downloaded file or null.
+     * @param fileName    The name of the downloaded file or null.
      */
     public void setFileDownloadHeaders(String contentType, String fileName) {
         // Some applications also muck with the character encoding
@@ -464,7 +471,9 @@ public class CoreActionBean implements ActionBean {
 
     /**
      * Helper method to create a streaming text resolution, used to create the response from an AJAX call.
+     *
      * @param text text to return
+     *
      * @return the resolution.
      */
     public Resolution createTextResolution(String text) {
@@ -484,11 +493,24 @@ public class CoreActionBean implements ActionBean {
 
     /**
      * Given a JIRA ticket key, create a URL to open the ticket in JIRA.
+     *
      * @param jiraTicketKey the key
+     *
      * @return the JIRA URL
      */
     public String jiraUrl(String jiraTicketKey) {
         return jiraLink.browseUrl(jiraTicketKey);
+    }
+
+    /**
+     * Given a Portal requisition key, create a URL to open the requisition in the Portal.
+     *
+     * @param requisitionKey the key
+     *
+     * @return the Portal URL
+     */
+    public String portalRequisitionUrl(String requisitionKey) {
+        return portalLink.browseRequisitionUrl(requisitionKey);
     }
 
     /**
@@ -525,7 +547,7 @@ public class CoreActionBean implements ActionBean {
     public boolean isEditAllowed() {
         return true;
     }
-    
+
     public String getDatePattern() {
         return DATE_PATTERN;
     }

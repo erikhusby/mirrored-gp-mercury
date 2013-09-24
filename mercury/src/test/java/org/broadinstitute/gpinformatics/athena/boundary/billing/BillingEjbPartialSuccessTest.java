@@ -150,7 +150,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * </ul>
      */
     public void testPositive() {
-
         BillingSession billingSession = writeFixtureData();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
@@ -168,10 +167,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, hasSize(2));
 
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
-            if (SM_1234.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
+            if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
             }
-            if (SM_5678.equals(ledgerEntry.getProductOrderSample().getSampleName())) {
+            if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
             }
         }

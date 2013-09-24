@@ -72,7 +72,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         Assert.assertEquals(samplesFromDb.size(), sampleNames.length);
         // check the sample order, should be the same.
         for (int i = 0; i < sampleNames.length; i++) {
-            Assert.assertEquals(samplesFromDb.get(i).getSampleName(), sampleNames[i]);
+            Assert.assertEquals(samplesFromDb.get(i).getName(), sampleNames[i]);
         }
     }
 }

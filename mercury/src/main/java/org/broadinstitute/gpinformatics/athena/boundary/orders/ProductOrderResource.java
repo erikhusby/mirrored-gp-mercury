@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -30,6 +32,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -41,6 +44,8 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderResource {
+    private static Log log = LogFactory.getLog(ProductOrderResource.class);
+
     @Inject
     private ProductOrderDao productOrderDao;
 
@@ -89,20 +94,17 @@ public class ProductOrderResource {
             productOrder.setCreatedBy(user.getUserId());
         }
 
-        productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
         // sure any DB constraints have been enforced.
         productOrderDao.persist(productOrder);
         productOrderDao.flush();
 
-        /*
-        // If returning the URI to the resource we made, then return type needs to be Response.
-        URI productOrderUri =
-                uriInfo.getAbsolutePathBuilder().path(productOrder.getProductOrderId().toString()).build();
-        return Response.created(productOrderUri).build();
-        */
+        log.info(user.getUsername() + " created product order " + productOrder.getBusinessKey()
+                 + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
+                 + productOrder.getSamples().size() + " samples");
 
         return new ProductOrderData(productOrder);
     }
@@ -133,8 +135,6 @@ public class ProductOrderResource {
         }
 
         productOrder.setTitle(productOrderData.getTitle());
-
-
         productOrder.setComments(productOrderData.getComments());
         productOrder.setQuoteId(productOrderData.getQuoteId());
 
@@ -144,9 +144,9 @@ public class ProductOrderResource {
             productOrder.setProduct(product);
         }
 
-        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
+        if (!StringUtils.isBlank(productOrderData.getResearchProjectKey())) {
             ResearchProject researchProject =
-                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
+                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectKey());
             productOrder.setResearchProject(researchProject);
         }
 
@@ -253,7 +253,7 @@ public class ProductOrderResource {
             productOrderData.setProductName(productOrder.getProduct().getName());
             productOrderData.setStatus(productOrder.getOrderStatus().name());
             productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setResearchProjectKey(productOrder.getResearchProject().getBusinessKey());
             productOrderData.setQuoteId(productOrder.getQuoteId());
 
             if (includeSamples) {

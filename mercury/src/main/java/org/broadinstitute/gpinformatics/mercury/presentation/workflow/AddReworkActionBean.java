@@ -56,7 +56,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private LabVessel labVessel;
     private List<ReworkEjb.ReworkCandidate> reworkCandidates = new ArrayList<>();
-    private LinkedHashSet<WorkflowBucketDef> buckets = new LinkedHashSet<>();
+    private List<WorkflowBucketDef> buckets = new ArrayList<>();
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION})
     private String vesselLabel;
@@ -129,13 +129,12 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        // Only does supported workflows.
-        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
-            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            buckets.addAll(workflowVersion.getBuckets());
-        }
-        // Set the initial bucket to the first in the list and load it.
+        // Only supports Agilent Exome Express.
+        ProductWorkflowDef workflowDef =
+                workflowConfig.getWorkflowByName(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
+        ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+        buckets.addAll(workflowVersion.getBuckets());
+        // Set the initial bucket to the first one found.
         if (!buckets.isEmpty()) {
             bucketName = buckets.iterator().next().getName();
         }
@@ -208,7 +207,7 @@ public class AddReworkActionBean extends CoreActionBean {
         this.noResultQueryTerms = noResultQueryTerms;
     }
 
-    public Set<WorkflowBucketDef> getBuckets() {
+    public List<WorkflowBucketDef> getBuckets() {
         return buckets;
     }
 

@@ -56,7 +56,7 @@ public class ProductOrderSampleEtl extends GenericEntityAndStatusEtl<ProductOrde
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                format(entity.getSampleName()),
+                format(entity.getName()),
                 format(entity.getDeliveryStatus().name()),
                 format(entity.getSamplePosition())
         );

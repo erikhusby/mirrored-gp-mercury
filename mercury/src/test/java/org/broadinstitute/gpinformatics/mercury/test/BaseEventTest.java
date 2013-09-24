@@ -174,11 +174,11 @@ public class BaseEventTest {
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(poSample.getSampleName()));
+            bspAliquot.addSample(new MercurySample(poSample.getName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
-            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getSampleName());
-            mapSampleNameToDto.put(poSample.getSampleName(), new BSPSampleDTO(dataMap));
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
+            mapSampleNameToDto.put(poSample.getName(), new BSPSampleDTO(dataMap));
             if (rackPosition > NUM_POSITIONS_IN_RACK) {
                 log.error(
                         "More product order samples than allowed in a single rack. " + productOrder.getSamples().size()

@@ -187,7 +187,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().nextRow();
 
         // sample name.
-        getWriter().writeCell(sample.getSampleName());
+        getWriter().writeCell(sample.getName());
 
         // collaborator sample ID, looks like this is properly initialized.
         getWriter().writeCell(sample.getBspSampleDTO().getCollaboratorsSampleName());

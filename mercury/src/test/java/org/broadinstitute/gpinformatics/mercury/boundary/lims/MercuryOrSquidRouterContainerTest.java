@@ -911,11 +911,11 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         for (ProductOrderSample currSample : productOrder.getSamples()) {
 
-            TwoDBarcodedTube newTube = (TwoDBarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getSampleName());
+            TwoDBarcodedTube newTube = (TwoDBarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getName());
             if (newTube == null) {
-                newTube = new TwoDBarcodedTube("R" + currSample.getSampleName());
+                newTube = new TwoDBarcodedTube("R" + currSample.getName());
             }
-            newTube.addSample(new MercurySample(currSample.getSampleName()));
+            newTube.addSample(new MercurySample(currSample.getName()));
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {

@@ -86,6 +86,19 @@ jira:
 #      port:     8020
       urlBase:      https://crspjira.broadinstitute.org
 
+portal:
+    TEST:
+      urlBase:      http://crsp-dev-portal:8111/portal
+
+    DEV:
+      urlBase:      http://crsp-dev-portal:8111/portal
+
+    QA:
+      urlBase:      http://crsp-qa-portal:8111/portal
+
+    PROD:
+      urlBase:      https://www.broadinstitute.org/portal
+
 quote:
 
     DEV:
@@ -182,6 +195,7 @@ mercury:
 
       app:      DEV
       bsp:      DEV
+      portal:   DEV
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -210,6 +224,7 @@ mercury:
 
       app:      TEST
       bsp:      DEV
+      portal:   DEV
       jira:     TEST
       quote:    DEV
       squid:    DISABLED
@@ -224,6 +239,7 @@ mercury:
 
       app:      QA
       bsp:      RC
+      portal:   QA
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -238,6 +254,7 @@ mercury:
 
       app:      RC
       bsp:      RC
+      portal:   QA
       jira:     TEST
       quote:    QA
       squid:    DISABLED
@@ -252,6 +269,7 @@ mercury:
 
       app:      PROD
       bsp:      PROD
+      portal:   PROD
       jira:     PROD
       quote:    PROD
       squid:    DISABLED

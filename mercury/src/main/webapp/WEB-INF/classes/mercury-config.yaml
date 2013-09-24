@@ -76,6 +76,19 @@ jira:
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
 
+portal:
+    TEST:
+      urlBase:      http://gapdev:8111/portal
+
+    DEV:
+      urlBase:      http://gapdev:8111/portal
+
+    QA:
+      urlBase:      http://gaprc:8111/portal
+
+    PROD:
+      urlBase:      https://www.broadinstitute.org/portal
+
 quote:
 
     DEV:
