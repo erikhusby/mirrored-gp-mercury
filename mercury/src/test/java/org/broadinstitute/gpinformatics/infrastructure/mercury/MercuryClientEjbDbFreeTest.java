@@ -173,6 +173,9 @@ public class MercuryClientEjbDbFreeTest {
 
     public void testSamplesToPicoBucket() throws Exception {
         for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
+            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
+                continue;
+            }
             setUp(workflow);
 
             WorkflowConfig workflowConfig = workflowLoader.load();

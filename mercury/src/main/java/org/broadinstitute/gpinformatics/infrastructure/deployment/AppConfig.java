@@ -64,13 +64,7 @@ public class AppConfig extends AbstractConfig implements Serializable {
      * @return
      */
     public boolean shouldSendEmail() {
-        boolean shouldSend = false;
-        if (workflowValidationEmail != null) {
-            if (StringUtils.isBlank(workflowValidationEmail)) {
-                shouldSend = true;
-            }
-        }
-        return shouldSend;
+        return !StringUtils.isBlank(workflowValidationEmail);
     }
 
     public String getWorkflowValidationEmail() {
