@@ -50,8 +50,14 @@ public class ThriftConnection {
     // stateful: created by constructor
     private transient TTransport transport;
 
+    private ThriftConfig thriftConfig;
+
     @Inject
     public ThriftConnection(ThriftConfig thriftConfig) {
+        if (thriftConfig == null) {
+            throw new RuntimeException("thriftConfig cannot be null.");
+        }
+        this.thriftConfig = thriftConfig;
         /*
          * Try creating the transport here instead of in open(). If it doesn't
          * cause any problems, this can instead be injected from a producer
@@ -96,7 +102,7 @@ public class ThriftConnection {
             transport.open();
         }
         catch(TTransportException e) {
-            throw new RuntimeException("Could not open thrift connection",e);
+            throw new RuntimeException("Could not open thrift connection at " + thriftConfig.getHost() + ":" + thriftConfig.getPort(), e);
         }
     }
 
