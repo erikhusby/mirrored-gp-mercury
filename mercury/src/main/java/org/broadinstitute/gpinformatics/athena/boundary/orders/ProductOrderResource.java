@@ -30,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -90,17 +91,27 @@ public class ProductOrderResource {
 
         // Figure out who called this so we can record the owner.
         BspUser user = bspUserList.getByUsername(productOrderJaxB.getUsername());
-        if (user != null) {
-            productOrder.setCreatedBy(user.getUserId());
+        if (user == null) {
+            throw new ApplicationValidationException(
+                    "Problem creating the product order, cannot find the user " + productOrderJaxB.getUsername());
         }
 
-        productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        try {
+            productOrder.setCreatedBy(user.getUserId());
+            productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
+            productOrder.placeOrder();
+            productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-        // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
-        // sure any DB constraints have been enforced.
-        productOrderDao.persist(productOrder);
-        productOrderDao.flush();
+            // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
+            // any DB constraints have been enforced.
+            productOrderDao.persist(productOrder);
+            productOrderDao.flush();
+        } catch (Exception e) {
+            log.error(
+                    user.getUsername() + " had a problem placing their product order " + productOrder.getBusinessKey(),
+                    e);
+            throw new ApplicationValidationException("Cannot create the product order - " + e.getMessage());
+        }
 
         log.info(user.getUsername() + " created product order " + productOrder.getBusinessKey()
                  + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
