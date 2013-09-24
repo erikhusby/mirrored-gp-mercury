@@ -48,8 +48,8 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
             Double currentVolume = bspSampleDTO.getVolume();
             Double currentConcentration = bspSampleDTO.getConcentration();
 
-            Assert.assertTrue(scaleResult(newVolume[i]) - currentVolume <= ERROR_BAND);
-            Assert.assertTrue(scaleResult(newConcentration[i]) - currentConcentration <= ERROR_BAND);
+            Assert.assertTrue(Math.abs(scaleResult(newVolume[i]) - currentVolume) <= ERROR_BAND);
+            Assert.assertTrue(Math.abs(scaleResult(newConcentration[i]) - currentConcentration) <= ERROR_BAND);
         }
     }
 
