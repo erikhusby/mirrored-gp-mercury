@@ -174,7 +174,7 @@ public class ProductOrderFixupTest extends Arquillian {
         while (sampleIterator.hasNext()) {
             ProductOrderSample sample = sampleIterator.next();
 
-            if (samplesToRemove.contains(sample.getSampleName())) {
+            if (samplesToRemove.contains(sample.getName())) {
                 sampleIterator.remove();
             }
         }
@@ -203,7 +203,7 @@ public class ProductOrderFixupTest extends Arquillian {
         while (sampleIterator.hasNext()) {
             ProductOrderSample sample = sampleIterator.next();
 
-            if (samplesToRemove.contains(sample.getSampleName())) {
+            if (samplesToRemove.contains(sample.getName())) {
                 sampleIterator.remove();
             }
         }
@@ -229,7 +229,7 @@ public class ProductOrderFixupTest extends Arquillian {
         while (sampleIterator.hasNext()) {
             ProductOrderSample sample = sampleIterator.next();
 
-            if (samplesToRemove.contains(sample.getSampleName())) {
+            if (samplesToRemove.contains(sample.getName())) {
                 sampleIterator.remove();
             }
         }
@@ -392,7 +392,7 @@ public class ProductOrderFixupTest extends Arquillian {
         List<ProductOrderSample> sampleList = productOrder.getSamples();
 
         for (ProductOrderSample sample : sampleList) {
-            if (samplesToUnAbandon.contains(sample.getSampleName())) {
+            if (samplesToUnAbandon.contains(sample.getName())) {
                 sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
             }
         }

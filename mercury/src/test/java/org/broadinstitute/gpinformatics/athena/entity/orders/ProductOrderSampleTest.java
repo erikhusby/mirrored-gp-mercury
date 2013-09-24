@@ -204,12 +204,12 @@ public class ProductOrderSampleTest {
     public void testRisk(ProductOrderSample sample) {
         if (sample.isOnRisk()) {
             String message =
-                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getSampleName());
+                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getName());
 
             assertThat(message, sample.getRiskString(), is(not(nullOrEmptyString())));
         } else {
             String message =
-                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getSampleName());
+                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getName());
 
             assertThat(message, sample.getRiskString(), is(nullOrEmptyString()));
         }

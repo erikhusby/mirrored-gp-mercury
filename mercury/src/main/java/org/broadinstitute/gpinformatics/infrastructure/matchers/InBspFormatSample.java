@@ -11,7 +11,7 @@ public class InBspFormatSample extends TypeSafeMatcher<ProductOrderSample> {
 
     @Override
     public boolean matchesSafely(ProductOrderSample sample) {
-        return BSPUtil.isInBspFormat(sample.getSampleName());
+        return BSPUtil.isInBspFormat(sample.getName());
     }
 
     @Override

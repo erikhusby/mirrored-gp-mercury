@@ -165,7 +165,7 @@ public class ProductOrderTestFactory {
         return Multimaps.index(productOrder.getSamples(), new Function<ProductOrderSample, String>() {
             @Override
             public String apply(ProductOrderSample input) {
-                return input.getSampleName();
+                return input.getName();
             }
         });
     }

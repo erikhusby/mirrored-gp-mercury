@@ -84,7 +84,7 @@ public class ProductOrderSampleDao extends GenericDao {
         List<ProductOrderSample> productOrderSamples = findListByList(ProductOrderSample.class,
                 ProductOrderSample_.sampleName, sampleNames);
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            mapSampleNameToProductOrderSampleList.get(productOrderSample.getSampleName()).add(productOrderSample);
+            mapSampleNameToProductOrderSampleList.get(productOrderSample.getName()).add(productOrderSample);
         }
         return mapSampleNameToProductOrderSampleList;
     }

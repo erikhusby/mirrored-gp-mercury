@@ -114,7 +114,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public static List<String> getSampleNames(Collection<ProductOrderSample> samples) {
         List<String> names = new ArrayList<>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
-            names.add(productOrderSample.getSampleName());
+            names.add(productOrderSample.getName());
         }
         return names;
     }
@@ -228,16 +228,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
                               @Nonnull BSPSampleDTO bspSampleDTO) {
         super(bspSampleDTO);
         this.sampleName = sampleName;
-    }
-
-    /**
-     * @deprecated
-     * @see #getBusinessKey
-     * @return the business key
-     */
-    @Deprecated
-    public String getSampleName() {
-        return sampleName;
     }
 
     @Override

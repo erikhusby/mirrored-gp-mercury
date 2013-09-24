@@ -56,9 +56,9 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(testOrder.getCountsByStockType().get(ProductOrderSample.ACTIVE_IND).intValue(), 3);
 
         // Test the sample order should be the same as when created.
-        Assert.assertEquals(testOrder.getSamples().get(0).getSampleName(), "SM-1P3X9");
-        Assert.assertEquals(testOrder.getSamples().get(1).getSampleName(), "SM-1P3WY");
-        Assert.assertEquals(testOrder.getSamples().get(2).getSampleName(), "SM-1P3XN");
+        Assert.assertEquals(testOrder.getSamples().get(0).getName(), "SM-1P3X9");
+        Assert.assertEquals(testOrder.getSamples().get(1).getName(), "SM-1P3WY");
+        Assert.assertEquals(testOrder.getSamples().get(2).getName(), "SM-1P3XN");
 
         Assert.assertEquals(testOrder.getReceivedSampleCount(), 3);
 
