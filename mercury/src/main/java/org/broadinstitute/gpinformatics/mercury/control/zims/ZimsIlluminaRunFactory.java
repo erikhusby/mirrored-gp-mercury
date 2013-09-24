@@ -349,10 +349,10 @@ public class ZimsIlluminaRunFactory {
             // todo jmt in place events?
             for (LabVessel labVessel : event.getTargetLabVessels()) {
                 VesselContainer<?> containerRole = labVessel.getContainerRole();
-                if(containerRole == null) {
+                if (containerRole == null) {
                     mapHopToLabVessels.get(context.getHopCount()).add(labVessel);
                 } else {
-                    mapHopToLabVessels.get(context.getHopCount()).addAll(containerRole.getContainedVessels());
+                    mapHopToLabVessels.get(context.getHopCount()).add(containerRole.getVesselAtPosition(context.getVesselPosition()));
                 }
             }
             return TraversalControl.StopTraversing;
