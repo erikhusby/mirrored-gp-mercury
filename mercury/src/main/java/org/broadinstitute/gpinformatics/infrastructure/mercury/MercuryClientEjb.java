@@ -109,13 +109,13 @@ public class MercuryClientEjb {
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
-            Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getSampleName());
+            Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getName());
             if (pdoSampleList == null) {
                 pdoSampleList = new ArrayList<>();
-                nameToSampleMap.put(pdoSample.getSampleName(), pdoSampleList);
+                nameToSampleMap.put(pdoSample.getName(), pdoSampleList);
             }
             pdoSampleList.add(pdoSample);
-            sampleKeyList.add(pdoSample.getSampleName());
+            sampleKeyList.add(pdoSample.getName());
         }
 
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);

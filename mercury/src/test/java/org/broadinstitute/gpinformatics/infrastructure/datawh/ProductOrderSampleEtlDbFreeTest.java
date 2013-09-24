@@ -70,7 +70,7 @@ public class ProductOrderSampleEtlDbFreeTest {
         expect(obj.getProductOrderSampleId()).andReturn(entityId);
         expect(obj.getProductOrder()).andReturn(pdo).times(2);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
-        expect(obj.getSampleName()).andReturn(sampleName);
+        expect(obj.getName()).andReturn(sampleName);
         expect(obj.getDeliveryStatus()).andReturn(deliveryStatus);
         expect(obj.getSamplePosition()).andReturn(position);
 

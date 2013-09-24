@@ -127,24 +127,24 @@ public class MercuryClientEjbDbFreeTest {
                 case 1:
                     // Unreceived root should be rejected.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                     bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
                     break;
 
                 case 2:
                     // Received root but non-genomic material, should be rejected.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
                     bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
                     break;
 
                 case 3:
                     // Received root should be accepted.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getSampleName());
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                     bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
                     expectedSamples.add(pdoSample);
                     break;
@@ -154,16 +154,16 @@ public class MercuryClientEjbDbFreeTest {
                     // Non-root samples should all be accepted.
                     bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
                     bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getSampleName());
+                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
                     expectedSamples.add(pdoSample);
                     break;
             }
             BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
             bspDto.addPlastic(makeTubeBarcode(rackPosition));
-            bspDtoMap.put(pdoSample.getSampleName(), bspDto);
+            bspDtoMap.put(pdoSample.getName(), bspDto);
 
             LabVessel labVessel = new TwoDBarcodedTube(makeTubeBarcode(rackPosition));
-            labVessel.addSample(new MercurySample(pdoSample.getSampleName(), bspDto));
+            labVessel.addSample(new MercurySample(pdoSample.getName(), bspDto));
             labVessels.add(labVessel);
 
             labBatch.addLabVessel(labVessel);
@@ -192,7 +192,7 @@ public class MercuryClientEjbDbFreeTest {
                 if (rackPosition == 4) {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
-                    expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getSampleName()),
+                    expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
                             eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))
                             .andReturn(mockCreatedVessels);
                 }

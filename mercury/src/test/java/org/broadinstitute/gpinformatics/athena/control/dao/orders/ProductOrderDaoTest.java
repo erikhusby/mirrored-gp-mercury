@@ -155,7 +155,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         ProductOrder productOrder = productOrderMap.get(productOrderKey);
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            if (productOrderSample.getSampleName().equals(sampleBarcode)) {
+            if (productOrderSample.getName().equals(sampleBarcode)) {
                 return;
             }
         }

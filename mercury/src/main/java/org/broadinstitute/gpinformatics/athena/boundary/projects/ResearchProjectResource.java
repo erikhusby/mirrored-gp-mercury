@@ -48,6 +48,8 @@ public class ResearchProjectResource {
 
         public final String id;
 
+        private String businessKey;
+
         public final String synopsis;
 
         public final Date modifiedDate;
@@ -70,6 +72,7 @@ public class ResearchProjectResource {
         ResearchProjectData() {
             title = null;
             id = null;
+            businessKey = null;
             synopsis = null;
             projectManagers = null;
             broadPIs = null;
@@ -100,16 +103,19 @@ public class ResearchProjectResource {
         public ResearchProjectData(BSPUserList bspUserList, ResearchProject researchProject) {
             title = researchProject.getTitle();
             id = researchProject.getJiraTicketKey();
+            businessKey = researchProject.getBusinessKey();
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
             orders = new ArrayList<>(researchProject.getProductOrders().size());
             BspUser user = bspUserList.getById(researchProject.getCreatedBy());
+
             if (user != null) {
                 username = user.getUsername();
             } else {
                 username = null;
             }
+
             for (ProductOrder order : researchProject.getProductOrders()) {
                 // We omit draft orders from the report. At this point there is no requirement to expose draft
                 // orders to client of this web service.
@@ -117,6 +123,7 @@ public class ResearchProjectResource {
                     orders.add(order.getJiraTicketKey());
                 }
             }
+
             modifiedDate = researchProject.getModifiedDate();
         }
     }

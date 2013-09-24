@@ -35,7 +35,7 @@ public class CreateBillingData extends ContainerTest {
 
             Set<LedgerEntry> ledgerEntries = new HashSet<>();
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                if (productOrderSample.getSampleName().contains("A")) {
+                if (productOrderSample.getName().contains("A")) {
                     ledgerEntries.add(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
                             new Date(), 0.5));
                 }
@@ -45,7 +45,7 @@ public class CreateBillingData extends ContainerTest {
             productOrderDao.persist(billingSession);
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-                if (productOrderSample.getSampleName().contains("B")) {
+                if (productOrderSample.getName().contains("B")) {
                     productOrderDao.persist(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
                             new Date(), 1.1));
                 }

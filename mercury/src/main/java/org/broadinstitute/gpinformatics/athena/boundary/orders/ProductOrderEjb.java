@@ -207,7 +207,7 @@ public class ProductOrderEjb {
         }
 
         for (ProductOrderSample sample : order.getSamples()) {
-            if (sample.getSampleName().equals(sampleName) && sample.getAliquotId() == null) {
+            if (sample.getName().equals(sampleName) && sample.getAliquotId() == null) {
                 sample.setAliquotId(aliquotId);
                 return sample;
             }
@@ -533,7 +533,7 @@ public class ProductOrderEjb {
             List<String> messages = new ArrayList<>();
 
             for (ProductOrderSample sample : samples) {
-                messages.add(sample.getSampleName() + " @ " + sample.getSamplePosition()
+                messages.add(sample.getName() + " @ " + sample.getSamplePosition()
                              + " : current status " + sample.getDeliveryStatus().getDisplayName());
             }
 
