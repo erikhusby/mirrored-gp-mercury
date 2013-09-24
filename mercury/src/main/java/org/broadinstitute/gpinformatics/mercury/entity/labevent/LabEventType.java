@@ -602,7 +602,7 @@ public enum LabEventType {
     }
 
     /**
-     * whether it's an error for the source vessels to have content.
+     * Whether it's an error for the source vessels to have content.
      */
     public enum ExpectSourcesEmpty {
         TRUE(true),
@@ -628,7 +628,7 @@ public enum LabEventType {
     }
 
     /**
-     * whether it's an error for the target vessels to have content
+     * Whether it's an error for the target vessels to have content.
      */
     private enum ExpectTargetsEmpty {
         TRUE(true),
