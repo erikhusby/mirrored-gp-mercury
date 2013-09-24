@@ -45,9 +45,8 @@ public class ProductFixupTest extends Arquillian {
 
         if (exExProduct.getWorkflow() != Workflow.AGILENT_EXOME_EXPRESS) {
             exExProduct.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+            productDao.persist(exExProduct);
         }
-
-        productDao.persist(exExProduct);
     }
 
     @Test(enabled = false)
