@@ -915,7 +915,27 @@
             </build>
         </profile>
 
+        <profile>
+            <id>CRSPBUILD</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
 
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@crsp-db-dev-vm:1521:crspdev</database.url>
+                <mercury.password>welcome1</mercury.password>
+                <athena.password>welcome1</athena.password>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
         <profile>
             <id>BUILD</id>
             <properties>

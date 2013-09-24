@@ -482,12 +482,30 @@
                                 &#160;
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
+                                <a id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
                 </div>
             </div>
+
+            <c:if test="${not empty actionBean.editOrder.requisitionKey}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Requisition</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.draft}">
+                                    &#160;
+                                </c:when>
+                                <c:otherwise>
+                                    <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Product</label>

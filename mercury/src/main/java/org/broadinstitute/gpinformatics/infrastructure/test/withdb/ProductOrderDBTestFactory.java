@@ -80,7 +80,7 @@ public class ProductOrderDBTestFactory {
         order.setJiraTicketKey(TEST_PRODUCT_ORDER_KEY_PREFIX + UUID.randomUUID());
         BspUser testUser = new BspUser();
         testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser, true);
+        order.prepareToSave(testUser, ProductOrder.SaveType.CREATING);
 
         return order;
     }

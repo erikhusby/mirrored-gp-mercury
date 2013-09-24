@@ -89,8 +89,8 @@ public class ProductOrderResource {
             productOrder.setCreatedBy(user.getUserId());
         }
 
-        productOrder.prepareToSave(user, ProductOrder.IS_CREATING);
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         // Not supplying samples and add-ons at this point, just saving what we defined above and then flushing to make
         // sure any DB constraints have been enforced.
@@ -144,9 +144,9 @@ public class ProductOrderResource {
             productOrder.setProduct(product);
         }
 
-        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
+        if (!StringUtils.isBlank(productOrderData.getResearchProjectKey())) {
             ResearchProject researchProject =
-                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
+                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectKey());
             productOrder.setResearchProject(researchProject);
         }
 
@@ -253,7 +253,7 @@ public class ProductOrderResource {
             productOrderData.setProductName(productOrder.getProduct().getName());
             productOrderData.setStatus(productOrder.getOrderStatus().name());
             productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setResearchProjectKey(productOrder.getResearchProject().getBusinessKey());
             productOrderData.setQuoteId(productOrder.getQuoteId());
 
             if (includeSamples) {

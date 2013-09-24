@@ -5,12 +5,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 
 import javax.annotation.Nonnull;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -28,18 +26,18 @@ public class ProductOrderData {
     private Date modifiedDate;
     private String product;
     private String status;
+    private String aggregationDataType;
+    private String researchProjectKey;
+    private String productName;
+    private String quoteId;
+    private String username;
+    private String requisitionKey;
+    private String productOrderKey;
 
     /**
      * This is really a list of sample IDs.
      */
     private List<String> samples;
-
-    private String aggregationDataType;
-    private String researchProjectId;
-    private String productName;
-    private String quoteId;
-    private String username;
-    private String requisitionKey;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -51,13 +49,14 @@ public class ProductOrderData {
      *
      * @param productOrder the {@link ProductOrder}
      */
-    public  ProductOrderData(@Nonnull ProductOrder productOrder) {
+    public ProductOrderData(@Nonnull ProductOrder productOrder) {
         title = productOrder.getTitle();
 
         if (productOrder.getProductOrderId() != null) {
             id = productOrder.getProductOrderId().toString();
         }
 
+        productOrderKey = productOrder.getBusinessKey();
         comments = productOrder.getComments();
         placedDate = productOrder.getPlacedDate();
         modifiedDate = productOrder.getModifiedDate();
@@ -73,7 +72,7 @@ public class ProductOrderData {
         samples = getSampleList(productOrder.getSamples());
 
         if (productOrder.getResearchProject() != null) {
-            researchProjectId = productOrder.getResearchProject().getResearchProjectId().toString();
+            researchProjectKey = productOrder.getResearchProject().getBusinessKey();
         }
     }
 
@@ -201,16 +200,16 @@ public class ProductOrderData {
         return aggregationDataType;
     }
 
-    public void setResearchProjectId(String researchProjectId) {
-        this.researchProjectId = researchProjectId;
+    public void setResearchProjectKey(String researchProjectKey) {
+        this.researchProjectKey = researchProjectKey;
     }
 
-    public String getResearchProjectId() {
-        if (researchProjectId == null) {
+    public String getResearchProjectKey() {
+        if (researchProjectKey == null) {
             return "";
         }
 
-        return researchProjectId;
+        return researchProjectKey;
     }
 
     public void setProductName(String productName) {
@@ -259,5 +258,13 @@ public class ProductOrderData {
 
     public void setRequisitionKey(String requisitionKey) {
         this.requisitionKey = requisitionKey;
+    }
+
+    public String getProductOrderKey() {
+        return productOrderKey;
+    }
+
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
     }
 }

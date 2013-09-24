@@ -175,12 +175,12 @@ public class ReworkEjb {
             for (Set<ProductOrderSample> samples : samplesById.values()) {
                 Collection<String> sampleIDs = new ArrayList<>();
                 for (ProductOrderSample sample : samples) {
-                    sampleIDs.add(sample.getSampleName());
+                    sampleIDs.add(sample.getName());
                 }
                 Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
                 bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
                 for (ProductOrderSample sample : samples) {
-                    String sampleKey = sample.getSampleName();
+                    String sampleKey = sample.getName();
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                     final ReworkCandidate candidate =
                             new ReworkCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
