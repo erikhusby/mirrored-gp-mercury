@@ -765,11 +765,11 @@
                                     <c:choose>
                                         <c:when test="${sampleLink.hasLink}">
                                             <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}" href="${sampleLink.url}">
-                                                ${sample.sampleName}
+                                                ${sample.name}
                                             </stripes:link>
                                         </c:when>
                                         <c:otherwise>
-                                            ${sample.sampleName}
+                                            ${sample.name}
                                         </c:otherwise>
                                     </c:choose>
                                 </td>

@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -32,10 +33,7 @@ public class EmailSender implements Serializable {
      * @param subject subject line
      * @param body HTML
      */
-    public void sendHtmlEmail(AppConfig appConfig, String to, String subject, String body) {
-        if (appConfig == null) {
-            throw new RuntimeException("No appConfig was passed in for email to " + to + " regarding " + subject + "; the system does not know whether to it should really send the email.");
-        }
+    public void sendHtmlEmail(@Nonnull AppConfig appConfig, String to, String subject, String body) {
         if (appConfig.shouldSendEmail()) {
             if (mailSession != null) {
                 try {

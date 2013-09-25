@@ -5,12 +5,12 @@
 VERSION=`groovy -e 'print new XmlParser().parse(new File("pom.xml")).version.text()'`
 
 # Target is either DEV, RC or Production depending on the version.
-CLASSIFIER=`expr $VERSION : '[0-9]*\.[0-9]*-\(.*\)'`
+CLASSIFIER=`expr $VERSION : '.*\(-.*\)'`
 
-if [ "$CLASSIFIER" = "RC" ] 
+if [ "$CLASSIFIER" = "-RC" ] 
 then
     TARGET="MercuryRC"
-elif [ "$CLASSIFIER" = "SNAPSHOT" ]
+elif [ "$CLASSIFIER" = "-SNAPSHOT" ]
 then
     TARGET="MercuryDEV"
 else

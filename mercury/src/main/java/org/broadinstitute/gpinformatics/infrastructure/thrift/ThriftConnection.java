@@ -8,6 +8,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 /**
@@ -53,10 +54,7 @@ public class ThriftConnection {
     private ThriftConfig thriftConfig;
 
     @Inject
-    public ThriftConnection(ThriftConfig thriftConfig) {
-        if (thriftConfig == null) {
-            throw new RuntimeException("thriftConfig cannot be null.");
-        }
+    public ThriftConnection(@Nonnull ThriftConfig thriftConfig) {
         this.thriftConfig = thriftConfig;
         /*
          * Try creating the transport here instead of in open(). If it doesn't
