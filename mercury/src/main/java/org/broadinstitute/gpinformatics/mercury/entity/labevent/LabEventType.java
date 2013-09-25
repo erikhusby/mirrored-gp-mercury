@@ -607,10 +607,14 @@ public enum LabEventType {
     public enum ExpectSourcesEmpty {
         TRUE(true),
         FALSE(false);
-        private boolean value;
+        private final boolean value;
 
         ExpectSourcesEmpty(boolean value) {
             this.value = value;
+        }
+
+        public boolean booleanValue() {
+            return value;
         }
     }
 
@@ -620,10 +624,13 @@ public enum LabEventType {
     public enum CreateSources {
         TRUE(true),
         FALSE(false);
-        private boolean value;
+        private final boolean value;
 
         CreateSources(boolean value) {
             this.value = value;
+        }
+        public boolean booleanValue() {
+            return value;
         }
     }
 
