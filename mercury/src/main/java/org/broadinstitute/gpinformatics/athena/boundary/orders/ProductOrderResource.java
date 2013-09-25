@@ -30,10 +30,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +43,7 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderResource {
-    private static Log log = LogFactory.getLog(ProductOrderResource.class);
+    final private static Log log = LogFactory.getLog(ProductOrderResource.class);
 
     @Inject
     private ProductOrderDao productOrderDao;

@@ -48,8 +48,6 @@ public class ResearchProjectResource {
 
         public final String id;
 
-        private String businessKey;
-
         public final String synopsis;
 
         public final Date modifiedDate;
@@ -72,7 +70,6 @@ public class ResearchProjectResource {
         ResearchProjectData() {
             title = null;
             id = null;
-            businessKey = null;
             synopsis = null;
             projectManagers = null;
             broadPIs = null;
@@ -103,7 +100,6 @@ public class ResearchProjectResource {
         public ResearchProjectData(BSPUserList bspUserList, ResearchProject researchProject) {
             title = researchProject.getTitle();
             id = researchProject.getJiraTicketKey();
-            businessKey = researchProject.getBusinessKey();
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
