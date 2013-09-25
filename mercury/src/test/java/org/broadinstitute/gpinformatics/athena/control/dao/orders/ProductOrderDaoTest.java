@@ -79,7 +79,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         // Try to find by list of keys.
         List<ProductOrder> orders =
-                productOrderDao.findListByBusinessKeyList(Collections.singletonList(order.getBusinessKey()));
+                productOrderDao.findListByBusinessKeys(Collections.singletonList(order.getBusinessKey()));
         Assert.assertNotNull(orders);
         if (!orders.isEmpty()) {
             productOrderFromDb = orders.get(0);

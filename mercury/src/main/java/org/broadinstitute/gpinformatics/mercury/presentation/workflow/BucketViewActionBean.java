@@ -369,7 +369,7 @@ public class BucketViewActionBean extends CoreActionBean {
             return new ForwardResolution(VIEW_PAGE);
         }
         // Cannot mix workfows in an LCSET.
-        Set<String> batchWorkflows = getWorkflowNames(batch);
+        Set<String> batchWorkflows = getWorkflowNames();
         if (!batchWorkflows.contains(selectedWorkflowDef.getName())) {
             addValidationError("incompatibleWorkflows",
                     "The selected workflow (" + selectedWorkflowDef.getName() +
@@ -385,12 +385,12 @@ public class BucketViewActionBean extends CoreActionBean {
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
-        seperateEntriesByType();
+        separateEntriesByType();
     }
 
 
     // Returns the workflow name for entries in the batch.
-    private Set<String> getWorkflowNames(LabBatch batch) {
+    private Set<String> getWorkflowNames() {
         Set<String> pdoKeys = new HashSet<>();
         for (BucketEntry entry : batch.getBucketEntries()) {
             pdoKeys.add(entry.getPoBusinessKey());
@@ -405,7 +405,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(REWORK_CONFIRMED_ACTION)
     public Resolution reworkConfirmed() {
-        seperateEntriesByType();
+        separateEntriesByType();
         try {
             if (!selectedLcset.startsWith("LCSET-")) {
                 selectedLcset = "LCSET-" + selectedLcset;
@@ -427,7 +427,7 @@ public class BucketViewActionBean extends CoreActionBean {
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() {
-        seperateEntriesByType();
+        separateEntriesByType();
         try {
             batch = labBatchEjb
                     .createLabBatchAndRemoveFromBucket(LabBatch.LabBatchType.WORKFLOW,
@@ -444,14 +444,17 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
-    private void seperateEntriesByType() {
+    private void separateEntriesByType() {
         // Iterate through the selected entries and separate the pdo entries from rework entries.
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         for (BucketEntry entry : selectedEntries) {
-            if (BucketEntry.BucketEntryType.PDO_ENTRY.equals(entry.getEntryType())) {
+            switch (entry.getEntryType()) {
+            case PDO_ENTRY:
                 bucketEntryIds.add(entry.getBucketEntryId());
-            } else if (BucketEntry.BucketEntryType.REWORK_ENTRY.equals(entry.getEntryType())) {
+                break;
+            case REWORK_ENTRY:
                 reworkEntryIds.add(entry.getBucketEntryId());
+                break;
             }
         }
     }

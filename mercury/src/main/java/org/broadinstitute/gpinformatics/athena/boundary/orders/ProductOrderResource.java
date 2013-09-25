@@ -199,8 +199,8 @@ public class ProductOrderResource {
         List<ProductOrder> productOrderList = includeSamples ?
                 // Do use the FetchSpec for samples if we are to include sample data as otherwise this data would
                 // be singleton selected.
-                productOrderDao.findListByBusinessKeyList(businessKeyList, ProductOrderDao.FetchSpec.Samples) :
-                productOrderDao.findListByBusinessKeyList(businessKeyList);
+                productOrderDao.findListByBusinessKeys(businessKeyList, ProductOrderDao.FetchSpec.SAMPLES) :
+                productOrderDao.findListByBusinessKeys(businessKeyList);
 
         return buildProductOrdersFromList(productOrderList, includeSamples);
     }
@@ -228,8 +228,8 @@ public class ProductOrderResource {
         if (!StringUtils.isEmpty(productOrderIds)) {
             List<String> businessKeyList = Arrays.asList(productOrderIds.split(","));
             orders = includeSamples ?
-                    productOrderDao.findListByBusinessKeyList(businessKeyList, ProductOrderDao.FetchSpec.Samples) :
-                    productOrderDao.findListByBusinessKeyList(businessKeyList);
+                    productOrderDao.findListByBusinessKeys(businessKeyList, ProductOrderDao.FetchSpec.SAMPLES) :
+                    productOrderDao.findListByBusinessKeys(businessKeyList);
         } else if (sampleIds != null) {
             // There isn't currently a fetchspec version of findBySampleBarcodes so this will take the singleton select
             // hit.
@@ -239,7 +239,7 @@ public class ProductOrderResource {
             orders = productOrderDao.findModifiedAfter(modifiedAfter);
         } else {
             orders = includeSamples ?
-                    productOrderDao.findAll(ProductOrderDao.FetchSpec.Samples) :
+                    productOrderDao.findAll(ProductOrderDao.FetchSpec.SAMPLES) :
                     productOrderDao.findAll();
         }
 

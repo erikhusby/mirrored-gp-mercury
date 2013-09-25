@@ -303,7 +303,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("No product order was specified.");
         } else {
             // Since just getting the one item, get all the lazy data.
-            editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RiskItems);
+            editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
@@ -435,11 +435,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             Set<Product> products = new HashSet<>();
             selectedProductOrders =
-                    productOrderDao.findListByBusinessKeyList(
-                            selectedProductOrderBusinessKeys,
-                            ProductOrderDao.FetchSpec.Product,
-                            ProductOrderDao.FetchSpec.ResearchProject,
-                            ProductOrderDao.FetchSpec.Samples);
+                    productOrderDao.findListByBusinessKeys(selectedProductOrderBusinessKeys,
+                            ProductOrderDao.FetchSpec.PRODUCT, ProductOrderDao.FetchSpec.RESEARCH_PROJECT,
+                            ProductOrderDao.FetchSpec.SAMPLES);
 
             for (ProductOrder order : selectedProductOrders) {
                 products.add(order.getProduct());

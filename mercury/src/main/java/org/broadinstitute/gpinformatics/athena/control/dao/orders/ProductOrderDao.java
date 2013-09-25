@@ -63,11 +63,11 @@ public class ProductOrderDao extends GenericDao {
     }
 
     public enum FetchSpec {
-        Product,
-        ProductFamily,
-        ResearchProject,
-        Samples,
-        RiskItems
+        PRODUCT,
+        PRODUCT_FAMILY,
+        RESEARCH_PROJECT,
+        SAMPLES,
+        RISK_ITEMS
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -85,27 +85,27 @@ public class ProductOrderDao extends GenericDao {
         @Override
         public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
             // Risk Item fetching requires sample fetching so don't require the user to know that.
-            if (fetchSpecs.contains(FetchSpec.Samples) || fetchSpecs.contains(FetchSpec.RiskItems)) {
+            if (fetchSpecs.contains(FetchSpec.SAMPLES) || fetchSpecs.contains(FetchSpec.RISK_ITEMS)) {
                 // This is one to many so set it to be distinct.
                 criteriaQuery.distinct(true);
                 Fetch<ProductOrder, ProductOrderSample> pdoSampleFetch =
                         productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
 
-                if (fetchSpecs.contains(FetchSpec.RiskItems)) {
+                if (fetchSpecs.contains(FetchSpec.RISK_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
                 }
             }
 
-            if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains(FetchSpec.ProductFamily)) {
+            if (fetchSpecs.contains(FetchSpec.PRODUCT) || fetchSpecs.contains(FetchSpec.PRODUCT_FAMILY)) {
                 productOrder.fetch(ProductOrder_.product);
             }
 
-            if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
+            if (fetchSpecs.contains(FetchSpec.PRODUCT_FAMILY)) {
                 Join<ProductOrder, Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
                 productOrderProductJoin.fetch(Product_.productFamily);
             }
 
-            if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
+            if (fetchSpecs.contains(FetchSpec.RESEARCH_PROJECT)) {
                 productOrder.fetch(ProductOrder_.researchProject);
             }
         }
@@ -152,16 +152,16 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Return the {@link ProductOrder}s specified by the List of business keys, applying optional fetches.
+     * Return the {@link ProductOrder}s specified by a list of business keys, applying optional fetches.
      *
-     * @param businessKeyList List of business keys.
-     * @param fs Varargs array of Fetch Specs.
+     * @param businessKeys the business keys.
+     * @param fetchSpecs the Fetch Specs.
      *
      * @return List of ProductOrders.
      */
-    public List<ProductOrder> findListByBusinessKeyList(Collection<String> businessKeyList, FetchSpec... fs) {
-        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
-                new ProductOrderDaoCallback(fs));
+    public List<ProductOrder> findListByBusinessKeys(Collection<String> businessKeys, FetchSpec... fetchSpecs) {
+        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys,
+                new ProductOrderDaoCallback(fetchSpecs));
     }
 
     // Used by tests only.

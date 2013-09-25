@@ -111,8 +111,8 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution downloadTracker() {
 
         List<ProductOrder> productOrders =
-                productOrderDao.findListByBusinessKeyList(editSession.getProductOrderBusinessKeys(),
-                        Product, ResearchProject, Samples);
+                productOrderDao.findListByBusinessKeys(editSession.getProductOrderBusinessKeys(), PRODUCT,
+                        RESEARCH_PROJECT, SAMPLES);
 
         Resolution downloadResolution =
             ProductOrderActionBean.getTrackerForOrders(this, productOrders, priceItemDao, bspUserList, priceListCache);
