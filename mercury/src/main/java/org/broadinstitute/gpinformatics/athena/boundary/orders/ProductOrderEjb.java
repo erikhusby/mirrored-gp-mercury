@@ -383,14 +383,7 @@ public class ProductOrderEjb {
 
             Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
-            // This assumes all target fields are not nullable, which is currently true but may not be in the future.
-            if (previousValue == null) {
-                throw new RuntimeException(
-                        "Custom field value for '" + displayName + "' not found in issue '" + productOrder
-                                .getJiraTicketKey() + "'");
-            }
-
-            Object oldValueToCompare = previousValue;
+            Object oldValueToCompare = (previousValue != null)?previousValue:"";
             Object newValueToCompare = newValue;
 
             if (newValue instanceof CreateFields.Reporter) {
