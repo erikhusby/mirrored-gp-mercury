@@ -522,9 +522,6 @@ public enum LabEventType {
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // PCRFree
-    PCR_FREE_ADAPTER_LIGATION_CLEANUP("PCRFreeAdapterLigationCleanup", ExpectSourcesEmpty.FALSE,
-            ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID, CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     PCR_FREE_POND_REGISTRATION("PCRFreePondRegistration", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
