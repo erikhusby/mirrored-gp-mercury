@@ -117,7 +117,9 @@ public class SampleKitEjb {
      *
      * @param sampleKitRequestDto Object containing required and optional fields for jira issue. One Jira issue
      *                            will be created per rack.
+     *
      * @return Returns a List of Jira issue ID's.
+     *
      * @throws Exception An exception is thrown if there was a problem creating an issue in jira.
      */
     public List<String> createKitRequest(@Nonnull SampleKitRequestDto sampleKitRequestDto) throws Exception {
@@ -157,7 +159,8 @@ public class SampleKitEjb {
                             new CustomField.SelectOption(sampleKitRequestDto.getDeliveryMethod())));
 
             // Add Project Managers
-            List<CustomField.NameContainer> projectManagers=new ArrayList<>(sampleKitRequestDto.getProjectManagers().size());
+            List<CustomField.NameContainer> projectManagers =
+                    new ArrayList<>(sampleKitRequestDto.getProjectManagers().size());
             for (String projectManager : sampleKitRequestDto.getProjectManagers()) {
                 projectManagers.add(new CustomField.NameContainer(projectManager));
             }
@@ -175,7 +178,7 @@ public class SampleKitEjb {
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
 
             JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
-                    null, CreateFields.IssueType.SAMPLE_KIT,
+                    sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
                     summary, customFieldList);
             createdJiraIds.add(jiraIssue.getKey());
         }
