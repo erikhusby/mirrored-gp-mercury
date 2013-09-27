@@ -37,8 +37,7 @@ public class SampleKitEjbTest extends ContainerTest {
     }
 
     public void testAllowedValuesResultList(){
-        Collection<String> allowedValues =
-                sampleKitEjb.getAllowedValues(SampleKitEjb.JiraField.DELIVERY_METHOD);
+        Collection<String> allowedValues = sampleKitEjb.getDeliveryMethods();
         Assert.assertTrue(allowedValues.containsAll(Arrays.asList("FedEx","Broad Truck","Local Pickup")));
     }
 

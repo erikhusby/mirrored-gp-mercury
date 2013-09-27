@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -38,7 +39,7 @@ public class SampleKitEjb {
     @Inject
     private Log logger;
 
-    private static Map<String, CustomFieldDefinition> sampleKitJiraFields;
+    private Map<String, CustomFieldDefinition> sampleKitJiraFields;
 
     public SampleKitEjb() {
         initJiraFields();
@@ -78,6 +79,24 @@ public class SampleKitEjb {
     }
 
     /**
+     * Get a list of Strings representing the different types of delivery methods a SampleKit can contain.
+     *
+     * @return a list of the available delivey methods (Fedex, Local Pickup Etc).
+     */
+    public Collection<String> getDeliveryMethods() {
+        return getAllowedValues(SampleKitEjb.JiraField.DELIVERY_METHOD);
+    }
+
+    /**
+     * Get a list of Strings representing the different types of plasticware a SampleKit can contain.
+     *
+     * @return a list of the available plasticware.
+     */
+    public Collection<String> getPlasticware() {
+        return getAllowedValues(JiraField.PLASTICWARE);
+    }
+
+    /**
      * Return a list of allowed values for a select list field.
      *
      * @param jiraField the field you would like pre-defined values from.
@@ -100,12 +119,11 @@ public class SampleKitEjb {
      */
     public Map<String, CustomFieldDefinition> initJiraFields() {
         try {
-            if (sampleKitJiraFields == null) {
-                CreateFields.Project kitRequestProject =
-                        new CreateFields.Project(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix());
-                sampleKitJiraFields =
-                        jiraService.getRequiredFields(kitRequestProject, CreateFields.IssueType.SAMPLE_KIT);
-            }
+            CreateFields.Project kitRequestProject =
+                    new CreateFields.Project(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix());
+            sampleKitJiraFields =
+                    jiraService.getRequiredFields(kitRequestProject, CreateFields.IssueType.SAMPLE_KIT);
+
         } catch (IOException e) {
             logger.error("Could not communicate with Jira.", e);
         }
@@ -180,7 +198,12 @@ public class SampleKitEjb {
             JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
                     sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
                     summary, customFieldList);
-            createdJiraIds.add(jiraIssue.getKey());
+            String jiraIssueKey = jiraIssue.getKey();
+            if (sampleKitRequestDto.getLinkedProductOrder() != null) {
+                jiraService.addLink(AddIssueLinkRequest.LinkType.Related,
+                        sampleKitRequestDto.getLinkedProductOrder().getJiraTicketKey(), jiraIssueKey);
+            }
+            createdJiraIds.add(jiraIssueKey);
         }
         return createdJiraIds;
     }
