@@ -24,7 +24,11 @@ public class CustomFieldJsonParser {
 
     private static final String REQUIRED = "required";
 
+    private static final String ALLOWED_VALUES = "allowedValues";
+
     private static final String FIELD_ID = "id";
+
+    private static final String VALUE = "value";
 
     /**
      * Parses the custom fields from the given json response.
@@ -44,9 +48,23 @@ public class CustomFieldJsonParser {
             Map fieldProperties = field.getValue();
             String fieldName = (String) fieldProperties.get(NAME);
             Boolean required = (Boolean) fieldProperties.get(REQUIRED);
+            List<Map<String, String>> allowedValuesList =
+                    (List<Map<String, String>>) fieldProperties.get(ALLOWED_VALUES);
+            List<String> allowedValueList = null;
+            if (allowedValuesList!=null) {
+                allowedValueList = new ArrayList<>();
+                for (Map<String, String> allowedValuesMap : allowedValuesList) {
+                    if (allowedValuesMap.containsKey(VALUE)) {
+                        allowedValueList.add(allowedValuesMap.get(VALUE));
+                    }
+                    if (allowedValuesMap.containsKey(NAME)) {
+                        allowedValueList.add(allowedValuesMap.get(NAME));
+                    }
+                }
+            }
 
             if (StringUtils.isNotBlank(fieldName)) {
-                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required, allowedValueList));
             }
         }
         return customFields;
@@ -70,7 +88,8 @@ public class CustomFieldJsonParser {
             // Leaving false for now until can better come up with a solution.
             Boolean required = false;
 
-            customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
+            customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required,
+                    CustomFieldDefinition.NULL_ALLOWED_VALUES));
 
             // This needs a good way to account for different types (String, textfield, multi-select, etc.)
         }

@@ -76,7 +76,8 @@ public class CreateFields extends UpdateFields {
         PRODUCT_ORDERING("Product Ordering", "PDO"),
         CRSP_PRODUCT_ORDERING("Product Ordering", "CPDO"),
         RESEARCH_PROJECTS("Research Projects", "RP"),
-        CRSP_RESEARCH_PROJECTS("Research Projects", "CRP");
+        CRSP_RESEARCH_PROJECTS("Research Projects", "CRP"),
+        SAMPLE_KIT_INITIATION("Sample Initiation", "KIT");
 
         private final String projectName;
         private final String keyPrefix;
@@ -120,6 +121,7 @@ public class CreateFields extends UpdateFields {
         RESEARCH_PROJECT("Research Project"),
         CLIA_RESEARCH_PROJECT("CLIA Research Project"),
         FLOWCELL("Flowcell"),
+        SAMPLE_KIT("Sample Kit"),
         MISEQ("MiSeq");
 
         private final String jiraName;
