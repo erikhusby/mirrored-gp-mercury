@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -199,5 +200,21 @@ public class LabVesselFixupTest extends Arquillian {
             staticPlateDao.remove(staticPlate);
         }
         staticPlateDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp934() {
+        Map<String, String> kitToContainer = new HashMap<String, String>() {{
+            put("SK-247T", "CO-7496163");
+        }};
+
+        for (Map.Entry<String, String> entry : kitToContainer.entrySet()) {
+            String sampleKitBarcode = entry.getKey();
+            String containerBarcode = entry.getValue();
+            LabVessel vessel = labVesselDao.findByIdentifier(sampleKitBarcode);
+            vessel.setLabel(containerBarcode);
+        }
+
+        labVesselDao.flush();
     }
 }
