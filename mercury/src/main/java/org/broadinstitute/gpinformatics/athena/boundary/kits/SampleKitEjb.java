@@ -111,24 +111,15 @@ public class SampleKitEjb {
         }
         return sampleKitJiraFields;
     }
-    /*
-    Can choose from a drop down list of plasticware (currently restricted to 0.75 mL tubes that have linear barcodes etched/printed on the side by the manufacturer
-    Can choose how many empty racks to request
-    Can choose number of tubes per rack
-    Can select a destination for the kit using an address search widget that queries BSP people by name to find addresses
-    Creation of kit request in mercury also creates a KIT-type jira ticket (work with Amy to get the details of the ticket)
-    Each kit (rack) request creates a single KIT-type jira ticket
-    Creation of kit request in mercury triggers the creation of a kit request in BSP
-    Jira ticket created for kit is linked to BSP kit request
-    Jira kit tickets are linked to the jira PDO tickets so PMs and PDMs can see their kit requests from jira in the context of a PDO
 
-    private int numberOfRacks;
-    private int numberOfTubesPerRack;
-    private String destination;
-    private String bspKitRequest;
-    private ProductOrder linkedProductOrder;
+    /**
+     * Create a KIT Request in Jira.
+     *
+     * @param sampleKitRequestDto Object containing required and optional fields for jira issue. One Jira issue
+     *                            will be created per rack.
+     * @return Returns a List of Jira issue ID's.
+     * @throws Exception An exception is thrown if there was a problem creating an issue in jira.
      */
-
     public List<String> createKitRequest(@Nonnull SampleKitRequestDto sampleKitRequestDto) throws Exception {
         List<String> createdJiraIds = new ArrayList<>(sampleKitRequestDto.getNumberOfRacks());
         // Create one jira ticket per rack.
