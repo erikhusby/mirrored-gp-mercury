@@ -73,7 +73,7 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private ResearchProjectDao projectDao;
 
-    // When you run this on prod, change to PROD and prod
+    // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -330,6 +330,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         ResearchProject oldProject = order.getResearchProject();
         ResearchProject newProject = projectDao.findByBusinessKey(newProjectKey);
+        Assert.assertNotNull(newProject, "Could not find new research project " + newProjectKey);
 
         order.setResearchProject(newProject);
 
@@ -347,6 +348,18 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void changeProjectForPdo() throws Exception {
         changeProjectForPdo("PDO-1621", "RP-317");
+    }
+
+    @Test(enabled = false)
+    public void changeProjectForPdo_GPLIM_2178() throws Exception {
+        String[] pdos = new String[]{
+                "PDO-2187",
+                "PDO-2039",
+                "PDO-2035"};
+
+        for (String pdo : pdos) {
+            changeProjectForPdo(pdo, "RP-490");
+        }
     }
 
     @Test(enabled = false)
