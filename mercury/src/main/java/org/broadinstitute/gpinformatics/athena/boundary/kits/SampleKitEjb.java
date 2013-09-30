@@ -13,6 +13,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.kits;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -38,17 +41,23 @@ public class SampleKitEjb {
     @Inject
     JiraService jiraService;
 
+    @Inject
+    private Deployment deployment;
+
     private Log logger = LogFactory.getLog(SampleKitEjb.class);
+
+    BSPConfig bspConfig;
 
     private Map<String, CustomFieldDefinition> sampleKitJiraFields;
 
     public SampleKitEjb() {
-        initJiraFields();
+        init();
     }
 
-    public SampleKitEjb(@Nonnull JiraService jiraService) {
+    public SampleKitEjb(@Nonnull JiraService jiraService, @Nonnull Deployment deployment) {
         this.jiraService = jiraService;
-        initJiraFields();
+        this.deployment = deployment;
+        init();
     }
 
     public enum JiraField implements CustomField.SubmissionField {
@@ -118,7 +127,9 @@ public class SampleKitEjb {
      *
      * @return
      */
-    public Map<String, CustomFieldDefinition> initJiraFields() {
+    public Map<String, CustomFieldDefinition> init() {
+        MercuryConfiguration mercuryConfiguration = MercuryConfiguration.getInstance();
+        bspConfig = (BSPConfig) mercuryConfiguration.getConfig(BSPConfig.class, deployment);
         try {
             CreateFields.Project kitRequestProject =
                     new CreateFields.Project(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix());
@@ -135,7 +146,7 @@ public class SampleKitEjb {
      * Create a KIT Request in Jira.
      *
      * @param kitRequestDto Object containing required and optional fields for jira issue. One Jira issue
-     *                            will be created per rack.
+     *                      will be created per rack.
      *
      * @return Returns a List of Jira issue ID's.
      *
@@ -187,12 +198,15 @@ public class SampleKitEjb {
             customFieldList.add(new CustomField(sampleKitJiraFields.get(JiraField.PROJECT_MANAGERS.fieldName),
                     projectManagers));
 
+            // summary field.
             String summary =
                     String.format("Kit Request for %s [%s]",
-                            kitRequestDto.getBspKitRequest(),kitRequestDto.getLinkedProductOrder());
+                            kitRequestDto.getBspKitRequest(), kitRequestDto.getLinkedProductOrder());
 
+            // description field.
             String description = String.format("%s Samples requested for %s [%s]",
-                    kitRequestDto.getNumberOfTubesPerRack(), kitRequestDto.getBspKitRequest(),
+                    kitRequestDto.getNumberOfTubesPerRack(),
+                    createWorkRequestJiraLink(kitRequestDto.getBspKitRequest()),
                     kitRequestDto.getLinkedProductOrder());
 
             customFieldList
@@ -217,6 +231,20 @@ public class SampleKitEjb {
             }
         }
         return createdJiraIds;
+    }
+
+    /**
+     * construct a Jira external link to a Bsp Work Request.
+     *
+     * @param workRequestId work request to link to.
+     *
+     * @return a String which can be used directly in a jira field to link to a Work Request in BSP.
+     */
+    private String createWorkRequestJiraLink(@Nonnull String workRequestId) {
+        String workRequestNumber = workRequestId.replace("WR-", "");
+        String searchLink = String.format("workrequest/ManageWorkRequests.action?ShowWorkRequest=&workRequestId=%s",
+                workRequestNumber);
+        return String.format("[%s|%s]", workRequestId, bspConfig.getUrl(searchLink));
     }
 }
 
