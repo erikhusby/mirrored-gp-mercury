@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.kits;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -37,8 +38,7 @@ public class SampleKitEjb {
     @Inject
     JiraService jiraService;
 
-    @Inject
-    private Log logger;
+    private Log logger = LogFactory.getLog(SampleKitEjb.class);
 
     private Map<String, CustomFieldDefinition> sampleKitJiraFields;
 
@@ -134,53 +134,53 @@ public class SampleKitEjb {
     /**
      * Create a KIT Request in Jira.
      *
-     * @param sampleKitRequestDto Object containing required and optional fields for jira issue. One Jira issue
+     * @param kitRequestDto Object containing required and optional fields for jira issue. One Jira issue
      *                            will be created per rack.
      *
      * @return Returns a List of Jira issue ID's.
      *
      * @throws Exception An exception is thrown if there was a problem creating an issue in jira.
      */
-    public List<String> createKitRequest(@Nonnull SampleKitRequestDto sampleKitRequestDto) {
-        List<String> createdJiraIds = new ArrayList<>(sampleKitRequestDto.getNumberOfRacks());
+    public List<String> createKitRequest(@Nonnull SampleKitRequestDto kitRequestDto) {
+        List<String> createdJiraIds = new ArrayList<>(kitRequestDto.getNumberOfRacks());
         // Create one jira ticket per rack.
-        while (createdJiraIds.size() < sampleKitRequestDto.getNumberOfRacks()) {
+        while (createdJiraIds.size() < kitRequestDto.getNumberOfRacks()) {
             Collection<CustomField> customFieldList = new LinkedList<>();
 
             // Plasticware field
             if (!sampleKitJiraFields.containsKey(JiraField.PLASTICWARE.fieldName)) {
                 throw new RuntimeException(
-                        sampleKitRequestDto.getPlasticware() + " is not a valid tube type for sample kits.");
+                        kitRequestDto.getPlasticware() + " is not a valid tube type for sample kits.");
             }
             customFieldList.add(new CustomField(sampleKitJiraFields.get(JiraField.PLASTICWARE.fieldName),
-                    new CustomField.SelectOption(sampleKitRequestDto.getPlasticware())));
+                    new CustomField.SelectOption(kitRequestDto.getPlasticware())));
 
             // Destination field
             customFieldList.add(new CustomField(sampleKitJiraFields.get(JiraField.SITE_NAME.fieldName),
-                    sampleKitRequestDto.getDestination()));
+                    kitRequestDto.getDestination()));
 
             // Number of tubes
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.NUMBER_OF_SAMPLES.fieldName),
-                            sampleKitRequestDto.getNumberOfTubesPerRack()));
+                            kitRequestDto.getNumberOfTubesPerRack()));
             // BSP Work Request Ids
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.WORK_REQUEST_IDS.fieldName),
-                            sampleKitRequestDto.getBspKitRequest()));
+                            kitRequestDto.getBspKitRequest()));
 
             // Delivery Method
             if (!sampleKitJiraFields.containsKey(JiraField.DELIVERY_METHOD.fieldName)) {
                 throw new RuntimeException(
-                        sampleKitRequestDto.getPlasticware() + " is not a valid tube type for sample kits.");
+                        kitRequestDto.getPlasticware() + " is not a valid tube type for sample kits.");
             }
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DELIVERY_METHOD.fieldName),
-                            new CustomField.SelectOption(sampleKitRequestDto.getDeliveryMethod())));
+                            new CustomField.SelectOption(kitRequestDto.getDeliveryMethod())));
 
             // Add Project Managers
             List<CustomField.NameContainer> projectManagers =
-                    new ArrayList<>(sampleKitRequestDto.getProjectManagers().size());
-            for (String projectManager : sampleKitRequestDto.getProjectManagers()) {
+                    new ArrayList<>(kitRequestDto.getProjectManagers().size());
+            for (String projectManager : kitRequestDto.getProjectManagers()) {
                 projectManagers.add(new CustomField.NameContainer(projectManager));
             }
 
@@ -188,23 +188,26 @@ public class SampleKitEjb {
                     projectManagers));
 
             String summary =
-                    String.format("%s Kit Request", sampleKitRequestDto.getLinkedProductOrder());
+                    String.format("Kit Request for %s [%s]",
+                            kitRequestDto.getBspKitRequest(),kitRequestDto.getLinkedProductOrder());
 
-            String description = String.format("%s Samples requested for productOrder %s",
-                    sampleKitRequestDto.getNumberOfTubesPerRack(),
-                    sampleKitRequestDto.getLinkedProductOrder());
+            String description = String.format("%s Samples requested for %s [%s]",
+                    kitRequestDto.getNumberOfTubesPerRack(), kitRequestDto.getBspKitRequest(),
+                    kitRequestDto.getLinkedProductOrder());
+
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
+            logger.info(description);
 
             try {
                 JiraIssue jiraIssue =
                         jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
-                                sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
+                                kitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
                                 summary, customFieldList);
                 String jiraIssueKey = jiraIssue.getKey();
 
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage,
-                        sampleKitRequestDto.getLinkedProductOrder(), jiraIssueKey);
+                        kitRequestDto.getLinkedProductOrder(), jiraIssueKey);
                 createdJiraIds.add(jiraIssueKey);
 
             } catch (IOException e) {
