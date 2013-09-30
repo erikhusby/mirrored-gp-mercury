@@ -30,7 +30,7 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
-    @Test(invocationCount = 100)
+    @Test
     public void testSetVolumeAndConcentration() {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
