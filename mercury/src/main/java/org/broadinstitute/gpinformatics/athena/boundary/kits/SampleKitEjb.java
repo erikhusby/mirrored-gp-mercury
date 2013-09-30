@@ -197,15 +197,16 @@ public class SampleKitEjb {
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
 
             try {
-                JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
-                        sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
-                        summary, customFieldList);
+                JiraIssue jiraIssue =
+                        jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
+                                sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
+                                summary, customFieldList);
                 String jiraIssueKey = jiraIssue.getKey();
-                if (sampleKitRequestDto.getLinkedProductOrder() != null) {
-                    jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage,
-                            sampleKitRequestDto.getLinkedProductOrder().getJiraTicketKey(), jiraIssueKey);
-                    createdJiraIds.add(jiraIssueKey);
-                }
+
+                jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage,
+                        sampleKitRequestDto.getLinkedProductOrder(), jiraIssueKey);
+                createdJiraIds.add(jiraIssueKey);
+
             } catch (IOException e) {
                 logger.error("Error attempting to Sample Kit Request in JIRA.", e);
                 throw new InformaticsServiceException("Error attempting to Sample Kit Request in JIRA.", e);

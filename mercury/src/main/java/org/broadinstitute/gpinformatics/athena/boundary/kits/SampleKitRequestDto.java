@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.kits;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,11 +24,11 @@ public class SampleKitRequestDto {
     private String destination;
     private String deliveryMethod;
     private String bspKitRequest;
-    private ProductOrder linkedProductOrder;
+    private String linkedProductOrder;
 
     public static final List<String> NULL_PROJECT_MANAGERS = null;
     public static final String NULL_BSP_KIT_REQUEST = null;
-    public static final ProductOrder NULL_PRODUCT_ORDER = null;
+    public static final String NULL_PRODUCT_ORDER = null;
 
     /**
      * @param requestedBy          User requesting the sample kit.
@@ -49,7 +47,7 @@ public class SampleKitRequestDto {
                                @Nonnull int numberOfRacks,
                                @Nonnull int numberOfTubesPerRack, @Nonnull String destination,
                                @Nullable String deliveryMethod, @Nullable String bspKitRequest,
-                               @Nullable ProductOrder linkedProductOrder) {
+                               @Nonnull String linkedProductOrder) {
         this.requestedBy = requestedBy;
         this.projectManagers = projectManagers;
         this.plasticware = plasticware;
@@ -94,7 +92,7 @@ public class SampleKitRequestDto {
         return bspKitRequest;
     }
 
-    public ProductOrder getLinkedProductOrder() {
+    public String getLinkedProductOrder() {
         return linkedProductOrder;
     }
 }

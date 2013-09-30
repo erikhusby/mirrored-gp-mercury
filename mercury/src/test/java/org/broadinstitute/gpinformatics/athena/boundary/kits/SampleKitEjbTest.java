@@ -51,7 +51,7 @@ public class SampleKitEjbTest extends ContainerTest {
 
     public void testCreateKit() throws Exception {
         SampleKitRequestDto sampleKitDto=new SampleKitRequestDto("dryan", Arrays.asList("breilly", "andrew"),
-                "Tube - 0.75 mL Matrix", 2, 96, "320", "Broad Truck", "WR-1234", SampleKitRequestDto.NULL_PRODUCT_ORDER);
+                "Tube - 0.75 mL Matrix", 2, 96, "320", "Broad Truck", "WR-1234", "PDO-1234");
         List<String> kitRequests = sampleKitEjb.createKitRequest(sampleKitDto);
         Assert.assertNotNull(kitRequests);
         Assert.assertEquals(kitRequests.size(), 2);
