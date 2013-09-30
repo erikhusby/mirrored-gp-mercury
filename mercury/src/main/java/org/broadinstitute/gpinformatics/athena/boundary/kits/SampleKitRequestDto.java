@@ -62,7 +62,7 @@ public class SampleKitRequestDto {
     }
 
 
-    public List<String> getProjectManagers() throws Exception {
+    public List<String> getProjectManagers() {
         return projectManagers;
     }
 

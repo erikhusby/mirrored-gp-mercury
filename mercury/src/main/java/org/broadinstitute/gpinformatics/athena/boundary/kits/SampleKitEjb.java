@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -140,7 +141,7 @@ public class SampleKitEjb {
      *
      * @throws Exception An exception is thrown if there was a problem creating an issue in jira.
      */
-    public List<String> createKitRequest(@Nonnull SampleKitRequestDto sampleKitRequestDto) throws Exception {
+    public List<String> createKitRequest(@Nonnull SampleKitRequestDto sampleKitRequestDto) {
         List<String> createdJiraIds = new ArrayList<>(sampleKitRequestDto.getNumberOfRacks());
         // Create one jira ticket per rack.
         while (createdJiraIds.size() < sampleKitRequestDto.getNumberOfRacks()) {
@@ -195,17 +196,23 @@ public class SampleKitEjb {
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
 
-            JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
-                    sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
-                    summary, customFieldList);
-            String jiraIssueKey = jiraIssue.getKey();
-            if (sampleKitRequestDto.getLinkedProductOrder() != null) {
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Related,
-                        sampleKitRequestDto.getLinkedProductOrder().getJiraTicketKey(), jiraIssueKey);
+            try {
+                JiraIssue jiraIssue = jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
+                        sampleKitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
+                        summary, customFieldList);
+                String jiraIssueKey = jiraIssue.getKey();
+                if (sampleKitRequestDto.getLinkedProductOrder() != null) {
+                    jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage,
+                            sampleKitRequestDto.getLinkedProductOrder().getJiraTicketKey(), jiraIssueKey);
+                    createdJiraIds.add(jiraIssueKey);
+                }
+            } catch (IOException e) {
+                logger.error("Error attempting to Sample Kit Request in JIRA.", e);
+                throw new InformaticsServiceException("Error attempting to Sample Kit Request in JIRA.", e);
+
             }
-            createdJiraIds.add(jiraIssueKey);
         }
         return createdJiraIds;
     }
-
 }
+
