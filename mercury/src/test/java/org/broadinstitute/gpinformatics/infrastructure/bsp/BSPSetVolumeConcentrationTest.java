@@ -30,7 +30,7 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
-    @Test()
+    @Test(invocationCount = 100)
     public void testSetVolumeAndConcentration() {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
@@ -48,8 +48,17 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
             Double currentVolume = bspSampleDTO.getVolume();
             Double currentConcentration = bspSampleDTO.getConcentration();
 
-            Assert.assertTrue(Math.abs(scaleResult(newVolume[i]) - currentVolume) <= ERROR_BAND);
-            Assert.assertTrue(Math.abs(scaleResult(newConcentration[i]) - currentConcentration) <= ERROR_BAND);
+            String errorString = "%s differs from expected value of %f by %f (original value was %f).";
+
+            Double scaledValue = scaleResult(newVolume[i]);
+            double valueDifference = Math.abs(scaledValue - currentVolume);
+            Assert.assertTrue(valueDifference <= ERROR_BAND,
+                    String.format(errorString, "Volume", scaledValue, valueDifference, currentVolume));
+
+            scaledValue = scaleResult(newConcentration[i]);
+            valueDifference = scaledValue - currentConcentration;
+            Assert.assertTrue(valueDifference <= ERROR_BAND,
+                    String.format(errorString, "Concentration", scaledValue, valueDifference, currentConcentration));
         }
     }
 
@@ -63,6 +72,6 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     }
 
     private Double scaleResult(BigDecimal bigDecimal) {
-        return bigDecimal.setScale(5, RoundingMode.HALF_UP).doubleValue();
+        return bigDecimal.setScale(6, RoundingMode.HALF_UP).doubleValue();
     }
 }
