@@ -37,10 +37,10 @@ public class SampleLink {
 
     public String getUrl() {
         switch (format) {
+        case CRSP:
+//            return jiraLink.browseUrl(sample.getSampleKey());
         case BSP:
             return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
-        case CRSP:
-            return jiraLink.browseUrl(sample.getSampleKey());
         default:
             return sample.getSampleKey();
         }
