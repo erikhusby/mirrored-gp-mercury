@@ -188,7 +188,7 @@ public class SampleKitEjb {
                     projectManagers));
 
             String summary =
-                    String.format("Sample initiation for %s Samples", sampleKitRequestDto.getNumberOfTubesPerRack());
+                    String.format("%s Kit Request", sampleKitRequestDto.getLinkedProductOrder());
 
             String description = String.format("%s Samples requested for productOrder %s",
                     sampleKitRequestDto.getNumberOfTubesPerRack(),
