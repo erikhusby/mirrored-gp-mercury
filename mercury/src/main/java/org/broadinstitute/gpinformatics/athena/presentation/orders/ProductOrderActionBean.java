@@ -376,7 +376,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         }
 
-        requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        if (!isSampleInitiation()) {
+            requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
