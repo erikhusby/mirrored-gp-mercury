@@ -31,6 +31,11 @@ public class SampleKitRequestDto {
     public static final String NULL_PRODUCT_ORDER = null;
 
     /**
+     * Empty constructor for action beans to use to bind form elements to.
+     */
+    public SampleKitRequestDto() {}
+
+    /**
      * @param requestedBy          User requesting the sample kit.
      * @param projectManagers      list of projectManagers
      * @param plasticware          Can choose from a drop down list of plasticware (currently restricted to
@@ -72,6 +77,10 @@ public class SampleKitRequestDto {
         return plasticware;
     }
 
+    public void setPlasticware(String plasticware) {
+        this.plasticware = plasticware;
+    }
+
     public String getRequestedBy() {
         return requestedBy;
     }
@@ -80,12 +89,24 @@ public class SampleKitRequestDto {
         return numberOfRacks;
     }
 
+    public void setNumberOfRacks(int numberOfRacks) {
+        this.numberOfRacks = numberOfRacks;
+    }
+
     public int getNumberOfTubesPerRack() {
         return numberOfTubesPerRack;
     }
 
+    public void setNumberOfTubesPerRack(int numberOfTubesPerRack) {
+        this.numberOfTubesPerRack = numberOfTubesPerRack;
+    }
+
     public String getDestination() {
         return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination;
     }
 
     public String getBspKitRequest() {

@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -51,6 +52,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -190,6 +192,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private BspShippingLocationTokenInput bspShippingLocationTokenInput;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
@@ -258,6 +263,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
+    private SampleKitRequestDto sampleKitRequestDto;
+
     /*
      * The search query.
      */
@@ -278,6 +285,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
     public void init() {
+        sampleKitRequestDto = new SampleKitRequestDto();
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
@@ -1224,6 +1232,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(productTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("shippingLocationAutocomplete")
+    public Resolution shippingLocationAutocomplete() throws Exception {
+        Resolution resolution = createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
+        return resolution;
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1313,6 +1327,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         return projectTokenInput;
     }
 
+    public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
+        return bspShippingLocationTokenInput;
+    }
+
     public String getResearchProjectKey() {
         return researchProjectKey;
     }
@@ -1387,6 +1405,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return getProductOrderListEntry().getBillingSessionBusinessKey();
+    }
+
+    /**
+     * Convenience method to determine whether or not the current PDO is for sample initiation.
+     *
+     * @return true if this is a sample initiation PDO; false otherwise
+     */
+    public boolean isSampleInitiation() {
+        return editOrder.getProduct().isSampleInitiationProduct();
     }
 
     /**
@@ -1530,6 +1557,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
+    }
+
+    public SampleKitRequestDto getSampleKitRequestDto() {
+        return sampleKitRequestDto;
     }
 
     /**

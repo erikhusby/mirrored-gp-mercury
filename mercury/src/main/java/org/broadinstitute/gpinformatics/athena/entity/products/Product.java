@@ -542,6 +542,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return getProductFamily().isSupportsNumberOfLanes();
     }
 
+    public boolean isSampleInitiationProduct() {
+        return isSameProductFamily(ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE);
+    }
+
     public List<RiskCriterion> getRiskCriteria() {
         return riskCriteria;
     }
