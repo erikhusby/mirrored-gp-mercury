@@ -12,6 +12,7 @@ package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -583,5 +584,14 @@ public class DateUtils {
         Date end = getStartOfDay(endDate);
 
         return (int)( (end.getTime() - start.getTime()) / MILLISECONDS_IN_DAY);
+    }
+
+    public static Date parseXmlDate(String s) {
+        return DatatypeConverter.parseDate(s).getTime();
+    }
+    public static String printXmlDate(Date dt) {
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(dt);
+        return DatatypeConverter.printDate(cal);
     }
 }
