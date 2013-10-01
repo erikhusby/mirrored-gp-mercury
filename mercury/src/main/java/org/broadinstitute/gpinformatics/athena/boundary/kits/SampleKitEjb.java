@@ -13,6 +13,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.kits;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -38,24 +41,31 @@ public class SampleKitEjb {
     @Inject
     JiraService jiraService;
 
-    private Log logger = LogFactory.getLog(SampleKitEjb.class);
+    @Inject
+    private Deployment deployment;
+
+    private Log log = LogFactory.getLog(SampleKitEjb.class);
+
+    @Inject
+    private BSPConfig bspConfig;
 
     private Map<String, CustomFieldDefinition> sampleKitJiraFields;
 
     public SampleKitEjb() {
-        initJiraFields();
+        init();
     }
 
-    public SampleKitEjb(@Nonnull JiraService jiraService) {
+    public SampleKitEjb(@Nonnull JiraService jiraService, @Nonnull Deployment deployment) {
         this.jiraService = jiraService;
-        initJiraFields();
+        this.deployment = deployment;
+        init();
     }
 
     public enum JiraField implements CustomField.SubmissionField {
         TASK_ID("Task ID"),// (text)
-        SHIPPING_ADDRESS("Shipping Address"), // (large text)
-        SITE_NAME("Site Name"), // (text)
-        DELIVERY_METHOD("Kit Delivery Method"), // (select list with options:
+        SHIPPING_ADDRESS("Shipping Address"),
+        SITE_NAME("Site Name"),
+        DELIVERY_METHOD("Kit Delivery Method"),
         COLLABORATOR_INFORMATION("Collaborator Information"),
         WORK_REQUEST_IDS("Work Request ID(s)"),
         PROJECT("Project"),
@@ -68,8 +78,8 @@ public class SampleKitEjb {
 
         private final String fieldName;
 
-        private JiraField(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        private JiraField(String fieldName) {
+            this.fieldName = fieldName;
         }
 
         @Nonnull
@@ -102,7 +112,7 @@ public class SampleKitEjb {
      *
      * @param jiraField the field you would like pre-defined values from.
      *
-     * @return
+     * @return a collection of values allowed for this jira field.
      */
     public Collection<String> getAllowedValues(JiraField jiraField) {
         Collection<String> allowedValues = new ArrayList<>();
@@ -115,10 +125,10 @@ public class SampleKitEjb {
 
     /**
      * Initialize the fields for a sampleKit.
-     *
-     * @return
      */
-    public Map<String, CustomFieldDefinition> initJiraFields() {
+    public void init() {
+        MercuryConfiguration mercuryConfiguration = MercuryConfiguration.getInstance();
+        bspConfig = (BSPConfig) mercuryConfiguration.getConfig(BSPConfig.class, deployment);
         try {
             CreateFields.Project kitRequestProject =
                     new CreateFields.Project(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix());
@@ -126,16 +136,15 @@ public class SampleKitEjb {
                     jiraService.getRequiredFields(kitRequestProject, CreateFields.IssueType.SAMPLE_KIT);
 
         } catch (IOException e) {
-            logger.error("Could not communicate with Jira.", e);
+            throw new InformaticsServiceException("Could not communicate with Jira.", e);
         }
-        return sampleKitJiraFields;
     }
 
     /**
      * Create a KIT Request in Jira.
      *
      * @param kitRequestDto Object containing required and optional fields for jira issue. One Jira issue
-     *                            will be created per rack.
+     *                      will be created per rack.
      *
      * @return Returns a List of Jira issue ID's.
      *
@@ -187,17 +196,20 @@ public class SampleKitEjb {
             customFieldList.add(new CustomField(sampleKitJiraFields.get(JiraField.PROJECT_MANAGERS.fieldName),
                     projectManagers));
 
+            // summary field.
             String summary =
                     String.format("Kit Request for %s [%s]",
-                            kitRequestDto.getBspKitRequest(),kitRequestDto.getLinkedProductOrder());
+                            kitRequestDto.getBspKitRequest(), kitRequestDto.getLinkedProductOrder());
 
+            // description field.
             String description = String.format("%s Samples requested for %s [%s]",
-                    kitRequestDto.getNumberOfTubesPerRack(), kitRequestDto.getBspKitRequest(),
+                    kitRequestDto.getNumberOfTubesPerRack(),
+                    createWorkRequestJiraLink(kitRequestDto.getBspKitRequest()),
                     kitRequestDto.getLinkedProductOrder());
 
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
-            logger.info(description);
+            log.info(description);
 
             try {
                 JiraIssue jiraIssue =
@@ -211,12 +223,24 @@ public class SampleKitEjb {
                 createdJiraIds.add(jiraIssueKey);
 
             } catch (IOException e) {
-                logger.error("Error attempting to Sample Kit Request in JIRA.", e);
                 throw new InformaticsServiceException("Error attempting to Sample Kit Request in JIRA.", e);
-
             }
         }
         return createdJiraIds;
+    }
+
+    /**
+     * construct a Jira external link to a Bsp Work Request.
+     *
+     * @param workRequestId work request to link to.
+     *
+     * @return a String which can be used directly in a jira field to link to a Work Request in BSP.
+     */
+    private String createWorkRequestJiraLink(@Nonnull String workRequestId) {
+        String workRequestNumber = workRequestId.replace("WR-", "");
+        String searchLink = String.format("workrequest/ManageWorkRequests.action?ShowWorkRequest=&workRequestId=%s",
+                workRequestNumber);
+        return String.format("[%s|%s]", workRequestId, bspConfig.getUrl(searchLink));
     }
 }
 
