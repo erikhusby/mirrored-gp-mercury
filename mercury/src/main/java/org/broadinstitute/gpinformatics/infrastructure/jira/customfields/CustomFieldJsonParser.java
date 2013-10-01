@@ -50,21 +50,20 @@ public class CustomFieldJsonParser {
             Boolean required = (Boolean) fieldProperties.get(REQUIRED);
             List<Map<String, String>> allowedValuesList =
                     (List<Map<String, String>>) fieldProperties.get(ALLOWED_VALUES);
-            List<String> allowedValueList = null;
+            List<String> valuesList = null;
             if (allowedValuesList!=null) {
-                allowedValueList = new ArrayList<>();
+                valuesList = new ArrayList<>();
                 for (Map<String, String> allowedValuesMap : allowedValuesList) {
-                    if (allowedValuesMap.containsKey(VALUE)) {
-                        allowedValueList.add(allowedValuesMap.get(VALUE));
+                    String allowed = allowedValuesMap.get(VALUE);
+                    if (allowed==null){
+                        allowed=allowedValuesMap.get(NAME);
                     }
-                    if (allowedValuesMap.containsKey(NAME)) {
-                        allowedValueList.add(allowedValuesMap.get(NAME));
-                    }
+                    valuesList.add(allowed);
                 }
             }
 
             if (StringUtils.isNotBlank(fieldName)) {
-                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required, allowedValueList));
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required, valuesList));
             }
         }
         return customFields;
