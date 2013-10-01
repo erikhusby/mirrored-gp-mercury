@@ -107,8 +107,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW)).
-                andReturn(sampleInstList);
+        EasyMock.expect(labVessel.getSampleInstances(EasyMock.anyObject(LabVessel.SampleType.class),
+                EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(null);
 
         EasyMock.replay(mocks);
@@ -120,8 +120,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW)).
-                andReturn(sampleInstList);
+        EasyMock.expect(labVessel.getSampleInstances(EasyMock.anyObject(LabVessel.SampleType.class),
+                EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
@@ -145,8 +145,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW)).
-                andReturn(sampleInstList);
+        EasyMock.expect(labVessel.getSampleInstances(EasyMock.anyObject(LabVessel.SampleType.class),
+                EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
         EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(Collections.<LabBatch>emptyList());
@@ -169,8 +169,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(null);
-        EasyMock.expect(labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW)).
-                andReturn(sampleInstList);
+        EasyMock.expect(labVessel.getSampleInstances(EasyMock.anyObject(LabVessel.SampleType.class),
+                EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
@@ -199,8 +199,8 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(dao.findById(LabMetric.class, entityId)).andReturn(obj);
         EasyMock.expect(obj.getLabVessel()).andReturn(labVessel).times(2);
         EasyMock.expect(obj.getLabMetricRun()).andReturn(run);
-        EasyMock.expect(labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW)).
-                andReturn(sampleInstList);
+        EasyMock.expect(labVessel.getSampleInstances(EasyMock.anyObject(LabVessel.SampleType.class),
+                EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
