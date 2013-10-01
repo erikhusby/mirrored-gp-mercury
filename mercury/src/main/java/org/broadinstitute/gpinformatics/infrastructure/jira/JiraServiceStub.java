@@ -108,7 +108,7 @@ public class JiraServiceStub implements JiraService {
         Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName, new CustomFieldDefinition(
-                    "stub_custom_field_" + requiredFieldName, requiredFieldName, true, CustomFieldDefinition.NULL_ALLOWED_VALUES));
+                    "stub_custom_field_" + requiredFieldName, requiredFieldName, true));
         }
         return customFields;
     }
@@ -118,7 +118,7 @@ public class JiraServiceStub implements JiraService {
         Map<String, CustomFieldDefinition> customFields = new HashMap<>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
-                    requiredFieldName, true, CustomFieldDefinition.NULL_ALLOWED_VALUES));
+                    requiredFieldName, true));
         }
         return customFields;
     }

@@ -9,7 +9,6 @@ import java.util.List;
 
 public class CustomFieldDefinition {
 
-    public static final List<String> NULL_ALLOWED_VALUES = null;
     private final String fieldId;
 
     private final String fieldName;

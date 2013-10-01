@@ -88,8 +88,7 @@ public class CustomFieldJsonParser {
             // Leaving false for now until can better come up with a solution.
             Boolean required = false;
 
-            customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required,
-                    CustomFieldDefinition.NULL_ALLOWED_VALUES));
+            customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
 
             // This needs a good way to account for different types (String, textfield, multi-select, etc.)
         }
