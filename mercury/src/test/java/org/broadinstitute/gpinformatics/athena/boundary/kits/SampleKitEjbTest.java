@@ -15,8 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -25,11 +27,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class SampleKitEjbTest extends ContainerTest {
+public class SampleKitEjbTest extends Arquillian {
     private SampleKitEjb sampleKitEjb;
 
     private JiraService jiraService;
+
+    @org.jboss.arquillian.container.test.api.Deployment
+    public static WebArchive getDeployment() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
+
 
     @BeforeMethod()
     public void setUp() throws Exception {
@@ -37,9 +47,9 @@ public class SampleKitEjbTest extends ContainerTest {
         sampleKitEjb = new SampleKitEjb(jiraService, Deployment.DEV);
     }
 
-    public void testAllowedValuesResultList(){
+    public void testAllowedValuesResultList() {
         Collection<String> allowedValues = sampleKitEjb.getDeliveryMethods();
-        Assert.assertTrue(allowedValues.containsAll(Arrays.asList("FedEx","Broad Truck","Local Pickup")));
+        Assert.assertTrue(allowedValues.containsAll(Arrays.asList("FedEx", "Broad Truck", "Local Pickup")));
     }
 
     public void testGetAllowedValues() throws Exception {
@@ -51,7 +61,7 @@ public class SampleKitEjbTest extends ContainerTest {
     }
 
     public void testCreateKit() throws Exception {
-        SampleKitRequestDto sampleKitDto=new SampleKitRequestDto("dryan", Arrays.asList("breilly", "andrew"),
+        SampleKitRequestDto sampleKitDto = new SampleKitRequestDto("dryan", Arrays.asList("breilly", "andrew"),
                 "Tube - 0.75 mL Matrix", 2, 96, "320", "Broad Truck", "WR-13299", "PDO-2134");
         List<String> kitRequests = sampleKitEjb.createKitRequest(sampleKitDto);
         Assert.assertNotNull(kitRequests);

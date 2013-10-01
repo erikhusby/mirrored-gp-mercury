@@ -44,9 +44,10 @@ public class SampleKitEjb {
     @Inject
     private Deployment deployment;
 
-    private Log logger = LogFactory.getLog(SampleKitEjb.class);
+    private Log log = LogFactory.getLog(SampleKitEjb.class);
 
-    BSPConfig bspConfig;
+    @Inject
+    private BSPConfig bspConfig;
 
     private Map<String, CustomFieldDefinition> sampleKitJiraFields;
 
@@ -62,9 +63,9 @@ public class SampleKitEjb {
 
     public enum JiraField implements CustomField.SubmissionField {
         TASK_ID("Task ID"),// (text)
-        SHIPPING_ADDRESS("Shipping Address"), // (large text)
-        SITE_NAME("Site Name"), // (text)
-        DELIVERY_METHOD("Kit Delivery Method"), // (select list with options:
+        SHIPPING_ADDRESS("Shipping Address"),
+        SITE_NAME("Site Name"),
+        DELIVERY_METHOD("Kit Delivery Method"),
         COLLABORATOR_INFORMATION("Collaborator Information"),
         WORK_REQUEST_IDS("Work Request ID(s)"),
         PROJECT("Project"),
@@ -77,8 +78,8 @@ public class SampleKitEjb {
 
         private final String fieldName;
 
-        private JiraField(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        private JiraField(String fieldName) {
+            this.fieldName = fieldName;
         }
 
         @Nonnull
@@ -111,7 +112,7 @@ public class SampleKitEjb {
      *
      * @param jiraField the field you would like pre-defined values from.
      *
-     * @return
+     * @return a collection of values allowed for this jira field.
      */
     public Collection<String> getAllowedValues(JiraField jiraField) {
         Collection<String> allowedValues = new ArrayList<>();
@@ -124,10 +125,8 @@ public class SampleKitEjb {
 
     /**
      * Initialize the fields for a sampleKit.
-     *
-     * @return
      */
-    public Map<String, CustomFieldDefinition> init() {
+    public void init() {
         MercuryConfiguration mercuryConfiguration = MercuryConfiguration.getInstance();
         bspConfig = (BSPConfig) mercuryConfiguration.getConfig(BSPConfig.class, deployment);
         try {
@@ -137,9 +136,8 @@ public class SampleKitEjb {
                     jiraService.getRequiredFields(kitRequestProject, CreateFields.IssueType.SAMPLE_KIT);
 
         } catch (IOException e) {
-            logger.error("Could not communicate with Jira.", e);
+            log.error("Could not communicate with Jira.", e);
         }
-        return sampleKitJiraFields;
     }
 
     /**
@@ -211,7 +209,7 @@ public class SampleKitEjb {
 
             customFieldList
                     .add(new CustomField(sampleKitJiraFields.get(JiraField.DESCRIPTION.fieldName), description));
-            logger.info(description);
+            log.info(description);
 
             try {
                 JiraIssue jiraIssue =
@@ -225,9 +223,7 @@ public class SampleKitEjb {
                 createdJiraIds.add(jiraIssueKey);
 
             } catch (IOException e) {
-                logger.error("Error attempting to Sample Kit Request in JIRA.", e);
                 throw new InformaticsServiceException("Error attempting to Sample Kit Request in JIRA.", e);
-
             }
         }
         return createdJiraIds;

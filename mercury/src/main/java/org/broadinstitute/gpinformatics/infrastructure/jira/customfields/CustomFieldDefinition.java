@@ -9,7 +9,7 @@ import java.util.List;
 
 public class CustomFieldDefinition {
 
-    public static final List<String>  NULL_ALLOWED_VALUES = null;
+    public static final List<String> NULL_ALLOWED_VALUES = null;
     private final String fieldId;
 
     private final String fieldName;
@@ -18,7 +18,8 @@ public class CustomFieldDefinition {
 
     private Collection<String> allowedValues;
 
-    public CustomFieldDefinition(String fieldId, String fieldName, boolean isRequired, @Nullable Collection<String> allowedValues) {
+    public CustomFieldDefinition(String fieldId, String fieldName, boolean isRequired,
+                                 @Nullable Collection<String> allowedValues) {
         this.allowedValues = allowedValues;
         if (fieldId == null) {
             throw new NullPointerException("fieldId cannot be null");
@@ -45,8 +46,8 @@ public class CustomFieldDefinition {
     }
 
     public Collection<String> getAllowedValues() {
-        if (allowedValues==null){
-            allowedValues= Collections.emptyList();
+        if (allowedValues == null) {
+            allowedValues = Collections.emptyList();
         }
         return allowedValues;
     }

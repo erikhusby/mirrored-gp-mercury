@@ -43,8 +43,6 @@ public class JiraServiceTest {
      */
     @Test
     public void testCreation() {
-
-        setUp();
         try {
 
             Map<String, CustomFieldDefinition> requiredFields =
@@ -78,8 +76,6 @@ public class JiraServiceTest {
 
     @Test
     public void testCreationFromAllowedValue() {
-
-        setUp();
         try {
 
             Map<String, CustomFieldDefinition> requiredFields =
@@ -114,7 +110,6 @@ public class JiraServiceTest {
     }
 
     public void testCreatePdoTicket() {
-        setUp();
         Collection<CustomField> customFieldList = new LinkedList<>();
 
         try {
@@ -172,8 +167,6 @@ public class JiraServiceTest {
     }
 
     public void testAddWatcher() {
-
-        setUp();
         try {
             service.addWatcher("PDO-8", "squid");
         } catch (IOException iox) {
@@ -183,8 +176,6 @@ public class JiraServiceTest {
 
     @Test(enabled = false)
     public void testLinkTicket() {
-
-        setUp();
         try {
             service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
         } catch (IOException iox) {
@@ -194,8 +185,6 @@ public class JiraServiceTest {
     }
 
     public void testAddPublicComment() {
-
-        setUp();
         try {
 
             service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
@@ -211,7 +200,6 @@ public class JiraServiceTest {
     // disabled until we can get test jira to keep squid user as an admin
     public void testAddRestrictedComment() {
 
-        setUp();
         try {
 
             service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role,
@@ -223,8 +211,7 @@ public class JiraServiceTest {
         }
     }
 
-    public void test_custom_fields() throws IOException {
-        setUp();
+    public void testCustomFields() throws IOException {
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateFields.Project(
                 CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
