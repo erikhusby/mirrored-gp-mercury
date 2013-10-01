@@ -12,7 +12,6 @@ public class CustomField {
     private final Object value;
 
     public static class ValueContainer {
-
         public ValueContainer() {
         }
 
@@ -35,31 +34,17 @@ public class CustomField {
         }
     }
 
-
-
     public static class NameContainer {
+        public NameContainer(String name) {
+            this.name = name;
+        }
 
-           public NameContainer() {
-           }
+        private final String name;
 
-           public NameContainer(boolean name) {
-               this.name = name ? "Yes" : "No";
-           }
-
-           public NameContainer(String name) {
-               this.name = name;
-           }
-
-           private String name;
-
-           public String getName() {
-               return name;
-           }
-
-           public void setName(String name) {
-               this.name = name;
-           }
-       }
+        public String getName() {
+            return name;
+        }
+    }
 
 
     public static class SelectOption extends ValueContainer {

@@ -47,7 +47,7 @@ public class SampleKitRequestDto {
      * @param bspKitRequest        The BSP kit request this should be linked to.
      * @param linkedProductOrder   The Mercury ProductOrder this request should be linked to.
      */
-    public SampleKitRequestDto(@Nonnull String requestedBy, @Nullable List<String> projectManagers,
+    public SampleKitRequestDto(@Nonnull String requestedBy, List<String> projectManagers,
                                @Nonnull String plasticware,
                                @Nonnull int numberOfRacks,
                                @Nonnull int numberOfTubesPerRack, @Nonnull String destination,

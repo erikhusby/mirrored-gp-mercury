@@ -216,12 +216,11 @@ public class SampleKitEjb {
                         jiraService.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(),
                                 kitRequestDto.getRequestedBy(), CreateFields.IssueType.SAMPLE_KIT,
                                 summary, customFieldList);
+
                 String jiraIssueKey = jiraIssue.getKey();
+                jiraIssue.addLink(AddIssueLinkRequest.LinkType.Parentage, kitRequestDto.getLinkedProductOrder());
 
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage,
-                        kitRequestDto.getLinkedProductOrder(), jiraIssueKey);
                 createdJiraIds.add(jiraIssueKey);
-
             } catch (IOException e) {
                 throw new InformaticsServiceException("Error attempting to Sample Kit Request in JIRA.", e);
             }
