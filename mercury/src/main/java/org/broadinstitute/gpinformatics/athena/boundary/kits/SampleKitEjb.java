@@ -136,7 +136,7 @@ public class SampleKitEjb {
                     jiraService.getRequiredFields(kitRequestProject, CreateFields.IssueType.SAMPLE_KIT);
 
         } catch (IOException e) {
-            log.error("Could not communicate with Jira.", e);
+            throw new InformaticsServiceException("Could not communicate with Jira.", e);
         }
     }
 
