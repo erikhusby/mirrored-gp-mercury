@@ -72,14 +72,12 @@ public class CrspInfoResource extends AbstractJerseyClientService {
             //Create a SAXSource specifying the filter
             SAXSource source = new SAXSource(is);
 
-            CrspPhiInfo queryInfo = (CrspPhiInfo)unmarshaller.unmarshal(source);
+            CrspPhiInfo queryInfo = (CrspPhiInfo) unmarshaller.unmarshal(source);
 
-            if (queryInfo == null || queryInfo.getPhiData().isEmpty()) {
-                throw new ResourceException("No results were found for the given samples", Response.Status.NOT_FOUND);
-            }
-
-            for (CrspPhiDTO phiDTO : queryInfo.getPhiData()) {
-                resourceResults.put(phiDTO.getSampleID(), phiDTO);
+            if (queryInfo != null) {
+                for (CrspPhiDTO phiDTO : queryInfo.getPhiData()) {
+                    resourceResults.put(phiDTO.getSampleID(), phiDTO);
+                }
             }
             foundResponse = Response.ok().entity(resourceResults).build();
         } catch (JAXBException | SAXException e) {
