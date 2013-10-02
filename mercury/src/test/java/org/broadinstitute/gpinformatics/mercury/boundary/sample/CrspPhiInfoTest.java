@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiInfo;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE, enabled = false)
 public class CrspPhiInfoTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
