@@ -23,10 +23,10 @@ import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiInfo;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@Test(groups = TestGroups.DATABASE_FREE, enabled = false)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class CrspPhiInfoTest {
 
-    @Test(groups = TestGroups.DATABASE_FREE)
+    @Test(groups = TestGroups.DATABASE_FREE, enabled = false)
     public void testMarshalling() throws Exception {
 
         String rawSource = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
