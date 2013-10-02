@@ -46,7 +46,7 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
     @GET
     @Path("/getCrspPhiInfo")
-    @RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators, Mercury-Developers")
+    @RolesAllowed("CRSP-Mercury-ProjectManagers, CRSP-Mercury-Administrators, CRSP-Mercury-Developers")
     @Produces({MediaType.APPLICATION_JSON})
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds) {
 
@@ -94,5 +94,4 @@ public class CrspInfoResource extends AbstractJerseyClientService {
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
     }
-
 }
