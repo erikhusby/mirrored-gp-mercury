@@ -9,6 +9,9 @@ import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.sample.Sample;
 import org.broadinstitute.bsp.client.sample.SampleKit;
 import org.broadinstitute.bsp.client.sample.SampleManager;
+import org.broadinstitute.bsp.client.site.AllSitesResponse;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
@@ -17,16 +20,12 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author Scott Matthews
- *         Date: 11/26/12
- *         Time: 3:03 PM
- */
 @Stub
 @Alternative
 public class BSPManagerFactoryStub implements BSPManagerFactory {
@@ -197,4 +196,16 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
         };
     }
 
+    @Override
+    public BspSiteManager createSiteManager() {
+        return new BspSiteManager(null, null, null, null) {
+            @Override
+            public AllSitesResponse getAllSites() {
+                return new AllSitesResponse(
+                        Arrays.asList(new Site(1, "Name", "Description", "Address 1\nAddress 2", "Primary Shipper",
+                                false, false)),
+                        true);
+            }
+        };
+    }
 }
