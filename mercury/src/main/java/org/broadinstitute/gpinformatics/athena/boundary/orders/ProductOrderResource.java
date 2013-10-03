@@ -149,9 +149,9 @@ public class ProductOrderResource {
             productOrder.setProduct(product);
         }
 
-        if (!StringUtils.isBlank(productOrderData.getResearchProjectKey())) {
+        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
             ResearchProject researchProject =
-                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectKey());
+                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
 
             // Make sure the required research project is present.
             if (researchProject == null) {
@@ -270,7 +270,7 @@ public class ProductOrderResource {
             productOrderData.setProductName(productOrder.getProduct().getName());
             productOrderData.setStatus(productOrder.getOrderStatus().name());
             productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectKey(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
             productOrderData.setQuoteId(productOrder.getQuoteId());
 
             if (includeSamples) {
