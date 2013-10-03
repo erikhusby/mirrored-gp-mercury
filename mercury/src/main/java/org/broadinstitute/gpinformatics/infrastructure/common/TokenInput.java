@@ -30,7 +30,9 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     // These are generic menu entry divs that go in between <li> tags in the token input javascript
     // There are two forms (single line and double line) which have different format classes. Subclasses populate
     // just the details.
+    /** The one line menu format string. */
     private static final String MENU_ONE_LINE = "<div class=\"ac-dropdown-text\">{0}</div>";
+    /** The two line menu format string. */
     private static final String MENU_TWO_LINE = MENU_ONE_LINE + "<div class=\"ac-dropdown-subtext\">{1}</div>";
     private static final String EXTRA_COUNT_LINE = "<div class=\"ac-dropdown-subtext\">...and {0} more</div>";
 
@@ -166,11 +168,17 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         return item;
     }
 
-    // To build the generic JSON object for token input
+    /** Used to build the generic JSON object for token input */
     protected abstract String getTokenId(TOKEN_OBJECT tokenObject);
     protected abstract String getTokenName(TOKEN_OBJECT tokenObject);
 
-    // Format the message into a string
+    /**
+     * Format the message into a string.
+     *
+     * @param messageString the format string, either a ONE or TWO line format
+     * @param tokenObject the object to format.
+     *
+     */
     protected abstract String formatMessage(String messageString, TOKEN_OBJECT tokenObject);
 
     /**
