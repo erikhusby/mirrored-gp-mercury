@@ -441,7 +441,7 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setDisambiguator(1L);
         plateTransferEvent.setOperator("pdunlea");
         plateTransferEvent.setStation("ZAN");
-        plateTransferEvent.setProgram(eventType + "-testProgram");
+        plateTransferEvent.setProgram("Bravo");
     }
 
     private PlateType buildRack(String rackBarcode) {

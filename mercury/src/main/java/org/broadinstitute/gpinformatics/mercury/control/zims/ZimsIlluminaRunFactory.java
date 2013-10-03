@@ -95,7 +95,7 @@ public class ZimsIlluminaRunFactory {
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
                 Set<SampleInstance> sampleInstances =
-                        labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO, LabBatch.LabBatchType.WORKFLOW);
+                        labVessel.getSampleInstances(LabVessel.SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
                 for (SampleInstance sampleInstance : sampleInstances) {
 
                     String productOrderKey = sampleInstance.getProductOrderKey();

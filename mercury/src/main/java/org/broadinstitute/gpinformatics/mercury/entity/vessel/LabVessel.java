@@ -50,7 +50,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -623,7 +622,12 @@ public abstract class LabVessel implements Serializable {
         /**
          * Any MercurySample.
          */
-        ANY
+        ANY,
+        /**
+         * Like PREFER_PDO but traverses to the beginning of the vessel transfer chain to get the "root" sample
+         * which appears to be a ProductOrderSample.
+         */
+        ROOT_SAMPLE
     }
 
     /**
@@ -803,6 +807,8 @@ public abstract class LabVessel implements Serializable {
                 continueTraversing = false;
             }
             break;
+        case ROOT_SAMPLE:
+            break;
         }
         if (continueTraversing) {
             List<VesselEvent> vesselEvents = getAncestors();
@@ -846,12 +852,11 @@ public abstract class LabVessel implements Serializable {
             // If this vessel is a BSP export, sets the aliquot sample.
             // Expects one sample per vessel in the BSP export.
             if (labBatch.getLabBatchType() == LabBatch.LabBatchType.SAMPLES_IMPORT) {
+                if (mercurySamples.size() > 1) {
+                    throw new RuntimeException("No support for pooled sample imports.");
+                }
                 for (MercurySample mercurySample : mercurySamples) {
-                    // FIXME: If there are multiple mercurySamples, won't this just overwrite each
-                    // FIXME: sampleInstance.bspExportSample multiple times? I know there's a comment above about
-                    // FIXME: the expectation, but we should probably throw an exception if it's not as we expect
-                    // FIXME: instead of potentially doing the wrong thing. -BPR
-                    traversalResults.setBspExportSample(mercurySample);
+                    traversalResults.setBspExportSample(mercurySamples.iterator().next());
                 }
             }
         }

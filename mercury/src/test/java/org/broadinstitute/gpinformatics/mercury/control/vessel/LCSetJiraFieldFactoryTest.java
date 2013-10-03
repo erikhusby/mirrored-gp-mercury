@@ -65,19 +65,6 @@ public class LCSetJiraFieldFactoryTest {
         workflow = Workflow.AGILENT_EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
 
-        Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
-
-        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
-        rpSynopsis = "Test synopsis";
-        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
-                new Product("Test product",
-                        new ProductFamily("Test product family"), "test",
-                        "1234", null, null, 10000, 20000, 100, 40, null, null,
-                        true, workflow, false, "agg type"),
-                new ResearchProject(101L, "Test RP", rpSynopsis, false));
-        productOrder.setJiraTicketKey(pdoBusinessName);
-        mapKeyToProductOrder.put(pdoBusinessName, productOrder);
-
         List<String> vesselSampleList = new ArrayList<>(6);
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
@@ -86,10 +73,9 @@ public class LCSetJiraFieldFactoryTest {
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
-            productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, pdoBusinessName,
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, sampleIndex == 1 ? "PDO-7" : pdoBusinessName,
                     BucketEntry.BucketEntryType.PDO_ENTRY));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -116,10 +102,11 @@ public class LCSetJiraFieldFactoryTest {
 
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
-        AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
-                .getInstance(CreateFields.ProjectType.getLcsetProjectType(), testBatch, AthenaClientProducer.stubInstance());
+        AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
+                CreateFields.ProjectType.getLcsetProjectType(), testBatch, AthenaClientProducer.stubInstance());
 
-        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBuilder.generateDescription());
+        Assert.assertEquals("1 samples from MyResearchProject PDO-7\n5 samples from MyResearchProject PDO-999\n",
+                testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
@@ -170,7 +157,7 @@ public class LCSetJiraFieldFactoryTest {
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void test_sample_field_text_with_reworks() {
         String expectedText = "SM-1\n\nSM-2 (rework)";
 
