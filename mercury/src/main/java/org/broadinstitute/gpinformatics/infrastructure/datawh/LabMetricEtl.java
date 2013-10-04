@@ -68,7 +68,7 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                 LabMetricRun run = entity.getLabMetricRun();
 
                 Set<SampleInstance> sampleInstances =
-                        labVessel.getSampleInstances(LabVessel.SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW);
+                        labVessel.getSampleInstances(LabVessel.SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
 
                 if (!sampleInstances.isEmpty()) {
                     for (SampleInstance si : sampleInstances) {

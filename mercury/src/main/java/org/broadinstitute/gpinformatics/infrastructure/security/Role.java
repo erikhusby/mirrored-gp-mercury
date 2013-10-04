@@ -39,4 +39,11 @@ public enum Role {
 
         return roleNames;
     }
+
+    public String getName() {
+        return name;
+    }
+    public String getCrspName() {
+        return "CRSP-"+name;
+    }
 }

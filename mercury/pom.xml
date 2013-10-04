@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.33-SNAPSHOT</version>
+    <version>1.34-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1925,6 +1925,23 @@
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+
+                        <id>CrspTypes</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>CrspTypes.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.crsp.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.CrspTypesXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
