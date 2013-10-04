@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <!--targetNamespace="http://genome.wi.mit.edu/coral.xsd"--> <!-- xmlns="http://genome.wi.mit.edu/coral.xsd" -->
+
+    <xs:complexType name="plateType">
+        <xs:attribute name="physType" type="xs:NCName" use="required"/>
+        <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="section" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="tubeType" type="xs:NCName"/>
+    </xs:complexType>
+
+    <xs:complexType name="positionMapType">
+        <xs:sequence>
+            <xs:element name="receptacle" type="receptacleType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
+    </xs:complexType>
+
+    <xs:attributeGroup name="reagentGroup">
+        <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="kitType" type="xs:NMTOKEN" use="required"/>
+    </xs:attributeGroup>
+
+    <xs:complexType name="reagentType">
+        <xs:attributeGroup ref="reagentGroup"/>
+    </xs:complexType>
+
+    <xs:attributeGroup name="metadataGroup">
+        <xs:attribute name="name" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="value" type="xs:normalizedString" use="required"/>
+    </xs:attributeGroup>
+
+    <xs:complexType name="metadataType">
+        <xs:attributeGroup ref="metadataGroup"/>
+    </xs:complexType>
+
+    <xs:complexType name="observationType">
+        <xs:attribute name="type" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="date" type="xs:dateTime"/>
+        <xs:attribute name="comment" type="xs:normalizedString"/>
+        <xs:attribute name="value" type="xs:double"/>
+    </xs:complexType>
+
+    <xs:complexType name="stationEventType">
+        <xs:sequence>
+            <xs:element name="comment" type="xs:normalizedString" minOccurs="0"/>
+            <xs:element name="observation" type="observationType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="eventType" type="xs:NCName" use="required"/>
+        <xs:attribute name="station" type="xs:NCName" use="required"/>
+        <xs:attribute name="operator" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="program" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="start" type="xs:dateTime" use="required"/>
+        <xs:attribute name="end" type="xs:dateTime"/>
+        <xs:attribute name="disambiguator" type="xs:long"/>
+        <xs:attribute name="batchId" type="xs:NMTOKEN"/>
+    </xs:complexType>
+
+    <xs:complexType name="experimentType">
+        <xs:attribute name="name" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="category" type="xs:normalizedString" use="required"/>
+        <xs:attribute name="purpose" type="xs:normalizedString"/>
+    </xs:complexType>
+
+    <xs:complexType name="basePlateEventType">
+        <xs:complexContent>
+            <xs:extension base="stationEventType">
+                <xs:sequence>
+                    <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element name="plate" type="plateType"/>
+                    <xs:element name="experiment" type="experimentType" minOccurs="0"/>
+                </xs:sequence>
+                <xs:attribute name="operation" type="xs:NMTOKEN"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="sampleType">
+        <xs:attribute name="name" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="well" type="xs:NCName" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="receptacleSampleType">
+        <xs:complexContent>
+            <xs:extension base="receptacleType">
+                <xs:attribute name="well" type="xs:NCName" use="required"/>
+                <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="seqContentSampleType">
+        <xs:attribute name="id" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="well" type="xs:NCName" use="required"/>
+        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
+    </xs:complexType>
+
+    <xs:complexType name="lcSampleSampleType">
+        <xs:attribute name="id" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="well" type="xs:NCName" use="required"/>
+        <xs:attribute name="poolingExpectation" type="xs:NMTOKEN"/>
+    </xs:complexType>
+
+    <xs:complexType name="registrationType">
+        <xs:sequence>
+            <!-- The sample elements provide for optional naming of samples by a client.
+        The number of sample elements must equal the number of wells in the plate section,
+        or else the sample names must be entirely omitted, in which case the samples
+        will be named automatically. -->
+            <xs:element name="sample" type="sampleType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="experiment" type="experimentType" minOccurs="0"/>
+            <xs:element name="receptacleSample" type="receptacleSampleType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="seqContentSample" type="seqContentSampleType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="lcSampleSample" type="lcSampleSampleType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="sampleClass" type="xs:NCName"/>
+        <xs:attribute name="lib" type="xs:NCName"/>
+        <xs:attribute name="givenName" type="xs:NCName"/>
+    </xs:complexType>
+
+    <xs:complexType name="sampleRegistrationType">
+        <xs:sequence>
+            <xs:element name="sampleBarcode" maxOccurs="96">
+                <xs:complexType>
+                    <xs:simpleContent>
+                        <xs:extension base="xs:NMTOKEN">
+                            <xs:attribute name="tubeBarcode" type="xs:NMTOKEN" use="required"/>
+                        </xs:extension>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="plateEventType">
+        <xs:complexContent>
+            <xs:extension base="basePlateEventType">
+                <xs:sequence>
+                    <xs:element name="registration" type="registrationType" minOccurs="0"/>
+                    <xs:element name="positionMap" type="positionMapType" minOccurs="0"/>
+                    <xs:element name="sampleRegistration" type="sampleRegistrationType" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="plateTransferEventType">
+        <xs:complexContent>
+            <xs:extension base="plateEventType">
+                <xs:sequence>
+                    <xs:element name="sourcePlate" type="plateType"/>
+                    <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0"/>
+                </xs:sequence>
+                <xs:attribute name="flipped" type="xs:boolean" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="cherryPickSourceType">
+        <!-- not enough info to create the source plate: it must already exist in the DB -->
+        <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="well" type="xs:NCName" use="required"/>
+        <xs:attribute name="destinationBarcode" type="xs:NMTOKEN" use="optional"/>
+        <xs:attribute name="destinationWell" type="xs:NCName" use="optional"/>
+    </xs:complexType>
+
+    <!-- To be really correct, we ought to restrict the eventType to "Rearray" and the section to "ALL". -->
+    <xs:element name="plateCherryPickEvent">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="stationEventType">
+                    <xs:sequence>
+                        <xs:element name="plate" type="plateType" maxOccurs="unbounded"/>
+                        <xs:element name="positionMap" type="positionMapType" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="sourcePlate" type="plateType" minOccurs="0" maxOccurs="unbounded"/>
+                        <xs:element name="sourcePositionMap" type="positionMapType" minOccurs="0"
+                                    maxOccurs="unbounded"/>
+                        <xs:element name="source" type="cherryPickSourceType" maxOccurs="unbounded"/>
+                        <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                    <xs:attribute name="operation" type="xs:NMTOKEN"/>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="receptaclePlateTransferEvent">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="stationEventType">
+                    <xs:sequence>
+                        <!-- Use sourceReceptacle and destinationPlate, or sourcePlate and destinationReceptacle  -->
+                        <xs:element name="sourcePlate" type="plateType" minOccurs="0" maxOccurs="1"/>
+                        <xs:element name="sourceReceptacle" type="receptacleType" minOccurs="0" maxOccurs="1"/>
+                        <xs:element name="destinationPlate" type="plateType" minOccurs="0" maxOccurs="1"/>
+                        <xs:element name="destinationPositionMap" type="positionMapType" minOccurs="0"
+                                    maxOccurs="unbounded"/>
+                        <xs:element name="destinationReceptacle" type="receptacleType" minOccurs="0" maxOccurs="1"/>
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="protocolType">
+        <xs:attribute name="eventType" type="xs:NCName"/>
+        <xs:attribute name="physType" type="xs:NCName"/>
+        <xs:attribute name="sourcePhysType" type="xs:NCName"/>
+    </xs:complexType>
+
+    <xs:complexType name="reservoirType">
+        <xs:attribute name="name" type="xs:NCName" use="required"/>
+        <xs:attributeGroup ref="reagentGroup"/>
+    </xs:complexType>
+
+    <xs:element name="stationSetupEvent">
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="stationEventType">
+                    <xs:sequence>
+                        <xs:element name="protocol" type="protocolType" minOccurs="0"/>
+                        <xs:element name="reservoir" type="reservoirType" minOccurs="0" maxOccurs="2"/>
+                    </xs:sequence>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="receptacleType">
+        <xs:sequence>
+            <xs:element name="reagent" type="reagentType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="metadata" type="metadataType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
+        <xs:attribute name="receptacleType" type="xs:NMTOKEN" use="optional"/>
+        <xs:attribute name="position" type="xs:NMTOKEN" use="optional"/>
+        <xs:attribute name="materialType" type="xs:NMTOKEN" use="optional"/>
+        <!-- if volume is on 'source' then it means how much was transferred out; if it is on destination then it means the final actual volume in the tube.  -->
+        <xs:attribute name="volume" type="xs:decimal" use="optional"/>
+        <xs:attribute name="concentration" type="xs:decimal" use="optional"/>
+        <xs:attribute name="fragmentSize" type="xs:decimal" use="optional"/>
+    </xs:complexType>
+
+    <xs:complexType name="lcSampleType">
+        <xs:attribute name="lsid" type="xs:NMTOKEN"/>
+    </xs:complexType>
+
+    <xs:complexType name="receptacleSampleEventType">
+        <xs:complexContent>
+            <xs:extension base="receptacleEventType">
+                <xs:sequence>
+                    <xs:element name="lcSample" type="lcSampleType" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="receptacleEventType">
+        <xs:complexContent>
+            <xs:extension base="stationEventType">
+                <xs:sequence>
+                    <xs:element name="receptacle" type="receptacleType"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="bettaLIMSMessage">
+        <xs:complexType>
+            <xs:choice>
+                <xs:element name="plateEvent" type="plateEventType" maxOccurs="unbounded"/>
+                <xs:element name="plateTransferEvent" type="plateTransferEventType" maxOccurs="unbounded"/>
+                <xs:element ref="stationSetupEvent"/>
+                <xs:element ref="plateCherryPickEvent" maxOccurs="unbounded"/>
+                <xs:element ref="receptaclePlateTransferEvent" maxOccurs="unbounded"/>
+                <xs:element name="receptacleEvent" type="receptacleEventType" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element name="receptacleSampleEvent" type="receptacleSampleEventType" minOccurs="0" maxOccurs="1"/>
+            </xs:choice>
+            <xs:attribute name="mode" type="xs:NCName"/>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

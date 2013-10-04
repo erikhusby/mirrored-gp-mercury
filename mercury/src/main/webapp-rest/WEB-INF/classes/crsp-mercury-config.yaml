@@ -1,0 +1,294 @@
+# External system definitions.  These describe the various deployments of external systems with which Mercury might
+# integrate.
+
+app:
+
+    DEV:
+      host:     localhost
+      port:     8080
+      jmsPort:  5445
+      workflowValidationEmail:
+
+    AUTO_BUILD:
+      host:     crsp-dev-mercury.broadinstitute.org
+      port:     8081
+      jmsPort:  5446
+      workflowValidationEmail:
+
+    TEST:
+      host:     crsp-dev-mercury.broadinstitute.org
+      port:     8080
+      jmsPort:  5445
+      workflowValidationEmail:
+
+    QA:
+      host:     crsp-qa-mercury.broadinstitute.org
+      port:     8080
+      jmsPort:  5445
+      workflowValidationEmail:
+
+    RC:
+      host:     crsp-rc-mercury.broadinstitute.org
+      port:     8082
+      jmsPort:  5447
+      workflowValidationEmail:
+
+    PROD:
+      host:     crsp-mercury.broadinstitute.org
+      port:     8080
+      jmsPort:  5445
+      workflowValidationEmail: gplims@broadinstitute.org
+      #limsworkflowvalidation@broadinstitute.org
+
+# Stubbed out so that the MercuryConfiguration doesn't throw a big fat exception and halts the Mercury WAR deployment.
+bsp:
+
+    DEV:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-dev-bsp.broadinstitute.org
+      port:     8080
+
+    RC:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-qa-bsp.broadinstitute.org
+      port:     8080
+
+    PROD:
+      login:    seqsystem
+      password: bspbsp
+      host:     crsp-bsp.broadinstitute.org
+      port:
+
+squid:
+    DEV:
+    QA:
+    PROD:
+
+datawhEtl:
+    DEV:
+    QA:
+    PROD:
+
+jira:
+
+    TEST:
+      login:    crspuser
+      password: crspuser
+      host:     crsptestjira.broadinstitute.org
+      port:     8443
+      urlBase:      https://crsptestjira.broadinstitute.org:8443
+
+    QA:
+      login:    crspuser
+      password: crspuser
+      host:     crsptestjira.broadinstitute.org
+      port:     8443
+      urlBase:  https://crspqajira.broadinstitute.org:8443
+
+
+    PROD:
+      login:    crspuser
+      password: crspuser
+      host:     crspjira.broadinstitute.org
+#      port:     8020
+      urlBase:      https://crspjira.broadinstitute.org
+
+portal:
+    TEST:
+      urlBase:      http://crsp-dev-portal:8111/portal
+
+    DEV:
+      urlBase:      http://crsp-dev-portal:8111/portal
+
+    QA:
+      urlBase:      http://crsp-qa-portal:8111/portal
+
+    PROD:
+      urlBase:      https://www.broadinstitute.org/portal
+
+quote:
+
+    DEV:
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quotedev:8080
+
+    QA:
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quoteqa:8080
+
+    PROD:
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quoteprod:8080
+
+
+thrift:
+
+    QA:
+      host: seqtest04
+      port: 9090
+
+    TEST:
+      host: prodinfobuild
+      port: 9090
+
+    PROD:
+      host: seqlims
+      port: 9090
+
+
+# rename to wsMsgStore
+deckMsgs:
+
+    DEV:
+        messageStoreDirRoot: /seq/lims/mercury/dev
+
+    QA:
+        messageStoreDirRoot: /seq/lims/mercury/qa
+
+    PROD:
+        messageStoreDirRoot: /seq/lims/mercury/prod
+
+
+bettaLimsServer:
+
+    DEV:
+        wsHost: node115
+        wsPort: 9998
+        #14009
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.thompson
+
+    TEST:
+        wsHost: node115
+        wsPort: 9997
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.test
+
+    QA:
+        wsHost: vbettalimsqa
+        wsPort: 9998
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.qa
+
+    PROD:
+        wsHost: seqlims
+        wsPort: 9998
+        jmsHost: seqlims
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims
+
+hipchat:
+    DEV:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
+    QA:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
+    PROD:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLims
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
+# Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
+
+mercury:
+
+    DEV:
+
+      app:      DEV
+      bsp:      DEV
+      portal:   DEV
+      jira:     TEST
+      quote:    QA
+      squid:    DISABLED
+      thrift:   QA
+      deckMsgs: DEV
+      datawhEtl: DISABLED
+      bettaLimsServer: DEV
+      hipchat: DEV
+
+
+    AUTO_BUILD:
+
+      app:      AUTO_BUILD
+      bsp:      DEV
+      jira:     TEST
+      quote:    QA
+      squid:    DISABLED
+      thrift:   QA
+      deckMsgs: DEV
+      datawhEtl: DISABLED
+      bettaLimsServer: DEV
+      hipchat: DEV
+
+
+    TEST:
+
+      app:      TEST
+      bsp:      DEV
+      portal:   DEV
+      jira:     TEST
+      quote:    DEV
+      squid:    DISABLED
+      thrift:   TEST
+      deckMsgs: DEV
+      datawhEtl: DISABLED
+      bettaLimsServer: TEST
+      hipchat: DEV
+
+
+    QA:
+
+      app:      QA
+      bsp:      RC
+      portal:   QA
+      jira:     QA
+      quote:    QA
+      squid:    DISABLED
+      thrift:   QA
+      deckMsgs: QA
+      datawhEtl: DISABLED
+      bettaLimsServer: QA
+      hipchat: DEV
+
+
+    RC:
+
+      app:      RC
+      bsp:      RC
+      portal:   QA
+      jira:     TEST
+      quote:    QA
+      squid:    DISABLED
+      thrift:   QA
+      deckMsgs: QA
+      datawhEtl: DISABLED
+      bettaLimsServer: QA
+      hipchat: DEV
+
+
+    PROD:
+
+      app:      PROD
+      bsp:      PROD
+      portal:   PROD
+      jira:     PROD
+      quote:    PROD
+      squid:    DISABLED
+      thrift:   PROD
+      deckMsgs: PROD
+      datawhEtl: DISABLED
+      bettaLimsServer: PROD
+      hipchat: PROD
