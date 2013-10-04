@@ -156,11 +156,10 @@ bettaLimsServer:
 
     DEV:
         wsHost: node115
-        wsPort: 9998
-        #14009
+        wsPort: 9997
         jmsHost: node115
         jmsPort: 61616
-        jmsQueue: broad.queue.bettalims.thompson
+        jmsQueue: broad.queue.bettalims.test
 
     TEST:
         wsHost: node115
