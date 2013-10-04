@@ -10,7 +10,7 @@ app:
       workflowValidationEmail:
 
     AUTO_BUILD:
-      host:     mercurydev.broadinstitute.org
+      host:     crsp-dev-mercury.broadinstitute.org
       port:     8081
       jmsPort:  5446
       workflowValidationEmail:
@@ -23,7 +23,7 @@ app:
 
     QA:
       host:     crsp-qa-mercury.broadinstitute.org
-      port:     8081
+      port:     8080
       jmsPort:  5445
       workflowValidationEmail:
 
@@ -35,6 +35,7 @@ app:
 
     PROD:
       host:     crsp-mercury.broadinstitute.org
+      port:     8080
       jmsPort:  5445
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
@@ -78,6 +79,14 @@ jira:
       host:     crsptestjira.broadinstitute.org
       port:     8443
       urlBase:      https://crsptestjira.broadinstitute.org:8443
+
+    QA:
+      login:    crspuser
+      password: crspuser
+      host:     crsptestjira.broadinstitute.org
+      port:     8443
+      urlBase:  https://crspqajira.broadinstitute.org:8443
+
 
     PROD:
       login:    crspuser
@@ -182,6 +191,11 @@ hipchat:
         gpLimsRoom: GPLIMS Testing
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
+    QA:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
     PROD:
         baseUrl: https://www.hipchat.com/v1/rooms/message
         gpLimsRoom: GPLims
@@ -240,7 +254,7 @@ mercury:
       app:      QA
       bsp:      RC
       portal:   QA
-      jira:     TEST
+      jira:     QA
       quote:    QA
       squid:    DISABLED
       thrift:   QA

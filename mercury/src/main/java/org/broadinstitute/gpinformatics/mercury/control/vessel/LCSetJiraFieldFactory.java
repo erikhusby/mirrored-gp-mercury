@@ -197,7 +197,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (!workflowDefs.isEmpty()) {
             StringBuilder builtProtocol = new StringBuilder();
-            for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
+            for (ProductWorkflowDef currWorkflowDef : new HashSet<>(workflowDefs.values())) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
                     builtProtocol.append(", ");

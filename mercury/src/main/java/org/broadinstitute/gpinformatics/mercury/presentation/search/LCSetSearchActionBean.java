@@ -6,6 +6,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -89,10 +90,13 @@ public class LCSetSearchActionBean extends SearchActionBean {
 
     public Double getExportedSampleConcentration(LabVessel vessel) {
         Set<SampleInstance> sampleInstances = vesselToSampleInstanceMap.get(vessel);
-        //a little hacky but we should only get one sample instance for sample import (no pooled imports)
-        if (sampleInstances != null) {
-            return sampleToBspPicoValueMap.get(sampleInstances.iterator().next().getStartingSample().getSampleKey())
-                    .getConcentration();
+        if (!CollectionUtils.isEmpty(sampleInstances)) {
+            if (sampleInstances.size() == 1) {
+                return sampleToBspPicoValueMap.get(sampleInstances.iterator().next().getStartingSample().getSampleKey())
+                        .getConcentration();
+            } else {
+                throw new RuntimeException("No support for pooled sample imports.");
+            }
         }
         return Double.NaN;
     }

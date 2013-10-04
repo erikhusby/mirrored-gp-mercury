@@ -35,7 +35,6 @@ public class LabVesselFixupTest extends Arquillian {
     /**
      * Use test deployment here to talk to the actual jira
      *
-     * @return
      */
     @Deployment
     public static WebArchive buildMercuryWar() {

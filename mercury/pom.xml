@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.33-SNAPSHOT</version>
+    <version>1.34-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -695,6 +695,55 @@
             </build>
         </profile>
 
+
+        <profile>
+            <id>CRSP-QA</id>
+            <dependencies>
+                <dependency>
+                    <groupId>javax</groupId>
+                    <artifactId>javaee-api</artifactId>
+                    <version>6.0</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+            <properties>
+                <!--  Oracle QA database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@crsp-db-qa-vm:1521:crspqa</database.url>
+                <mercury.password>m3lb3c</mercury.password>
+                <athena.password>welcome</athena.password>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-crsp</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources-qa</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>crsp-mercury-config.yaml</include>
+                        </includes>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+
         <profile>
             <id>CRSP-PROD</id>
             <!-- This is for CRSP PRODUCTION ONLY -->
@@ -705,8 +754,8 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <database.url>jdbc:oracle:thin:@crsp-db-prod-vm:1521:gpinfprd</database.url>
-                <mercury.password>mercury_prod</mercury.password>
-                <athena.password>athena_prod</athena.password>
+                <mercury.password></mercury.password>
+                <athena.password></athena.password>
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for crsp production -->
@@ -1526,7 +1575,7 @@
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <version>1.3.18</version>
+            <version>1.3.19</version>
         </dependency>
 
         <dependency>
@@ -1876,6 +1925,23 @@
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+                    <execution>
+
+                        <id>CrspTypes</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>CrspTypes.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.crsp.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.CrspTypesXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
