@@ -24,11 +24,7 @@ public class CustomFieldJsonParser {
 
     private static final String REQUIRED = "required";
 
-    private static final String ALLOWED_VALUES = "allowedValues";
-
     private static final String FIELD_ID = "id";
-
-    private static final String VALUE = "value";
 
     /**
      * Parses the custom fields from the given json response.
@@ -48,22 +44,9 @@ public class CustomFieldJsonParser {
             Map fieldProperties = field.getValue();
             String fieldName = (String) fieldProperties.get(NAME);
             Boolean required = (Boolean) fieldProperties.get(REQUIRED);
-            List<Map<String, String>> allowedValuesList =
-                    (List<Map<String, String>>) fieldProperties.get(ALLOWED_VALUES);
-            List<String> valuesList = null;
-            if (allowedValuesList!=null) {
-                valuesList = new ArrayList<>();
-                for (Map<String, String> allowedValuesMap : allowedValuesList) {
-                    String allowed = allowedValuesMap.get(VALUE);
-                    if (allowed==null){
-                        allowed=allowedValuesMap.get(NAME);
-                    }
-                    valuesList.add(allowed);
-                }
-            }
 
             if (StringUtils.isNotBlank(fieldName)) {
-                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required, valuesList));
+                customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
             }
         }
         return customFields;

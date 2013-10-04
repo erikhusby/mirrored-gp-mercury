@@ -12,6 +12,7 @@ public class CustomField {
     private final Object value;
 
     public static class ValueContainer {
+
         public ValueContainer() {
         }
 
@@ -33,19 +34,6 @@ public class CustomField {
             this.value = value;
         }
     }
-
-    public static class NameContainer {
-        public NameContainer(String name) {
-            this.name = name;
-        }
-
-        private final String name;
-
-        public String getName() {
-            return name;
-        }
-    }
-
 
     public static class SelectOption extends ValueContainer {
         private String id;

@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -66,41 +65,6 @@ public class JiraServiceTest {
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                             "Summary created from Mercury",
                             customFieldList);
-
-            Assert.assertNotNull(jiraIssue.getKey());
-
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    @Test
-    public void testCreationFromAllowedValue() {
-        try {
-
-            Map<String, CustomFieldDefinition> requiredFields =
-                    service.getRequiredFields(new CreateFields.Project(
-                            CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix()),
-                            CreateFields.IssueType.SAMPLE_KIT);
-
-            Collection<CustomField> customFieldList = new LinkedList<>();
-
-            customFieldList.add(new CustomField(requiredFields.get("Site Name"), "The Site"));
-            Collection<String> plasticwareValues = requiredFields.get("Plasticware").getAllowedValues();
-            Assert.assertNotNull(plasticwareValues);
-            String firstValue = TestUtils.getFirst(plasticwareValues);
-
-            customFieldList.add(new CustomField(requiredFields.get("Plasticware"),
-                    new CustomField.SelectOption(firstValue)));
-            customFieldList
-                    .add(new CustomField((requiredFields.get("Description")), "Description created from Mercury"));
-
-            JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.SAMPLE_KIT_INITIATION.getKeyPrefix(), null,
-                            CreateFields.IssueType.SAMPLE_KIT,
-                            "Summary created from Mercury",
-                            customFieldList);
-
 
             Assert.assertNotNull(jiraIssue.getKey());
 

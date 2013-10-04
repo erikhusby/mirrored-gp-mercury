@@ -26,10 +26,6 @@ public class SampleKitRequestDto {
     private String bspKitRequest;
     private String linkedProductOrder;
 
-    public static final List<String> NULL_PROJECT_MANAGERS = null;
-    public static final String NULL_BSP_KIT_REQUEST = null;
-    public static final String NULL_PRODUCT_ORDER = null;
-
     /**
      * Empty constructor for action beans to use to bind form elements to.
      */
