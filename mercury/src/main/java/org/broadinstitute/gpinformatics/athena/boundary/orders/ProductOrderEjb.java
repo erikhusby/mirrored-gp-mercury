@@ -385,12 +385,11 @@ public class ProductOrderEjb {
 
             Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
-            Object oldValueToCompare = (previousValue != null)?previousValue:"";
+            Object oldValueToCompare = (previousValue != null) ? previousValue : "";
             Object newValueToCompare = newValue;
 
             if (newValue instanceof CreateFields.Reporter) {
                 // Need to special case Reporter type for display and comparison.
-                assert previousValue != null;
                 oldValueToCompare = ((Map<?, ?>) previousValue).get("name").toString();
                 newValueToCompare = ((CreateFields.Reporter) newValue).getName();
             }
@@ -439,9 +438,8 @@ public class ProductOrderEjb {
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
 
         // Add the Requisition key to the list of fields when appropriate.
-        if (Deployment.isCRSP && StringUtils.isBlank(productOrder.getRequisitionKey())) {
-            PDOUpdateField pdoUpdateField = new PDOUpdateField(ProductOrder.JiraField.REQUISITION_ID, productOrder.getRequisitionKey());
-            pdoUpdateFields.add(pdoUpdateField);
+        if (Deployment.isCRSP && !StringUtils.isBlank(productOrder.getRequisitionKey())) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_ID, productOrder.getRequisitionKey()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
