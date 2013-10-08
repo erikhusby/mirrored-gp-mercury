@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 /**
@@ -14,6 +15,12 @@ public class CrspSystemRouterTest extends SystemRouterTest {
     public void setUp() {
         super.setUp();
         Deployment.isCRSP = true;
+    }
+
+    @AfterMethod
+    public void tearDown() {
+
+        Deployment.isCRSP = false;
     }
 
     @Override
