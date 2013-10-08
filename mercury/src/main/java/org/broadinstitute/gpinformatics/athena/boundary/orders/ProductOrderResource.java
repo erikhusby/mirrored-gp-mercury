@@ -100,6 +100,9 @@ public class ProductOrderResource {
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
+
+            // Set the requisition ID on the Jira referenced PDO.
+            productOrderEjb.updateJiraIssue(productOrder);
         } catch (Exception e) {
             log.error(
                     user.getUsername() + " had a problem placing their product order " + productOrder.getBusinessKey(),
