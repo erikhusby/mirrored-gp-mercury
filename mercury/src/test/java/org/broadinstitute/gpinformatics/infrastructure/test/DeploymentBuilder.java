@@ -60,6 +60,14 @@ public class DeploymentBuilder {
         return war;
     }
 
+    public static WebArchive buildCRSPMercuryWar(Deployment deployment, String dataSourceEnvironment) {
+        WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
+
+        war.addAsWebInfResource(new StringAsset(DeploymentProducer.CRSP + "=true" ), "classes/jndi.properties");
+
+        return war;
+    }
+
     private static WebArchive addWebResourcesTo(WebArchive archive, String directoryName) {
         final File webAppDirectory = new File(directoryName);
         for (File file : FileUtils.listFiles(webAppDirectory, null, true)) {
