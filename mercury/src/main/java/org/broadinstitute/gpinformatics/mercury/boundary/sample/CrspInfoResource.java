@@ -12,6 +12,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import javax.annotation.security.DenyAll;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -46,7 +48,8 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
     @GET
     @Path("/getCrspPhiInfo")
-    @RolesAllowed("CRSP-Mercury-ProjectManagers, CRSP-Mercury-Administrators, CRSP-Mercury-Developers")
+//    @RolesAllowed({"CRSP-Mercury-ProjectManagers", "CRSP-Mercury-Developers"})
+    @PermitAll
     @Produces({MediaType.APPLICATION_JSON})
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds) {
 

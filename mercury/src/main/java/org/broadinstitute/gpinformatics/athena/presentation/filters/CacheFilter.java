@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.filters;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -25,6 +26,9 @@ public class CacheFilter implements Filter {
      * Number of seconds for the content to expire.
      */
     private int expirationTime;
+
+    private static ServletContext servletContext;
+
 
     /**
      * Should the filter set to cache or NOT cache the content?  Useful for local debugging of various issues if set to
@@ -58,6 +62,9 @@ public class CacheFilter implements Filter {
      */
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
+
+        servletContext = filterConfig.getServletContext();
+
         try {
             expirationTime = Integer.valueOf(filterConfig.getInitParameter(EXPIRATION_TIME));
         } catch (Exception e) {
@@ -124,5 +131,9 @@ public class CacheFilter implements Filter {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-store, no-cache");
         response.setDateHeader("Expires", -1);
+    }
+
+    public static ServletContext getServletContext() {
+        return servletContext;
     }
 }
