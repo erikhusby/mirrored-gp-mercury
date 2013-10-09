@@ -43,6 +43,6 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
 
     @Override
     protected Site getById(String key) {
-        return bspSiteList.getById(Long.getLong(key));
+        return bspSiteList.getById(Long.valueOf(key));
     }
 }
