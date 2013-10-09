@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -16,6 +17,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,6 +34,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private LabBatchDao labBatchDao;
 
     @Inject
     private TubeFormationDao tubeFormationDao;
@@ -203,9 +208,24 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupBsp934() {
+    public void fixupBsp934And1005() {
         Map<String, String> kitToContainer = new HashMap<String, String>() {{
-            put("SK-247T", "CO-7496163");
+            //put("SK-247T", "CO-7496163");
+            put("SK-24EI", "CO-6635472");
+            put("SK-24EK", "CO-7506733");
+            put("SK-24EM", "CO-7506736");
+            put("SK-24EO", "CO-7507178");
+            put("SK-24EQ", "CO-6633920");
+            put("SK-24ET", "CO-7507180");
+            put("SK-24EU", "CO-7507181");
+            put("SK-24EV", "CO-6633823");
+            put("SK-24EY", "CO-7506735");
+            put("SK-24F1", "CO-6580265");
+            put("SK-24F2", "CO-7506732");
+
+            put("SK-24EL", "CO-7506734");
+            put("SK-24EW", "CO-6578422");
+            put("SK-24F3", "CO-6633726");
         }};
 
         for (Map.Entry<String, String> entry : kitToContainer.entrySet()) {
@@ -216,5 +236,31 @@ public class LabVesselFixupTest extends Arquillian {
         }
 
         labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupMisbatchesBSP_1005() {
+        final String [] toRemoveFromBatch = new String [] {
+                "CO-6580265",
+                "CO-6635472",
+                "CO-7507180",
+                "CO-7507181",
+                "CO-7506733",
+        };
+
+        final String batchToRemoveFrom = "BP-44457";
+
+        for (LabVessel vessel : labVesselDao.findByListIdentifiers(Arrays.asList(toRemoveFromBatch))) {
+            for (TubeFormation tubeFormation : ((RackOfTubes) vessel).getTubeFormations()) {
+                for (SectionTransfer sectionTransfer : tubeFormation.getContainerRole().getSectionTransfersFrom()) {
+                    LabEvent labEvent = sectionTransfer.getLabEvent();
+                    if (labEvent.getLabBatch().getBatchName().equals(batchToRemoveFrom)) {
+                        // VESSEL_TRANSFER has a FK constraint to LAB_EVENT, so this must be deleted first.
+                        labVesselDao.remove(sectionTransfer);
+                        labVesselDao.remove(labEvent);
+                    }
+                }
+            }
+        }
     }
 }
