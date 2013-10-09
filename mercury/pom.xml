@@ -1946,6 +1946,23 @@
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
+                    <execution>
+
+                        <id>VesselRegistration</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>VesselRegistration.xsd</schemaFiles>
+                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
