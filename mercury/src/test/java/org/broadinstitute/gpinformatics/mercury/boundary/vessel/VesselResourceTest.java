@@ -1,14 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated.RegisterTubeBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
