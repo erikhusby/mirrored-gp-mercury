@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -41,6 +42,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -383,7 +385,7 @@ public class ProductOrderEjb {
 
             Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
-            Object oldValueToCompare = (previousValue != null)?previousValue:"";
+            Object oldValueToCompare = (previousValue != null) ? previousValue : "";
             Object newValueToCompare = newValue;
 
             if (newValue instanceof CreateFields.Reporter) {
@@ -426,17 +428,21 @@ public class ProductOrderEjb {
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
 
-        PDOUpdateField[] pdoUpdateFields = new PDOUpdateField[]{
+        List<PDOUpdateField> pdoUpdateFields = new ArrayList<>(Arrays.asList(
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
                         productOrder.getProduct().getProductFamily().getName()),
                 new PDOUpdateField(ProductOrder.JiraField.QUOTE_ID, productOrder.getQuoteId()),
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
-                        new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))
-        };
+                        new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
 
-        String[] customFieldNames = new String[pdoUpdateFields.length];
+        // Add the Requisition key to the list of fields when appropriate.
+        if (Deployment.isCRSP && !StringUtils.isBlank(productOrder.getRequisitionKey())) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_ID, productOrder.getRequisitionKey()));
+        }
+
+        String[] customFieldNames = new String[pdoUpdateFields.size()];
 
         int i = 0;
         for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
