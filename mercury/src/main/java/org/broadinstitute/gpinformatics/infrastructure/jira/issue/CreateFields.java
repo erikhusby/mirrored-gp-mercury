@@ -6,10 +6,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJ
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.SerializerProvider;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +27,20 @@ import java.util.Map;
  */
 @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
 public class CreateFields extends UpdateFields {
+
+    public static class ProjectJsonSerializer extends JsonSerializer<Project> {
+        @Override
+        public void serialize(Project project, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+                throws IOException {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeObjectField("key", project.getProjectType().getKeyPrefix());
+            jsonGenerator.writeEndObject();
+        }
+    }
+
+    @JsonSerialize(using = ProjectJsonSerializer.class)
     public static class Project {
         public Project() {
-
         }
 
         public Project(@Nonnull ProjectType projectType) {
@@ -68,8 +83,7 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-    @JsonSerialize(using = NameableTypeJsonSerializer.class)
-    public enum ProjectType implements Nameable {
+    public enum ProjectType {
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
@@ -81,11 +95,6 @@ public class CreateFields extends UpdateFields {
         ProjectType(String projectName, String keyPrefix) {
             this.projectName = projectName;
             this.keyPrefix = keyPrefix;
-        }
-
-        @Override
-        public String getName() {
-            return keyPrefix;
         }
 
         /**
