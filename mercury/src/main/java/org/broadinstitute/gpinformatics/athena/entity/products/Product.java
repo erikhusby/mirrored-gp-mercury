@@ -47,7 +47,11 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     private static final long serialVersionUID = 4859861191078406439L;
 
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
+
     public static final boolean TOP_LEVEL_PRODUCT = true;
+
+    /** The part number for the sample initiation product. */
+    private static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -543,7 +547,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     }
 
     public boolean isSampleInitiationProduct() {
-        return isSameProductFamily(ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE);
+        return partNumber.equals(SAMPLE_INITIATION_PART_NUMBER);
     }
 
     public List<RiskCriterion> getRiskCriteria() {
