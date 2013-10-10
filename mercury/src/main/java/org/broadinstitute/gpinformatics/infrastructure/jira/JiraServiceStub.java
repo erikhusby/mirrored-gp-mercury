@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Dummy implementation that writes calls
  * to {@link #addComment(String, String)}  and
- * {@link #addComment(String, String, org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility.Type, org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility.Value)}
+ * {@link #addComment(String, String, Visibility.Type, Visibility.Value)}
  * to a logger.
  */
 @Stub

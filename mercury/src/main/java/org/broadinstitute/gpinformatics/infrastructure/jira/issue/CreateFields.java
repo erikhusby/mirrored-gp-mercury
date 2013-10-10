@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
@@ -67,8 +68,8 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-    @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
-    public enum ProjectType {
+    @JsonSerialize(using = NameableTypeJsonSerializer.class)
+    public enum ProjectType implements Nameable {
         LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT"),
         PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
@@ -80,6 +81,11 @@ public class CreateFields extends UpdateFields {
         ProjectType(String projectName, String keyPrefix) {
             this.projectName = projectName;
             this.keyPrefix = keyPrefix;
+        }
+
+        @Override
+        public String getName() {
+            return keyPrefix;
         }
 
         /**
@@ -103,8 +109,8 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-    @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
-    public enum IssueType {
+    @JsonSerialize(using = NameableTypeJsonSerializer.class)
+    public enum IssueType implements Nameable {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
@@ -117,6 +123,11 @@ public class CreateFields extends UpdateFields {
 
         IssueType(String jiraName) {
             this(jiraName, "");
+        }
+
+        @Override
+        public String getName() {
+            return jiraName;
         }
 
         /**
@@ -141,7 +152,7 @@ public class CreateFields extends UpdateFields {
     }
 
 
-    private Project project;
+    private final Project project;
 
     private String summary;
 
