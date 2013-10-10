@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -70,15 +71,13 @@ public abstract class AbstractBatchJiraFieldFactory {
     public abstract CreateFields.ProjectType getProjectType();
 
     /**
-     * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type
+     * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type.
      *
      * @param projectType         type of Jira Project for which the user needs to generate submission values.
      * @param batch               an instance of a LabBatch Entity.  This entity is the primary source of the data from
-     *                            which the
-     *                            custom submission fields will be generated
+     *                            which the custom submission fields will be generated
      * @param athenaClientService infrastructure service which will provide access to entity information found on the
-     *                            "Athena" side of the Mercury system
-     *                            (e.g. {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s)
+     *                            "Athena" side of the Mercury system (e.g. {@link ProductOrder}s)
      *
      * @return The instance of the JIRA field factory for the given project type.
      */
@@ -90,7 +89,6 @@ public abstract class AbstractBatchJiraFieldFactory {
 
         switch (projectType) {
         case LCSET_PROJECT:
-        case CRSP_LCSET_PROJECT:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
             break;
         case FCT_PROJECT:

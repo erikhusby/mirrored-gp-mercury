@@ -41,10 +41,10 @@ public class JiraServiceStub implements JiraService {
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
-    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
+    public JiraIssue createIssue(CreateFields.ProjectType projectType, String reporter, CreateFields.IssueType issueType,
                                  String summary, Collection<CustomField> customFields) throws
             IOException {
-        return new JiraIssue(projectPrefix + createdIssueSuffix, this);
+        return new JiraIssue(projectType.getKeyPrefix() + createdIssueSuffix, this);
     }
 
     @Override

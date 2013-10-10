@@ -1,10 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -30,7 +25,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -103,7 +97,7 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.getLcsetProjectType(), testBatch, AthenaClientProducer.stubInstance());
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
 
         Assert.assertEquals("1 samples from MyResearchProject PDO-7\n5 samples from MyResearchProject PDO-999\n",
                 testBuilder.generateDescription());

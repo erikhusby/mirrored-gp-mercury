@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -32,7 +31,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -123,11 +121,6 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-        assertThat(productOrder.fetchJiraIssueType(), is(equalTo(
-                CreateFields.IssueType.getProductOrderIssueType())));
-        assertThat(productOrder.fetchJiraProject(), is(equalTo(
-                CreateFields.ProjectType.getProductOrderingProductType())));
-        assertThat(productOrder.getJiraTicketKey(), is(notNullValue()));
         assertThat(productOrder.getJiraTicketKey(), is(equalTo(PDO_JIRA_KEY)));
     }
 
