@@ -27,7 +27,7 @@ public class ProductOrderData {
     private String product;
     private String status;
     private String aggregationDataType;
-    private String researchProjectKey;
+    private String researchProjectId;
     private String productName;
     private String quoteId;
     private String username;
@@ -72,7 +72,7 @@ public class ProductOrderData {
         samples = getSampleList(productOrder.getSamples());
 
         if (productOrder.getResearchProject() != null) {
-            researchProjectKey = productOrder.getResearchProject().getBusinessKey();
+            researchProjectId = productOrder.getResearchProject().getBusinessKey();
         }
     }
 
@@ -200,16 +200,16 @@ public class ProductOrderData {
         return aggregationDataType;
     }
 
-    public void setResearchProjectKey(String researchProjectKey) {
-        this.researchProjectKey = researchProjectKey;
+    public void setResearchProjectId(String researchProjectId) {
+        this.researchProjectId = researchProjectId;
     }
 
-    public String getResearchProjectKey() {
-        if (researchProjectKey == null) {
+    public String getResearchProjectId() {
+        if (researchProjectId == null) {
             return "";
         }
 
-        return researchProjectKey;
+        return researchProjectId;
     }
 
     public void setProductName(String productName) {

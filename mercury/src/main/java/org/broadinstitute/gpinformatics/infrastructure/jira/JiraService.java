@@ -24,10 +24,9 @@ public interface JiraService extends Serializable {
     Format JIRA_DATE_FORMAT = FastDateFormat.getInstance("yyyy-MM-dd");
 
     /**
-     * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
-     * the JIRA project TestProject having prefix TP.
+     * Create an issue.
      *
-     * @param projectPrefix The project type by prefix
+     * @param projectType   The issue's project type.
      * @param issueType     The issue type within this project type
      * @param summary       The basic summary of the issue
      * @param customFields  All specific fields for the issue type
@@ -36,7 +35,7 @@ public interface JiraService extends Serializable {
      *
      * @throws IOException
      */
-    JiraIssue createIssue(String projectPrefix, @Nullable String reporter,
+    JiraIssue createIssue(CreateFields.ProjectType projectType, @Nullable String reporter,
                           CreateFields.IssueType issueType, String summary,
                           Collection<CustomField> customFields) throws IOException;
 

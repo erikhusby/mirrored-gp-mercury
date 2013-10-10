@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -237,6 +238,9 @@ public class SystemRouter implements Serializable {
                                         system = productWorkflowDef.getRouting();
                                     }
                                     if (system == BOTH) {
+                                        if(Deployment.isCRSP) {
+                                            throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
+                                        }
                                         system = SQUID;
                                     }
                                     routingOptions.add(system);
@@ -254,6 +258,9 @@ public class SystemRouter implements Serializable {
 
                         // Don't bother querying BSP if Mercury doesn't have any active controls.
                         if (controlCollaboratorSampleIds.isEmpty()) {
+                            if(Deployment.isCRSP) {
+                                throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
+                            }
                             routingOptions.add(SQUID);
                         } else {
                             for (SampleInstance possibleControl : possibleControls) {
@@ -279,6 +286,9 @@ public class SystemRouter implements Serializable {
                                             routingOptions.add(productWorkflowDef.getRouting());
                                         }
                                     } else {
+                                        if(Deployment.isCRSP) {
+                                            throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
+                                        }
                                         routingOptions.add(SQUID);
                                     }
                                 }
@@ -328,11 +338,17 @@ public class SystemRouter implements Serializable {
         System result;
 
         if (routingOptions.isEmpty()) {
+            if(Deployment.isCRSP) {
+                throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
+            }
             result = SQUID;
         } else if (routingOptions.size() == 1) {
             result = routingOptions.iterator().next();
         } else if (routingOptions.equals(EnumSet.of(SQUID, BOTH)) ||
                 (intent == Intent.SYSTEM_OF_RECORD && routingOptions.equals(EnumSet.of(SQUID, MERCURY)))) {
+            if(Deployment.isCRSP) {
+                throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
+            }
             result = SQUID;
         } else if (routingOptions.equals(EnumSet.of(MERCURY, BOTH))) {
             result = MERCURY;

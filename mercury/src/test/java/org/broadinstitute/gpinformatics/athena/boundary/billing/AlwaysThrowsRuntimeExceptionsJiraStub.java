@@ -33,7 +33,7 @@ class AlwaysThrowsRuntimeExceptionsJiraStub implements JiraService {
     private static int invocationCount;
 
     @Override
-    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
+    public JiraIssue createIssue(CreateFields.ProjectType projectType, String reporter, CreateFields.IssueType issueType,
                                  String summary, Collection<CustomField> customFields)
             throws IOException {
         invocationCount++;

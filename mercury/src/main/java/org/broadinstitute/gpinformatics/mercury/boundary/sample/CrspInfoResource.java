@@ -169,6 +169,6 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, currentConfig);
+        specifyHttpAuthCredentials(client, bspConfig);
     }
 }
