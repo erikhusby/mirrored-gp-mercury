@@ -46,8 +46,8 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     localhost
-      port:     8221
+      host:     crsp-dev-bsp.broadinstitute.org
+      port:     8080
 
     RC:
       login:    seqsystem
@@ -105,8 +105,8 @@ portal:
     DEV:
       login:    portaluser
       password: Dr1ftw00d
-      host:     localhost
-      port:     8221
+      host:     crsp-dev-portal
+      port:     8111
 
     QA:
       login:    portaluser

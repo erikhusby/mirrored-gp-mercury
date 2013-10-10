@@ -18,18 +18,6 @@
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
 
-    <!-- Stripes -->
-    <servlet>
-        <servlet-name>StripesDispatcher</servlet-name>
-        <servlet-class>net.sourceforge.stripes.controller.DispatcherServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-
-    <servlet-mapping>
-        <servlet-name>StripesDispatcher</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
-    </servlet-mapping>
-
     <!-- END for JBoss AS 7 -->
 
     <context-param>
@@ -62,7 +50,8 @@
         </web-resource-collection>
         <auth-constraint>
             <description>User must be logged in</description>
-            <role-name>*</role-name>
+            <role-name>CRSP-Mercury-Developers</role-name>
+            <role-name>CRSP-Mercury-WebServiceUser</role-name>
         </auth-constraint>
     </security-constraint>
 

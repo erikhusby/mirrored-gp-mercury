@@ -19,20 +19,26 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.security.auth.Subject;
+import javax.servlet.ServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.security.AccessController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,8 +51,8 @@ import java.util.Map;
 @RequestScoped
 public class CrspInfoResource extends AbstractJerseyClientService {
 
-    public static final String SEARCH_CRSP_PHI = "sample/getcrspphenotypes";
-    public static final String SEARCH_CRSP_CLINICIAN_INFO = "getclinicianinfo";
+    private static final String SEARCH_CRSP_PHI = "sample/getcrspphenotypes";
+    private static final String SEARCH_CRSP_CLINICIAN_INFO = "getclinicianinfo";
 
     private static final Log logger = LogFactory.getLog(CrspInfoResource.class);
 
@@ -59,16 +65,24 @@ public class CrspInfoResource extends AbstractJerseyClientService {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Context
+    SecurityContext sc;
 
     private LoginAndPassword currentConfig;
 
     @GET
     @Path("/getCrspPhiInfo")
 //    @RolesAllowed({"CRSP-Mercury-ProjectManagers", "CRSP-Mercury-Developers"})
-    @PermitAll
+//    @PermitAll
     @Produces({MediaType.APPLICATION_JSON})
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds,
                                    @QueryParam("reqId") String reqId) {
+
+        if(!sc.isUserInRole("CRSP-Mercury-Developers") &&
+           !sc.isUserInRole("CRSP-Mercury-WebServiceUser")) {
+            throw new ResourceException(String.format("Unauthorized Access: user %s does not have access to PHI information",sc.getUserPrincipal().getName()),
+                    Response.Status.FORBIDDEN);
+        }
 
         currentConfig = portalConfig;
         if (sampleIds == null || sampleIds.isEmpty()) {
