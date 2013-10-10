@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -556,8 +555,8 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
 
         // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
         // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
-        JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(), username, fetchJiraIssueType(),
-                title, listOfFields);
+        JiraIssue issue = jiraService.createIssue(CreateFields.ProjectType.RESEARCH_PROJECTS, username,
+                CreateFields.IssueType.RESEARCH_PROJECT, title, listOfFields);
         jiraTicketKey = issue.getKey();
 
         // Update ticket with link back into Mercury
@@ -603,32 +602,6 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return parentResearchProject.getRootResearchProject();
     }
 
-    /**
-     * fetchJiraProject is a helper method that binds a specific Jira project to a ResearchProject entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity
-     *
-     * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
-     *         represents the Jira Project for Research Projects
-     */
-    @Transient
-    public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.getResearchProjectType();
-    }
-
-    /**
-     * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to a ResearchProject entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity
-     *
-     * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
-     *         represents the Jira Issue Type for Research Projects
-     */
-    @Transient
-    public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.getResearchProjectIssueType();
-    }
-
     public Collection<ResearchProject> getAllChildren() {
         Collection<ResearchProject> collectedProjects = new TreeSet<>();
         collectedProjects.addAll(getChildProjects());
@@ -643,7 +616,8 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      *
      * @return collection of research projects
      */
-    private Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
+    private static Collection<ResearchProject> collectChildResearchProjects(
+            Collection<ResearchProject> collectedProjects) {
         for (ResearchProject childResearchProject : collectedProjects) {
             collectedProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
         }
@@ -668,6 +642,8 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
     private boolean hasLoop() {
         ResearchProject parent = parentResearchProject;
         while (parent != null) {
+            // Here we're looking for exact object comparison, so no need to call equals().
+            //noinspection ObjectEquality
             if (parent == this) {
                 return true;
             }

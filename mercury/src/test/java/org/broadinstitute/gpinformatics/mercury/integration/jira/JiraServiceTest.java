@@ -28,9 +28,6 @@ public class JiraServiceTest {
 
     private JiraService service;
 
-    private String pdoJiraKey;
-    private String lcsetJiraKey;
-
     @BeforeMethod
     public void setUp() {
         service = JiraServiceProducer.testInstance();
@@ -41,85 +38,66 @@ public class JiraServiceTest {
      * that do not expose the reporter, so change the API to do that later.
      */
     @Test
-    public void testCreation() {
-        try {
+    public void testCreation() throws IOException {
 
-            Map<String, CustomFieldDefinition> requiredFields =
-                    service.getRequiredFields(new CreateFields.Project(
-                            CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
-                            CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
+        Map<String, CustomFieldDefinition> requiredFields =
+                service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT),
+                        CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
-            Collection<CustomField> customFieldList = new LinkedList<>();
-
-            customFieldList.add(new CustomField(requiredFields.get("Protocol"), "test protocol"));
-            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"), "WR 1 Billion!"));
-            customFieldList
-                    .add(new CustomField((requiredFields.get("Description")), "Description created from Mercury"));
-
-            //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
-            //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
-
-
-            JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix(), null,
-                            CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
-                            "Summary created from Mercury",
-                            customFieldList);
-
-            Assert.assertNotNull(jiraIssue.getKey());
-
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-    }
-
-    public void testCreatePdoTicket() {
         Collection<CustomField> customFieldList = new LinkedList<>();
 
-        try {
-            CreateFields.ProjectType productOrdering =
-                    CreateFields.ProjectType.getProductOrderingProductType();
+        customFieldList.add(new CustomField(requiredFields.get("Protocol"), "test protocol"));
+        customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"), "WR 1 Billion!"));
+        customFieldList.add(new CustomField((requiredFields.get("Description")), "Description created from Mercury"));
 
-            CreateFields.IssueType productOrder = CreateFields.IssueType.getProductOrderIssueType();
-
-            Map<String, CustomFieldDefinition> requiredFields =
-                    service.getRequiredFields(
-                            new CreateFields.Project(productOrdering.getKeyPrefix()),
-                            productOrder);
-
-            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
+        JiraIssue jiraIssue =
+                service.createIssue(CreateFields.ProjectType.LCSET_PROJECT, null,
+                        CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
+                        "Summary created from Mercury",
+                        customFieldList);
 
 
-            customFieldList
-                    .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getName()),
-                            "Test Exome Express"));
-            customFieldList.add(new CustomField(requiredFields.get("Description"),
-                    "Athena Test Case:  Test description setting"));
+        Assert.assertNotNull(jiraIssue.getKey());
+    }
 
-            JiraIssue jiraIssue =
-                    service.createIssue(productOrdering.getKeyPrefix(), "hrafal",
-                            productOrder,
-                            "Athena Test case:::  Test new Summary Addition", customFieldList);
+    public void testCreatePdoTicket() throws IOException {
+        Collection<CustomField> customFieldList = new LinkedList<>();
 
-            Assert.assertNotNull(jiraIssue.getKey());
+        CreateFields.ProjectType productOrdering = CreateFields.ProjectType.PRODUCT_ORDERING;
 
-        } catch (IOException ioe) {
-            Assert.fail(ioe.getMessage());
-        }
+        CreateFields.IssueType productOrder = CreateFields.IssueType.PRODUCT_ORDER;
+
+        Map<String, CustomFieldDefinition> requiredFields =
+                service.getRequiredFields(new CreateFields.Project(productOrdering),productOrder);
+
+        Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getName()));
+
+
+        customFieldList
+                .add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getName()),
+                        "Test Exome Express"));
+        customFieldList.add(new CustomField(requiredFields.get("Description"),
+                "Athena Test Case:  Test description setting"));
+
+        JiraIssue jiraIssue =
+                service.createIssue(productOrdering, "hrafal", productOrder,
+                        "Athena Test case:::  Test new Summary Addition", customFieldList);
+
+        Assert.assertNotNull(jiraIssue.getKey());
     }
 
     public void testUpdateTicket() throws IOException {
         Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(
                         new CreateFields.Project(
-                                CreateFields.ProjectType.getProductOrderingProductType().getKeyPrefix()),
-                        CreateFields.IssueType.getProductOrderIssueType());
+                                CreateFields.ProjectType.PRODUCT_ORDERING),
+                        CreateFields.IssueType.PRODUCT_ORDER);
         Collection<CustomField> customFieldList = new LinkedList<>();
         customFieldList.add(new CustomField(requiredFields.get("Description"),
                 "Athena Test Case:  Test description setting"));
         JiraIssue issue = service.createIssue(
-                CreateFields.ProjectType.getResearchProjectType().getKeyPrefix(), "breilly",
-                CreateFields.IssueType.getResearchProjectIssueType(),
+                CreateFields.ProjectType.RESEARCH_PROJECTS, "breilly",
+                CreateFields.IssueType.RESEARCH_PROJECT,
                 "JiraServiceTest.testUpdateTicket", customFieldList);
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
@@ -130,60 +108,33 @@ public class JiraServiceTest {
         issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }
 
-    public void testAddWatcher() {
-        try {
-            service.addWatcher("PDO-8", "squid");
-        } catch (IOException iox) {
-            Assert.fail(iox.getMessage());
-        }
+    public void testAddWatcher() throws IOException {
+        service.addWatcher("PDO-8", "squid");
     }
 
     @Test(enabled = false)
-    public void testLinkTicket() {
-        try {
-            service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
-        } catch (IOException iox) {
-            Assert.fail(iox.getMessage());
-        }
-
+    public void testLinkTicket() throws IOException {
+        service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
     }
 
-    public void testAddPublicComment() {
-        try {
-
-            service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
-        } catch (IOException iox) {
-
-            Assert.fail(iox.getMessage());
-
-        }
+    public void testAddPublicComment() throws IOException {
+        service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
     }
 
 
     @Test(enabled = false)
     // disabled until we can get test jira to keep squid user as an admin
-    public void testAddRestrictedComment() {
-
-        try {
-
-            service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role,
-                    Visibility.Value.Administrators);
-        } catch (IOException iox) {
-
-            Assert.fail(iox.getMessage());
-
-        }
+    public void testAddRestrictedComment() throws IOException {
+        service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role,
+                Visibility.Value.Administrators);
     }
 
     public void testCustomFields() throws IOException {
-        Map<String, CustomFieldDefinition> customFields = null;
-        customFields = service.getRequiredFields(new CreateFields.Project(
-                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
+        Map<String, CustomFieldDefinition> customFields = service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT),
                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
         for (CustomFieldDefinition customField : customFields.values()) {
-            System.out.println(customField.getName() + " id " + customField.getJiraCustomFieldId());
             if (customField.getName().equals("Lanes Requested")) {
                 foundLanesRequestedField = true;
             }

@@ -50,14 +50,12 @@ public class JiraCustomFieldsUtil {
      */
     public static Map<String, CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService)
             throws IOException {
-        final Map<String, CustomFieldDefinition> allCustomFields =
+        Map<String, CustomFieldDefinition> allCustomFields =
                 jiraService.getRequiredFields(
-                        new CreateFields.Project(
-                                CreateFields.ProjectType.getLcsetProjectType().getKeyPrefix()),
+                        new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT),
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
 
-        final Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions =
-                new HashMap<>();
+        Map<String, CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<>();
 
         for (String requiredFieldName : REQUIRED_FIELD_NAMES) {
             boolean foundIt = false;

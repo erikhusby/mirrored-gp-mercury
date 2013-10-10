@@ -128,11 +128,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
+    public JiraIssue createIssue(CreateFields.ProjectType projectType, String reporter, CreateFields.IssueType issueType,
                                  String summary, Collection<CustomField> customFields) throws IOException {
 
-        CreateIssueRequest issueRequest = CreateIssueRequest
-                .create(projectPrefix, reporter, issueType, summary, customFields);
+        CreateIssueRequest issueRequest =
+                new CreateIssueRequest(projectType, reporter, issueType, summary, customFields);
 
         String urlString = getBaseUrl() + "/issue/";
         log.debug("createIssue URL is " + urlString);
@@ -302,7 +302,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/issue/createmeta";
 
         String jsonResponse = getJerseyClient().resource(urlString)
-                .queryParam("projectKeys", project.getKey())
+                .queryParam("projectKeys", project.getProjectType().getKeyPrefix())
                 .queryParam("issueTypeNames", issueType.getJiraName())
                 .queryParam("expand", "projects.issuetypes.fields")
                 .get(String.class);

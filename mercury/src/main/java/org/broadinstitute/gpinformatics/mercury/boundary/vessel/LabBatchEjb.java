@@ -343,7 +343,6 @@ public class LabBatchEjb {
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType) {
 
-        JiraTicket ticket;
         try {
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(newBatch, athenaClientService);
@@ -361,10 +360,10 @@ public class LabBatchEjb {
                     throw new InformaticsServiceException("JIRA issue type must be specified");
                 }
                 JiraIssue jiraIssue = jiraService
-                        .createIssue(fieldBuilder.getProjectType().getKeyPrefix(), reporter,
-                                issueType, fieldBuilder.getSummary(), fieldBuilder.getCustomFields(submissionFields));
+                        .createIssue(fieldBuilder.getProjectType(), reporter, issueType, fieldBuilder.getSummary(),
+                                fieldBuilder.getCustomFields(submissionFields));
 
-                ticket = new JiraTicket(jiraService, jiraIssue.getKey());
+                JiraTicket ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
                 newBatch.setJiraTicket(ticket);
             }

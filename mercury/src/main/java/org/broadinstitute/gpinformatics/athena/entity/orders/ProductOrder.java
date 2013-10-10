@@ -829,8 +829,8 @@ public class ProductOrder implements BusinessObject, Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
-                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
-                fetchJiraIssueType(), title, listOfFields);
+                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(createdBy).getUsername(),
+                CreateFields.IssueType.PRODUCT_ORDER, title, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
@@ -867,26 +867,6 @@ public class ProductOrder implements BusinessObject, Serializable {
      */
     private boolean isSheetEmpty() {
         return samples.isEmpty();
-    }
-
-    /**
-     * This is a helper method that binds a specific Jira project to an ProductOrder entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity.
-     *
-     * @return An enum that represents the Jira Project for Product Orders
-     */
-    public CreateFields.ProjectType fetchJiraProject() {
-        return CreateFields.ProjectType.getProductOrderingProductType();
-    }
-
-    /**
-     * This is a helper method that binds a specific Jira Issue Type to an ProductOrder entity.  This
-     * makes it easier for a user of this object to interact with Jira for this entity.
-     *
-     * @return An enum that represents the Jira Issue Type for Product Orders
-     */
-    public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.getProductOrderIssueType();
     }
 
     @Override
