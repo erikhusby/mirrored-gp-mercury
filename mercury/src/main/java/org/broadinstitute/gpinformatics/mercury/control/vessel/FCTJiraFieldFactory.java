@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -24,7 +25,7 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
