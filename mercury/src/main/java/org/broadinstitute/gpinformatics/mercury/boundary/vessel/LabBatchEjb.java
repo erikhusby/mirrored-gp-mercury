@@ -46,11 +46,7 @@ import java.util.Set;
 
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
- * of a new batch entity and saving that to JIRA
- *
- * @author Scott Matthews
- *         Date: 12/6/12
- *         Time: 2:01 PM
+ * of a new batch entity and saving that to JIRA.
  */
 @Stateful
 @RequestScoped
@@ -77,18 +73,17 @@ public class LabBatchEjb {
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode.
      *
-     * @param reporter       The user that is attempting to create the batch.
-     * @param labVesselNames The plastic ware that the newly created lab batch will represent.
-     * @param batchName      The name for the batch being created. This can be an existing JIRA ticket id.
-     * @param labBatchType   The type of batch to create.
-     * @param issueType      The type of issue to create in JIRA for this lab batch.
+     * @param reporter       The username of the person that is attempting to create the batch
+     * @param labVesselNames The plastic ware that the newly created lab batch will represent
+     * @param batchName      The name for the batch being created. This can be an existing JIRA ticket id
+     * @param labBatchType   The type of batch to create
+     * @param issueType      The type of issue to create in JIRA for this lab batch
      *
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Set<String> labVesselNames,
                                    @Nonnull String batchName, LabBatch.LabBatchType labBatchType,
                                    @Nonnull CreateFields.IssueType issueType) {
-
         Set<LabVessel> vesselsForBatch = new HashSet<>(labVesselNames.size());
 
         for (String currVesselLabel : labVesselNames) {
@@ -99,26 +94,23 @@ public class LabBatchEjb {
     }
 
     /**
-     * This method will, given a group of lab plastic ware, create a batch entity and a new JIRA Ticket for that entity.
+     * This method will, given a group of lab plastic ware, create a batch entity and a new JIRA Ticket for that entity
      *
-     * @param labVessels   The plastic ware that the newly created lab batch will represent.
-     * @param reporter     The user that is attempting to create the batch.
-     * @param batchName    The name for the batch being created. This can be an existing JIRA ticket id.
-     * @param labBatchType The type of batch to create.
-     * @param issueType    The type of issue to create in JIRA for this lab batch.
+     * @param labVessels   The plastic ware that the newly created lab batch will represent
+     * @param reporter     The username of the person that is attempting to create the batch
+     * @param batchName    The name for the batch being created -- this can be an existing JIRA ticket id
+     * @param labBatchType The type of batch to create
+     * @param issueType    The type of issue to create in JIRA for this lab batch
      *
      * @return The lab batch that was created.
      */
     public LabBatch createLabBatch(@Nonnull Set<LabVessel> labVessels, @Nonnull String reporter,
                                    @Nonnull String batchName, @Nonnull LabBatch.LabBatchType labBatchType,
                                    @Nonnull CreateFields.IssueType issueType) {
-
         LabBatch batchObject = new LabBatch(batchName, labVessels, labBatchType);
 
         labBatchDao.persist(batchObject);
-
         setJiraInformation(batchObject, batchName);
-
         batchToJira(reporter, batchName, batchObject, issueType);
 
         return batchObject;
@@ -131,7 +123,7 @@ public class LabBatchEjb {
      *
      * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
      *                    to persist a new batch.
-     * @param reporter    The user that is attempting to create the batch.
+     * @param reporter    The username of the person that is attempting to create the batch.
      * @param issueType   The type of issue to create in JIRA for this lab batch.
      *
      * @return The lab batch that was created.
@@ -141,25 +133,71 @@ public class LabBatchEjb {
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, String reporter,
                                    @Nonnull CreateFields.IssueType issueType) {
         if (StringUtils.isBlank(batchObject.getBatchName())) {
-            throw new InformaticsServiceException("The Name for the batch Object cannot be null");
+            throw new InformaticsServiceException("The name for the batch object cannot be null");
         }
 
         labBatchDao.persist(batchObject);
-
         batchToJira(reporter, null, batchObject, issueType);
-
         return batchObject;
+    }
+
+    /**
+     * Creates a lab batch for a set of lab vessels (and reworks).
+     *
+     * @param labBatchType  the type of lab batch to create
+     * @param workflowName  the workflow that the batch is to run through
+     * @param batchName     the name for the batch (also the summary for JIRA)
+     * @param description   the description for the batch (for JIRA)
+     * @param dueDate       the due date for the batch (for JIRA)
+     * @param important     the important notes for the batch (for JIRA)
+     * @param username      the user creating the batch (for JIRA)
+     * @param vessels       the vessels to include in the batch
+     * @param reworkVessels the vessels being reworked to include in the batch
+     *
+     * @return a new lab batch
+     */
+    public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String workflowName,
+                                   @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
+                                   @Nonnull String important, @Nonnull String username,
+                                   @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
+        LabBatch batch =
+                new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
+                        important);
+        labBatchDao.persist(batch);
+
+        return batch;
+    }
+
+    /**
+     * Creates a new lab batch and adds the vessels to the named bucket.
+     *
+     * @param batch      A constructed, but not persisted, batch object containing all initial information necessary
+     *                   to persist a new batch
+     * @param operator   The person creating the batch
+     * @param bucketName The name of the bucket to add the vessels to
+     * @param location   The machine location of the operation for the bucket event
+     * @param issueType  The type of issue to create in JIRA for this lab batch
+     *
+     * @return The lab batch that was created.
+     */
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
+                                                      @Nonnull String bucketName, @Nonnull String location,
+                                                      @Nonnull CreateFields.IssueType issueType) {
+        batch = createLabBatch(batch, operator, issueType);
+        Bucket bucket = bucketDao.findByName(bucketName);
+        bucketEjb.createEntriesAndBatchThem(batch.getStartingBatchLabVessels(), bucket);
+        return batch;
     }
 
     /**
      * Creates a new lab batch, using an existing JIRA ticket for tracking, and adds the vessels to the named bucket.
      *
-     * @param vesselLabels The vessel labels to add to the batch and the bucket.
-     * @param operator     The person creating the batch.
-     * @param batchName    The name of the batch being created. This can be an existing JIRA ticket id.
-     * @param bucketName   The name of the bucket to add the vessels to.
-     * @param labBatchType The type of batch to create.
-     * @param issueType    The type of issue to create in JIRA for this lab batch.
+     * @param vesselLabels The vessel labels to add to the batch and the bucket
+     * @param operator     The username of the person creating the batch
+     * @param batchName    The name of the batch being created. This can be an existing JIRA ticket id
+     * @param bucketName   The name of the bucket to add the vessels to
+     * @param labBatchType The type of batch to create
+     * @param issueType    The type of issue to create in JIRA for this lab batch
      *
      * @return The lab batch that was created.
      */
@@ -167,7 +205,6 @@ public class LabBatchEjb {
                                                       @Nonnull String batchName, @Nonnull String bucketName,
                                                       @Nonnull LabBatch.LabBatchType labBatchType,
                                                       @Nonnull CreateFields.IssueType issueType) {
-
         Set<LabVessel> vessels = new HashSet<>(tubeDao.findByListIdentifiers(vesselLabels));
         Bucket bucket = bucketDao.findByName(bucketName);
         LabBatch batch = createLabBatch(vessels, operator, batchName, labBatchType, issueType);
@@ -196,7 +233,6 @@ public class LabBatchEjb {
                                                       @Nonnull String batchName, @Nonnull String description,
                                                       @Nonnull Date dueDate, @Nonnull String important,
                                                       @Nonnull String username) throws ValidationException {
-
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkBucketEntryIds);
         Set<String> pdoKeys = new HashSet<>();
@@ -258,61 +294,12 @@ public class LabBatchEjb {
     }
 
     /**
-     * Creates a lab batch for a set of lab vessels (and reworks).
-     *
-     * @param labBatchType  the type of lab batch to create
-     * @param workflowName  the workflow that the batch is to run through
-     * @param batchName     the name for the batch (also the summary for JIRA)
-     * @param description   the description for the batch (for JIRA)
-     * @param dueDate       the due date for the batch (for JIRA)
-     * @param important     the important notes for the batch (for JIRA)
-     * @param username      the user creating the batch (for JIRA)
-     * @param vessels       the vessels to include in the batch
-     * @param reworkVessels the vessels being reworked to include in the batch
-     *
-     * @return a new lab batch
-     */
-    public LabBatch createLabBatch(@Nonnull LabBatch.LabBatchType labBatchType, @Nonnull String workflowName,
-                                   @Nonnull String batchName, @Nonnull String description, @Nonnull Date dueDate,
-                                   @Nonnull String important, @Nonnull String username,
-                                   @Nonnull Set<LabVessel> vessels, @Nonnull Set<LabVessel> reworkVessels) {
-        LabBatch batch =
-                new LabBatch(batchName, vessels, reworkVessels, labBatchType, workflowName, description, dueDate,
-                        important);
-        labBatchDao.persist(batch);
-
-        return batch;
-    }
-
-    /**
-     * Creates a new lab batch and adds the vessels to the named bucket.
-     *
-     * @param batch      A constructed, but not persisted, batch object containing all initial information necessary
-     *                   to persist a new batch.
-     * @param operator   The person creating the batch.
-     * @param bucketName The name of the bucket to add the vessels to.
-     * @param location   The machine location of the operation for the bucket event.
-     * @param issueType  The type of issue to create in JIRA for this lab batch.
-     *
-     * @return The lab batch that was created.
-     */
-    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
-                                                      @Nonnull String bucketName, @Nonnull String location,
-                                                      @Nonnull CreateFields.IssueType issueType) {
-        batch = createLabBatch(batch, operator, issueType);
-        Bucket bucket = bucketDao.findByName(bucketName);
-        bucketEjb.createEntriesAndBatchThem(batch.getStartingBatchLabVessels(), bucket);
-        return batch;
-    }
-
-    /**
      * This method fetches the JIRA ticket, or creates a new one, sets the batch description and JIRA ticket.
      *
-     * @param batchObject The batch object to set the description and JIRA ticket of.
-     * @param jiraTicket  The JIRA ticket key to fetch and set to the batch.
+     * @param batchObject The batch object to set the description and JIRA ticket of
+     * @param jiraTicket  The JIRA ticket key to fetch and set to the batch
      */
     private void setJiraInformation(LabBatch batchObject, String jiraTicket) {
-
         JiraTicket ticket;
         try {
             JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
@@ -335,14 +322,13 @@ public class LabBatchEjb {
      * This method extracts all necessary information from the given batch object and creates (if necessary) and
      * associates a JIRA ticket that will represent this batch.
      *
-     * @param reporter   The User that is attempting to create the batch.
-     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch .
-     * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket.
-     * @param issueType  The type of issue to create in JIRA for this lab batch.
+     * @param reporter   The username of the person that is attempting to create the batch
+     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket
+     * @param issueType  The type of issue to create in JIRA for this lab batch
      */
     public void batchToJira(String reporter, @Nullable String jiraTicket, LabBatch newBatch,
                             @Nonnull CreateFields.IssueType issueType) {
-
         try {
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(newBatch, athenaClientService);
@@ -368,16 +354,16 @@ public class LabBatchEjb {
                 newBatch.setJiraTicket(ticket);
             }
         } catch (IOException ioe) {
-            logger.error("Error attempting to create Lab Batch in JIRA", ioe);
-            throw new InformaticsServiceException("Error attempting to create Lab Batch in JIRA", ioe);
+            logger.error("Error attempting to create a lab batch in JIRA", ioe);
+            throw new InformaticsServiceException("Error attempting to create a lab batch in JIRA", ioe);
         }
     }
 
     /**
      * This method links two batch JIRA tickets together in a parent to child relationship.
      *
-     * @param parentBatch The parent batch to link.
-     * @param childBatch  The child batch to link.
+     * @param parentBatch The parent batch to link
+     * @param childBatch  The child batch to link
      */
     public void linkJiraBatches(LabBatch parentBatch, LabBatch childBatch) {
         try {
@@ -387,8 +373,8 @@ public class LabBatchEjb {
                                 .getTicketName());
             }
         } catch (Exception ioe) {
-            logger.error("Error attempting to link Batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to Product order " + parentBatch,
+            logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
+                         + " to product order " + parentBatch,
                     ioe);
         }
     }
@@ -396,8 +382,8 @@ public class LabBatchEjb {
     /**
      * This method links two batch JIRA tickets together in a parent to child relationship.
      *
-     * @param parentTicket The parent ticket key to link.
-     * @param childBatch   The child batch to link.
+     * @param parentTicket The parent ticket key to link
+     * @param childBatch   The child batch to link
      */
     public void linkJiraBatchToTicket(String parentTicket, LabBatch childBatch) {
         try {
@@ -407,8 +393,8 @@ public class LabBatchEjb {
                                 .getTicketName());
             }
         } catch (Exception ioe) {
-            logger.error("Error attempting to link Batch " + childBatch.getJiraTicket().getTicketName()
-                         + " to Product order " + parentTicket,
+            logger.error("Error attempting to link batch " + childBatch.getJiraTicket().getTicketName()
+                         + " to product order " + parentTicket,
                     ioe);
         }
     }
@@ -417,16 +403,14 @@ public class LabBatchEjb {
      * Primarily utilized by the deck messaging, this method will validate that all given Vessels have previously been
      * defined in a batch known to the Mercury System.
      *
-     * @param batchVessels The vessels to check the batches of.
+     * @param batchVessels The vessels to check the batches of
      *
-     * @return A boolean that determines if the vessels passed in are all in a batch known to Mercury.
+     * @return A boolean that determines if the vessels passed in are all in a batch known to Mercury
      */
     public boolean validatePriorBatch(Collection<LabVessel> batchVessels) {
-
         boolean result = false;
 
         Iterator<LabVessel> vesselIterator = batchVessels.iterator();
-
         LabVessel firstVessel = vesselIterator.next();
 
         for (LabBatch testBatch : firstVessel.getNearestLabBatches()) {
@@ -442,9 +426,10 @@ public class LabBatchEjb {
     /**
      * This method adds bucket entries, from PDO creation or rework, to an existing lab batch.
      *
-     * @param businessKey       the business key for the lab batch we are adding samples to
-     * @param bucketEntryIds    the bucket entries whose vessel are being added to the batch
-     * @param reworkEntries     the rework bucket entries whose vessels are being added to the batch
+     * @param businessKey    the business key for the lab batch we are adding samples to
+     * @param bucketEntryIds the bucket entries whose vessel are being added to the batch
+     * @param reworkEntries  the rework bucket entries whose vessels are being added to the batch
+     *
      * @throws IOException This exception is thrown when the JIRA service can not be contacted.
      */
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries)
@@ -457,17 +442,20 @@ public class LabBatchEjb {
             labVessels.add(bucketEntry.getLabVessel());
             bucketEntry.getBucket().removeEntry(bucketEntry);
         }
+
         batch.addLabVessels(labVessels);
         bucketEjb.moveFromBucketToBatch(bucketEntries, batch);
 
         List<BucketEntry> reworkBucketEntries = bucketEntryDao.findByIds(reworkEntries);
         Set<LabVessel> reworkVessels = new HashSet<>();
         Bucket reworkFromBucket = null;
+
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
         }
+
         batch.addReworks(reworkVessels);
         bucketEjb.moveFromBucketToBatch(reworkBucketEntries, batch);
 
