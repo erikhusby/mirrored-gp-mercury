@@ -14,6 +14,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -127,8 +128,27 @@ public class LedgerEntryDao extends GenericDao {
         return findByOrderList(orders, BillingSessionInclusion.NO_SESSION_STARTED);
     }
 
-    public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys) {
-        return findByOrderList(productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
+    public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys,
+                                                                 @Nonnull List<String> errorMessages) {
+        Set<LedgerEntry> byOrderList =
+                findByOrderList(productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
+
+
+        List<Long> pdoIds = new ArrayList<>();
+        List<LedgerEntry> entriesToRemove = new ArrayList<>();
+
+        for (LedgerEntry ledgerEntry : byOrderList) {
+            if (ledgerEntry.getProductOrderSample().getProductOrder().getQuoteId() == null) {
+                if (pdoIds.add(ledgerEntry.getProductOrderSample().getProductOrder().getProductOrderId())) {
+
+                    errorMessages.add("You are missing a Quote ID for PDO: "
+                                      + ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey());
+                }
+                entriesToRemove.add(ledgerEntry);
+            }
+        }
+        byOrderList.removeAll(entriesToRemove);
+        return byOrderList;
     }
 
     public Set<LedgerEntry> findUploadedUnbilledOrderList(ProductOrder[] orders) {

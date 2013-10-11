@@ -323,6 +323,18 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
+     * Convenience method for adding an error message to the context.  The message and its arguments, if any, is
+     * formatted using MessageFormat.format().
+     *
+     * @param errorMessages List of error messages to put into a SimpleError.
+     */
+    public void addGlobalValidationErrors(List<String> errorMessages) {
+        for (String error : errorMessages) {
+            addGlobalValidationError(error);
+        }
+    }
+
+    /**
      * Manage errors gracefully with this.
      */
     public final String formatValidationErrors(ValidationErrors errors) throws Exception {
