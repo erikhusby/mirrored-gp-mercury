@@ -5,46 +5,22 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 
 import java.util.Collection;
 
-
 public class CreateIssueRequest {
 
-    private CreateFields fields;
+    private final CreateFields fields;
 
     public CreateFields getFields() {
         return fields;
     }
 
-    public void setFields(CreateFields fields) {
-        this.fields = fields;
-    }
+    public CreateIssueRequest(CreateFields.ProjectType projectType,
+                              String reporter,
+                              CreateFields.IssueType issueType,
+                              String summary,
+                              Collection<CustomField> customFields) {
+        fields = new CreateFields(customFields);
 
-
-    public CreateIssueRequest() {
-        this.fields = new CreateFields();
-        // todo arz move these out to JiraService params
-//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
-//        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
-    }
-
-    public CreateIssueRequest(Collection<CustomField> customFields) {
-        this();
-        if (customFields != null) {
-            fields.getCustomFields().addAll(customFields);
-        }
-    }
-
-
-    public static CreateIssueRequest create(String key,
-                                            String reporter,
-                                            CreateFields.IssueType issueType,
-                                            String summary,
-                                            Collection<CustomField> customFields) {
-
-        CreateIssueRequest ret = new CreateIssueRequest(customFields);
-
-        CreateFields fields = ret.getFields();
-
-        fields.getProject().setKey(key);
+        fields.getProject().setProjectType(projectType);
 
         if (reporter != null) {
             fields.getReporter().setName(reporter);
@@ -54,7 +30,5 @@ public class CreateIssueRequest {
 
         fields.setIssueType(issueType);
         fields.setSummary(summary);
-
-        return ret;
     }
 }

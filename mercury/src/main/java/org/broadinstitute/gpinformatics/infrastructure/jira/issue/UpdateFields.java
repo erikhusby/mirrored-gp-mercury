@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.UpdateJ
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 /**
@@ -15,9 +16,17 @@ import java.util.HashSet;
 @JsonSerialize(using = UpdateJiraIssueUpdateSerializer.class)
 public class UpdateFields {
 
-    private final Collection<CustomField> customFields = new HashSet<>();
+    private final Collection<CustomField> customFields;
 
     public Collection<CustomField> getCustomFields() {
         return customFields;
+    }
+
+    public UpdateFields() {
+        this(Collections.<CustomField>emptySet());
+    }
+
+    public UpdateFields(Collection<CustomField> customFields) {
+        this.customFields = new HashSet<>(customFields);
     }
 }

@@ -293,7 +293,7 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
             for (LabVessel vessel : vessels) {
                 try {
                     Set<SampleInstance> sampleInstances =
-                            vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
+                            vessel.getSampleInstances(SampleType.ROOT_SAMPLE, LabBatchType.WORKFLOW);
 
                     if (!sampleInstances.isEmpty()) {
                         for (SampleInstance si : sampleInstances) {

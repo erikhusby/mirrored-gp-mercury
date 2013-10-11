@@ -276,7 +276,7 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                 if (tube != null) {
                     LabVessel fctVessel = (fctBatch != null) ? fctBatch.getStartingVesselByPosition(position) : tube;
                     Collection<SampleInstance> sampleInstances =
-                            tube.getSampleInstances(SampleType.WITH_PDO, LabBatch.LabBatchType.WORKFLOW);
+                            tube.getSampleInstances(SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
                     for (SampleInstance si : sampleInstances) {
                         String productOrderId = null;
                         String researchProjectId = null;

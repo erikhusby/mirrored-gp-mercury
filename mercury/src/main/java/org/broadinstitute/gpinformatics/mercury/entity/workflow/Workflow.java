@@ -28,7 +28,6 @@ public enum Workflow {
     /** Workflow processes that Mercury supports. */
     public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
         add(AGILENT_EXOME_EXPRESS);
-        add(ICE);
     }};
 
     @Nullable

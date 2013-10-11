@@ -28,11 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket
- *
- * @author Scott Matthews
- *         Date: 12/7/12
- *         Time: 10:39 AM
+ * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket.
  */
 public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
@@ -48,9 +44,8 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<>();
     private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<>();
     private final Map<String, ProductWorkflowDef> workflowDefs = new HashMap<>();
-//    private final Collection<String> pdos;
 
-    private static final Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
+    private static final Log log = LogFactory.getLog(LCSetJiraFieldFactory.class);
 
 
     /**
@@ -97,7 +92,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
                 //TODO SGM: Throw an exception here (?)
-                logger.error("Unable to find a PDO for the business key of " + currPdo);
+                log.error("Unable to find a PDO for the business key of " + currPdo);
             }
             if (batch.getWorkflowName() != null) {
                 workflowDefs.put(currPdo, wfConfig.getWorkflowByName(batch.getWorkflowName()));
@@ -197,7 +192,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (!workflowDefs.isEmpty()) {
             StringBuilder builtProtocol = new StringBuilder();
-            for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
+            for (ProductWorkflowDef currWorkflowDef : new HashSet<>(workflowDefs.values())) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
                     builtProtocol.append(", ");
@@ -258,7 +253,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     @Override
     public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.getLcsetProjectType();
+        return CreateFields.ProjectType.LCSET_PROJECT;
     }
 
 }

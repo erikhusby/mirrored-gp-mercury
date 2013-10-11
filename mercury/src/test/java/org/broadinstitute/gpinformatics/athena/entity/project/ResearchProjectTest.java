@@ -2,8 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.testng.Assert;
@@ -111,11 +109,6 @@ public class ResearchProjectTest {
         assertThat(researchProject.getCohortIds(), is(arrayWithSize(1)));
 
         assertThat(researchProject.getJiraTicketKey(), is(nullValue()));
-
-        assertThat(researchProject.fetchJiraIssueType(), is(equalTo(CreateFields.IssueType.getResearchProjectIssueType())));
-
-        assertThat(researchProject.fetchJiraProject(), is(equalTo(
-                CreateFields.ProjectType.getResearchProjectType())));
 
         assertThat(researchProject.getProjectManagers(), is(arrayWithSize(greaterThan(0))));
         assertThat(researchProject.getBroadPIs(), is(arrayWithSize(greaterThan(0))));

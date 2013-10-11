@@ -1,13 +1,20 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.SerializerProvider;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,26 +27,34 @@ import java.util.Map;
  */
 @JsonSerialize(using = CreateJiraIssueFieldsSerializer.class)
 public class CreateFields extends UpdateFields {
+
+    public static class ProjectJsonSerializer extends JsonSerializer<Project> {
+        @Override
+        public void serialize(Project project, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+                throws IOException {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeObjectField("key", project.getProjectType().getKeyPrefix());
+            jsonGenerator.writeEndObject();
+        }
+    }
+
+    @JsonSerialize(using = ProjectJsonSerializer.class)
     public static class Project {
         public Project() {
-
         }
 
-        public Project(String key) {
-            if (key == null) {
-                throw new RuntimeException("key cannot be null");
-            }
-            this.key = key;
+        public Project(@Nonnull ProjectType projectType) {
+            this.projectType = projectType;
         }
 
-        private String key;
+        private ProjectType projectType;
 
-        public String getKey() {
-            return key;
+        public ProjectType getProjectType() {
+            return projectType;
         }
 
-        public void setKey(String key) {
-            this.key = key;
+        public void setProjectType(ProjectType projectType) {
+            this.projectType = projectType;
         }
     }
 
@@ -68,39 +83,32 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-    @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum ProjectType {
-        LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
-        CRSP_LCSET_PROJECT("Illumina Library Construction Tracking", "CLCSET"),
+        LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET", "CLCSET"),
         FCT_PROJECT("Flowcell Tracking", "FCT"),
-        PRODUCT_ORDERING("Product Ordering", "PDO"),
-        CRSP_PRODUCT_ORDERING("Product Ordering", "CPDO"),
-        RESEARCH_PROJECTS("Research Projects", "RP"),
-        CRSP_RESEARCH_PROJECTS("Research Projects", "CRP");
+        PRODUCT_ORDERING("Product Ordering", "PDO", "CPDO"),
+        RESEARCH_PROJECTS("Research Projects", "RP", "CRP");
 
         private final String projectName;
         private final String keyPrefix;
 
-        private ProjectType(String projectName, String keyPrefix) {
+        ProjectType(String projectName, String keyPrefix) {
             this.projectName = projectName;
             this.keyPrefix = keyPrefix;
         }
 
-        public static ProjectType getLcsetProjectType() {
-            return Deployment.isCRSP ? CRSP_LCSET_PROJECT :
-                    LCSET_PROJECT ;
+        /**
+         * Create a project type with one of two prefixes.
+         * @param projectName the project name
+         * @param keyPrefix the non-CRSP prefix
+         * @param crspKeyPrefix the CRSP prefix
+         */
+        ProjectType(String projectName, String keyPrefix, String crspKeyPrefix) {
+            this.projectName = projectName;
+            this.keyPrefix = Deployment.isCRSP ? crspKeyPrefix : keyPrefix;
         }
 
-        public static ProjectType getProductOrderingProductType() {
-            return (Deployment.isCRSP) ? CRSP_PRODUCT_ORDERING :
-                    PRODUCT_ORDERING;
-        }
-
-        public static ProjectType getResearchProjectType() {
-            return ((Deployment.isCRSP) ? CRSP_RESEARCH_PROJECTS :
-                    RESEARCH_PROJECTS);
-        }
-
+        // TODO: currently unused. Can use someday to look up prefix in JIRA instead of hardcoding it here.
         public String getProjectName() {
             return projectName;
         }
@@ -110,34 +118,37 @@ public class CreateFields extends UpdateFields {
         }
     }
 
-    @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
-    public enum IssueType {
+    @JsonSerialize(using = NameableTypeJsonSerializer.class)
+    public enum IssueType implements Nameable {
         // jiraName is defined by JIRA and must not be based on Mercury Workflow.
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
         EXOME_EXPRESS("Exome Express"),
-        PRODUCT_ORDER("Product Order"),
-        CLIA_PRODUCT_ORDER("CLIA Product Order"),
-        RESEARCH_PROJECT("Research Project"),
-        CLIA_RESEARCH_PROJECT("CLIA Research Project"),
+        PRODUCT_ORDER("Product Order", "CLIA "),
+        RESEARCH_PROJECT("Research Project", "CLIA "),
         FLOWCELL("Flowcell"),
         MISEQ("MiSeq");
 
         private final String jiraName;
 
-        private IssueType(String jiraName) {
-            this.jiraName = jiraName;
+        IssueType(String jiraName) {
+            this(jiraName, "");
         }
 
-        public static IssueType getProductOrderIssueType() {
-            return (Deployment.isCRSP) ? CLIA_PRODUCT_ORDER :
-                    PRODUCT_ORDER;
+        @Override
+        public String getName() {
+            return jiraName;
         }
 
-        public static IssueType getResearchProjectIssueType() {
-            return (Deployment.isCRSP) ? CLIA_RESEARCH_PROJECT :
-                    RESEARCH_PROJECT;
+        /**
+         * Create an issue type with an optional prefix.
+         * @param jiraName the name for the issue type in JIRA
+         * @param crspPrefix the prefix for CRSP JIRA, if any
+         */
+        IssueType(String jiraName, String crspPrefix) {
+            this.jiraName = Deployment.isCRSP ? crspPrefix + jiraName : jiraName;
         }
 
+        /** The name for this Issue Type in JIRA. */
         public String getJiraName() {
             return jiraName;
         }
@@ -150,7 +161,7 @@ public class CreateFields extends UpdateFields {
     }
 
 
-    private Project project;
+    private final Project project;
 
     private String summary;
 
@@ -186,7 +197,8 @@ public class CreateFields extends UpdateFields {
         this.issueType = issueType;
     }
 
-    public CreateFields() {
+    public CreateFields(Collection<CustomField> customFields) {
+        super(customFields);
         project = new Project();
         reporter = new Reporter();
     }
