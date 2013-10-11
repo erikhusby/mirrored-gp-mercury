@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 
-import com.sun.jersey.api.client.Client;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.container.ContainerManager;
@@ -9,10 +9,10 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.*;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPWorkRequestClientService;
 import org.broadinstitute.gpinformatics.infrastructure.common.GroupingIterable;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 
@@ -21,7 +21,7 @@ import java.text.DateFormat;
 import java.util.*;
 
 @Impl
-public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService implements BSPPlatingRequestService {
+public class BSPPlatingRequestServiceImpl extends BSPWorkRequestClientService implements BSPPlatingRequestService {
 
     // not sure these are really going to be constants; they should be true
     // for 96 tube Matrix racks but different size plates are certainly
@@ -95,7 +95,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     }
 
     /**
-     * Submit the plating WR if it has no errors
+     * Submit the plating WR if it has no errors.
      *
      * @param bspWorkRequest        The plating WR
      * @param bspWorkRequestManager The BSP work request manager which will handle our submission
@@ -115,31 +115,25 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         result.setWarnings(bspWorkRequest.getWarnings() == null ? null : new ArrayList<>(bspWorkRequest.getWarnings()));
         result.setInfos(bspWorkRequest.getInfo() == null ? null : new ArrayList<>(bspWorkRequest.getInfo()));
 
-        // assume the worst, that we will ultimately fail submitting this WR
+        // Assume the worst, that we will ultimately fail submitting this WR.
         result.setPlatingRequestSubmitted(false);
 
-        if (bspWorkRequest.getErrors() != null && bspWorkRequest.getErrors().size() > 0) {
+        if (bspWorkRequest.getErrors() != null && !bspWorkRequest.getErrors().isEmpty()) {
             // Errors on work request, do not submit. This is not a hard error,
             // but the PMs will need to sort out the problems before plating can
             // go forward.
-            final String message = String.format(
-                    "Errors on Squid WR '%s': %s",
-                    bspWorkRequest.getWorkRequestName(),
-                    bspWorkRequest.getErrors().toString());
 
-            log.warn(message);
+            log.warn(String.format("Errors on Mercury WR '%s': %s",
+                    bspWorkRequest.getWorkRequestName(), bspWorkRequest.getErrors().toString()));
 
             return result;
         }
 
-        final String message = String.format(
-                "No errors for BSP plating receipt '%s' created for Squid WR '%s', attempting to submit",
-                wrBarcode,
-                bspWorkRequest.getWorkRequestName());
+        log.info(String.format(
+                "No errors for BSP plating receipt '%s' created for Mercury WR '%s', attempting to submit",
+                wrBarcode, bspWorkRequest.getWorkRequestName()));
 
-        log.info(message);
-
-        // if no errors, proceed with submission
+        // If there are no errors, proceed with submission.
         WorkRequestResponse submissionResponse = bspWorkRequestManager.submit(result.getPlatingRequestReceipt());
 
         // this REALLY should not happen if we've gotten this far; I've only
@@ -220,10 +214,10 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         //workRequest.setExpectedPlateCount((long) platesWorthGroupingsOfAliquots.size());
         workRequest.setExpectedPlateCount(1L);
 
-        String template = "Issued automatically from Squid by %s on %s";
+        String template = "Issued automatically from Mercury by %s on %s";
         DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.MEDIUM);
 
-        // Issued automatically from Squid by susanna on Monday, November 14, 2011 5:08:56 PM
+        // Issued automatically from Mercury by susanna on Monday, November 14, 2011 5:08:56 PM
         workRequest.setNotes(String.format(template, login, formatter.format(new Date())));
 
         // plate numbers are 1-based
@@ -231,7 +225,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
         // mapping from 1-based plate numbers to our generated barcodes
         Map<Integer, String> plateNameMap = new HashMap<>();
-        if (humanReadableBarcode != null && !humanReadableBarcode.isEmpty()) {
+        if (!StringUtils.isEmpty(humanReadableBarcode)) {
             //assumes only 1 plate is created per plating request
             plateNameMap.put(plateNumber, humanReadableBarcode);
         }
@@ -255,8 +249,8 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         // Work request name must be non-null and unique.  Other than that we don't care about it too much,
         // and we can't use work request id or JIRA id since those don't exist at the time this method is
         // being called
-        String workRequestName = null;
-        if (platingRequestName != null && !platingRequestName.isEmpty()) {
+        String workRequestName;
+        if (!StringUtils.isEmpty(platingRequestName)) {
             workRequestName = platingRequestName;
         } else {
             workRequestName = String.valueOf(System.currentTimeMillis());
@@ -289,7 +283,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         workRequest.setRequiredConcentration(33.0D);
         workRequest.setRequiredVolume(44.0D);
 
-        //for (SeqWorkRequestAliquot stock : seqAliquots) {
         for (List<SeqWorkRequestAliquot> platesWorthOfAliquots : platesWorthGroupingsOfAliquots) {
 
             // for the current Tripod use case, there will only be one plate per cart and therefore only one plate
@@ -335,26 +328,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         /*
         * Create a new Work Request.
         */
-        WorkRequestResponse response;
-
-        if (bspPlatingBarcode == null)
-            response = bspWorkRequestManager.create(workRequest);
-        else
-            response = bspWorkRequestManager.update(workRequest);
-
-        String message;
-
-        if (response == null) {
-            message = "null response from PlatingRequestManager trying to create/update plating work request " + workRequestName;
-            log.error(message);
-            throw new RuntimeException(message);
-        }
-
-        if (!response.isSuccess()) {
-            message = String.format("Errors trying to create/update plating work request %s: %s", workRequestName, response.getErrors().toString());
-            log.error(message);
-            throw new RuntimeException(message);
-        }
+        WorkRequestResponse response = createOrUpdateWorkRequest(bspWorkRequestManager, workRequest);
 
         // If we get this far, we have a WorkRequest.  It may be a fatally flawed WorkRequest, but
         // it's a WorkRequest nonetheless.  Now attempt to submit it, assuming it is error-free.
@@ -489,11 +463,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     @Override
     public BSPPlatingRequestOptions getBSPPlatingRequestDefaultOptions() {
         return defaultPlatingRequestOptions;
-    }
-
-    @Override
-    protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, bspConfig);
     }
 
     @Override
