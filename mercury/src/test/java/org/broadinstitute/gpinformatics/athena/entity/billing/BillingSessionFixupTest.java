@@ -55,8 +55,10 @@ public class BillingSessionFixupTest extends Arquillian {
         BspUser user = userList.getByUsername("hrafal");
 
         // Add the ledger entries that we want to this billing session.
+        // These will be ignored as this fixup script has ben run and this is only to allow compile.
+        List<String> errorMessages = new ArrayList<>();
         Set<LedgerEntry> ledgerItems =
-            ledgerEntryDao.findWithoutBillingSessionByOrderList(Collections.singletonList("PDO-222"));
+            ledgerEntryDao.findWithoutBillingSessionByOrderList(Collections.singletonList("PDO-222"), errorMessages);
 
         Assert.assertNotNull(ledgerItems);
         Assert.assertEquals(ledgerItems.size(), 9, "PDO-222 should have exactly 9 unbilled ledger entries");
