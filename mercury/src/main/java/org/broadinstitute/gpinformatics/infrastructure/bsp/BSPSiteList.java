@@ -44,7 +44,7 @@ public class BSPSiteList extends AbstractCache implements Serializable {
     }
 
     /**
-     * @param id key of user to look up
+     * @param id key of site to look up
      * @return if found, the site, otherwise null
      */
     public Site getById(long id) {
@@ -52,7 +52,7 @@ public class BSPSiteList extends AbstractCache implements Serializable {
     }
 
     /**
-     * Returns a list of users whose first name, last name, or username match the given query.  If the query is
+     * Returns a list of sites whose name, address, shipper or description match the given query.  If the query is
      * null then it will return an empty list.
      *
      * @param query the query string to match on
