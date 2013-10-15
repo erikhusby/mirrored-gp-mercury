@@ -13,8 +13,10 @@ import java.text.MessageFormat;
  */
 public class BspShippingLocationTokenInput extends TokenInput<Site> {
 
+    private static final String ADDITIONAL_LINE_FORMAT = "<div class=\"ac-dropdown-subtext\">{0}</div>";
+
     @Inject
-    BSPSiteList bspSiteList;
+    private BSPSiteList bspSiteList;
 
     public BspShippingLocationTokenInput() {
         super(DOUBLE_LINE_FORMAT);
@@ -34,11 +36,24 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
         return site.getName();
     }
 
+    /**
+     * Reformat an address so its lines split into different menu lines, when shown in the HTML drop down menu.
+     *
+     * @param address the address, with embedded CRs
+     * @return the HTML formatted address text
+     */
+    private static String formatAddress(String address) {
+        StringBuilder formattedAddress = new StringBuilder();
+        for (String line : address.split("\n")) {
+           formattedAddress.append(MessageFormat.format(ADDITIONAL_LINE_FORMAT, line));
+        }
+        return formattedAddress.toString();
+    }
+
     @Override
     protected String formatMessage(String messageString, Site tokenObject) {
-        return MessageFormat
-                .format(messageString, tokenObject.getName(),
-                        tokenObject.getPrimaryShipper() + " " + tokenObject.getAddress());
+        return MessageFormat.format(messageString, tokenObject.getName(), tokenObject.getPrimaryShipper()) +
+               formatAddress(tokenObject.getAddress());
     }
 
     @Override
