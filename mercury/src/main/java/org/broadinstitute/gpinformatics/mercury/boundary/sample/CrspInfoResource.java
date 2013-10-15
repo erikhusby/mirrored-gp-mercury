@@ -78,8 +78,7 @@ public class CrspInfoResource extends AbstractJerseyClientService {
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds,
                                    @QueryParam("reqId") String reqId) {
 
-        if(!sc.isUserInRole("CRSP-Mercury-Developers") &&
-           !sc.isUserInRole("CRSP-Mercury-WebServiceUser")) {
+        if(!sc.isUserInRole("CRSP-Mercury-WebServiceUser")) {
             throw new ResourceException(String.format("Unauthorized Access: user %s does not have access to PHI information",sc.getUserPrincipal().getName()),
                     Response.Status.FORBIDDEN);
         }
@@ -169,6 +168,6 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, bspConfig);
+        specifyHttpAuthCredentials(client, currentConfig);
     }
 }
