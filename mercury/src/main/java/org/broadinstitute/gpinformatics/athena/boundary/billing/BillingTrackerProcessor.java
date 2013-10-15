@@ -265,6 +265,11 @@ public class BillingTrackerProcessor extends TableProcessor {
         currentProductOrder = productOrderDao.findByBusinessKey(rowPdoIdStr);
         if (currentProductOrder != null) {
 
+            if (currentProductOrder.getQuoteId() == null) {
+                addDataMessage("You are missing a Quote ID for PDO: "
+                               + currentProductOrder.getBusinessKey(), dataRowIndex);
+            }
+
             sampleIndexInOrder = 0; // Set to 0 at start here so row numbers will be correct.
 
             // Add to the list of product orders that were processed.

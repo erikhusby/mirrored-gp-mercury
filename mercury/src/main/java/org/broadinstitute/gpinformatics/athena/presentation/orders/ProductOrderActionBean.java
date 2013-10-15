@@ -832,11 +832,20 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
+        List<String> errorMessages = new ArrayList<>();
         Set<LedgerEntry> ledgerItems =
-                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
+                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys, errorMessages);
+
+        // Add error messages
+        addGlobalValidationErrors(errorMessages);
+
         if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
+        }
+
+        if (hasErrors()) {
+            return getContext().getSourcePageResolution();
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);

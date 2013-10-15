@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
@@ -110,7 +111,7 @@ public class BettaLimsMessageTestFactory {
     public void advanceTime() {
         // The Mercury constraint has millisecond resolution, but the Squid equivalent has second resolution, so to
         // allow cross system testing we advance by 1 second.
-        time += 1000L;
+        time += DateUtils.MILLIS_PER_SECOND;
     }
 
     public enum WellNameType {
