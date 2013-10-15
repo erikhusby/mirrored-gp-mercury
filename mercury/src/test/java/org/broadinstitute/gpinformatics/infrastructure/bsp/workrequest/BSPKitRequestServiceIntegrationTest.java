@@ -34,16 +34,18 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1L, 96L);
+        workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
         System.out.println(result.getWorkRequestBarcode());
     }
 
-    @Test
+    @Test(enabled = false)
     public void testSubmitKitRequest() {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1L, 96L);
+        workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
 
