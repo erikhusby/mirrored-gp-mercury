@@ -18,13 +18,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import javax.annotation.security.PermitAll;
-import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.security.auth.Subject;
-import javax.servlet.ServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -38,13 +34,13 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
-import java.security.AccessController;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * This resource supports the Rest call to retrieve PHI for the CRSP platform.  Calls to this service are protected
+ * and accessible only by users in a select group
  */
 @Path("/crspinfo")
 @Stateful
@@ -54,7 +50,7 @@ public class CrspInfoResource extends AbstractJerseyClientService {
     private static final String SEARCH_CRSP_PHI = "sample/getcrspphenotypes";
     private static final String SEARCH_CRSP_CLINICIAN_INFO = "getclinicianinfo";
 
-    private static final Log logger = LogFactory.getLog(CrspInfoResource.class);
+    private static final Log log = LogFactory.getLog(CrspInfoResource.class);
 
     @Inject
     private BSPConfig bspConfig;
@@ -72,8 +68,6 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
     @GET
     @Path("/getCrspPhiInfo")
-//    @RolesAllowed({"CRSP-Mercury-ProjectManagers", "CRSP-Mercury-Developers"})
-//    @PermitAll
     @Produces({MediaType.APPLICATION_JSON})
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds,
                                    @QueryParam("reqId") String reqId) {
@@ -103,7 +97,7 @@ public class CrspInfoResource extends AbstractJerseyClientService {
         try {
             clinicianInfo = parseCrspPhiResponse(clinicianQueryResponse);
         } catch (JAXBException | SAXException e) {
-            logger.error("Error parsing information retrieved for clinician information");
+            log.error("Error parsing information retrieved for clinician information");
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -143,7 +137,7 @@ public class CrspInfoResource extends AbstractJerseyClientService {
             }
         } catch (JAXBException | SAXException e) {
             e.printStackTrace();
-            logger.error("Error getting data from BSP call",e);
+            log.error("Error getting data from BSP call", e);
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
