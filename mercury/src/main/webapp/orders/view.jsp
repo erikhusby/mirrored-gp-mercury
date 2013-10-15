@@ -697,24 +697,14 @@
                     </div>
                 </div>
 
-                <c:if test="${actionBean.sampleInitiation}">
+                <c:if test="${actionBean.sampleInitiation && actionBean.editOrder.draft}">
                     <div class="form-horizontal span5">
                         <fieldset>
                             <legend><h4>Sample Kit Request</h4></legend>
 
                             <div class="control-group">
-                                <stripes:label for="numberOfKits" class="control-label">
-                                    Number of Kits
-                                </stripes:label>
-                                <div class="controls">
-                                    <stripes:text id="numberOfKits" name="sampleKitRequestDto.numberOfRacks" class="defaultText"
-                                                  title="Enter the number of kits to request"/>
-                                </div>
-                            </div>
-
-                            <div class="control-group">
                                 <stripes:label for="tubesPerKit" class="control-label">
-                                    Number of Tubes per Kit
+                                    Number of Samples
                                 </stripes:label>
                                 <div class="controls">
                                     <stripes:text id="tubesPerKit" name="sampleKitRequestDto.numberOfTubesPerRack"

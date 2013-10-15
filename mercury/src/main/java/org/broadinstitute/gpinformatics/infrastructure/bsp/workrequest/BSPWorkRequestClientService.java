@@ -65,4 +65,38 @@ public class BSPWorkRequestClientService extends AbstractJerseyClientService {
         }
         return response;
     }
+
+    protected WorkRequestResponse submitWorkRequest(String wrBarcode, WorkRequestManager bspWorkRequestManager) {
+        WorkRequestResponse submissionResponse = bspWorkRequestManager.submit(wrBarcode);
+
+        // this REALLY should not happen if we've gotten this far; I've only
+        // ever seen this for mismatched client/server jars and we should
+        // have found out about that in our initial connection to the WR
+        // manager.
+        if (submissionResponse == null) {
+
+            final String msg = String.format("Error submitting BSP Plating Work Request '%s'", wrBarcode);
+
+            log.error(msg);
+            throw new RuntimeException(msg);
+        }
+
+        // log.warn("Skipping submission response check due to bogus BSP errors!");
+
+        if (!submissionResponse.isSuccess()) {
+
+            final String msg = String.format(
+                    "Found errors attempting to submit BSP WR %s: %s",
+                    wrBarcode,
+                    submissionResponse.getErrors().toString());
+
+            log.error(msg);
+            throw new RuntimeException(submissionResponse.getErrors().toString());
+        }
+
+        // success!
+        log.info("Submission successful!");
+
+        return submissionResponse;
+    }
 }

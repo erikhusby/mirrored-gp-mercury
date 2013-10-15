@@ -58,6 +58,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -202,6 +203,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService mercuryClientService;
+
+    @Inject
+    private BSPKitRequestService bspKitRequestService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -719,6 +723,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             // Save it!
             productOrderDao.persist(editOrder);
+
+            if (isSampleInitiation()) {
+                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, Long.parseLong(sampleKitRequestDto.getDestination()), Long.valueOf(sampleKitRequestDto.getNumberOfTubesPerRack()));
+            }
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
             addGlobalValidationError("{2}", e.getMessage());
