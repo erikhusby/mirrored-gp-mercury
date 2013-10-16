@@ -112,6 +112,7 @@ textarea.controlledText { width: 550px; }
 .global-search li { margin-top: 1px; }
 
 .ac-dropdown-text { margin-left: 5px; font-size: x-small; }
+.ac-dropdown-multiline-subtext { margin-left: 10px; font-size: xx-small; font-style: italic; line-height: .3cm }
 .ac-dropdown-subtext { margin-left: 5px; font-size: xx-small; font-style: italic; border-bottom: 1px solid #cfd3cf; }
 
 .barFull.view { height: 15px; width: 270px; }
