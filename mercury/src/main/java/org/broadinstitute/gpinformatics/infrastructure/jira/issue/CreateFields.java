@@ -126,7 +126,8 @@ public class CreateFields extends UpdateFields {
         PRODUCT_ORDER("Product Order", "CLIA "),
         RESEARCH_PROJECT("Research Project", "CLIA "),
         FLOWCELL("Flowcell"),
-        MISEQ("MiSeq");
+        MISEQ("MiSeq"),
+        SAMPLE_INITIATION("Sample Initiation");
 
         private final String jiraName;
 

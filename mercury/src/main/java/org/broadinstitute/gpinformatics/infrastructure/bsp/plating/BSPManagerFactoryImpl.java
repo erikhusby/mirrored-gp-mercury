@@ -4,20 +4,17 @@ import org.broadinstitute.bsp.client.container.BspContainerManager;
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.sample.BspSampleManager;
 import org.broadinstitute.bsp.client.sample.SampleManager;
-import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.users.BspUserManager;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
 
 @Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
@@ -59,5 +56,10 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     @Override
     public SampleManager createSampleManager() {
         return (SampleManager) create(BspSampleManager.class);
+    }
+
+    @Override
+    public BspSiteManager createSiteManager() {
+        return (BspSiteManager) create(BspSiteManager.class);
     }
 }

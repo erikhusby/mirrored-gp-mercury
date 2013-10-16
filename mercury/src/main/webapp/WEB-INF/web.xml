@@ -62,7 +62,8 @@
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
             org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.sample.CrspInfoResource
         </param-value>
     </context-param>
     <context-param>

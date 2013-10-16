@@ -1,36 +1,36 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
-import net.sourceforge.stripes.util.Log;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 
 /**
- * Comma separated list of roles that this block will allow access.  Using "All" will mean all roles have access.
+ * As input this tag supports a comma separated list of roles that this block will allow access.  Using "All" will
+ * mean all roles have access. The tag also supports "context", which lets the user specify CRSP or RESEARCH. If
+ * context is omitted, the block will be shown in both instances.
  * <p/>
- * Below is an example of how it is used. You will need to define your own tld.
+ * Below is an example of how it is used.
  * <p/>
- * <br/>
- * {@code
- * <%@ taglib uri="http://www.broadinstitute.org/Mercury/AuthorizeBlock"" prefix="security"%>
- * <security:authorizeBlock roles={"Administrator", "Project Manager"}>
- * Secured content goes in here
- * </security:authorizeBlock>
- * }
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ * {@code <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security"" prefix="security"%>}<br/>
+ * {@code <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>}<br/>
+ * {@code <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>}<br/>
+ * {@code<security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>">}<br/>
+ * {@code     Secured content goes in here}<br/>
+ * {@code </security:authorizeBlock>}
  */
 public class AuthorizeBlockStripesTag extends TagSupport {
+
     public static final String ALLOW_ALL_ROLES = "All";
-    private static final Log log = Log.getInstance(AuthorizeBlockStripesTag.class);
+
     private static final long serialVersionUID = 201300107L;
     @Inject
     UserBean userBean;
+
     private String[] roles;
+
     private ApplicationInstance context;
 
     public String[] getRoles() {
@@ -60,20 +60,14 @@ public class AuthorizeBlockStripesTag extends TagSupport {
             return SKIP_BODY;
         }
 
-        try {
-            HttpServletRequest request = (HttpServletRequest) pageContext.getRequest();
-
-            if (context == null || context.isContextSupported()) {
-                // Now check the roles to include the jsp code block.
-                for (String role : roles) {
-                    if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
-                        // User in role or all roles allowed.
-                        return EVAL_BODY_INCLUDE;
-                    }
+        if (context == null || context.isCurrent()) {
+            // Now check the roles to include the jsp code block.
+            for (String role : roles) {
+                if (userBean.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
+                    // User in role or all roles allowed.
+                    return EVAL_BODY_INCLUDE;
                 }
             }
-        } catch (Exception e) {
-            log.warn("Problem determining if the user was in the role", e);
         }
 
         return super.doStartTag();

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.sample.SampleManager;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 
@@ -9,12 +10,13 @@ import java.io.Serializable;
 
 public interface BSPManagerFactory extends Serializable {
 
-    public WorkRequestManager createWorkRequestManager();
+    WorkRequestManager createWorkRequestManager();
 
-    public ContainerManager createContainerManager();
+    ContainerManager createContainerManager();
 
-    public UserManager createUserManager();
+    UserManager createUserManager();
 
-    public SampleManager createSampleManager();
+    SampleManager createSampleManager();
 
+    BspSiteManager createSiteManager();
 }

@@ -828,9 +828,16 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
+        CreateFields.IssueType issueType;
+        if (product.isSampleInitiationProduct()) {
+            issueType = CreateFields.IssueType.SAMPLE_INITIATION;
+        } else {
+            issueType = CreateFields.IssueType.PRODUCT_ORDER;
+        }
+
         JiraIssue issue = jiraService.createIssue(
-                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(createdBy).getUsername(),
-                CreateFields.IssueType.PRODUCT_ORDER, title, listOfFields);
+                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(createdBy).getUsername(), issueType,
+                title, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
