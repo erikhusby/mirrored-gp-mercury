@@ -138,11 +138,15 @@ public class LedgerEntryDao extends GenericDao {
         List<LedgerEntry> entriesToRemove = new ArrayList<>();
 
         for (LedgerEntry ledgerEntry : byOrderList) {
+
+            // Note: This was added as a Just In Case error check from the code that started allowing submitted
+            // PDOs to have a null quote. I haven't been able to get a PDO where this state occurs without modifying
+            // the database, but wanted there to be a nice error message here instead of an NPE at a later time.
             if (ledgerEntry.getProductOrderSample().getProductOrder().getQuoteId() == null) {
                 if (pdoIds.add(ledgerEntry.getProductOrderSample().getProductOrder().getProductOrderId())) {
 
-                    errorMessages.add("You are missing a Quote ID for PDO: "
-                                      + ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey());
+                    errorMessages.add(ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey()
+                                      + " has been excluded as there is no Quote ID selected.");
                 }
                 entriesToRemove.add(ledgerEntry);
             }
