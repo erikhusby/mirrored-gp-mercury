@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
-    <artifactId>Mercury</artifactId>
+    <artifactId>Mercury-Rest</artifactId>
     <version>1.35-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
@@ -21,8 +21,8 @@
     </parent>
     -->
 
-    <name>Mercury</name>
-    <description>The next generation Squid.</description>
+    <name>Mercury Rest Services</name>
+    <description>Defines building the Rest Services to accompany the Mercury application</description>
 
     <url>${site.url}/${project.artifactId}</url>
 
@@ -193,259 +193,9 @@
 
         <mercury.rc.ip>must be specified.</mercury.rc.ip>
 
-        <umlgraph.path>must be specified</umlgraph.path>
-
     </properties>
 
     <profiles>
-        <profile>
-            <id>Clover.report</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                        <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
-                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>false</includesAllSourceRoots>
-                            <targetPercentage>${clover.targetPercentage}</targetPercentage>
-                            <excludes>
-                                <exclude>**/generated/*.java</exclude>
-                            </excludes>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>instrument</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>clover</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                    <goal>clover</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <reporting>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                    </plugin>
-                </plugins>
-            </reporting>
-        </profile>
-        <profile>
-            <id>Clover.optimize</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                        <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
-                            <fullRunEvery>60</fullRunEvery>
-                            <snapshot>${user.home}/.clover/${project.groupId}-${project.artifactId}/clover.snapshot
-                            </snapshot>
-                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>true</includesAllSourceRoots>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>clover</id>
-                                <goals>
-                                    <goal>setup</goal>
-                                    <goal>optimize</goal>
-                                    <goal>snapshot</goal>
-                                    <goal>save-history</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>Clover.All</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                        <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
-                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>false</includesAllSourceRoots>
-                            <targetPercentage>${clover.targetPercentage}</targetPercentage>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>instrument</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>Clover.site</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                        <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
-                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <includesAllSourceRoots>false</includesAllSourceRoots>
-                            <targetPercentage>${clover.targetPercentage}</targetPercentage>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>generate-sources</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                    <goal>instrument</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>verify</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                    <goal>log</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>site</id>
-                                <phase>pre-site</phase>
-                                <goals>
-                                    <goal>save-history</goal>
-                                    <goal>reset</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <reporting>
-                <plugins>
-                    <plugin>
-                        <groupId>com.atlassian.maven.plugins</groupId>
-                        <artifactId>maven-clover2-plugin</artifactId>
-                        <version>${clover.plugin.version}</version>
-                        <configuration>
-                            <cloverDatabase>${project.build.directory}/clover/clover.db</cloverDatabase>
-                            <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
-                            <generateHistorical>true</generateHistorical>
-                            <generateHtml>true</generateHtml>
-                            <generateXml>true</generateXml>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </reporting>
-        </profile>
-        <profile>
-            <!-- schemagen generates XSDs from JAX-RS DTOs.  schemagen and clover seem to interfere, so schemagen must be run separately -->
-            <id>Jaxb.schemagen</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>jaxb2-maven-plugin</artifactId>
-                        <version>1.4</version>
-                        <executions>
-                            <execution>
-                                <id>LabEventSchemaGen</id>
-                                <goals>
-                                    <goal>schemagen</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
-                                        </include>
-                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/labevent/*Bean.java
-                                        </include>
-                                    </includes>
-                                    <excludes>
-                                        <exclude>
-                                            org/broadinstitute/gpinformatics/mercury/boundary/labevent/BettaLimsMessageBean.java
-                                        </exclude>
-                                    </excludes>
-                                    <transformSchemas>
-                                        <!--
-                                            Each schema element defines:
-
-                                            a) A <<namespace uri>> for one of your namespaces.
-                                               This namespace uri must be unique within the schemas element.
-
-                                            b) A <<toPrefix>> that you want to use for the namespace.
-                                               Should not contain whitespace or exotic characters.
-                                               This yields a namespace definition on the form
-                                               <xs:schema ... xmlns:[toPrefix]="[uri]" ... />
-
-                                               (I.e: <xs:schema ... xmlns:some="http://some/namespace" xmlns:xs="http://www.w3.org/2001/XMLSchema"> )
-
-                                               ... and transforms relevant xml schema elements to use the provided namespace prefix:
-
-                                               <some:elementName ... />
-
-                                            c) The desired <<toFile>> name of the generated XML schema definition file,
-                                               excluding the ".xsd" suffix (which will be added automatically).
-                                        -->
-                                        <transformSchema>
-                                            <uri>http://broadinstitute.org/gpinformatics/mercury/labevent</uri>
-                                            <!--
-                                            <toPrefix>labevent</toPrefix>
-                                            -->
-                                            <toFile>labevent.xsd</toFile>
-                                        </transformSchema>
-                                    </transformSchemas>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>VesselSchemaGen</id>
-                                <goals>
-                                    <goal>schemagen</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java
-                                        </include>
-                                        <include>org/broadinstitute/gpinformatics/mercury/boundary/vessel/*Bean.java
-                                        </include>
-                                    </includes>
-                                    <excludes>
-                                        <exclude>
-                                            org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java
-                                        </exclude>
-                                    </excludes>
-                                    <transformSchemas>
-                                        <transformSchema>
-                                            <uri>http://broadinstitute.org/gpinformatics/mercury/vessel</uri>
-                                            <!--
-                                            <toPrefix>labevent</toPrefix>
-                                            -->
-                                            <toFile>vessel.xsd</toFile>
-                                        </transformSchema>
-                                    </transformSchemas>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
         <profile>
             <id>Tests.ExternalIntegration</id>
             <build>
@@ -498,14 +248,6 @@
             </build>
         </profile>
 
-        <!-- This profile is use to only run the UI Tests. -->
-        <profile>
-            <id>Tests.UI</id>
-            <properties>
-                <tests.excludedGroups/>
-                <tests.groups>UI,arquillian</tests.groups>
-            </properties>
-        </profile>
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
@@ -675,7 +417,7 @@
                         <configuration>
                             <webResources>
                                 <resource>
-                                    <directory>src/main/webapp-crsp</directory>
+                                    <directory>src/main/webapp-rest</directory>
                                 </resource>
                             </webResources>
                         </configuration>
@@ -724,7 +466,7 @@
                         <configuration>
                             <webResources>
                                 <resource>
-                                    <directory>src/main/webapp-crsp</directory>
+                                    <directory>src/main/webapp-rest</directory>
                                 </resource>
                             </webResources>
                         </configuration>
@@ -766,13 +508,9 @@
                         <configuration>
                             <webResources>
                                 <resource>
-                                    <directory>src/main/webapp-crsp</directory>
+                                    <directory>src/main/webapp-rest</directory>
                                 </resource>
-
-                                <resource>
-                                    <directory>src/main/webapp-crsp-prod</directory>
-                                </resource>
-                            </webResources>
+                        </webResources>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1064,164 +802,13 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-war-plugin</artifactId>
                         <version>2.2</version>
-                        <configuration>
-                            <webResources>
-                                <resource>
-                                    <directory>src/main/webapp-prod</directory>
-                                </resource>
-                            </webResources>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>Liquibase</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.liquibase</groupId>
-                        <artifactId>liquibase-maven-plugin</artifactId>
-                        <version>2.0.5</version>
-                        <executions>
-                            <execution>
-                                <id>Mercury</id>
-                                <phase>process-resources</phase>
-                                <configuration>
-                                    <changeLogFile>src/main/db/mercurydb.changelog-master.xml</changeLogFile>
-                                    <driver>${database.driver}</driver>
-                                    <url>${database.url}</url>
-                                    <username>mercury</username>
-                                    <password>${mercury.password}</password>
-                                    <defaultSchemaName>mercury</defaultSchemaName>
-                                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-                                </configuration>
-                                <goals>
-                                    <goal>update</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>Athena</id>
-                                <phase>process-resources</phase>
-                                <configuration>
-                                    <changeLogFile>src/main/db/athenadb.changelog-master.xml</changeLogFile>
-                                    <driver>${database.driver}</driver>
-                                    <url>${database.url}</url>
-                                    <username>athena</username>
-                                    <password>${athena.password}</password>
-                                    <defaultSchemaName>athena</defaultSchemaName>
-                                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-                                </configuration>
-                                <goals>
-                                    <goal>update</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>sql-maven-plugin</artifactId>
-                        <dependencies>
-                            <dependency>
-                                <groupId>com.oracle</groupId>
-                                <artifactId>ojdbc</artifactId>
-                                <version>${oracle.version}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>postgresql</groupId>
-                                <artifactId>postgresql</artifactId>
-                                <version>${postgresql.version}</version>
-                            </dependency>
-                        </dependencies>
-                        <configuration>
-                            <driver>${database.driver}</driver>
-                            <url>${database.url}</url>
-                            <username>athena</username>
-                            <password>${athena.password}</password>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>Apply Athena Grants</id>
-                                <phase>process-resources</phase>
-                                <goals>
-                                    <goal>execute</goal>
-                                </goals>
-                                <configuration>
-                                    <delimiterType>${database.delimiterType}</delimiterType>
-                                    <srcFiles>
-                                        <srcFile>src/main/db/athena-${database}-grants.sql</srcFile>
-                                    </srcFiles>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>MessageTestJar</id>
-            <properties>
-                <version>${project.version}</version>
-                <file>target/${project.artifactId}-${project.version}-tests.jar</file>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>${project.artifactId}</artifactId>
-                <packaging>jar</packaging>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <includes>
-                                <include>**/*JaxbBuilder*.class</include>
-                                <include>**/ProductionFlowcellPath.class</include>
-                                <include>**/BettaLimsMessageTestFactory*.class</include>
-                            </includes>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <url>${project.distributionManagement.repository.url}</url>
-                            <classifier>message-test</classifier>
-                            <uniqueVersion>false</uniqueVersion>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>BettaLimsGeneratedJar</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <configuration>
-                            <classifier>bettalims-generated</classifier>
-                            <includes>
-                                <include>**/bettalims/generated/*.class</include>
-                                <include>**/Workflow.class</include>
-                            </includes>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <url>${project.distributionManagement.repository.url}</url>
-                            <file>target/${project.artifactId}-${project.version}-bettalims-generated.jar</file>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>${project.artifactId}</artifactId>
-                            <version>${project.version}</version>
-                            <packaging>jar</packaging>
-                            <classifier>bettalims-generated</classifier>
-                            <uniqueVersion>false</uniqueVersion>
-                        </configuration>
+                        <!--<configuration>-->
+                        <!--<webResources>-->
+                        <!--<resource>-->
+                        <!--<directory>src/main/webapp-prod</directory>-->
+                        <!--</resource>-->
+                        <!--</webResources>-->
+                        <!--</configuration>-->
                     </plugin>
                 </plugins>
             </build>
@@ -1283,22 +870,6 @@
             <artifactId>hamcrest-all</artifactId>
             <version>1.3</version>
         </dependency>
-
-        <!-- uncomment this to enable squid integration -->
-        <!--
-        <dependency>
-
-            <groupId>Squid</groupId>
-            <artifactId>SquidEntities</artifactId>
-            <version>${build.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>edu.mit.broad.prodinfo</groupId>
-            <artifactId>squidServices</artifactId>
-            <version>${build.version}</version>
-        </dependency>
-        -->
 
         <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
@@ -1575,7 +1146,7 @@
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <version>1.3.24</version>
+            <version>1.3.22</version>
         </dependency>
 
         <dependency>
@@ -1797,7 +1368,25 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <compilerArgument>-proc:none</compilerArgument>
+                    <excludes>
+                        <exclude>**/BettaLimsMessageBean*.*</exclude>
+                        <exclude>**/SampleReceiptMessageBean*.*</exclude>
+                        <exclude>**/WorkCompleteMessageBean*.*</exclude>
+                        <exclude>**/ExtractTransformRunner*.*</exclude>
+                    </excludes>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -1946,23 +1535,6 @@
                             <clearOutputDir>false</clearOutputDir>
                         </configuration>
                     </execution>
-                    <execution>
-
-                        <id>VesselRegistration</id>
-                        <goals>
-                            <goal>xjc</goal>
-                        </goals>
-                        <configuration>
-                            <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>VesselRegistration.xsd</schemaFiles>
-                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated</packageName>
-                            <!-- each execution must have a unique staleFile -->
-                            <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
-                            <!-- all executions, except the first, need clearOutputDir set to false -->
-                            <clearOutputDir>false</clearOutputDir>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
 
@@ -2027,6 +1599,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <excludes>
+                        <exclude>**/*Test.java</exclude>
+                    </excludes>
                     <groups>${tests.groups}</groups>
                     <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <forkMode>never</forkMode>
@@ -2115,45 +1690,17 @@
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9</version>
-                <configuration>
-                    <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
-                    <docletArtifact>
-                        <groupId>org.umlgraph</groupId>
-                        <artifactId>umlgraph</artifactId>
-                        <version>5.6</version>
-                    </docletArtifact>
-                    <docletPath>${umlgraph.path}</docletPath>
-                    <!-- Note, the following parameters must be on one line -->
-                    <additionalparam>-views -inferrel -inferdep -quiet -hide java.* -collpackages java.util.* -qualify
-                        -postfixpackage -nodefontsize 9 -nodefontpackagesize 7
-                    </additionalparam>
-                    <useStandardDocletOptions>true</useStandardDocletOptions>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.2</version>
                 <configuration>
+                    <!--<webXml>src/main/webapp-rest/WEB-INF/web.xml</webXml>-->
+                    <!--<webResources>-->
+                        <!--<resource>-->
+                            <!--<directory>src/main/webapp-rest</directory>-->
+                        <!--</resource>-->
+                    <!--</webResources>-->
+                    <!--<warSourceDirectory>src/main/webapp-rest</warSourceDirectory>-->
                     <webappDirectory>${project.build.directory}/${project.artifactId}.war</webappDirectory>
-                    <!-- We'll keep mercury-config-local.yaml in src/main/resources for now. We can add a local directory later if needed.
-                                        <webResources>
-                                            <resource>
-                                                <directory>${project.basedir}/local</directory>
-                                                <includes>
-                                                    <include>mercury-config-local.yaml</include>
-                                                    <include>target/version.properties</include>
-                                                </includes>
-                                                <targetPath>WEB-INF/classes</targetPath>
-                                            </resource>
-                                        </webResources>
-                    -->
-                    <!--
-                                        <packagingExcludes>WEB-INF/classes/META-INF/persistence.xml</packagingExcludes>
-                    -->
                 </configuration>
             </plugin>
 
@@ -2220,10 +1767,7 @@
                 </includes>
             </testResource>
         </testResources>
-
-
     </build>
-
     <reporting>
         <plugins>
             <plugin>
@@ -2311,5 +1855,4 @@
             </plugin>
         </plugins>
     </reporting>
-
 </project>

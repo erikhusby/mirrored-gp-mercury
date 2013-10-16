@@ -3,15 +3,21 @@ package org.broadinstitute.gpinformatics.infrastructure.security;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 /**
- * Application Context helps define a targeted instance of mercury.  Currently there are 2 mercury deployments, it is
- * conceivable that this list can grow in the future.
+ * Use this to specify an instance of mercury.  Currently there are two mercury instances, this list
+ * may grow in the future.
  */
 public enum ApplicationInstance {
-    CRSP, RESEARCH;
+    /** The CLIA instance of Mercury */
+    CRSP,
+    /** The non-CLIA instance of Mercury */
+    RESEARCH;
 
 
-    public boolean isContextSupported() {
-        return ((ApplicationInstance.RESEARCH == this) && !Deployment.isCRSP) ||
-               ((ApplicationInstance.CRSP == this) && Deployment.isCRSP);
+    /**
+     * @return true if this is the currently running instance of mercury
+     */
+    public boolean isCurrent() {
+        return ((this == ApplicationInstance.RESEARCH) && !Deployment.isCRSP) ||
+               ((this == ApplicationInstance.CRSP) && Deployment.isCRSP);
     }
 }

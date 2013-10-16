@@ -17,6 +17,7 @@
         <crowd.applicaiton.name>mercury</crowd.applicaiton.name>
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
         <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
+        <roleprefix></roleprefix>
     </properties>
 
     <repositories>
@@ -52,6 +53,7 @@
             <properties>
                 <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
                 <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+                <roleprefix>CRSP-</roleprefix>
             </properties>
         </profile>
 
@@ -60,6 +62,7 @@
             <properties>
                 <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
                 <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+                <roleprefix>CRSP-</roleprefix>
             </properties>
         </profile>
 
@@ -68,6 +71,7 @@
             <properties>
                 <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
                 <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
+                <roleprefix>CRSP-</roleprefix>
             </properties>
         </profile>
 

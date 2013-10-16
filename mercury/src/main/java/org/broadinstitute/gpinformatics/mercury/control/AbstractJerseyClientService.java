@@ -238,4 +238,8 @@ public abstract class AbstractJerseyClientService implements Serializable {
             IOUtils.closeQuietly(reader);
         }
     }
+
+    protected void clearClient() {
+        jerseyClient = null;
+    }
 }

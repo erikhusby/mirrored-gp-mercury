@@ -97,16 +97,28 @@ jira:
 
 portal:
     TEST:
-      urlBase:      http://crsp-dev-portal:8111/portal
+      login:    portaluser
+      password: Dr1ftw00d
+      host:     crsp-dev-portal
+      port:     8111
 
     DEV:
-      urlBase:      http://crsp-dev-portal:8111/portal
+      login:    portaluser
+      password: Dr1ftw00d
+      host:     crsp-dev-portal
+      port:     8111
 
     QA:
-      urlBase:      http://crsp-qa-portal:8111/portal
+      login:    portaluser
+      password: Dr1ftw00d
+      host:     crsp-qa-portal
+      port:     8111
 
     PROD:
-      urlBase:      https://www.broadinstitute.org/portal
+      login:    portaluser
+      password: Dr1ftw00d
+      host:     crsp-portal
+      port:
 
 quote:
 
