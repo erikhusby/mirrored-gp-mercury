@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.kits;
 
+import org.broadinstitute.bsp.client.site.Site;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
@@ -20,8 +22,8 @@ public class SampleKitRequestDto {
     private List<String> projectManagers;
     private String plasticware;
     private int numberOfRacks;
-    private int numberOfTubesPerRack;
-    private String destination;
+    private long numberOfTubesPerRack;
+    private Site site;
     private String deliveryMethod;
     private String bspKitRequest;
     private String linkedProductOrder;
@@ -38,15 +40,15 @@ public class SampleKitRequestDto {
      *                             0.75 mL tubes that have linear barcodes etched/printed on the side by the manufacturer
      * @param numberOfRacks        How many empty racks to request.
      * @param numberOfTubesPerRack How many tubes per rack.
-     * @param destination          The destination for the kit.
+     * @param site               The site the kit will be shipped to.
      * @param deliveryMethod       How will we deliver the kit? (Fedex, Broad Truck, Local Pickup)
      * @param bspKitRequest        The BSP kit request this should be linked to.
      * @param linkedProductOrder   The Mercury ProductOrder this request should be linked to.
      */
     public SampleKitRequestDto(@Nonnull String requestedBy, List<String> projectManagers,
                                @Nonnull String plasticware,
-                               @Nonnull int numberOfRacks,
-                               @Nonnull int numberOfTubesPerRack, @Nonnull String destination,
+                               int numberOfRacks,
+                               long numberOfTubesPerRack, @Nonnull Site site,
                                @Nullable String deliveryMethod, @Nullable String bspKitRequest,
                                @Nonnull String linkedProductOrder) {
         this.requestedBy = requestedBy;
@@ -54,7 +56,7 @@ public class SampleKitRequestDto {
         this.plasticware = plasticware;
         this.numberOfRacks = numberOfRacks;
         this.numberOfTubesPerRack = numberOfTubesPerRack;
-        this.destination = destination;
+        this.site = site;
         this.deliveryMethod = deliveryMethod;
         this.bspKitRequest = bspKitRequest;
         this.linkedProductOrder = linkedProductOrder;
@@ -89,20 +91,20 @@ public class SampleKitRequestDto {
         this.numberOfRacks = numberOfRacks;
     }
 
-    public int getNumberOfTubesPerRack() {
+    public long getNumberOfTubesPerRack() {
         return numberOfTubesPerRack;
     }
 
-    public void setNumberOfTubesPerRack(int numberOfTubesPerRack) {
+    public void setNumberOfTubesPerRack(long numberOfTubesPerRack) {
         this.numberOfTubesPerRack = numberOfTubesPerRack;
     }
 
-    public String getDestination() {
-        return destination;
+    public Site getSite() {
+        return site;
     }
 
-    public void setDestination(String destination) {
-        this.destination = destination;
+    public void setSite(Site site) {
+        this.site = site;
     }
 
     public String getBspKitRequest() {

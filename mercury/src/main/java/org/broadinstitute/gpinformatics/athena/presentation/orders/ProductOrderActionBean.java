@@ -20,6 +20,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -382,6 +383,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        } else {
+            requireField(sampleKitRequestDto.getNumberOfTubesPerRack() > 0, "a specified number of tubes", action);
+            requireField(sampleKitRequestDto.getSite(), "a site", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -428,6 +432,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
+
+        // Update the shipping location token input, which is only visible on the View page before placing.
+        List<Site> sites = bspShippingLocationTokenInput.getTokenObjects();
+        if (!sites.isEmpty()) {
+            sampleKitRequestDto.setSite(sites.get(0));
+        }
+
         doValidation(action);
 
         if (!hasErrors()) {
@@ -725,7 +736,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, Long.parseLong(sampleKitRequestDto.getDestination()), Long.valueOf(sampleKitRequestDto.getNumberOfTubesPerRack()));
+                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, sampleKitRequestDto.getSite(),
+                        sampleKitRequestDto.getNumberOfTubesPerRack());
             }
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.

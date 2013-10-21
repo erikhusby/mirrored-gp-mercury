@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
 import org.hamcrest.CoreMatchers;
@@ -12,7 +13,8 @@ public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
-        SampleKitRequestDto sampleKitRequestDto = new SampleKitRequestDto("breilly", null, "0.75mL", 0, 96, "42", null, null, null);
+        SampleKitRequestDto sampleKitRequestDto = new SampleKitRequestDto("breilly", null, "0.75mL", 0, 96,
+                new Site(42, null, null, null, null, null, null), null, null, null);
 
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 14038, 14038L, 42L, 96L);

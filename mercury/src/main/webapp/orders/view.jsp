@@ -708,7 +708,7 @@
                                 </stripes:label>
                                 <div class="controls">
                                     <stripes:text id="tubesPerKit" name="sampleKitRequestDto.numberOfTubesPerRack"
-                                                  class="defaultText" title="Enter the number of tubes per kit"/>
+                                                  class="defaultText" title="Enter the number of samples"/>
                                 </div>
                             </div>
 
@@ -729,7 +729,7 @@
                                 </stripes:label>
                                 <div class="controls">
                                     <stripes:text
-                                            id="shippingLocation" name="sampleKitRequestDto.destination"
+                                            id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
                                             class="defaultText"
                                             title="Search for shipping location"/>
                                 </div>
