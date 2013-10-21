@@ -40,7 +40,6 @@ public class JiraServiceTest {
     @Test
     public void testCreation() throws IOException {
 
-        setUp();
         Map<String, CustomFieldDefinition> requiredFields =
                 service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT),
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
@@ -62,7 +61,6 @@ public class JiraServiceTest {
     }
 
     public void testCreatePdoTicket() throws IOException {
-        setUp();
         Collection<CustomField> customFieldList = new LinkedList<>();
 
         CreateFields.ProjectType productOrdering = CreateFields.ProjectType.PRODUCT_ORDERING;
@@ -111,18 +109,15 @@ public class JiraServiceTest {
     }
 
     public void testAddWatcher() throws IOException {
-        setUp();
         service.addWatcher("PDO-8", "squid");
     }
 
     @Test(enabled = false)
     public void testLinkTicket() throws IOException {
-        setUp();
         service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
     }
 
     public void testAddPublicComment() throws IOException {
-        setUp();
         service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
     }
 
@@ -130,13 +125,11 @@ public class JiraServiceTest {
     @Test(enabled = false)
     // disabled until we can get test jira to keep squid user as an admin
     public void testAddRestrictedComment() throws IOException {
-        setUp();
         service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role,
                 Visibility.Value.Administrators);
     }
 
     public void testCustomFields() throws IOException {
-        setUp();
         Map<String, CustomFieldDefinition> customFields = service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.LCSET_PROJECT),
                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL);
         Assert.assertFalse(customFields.isEmpty());

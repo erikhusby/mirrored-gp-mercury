@@ -265,6 +265,10 @@ public class BillingTrackerProcessor extends TableProcessor {
         currentProductOrder = productOrderDao.findByBusinessKey(rowPdoIdStr);
         if (currentProductOrder != null) {
 
+            if (currentProductOrder.getQuoteId() == null) {
+                getMessages().add(currentProductOrder.getBusinessKey() + " has no Quote ID selected.");
+            }
+
             sampleIndexInOrder = 0; // Set to 0 at start here so row numbers will be correct.
 
             // Add to the list of product orders that were processed.

@@ -7,8 +7,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
-                       sectionTitle="View Product Order: ${actionBean.editOrder.title}"
+<stripes:layout-render name="/layout.jsp" pageTitle="Review Product Order: ${actionBean.editOrder.title}"
+                       sectionTitle="Review Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -38,6 +38,16 @@
                         updateBspInformation(tempArray);
                     }
                 }
+
+                $j("#shippingLocation").tokenInput(
+                        "${ctxpath}/orders/order.action?shippingLocationAutocomplete=", {
+                            hintText: "Search for shipping location",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
+                            resultsFormatter: formatInput,
+                            tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
+                            tokenLimit: 1
+                        }
+                );
             });
 
             var bspDataCount = 0;
@@ -331,7 +341,7 @@
             }
 
             function showDeleteConfirm(action) {
-                $j("#orderDialogAction").attr("name", action);
+                $j("#dialogAction").attr("name", action);
                 $j("#deleteConfirmation").dialog("open");
             }
 
@@ -349,7 +359,7 @@
             }
 
             function showAbandonConfirm(action, actionPrompt, level) {
-                $j("#orderDialogAction").attr("name", action);
+                $j("#dialogAction").attr("name", action);
                 $j("#confirmDialogMessage").text(actionPrompt);
 
                 if (level) {
@@ -359,6 +369,11 @@
                 }
 
                 $j("#abandonConfirmation").dialog("open");
+            }
+
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
         </script>
     </stripes:layout-component>
@@ -402,7 +417,9 @@
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            <stripes:hidden id="orderDialogAction" name=""/>
+            <stripes:hidden id="dialogAction" name=""/>
+            <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
+            <stripes:hidden id="riskComment" name="riskComment" value=""/>
 
             <div class="actionButtons">
                 <c:choose>
@@ -462,227 +479,264 @@
                 </c:choose>
 
             </div>
-        </stripes:form>
 
-        <div style="both:clear"> </div>
+            <div style="both:clear"> </div>
 
-        <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            <stripes:hidden id="dialogAction" name=""/>
-
-            <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
-            <stripes:hidden id="riskComment" name="riskComment" value=""/>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Order ID</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.draft}">
-                                &#160;
-                            </c:when>
-                            <c:otherwise>
-                                <a id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-            </div>
-
-            <c:if test="${not empty actionBean.editOrder.requisitionKey}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Requisition</label>
-                    <div class="controls">
-                        <div class="form-value">
-                            <c:choose>
-                                <c:when test="${actionBean.editOrder.draft}">
-                                    &#160;
-                                </c:when>
-                                <c:otherwise>
-                                    <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-            </c:if>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Product</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.product != null}">
-                            <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                                <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                                ${actionBean.editOrder.product.productName}
-                            </stripes:link>
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Family</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.product != null}">
-                            ${actionBean.editOrder.product.productFamily.name}
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Order Status</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
-                            ${actionBean.editOrder.orderStatus}
-                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Research Project</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.researchProject != null}">
-                            <stripes:link title="Research Project"
-                                          beanclass="<%=ResearchProjectActionBean.class.getName()%>"
-                                          event="view">
-                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
-                                ${actionBean.editOrder.researchProject.title}
-                            </stripes:link>
-                            (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
-                            ${actionBean.editOrder.researchProject.jiraTicketKey}
-                            </a>)
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Owner</label>
-                <div class="controls">
-                    <div class="form-value">
-                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
-                    </div>
-                </div>
-            </div>
-
-            <c:if test="${actionBean.editOrder.placedDate != null}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Placed Date</label>
-                    <div class="controls">
-                        <div class="form-value">
-                            <fmt:formatDate value="${actionBean.editOrder.placedDate}" pattern="${actionBean.datePattern}"/>
-                        </div>
-                    </div>
-                </div>
-            </c:if>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Funding Deadline</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}" pattern="${actionBean.datePattern}"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Publication Deadline</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}" pattern="${actionBean.datePattern}"/>
-                    </div>
-                </div>
-            </div>
-
-            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Number of Lanes Per Sample</label>
-
-                    <div class="controls">
-                        <div class="form-value">${actionBean.editOrder.laneCount}</div>
-                    </div>
-                </div>
-            </c:if>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Add-ons</label>
-                <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.addOnList}</div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Quote ID</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                                ${actionBean.editOrder.quoteId}
-                        </a>
-                        <span id="fundsRemaining" style="margin-left: 20px;"> </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Can Bill</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.eligibleForBilling}">
+            <div class="row-fluid">
+                <div class="form-horizontal span7">
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Order ID</label>
+                        <div class="controls">
+                            <div class="form-value">
                                 <c:choose>
-                                    <c:when test="${actionBean.billingSessionBusinessKey == null}">
-                                        Yes, No Billing Session
+                                    <c:when test="${actionBean.editOrder.draft}">
+                                        &#160;
                                     </c:when>
                                     <c:otherwise>
-                                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
-                                                      event="view">Yes,
-                                            <stripes:param name="sessionKey" value="${actionBean.billingSessionBusinessKey}"/>
-                                            ${actionBean.billingSessionBusinessKey}
-                                        </stripes:link>
+                                        <a id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                                     </c:otherwise>
                                 </c:choose>
-
-                            </c:when>
-                            <c:otherwise>
-                                No
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Sample Status</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                            <span class="barAbandon"
-                                title="${actionBean.percentAbandoned}% Abandoned"
-                                style="width: ${actionBean.percentAbandoned}%"> </span>
-                            <span class="barComplete"
-                                title="${actionBean.percentCompleted}% Completed"
-                                style="width: ${actionBean.percentCompleted}%"> </span>
+                            </div>
                         </div>
-                        ${actionBean.progressString}
+                    </div>
+
+                    <c:if test="${not empty actionBean.editOrder.requisitionKey}">
+                        <div class="view-control-group control-group">
+                            <label class="control-label label-form">Requisition</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <c:choose>
+                                        <c:when test="${actionBean.editOrder.draft}">
+                                            &#160;
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Product</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <c:if test="${actionBean.editOrder.product != null}">
+                                    <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                        <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                        ${actionBean.editOrder.product.productName}
+                                    </stripes:link>
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Product Family</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <c:if test="${actionBean.editOrder.product != null}">
+                                    ${actionBean.editOrder.product.productFamily.name}
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Order Status</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                                    ${actionBean.editOrder.orderStatus}
+                                <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Research Project</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <c:if test="${actionBean.editOrder.researchProject != null}">
+                                    <stripes:link title="Research Project"
+                                                  beanclass="<%=ResearchProjectActionBean.class.getName()%>"
+                                                  event="view">
+                                        <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                        ${actionBean.editOrder.researchProject.title}
+                                    </stripes:link>
+                                    (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
+                                    ${actionBean.editOrder.researchProject.jiraTicketKey}
+                                    </a>)
+                                </c:if>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Owner</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                    ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <c:if test="${actionBean.editOrder.placedDate != null}">
+                        <div class="view-control-group control-group">
+                            <label class="control-label label-form">Placed Date</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <fmt:formatDate value="${actionBean.editOrder.placedDate}" pattern="${actionBean.datePattern}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Funding Deadline</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}" pattern="${actionBean.datePattern}"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Publication Deadline</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}" pattern="${actionBean.datePattern}"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+                        <div class="view-control-group control-group">
+                            <label class="control-label label-form">Number of Lanes Per Sample</label>
+
+                            <div class="controls">
+                                <div class="form-value">${actionBean.editOrder.laneCount}</div>
+                            </div>
+                        </div>
+                    </c:if>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Add-ons</label>
+                        <div class="controls">
+                            <div class="form-value">${actionBean.editOrder.addOnList}</div>
+                        </div>
+                    </div>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Quote ID</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
+                                        ${actionBean.editOrder.quoteId}
+                                </a>
+                                <span id="fundsRemaining" style="margin-left: 20px;"> </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Can Bill</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <c:choose>
+                                    <c:when test="${actionBean.eligibleForBilling}">
+                                        <c:choose>
+                                            <c:when test="${actionBean.billingSessionBusinessKey == null}">
+                                                Yes, No Billing Session
+                                            </c:when>
+                                            <c:otherwise>
+                                                <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
+                                                              event="view">Yes,
+                                                    <stripes:param name="sessionKey" value="${actionBean.billingSessionBusinessKey}"/>
+                                                    ${actionBean.billingSessionBusinessKey}
+                                                </stripes:link>
+                                            </c:otherwise>
+                                        </c:choose>
+
+                                    </c:when>
+                                    <c:otherwise>
+                                        No
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Sample Status</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
+                                    <span class="barAbandon"
+                                        title="${actionBean.percentAbandoned}% Abandoned"
+                                        style="width: ${actionBean.percentAbandoned}%"> </span>
+                                    <span class="barComplete"
+                                        title="${actionBean.percentCompleted}% Completed"
+                                        style="width: ${actionBean.percentCompleted}%"> </span>
+                                </div>
+                                ${actionBean.progressString}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="view-control-group control-group">
+                        <label class="control-label label-form">Description</label>
+                        <div class="controls">
+                            <div class="form-value">${actionBean.editOrder.comments}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Description</label>
-                <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.comments}</div>
-                </div>
+                <c:if test="${actionBean.sampleInitiation && actionBean.editOrder.draft}">
+                    <div class="form-horizontal span5">
+                        <fieldset>
+                            <legend><h4>Sample Kit Request</h4></legend>
+
+                            <div class="control-group">
+                                <stripes:label for="tubesPerKit" class="control-label">
+                                    Number of Samples
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:text id="tubesPerKit" name="sampleKitRequestDto.numberOfTubesPerRack"
+                                                  class="defaultText" title="Enter the number of samples"/>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <stripes:label for="kitType" class="control-label">
+                                    Kit Type
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:select id="kitType" name="sampleKitRequestDto.plasticware">
+                                        <stripes:option value="0.75mL">0.75mL</stripes:option>
+                                    </stripes:select>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <stripes:label for="shippingLocation" class="control-label">
+                                    Shipping Location
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:text
+                                            id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
+                                            class="defaultText"
+                                            title="Search for shipping location"/>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </c:if>
             </div>
 
             <div class="borderHeader">

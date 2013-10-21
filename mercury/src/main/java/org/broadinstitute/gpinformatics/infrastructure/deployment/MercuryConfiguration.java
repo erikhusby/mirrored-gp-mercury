@@ -5,6 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.log4j.Logger;
+import org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
@@ -128,14 +129,14 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Abstract away getting the ServletContext.  Currently the {@link AuthorizationFilter} class has been
-     * leveraged to capture the ServletContext during its {@link AuthorizationFilter#init}, hopefully we can find a
+     * Abstract away getting the ServletContext.  Currently the {@link CacheFilter} class has been
+     * leveraged to capture the ServletContext during its {@link CacheFilter#init}, hopefully we can find a
      * cleaner way of doing this if we still need the ServletContext.
      *
      * @return the ServletContext.
      */
     private static ServletContext getServletContext() {
-        return AuthorizationFilter.getServletContext();
+        return CacheFilter.getServletContext();
     }
 
     private static Class<? extends AbstractConfig> getConfigClass(String configKey) {

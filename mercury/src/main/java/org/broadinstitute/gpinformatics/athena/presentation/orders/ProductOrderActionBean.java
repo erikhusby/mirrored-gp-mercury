@@ -20,7 +20,9 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -51,11 +53,13 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -190,6 +194,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private BspShippingLocationTokenInput bspShippingLocationTokenInput;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
@@ -197,6 +204,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService mercuryClientService;
+
+    @Inject
+    private BSPKitRequestService bspKitRequestService;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -258,6 +268,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
+    private SampleKitRequestDto sampleKitRequestDto;
+
     /*
      * The search query.
      */
@@ -278,6 +290,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
     public void init() {
+        sampleKitRequestDto = new SampleKitRequestDto();
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
@@ -368,7 +381,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         }
 
-        requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        if (!isSampleInitiation()) {
+            requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        } else {
+            requireField(sampleKitRequestDto.getNumberOfTubesPerRack() > 0, "a specified number of tubes", action);
+            requireField(sampleKitRequestDto.getSite(), "a site", action);
+        }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
@@ -414,6 +432,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
+
+        // Update the shipping location token input, which is only visible on the View page before placing.
+        List<Site> sites = bspShippingLocationTokenInput.getTokenObjects();
+        if (!sites.isEmpty()) {
+            sampleKitRequestDto.setSite(sites.get(0));
+        }
+
         doValidation(action);
 
         if (!hasErrors()) {
@@ -709,6 +734,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             // Save it!
             productOrderDao.persist(editOrder);
+
+            if (isSampleInitiation()) {
+                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, sampleKitRequestDto.getSite(),
+                        sampleKitRequestDto.getNumberOfTubesPerRack());
+            }
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
             addGlobalValidationError("{2}", e.getMessage());
@@ -822,11 +852,20 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
+        List<String> errorMessages = new ArrayList<>();
         Set<LedgerEntry> ledgerItems =
-                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
+                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys, errorMessages);
+
+        // Add error messages
+        addGlobalValidationErrors(errorMessages);
+
         if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
+        }
+
+        if (hasErrors()) {
+            return getContext().getSourcePageResolution();
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
@@ -1224,6 +1263,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(productTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("shippingLocationAutocomplete")
+    public Resolution shippingLocationAutocomplete() throws Exception {
+        Resolution resolution = createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
+        return resolution;
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1313,6 +1358,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         return projectTokenInput;
     }
 
+    public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
+        return bspShippingLocationTokenInput;
+    }
+
     public String getResearchProjectKey() {
         return researchProjectKey;
     }
@@ -1387,6 +1436,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return getProductOrderListEntry().getBillingSessionBusinessKey();
+    }
+
+    /**
+     * Convenience method to determine whether or not the current PDO is for sample initiation.
+     *
+     * @return true if this is a sample initiation PDO; false otherwise
+     */
+    public boolean isSampleInitiation() {
+        return editOrder.getProduct().isSampleInitiationProduct();
     }
 
     /**
@@ -1530,6 +1588,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
+    }
+
+    public SampleKitRequestDto getSampleKitRequestDto() {
+        return sampleKitRequestDto;
     }
 
     /**

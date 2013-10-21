@@ -11,6 +11,14 @@
             <xs:element name="patientLastName" type="xs:normalizedString"/>
             <xs:element name="patientGender" type="xs:normalizedString"/>
             <xs:element name="clinicianName" type="xs:normalizedString"/>
+            <xs:element name="clinicianPhone" type="xs:normalizedString"/>
+            <xs:element name="clinicianFax" type="xs:normalizedString"/>
+            <xs:element name="clinicianAddress1" type="xs:normalizedString"/>
+            <xs:element name="clinicianAddress2" type="xs:normalizedString"/>
+            <xs:element name="clinicianCity" type="xs:normalizedString"/>
+            <xs:element name="clinicianState" type="xs:normalizedString"/>
+            <xs:element name="clinicianZipCode" type="xs:normalizedString"/>
+            <xs:element name="clinicianCountry" type="xs:normalizedString"/>
             <xs:element name="clinicianEmail" type="xs:normalizedString"/>
             <xs:element name="clinicianInstitution" type="xs:normalizedString"/>
             <xs:element name="stateOfPatientResidence" type="xs:normalizedString"/>

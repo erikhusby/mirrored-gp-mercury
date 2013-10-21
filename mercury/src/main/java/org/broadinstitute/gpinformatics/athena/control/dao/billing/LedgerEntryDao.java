@@ -14,6 +14,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -127,8 +128,31 @@ public class LedgerEntryDao extends GenericDao {
         return findByOrderList(orders, BillingSessionInclusion.NO_SESSION_STARTED);
     }
 
-    public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys) {
-        return findByOrderList(productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
+    public Set<LedgerEntry> findWithoutBillingSessionByOrderList(@Nonnull List<String> productOrderBusinessKeys,
+                                                                 @Nonnull List<String> errorMessages) {
+        Set<LedgerEntry> byOrderList =
+                findByOrderList(productOrderBusinessKeys, BillingSessionInclusion.NO_SESSION_STARTED);
+
+
+        List<Long> pdoIds = new ArrayList<>();
+        List<LedgerEntry> entriesToRemove = new ArrayList<>();
+
+        for (LedgerEntry ledgerEntry : byOrderList) {
+
+            // Note: This was added as a Just In Case error check from the code that started allowing submitted
+            // PDOs to have a null quote. I haven't been able to get a PDO where this state occurs without modifying
+            // the database, but wanted there to be a nice error message here instead of an NPE at a later time.
+            if (ledgerEntry.getProductOrderSample().getProductOrder().getQuoteId() == null) {
+                if (pdoIds.add(ledgerEntry.getProductOrderSample().getProductOrder().getProductOrderId())) {
+
+                    errorMessages.add(ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey()
+                                      + " has been excluded as there is no Quote ID selected.");
+                }
+                entriesToRemove.add(ledgerEntry);
+            }
+        }
+        byOrderList.removeAll(entriesToRemove);
+        return byOrderList;
     }
 
     public Set<LedgerEntry> findUploadedUnbilledOrderList(ProductOrder[] orders) {
