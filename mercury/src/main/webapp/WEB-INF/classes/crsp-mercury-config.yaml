@@ -44,20 +44,20 @@ app:
 bsp:
 
     DEV:
-      login:    seqsystem
-      password: bspbsp
+      login:
+      password:
       host:     crsp-dev-bsp.broadinstitute.org
       port:     8080
 
     RC:
-      login:    seqsystem
-      password: bspbsp
+      login:
+      password:
       host:     crsp-qa-bsp.broadinstitute.org
       port:     8080
 
     PROD:
-      login:    seqsystem
-      password: bspbsp
+      login:
+      password:
       host:     crsp-bsp.broadinstitute.org
       port:
 
@@ -74,67 +74,67 @@ datawhEtl:
 jira:
 
     TEST:
-      login:    crspuser
-      password: crspuser
+      login:
+      password:
       host:     crsptestjira.broadinstitute.org
       port:     8443
       urlBase:      https://crsptestjira.broadinstitute.org:8443
 
     QA:
-      login:    crspuser
-      password: crspuser
+      login:
+      password:
       host:     crsptestjira.broadinstitute.org
       port:     8443
       urlBase:  https://crspqajira.broadinstitute.org:8443
 
 
     PROD:
-      login:    crspuser
-      password: crspuser
+      login:
+      password:
       host:     crspjira.broadinstitute.org
 #      port:     8020
       urlBase:      https://crspjira.broadinstitute.org
 
 portal:
     TEST:
-      login:    portaluser
-      password: Dr1ftw00d
+      login:
+      password:
       host:     crsp-dev-portal
       port:     8111
 
     DEV:
-      login:    portaluser
-      password: Dr1ftw00d
+      login:
+      password:
       host:     crsp-dev-portal
       port:     8111
 
     QA:
-      login:    portaluser
-      password: Dr1ftw00d
+      login:
+      password:
       host:     crsp-qa-portal
       port:     8111
 
     PROD:
-      login:    portaluser
-      password: Dr1ftw00d
+      login:
+      password:
       host:     crsp-portal
       port:
 
 quote:
 
     DEV:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:
+      password:
       url:      http://quotedev:8080
 
     QA:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:
+      password:
       url:      http://quoteqa:8080
 
     PROD:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:
+      password:
       url:      http://quoteprod:8080
 
 
