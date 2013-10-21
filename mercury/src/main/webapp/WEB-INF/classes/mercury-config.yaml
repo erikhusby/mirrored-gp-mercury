@@ -155,23 +155,23 @@ deckMsgs:
 bettaLimsServer:
 
     DEV:
-        wsHost: node115
+        wsHost: seqtest04
         wsPort: 9997
-        jmsHost: node115
+        jmsHost: seqtest04
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.test
 
     TEST:
-        wsHost: node115
+        wsHost: seqtest04
         wsPort: 9997
-        jmsHost: node115
+        jmsHost: seqtest04
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.test
 
     QA:
         wsHost: vbettalimsqa
         wsPort: 9998
-        jmsHost: node115
+        jmsHost: seqtest04
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.qa
 
