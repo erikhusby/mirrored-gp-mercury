@@ -266,8 +266,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         if (currentProductOrder != null) {
 
             if (currentProductOrder.getQuoteId() == null) {
-                addDataMessage("You are missing a Quote ID for PDO: "
-                               + currentProductOrder.getBusinessKey(), dataRowIndex);
+                getMessages().add(currentProductOrder.getBusinessKey() + " has no Quote ID selected.");
             }
 
             sampleIndexInOrder = 0; // Set to 0 at start here so row numbers will be correct.
