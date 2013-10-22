@@ -101,7 +101,7 @@ public class ProductOrderResource {
             productOrderDao.persist(productOrder);
             productOrderDao.flush();
 
-            // Set the requisition ID on the Jira referenced PDO.
+            // Set the requisition name on the Jira referenced PDO.
             productOrderEjb.updateJiraIssue(productOrder);
         } catch (Exception e) {
             log.error(
@@ -178,8 +178,8 @@ public class ProductOrderResource {
 
         productOrder.addSamples(productOrderSamples);
 
-        // Set the requisition key so one can look up the requisition in the Portal.
-        productOrder.setRequisitionKey(productOrderData.getRequisitionKey());
+        // Set the requisition name so one can look up the requisition in the Portal.
+        productOrder.setRequisitionName(productOrderData.getRequisitionName());
 
         return productOrder;
     }

@@ -93,6 +93,7 @@ public class ProductOrderTest {
                 .ignoreProperty("sampleList")
                 .ignoreProperty("fundingDeadline")
                 .ignoreProperty("requisitionKey")
+                .ignoreProperty("requisitionName")
                 .ignoreProperty("publicationDeadline").build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -102,7 +103,6 @@ public class ProductOrderTest {
 
             @Override
             public ProductOrder create() {
-
                 Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
                         1814400, 1814400, 184, null, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
                 ResearchProject researchProject =

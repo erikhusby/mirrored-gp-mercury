@@ -131,7 +131,6 @@
         </addColumn>
     </changeSet>
 
-
     <changeSet id="GPLIM-1957-1" author="dinsmore">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -152,5 +151,42 @@
         <addColumn tableName="product_order_aud">
             <column name="REQUISITION_KEY" type="VARCHAR(60)"/>
         </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2252-1" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order" columnName="REQUISITION_NAME" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order">
+            <column name="REQUISITION_NAME" type="VARCHAR(256)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2252-2" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_aud" columnName="REQUISITION_NAME" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud">
+            <column name="REQUISITION_NAME" type="VARCHAR(256)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2252-3" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+                <columnExists tableName="product_order" columnName="REQUISITION_KEY" schemaName="athena"/>
+        </preConditions>
+        <dropColumn tableName="product_order" columnName="REQUISITION_KEY" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2252-4" author="dinsmore">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="product_order_aud" columnName="REQUISITION_KEY" schemaName="athena"/>
+        </preConditions>
+        <dropColumn tableName="product_order_aud" columnName="REQUISITION_KEY" />
     </changeSet>
 </databaseChangeLog>

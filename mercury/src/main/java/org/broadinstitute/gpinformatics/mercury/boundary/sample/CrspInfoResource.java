@@ -46,7 +46,6 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class CrspInfoResource extends AbstractJerseyClientService {
-
     private static final String SEARCH_CRSP_PHI = "sample/getcrspphenotypes";
     private static final String SEARCH_CRSP_CLINICIAN_INFO = "getclinicianinfo";
 
@@ -71,7 +70,6 @@ public class CrspInfoResource extends AbstractJerseyClientService {
     @Produces({MediaType.APPLICATION_JSON})
     public Response getCrspPhiInfo(@QueryParam("sampleIds") List<String> sampleIds,
                                    @QueryParam("reqId") String reqId) {
-
         if(!sc.isUserInRole("CRSP-Mercury-WebServiceUser")) {
             throw new ResourceException(String.format("Unauthorized Access: user %s does not have access to PHI information",sc.getUserPrincipal().getName()),
                     Response.Status.FORBIDDEN);
@@ -118,7 +116,6 @@ public class CrspInfoResource extends AbstractJerseyClientService {
 
             if (queryInfo != null) {
                 for (CrspPhiDTO phiDTO : queryInfo.getPhiData()) {
-
                     phiDTO.setClinicianName(clinicianData.getClinicianName());
 
                     phiDTO.setClinicianPhone(clinicianData.getClinicianPhone());

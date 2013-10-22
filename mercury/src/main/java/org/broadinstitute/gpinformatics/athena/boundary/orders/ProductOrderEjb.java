@@ -437,9 +437,9 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
 
-        // Add the Requisition key to the list of fields when appropriate.
-        if (Deployment.isCRSP && !StringUtils.isBlank(productOrder.getRequisitionKey())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_ID, productOrder.getRequisitionKey()));
+        // Add the Requisition name to the list of fields when appropriate.
+        if (Deployment.isCRSP && !StringUtils.isBlank(productOrder.getRequisitionName())) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME, productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];

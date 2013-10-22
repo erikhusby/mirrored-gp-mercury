@@ -505,14 +505,9 @@
                             <label class="control-label label-form">Requisition</label>
                             <div class="controls">
                                 <div class="form-value">
-                                    <c:choose>
-                                        <c:when test="${actionBean.editOrder.draft}">
-                                            &#160;
-                                        </c:when>
-                                        <c:otherwise>
-                                            <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <c:if test="!${actionBean.editOrder.draft}">
+                                        <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a> <c:out value="${actionBean.editOrder.requisitionName}"/>
+                                    </c:if>
                                 </div>
                             </div>
                         </div>

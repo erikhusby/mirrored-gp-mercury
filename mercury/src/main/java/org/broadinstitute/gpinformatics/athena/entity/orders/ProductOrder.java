@@ -64,6 +64,8 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     private static final String DRAFT_PREFIX = "Draft-";
 
+    private static final String REQUISITION_PREFIX = "REQ-";
+
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -143,8 +145,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     @Column(name = "count")
     private int laneCount = 1;
 
-    @Column(name = "REQUISITION_KEY")
-    private String requisitionKey;
+    @Column(name = "REQUISITION_NAME", length = 256)
+    private String requisitionName;
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -211,7 +213,7 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     * Use this method to convert from a business key to either a JIRA ID or a product order ID.
      *
      * @param businessKey the key to convert
      *
@@ -390,8 +392,8 @@ public class ProductOrder implements BusinessObject, Serializable {
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
      *
-     * @param user       the user doing the save operation.
-     * @param  saveType  a {@link SaveType} enum to define if creating or just updating
+     * @param user     the user doing the save operation.
+     * @param saveType a {@link SaveType} enum to define if creating or just updating
      */
     public void prepareToSave(BspUser user, SaveType saveType) {
         Date now = new Date();
@@ -620,12 +622,19 @@ public class ProductOrder implements BusinessObject, Serializable {
         this.placedDate = placedDate;
     }
 
-    public String getRequisitionKey() {
-        return requisitionKey;
+    /**
+     * Get the requisition key which should be the same ID as the product order, just a different prefix.
+     */
+     public String getRequisitionKey() {
+        return REQUISITION_PREFIX + getBusinessKey().substring(getBusinessKey().indexOf('-') + 1);
     }
 
-    public void setRequisitionKey(String requisitionKey) {
-        this.requisitionKey = requisitionKey;
+    public String getRequisitionName() {
+        return requisitionName;
+    }
+
+    public void setRequisitionName(String requisitionName) {
+        this.requisitionName = requisitionName;
     }
 
     /**
@@ -951,7 +960,9 @@ public class ProductOrder implements BusinessObject, Serializable {
         PUBLICATION_DEADLINE("Publication Deadline"),
         DESCRIPTION("Description"),
         STATUS("Status"),
-        REQUISITION_ID("Requisition ID");
+        REQUISITION_ID("Requisition ID"),
+        REQUISITION_NAME("Requisition Name");
+
         private final String fieldName;
 
         private JiraField(String fieldNameIn) {
