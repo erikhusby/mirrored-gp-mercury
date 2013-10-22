@@ -63,7 +63,7 @@
                             click: function () {
                                 $j(this).dialog("close");
                                 $j("#confirmOkButton").attr("disabled", "disabled");
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
@@ -86,7 +86,7 @@
                                 $j(this).dialog("close");
                                 $j("#recalculateRiskOkButton").attr("disabled", "disabled");
 
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
@@ -111,7 +111,7 @@
                                 $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
                                 $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
