@@ -109,7 +109,7 @@
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
     <changeSet id="GPLIM-2036-3" author="scottmat">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="sample_receipt_validation" columnName="reason" schemaName="athena" />
             </not>
@@ -121,7 +121,7 @@
         </addColumn>
     </changeSet>
     <changeSet id="GPLIM-2036-4" author="scottmat">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="sample_receipt_validation_aud" columnName="reason" schemaName="athena" />
             </not>
