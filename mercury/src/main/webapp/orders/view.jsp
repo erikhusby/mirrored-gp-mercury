@@ -500,7 +500,7 @@
                         </div>
                     </div>
 
-                    <c:if test="${not empty actionBean.editOrder.requisitionKey}">
+                    <c:if test="${not empty actionBean.editOrder.requisitionName}">
                         <div class="view-control-group control-group">
                             <label class="control-label label-form">Requisition</label>
                             <div class="controls">
