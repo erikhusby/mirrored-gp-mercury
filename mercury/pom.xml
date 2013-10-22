@@ -84,7 +84,9 @@
             <id>Broad Maven</id>
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
-            <url>http://maven.broadinstitute.org/maven</url>
+            <url>http://prodinfosvn.broadinstitute.org:8000/maven</url>
+<!--            <url>http://maven.broadinstitute.org/maven</url> -->
+
         </repository>
 
         <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
