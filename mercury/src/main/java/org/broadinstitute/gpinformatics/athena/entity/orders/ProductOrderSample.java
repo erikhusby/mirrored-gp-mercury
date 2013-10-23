@@ -204,6 +204,9 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     public ProductOrderSample(@Nonnull String sampleName) {
+        if (!StringUtils.isAsciiPrintable(sampleName)) {
+            throw new RuntimeException("Sample name is not ASCII printable");
+        }
         this.sampleName = sampleName;
     }
 
@@ -587,5 +590,12 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void addValidation(SampleReceiptValidation validation) {
         validation.setProductOrderSample(this);
         this.sampleReceiptValidations.add(validation);
+    }
+
+    public void setName(String newName) {
+        if (!StringUtils.isAsciiPrintable(newName)) {
+            throw new RuntimeException("Sample name is not ASCII printable");
+        }
+        sampleName = newName;
     }
 }
