@@ -53,6 +53,30 @@
             <role-name>CRSP-Mercury-Developers</role-name>
             <role-name>CRSP-Mercury-WebServiceUser</role-name>
         </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>SecuredApplication</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <description>User must be logged in</description>
+            <role-name>CRSP-Mercury-Developers</role-name>
+            <role-name>CRSP-Mercury-WebServiceUser</role-name>
+            <role-name>CRSP-Mercury-ProjectManagers</role-name>
+            <role-name>CRSP-Mercury-ProductManagers</role-name>
+            <role-name>CRSP-Mercury-LabUsers</role-name>
+            <role-name>CRSP-Mercury-LabManagers</role-name>
+            <role-name>CRSP-Mercury-BillingManagers</role-name>
+            <role-name>CRSP-Mercury-PipelineAdmins</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
     </security-constraint>
 
     <login-config>
