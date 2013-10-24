@@ -8,9 +8,7 @@
         <connection-url>jdbc:oracle:thin:@crsp-db-qa-vm:1521:crspqa</connection-url>
         <driver>com.oracle</driver>
         <security>
-            <user-name>mercury</user-name>
-            <password>m3lb3c</password>
-
+            <security-domain>mercury-qa-encrypted-ds</security-domain>
         </security>
         <validation>
             <background-validation>true</background-validation>
