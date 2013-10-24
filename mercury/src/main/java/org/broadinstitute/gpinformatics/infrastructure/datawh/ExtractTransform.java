@@ -64,7 +64,7 @@ public class ExtractTransform implements Serializable {
     /**
      * Record delimiter expected in sqlLoader file.
      */
-    public static final String DELIM = ",";
+    public static final String DELIMITER = ",";
 
     /**
      * This filename matches what cron job expects.

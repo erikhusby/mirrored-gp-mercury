@@ -10,11 +10,12 @@ import java.util.regex.Pattern;
 
 public class EtlTestUtilities {
 
-    public static final Pattern RECORD_REGEX =
-            Pattern.compile(ExtractTransform.DELIM + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+    private static final Pattern RECORD_REGEX =
+            Pattern.compile(ExtractTransform.DELIMITER + "(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
 
     /**
-     * Uses a regular expression string for splitting the records by the {@link ExtractTransform}.DELIM that are not within an even number of double quotes.
+     * Uses a regular expression string for splitting the records by the {@link ExtractTransform}.DELIMITER
+     * that are not within an even number of double quotes.
      *
      * @return String array of records split based on the string pattern.
      */
@@ -65,8 +66,8 @@ public class EtlTestUtilities {
         return getDirFiles(directoryName, etlDateStart, etlDateEnd);
     }
 
-    public static File[] getDirFiles(String directoryName, final String etlDateStringStart,
-                                     final String etlDateStringEnd) {
+    public static File[] getDirFiles(String directoryName, String etlDateStringStart,
+                                     String etlDateStringEnd) {
         final long yyyymmddHHMMSSstart = Long.parseLong(etlDateStringStart);
         final long yyyymmddHHMMSSend = Long.parseLong(etlDateStringEnd);
         File dir = new File(directoryName);
