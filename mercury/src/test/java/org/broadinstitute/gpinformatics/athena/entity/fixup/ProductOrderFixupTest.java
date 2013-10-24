@@ -435,12 +435,14 @@ public class ProductOrderFixupTest extends Arquillian {
             productOrderSampleDao.persist(sample);
         }
 
-        // Renames samples that had two SMids concatenated.
+        // Renames samples that were mistyped.
         Map<Long, String> map = new HashMap<Long, String>(){{
             put((Long)9181L, "SM-3O76Q");
             put((Long)9262L, "SM-3NOLL");
             put((Long)9294L, "SM-3NOYJ");
             put((Long)9312L, "SM-3NP1A");
+            put((Long)69363L, "SM-3O57J");
+            put((Long)69362L, "SM-3O57I");
         }};
         for (Map.Entry<Long, String> entry : map.entrySet()) {
             ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, entry.getKey());
