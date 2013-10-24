@@ -64,6 +64,8 @@
         <realm-name>crowd_custom_realm</realm-name>
     </login-config>
 
+    <!--  Even though there is nothing to cache, we need access to the ServletContext through some means, either this
+    filter or another implemented in the application (Authorization, Security)-->
     <filter>
         <filter-name>CacheFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
