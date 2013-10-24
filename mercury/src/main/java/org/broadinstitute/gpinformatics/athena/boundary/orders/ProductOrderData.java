@@ -31,7 +31,7 @@ public class ProductOrderData {
     private String productName;
     private String quoteId;
     private String username;
-    private String requisitionKey;
+    private String requisitionName;
     private String productOrderKey;
 
     /**
@@ -248,17 +248,18 @@ public class ProductOrderData {
         this.username = username;
     }
 
-    public String getRequisitionKey() {
-        if (requisitionKey == null) {
+    public String getRequisitionName() {
+        if (requisitionName == null) {
             return "";
         }
 
-        return requisitionKey;
+        return requisitionName;
     }
 
-    public void setRequisitionKey(String requisitionKey) {
-        this.requisitionKey = requisitionKey;
+    public void setRequisitionName(String requisitionName) {
+        this.requisitionName = requisitionName;
     }
+
 
     public String getProductOrderKey() {
         return productOrderKey;

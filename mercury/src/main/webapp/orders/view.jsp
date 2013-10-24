@@ -63,7 +63,7 @@
                             click: function () {
                                 $j(this).dialog("close");
                                 $j("#confirmOkButton").attr("disabled", "disabled");
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
@@ -86,7 +86,7 @@
                                 $j(this).dialog("close");
                                 $j("#recalculateRiskOkButton").attr("disabled", "disabled");
 
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
@@ -111,7 +111,7 @@
                                 $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
                                 $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
-                                $j("#orderSamplesForm").submit();
+                                $j("#orderForm").submit();
                             }
                         },
                         {
@@ -500,19 +500,14 @@
                         </div>
                     </div>
 
-                    <c:if test="${not empty actionBean.editOrder.requisitionKey}">
+                    <c:if test="${not empty actionBean.editOrder.requisitionName}">
                         <div class="view-control-group control-group">
                             <label class="control-label label-form">Requisition</label>
                             <div class="controls">
                                 <div class="form-value">
-                                    <c:choose>
-                                        <c:when test="${actionBean.editOrder.draft}">
-                                            &#160;
-                                        </c:when>
-                                        <c:otherwise>
-                                            <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <c:if test="!${actionBean.editOrder.draft}">
+                                        <a id="requisitionKey" href="${actionBean.portalRequisitionUrl(actionBean.editOrder.requisitionKey)}" class="external" target="Portal">${actionBean.editOrder.requisitionKey}</a> <c:out value="${actionBean.editOrder.requisitionName}"/>
+                                    </c:if>
                                 </div>
                             </div>
                         </div>
