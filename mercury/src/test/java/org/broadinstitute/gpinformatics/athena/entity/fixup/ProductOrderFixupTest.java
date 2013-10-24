@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.apache.http.cookie.SM;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -412,5 +414,51 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderSampleDao.persistAll(sampleList);
         productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey());
+    }
+
+
+    @Test(enabled = false)
+    public void fixupSampleNames() throws Exception {
+
+        // Renames samples that have some type of non-printable ASCII at the end (e.g. char(160)).
+        long[] ids = new long[]{104900, 104901, 104902, 104903, 104905, 104906, 104907, 104908, 104909, 104910, 104911,
+                104913, 104915, 104916, 104917, 104918, 104919, 104923, 104924, 104926, 104927, 104930, 104931, 133750,
+                133752, 133753, 133756, 133873, 210099, 210893, 234027, 262655, 48110};
+        for (long id : ids) {
+            ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)id);
+            String s1 = sample.getName();
+            while (!StringUtils.isAsciiPrintable(s1)) {
+                s1 = StringUtils.chop(s1);
+            }
+            Assert.assertTrue(s1.length() > 0);
+            sample.setName(s1);
+            productOrderSampleDao.persist(sample);
+        }
+
+        // Renames samples that were mistyped.
+        Map<Long, String> map = new HashMap<Long, String>(){{
+            put((Long)9181L, "SM-3O76Q");
+            put((Long)9262L, "SM-3NOLL");
+            put((Long)9294L, "SM-3NOYJ");
+            put((Long)9312L, "SM-3NP1A");
+            put((Long)69363L, "SM-3O57J");
+            put((Long)69362L, "SM-3O57I");
+        }};
+        for (Map.Entry<Long, String> entry : map.entrySet()) {
+            ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, entry.getKey());
+            String s1 = sample.getName();
+            sample.setName(entry.getValue());
+            productOrderSampleDao.persist(sample);
+        }
+
+        // Un-splits two sample names.
+        ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)268485L);
+        sample.setName("SM-4M8YQ");
+        productOrderSampleDao.persist(sample);
+
+        sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)268484L);
+        productOrderSampleDao.remove(sample);
+
+        productOrderSampleDao.flush();
     }
 }

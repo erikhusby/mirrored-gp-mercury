@@ -274,6 +274,7 @@ public class ProductOrderResource {
             productOrderData.setStatus(productOrder.getOrderStatus().name());
             productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
             productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
+            productOrderData.setRequisitionName(productOrder.getRequisitionName());
             productOrderData.setQuoteId(productOrder.getQuoteId());
 
             if (includeSamples) {

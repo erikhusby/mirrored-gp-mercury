@@ -31,7 +31,6 @@ public class ProductOrderData {
     private String productName;
     private String quoteId;
     private String username;
-    private String requisitionKey;
     private String requisitionName;
     private String productOrderKey;
 
@@ -247,18 +246,6 @@ public class ProductOrderData {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getRequisitionKey() {
-        if (requisitionKey == null) {
-            return "";
-        }
-
-        return requisitionKey;
-    }
-
-    public void setRequisitionKey(String requisitionKey) {
-        this.requisitionKey = requisitionKey;
     }
 
     public String getRequisitionName() {
