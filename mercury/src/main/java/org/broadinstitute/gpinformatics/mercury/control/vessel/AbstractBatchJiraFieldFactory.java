@@ -15,18 +15,21 @@ import java.util.Map;
  * AbstractBatchJiraFieldFactory sets the stage for factory methods to assist in the creation of JIRA tickets related
  * to {@link LabBatch} entities.  The system will potentially have many different ticket types related to a batch.
  * This factory setup will give callers the ability to retrieve the type of factory based simply on the {@link
- * org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType type} of JIRA project.
+ * CreateFields.ProjectType type} of Jira project.
  * <p/>
  * This setup will give us the Flexibility to extend this functionality to provide different custom field factories
- * based on the combination of {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType}
- * and {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} in the future.
+ * based on the combination of {@link CreateFields.ProjectType}
+ * and {@link CreateFields.IssueType} in the future
  */
 public abstract class AbstractBatchJiraFieldFactory {
 
     protected final LabBatch batch;
 
-    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch) {
+    private final CreateFields.ProjectType projectType;
+
+    public AbstractBatchJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull CreateFields.ProjectType projectType) {
         this.batch = batch;
+        this.projectType = projectType;
     }
 
     /**
@@ -64,7 +67,9 @@ public abstract class AbstractBatchJiraFieldFactory {
      * @return A {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} enum
      *         value for the concrete JIRA field factory
      */
-    public abstract CreateFields.ProjectType getProjectType();
+    public CreateFields.ProjectType getProjectType() {
+        return projectType;
+    }
 
     /**
      * Provides the user the ability to retrieve a concrete factory class specific to the given Project Type.

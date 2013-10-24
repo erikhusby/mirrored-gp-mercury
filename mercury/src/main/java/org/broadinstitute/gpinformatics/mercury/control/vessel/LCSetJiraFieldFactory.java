@@ -58,7 +58,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
      *                            batch entity
      */
     public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull AthenaClientService athenaClientService) {
-        super(batch);
+        super(batch, CreateFields.ProjectType.LCSET_PROJECT);
 
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
@@ -250,10 +250,4 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         return summary.toString();
     }
-
-    @Override
-    public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.LCSET_PROJECT;
-    }
-
 }

@@ -11,16 +11,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * @author Scott Matthews
- *         Date: 1/28/13
- *         Time: 5:02 PM
- */
 public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
-
     public FCTJiraFieldFactory(@Nonnull LabBatch batch) {
-        super(batch);
+        super(batch, CreateFields.ProjectType.FCT_PROJECT);
     }
 
     @Override
@@ -40,10 +34,5 @@ public class FCTJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             summary.append(vessel.getLabel());
         }
         return summary.toString();
-    }
-
-    @Override
-    public CreateFields.ProjectType getProjectType() {
-        return CreateFields.ProjectType.FCT_PROJECT;
     }
 }

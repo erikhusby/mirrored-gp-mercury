@@ -7,16 +7,15 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Fields that can be sent to JIRA in an update request.
- *
- * @author breilly
  */
 @JsonSerialize(using = UpdateJiraIssueUpdateSerializer.class)
 public class UpdateFields {
 
-    private final Collection<CustomField> customFields;
+    private final Set<CustomField> customFields;
 
     public Collection<CustomField> getCustomFields() {
         return customFields;
