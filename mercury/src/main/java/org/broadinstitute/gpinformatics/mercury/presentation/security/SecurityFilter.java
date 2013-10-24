@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class SecurityFilter implements Filter {
 
-    private boolean isSecure;
+    private final boolean isSecure = Deployment.isCRSP;
     private int securePort;
 
     private static final Log log = LogFactory.getLog(AuthorizationFilter.class);
@@ -29,7 +29,6 @@ public class SecurityFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
 
-        isSecure = Deployment.isCRSP;
         try {
             securePort = Integer.parseInt(filterConfig.getInitParameter("securePort"));
         } catch (NumberFormatException | NullPointerException e) {

@@ -52,6 +52,8 @@
             <description>User must be logged in</description>
             <role-name>CRSP-Mercury-WebServiceUser</role-name>
         </auth-constraint>
+        <!--  By defining the user-data-constraint, we make use of the redirect setting on JBOSS.  With out this,
+          we would have to redirect the request utilizing the SecurityFilter -->
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>

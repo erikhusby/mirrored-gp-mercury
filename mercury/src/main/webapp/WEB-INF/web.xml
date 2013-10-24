@@ -86,6 +86,12 @@
             <web-resource-name>SecuredArea</web-resource-name>
             <url-pattern>/dummy-url/*</url-pattern>
         </web-resource-collection>
+        <!--  for SSL forwarding, we could have done it using the forwarding that is specified in the JBoss
+            configuration.  If we did, we would have to specify the roles for auth constraint (all applicable roles) and
+            implement a user-data-constraint tag in here with a transport guarantee of CONFIDENTIAL.  Since CLIA needs
+            the SSL forwarding but research (currently) does not, utilizing this approach would have been an
+            unnecessary impact to the research implementation.  To get around this, a Security filter was added
+            to redirect unsecured traffic to the SSL port-->
         <auth-constraint>
         </auth-constraint>
     </security-constraint>
