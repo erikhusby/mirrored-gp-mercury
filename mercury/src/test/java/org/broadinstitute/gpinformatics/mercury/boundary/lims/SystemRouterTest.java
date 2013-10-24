@@ -247,30 +247,26 @@ public class SystemRouterTest extends BaseEventTest {
     public void testRouteForTubesNoneInMercury(ApplicationInstance instance) {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
+        final List<String> testBarcodes = Arrays.asList("squidTube1", "squidTube2");
         if (Deployment.isCRSP) {
             try {
-                systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube1", "squidTube2"));
+                systemRouter.routeForVesselBarcodes(testBarcodes);
                 Assert.fail("CRSP Deployment should not route to Squid");
             } catch (Exception e) {
 
             }
         } else {
-            assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube1", "squidTube2")), is(SQUID));
+            assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(SQUID));
         }
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidTube1");
-            add("squidTube2");
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesSomeInMercuryWithoutOrders(ApplicationInstance instance) {
-        assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidTube");
-            add(MERCURY_TUBE_1);
-        }});
+        final List<String> testTubes = Arrays.asList("squidTube", MERCURY_TUBE_1);
+        assertThat(systemRouter.routeForVesselBarcodes(testTubes), is(SQUID));
+        verify(mockLabVesselDao).findByBarcodes(testTubes);
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -278,20 +274,18 @@ public class SystemRouterTest extends BaseEventTest {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube1, testProduct);
+        final List<String> testTubes = Arrays.asList("squidTube", MERCURY_TUBE_1);
         if (Deployment.isCRSP) {
             try {
-                systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1));
+                systemRouter.routeForVesselBarcodes(testTubes);
                 Assert.fail("CRSP Deployment should never route to Squid");
             } catch (Exception e) {
 
             }
         } else {
-            assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
+            assertThat(systemRouter.routeForVesselBarcodes(testTubes), is(SQUID));
         }
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidTube");
-            add(MERCURY_TUBE_1);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testTubes);
         Deployment.isCRSP = oldDeployment;
     }
 
@@ -300,74 +294,63 @@ public class SystemRouterTest extends BaseEventTest {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         placeOrderForTube(tube2, testProduct);
+        final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
         if (Deployment.isCRSP) {
             try {
-                systemRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2));
+                systemRouter.routeForVesselBarcodes(testBarcodes);
                 Assert.fail("CRSP Deployment should never route to Squid");
             } catch (Exception e) {
 
             }
         } else {
-            assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
+            assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
                     is(SQUID));
         }
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add(MERCURY_TUBE_1);
-            add(MERCURY_TUBE_2);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         Deployment.isCRSP = oldDeployment;
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesSomeInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
         placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        final List<String> testBarcodes = Arrays.asList("squidTube", MERCURY_TUBE_1);
         try {
-            systemRouter.routeForVesselBarcodes(Arrays.asList("squidTube", MERCURY_TUBE_1));
+            systemRouter.routeForVesselBarcodes(testBarcodes);
             Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
         } catch (Exception expected) {}
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidTube");
-            add(MERCURY_TUBE_1);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithOrdersSomeExomeExpress(ApplicationInstance instance) {
         placeOrderForTube(tube1, testProduct);
         placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
         try {
-            systemRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2));
+            systemRouter.routeForVesselBarcodes(testBarcodes);
             Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
         } catch (Exception expected) {}
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add(MERCURY_TUBE_1);
-            add(MERCURY_TUBE_2);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes );
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
         ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
-        assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)),
+        final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
                 is(MERCURY));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add(MERCURY_TUBE_1);
-            add(MERCURY_TUBE_2);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls(ApplicationInstance instance) {
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
+        final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE);
         assertThat(systemRouter.routeForVesselBarcodes(
-                Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE)),
+                testBarcodes),
                 is(MERCURY));
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add(MERCURY_TUBE_1);
-            add(MERCURY_TUBE_2);
-            add(CONTROL_TUBE);
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
         verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
@@ -377,7 +360,8 @@ public class SystemRouterTest extends BaseEventTest {
         final TwoDBarcodedTube target1 = new TwoDBarcodedTube("target1");
         final TwoDBarcodedTube target2 = new TwoDBarcodedTube("target2");
         final TwoDBarcodedTube target3 = new TwoDBarcodedTube("target3");
-        when(mockLabVesselDao.findByBarcodes(Arrays.asList("target1", "target2", "target3")))
+        final List<String> testBarcodes = Arrays.asList("target1", "target2", "target3");
+        when(mockLabVesselDao.findByBarcodes(testBarcodes))
                 .thenReturn(new HashMap<String, LabVessel>() {{
                     put("target1", target1);
                     put("target2", target2);
@@ -388,14 +372,10 @@ public class SystemRouterTest extends BaseEventTest {
         doSectionTransfer(makeTubeFormation(tube1, tube2, controlTube), plate);
         doSectionTransfer(plate, makeTubeFormation(target1, target2, target3));
 
-        assertThat(systemRouter.routeForVesselBarcodes(Arrays.asList("target1", "target2", "target3")),
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
                 is(MERCURY));
 
-        verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("target1");
-            add("target2");
-            add("target3");
-        }});
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
         verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
     }
@@ -408,19 +388,20 @@ public class SystemRouterTest extends BaseEventTest {
     public void testRouteForPlateNotInMercury(ApplicationInstance instance) {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
+        final String testBarcode = "squidPlate";
         if(Deployment.isCRSP) {
             try {
-                systemRouter.routeForVessel("squidPlate");
+                systemRouter.routeForVessel(testBarcode);
 
                 Assert.fail("CRSP Deployment should never route to Squid");
             } catch (Exception e) {
 
             }
         } else {
-            assertThat(systemRouter.routeForVessel("squidPlate"), equalTo(SQUID));
+            assertThat(systemRouter.routeForVessel(testBarcode), equalTo(SQUID));
         }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidPlate");
+            add(testBarcode);
         }});
         Deployment.isCRSP = oldDeployment;
     }
@@ -491,18 +472,19 @@ public class SystemRouterTest extends BaseEventTest {
     public void testRouteForTubeNotInMercury(ApplicationInstance instance) {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
+        final String testBarcode = "squidTube";
         if (Deployment.isCRSP) {
             try {
-                systemRouter.routeForVessel("squidTube");
+                systemRouter.routeForVessel(testBarcode);
                 Assert.fail("CRSP Deployment should never route to Squid");
             } catch (Exception e) {
 
             }
         } else {
-            assertThat(systemRouter.routeForVessel("squidTube"), is(SQUID));
+            assertThat(systemRouter.routeForVessel(testBarcode), is(SQUID));
         }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
-            add("squidTube");
+            add(testBarcode);
         }});
         Deployment.isCRSP = oldDeployment;
     }
