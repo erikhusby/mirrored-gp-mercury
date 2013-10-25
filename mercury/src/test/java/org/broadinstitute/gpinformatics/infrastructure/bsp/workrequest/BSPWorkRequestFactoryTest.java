@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -10,12 +11,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * Tests for factory class for creating {@link SampleKitWorkRequest}s for use by {@link BSPKitRequestService}.
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2L, 3L, 4L);
+                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4L);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(1L));
         assertThat(workRequest.getProjectManagerId(), equalTo(2L));
