@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -118,7 +119,7 @@ public class BSPPlatingRequestServiceImpl extends BSPWorkRequestClientService im
         // Assume the worst, that we will ultimately fail submitting this WR.
         result.setPlatingRequestSubmitted(false);
 
-        if (bspWorkRequest.getErrors() != null && !bspWorkRequest.getErrors().isEmpty()) {
+        if (CollectionUtils.isNotEmpty(bspWorkRequest.getErrors())) {
             // Errors on work request, do not submit. This is not a hard error,
             // but the PMs will need to sort out the problems before plating can
             // go forward.

@@ -11,25 +11,25 @@ public class BSPWorkRequestFactory {
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
      *
-     * TODO: clarify PI and PM for the request
-     *
      * @param workRequestName          the name of the work request; must be unique in BSP
      * @param requestUser              the user making the request
      * @param productOrderId           the product order associated with the request
-     * @param primaryInvestigatorId    the domain user ID for ???
-     * @param projectManagerId         the domain user ID for ???
+     * @param primaryInvestigatorId    the domain user ID for the Broad PI
+     * @param projectManagerId         the domain user ID for the Broad PM
+     * @param externalCollaboratorId   the domain user ID for the external collaborator
      * @param siteId                   the BSP ID of the site that the sample kits should be shipped to
      * @param numberOfSamples          the total number of samples that the kit should contain
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
                                                               String productOrderId, long primaryInvestigatorId,
-                                                              long projectManagerId,
-                                                              long siteId, Long numberOfSamples) {
-        SampleKitWorkRequest workRequest = new SampleKitWorkRequest(
+                                                              long projectManagerId, long externalCollaboratorId,
+                                                              long siteId, long numberOfSamples) {
+
+        return new SampleKitWorkRequest(
                 primaryInvestigatorId, // primaryInvestigatorId
                 projectManagerId, // projectManagerId
-                null, // externalCollaboratorId
+                externalCollaboratorId, // externalCollaboratorId
                 null, // barCode
                 workRequestName, // workRequestName
                 requestUser, // requestUser
@@ -39,12 +39,10 @@ public class BSPWorkRequestFactory {
                 null, // errors
                 null, // warnings
                 null, // info
-                null, // moleculeType
+                SampleKitWorkRequest.MoleculeType.DNA, // moleculeType
                 siteId, // siteId
                 numberOfSamples, // numberOfSamples
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT // transferMethod
         );
-
-        return workRequest;
     }
 }
