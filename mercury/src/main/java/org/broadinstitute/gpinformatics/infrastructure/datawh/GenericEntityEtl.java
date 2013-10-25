@@ -40,6 +40,12 @@ import java.util.Set;
 public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLASS> {
     public static final String IN_CLAUSE_PLACEHOLDER = "__IN_CLAUSE__";
 
+    /** The quote character for ETL values. */
+    private static final String QUOTE = "\"";
+
+    /** The empty formatted value. */
+    private static final String EMPTY_VALUE = QUOTE + QUOTE;
+
     public final Class<AUDITED_ENTITY_CLASS> entityClass;
     /**
      * The entity-related name of the data file, and must sync with the ETL cron script and control file.
@@ -460,11 +466,10 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public static String genericRecord(String etlDateStr, boolean isDelete, Object... fields) {
         StringBuilder rec = new StringBuilder()
                 .append(etlDateStr)
-                .append(ExtractTransform.DELIM)
+                .append(ExtractTransform.DELIMITER)
                 .append(format(isDelete));
         for (Object field : fields) {
-            rec.append(ExtractTransform.DELIM)
-                    .append(field);
+            rec.append(ExtractTransform.DELIMITER).append(field);
         }
         return rec.toString();
     }
@@ -475,7 +480,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.formatTimestamp(date) : "\"\"");
+        return (date != null ? ExtractTransform.formatTimestamp(date) : EMPTY_VALUE);
     }
 
     /**
@@ -494,13 +499,13 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      */
     public static String format(String string) {
         if (string == null) {
-            return "\"\"";
+            return EMPTY_VALUE;
         }
         // Newlines are not allowed in the output.
         string = string.replace('\n', ' ');
-        if (string.contains(ExtractTransform.DELIM)) {
-            // Escapes all embedded double quotes by doubling them: " becomes ""
-            return "\"" + string.replaceAll("\"", "\"\"") + "\"";
+        // If a delimiter is present, we need to quote the contents. Escape all embedded quotes by doubling them.
+        if (string.contains(ExtractTransform.DELIMITER)) {
+            return QUOTE + string.replaceAll(QUOTE, QUOTE + QUOTE) + QUOTE;
         }
         return string;
     }
@@ -511,7 +516,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @param num to format
      */
     public static <T extends Number> String format(T num) {
-        return (num != null ? num.toString() : "\"\"");
+        return (num != null ? num.toString() : EMPTY_VALUE);
     }
 
     /**
@@ -542,7 +547,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             if (writer == null) {
                 writer = new BufferedWriter(new FileWriter(filename));
             }
-            writer.write(lineCount + ExtractTransform.DELIM + record);
+            writer.write(lineCount + ExtractTransform.DELIMITER + record);
             writer.newLine();
         }
 
@@ -572,7 +577,7 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public static long hash(String... strings) {
         StringBuilder sb = new StringBuilder();
         for (String s : strings) {
-            sb.append(ExtractTransform.DELIM).append(s);
+            sb.append(ExtractTransform.DELIMITER).append(s);
         }
         return GenericEntityEtl.hash(sb.toString());
     }

@@ -13,13 +13,13 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 
 /**
+ * Integration tests for {@link BSPKitRequestService}.
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPKitRequestServiceIntegrationTest extends Arquillian {
 
-    public static final long BREILLY_BSP_USER_ID = 14038L;
-    public static final long BREILLY_DOMAIN_USER_ID = 10619L;
-    public static final long ELANDER_DOMAIN_USER_ID = 7062L;
+    public static final long BREILLY_DOMAIN_USER_ID = 10619;
+    public static final long ELANDER_DOMAIN_USER_ID = 7062;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -33,18 +33,18 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     public void testSendKitRequest() {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1L, 96L);
+                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1, 96L);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
         System.out.println(result.getWorkRequestBarcode());
     }
 
-    @Test(enabled = false)
+    @Test
     public void testSubmitKitRequest() {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1L, 96L);
+                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, 1, 96L);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);

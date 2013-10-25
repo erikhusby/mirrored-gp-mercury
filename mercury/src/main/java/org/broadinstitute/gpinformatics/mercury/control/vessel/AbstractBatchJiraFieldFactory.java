@@ -36,7 +36,7 @@ public abstract class AbstractBatchJiraFieldFactory {
      * Provides the collection of {@link CustomField custom fields} necessary to successfully open a JIRA ticket based
      * on the provided {@link LabBatch Batch} entity.
      *
-     * @param submissionFields A {@link Map<String, CustomFieldDefinition>} indexed by the name of the field, of all
+     * @param submissionFields A {@link Map} indexed by the name of the field, of all
      *                         custom fields defined within the instance of JIRA that the system is currently
      *                         interacting with to allow the factory to relate a field value to the specific field for
      *                         which that value is to be associated
@@ -64,7 +64,7 @@ public abstract class AbstractBatchJiraFieldFactory {
     /**
      * This method returns the project type for the concrete JIRA field factories.
      *
-     * @return A {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} enum
+     * @return A {@link CreateFields.ProjectType} enum
      *         value for the concrete JIRA field factory
      */
     public CreateFields.ProjectType getProjectType() {
@@ -88,14 +88,13 @@ public abstract class AbstractBatchJiraFieldFactory {
         AbstractBatchJiraFieldFactory builder;
 
         switch (projectType) {
-        case LCSET_PROJECT:
-            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
-            break;
         case FCT_PROJECT:
             builder = new FCTJiraFieldFactory(batch);
             break;
+        case LCSET_PROJECT:
         default:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
         }
 
         return builder;
@@ -105,15 +104,14 @@ public abstract class AbstractBatchJiraFieldFactory {
                                                             AthenaClientService athenaClientService) {
         AbstractBatchJiraFieldFactory builder;
         switch (batch.getLabBatchType()) {
-        case WORKFLOW:
-            builder = new LCSetJiraFieldFactory(batch, athenaClientService);
-            break;
         case MISEQ:
         case FCT:
             builder = new FCTJiraFieldFactory(batch);
             break;
+        case WORKFLOW:
         default:
             builder = new LCSetJiraFieldFactory(batch, athenaClientService);
+            break;
         }
         return builder;
     }
