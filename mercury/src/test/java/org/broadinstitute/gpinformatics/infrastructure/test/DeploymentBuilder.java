@@ -60,6 +60,15 @@ public class DeploymentBuilder {
         return war;
     }
 
+    /**
+     * Allows caller to specify environments for remote systems, and for the database.  This method also adds a flag
+     * to indicate that this is a deployment for CRSP
+     * @param deployment              maps to settings in mercury-config.yaml
+     * @param dataSourceEnvironment   which datasources to use: dev, qa or prod`
+     * @return war
+     *
+     * {@see #buildMercuryWar}
+     */
     public static WebArchive buildCRSPMercuryWar(Deployment deployment, String dataSourceEnvironment) {
         WebArchive war = buildMercuryWar(deployment, dataSourceEnvironment);
 

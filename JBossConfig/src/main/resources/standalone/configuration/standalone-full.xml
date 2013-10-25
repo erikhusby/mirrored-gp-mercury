@@ -396,7 +396,10 @@
             <configuration>
                 <jsp-configuration development="true"/>
             </configuration>
-            <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http"/>
+            <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http" redirect-port="8443"/>
+            <connector name="https" protocol="HTTP/1.1" scheme="https" socket-binding="https" secure="true" redirect-port="8443">
+                <ssl name="https" key-alias="mercury_ssl" password="${ssl.keystore.password}" certificate-key-file="${jboss.server.config.dir}/${ssl.keystorefile}" protocol="TLSv1" verify-client="want" ca-certificate-file="${jboss.server.config.dir}/${ssl.truststorefile}" ca-certificate-password="${ssl.truststore.password}"/>
+            </connector>
             <virtual-server name="default-host" enable-welcome-root="true">
                 <alias name="localhost"/>
                 <alias name="example.com"/>

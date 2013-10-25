@@ -18,6 +18,10 @@
         <crowd.application.password>vx2hUJP4xB</crowd.application.password>
         <crowd.application.serverurl>https://crowd.broadinstitute.org:8443/crowd</crowd.application.serverurl>
         <roleprefix></roleprefix>
+        <ssl.keystorefile>mercuryssl.jks</ssl.keystorefile>
+        <ssl.truststorefile>mercuryssl.truststore</ssl.truststorefile>
+        <ssl.keystore.password>changeit</ssl.keystore.password>
+        <ssl.truststore.password>changeit</ssl.truststore.password>
     </properties>
 
     <repositories>
@@ -49,32 +53,25 @@
 
     <profiles>
         <profile>
-            <id>CRSP-DEV</id>
+            <id>CRSP</id>
             <properties>
                 <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
                 <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
                 <roleprefix>CRSP-</roleprefix>
+                <ssl.keystore.password>?</ssl.keystore.password>
+                <ssl.truststore.password>?</ssl.truststore.password>
             </properties>
         </profile>
 
         <profile>
-            <id>CRSP-PROD</id>
+            <id>PROD</id>
             <properties>
-                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
-                <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
-                <roleprefix>CRSP-</roleprefix>
+                <ssl.keystorefile> </ssl.keystorefile>
+                <ssl.truststorefile> </ssl.truststorefile>
+                <ssl.keystore.password>?</ssl.keystore.password>
+                <ssl.truststore.password>?</ssl.truststore.password>
             </properties>
         </profile>
-
-        <profile>
-            <id>CRSP-QA</id>
-            <properties>
-                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
-                <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
-                <roleprefix>CRSP-</roleprefix>
-            </properties>
-        </profile>
-
     </profiles>
 
     <build>
@@ -87,6 +84,19 @@
             <resource>
                 <directory>src/main/resources/standalone</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/mercuryssl.jks</exclude>
+                    <exclude>**/mercuryssl.truststore</exclude>
+                </excludes>
+                <targetPath>${project.build.directory}/standalone</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/resources/standalone</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/mercuryssl.jks</include>
+                    <include>**/mercuryssl.truststore</include>
+                </includes>
                 <targetPath>${project.build.directory}/standalone</targetPath>
             </resource>
         </resources>
