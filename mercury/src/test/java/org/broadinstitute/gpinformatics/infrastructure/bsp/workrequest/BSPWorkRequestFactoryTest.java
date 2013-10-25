@@ -1,31 +1,37 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
-import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
-import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.testng.annotations.Test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 /**
+ * Tests for factory class for creating {@link SampleKitWorkRequest}s for use by {@link BSPKitRequestService}.
  */
 public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
-        SampleKitRequestDto sampleKitRequestDto = new SampleKitRequestDto("breilly", null, "0.75mL", 0, 96,
-                new Site(42, null, null, null, null, null, null), null, null, null);
-
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 14038, 14038L, 42L, 96L);
+                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2L, 3L, 4L);
 
-        MatcherAssert.assertThat(workRequest.getWorkRequestName(),
-                CoreMatchers.equalTo("BSPKitRequestServiceTest.testBuildBspKitWorkRequest"));
-        MatcherAssert.assertThat(workRequest.getProjectManagerId(), CoreMatchers.equalTo(14038L));
-        MatcherAssert.assertThat(workRequest.getPrimaryInvestigatorId(), CoreMatchers.equalTo(14038L));
-        MatcherAssert.assertThat(workRequest.getPdoId(), CoreMatchers.equalTo("PDO-1"));
-        MatcherAssert.assertThat(workRequest.getRequestUser(), CoreMatchers.equalTo("breilly"));
-        MatcherAssert.assertThat(workRequest.getNumberOfSamples(), CoreMatchers.equalTo(96L));
-        MatcherAssert.assertThat(workRequest.getSiteId(), CoreMatchers.equalTo(42L));
+        assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(1L));
+        assertThat(workRequest.getProjectManagerId(), equalTo(2L));
+        assertThat(workRequest.getExternalCollaboratorId(), nullValue());
+        assertThat(workRequest.getBarCode(), nullValue());
+        assertThat(workRequest.getWorkRequestName(), equalTo("BSPKitRequestServiceTest.testBuildBspKitWorkRequest"));
+        assertThat(workRequest.getRequestUser(), equalTo("breilly"));
+        assertThat(workRequest.getPdoId(), equalTo("PDO-1"));
+        assertThat(workRequest.getStatus(), nullValue());
+        assertThat(workRequest.getNotificationList(), nullValue());
+        assertThat(workRequest.getErrors(), nullValue());
+        assertThat(workRequest.getWarnings(), nullValue());
+        assertThat(workRequest.getInfo(), nullValue());
+        assertThat(workRequest.getMoleculeType(), nullValue());
+        assertThat(workRequest.getSiteId(), equalTo(3L));
+        assertThat(workRequest.getNumberOfSamples(), equalTo(4L));
+        assertThat(workRequest.getTransferMethod(), equalTo(SampleKitWorkRequest.TransferMethod.SHIP_OUT));
     }
 }
