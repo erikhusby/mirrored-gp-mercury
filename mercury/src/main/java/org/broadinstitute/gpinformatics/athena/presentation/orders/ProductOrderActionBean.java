@@ -865,7 +865,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (hasErrors()) {
-            return getContext().getSourcePageResolution();
+            return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
