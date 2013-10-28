@@ -1,13 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.bsp.client.rackscan.NetworkRackScanner;
-import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.RackScannerConfig;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.abgene.AbgeneNetworkRackScanner;
 import org.broadinstitute.bsp.client.rackscan.zaith.ZaithNetworkRackScanner;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackScanner;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
