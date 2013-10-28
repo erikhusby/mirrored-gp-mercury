@@ -8,12 +8,13 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.rackscan.RackScanner;
 import org.broadinstitute.bsp.client.rackscan.ScannerException;
 import org.broadinstitute.bsp.client.rackscan.geometry.Dimension;
 import org.broadinstitute.bsp.client.rackscan.geometry.Geometry;
 import org.broadinstitute.bsp.client.rackscan.geometry.index.AlphaNumeric;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.RackScannerEjb;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackScanner;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -49,11 +50,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
         if (labToFilterBy == null) {
             rackScanners.addAll(Arrays.asList(RackScanner.values()));
         } else {
-            for (RackScanner scanner : RackScanner.values()) {
-                if (labToFilterBy == scanner.getRackScannerLab()) {
-                    rackScanners.add(scanner);
-                }
-            }
+            rackScanners.addAll(RackScanner.getRackScannersByLab(labToFilterBy));
         }
     }
 
@@ -110,8 +107,17 @@ public abstract class RackScanActionBean extends CoreActionBean {
     }
 
     /** Shows the possible labs rack scanners are in. */
-    public RackScanner.RackScannerLab[] getAllLabs() {
-        return RackScanner.RackScannerLab.values();
+    public List<RackScanner.RackScannerLab> getAllLabs() {
+
+        List<RackScanner.RackScannerLab> labsBySoftwareSystems;
+        if (ApplicationInstance.CRSP.isCurrent()) {
+            labsBySoftwareSystems =
+                    RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.CRSP_BSP);
+        } else {
+            labsBySoftwareSystems = RackScanner.RackScannerLab.getLabsBySoftwareSystems(RackScanner.SoftwareSystem.BSP,
+                    RackScanner.SoftwareSystem.MERCURY);
+        }
+        return labsBySoftwareSystems;
     }
 
     public List<String> getMatrixPositions() {
