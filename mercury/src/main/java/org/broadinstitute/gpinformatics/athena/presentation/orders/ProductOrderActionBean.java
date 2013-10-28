@@ -877,7 +877,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("abandonOrders")
     public Resolution abandonOrders() {
-
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
