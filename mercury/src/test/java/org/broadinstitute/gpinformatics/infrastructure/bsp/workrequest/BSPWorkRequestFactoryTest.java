@@ -17,11 +17,11 @@ public class BSPWorkRequestFactoryTest {
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4L);
+                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4, 5);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(1L));
         assertThat(workRequest.getProjectManagerId(), equalTo(2L));
-        assertThat(workRequest.getExternalCollaboratorId(), nullValue());
+        assertThat(workRequest.getExternalCollaboratorId(), equalTo(3L));
         assertThat(workRequest.getBarCode(), nullValue());
         assertThat(workRequest.getWorkRequestName(), equalTo("BSPKitRequestServiceTest.testBuildBspKitWorkRequest"));
         assertThat(workRequest.getRequestUser(), equalTo("breilly"));
@@ -31,9 +31,9 @@ public class BSPWorkRequestFactoryTest {
         assertThat(workRequest.getErrors(), nullValue());
         assertThat(workRequest.getWarnings(), nullValue());
         assertThat(workRequest.getInfo(), nullValue());
-        assertThat(workRequest.getMoleculeType(), nullValue());
-        assertThat(workRequest.getSiteId(), equalTo(3L));
-        assertThat(workRequest.getNumberOfSamples(), equalTo(4L));
+        assertThat(workRequest.getMoleculeType(), equalTo(SampleKitWorkRequest.MoleculeType.DNA));
+        assertThat(workRequest.getSiteId(), equalTo(4L));
+        assertThat(workRequest.getNumberOfSamples(), equalTo(5L));
         assertThat(workRequest.getTransferMethod(), equalTo(SampleKitWorkRequest.TransferMethod.SHIP_OUT));
     }
 }

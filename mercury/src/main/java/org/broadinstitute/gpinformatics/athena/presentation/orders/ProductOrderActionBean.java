@@ -22,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.kits.SampleKitRequestDto;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -268,7 +267,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private SampleKitRequestDto sampleKitRequestDto;
+    private long numberOfSamples;
+
+    private String plasticware;
+
+    private Site site;
 
     /*
      * The search query.
@@ -290,7 +293,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
     public void init() {
-        sampleKitRequestDto = new SampleKitRequestDto();
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
@@ -384,8 +386,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
-            requireField(sampleKitRequestDto.getNumberOfTubesPerRack() > 0, "a specified number of tubes", action);
-            requireField(sampleKitRequestDto.getSite(), "a site", action);
+            requireField(numberOfSamples > 0, "a specified number of tubes", action);
+            requireField(site, "a site", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -436,7 +438,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Update the shipping location token input, which is only visible on the View page before placing.
         List<Site> sites = bspShippingLocationTokenInput.getTokenObjects();
         if (!sites.isEmpty()) {
-            sampleKitRequestDto.setSite(sites.get(0));
+            site = sites.get(0);
         }
 
         doValidation(action);
@@ -736,8 +738,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, sampleKitRequestDto.getSite(),
-                        sampleKitRequestDto.getNumberOfTubesPerRack());
+                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples);
             }
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
@@ -865,7 +866,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (hasErrors()) {
-            return getContext().getSourcePageResolution();
+            return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
@@ -877,7 +878,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("abandonOrders")
     public Resolution abandonOrders() {
-
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
@@ -1590,8 +1590,28 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
     }
 
-    public SampleKitRequestDto getSampleKitRequestDto() {
-        return sampleKitRequestDto;
+    public long getNumberOfSamples() {
+        return numberOfSamples;
+    }
+
+    public void setNumberOfSamples(long numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public String getPlasticware() {
+        return plasticware;
+    }
+
+    public void setPlasticware(String plasticware) {
+        this.plasticware = plasticware;
+    }
+
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
     }
 
     /**
