@@ -701,7 +701,7 @@
                                     Number of Samples
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:text id="tubesPerKit" name="sampleKitRequestDto.numberOfTubesPerRack"
+                                    <stripes:text id="tubesPerKit" name="numberOfSamples"
                                                   class="defaultText" title="Enter the number of samples"/>
                                 </div>
                             </div>
@@ -711,7 +711,7 @@
                                     Kit Type
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:select id="kitType" name="sampleKitRequestDto.plasticware">
+                                    <stripes:select id="kitType" name="plasticware">
                                         <stripes:option value="0.75mL">0.75mL</stripes:option>
                                     </stripes:select>
                                 </div>
