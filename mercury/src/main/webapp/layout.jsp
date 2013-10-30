@@ -48,7 +48,7 @@
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
 
-        <link rel="stylesheet"  href="http://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
+        <link rel="stylesheet"  href="https://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/css/bootstrap.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
         <link rel="stylesheet"  href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
