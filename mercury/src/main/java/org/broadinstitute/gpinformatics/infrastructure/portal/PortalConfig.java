@@ -32,11 +32,11 @@ public class PortalConfig extends AbstractConfig  implements LoginAndPassword, S
     }
 
     public String getUrlBase() {
-        return String.format("http://%s:%d/portal", getHost(), getPort());
+        return String.format("%s%s:%d/portal",getHttpScheme(), getHost(), getPort());
     }
 
     public String getWsUrl(String portalName) {
-        return String.format("http://%s:%d/portal/%s/ws/portals/private/", getHost(), getPort(), portalName);
+        return String.format("%s%s:%d/portal/%s/ws/portals/private/",getHttpScheme(), getHost(), getPort(), portalName);
     }
 
 

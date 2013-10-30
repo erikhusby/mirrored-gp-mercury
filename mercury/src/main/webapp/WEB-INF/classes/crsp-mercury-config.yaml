@@ -5,37 +5,37 @@ app:
 
     DEV:
       host:     localhost
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail:
 
     AUTO_BUILD:
       host:     crsp-dev-mercury.broadinstitute.org
-      port:     8081
+      port:     8443
       jmsPort:  5446
       workflowValidationEmail:
 
     TEST:
       host:     crsp-dev-mercury.broadinstitute.org
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail:
 
     QA:
       host:     crsp-qa-mercury.broadinstitute.org
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail:
 
     RC:
       host:     crsp-rc-mercury.broadinstitute.org
-      port:     8082
+      port:     8443
       jmsPort:  5447
       workflowValidationEmail:
 
     PROD:
       host:     crsp-mercury.broadinstitute.org
-      port:     8080
+      port:     8443
       jmsPort:  5445
       workflowValidationEmail: gplims@broadinstitute.org
       #limsworkflowvalidation@broadinstitute.org
@@ -47,13 +47,13 @@ bsp:
       login:    seqsystem
       password: bspbsp
       host:     crsp-dev-bsp.broadinstitute.org
-      port:     8080
+      port:     8443
 
     RC:
       login:    seqsystem
       password: bspbsp
       host:     crsp-qa-bsp.broadinstitute.org
-      port:     8080
+      port:     8443
 
     PROD:
       login:
@@ -100,19 +100,19 @@ portal:
       login:    portaluser
       password: Dr1ftw00d
       host:     crsp-dev-portal
-      port:     8111
+      port:     8444
 
     DEV:
       login:    portaluser
       password: Dr1ftw00d
       host:     crsp-dev-portal
-      port:     8111
+      port:     8444
 
     QA:
       login:    portaluser
       password: Dr1ftw00d
       host:     crsp-qa-portal
-      port:     8111
+      port:     8444
 
     PROD:
       login:

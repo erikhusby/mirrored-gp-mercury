@@ -623,10 +623,16 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Get the requisition key which should be the same ID as the product order, just a different prefix.
+     * Get the requisition key which should be the same ID as the product order, just a different prefix.  If there is
+     * no product order business key, then it returns null. We use the jiraTicketKey because the product order would
+     * not exist in the draft state.
      */
-     public String getRequisitionKey() {
-        return REQUISITION_PREFIX + getBusinessKey().substring(getBusinessKey().indexOf('-') + 1);
+    public String getRequisitionKey() {
+        if (jiraTicketKey != null) {
+            return REQUISITION_PREFIX + jiraTicketKey.substring(jiraTicketKey.indexOf('-') + 1);
+        }
+
+        return null;
     }
 
     public String getRequisitionName() {

@@ -65,11 +65,11 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
     }
 
     public String getUrl(String suffix) {
-        return String.format("http://%s:%d/BSP/%s", getHost(), getPort(), suffix);
+        return String.format("%s%s:%d/BSP/%s", getHttpScheme(),getHost(), getPort(), suffix);
     }
 
     public String getWSUrl(String suffix) {
-        return String.format("http://%s:%d/ws/bsp/%s", getHost(), getPort(), suffix);
+        return String.format("%s%s:%d/ws/bsp/%s",getHttpScheme(), getHost(), getPort(), suffix);
     }
 
     public static BSPConfig produce(Deployment deployment) {
