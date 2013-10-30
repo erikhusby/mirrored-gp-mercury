@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 import com.sun.jersey.api.client.Client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.workrequest.SeqPlatingWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
@@ -29,7 +28,7 @@ public class BSPWorkRequestClientService extends AbstractJerseyClientService {
     private final BSPConfig bspConfig;
 
     public BSPWorkRequestClientService() {
-        bspConfig = null;
+        this(null);
     }
 
     @Inject
@@ -87,8 +86,7 @@ public class BSPWorkRequestClientService extends AbstractJerseyClientService {
 
             final String msg = String.format(
                     "Found errors attempting to submit BSP WR %s: %s",
-                    wrBarcode,
-                    submissionResponse.getErrors().toString());
+                    wrBarcode, submissionResponse.getErrors());
 
             log.error(msg);
             throw new RuntimeException(submissionResponse.getErrors().toString());
