@@ -9,7 +9,10 @@
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
     <version>1.35-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <modules>
+        <module>../jiraService</module>
+    </modules>
+    <packaging>pom</packaging>
     <inceptionYear>2012</inceptionYear>
 
     <!-- uncomment this to enable squid integration.
@@ -87,7 +90,7 @@
             <id>Broad Maven</id>
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
-            <url>http://maven.broadinstitute.org/maven</url>
+            <url>http://prodinfosvn.broadinstitute.org:8000/maven</url>
 
         </repository>
 

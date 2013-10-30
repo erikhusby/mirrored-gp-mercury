@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSeri
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
@@ -15,8 +14,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * We use a custom serializer here because custom fields are not
@@ -155,10 +152,10 @@ public class CreateFields extends UpdateFields {
         }
 
         /** Contains the IssueType to use for a given workflow. */
-        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
-            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
-            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
-        }};
+//        public static final Map<String, IssueType> MAP_WORKFLOW_TO_ISSUE_TYPE = new HashMap<String, IssueType>() {{
+//            put(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), EXOME_EXPRESS);
+//            put(Workflow.ICE.getWorkflowName(), EXOME_EXPRESS);
+//        }};
     }
 
 

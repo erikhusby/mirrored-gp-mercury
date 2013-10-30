@@ -106,7 +106,8 @@ public class JiraServiceStub implements JiraService {
                                                                 @Nonnull CreateFields.IssueType issueType) throws
             IOException {
         Map<String, CustomFieldDefinition> customFields = new HashMap<>();
-        for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
+        for (String requiredFieldName :
+                JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put(requiredFieldName, new CustomFieldDefinition(
                     "stub_custom_field_" + requiredFieldName, requiredFieldName, true));
         }
