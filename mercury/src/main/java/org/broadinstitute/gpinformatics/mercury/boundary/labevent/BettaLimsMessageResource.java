@@ -73,7 +73,7 @@ public class BettaLimsMessageResource {
      */
     private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
-    private static final Log LOG = LogFactory.getLog(BettaLimsMessageResource.class);
+    private static final Log log = LogFactory.getLog(BettaLimsMessageResource.class);
     private static final boolean VALIDATE_SCHEMA = false;
 
     @Inject
@@ -217,18 +217,23 @@ public class BettaLimsMessageResource {
                     // ignore the Mercury error.
                     if (processInSquid && bettaLimsResponse.getCode() !=
                                           Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
-                        LOG.error("Mercury processing failed, returning Squid result to client", e);
+                        log.error("Mercury processing failed, returning Squid result to client", e);
                     } else {
                         throw e;
                     }
                 }
             }
             if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
-                throw new RuntimeException(bettaLimsResponse.getMessage());
+                String error = bettaLimsResponse.getMessage();
+                if (error.startsWith("The specified user does not exist")) {
+                    log.info(error);
+                } else {
+                    throw new RuntimeException(error);
+                }
             }
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
-            LOG.error("Failed to process run", e);
+            log.error("Failed to process run", e);
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
                     e.getMessage());
             throw e;
@@ -381,7 +386,7 @@ public class BettaLimsMessageResource {
         try {
             workflowValidator.validateWorkflow(message);
         } catch (Exception e) {
-            LOG.error("Failed to validate workflow", e);
+            log.error("Failed to validate workflow", e);
             // Don't rethrow, workflow must not stop persistence of the message
         }
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
