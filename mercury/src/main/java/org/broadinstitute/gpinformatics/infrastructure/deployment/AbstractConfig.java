@@ -77,7 +77,7 @@ public abstract class AbstractConfig {
         return mercuryDeployment;
     }
 
-    protected static String getHttpScheme() {
+    public static String getHttpScheme() {
         return (Deployment.isCRSP)?"https://":"http://";
     }
 }
