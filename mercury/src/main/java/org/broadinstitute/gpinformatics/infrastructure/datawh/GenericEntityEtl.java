@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -13,6 +14,7 @@ import org.hibernate.envers.RevisionType;
 import org.hibernate.type.LongType;
 
 import javax.inject.Inject;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -45,6 +47,9 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
 
     /** The empty formatted value. */
     private static final String EMPTY_VALUE = QUOTE + QUOTE;
+
+    private final Set<Long> errorIds = new HashSet<>();
+    private Exception errorException = null;
 
     public final Class<AUDITED_ENTITY_CLASS> entityClass;
     /**
@@ -155,18 +160,22 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * @return the number of records created in the data file (deletes, modifies, and adds).
      */
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
+        try {
+            // Retrieves the Envers-formatted list of entity changes in the given revision range.
+            List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
+            AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities);
 
-        // Retrieves the Envers-formatted list of entity changes in the given revision range.
-        List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
-        AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities);
+            // The convert calls optionally convert entity types for cross-entity etl classes.
+            Collection<Long> deletedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.deletedEntityIds);
+            Collection<Long> modifiedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.modifiedEntityIds);
+            Collection<Long> addedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.addedEntityIds);
 
-        // The convert calls optionally convert entity types for cross-entity etl classes.
-        Collection<Long> deletedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.deletedEntityIds);
-        Collection<Long> modifiedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.modifiedEntityIds);
-        Collection<Long> addedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.addedEntityIds);
-
-        return writeEtlDataFile(deletedEntityIds, modifiedEntityIds, addedEntityIds, auditLists.revInfoPairs,
-                etlDateStr);
+            return writeEtlDataFile(deletedEntityIds, modifiedEntityIds, addedEntityIds, auditLists.revInfoPairs,
+                    etlDateStr);
+        } catch (RuntimeException e) {
+            logger.error(getClass().getSimpleName() + " ETL failed", e);
+            return 0;
+        }
     }
 
     int writeEtlDataFile(Collection<Long> deletedEntityIds,
@@ -207,29 +216,33 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
         if (!entityClass.equals(requestedClass)) {
             return 0;
         }
+        try {
+            Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
 
-        Collection<Long> auditClassDeletedIds = fetchDeletedEntityIds(startId, endId);
-
-        Collection<AUDITED_ENTITY_CLASS> auditEntities = entitiesInRange(startId, endId);
-        for (Iterator<AUDITED_ENTITY_CLASS> iter = auditEntities.iterator(); iter.hasNext(); ) {
-            if (auditClassDeletedIds.contains(entityId(iter.next()))) {
-                iter.remove();
+            Collection<AUDITED_ENTITY_CLASS> auditEntities = entitiesInRange(startId, endId);
+            for (Iterator<AUDITED_ENTITY_CLASS> iter = auditEntities.iterator(); iter.hasNext(); ) {
+                if (auditClassDeletedIds.contains(entityId(iter.next()))) {
+                    iter.remove();
+                }
             }
+            Collection<ETL_DATA_SOURCE_CLASS> dataSourceEntities = convertAuditedEntityToDataSourceEntity(auditEntities);
+
+            // Must not delete cross-etl entities when doing backfill.
+            Collection<Long> dataSourceDeletedIds = new ArrayList<>(
+                    convertAuditedEntityIdToDataSourceEntityId(auditClassDeletedIds));
+            dataSourceDeletedIds.retainAll(auditClassDeletedIds);
+            if (dataSourceDeletedIds.size() != auditClassDeletedIds.size()) {
+                dataSourceDeletedIds.clear();
+            }
+
+            int count = writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
+
+            postEtlLogging();
+            return count;
+        } catch (RuntimeException e) {
+            logger.error(getClass().getSimpleName() + " ETL failed", e);
+            return 0;
         }
-        Collection<ETL_DATA_SOURCE_CLASS> dataSourceEntities = convertAuditedEntityToDataSourceEntity(auditEntities);
-
-        // Must not delete cross-etl entities when doing backfill.
-        Collection<Long> dataSourceDeletedIds = new ArrayList<>(
-                convertAuditedEntityIdToDataSourceEntityId(auditClassDeletedIds));
-        dataSourceDeletedIds.retainAll(auditClassDeletedIds);
-        if (dataSourceDeletedIds.size() != auditClassDeletedIds.size()) {
-            dataSourceDeletedIds.clear();
-        }
-
-        int count = writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
-
-        postEtlLogging();
-        return count;
     }
 
     // Queries the _AUD table directly since AuditReader has no API for this.
@@ -367,9 +380,16 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             nonDeletedIds.addAll(addedEntityIds);
 
             for (Long entityId : nonDeletedIds) {
-                Collection<String> records = dataRecords(etlDateStr, false, entityId);
-                for (String record : records) {
-                    dataFile.write(record);
+                try {
+                    Collection<String> records = dataRecords(etlDateStr, false, entityId);
+                    for (String record : records) {
+                        dataFile.write(record);
+                    }
+                } catch (RuntimeException e) {
+                    if (errorException == null) {
+                        errorException = e;
+                    }
+                    errorIds.add(entityId);
                 }
             }
 
@@ -402,8 +422,15 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
             // Writes the records.
             for (ETL_DATA_SOURCE_CLASS entity : entities) {
                 if (!deletedEntityIds.contains(dataSourceEntityId(entity))) {
-                    for (String record : dataRecords(etlDateStr, false, entity)) {
-                        dataFile.write(record);
+                    try {
+                        for (String record : dataRecords(etlDateStr, false, entity)) {
+                            dataFile.write(record);
+                        }
+                    } catch (RuntimeException e) {
+                        if (errorException == null) {
+                            errorException = e;
+                        }
+                        errorIds.add(dataSourceEntityId(entity));
                     }
                 }
             }
@@ -586,5 +613,9 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * Tells ETL class to do per-run logging, at the end of the run.
      */
     protected void postEtlLogging() {
+        if (errorIds.size() > 0) {
+            logger.info("ETL failed on " + getClass().getSimpleName() + " for ids " +
+                        StringUtils.join(errorIds, ", "), errorException);
+        }
     }
 }

@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -87,7 +89,7 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
 
             for (Long entityId : nonDeletedIds) {
                 Collection<String> records = dataRecords(etlDateStr, false, entityId);
-                if (records.size() == 0) {
+                if (CollectionUtils.isEmpty(records)) {
                     deletedEntityIds.add(entityId);
                 }
                 for (String record : records) {
@@ -147,11 +149,16 @@ public abstract class GenericEntityAndStatusEtl<AUDITED_ENTITY_CLASS, ETL_DATA_S
             // Writes the data and status records.
             for (ETL_DATA_SOURCE_CLASS entity : entities) {
                 if (!deletedEntityIds.contains(dataSourceEntityId(entity))) {
-                    for (String record : dataRecords(etlDateStr, false, entity)) {
-                        dataFile.write(record);
+                    try {
+                        for (String record : dataRecords(etlDateStr, false, entity)) {
+                            dataFile.write(record);
+                        }
+                        String record = statusRecord(etlDateStr, false, entity, statusDate);
+                        statusFile.write(record);
+                    } catch (RuntimeException e) {
+                        logger.info("Error in ETL for " + entity.getClass().getSimpleName() +
+                                    " id " + dataSourceEntityId(entity));
                     }
-                    String record = statusRecord(etlDateStr, false, entity, statusDate);
-                    statusFile.write(record);
                 }
             }
 

@@ -110,6 +110,8 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
 
     @Override
     public void postEtlLogging() {
+        super.postEtlLogging();
+
         synchronized (nullVesselLabMetricIds) {
             if (nullVesselLabMetricIds.size() > 0) {
                 logger.debug("Missing vessel for labMetrics: " + StringUtils.join(nullVesselLabMetricIds, ", "));

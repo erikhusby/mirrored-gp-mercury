@@ -351,6 +351,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
 
     @Override
     public void postEtlLogging() {
+        super.postEtlLogging();
+
         synchronized (loggingDtos) {
             // Aggregates errors by the appropriate record identifier, depending on what the missing value is.
             Set<Long> errorIds = new HashSet<>();
