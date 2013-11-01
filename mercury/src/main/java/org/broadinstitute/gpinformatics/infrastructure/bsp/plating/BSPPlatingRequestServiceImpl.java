@@ -426,9 +426,8 @@ public class BSPPlatingRequestServiceImpl extends BSPWorkRequestClientService im
 
 
     public String generateLinkToBSPPlatingRequestPage(String platingRequestBarcode) {
-        return String.format("http://%s:%d/BSP/collection/find.action?barcode=%s",
-                bspConfig.getHost(),
-                bspConfig.getPort(),
+        return String.format("%s%s:%d/BSP/collection/find.action?barcode=%s",
+                BSPConfig.getHttpScheme() ,bspConfig.getHost(), bspConfig.getPort(),
                 platingRequestBarcode);
     }
 

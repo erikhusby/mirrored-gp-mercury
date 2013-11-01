@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
 /**
@@ -11,20 +12,25 @@ public class BSPWorkRequestFactory {
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
      *
-     * @param workRequestName          the name of the work request; must be unique in BSP
-     * @param requestUser              the user making the request
-     * @param productOrderId           the product order associated with the request
-     * @param primaryInvestigatorId    the domain user ID for the Broad PI
-     * @param projectManagerId         the domain user ID for the Broad PM
-     * @param externalCollaboratorId   the domain user ID for the external collaborator
-     * @param siteId                   the BSP ID of the site that the sample kits should be shipped to
-     * @param numberOfSamples          the total number of samples that the kit should contain
+     * @param workRequestName        the name of the work request; must be unique in BSP
+     * @param requestUser            the user making the request
+     * @param productOrderId         the product order associated with the request
+     * @param primaryInvestigatorId  the domain user ID for the Broad PI
+     * @param projectManagerId       the domain user ID for the Broad PM
+     * @param externalCollaboratorId the domain user ID for the external collaborator
+     * @param siteId                 the BSP ID of the site that the sample kits should be shipped to
+     * @param numberOfSamples        the total number of samples that the kit should contain
+     * @param materialType           the material type
+     * @param sourceMaterialType     the source material type
+     *
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
-                                                              long siteId, long numberOfSamples) {
+                                                              long siteId, long numberOfSamples,
+                                                              MaterialType materialType,
+                                                              MaterialType sourceMaterialType) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId, // primaryInvestigatorId
