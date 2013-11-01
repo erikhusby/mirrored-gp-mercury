@@ -22,8 +22,8 @@ public class BSPWorkRequestFactory {
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
-                                                              String productOrderId, long primaryInvestigatorId,
-                                                              long projectManagerId, long externalCollaboratorId,
+                                                              String productOrderId, Long primaryInvestigatorId,
+                                                              Long projectManagerId, Long externalCollaboratorId,
                                                               long siteId, long numberOfSamples) {
 
         return new SampleKitWorkRequest(

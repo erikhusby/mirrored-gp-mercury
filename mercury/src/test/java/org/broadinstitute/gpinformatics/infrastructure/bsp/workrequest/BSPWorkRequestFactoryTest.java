@@ -17,7 +17,7 @@ public class BSPWorkRequestFactoryTest {
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4, 5);
+                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1L, 2L, 3L, 4, 5);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(1L));
         assertThat(workRequest.getProjectManagerId(), equalTo(2L));
