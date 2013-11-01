@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -37,12 +38,15 @@ public class BSPKitRequestService {
      * BSP lab's current workflow. The additional details required by BSP are extracted from the given PDO and site or
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
+     *
      * @param productOrder       the product order to create the kit request from
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
-     * @return the BSP work request ID
+     * @param materialType
+     *@param sourceMaterialType @return the BSP work request ID
      */
-    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples) {
+    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
+                                                  MaterialType materialType, MaterialType sourceMaterialType) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -67,7 +71,7 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site.getId(), numberOfSamples);
+                externalCollaboratorId, site.getId(), numberOfSamples, materialType, sourceMaterialType);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

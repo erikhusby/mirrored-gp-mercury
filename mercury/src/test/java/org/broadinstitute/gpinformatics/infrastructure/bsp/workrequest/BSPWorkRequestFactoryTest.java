@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
@@ -17,7 +18,8 @@ public class BSPWorkRequestFactoryTest {
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
-                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4, 5);
+                "BSPKitRequestServiceTest.testBuildBspKitWorkRequest", "breilly", "PDO-1", 1, 2, 3, 4, 5,
+                new MaterialType("Cells:Pellet frozen, polar extracts"), new MaterialType("Whole Blood:Whole Blood"));
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(1L));
         assertThat(workRequest.getProjectManagerId(), equalTo(2L));
