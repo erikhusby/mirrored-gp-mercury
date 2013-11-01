@@ -15,8 +15,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -36,6 +38,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
     private transient Client jerseyClient;
 
     private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
+
+    @Inject
+    private Deployment deployment;
 
     public AbstractJerseyClientService() {}
     
@@ -126,6 +131,9 @@ public abstract class AbstractJerseyClientService implements Serializable {
     protected Client getJerseyClient() {
         if (jerseyClient == null) {
             DefaultClientConfig clientConfig = new DefaultClientConfig();
+            if(Deployment.isCRSP && deployment != Deployment.PROD) {
+                acceptAllServerCertificates(clientConfig);
+            }
             customizeConfig(clientConfig);
 
             jerseyClient = Client.create(clientConfig);
