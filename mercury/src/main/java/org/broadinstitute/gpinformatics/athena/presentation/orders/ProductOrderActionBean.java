@@ -20,6 +20,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -53,6 +54,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -191,6 +193,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductTokenInput productTokenInput;
 
     @Inject
+    private MaterialTypeTokenInput materialTypeTokenInput;
+
+    @Inject
+    private MaterialTypeTokenInput sourceMaterialTypeTokenInput;
+
+    @Inject
     private ProjectTokenInput projectTokenInput;
 
     @Inject
@@ -272,6 +280,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String plasticware;
 
     private Site site;
+
+    private MaterialType materialType;
+
+    private MaterialType sourceMaterialType;
 
     /*
      * The search query.
@@ -388,6 +400,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             requireField(numberOfSamples > 0, "a specified number of tubes", action);
             requireField(site, "a site", action);
+            requireField(materialType, "a material type", action);
+            requireField(sourceMaterialType, "a source material type", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -440,7 +454,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!sites.isEmpty()) {
             site = sites.get(0);
         }
-
+        List<MaterialType> materialTypes = materialTypeTokenInput.getTokenObjects();
+        if (!materialTypes.isEmpty()) {
+            materialType = materialTypes.iterator().next();
+        }
+        List<MaterialType> sourceMaterialTypes = sourceMaterialTypeTokenInput.getTokenObjects();
+        if (!sourceMaterialTypes.isEmpty()) {
+            sourceMaterialType = sourceMaterialTypes.iterator().next();
+        }
         doValidation(action);
 
         if (!hasErrors()) {
@@ -738,7 +759,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples);
+                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialType,
+                        sourceMaterialType);
             }
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
@@ -1269,6 +1291,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         return resolution;
     }
 
+    @HandlesEvent("materialTypeAutocomplete")
+    public Resolution materialTypeAutocomplete() throws Exception {
+        return createTextResolution(materialTypeTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("sourceMaterialTypeAutocomplete")
+    public Resolution sourceMaterialTypeAutocomplete() throws Exception {
+        return createTextResolution(sourceMaterialTypeTokenInput.getJsonString(getQ()));
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1637,5 +1669,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public ProductOrder.OrderStatus[] getOrderStatuses() {
         return ProductOrder.OrderStatus.values();
+    }
+
+    public MaterialTypeTokenInput getMaterialTypeTokenInput() {
+        return materialTypeTokenInput;
+    }
+
+    public MaterialTypeTokenInput getSourceMaterialTypeTokenInput() {
+        return sourceMaterialTypeTokenInput;
     }
 }
