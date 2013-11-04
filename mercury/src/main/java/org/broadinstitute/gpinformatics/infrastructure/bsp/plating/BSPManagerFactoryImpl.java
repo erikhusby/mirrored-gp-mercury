@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
+import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
 import org.broadinstitute.bsp.client.container.BspContainerManager;
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.sample.BspSampleManager;
@@ -61,5 +62,10 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
     @Override
     public BspSiteManager createSiteManager() {
         return (BspSiteManager) create(BspSiteManager.class);
+    }
+
+    @Override
+    public BspGroupCollectionManager createGroupCollectionManager() {
+        return (BspGroupCollectionManager) create(BspGroupCollectionManager.class);
     }
 }

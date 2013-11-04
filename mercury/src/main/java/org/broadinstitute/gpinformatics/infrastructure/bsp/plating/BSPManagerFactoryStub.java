@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
+import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
+import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.container.ContainerManager;
+import org.broadinstitute.bsp.client.response.AllGroupsResponse;
 import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitResponse;
@@ -209,6 +212,18 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 return new AllSitesResponse(
                         Arrays.asList(new Site(1, "Name", "Description", "Address 1\nAddress 2", "Primary Shipper",
                                 false, false)),
+                        true);
+            }
+        };
+    }
+
+    @Override
+    public BspGroupCollectionManager createGroupCollectionManager() {
+        return new BspGroupCollectionManager(null, null, null, null) {
+            @Override
+            public AllGroupsResponse getAllGroups() {
+                return new AllGroupsResponse(
+                        Arrays.asList(new Group(1L, "Name", "Description", false)),
                         true);
             }
         };
