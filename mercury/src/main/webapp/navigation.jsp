@@ -115,6 +115,9 @@
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
                             </li>
+                            <li>
+                                <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
+                            </li>
                         </security:authorizeBlock>
                         <li>
                             <stripes:link id="uploadQuants"
