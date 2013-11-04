@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated.RegisterTubeBean;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -7,9 +8,11 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +35,18 @@ public class VesselResourceTest extends Arquillian {
     }
 
     /**
+     * Convenience wrapper around method invocation.
+     */
+    public Response registerTubes(@Nonnull Collection<String> matrixBarcodes) {
+        MultivaluedMap<String, String> multivaluedMap = new MultivaluedMapImpl();
+        for (String matrixBarcode : matrixBarcodes) {
+            multivaluedMap.add("barcodes", matrixBarcode);
+        }
+
+        return vesselResource.registerTubes(multivaluedMap, null);
+    }
+
+    /**
      * Simple tube registration test with two known barcodes, this data should never become invalid.
      */
     @Test
@@ -42,7 +57,7 @@ public class VesselResourceTest extends Arquillian {
         matrixToSample.put("0097401641", "SM-1TNRR");
 
         // Check the HTTP Status.
-        Response response = vesselResource.registerTubes(new ArrayList<>(matrixToSample.keySet()));
+        Response response = registerTubes(matrixToSample.keySet());
         assertThat(response.getStatus(), is(equalTo(Response.Status.OK.getStatusCode())));
 
         // Make sure the returned entity is not null and of the expected type.
