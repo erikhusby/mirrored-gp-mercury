@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.collection.Group;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -18,8 +23,14 @@ import javax.inject.Inject;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPKitRequestServiceIntegrationTest extends Arquillian {
 
+    private static final Log log = LogFactory.getLog(BSPKitRequestServiceIntegrationTest.class);
+
     public static final long BREILLY_DOMAIN_USER_ID = 10619;
     public static final long ELANDER_DOMAIN_USER_ID = 7062;
+    public static final Site TEST_SITE = new Site(1, "site", "", "", "", false, false);
+    public static final SampleCollection TEST_COLLECTION =
+            new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false);
+    public static final long NUMBER_OF_SAMPLES = 96;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -33,25 +44,28 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     public void testSendKitRequest() {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, 1, 96L,
-                new MaterialType("Cells:Pellet frozen, polar extracts"), new MaterialType("Whole Blood:Whole Blood"));
+                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
+                ELANDER_DOMAIN_USER_ID, TEST_SITE, NUMBER_OF_SAMPLES,
+                new MaterialType("Cells:Pellet frozen, polar extracts"), new MaterialType("Whole Blood:Whole Blood"),
+                TEST_COLLECTION);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
-        System.out.println(result.getWorkRequestBarcode());
+        log.info(result.getWorkRequestBarcode());
     }
 
     @Test
     public void testSubmitKitRequest() {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, 1, 96L,
-                new MaterialType("Cells:Pellet frozen, polar extracts"), new MaterialType("Whole Blood:Whole Blood"));
+                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE, NUMBER_OF_SAMPLES,
+                new MaterialType("Cells:Pellet frozen, polar extracts"), new MaterialType("Whole Blood:Whole Blood"),
+                TEST_COLLECTION);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
 
         WorkRequestResponse submitResult = bspKitRequestService.submitKitRequest(result.getWorkRequestBarcode());
-        System.out.println(submitResult.getWorkRequestBarcode());
+        log.info(submitResult.getWorkRequestBarcode());
     }
 }

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
+import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
 import org.broadinstitute.bsp.client.container.ContainerManager;
 import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.site.BspSiteManager;
@@ -19,4 +20,6 @@ public interface BSPManagerFactory extends Serializable {
     SampleManager createSampleManager();
 
     BspSiteManager createSiteManager();
+
+    BspGroupCollectionManager createGroupCollectionManager();
 }

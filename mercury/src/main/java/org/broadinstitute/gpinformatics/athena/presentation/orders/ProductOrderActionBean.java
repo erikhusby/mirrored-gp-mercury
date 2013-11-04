@@ -53,6 +53,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -203,6 +204,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BspShippingLocationTokenInput bspShippingLocationTokenInput;
+
+    @Inject
+    private BspGroupCollectionTokenInput bspGroupCollectionTokenInput;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -383,7 +387,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                    action, editOrder.getBusinessKey(), name);
+                    action, editOrder.getName(), name);
         }
     }
 
@@ -402,6 +406,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(site, "a site", action);
             requireField(materialType, "a material type", action);
             requireField(sourceMaterialType, "a source material type", action);
+            requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -444,7 +449,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
-        validatePlacedOrder(PLACE_ORDER);
+        validatePlacedOrder("place order");
     }
 
     public void validatePlacedOrder(String action) {
@@ -759,12 +764,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialType,
-                        sourceMaterialType);
+                String workRequestBarcode =
+                        bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialType,
+                        sourceMaterialType,
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0));
+                addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
             }
         } catch (Exception e) {
-            // Need to quote the message contents to prevent errors.
-            addGlobalValidationError("{2}", e.getMessage());
+            addGlobalValidationError(e.toString());
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
             entryInit();
             return getSourcePageResolution();
@@ -1287,8 +1294,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
-        Resolution resolution = createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
-        return resolution;
+        return createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("groupCollectionAutocomplete")
+    public Resolution groupCollectionAutocomplete() throws Exception {
+        return createTextResolution(bspGroupCollectionTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent("materialTypeAutocomplete")
@@ -1392,6 +1403,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
         return bspShippingLocationTokenInput;
+    }
+
+    public BspGroupCollectionTokenInput getBspGroupCollectionTokenInput() {
+        return bspGroupCollectionTokenInput;
     }
 
     public String getResearchProjectKey() {

@@ -10,13 +10,12 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource;
-import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
-import java.io.File;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,10 +33,11 @@ public class WorkflowActionBean extends CoreActionBean {
 
     public static final String GET_WORKFLOW_IMAGE_ACTION = "workflowImage";
 
-    private final WorkflowLoader workflowLoader;
+    @Inject
+    private ProductResource productResource;
 
     // Combination of workflow def and one of its effective dates.
-    public class WorkflowDefDateDto {
+    public static class WorkflowDefDateDto {
         public int id;
         public ProductWorkflowDef workflowDef;
         public Date effectiveDate;
@@ -86,7 +86,7 @@ public class WorkflowActionBean extends CoreActionBean {
     public WorkflowActionBean() throws Exception {
         super(null, null, WORKFLOW_PARAMETER);
 
-        workflowLoader = new WorkflowLoader();
+        WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         allWorkflows = new ArrayList<>();
         // Collects all workflows, each with possibly multiple effective dates.
@@ -144,17 +144,12 @@ public class WorkflowActionBean extends CoreActionBean {
     }
 
     /**
-     * @return the path part of the Mercury REST url that returns the relevant workflow image file.
+     * Returns the url to a Mercury REST service that returns the relevant workflow image file.
      */
+    @HandlesEvent(GET_WORKFLOW_IMAGE_ACTION)
     public String getWorkflowImage() {
-
-        ProductWorkflowDef workflowDef = viewWorkflowDto.getWorkflowDef();
-        Date effectiveDate = viewWorkflowDto.getEffectiveDate();
-
-        File imageFile = new File(WorkflowDiagrammer.DIAGRAM_DIRECTORY,
-                WorkflowDiagrammer.getWorkflowImageFileName(workflowDef, effectiveDate));
-
-        return getContext().getRequest().getContextPath() + "/rest/" + ProductResource.WORKFLOW_DIAGRAM_IMAGE_URL +
-               imageFile.getName();
+        return getContext().getRequest().getContextPath() + "/rest/" +
+               productResource.createWorkflowImageUrl(viewWorkflowDto.getWorkflowDef(),
+                       viewWorkflowDto.getEffectiveDate());
     }
 }

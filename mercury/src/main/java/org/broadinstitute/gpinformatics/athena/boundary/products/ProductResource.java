@@ -5,7 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.presentation.products.WorkflowDiagrammer;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -21,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -31,7 +34,7 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductResource {
-    public static final String WORKFLOW_DIAGRAM_IMAGE_URL = "products/workflowDiagrams/";
+    private static final String WORKFLOW_DIAGRAM_IMAGE_URL = "products/workflowDiagrams/";
 
     @Inject
     private ProductDao productDao;
@@ -105,6 +108,12 @@ public class ProductResource {
         return "Created diagram files: " + filenames;
     }
 
+    @Nonnull
+    public String createWorkflowImageUrl(ProductWorkflowDef productWorkflowDef, Date effectiveDate) {
+        return WORKFLOW_DIAGRAM_IMAGE_URL +
+               WorkflowDiagrammer.getWorkflowImageFileName(productWorkflowDef, effectiveDate);
+    }
+
     /**
      * Returns a workflow diagram image, or null if no such diagram exists.
      */
@@ -116,7 +125,7 @@ public class ProductResource {
         // If diagramFile is not found in the directory, invoke the diagrammer to create all of the workflow diagrams.
         // Caching all of them will speed up the next viewing.  The cache is flushed when the app starts, so no
         // fear of caching an stale diagram.
-        File diagramFile = new File (diagramFileDir, filename);
+        File diagramFile = new File(diagramFileDir, filename);
         if (!diagramFile.exists()) {
             diagrammer.makeAllDiagramFiles();
         }
@@ -129,5 +138,4 @@ public class ProductResource {
             return null;
         }
     }
-
- }
+}

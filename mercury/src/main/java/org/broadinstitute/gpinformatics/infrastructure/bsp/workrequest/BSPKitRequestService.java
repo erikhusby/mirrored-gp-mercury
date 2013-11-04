@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -46,7 +47,8 @@ public class BSPKitRequestService {
      *@param sourceMaterialType @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialType materialType, MaterialType sourceMaterialType) {
+                                                  MaterialType materialType, MaterialType sourceMaterialType,
+                                                  SampleCollection collection) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -55,10 +57,10 @@ public class BSPKitRequestService {
         if (researchProject.getBroadPIs().length > 0) {
             BspUser broadPi = bspUserList.getById(researchProject.getBroadPIs()[0]);
             primaryInvestigatorId = broadPi.getDomainUserId();
-            externalCollaboratorId = broadPi.getDomainUserId();
+            externalCollaboratorId = primaryInvestigatorId;
         }
 
-        Long projectManagerId;
+        long projectManagerId;
         if (researchProject.getProjectManagers().length > 0) {
             BspUser projectManager = bspUserList.getById(researchProject.getProjectManagers()[0]);
             projectManagerId = projectManager.getDomainUserId();
@@ -71,7 +73,8 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site.getId(), numberOfSamples, materialType, sourceMaterialType);
+                externalCollaboratorId, site, numberOfSamples, materialType, sourceMaterialType,
+                collection);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

@@ -49,6 +49,16 @@
                         }
                 );
 
+                $j("#kitCollection").tokenInput(
+                        "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
+                            hintText: "Search for group and collection",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
+                            resultsFormatter: formatInput,
+                            tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
+                            tokenLimit: 1
+                        }
+                );
+
                 $j("#materialType").tokenInput(
                         "${ctxpath}/orders/order.action?materialTypeAutocomplete=", {
                             hintText: "Type a Material Type name",
@@ -733,6 +743,18 @@
                                     <stripes:select id="kitType" name="plasticware">
                                         <stripes:option value="0.75mL">0.75mL</stripes:option>
                                     </stripes:select>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <stripes:label for="kitCollection" class="control-label">
+                                    Group and Collection
+                                </stripes:label>
+                                <div class="controls">
+                                    <stripes:text
+                                            id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
+                                            class="defaultText"
+                                            title="Search for collection and group"/>
                                 </div>
                             </div>
 
