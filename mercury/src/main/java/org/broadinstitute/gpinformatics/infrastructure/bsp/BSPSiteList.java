@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.site.AllSitesResponse;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
@@ -27,8 +25,6 @@ import java.util.Map;
  */
 @ApplicationScoped
 public class BSPSiteList extends AbstractCache implements Serializable {
-    private static final Log log = LogFactory.getLog(BSPSiteList.class);
-
     private final BSPManagerFactory bspManagerFactory;
 
     private Map<Long, Site> sites;
@@ -56,7 +52,7 @@ public class BSPSiteList extends AbstractCache implements Serializable {
      * null then it will return an empty list.
      *
      * @param query the query string to match on
-     * @return a list of matching users
+     * @return a list of matching sites
      */
     @Nonnull
     public List<Site> find(String query) {
@@ -67,17 +63,17 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Site> results = new ArrayList<>();
-        for (Site user : getSites().values()) {
+        for (Site site : getSites().values()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched
-                if (!anyFieldMatches(lowerQuery, user)) {
+                if (!anyFieldMatches(lowerQuery, site)) {
                     eachItemMatchesSomething = false;
                 }
             }
 
             if (eachItemMatchesSomething) {
-                results.add(user);
+                results.add(site);
             }
         }
 
@@ -133,8 +129,8 @@ public class BSPSiteList extends AbstractCache implements Serializable {
         // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
         // our entries stay sorted and (2) it has lower overhead than a TreeMap.
         Map<Long, Site> siteMap = new LinkedHashMap<>(rawSites.size());
-        for (Site user : rawSites) {
-            siteMap.put(user.getId(), user);
+        for (Site site : rawSites) {
+            siteMap.put(site.getId(), site);
         }
 
         sites = ImmutableMap.copyOf(siteMap);
