@@ -363,6 +363,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
 
     @Override
     public void postEtlLogging() {
+        super.postEtlLogging();
+        
         List<EventFactDto> dtos = new ArrayList<>();
         synchronized (loggingDtos) {
             dtos.addAll(loggingDtos);

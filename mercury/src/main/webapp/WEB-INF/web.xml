@@ -126,14 +126,15 @@
         </taglib>
     </jsp-config -->
 
-    <filter>
-        <filter-name>SecurityFilter</filter-name>
-        <filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityFilter</filter-class>
-        <init-param>
-            <param-name>securePort</param-name>
-            <param-value>8443</param-value>
-        </init-param>
-    </filter>
+    <!-- FIXME SGM CRSP-69:  Temporarily disabling SecurityFilter until SSL issues have been resolved -->
+    <!--<filter>-->
+        <!--<filter-name>SecurityFilter</filter-name>-->
+        <!--<filter-class>org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityFilter</filter-class>-->
+        <!--<init-param>-->
+            <!--<param-name>securePort</param-name>-->
+            <!--<param-value>8443</param-value>-->
+        <!--</init-param>-->
+    <!--</filter>-->
     <filter>
         <filter-name>CacheFilter</filter-name>
         <filter-class>org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter</filter-class>
@@ -232,11 +233,13 @@
         <url-pattern>*.jsp</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
-    <filter-mapping>
-        <filter-name>SecurityFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-    </filter-mapping>
+
+    <!-- FIXME SGM CRSP-69:  Temporarily disabling SecurityFilter until SSL issues have been resolved -->
+    <!--<filter-mapping>-->
+        <!--<filter-name>SecurityFilter</filter-name>-->
+        <!--<url-pattern>/*</url-pattern>-->
+        <!--<dispatcher>REQUEST</dispatcher>-->
+    <!--</filter-mapping>-->
 
     <session-config>
         <session-timeout>480</session-timeout>
