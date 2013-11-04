@@ -87,18 +87,19 @@ public class ImportFromSquidTest extends Arquillian {
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportIndexingSchemes() {
         // Get schemes and sequences from Squid.
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     mis.NAME, " +
-                                                            "     mip.position_hint, " +
-                                                            "     mi.SEQUENCE " +
-                                                            "FROM " +
-                                                            "     molecular_indexing_scheme mis " +
-                                                            "     INNER JOIN molecular_index_position mip " +
-                                                            "          ON   mip.scheme_id = mis.ID " +
-                                                            "     INNER JOIN molecular_index mi " +
-                                                            "          ON   mi.ID = mip.index_id " +
-                                                            "ORDER BY " +
-                                                            "     mis.NAME ");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     mis.NAME, " +
+                "     mip.position_hint, " +
+                "     mi.SEQUENCE " +
+                "FROM " +
+                "     molecular_indexing_scheme mis " +
+                "     INNER JOIN molecular_index_position mip " +
+                "          ON   mip.scheme_id = mis.ID " +
+                "     INNER JOIN molecular_index mi " +
+                "          ON   mi.ID = mip.index_id " +
+                "ORDER BY " +
+                "     mis.NAME ");
         List<?> resultList = nativeQuery.getResultList();
 
         // Get schemes from Mercury, to avoid creating duplicates.
@@ -153,23 +154,22 @@ public class ImportFromSquidTest extends Arquillian {
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         // Get plates, wells and molecular indexes from Squid.
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     p.barcode AS plate_barcode, " +
-                                                            "     wd.NAME AS well_name, " +
-                                                            "     mis.NAME AS scheme_name " +
-                                                            "FROM " +
-                                                            "     plate_seq_sample_identifier pssi " +
-                                                            "     INNER JOIN plate p " +
-                                                            "          ON   p.plate_id = pssi.plate_id " +
-                                                            "     INNER JOIN well_description wd " +
-                                                            "          ON   wd.well_description_id = pssi.well_description_id "
-                                                            +
-                                                            "     INNER JOIN molecular_indexing_scheme mis " +
-                                                            "          ON   mis.ID = pssi.molecular_indexing_scheme_id "
-                                                            +
-                                                            "ORDER BY " +
-                                                            "     p.barcode, " +
-                                                            "     wd.NAME");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     p.barcode AS plate_barcode, " +
+                "     wd.NAME AS well_name, " +
+                "     mis.NAME AS scheme_name " +
+                "FROM " +
+                "     plate_seq_sample_identifier pssi " +
+                "     INNER JOIN plate p " +
+                "          ON   p.plate_id = pssi.plate_id " +
+                "     INNER JOIN well_description wd " +
+                "          ON   wd.well_description_id = pssi.well_description_id " +
+                "     INNER JOIN molecular_indexing_scheme mis " +
+                "          ON   mis.ID = pssi.molecular_indexing_scheme_id " +
+                "ORDER BY " +
+                "     p.barcode, " +
+                "     wd.NAME");
         List<?> resultList = nativeQuery.getResultList();
 
         // Get plates from Mercury, to avoid creating duplicates.
@@ -238,44 +238,38 @@ public class ImportFromSquidTest extends Arquillian {
     public void testCreateBaits() {
         // todo jmt for a bait to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes goes from ~40 to ~70,000
-        Query nativeQuery = entityManager.createNativeQuery("SELECT DISTINCT " +
-                                                            "    r.barcode, " +
-                                                            "    hbd.design_name " +
-                                                            "FROM " +
-                                                            "    recep_plate_transfer_event rpte " +
-                                                            "    INNER JOIN receptacle r " +
-                                                            "        ON   r.receptacle_id = rpte.receptacle_id " +
-                                                            "    INNER JOIN seq_content sc " +
-                                                            "        ON   sc.receptacle_id = r.receptacle_id " +
-                                                            "    INNER JOIN seq_content_type sct " +
-                                                            "        ON   sct.seq_content_type_id = sc.seq_content_type_id "
-                                                            +
-                                                            "    INNER JOIN seq_content_descr_set scds " +
-                                                            "        ON   scds.seq_content_id = sc.seq_content_id " +
-                                                            "    INNER JOIN seq_content_descr scd " +
-                                                            "        ON   scd.seq_content_descr_id = scds.seq_content_descr_id "
-                                                            +
-                                                            "    INNER JOIN next_generation_library_descr ngld " +
-                                                            "        ON   ngld.library_descr_id = scd.seq_content_descr_id "
-                                                            +
-                                                            "    INNER JOIN lc_sample ls " +
-                                                            "        ON   ls.lc_sample_id = ngld.sample_id " +
-                                                            "    INNER JOIN lc_sample_data_set lsds " +
-                                                            "        ON   lsds.lc_sample_id = ls.lc_sample_id " +
-                                                            "    INNER JOIN lc_sample_data lsd " +
-                                                            "        ON   lsd.lc_sample_data_id = lsds.lc_sample_data_id "
-                                                            +
-                                                            "    INNER JOIN lc_sample_data_type lsdt " +
-                                                            "        ON   lsdt.lc_sample_data_type_id = lsd.lc_sample_data_type_id "
-                                                            +
-                                                            "    INNER JOIN lc_sample_pool_oligo_data lspod " +
-                                                            "        ON   lspod.lc_sample_data_id = lsd.lc_sample_data_id "
-                                                            +
-                                                            "    INNER JOIN hybsel_bait_design hbd " +
-                                                            "        ON   hbd.hybsel_bait_design_id = lspod.hybsel_bait_design_id "
-                                                            +
-                                                            "ORDER BY " +
-                                                            "        hbd.design_name ");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT DISTINCT " +
+                "    r.barcode, " +
+                "    hbd.design_name " +
+                "FROM " +
+                "    recep_plate_transfer_event rpte " +
+                "    INNER JOIN receptacle r " +
+                "        ON   r.receptacle_id = rpte.receptacle_id " +
+                "    INNER JOIN seq_content sc " +
+                "        ON   sc.receptacle_id = r.receptacle_id " +
+                "    INNER JOIN seq_content_type sct " +
+                "        ON   sct.seq_content_type_id = sc.seq_content_type_id " +
+                "    INNER JOIN seq_content_descr_set scds " +
+                "        ON   scds.seq_content_id = sc.seq_content_id " +
+                "    INNER JOIN seq_content_descr scd " +
+                "        ON   scd.seq_content_descr_id = scds.seq_content_descr_id " +
+                "    INNER JOIN next_generation_library_descr ngld " +
+                "        ON   ngld.library_descr_id = scd.seq_content_descr_id " +
+                "    INNER JOIN lc_sample ls " +
+                "        ON   ls.lc_sample_id = ngld.sample_id " +
+                "    INNER JOIN lc_sample_data_set lsds " +
+                "        ON   lsds.lc_sample_id = ls.lc_sample_id " +
+                "    INNER JOIN lc_sample_data lsd " +
+                "        ON   lsd.lc_sample_data_id = lsds.lc_sample_data_id " +
+                "    INNER JOIN lc_sample_data_type lsdt " +
+                "        ON   lsdt.lc_sample_data_type_id = lsd.lc_sample_data_type_id " +
+                "    INNER JOIN lc_sample_pool_oligo_data lspod " +
+                "        ON   lspod.lc_sample_data_id = lsd.lc_sample_data_id " +
+                "    INNER JOIN hybsel_bait_design hbd " +
+                "        ON   hbd.hybsel_bait_design_id = lspod.hybsel_bait_design_id " +
+                "ORDER BY " +
+                "        hbd.design_name ");
         List<?> resultList = nativeQuery.getResultList();
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
@@ -320,33 +314,30 @@ public class ImportFromSquidTest extends Arquillian {
     public void testCreateCats() {
         // todo jmt for a CAT to show up in this query, it must have been transferred to a plate at least once.
         // Without this restriction, the number of tubes rises from 122 to ~14,000
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     DISTINCT  " +
-                                                            "     cas.design_name, " +
-                                                            "     cas.vendor_design_name, " +
-                                                            "     r.barcode " +
-                                                            "FROM " +
-                                                            "     custom_amplicon_set cas " +
-                                                            "     INNER JOIN ngld_custom_amplicon_set ncas " +
-                                                            "          ON   ncas.custom_amplicon_set_id = cas.custom_amplicon_set_id "
-                                                            +
-                                                            "     INNER JOIN next_generation_library_descr ngld " +
-                                                            "          ON   ngld.library_descr_id = ncas.library_descr_id "
-                                                            +
-                                                            "     INNER JOIN seq_content_descr scd " +
-                                                            "          ON   scd.seq_content_descr_id = ngld.library_descr_id "
-                                                            +
-                                                            "     INNER JOIN seq_content_descr_set scds " +
-                                                            "          ON   scds.seq_content_descr_id = scd.seq_content_descr_id "
-                                                            +
-                                                            "     INNER JOIN seq_content sc " +
-                                                            "          ON   sc.seq_content_id = scds.seq_content_id " +
-                                                            "     INNER JOIN receptacle r " +
-                                                            "          ON   r.receptacle_id = sc.receptacle_id " +
-                                                            "     INNER JOIN recep_plate_transfer_event rpte " +
-                                                            "          ON   rpte.receptacle_id = r.receptacle_id " +
-                                                            "     ORDER BY " +
-                                                            "          cas.design_name ");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     DISTINCT  " +
+                "     cas.design_name, " +
+                "     cas.vendor_design_name, " +
+                "     r.barcode " +
+                "FROM " +
+                "     custom_amplicon_set cas " +
+                "     INNER JOIN ngld_custom_amplicon_set ncas " +
+                "          ON   ncas.custom_amplicon_set_id = cas.custom_amplicon_set_id " +
+                "     INNER JOIN next_generation_library_descr ngld " +
+                "          ON   ngld.library_descr_id = ncas.library_descr_id " +
+                "     INNER JOIN seq_content_descr scd " +
+                "          ON   scd.seq_content_descr_id = ngld.library_descr_id " +
+                "     INNER JOIN seq_content_descr_set scds " +
+                "          ON   scds.seq_content_descr_id = scd.seq_content_descr_id " +
+                "     INNER JOIN seq_content sc " +
+                "          ON   sc.seq_content_id = scds.seq_content_id " +
+                "     INNER JOIN receptacle r " +
+                "          ON   r.receptacle_id = sc.receptacle_id " +
+                "     INNER JOIN recep_plate_transfer_event rpte " +
+                "          ON   rpte.receptacle_id = r.receptacle_id " +
+                "     ORDER BY " +
+                "          cas.design_name ");
         List<?> resultList = nativeQuery.getResultList();
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
@@ -377,25 +368,25 @@ public class ImportFromSquidTest extends Arquillian {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportQuants() {
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                                                            "     lqr.run_name, " +
-                                                            "     lqr.run_date, " +
-                                                            "     lqt.quant_type_name, " +
-                                                            "     lq.quant_value, " +
-                                                            "     r.barcode " +
-                                                            "FROM " +
-                                                            "     library_quant_run lqr " +
-                                                            "     INNER JOIN library_quant_type lqt " +
-                                                            "          ON   lqt.quant_type_id = lqr.quant_type_id " +
-                                                            "     INNER JOIN library_quant lq " +
-                                                            "          ON   lq.quant_run_id = lqr.run_id " +
-                                                            "     INNER JOIN receptacle r " +
-                                                            "          ON   r.receptacle_id = lq.receptacle_id " +
-                                                            "WHERE " +
-                                                            "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber "
-                                                            +
-                                                            "ORDER BY " +
-                                                            "     1, 3");
+        Query nativeQuery = entityManager.createNativeQuery(
+                "SELECT " +
+                "     lqr.run_name, " +
+                "     lqr.run_date, " +
+                "     lqt.quant_type_name, " +
+                "     lq.quant_value, " +
+                "     r.barcode " +
+                "FROM " +
+                "     library_quant_run lqr " +
+                "     INNER JOIN library_quant_type lqt " +
+                "          ON   lqt.quant_type_id = lqr.quant_type_id " +
+                "     INNER JOIN library_quant lq " +
+                "          ON   lq.quant_run_id = lqr.run_id " +
+                "     INNER JOIN receptacle r " +
+                "          ON   r.receptacle_id = lq.receptacle_id " +
+                "WHERE " +
+                "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber " +
+                "ORDER BY " +
+                "     1, 3");
         nativeQuery.setParameter("lcSetNumber", "2588");
         List<?> resultList = nativeQuery.getResultList();
 
