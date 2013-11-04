@@ -112,12 +112,12 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
      */
     public List<MaterialType> find(String query) {
         Set<MaterialType> materialTypeHashSet = new HashSet<>();
-        if ( StringUtils.isNotBlank( query )) {
+        if (StringUtils.isNotBlank(query)) {
             for (MaterialType materialType : getMaterialTypes()) {
-                StringTokenizer st = new StringTokenizer( query.trim() );
+                StringTokenizer st = new StringTokenizer(query.trim());
                 while (st.hasMoreTokens()) {
                     String queryTokenLowerCase = st.nextToken().toLowerCase();
-                    if ( materialType.getFullName().toLowerCase().contains( queryTokenLowerCase ) ) {
+                    if (materialType.getFullName().toLowerCase().contains(queryTokenLowerCase)) {
                         materialTypeHashSet.add(materialType);
                     }
                 }
