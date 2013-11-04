@@ -844,8 +844,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         CreateFields.IssueType issueType;
-        // FIXME: Temporary code to work around issue with LOJ-Test, remove before shipping!
-        if (false && product.isSampleInitiationProduct()) {
+        if (product.isSampleInitiationProduct()) {
             issueType = CreateFields.IssueType.SAMPLE_INITIATION;
         } else {
             issueType = CreateFields.IssueType.PRODUCT_ORDER;
