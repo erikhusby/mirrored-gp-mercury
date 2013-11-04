@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections15.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,8 +36,40 @@ public class VesselResource {
 
     private static final Log log = LogFactory.getLog(VesselResource.class);
 
+    private static final String BARCODES_KEY = "barcodes";
+
     private Response buildResponse(@Nonnull Response.Status status, @Nonnull RegisterTubesBean registerTubesBean) {
         return Response.status(status).entity(registerTubesBean).type(MediaType.APPLICATION_XML_TYPE).build();
+    }
+
+    /**
+     * Examine the UriInfo and MultivaluedMap for any unexpected GET or POST parameters.  The service calling this is
+     * not currently expecting GET parameters, and the only supported POST parameter is 'barcodes'.
+     */
+    private void logParameters(UriInfo uriInfo, MultivaluedMap<String, String> formParameters) {
+        // uriInfo can be null when called from test code.
+        if (uriInfo != null) {
+            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+            if (queryParameters != null) {
+                for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
+                    log.error(String.format("registerTubes called with unexpected query parameter '%s' and values: %s",
+                            entry.getKey(), StringUtils.join(entry.getValue(), " ")));
+                }
+            }
+        }
+
+        // formParameters should not be null, but the caller will check this as part of extracting the Matrix
+        // barcodes and returning the appropriate status code.
+        if (formParameters != null) {
+            // Loop over the form parameters and log an error if any unexpected parameters are seen.
+            for (Map.Entry<String, List<String>> entry : formParameters.entrySet()) {
+                String key = entry.getKey();
+                if (!key.equals(BARCODES_KEY)) {
+                    log.error(String.format("registerTubes called with unexpected form parameter '%s' and values: %s",
+                            key, StringUtils.join(entry.getValue(), " ")));
+                }
+            }
+        }
     }
 
     /**
@@ -50,37 +83,17 @@ public class VesselResource {
     @POST
     public Response registerTubes(MultivaluedMap<String, String> formParameters, @Context UriInfo uriInfo) {
 
-        // This can be null when called from test code.
-        if (uriInfo != null) {
-            MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
-            if (queryParameters != null) {
-                for (Map.Entry<String, List<String>> entry : queryParameters.entrySet()) {
-                    log.error(String.format("registerTubes called with unexpected query parameter '%s' and values: %s",
-                            entry.getKey(), StringUtils.join(entry.getValue(), " ")));
-                }
-            }
-        }
-
+        logParameters(uriInfo, formParameters);
         RegisterTubesBean responseBean = new RegisterTubesBean();
-        List<String> matrixBarcodes = null;
 
-        if (formParameters != null) {
-            for (Map.Entry<String, List<String>> entry : formParameters.entrySet()) {
-                String key = entry.getKey();
-                String joinedValues = StringUtils.join(entry.getValue(), " ");
-                if (key.equals("barcodes")) {
-                    log.info("registerTubes called for Matrix barcodes: " + joinedValues);
-                    matrixBarcodes = entry.getValue();
-                } else {
-                    log.error(String.format("registerTubes called with unexpected form parameter '%s' and values: %s",
-                            key, joinedValues));
-                }
-            }
-        }
+        // Get the List<String> barcodes value from the form parameters in a null-safe way.
+        List<String> matrixBarcodes = MapUtils.getObject(formParameters, BARCODES_KEY);
 
         if (CollectionUtils.isEmpty(matrixBarcodes)) {
             log.error("No 'barcodes' form parameters passed to registerTubes.");
             return buildResponse(Response.Status.BAD_REQUEST, responseBean);
+        } else {
+            log.info("registerTubes invoked for Matrix barcodes: " + StringUtils.join(matrixBarcodes, " "));
         }
 
         // The call to BSP happens for all barcodes since there is well information returned to the caller
