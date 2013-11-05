@@ -44,7 +44,9 @@ public class SecurityFilter implements Filter {
         HttpServletRequest httpReq = (HttpServletRequest) servletRequest;
 
         String servletPath = httpReq.getServletPath();
-        if (!excludeFromFilter(servletPath)) {
+        if (excludeFromFilter(servletPath)) {
+            filterChain.doFilter(servletRequest, servletResponse);
+        } else {
             String currentURI = httpReq.getRequestURI();
 
             if (isSecure && (!httpReq.isSecure())) {
