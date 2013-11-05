@@ -16,9 +16,9 @@
 
     <stripes:layout-component name="content">
 
-        <p>Upload a tab-delimited text file.  The first line contains headers: the first header may be an optional
-        NAME, to specify names for grand-fathered names (e.g. tagged_100) that were created before the auto-generated
-            names came into effect; subsequent headers are from this list:</p>
+        <p>Upload a tab-delimited text file. The first line contains headers: the first header may be an optional
+            NAME, to specify names for grand-fathered schemes (e.g. tagged_100) that were created before the
+            auto-generated names came into effect; subsequent headers are from this list:</p>
         <c:set var="enumValues" value="<%=MolecularIndexingScheme.IndexPosition.values()%>"/>
         <c:forEach items="${enumValues}" var="enumValue">
             <c:out value="${enumValue}"/>
