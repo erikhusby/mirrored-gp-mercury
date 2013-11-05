@@ -43,22 +43,37 @@ public class SecurityFilter implements Filter {
 
         HttpServletRequest httpReq = (HttpServletRequest) servletRequest;
 
-        String currentURI = httpReq.getRequestURI();
+        String servletPath = httpReq.getServletPath();
+        if (!excludeFromFilter(servletPath)) {
+            String currentURI = httpReq.getRequestURI();
 
-        if (isSecure && (!httpReq.isSecure())) {
-            // if required to be secure, then redirect user to proper location
-            log.warn(httpReq.getRemoteAddr() + " trying to access " + currentURI + " insecurely.");
+            if (isSecure && (!httpReq.isSecure())) {
+                // if required to be secure, then redirect user to proper location
+                log.warn(httpReq.getRemoteAddr() + " trying to access " + currentURI + " insecurely.");
 
-            // force user to secure login page (redirect)
-            String newURL = "https://" + httpReq.getServerName() + ":" + securePort
-                            + //httpReq.getContextPath() + "/" +
-                            currentURI;
-            ((HttpServletResponse) servletResponse).sendRedirect(newURL);
-        } else {
-
-            filterChain.doFilter(servletRequest, servletResponse);
+                // force user to secure login page (redirect)
+                String newURL = "https://" + httpReq.getServerName() + ":" + securePort
+                                + //httpReq.getContextPath() + "/" +
+                                currentURI;
+                ((HttpServletResponse) servletResponse).sendRedirect(newURL);
+            } else {
+                filterChain.doFilter(servletRequest, servletResponse);
+            }
         }
+    }
 
+    /**
+     * Determine whether to exclude a path from the filter.  Web Service calls from liquid handling decks are
+     * currently excluded, so the decks are not forced to implement SSL.
+     * @param path url after server
+     * @return true if excluded
+     */
+    private static boolean excludeFromFilter(String path) {
+        return path.startsWith("/rest/limsQuery") ||
+                path.startsWith("/rest/bettalimsmessage") ||
+                path.startsWith("/rest/vessel/registerTubes") ||
+                path.startsWith("/rest/IlluminaRun/query") ||
+                path.startsWith("/rest/solexarun");
     }
 
     @Override
