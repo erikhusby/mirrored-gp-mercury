@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -34,12 +35,15 @@ public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
+        MaterialInfo materialInfo =
+                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva",
+                        new MaterialType("Cells:Pellet frozen, polar extracts"));
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 PRODUCT_ORDER_ID, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE, NUMBER_OF_SAMPLES,
-                new MaterialType("Cells:Pellet frozen, polar extracts"),
-                new MaterialType("Whole Blood:Whole Blood"),
+                materialInfo,
+                materialInfo,
                 TEST_COLLECTION);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));

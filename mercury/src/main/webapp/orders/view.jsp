@@ -58,25 +58,6 @@
                             tokenLimit: 1
                         }
                 );
-
-                $j("#materialType").tokenInput(
-                        "${ctxpath}/orders/order.action?materialTypeAutocomplete=", {
-                            hintText: "Type a Material Type name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            resultsFormatter: formatInput,
-                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            tokenLimit: 1
-                        }
-                );
-                $j("#sourceMaterialType").tokenInput(
-                        "${ctxpath}/orders/order.action?materialTypeAutocomplete=", {
-                            hintText: "Type a source material type name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            resultsFormatter: formatInput,
-                            tokenDelimiter: "${actionBean.materialTypeTokenInput.separator}",
-                            tokenLimit: 1
-                        }
-                );
             });
 
             var bspDataCount = 0;
@@ -770,21 +751,27 @@
                                 </div>
                             </div>
                             <div class="control-group">
-                                <stripes:label for="materialType" class="control-label">
+                                <stripes:label for="materialInfo" class="control-label">
                                     Material Type
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:text id="materialType" name="materialTypeTokenInput.listOfKeys"
-                                                  class="defaultText" title="Search for material types."/>
+                                    <stripes:select name="materialInfo">
+                                        <stripes:option label="Choose"/>
+                                        <stripes:options-collection
+                                                collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                                    </stripes:select>
                                 </div>
                             </div>
                             <div class="control-group">
-                                <stripes:label for="sourceMaterialType" class="control-label">
+                                <stripes:label for="sourceMaterialInfo" class="control-label">
                                     Source Material Type
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:text id="sourceMaterialType" name="sourceMaterialTypeTokenInput.listOfKeys"
-                                                  class="defaultText" title="Search for material types."/>
+                                    <stripes:select name="sourceMaterialInfo">
+                                        <stripes:option label="Choose"/>
+                                        <stripes:options-collection
+                                                collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                                    </stripes:select>
                                 </div>
                             </div>
                         </fieldset>
