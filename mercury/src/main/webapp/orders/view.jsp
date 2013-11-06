@@ -58,6 +58,16 @@
                             tokenLimit: 1
                         }
                 );
+
+                $j("#notifyingUserList").tokenInput(
+                        "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
+                            hintText: "Enter a user name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.notifyingUserListTokenInput.completeData)},
+                            tokenDelimiter: "${actionBean.notifyingUserListTokenInput.separator}",
+                            preventDuplicates: true,
+                            resultsFormatter: formatInput
+                        }
+                );
             });
 
             var bspDataCount = 0;
@@ -772,6 +782,13 @@
                                         <stripes:options-collection
                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
                                     </stripes:select>
+                                </div>
+                            </div>
+                            <!-- Users to Notify because of shipment completion -->
+                            <div class="control-group">
+                                <stripes:label for="notifyingUserList" class="control-label">Notify Complete</stripes:label>
+                                <div class="controls">
+                                    <stripes:text id="notifyingUserList" name="notifyingUserListTokenInput.listOfKeys" />
                                 </div>
                             </div>
                         </fieldset>

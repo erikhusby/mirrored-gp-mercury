@@ -206,6 +206,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
+    @Inject
+    private UserTokenInput notifyingUserListTokenInput;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
@@ -1298,6 +1301,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(bspGroupCollectionTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("anyUsersAutocomplete")
+    public Resolution anyUsersAutocomplete() throws Exception {
+        return createTextResolution(notifyingUserListTokenInput.getJsonString(getQ()));
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1694,5 +1702,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
         this.materialInfo = materialInfo;
+    }
+
+    public UserTokenInput getNotifyingUserListTokenInput() {
+        return notifyingUserListTokenInput;
+    }
+
+    public void setNotifyingUserListTokenInput(UserTokenInput notifyingUserListTokenInput) {
+        this.notifyingUserListTokenInput = notifyingUserListTokenInput;
     }
 }
