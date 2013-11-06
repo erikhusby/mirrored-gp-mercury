@@ -8,6 +8,7 @@ import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleResponse;
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.sample.Sample;
 import org.broadinstitute.bsp.client.sample.SampleKit;
@@ -185,17 +186,31 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
             }
 
             @Override
+            public List<MaterialInfo> getMaterialInfo() {
+                List<MaterialInfo> materialInfoList = new ArrayList<>();
+                materialInfoList.add(new MaterialInfo("DNA Matrix Kit", "DNA Derived from Whole Blood",
+                        new MaterialType("DNA:DNA Somatic")));
+                return materialInfoList;
+            }
+
+            @Override
             public List<MaterialType> getMaterialTypes() {
                 List<MaterialType> materialTypes = new ArrayList<>();
-
                 materialTypes.add( new MaterialType("Cells:Pellet frozen") );
-                materialTypes.add( new MaterialType("DNA:DNA Genomic") );
                 materialTypes.add( new MaterialType("DNA:DNA Library External") );
                 materialTypes.add( new MaterialType("DNA:Viral Hybrid") );
                 materialTypes.add( new MaterialType("RNA:Total RNA") );
-                return  materialTypes;
-
+                materialTypes.add( new MaterialType("DNA:DNA WGA Qiagen") );
+                materialTypes.add( new MaterialType("DNA:DNA Somatic") );
+                materialTypes.add( new MaterialType("DNA:DNA Genomic") );
+                return materialTypes;
             }
+
+            @Override
+            public List<MaterialInfo> getMaterialInfo(String s) {
+                return getMaterialInfo();
+            }
+
 
             @Override
             public Boolean participantHasBeenSubmitted(String s, String s1) {

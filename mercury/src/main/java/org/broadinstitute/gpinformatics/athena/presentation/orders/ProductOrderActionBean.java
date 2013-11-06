@@ -20,7 +20,9 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -55,12 +57,12 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -125,7 +127,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     private static final String PLACE_ORDER = "placeOrder";
-
+    private static final String DNA_MATRIX_KIT_TYPE = "DNA Matrix Kit";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -194,12 +196,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductTokenInput productTokenInput;
 
     @Inject
-    private MaterialTypeTokenInput materialTypeTokenInput;
-
-    @Inject
-    private MaterialTypeTokenInput sourceMaterialTypeTokenInput;
-
-    @Inject
     private ProjectTokenInput projectTokenInput;
 
     @Inject
@@ -207,6 +203,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BspGroupCollectionTokenInput bspGroupCollectionTokenInput;
+
+    @Inject
+    private BSPManagerFactory bspManagerFactory;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -289,6 +288,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private MaterialType sourceMaterialType;
 
+    private List<MaterialInfo> dnaMatrixMaterialTypes;
+
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
+        return dnaMatrixMaterialTypes;
+    }
     /*
      * The search query.
      */
@@ -328,7 +332,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-
+        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfo(DNA_MATRIX_KIT_TYPE);
+        Collections.sort(dnaMatrixMaterialTypes, SampleManager.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
             addGlobalValidationError("No product order was specified.");
@@ -459,14 +464,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!sites.isEmpty()) {
             site = sites.get(0);
         }
-        List<MaterialType> materialTypes = materialTypeTokenInput.getTokenObjects();
-        if (!materialTypes.isEmpty()) {
-            materialType = materialTypes.iterator().next();
-        }
-        List<MaterialType> sourceMaterialTypes = sourceMaterialTypeTokenInput.getTokenObjects();
-        if (!sourceMaterialTypes.isEmpty()) {
-            sourceMaterialType = sourceMaterialTypes.iterator().next();
-        }
+
         doValidation(action);
 
         if (!hasErrors()) {
@@ -1302,16 +1300,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(bspGroupCollectionTokenInput.getJsonString(getQ()));
     }
 
-    @HandlesEvent("materialTypeAutocomplete")
-    public Resolution materialTypeAutocomplete() throws Exception {
-        return createTextResolution(materialTypeTokenInput.getJsonString(getQ()));
-    }
-
-    @HandlesEvent("sourceMaterialTypeAutocomplete")
-    public Resolution sourceMaterialTypeAutocomplete() throws Exception {
-        return createTextResolution(sourceMaterialTypeTokenInput.getJsonString(getQ()));
-    }
-
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1686,11 +1674,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         return ProductOrder.OrderStatus.values();
     }
 
-    public MaterialTypeTokenInput getMaterialTypeTokenInput() {
-        return materialTypeTokenInput;
+    public MaterialType getMaterialType() {
+        return materialType;
     }
 
-    public MaterialTypeTokenInput getSourceMaterialTypeTokenInput() {
-        return sourceMaterialTypeTokenInput;
+    public void setMaterialType(MaterialType materialType) {
+        this.materialType = materialType;
+    }
+
+    public MaterialType getSourceMaterialType() {
+        return sourceMaterialType;
+    }
+
+    public void setSourceMaterialType(MaterialType sourceMaterialType) {
+        this.sourceMaterialType = sourceMaterialType;
     }
 }

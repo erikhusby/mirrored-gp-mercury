@@ -55,7 +55,9 @@ public class BSPWorkRequestFactory {
                 site.getId(),
                 numberOfSamples,
                 collection.getCollectionId(),
-                SampleKitWorkRequest.TransferMethod.SHIP_OUT // transferMethod
+                SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
+                materialType,
+                sourceMaterialType
         );
     }
 }
