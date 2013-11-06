@@ -762,23 +762,11 @@
                             </div>
                             <div class="control-group">
                                 <stripes:label for="materialInfo" class="control-label">
-                                    Material Type
+                                    Material Information
                                 </stripes:label>
                                 <div class="controls">
                                     <stripes:select name="materialInfo">
-                                        <stripes:option label="Choose"/>
-                                        <stripes:options-collection
-                                                collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
-                                    </stripes:select>
-                                </div>
-                            </div>
-                            <div class="control-group">
-                                <stripes:label for="sourceMaterialInfo" class="control-label">
-                                    Source Material Type
-                                </stripes:label>
-                                <div class="controls">
-                                    <stripes:select name="sourceMaterialInfo">
-                                        <stripes:option label="Choose"/>
+                                        <stripes:option label="Choose..."/>
                                         <stripes:options-collection
                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
                                     </stripes:select>

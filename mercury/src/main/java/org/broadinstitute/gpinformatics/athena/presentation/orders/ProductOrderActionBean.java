@@ -288,8 +288,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private MaterialInfo materialInfo;
 
-    private MaterialInfo sourceMaterialInfo;
-
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {
@@ -334,7 +332,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfo(DNA_MATRIX_KIT_TYPE);
+        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(DNA_MATRIX_KIT_TYPE);
         Collections.sort(dnaMatrixMaterialTypes, SampleManager.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
@@ -412,7 +410,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(numberOfSamples > 0, "a specified number of tubes", action);
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
-            requireField(sourceMaterialInfo, "a source material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
@@ -764,9 +761,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                String workRequestBarcode = bspKitRequestService
-                        .createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialInfo,
-                                sourceMaterialInfo, bspGroupCollectionTokenInput.getTokenObjects().get(0));
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
+                        editOrder, site, numberOfSamples, materialInfo,
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0));
                 addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
             }
         } catch (Exception e) {
@@ -1686,14 +1683,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static void setLogger(Log logger) {
         ProductOrderActionBean.logger = logger;
-    }
-
-    public MaterialInfo getSourceMaterialInfo() {
-        return sourceMaterialInfo;
-    }
-
-    public void setSourceMaterialInfo(MaterialInfo sourceMaterialInfo) {
-        this.sourceMaterialInfo = sourceMaterialInfo;
     }
 
     public MaterialInfo getMaterialInfo() {
