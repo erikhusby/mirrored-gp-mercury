@@ -44,12 +44,10 @@ public class BSPKitRequestService {
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
      * @param materialInfo       materialInfo of the kit request
-     * @param sourceMaterialInfo  source materialInfo of the kit request
      * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialInfo materialInfo, MaterialInfo sourceMaterialInfo,
-                                                  SampleCollection collection) {
+                                                  MaterialInfo materialInfo, SampleCollection collection) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -74,8 +72,7 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialInfo, sourceMaterialInfo,
-                collection);
+                externalCollaboratorId, site, numberOfSamples, materialInfo, collection);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
