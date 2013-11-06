@@ -25,7 +25,6 @@ public class BSPWorkRequestFactory {
      * @param site                   the site that the sample kits will be shipped to
      * @param numberOfSamples        the total number of samples that the kit should contain
      * @param materialInfo           the material type
-     * @param sourceMaterialInfo     the source material type
      * @param collection             the collection to use for the sample kit work task
      *
      * @return a new SampleKitWorkRequest
@@ -34,8 +33,7 @@ public class BSPWorkRequestFactory {
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Site site, long numberOfSamples,
-                                                              MaterialInfo materialInfo, MaterialInfo sourceMaterialInfo,
-                                                              SampleCollection collection) {
+                                                              MaterialInfo materialInfo, SampleCollection collection) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -55,8 +53,7 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 collection.getCollectionId(),
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialInfo,
-                sourceMaterialInfo
+                materialInfo
         );
     }
 }
