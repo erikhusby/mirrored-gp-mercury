@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
@@ -24,8 +24,8 @@ public class BSPWorkRequestFactory {
      * @param externalCollaboratorId the domain user ID for the external collaborator
      * @param site                   the site that the sample kits will be shipped to
      * @param numberOfSamples        the total number of samples that the kit should contain
-     * @param materialType           the material type
-     * @param sourceMaterialType     the source material type
+     * @param materialInfo           the material type
+     * @param sourceMaterialInfo     the source material type
      * @param collection             the collection to use for the sample kit work task
      *
      * @return a new SampleKitWorkRequest
@@ -34,8 +34,7 @@ public class BSPWorkRequestFactory {
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Site site, long numberOfSamples,
-                                                              MaterialType materialType,
-                                                              MaterialType sourceMaterialType,
+                                                              MaterialInfo materialInfo, MaterialInfo sourceMaterialInfo,
                                                               SampleCollection collection) {
 
         return new SampleKitWorkRequest(
@@ -56,8 +55,8 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 collection.getCollectionId(),
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialType,
-                sourceMaterialType
+                materialInfo,
+                sourceMaterialInfo
         );
     }
 }

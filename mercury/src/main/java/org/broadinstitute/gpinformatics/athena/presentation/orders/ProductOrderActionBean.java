@@ -21,7 +21,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -284,11 +283,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Site site;
 
-    private MaterialType materialType;
+    private MaterialInfo materialInfo;
 
-    private MaterialType sourceMaterialType;
+    private MaterialInfo sourceMaterialInfo;
 
-    private List<MaterialInfo> dnaMatrixMaterialTypes;
+    private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
@@ -409,8 +408,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             requireField(numberOfSamples > 0, "a specified number of tubes", action);
             requireField(site, "a site", action);
-            requireField(materialType, "a material type", action);
-            requireField(sourceMaterialType, "a source material type", action);
+            requireField(materialInfo, "a material type", action);
+            requireField(sourceMaterialInfo, "a source material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
@@ -762,10 +761,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
 
             if (isSampleInitiation()) {
-                String workRequestBarcode =
-                        bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialType,
-                        sourceMaterialType,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0));
+                String workRequestBarcode = bspKitRequestService
+                        .createAndSubmitKitRequestForPDO(editOrder, site, numberOfSamples, materialInfo,
+                                sourceMaterialInfo, bspGroupCollectionTokenInput.getTokenObjects().get(0));
                 addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
             }
         } catch (Exception e) {
@@ -1674,19 +1672,27 @@ public class ProductOrderActionBean extends CoreActionBean {
         return ProductOrder.OrderStatus.values();
     }
 
-    public MaterialType getMaterialType() {
-        return materialType;
+    public static Log getLogger() {
+        return logger;
     }
 
-    public void setMaterialType(MaterialType materialType) {
-        this.materialType = materialType;
+    public static void setLogger(Log logger) {
+        ProductOrderActionBean.logger = logger;
     }
 
-    public MaterialType getSourceMaterialType() {
-        return sourceMaterialType;
+    public MaterialInfo getSourceMaterialInfo() {
+        return sourceMaterialInfo;
     }
 
-    public void setSourceMaterialType(MaterialType sourceMaterialType) {
-        this.sourceMaterialType = sourceMaterialType;
+    public void setSourceMaterialInfo(MaterialInfo sourceMaterialInfo) {
+        this.sourceMaterialInfo = sourceMaterialInfo;
+    }
+
+    public MaterialInfo getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(MaterialInfo materialInfo) {
+        this.materialInfo = materialInfo;
     }
 }

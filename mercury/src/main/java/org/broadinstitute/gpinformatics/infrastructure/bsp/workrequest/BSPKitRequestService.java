@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -43,11 +43,12 @@ public class BSPKitRequestService {
      * @param productOrder       the product order to create the kit request from
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
-     * @param materialType
-     *@param sourceMaterialType @return the BSP work request ID
+     * @param materialInfo       materialInfo of the kit request
+     * @param sourceMaterialInfo  source materialInfo of the kit request
+     * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialType materialType, MaterialType sourceMaterialType,
+                                                  MaterialInfo materialInfo, MaterialInfo sourceMaterialInfo,
                                                   SampleCollection collection) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
@@ -73,7 +74,7 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialType, sourceMaterialType,
+                externalCollaboratorId, site, numberOfSamples, materialInfo, sourceMaterialInfo,
                 collection);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
