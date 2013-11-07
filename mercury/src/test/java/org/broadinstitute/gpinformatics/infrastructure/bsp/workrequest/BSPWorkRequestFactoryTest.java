@@ -43,7 +43,7 @@ public class BSPWorkRequestFactoryTest {
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE, NUMBER_OF_SAMPLES,
                 materialInfo,
-                TEST_COLLECTION);
+                TEST_COLLECTION, "hrafal@broadinstitute.org");
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));

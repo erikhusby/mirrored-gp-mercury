@@ -207,7 +207,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BSPManagerFactory bspManagerFactory;
 
     @Inject
-    private UserTokenInput notifyingUserListTokenInput;
+    private UserTokenInput notificationListTokenInput;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -695,7 +695,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution view() {
         if (editOrder == null) {
             addGlobalValidationError("A PDO named '" + productOrder + "' could not be found.");
-            Resolution errorResolution = null;
+            Resolution errorResolution;
 
             try {
                 errorResolution = getContext().getSourcePageResolution();
@@ -753,19 +753,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
+            if (isSampleInitiation()) {
+                // Get comma separated list of e-mails from notificationList
+                String notificationList = notificationListTokenInput.getEmailList();
+
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
+                        editOrder, site, numberOfSamples, materialInfo,
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
+                addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
+            }
+
+            // Save it!
             editOrder.prepareToSave(userBean.getBspUser());
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            // Save it!
             productOrderDao.persist(editOrder);
-
-            if (isSampleInitiation()) {
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
-                        editOrder, site, numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0));
-                addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
-            }
         } catch (Exception e) {
             addGlobalValidationError(e.toString());
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
@@ -1300,7 +1303,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("anyUsersAutocomplete")
     public Resolution anyUsersAutocomplete() throws Exception {
-        return createTextResolution(notifyingUserListTokenInput.getJsonString(getQ()));
+        return createTextResolution(notificationListTokenInput.getJsonString(getQ()));
     }
 
     public List<String> getAddOnKeys() {
@@ -1693,11 +1696,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.materialInfo = materialInfo;
     }
 
-    public UserTokenInput getNotifyingUserListTokenInput() {
-        return notifyingUserListTokenInput;
+    public UserTokenInput getNotificationListTokenInput() {
+        return notificationListTokenInput;
     }
 
-    public void setNotifyingUserListTokenInput(UserTokenInput notifyingUserListTokenInput) {
-        this.notifyingUserListTokenInput = notifyingUserListTokenInput;
+    public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
+        this.notificationListTokenInput = notificationListTokenInput;
     }
 }

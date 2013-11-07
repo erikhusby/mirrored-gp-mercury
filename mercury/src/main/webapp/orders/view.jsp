@@ -59,11 +59,11 @@
                         }
                 );
 
-                $j("#notifyingUserList").tokenInput(
+                $j("#notificationList").tokenInput(
                         "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
                             hintText: "Enter a user name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.notifyingUserListTokenInput.completeData)},
-                            tokenDelimiter: "${actionBean.notifyingUserListTokenInput.separator}",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.completeData)},
+                            tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                             preventDuplicates: true,
                             resultsFormatter: formatInput
                         }
@@ -774,9 +774,9 @@
                             </div>
                             <!-- Users to Notify because of shipment completion -->
                             <div class="control-group">
-                                <stripes:label for="notifyingUserList" class="control-label">Notify Complete</stripes:label>
+                                <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
                                 <div class="controls">
-                                    <stripes:text id="notifyingUserList" name="notifyingUserListTokenInput.listOfKeys" />
+                                    <stripes:text id="notificationList" name="notificationListTokenInput.listOfKeys" />
                                 </div>
                             </div>
                         </fieldset>
