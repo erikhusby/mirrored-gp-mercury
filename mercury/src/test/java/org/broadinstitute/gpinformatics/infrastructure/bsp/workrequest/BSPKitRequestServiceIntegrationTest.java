@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
@@ -46,8 +45,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     @Test
     public void testSendKitRequest() {
         MaterialInfo materialInfo =
-                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva",
-                        new MaterialType("Cells:Pellet frozen, polar extracts"));
+                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
@@ -62,8 +60,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     @Test
     public void testSubmitKitRequest() {
         MaterialInfo materialInfo =
-                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva",
-                        new MaterialType("Cells:Pellet frozen, polar extracts"));
+                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE,

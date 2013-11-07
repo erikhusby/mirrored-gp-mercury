@@ -107,6 +107,25 @@ import java.util.Set;
 @SuppressWarnings("unused")
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+    public enum KitType {
+        DNA_MATRIX("DNA Matrix Kit", "0.75mL");
+
+        private final String kitTypeName;
+        private final String displayName;
+
+        private KitType(String kitTypeName, String displayName) {
+            this.kitTypeName = kitTypeName;
+            this.displayName = displayName;
+        }
+
+        public String getKitTypeName() {
+            return kitTypeName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
@@ -125,7 +144,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     private static final String PLACE_ORDER = "placeOrder";
-    private static final String DNA_MATRIX_KIT_TYPE = "DNA Matrix Kit";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -281,11 +299,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private long numberOfSamples;
 
-    private String plasticware;
+    private KitType plasticware;
 
     private Site site;
 
     private MaterialInfo materialInfo;
+
+    private String materialInfoString;
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
@@ -331,7 +351,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(DNA_MATRIX_KIT_TYPE);
+        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(plasticware.getKitTypeName());
         Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
@@ -463,6 +483,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<Site> sites = bspShippingLocationTokenInput.getTokenObjects();
         if (!sites.isEmpty()) {
             site = sites.get(0);
+        }
+
+        if (!StringUtils.isBlank(materialInfoString)) {
+            materialInfo = new MaterialInfo(plasticware.getKitTypeName(), materialInfoString);
+            if (!dnaMatrixMaterialTypes.contains(materialInfo)) {
+                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
+                        materialInfoString);
+            }
         }
 
         doValidation(action);
@@ -765,7 +793,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
                         bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
-                addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
+                addMessage("Created BSP work request \'{0}\' for this order.", workRequestBarcode);
             }
 
             // Save it!
@@ -1640,11 +1668,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.numberOfSamples = numberOfSamples;
     }
 
-    public String getPlasticware() {
+    public KitType getPlasticware() {
         return plasticware;
     }
 
-    public void setPlasticware(String plasticware) {
+    public void setPlasticware(KitType plasticware) {
         this.plasticware = plasticware;
     }
 
@@ -1689,12 +1717,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         ProductOrderActionBean.logger = logger;
     }
 
-    public MaterialInfo getMaterialInfo() {
-        return materialInfo;
+    public String getMaterialInfoString() {
+        return materialInfoString;
     }
 
-    public void setMaterialInfo(MaterialInfo materialInfo) {
-        this.materialInfo = materialInfo;
+    public void setMaterialInfoString(String materialInfoString) {
+        this.materialInfoString = materialInfoString;
     }
 
     public UserTokenInput getNotificationListTokenInput() {

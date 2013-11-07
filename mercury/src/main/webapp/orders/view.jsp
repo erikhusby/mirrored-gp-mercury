@@ -1,3 +1,4 @@
+<%@ taglib prefix="strips" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
@@ -732,7 +733,9 @@
                                 </stripes:label>
                                 <div class="controls">
                                     <stripes:select id="kitType" name="plasticware">
-                                        <stripes:option value="0.75mL">0.75mL</stripes:option>
+                                        <strips:options-enumeration label="displayName"
+                                                enum="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean.KitType"
+                                                />
                                     </stripes:select>
                                 </div>
                             </div>
@@ -765,9 +768,9 @@
                                     Material Information
                                 </stripes:label>
                                 <div class="controls">
-                                    <stripes:select name="materialInfo">
-                                        <stripes:option label="Choose..."/>
-                                        <stripes:options-collection
+                                    <stripes:select name="materialInfoString">
+                                        <stripes:option label="Choose..." value="" />
+                                        <stripes:options-collection value="bspName"
                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
                                     </stripes:select>
                                 </div>

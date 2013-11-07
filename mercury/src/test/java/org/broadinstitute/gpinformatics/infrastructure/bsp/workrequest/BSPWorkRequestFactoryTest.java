@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -15,7 +14,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.core.Is.is;
 
 /**
@@ -40,8 +38,7 @@ public class BSPWorkRequestFactoryTest {
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
         MaterialInfo materialInfo =
-                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva",
-                        new MaterialType("Cells:Pellet frozen, polar extracts"));
+                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 PRODUCT_ORDER_ID, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
