@@ -752,6 +752,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
+            editOrder.prepareToSave(userBean.getBspUser());
+            editOrder.placeOrder();
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
             if (isSampleInitiation()) {
                 // Get comma separated list of e-mails from notificationList
                 String notificationList = notificationListTokenInput.getEmailList();
@@ -763,10 +767,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
 
             // Save it!
-            editOrder.prepareToSave(userBean.getBspUser());
-            editOrder.placeOrder();
-            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             addGlobalValidationError(e.toString());
