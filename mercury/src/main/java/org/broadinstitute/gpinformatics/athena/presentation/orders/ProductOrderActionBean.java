@@ -351,7 +351,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(plasticware.getKitTypeName());
+        dnaMatrixMaterialTypes =
+                bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitTypeName());
         Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
