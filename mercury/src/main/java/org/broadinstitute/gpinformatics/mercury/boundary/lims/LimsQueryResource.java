@@ -5,12 +5,15 @@ import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
-import org.apache.commons.logging.Log;
+import org.apache.commons.collections15.MapUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -18,13 +21,17 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupTyp
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +40,6 @@ import java.util.Map;
  */
 @Path("/limsQuery")
 public class LimsQueryResource {
-    @Inject
-    private Log log;
 
     @Inject
     private ThriftService thriftService;
@@ -53,6 +58,9 @@ public class LimsQueryResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     public LimsQueryResource() {
     }
@@ -245,6 +253,72 @@ public class LimsQueryResource {
             default:
                 throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
+    }
+
+    /**
+     * Build an initial sample existence Map with all well positions from A01 through H12 and all false values.
+     */
+    private Map<String, Boolean> buildInitialSampleExistenceMap() {
+        // Initially fill all positions in the Map with false.
+        Map<String, Boolean> map = new HashMap<>();
+        for (char r = 'A'; r <= 'H'; r++) {
+            for (int c = 1; c <= 12; c++) {
+                map.put(String.format("%c%02d", r, c), false);
+            }
+        }
+        return map;
+    }
+
+    /**
+     * Utility method to build a response for the specified status and map data.
+     */
+    private Response buildResponse(@Nonnull Response.Status status, @Nonnull Map<String, Boolean> map) {
+        return Response.status(status).entity(map).type(MediaType.APPLICATION_JSON).build();
+    }
+
+    /**
+     * Return a Map with all the same entries as the argument but which will iterate keys in standard 96 well vessel
+     * position order, i.e. A01, A02, A03,... H12.
+     */
+    private Map<String, Boolean> sortedWellMap(Map<String, Boolean> map) {
+        Map<String, Boolean> sortedMap = new LinkedHashMap<>();
+        for (char r = 'A'; r <= 'H'; r++) {
+            for (int c = 1; c <= 12; c++) {
+                String well = String.format("%c%02d", r, c);
+                sortedMap.put(well, map.get(well));
+            }
+        }
+        return sortedMap;
+    }
+
+    /**
+     * Return a "sample existence" Map of all well position keys from A01 through H12 to a Boolean indicating whether
+     * there is a sample in the parent rack at that position.  This is currently more generally useful than the
+     * {@link LimsQueryResource#fetchParentRackContentsForPlate(String)} method which only works for Varioskan data
+     * generation when run for Exome Express sets.
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/parentRackContents")
+    public Response parentRackContents(@QueryParam("plateBarcode") @Nonnull String plateBarcode) {
+
+        LabVessel labVessel = labVesselDao.findByIdentifier(plateBarcode);
+        LabVessel sourceRack = labVessel.getContainerRole().getSourceRack();
+
+        if (sourceRack == null) {
+            // EMPTY_MAP does not have type parameters.
+            //noinspection unchecked
+            return buildResponse(Response.Status.BAD_REQUEST, MapUtils.EMPTY_MAP);
+        }
+
+        Map<String, Boolean> map = buildInitialSampleExistenceMap();
+        // Set any positions where this rack has samples to be true in the result Map.
+        for (VesselPosition vesselPosition : sourceRack.getContainerRole().getMapPositionToVessel().keySet()) {
+            map.put(vesselPosition.name(), true);
+        }
+
+        // Sort the well positions in the response for readability.
+        return buildResponse(Response.Status.OK, sortedWellMap(map));
     }
 
     // TODO round 3: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
