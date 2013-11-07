@@ -205,6 +205,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
+    @Inject
+    private UserTokenInput notificationListTokenInput;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
@@ -407,6 +410,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
+            requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
+            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0, "an external collaborator", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -691,7 +696,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution view() {
         if (editOrder == null) {
             addGlobalValidationError("A PDO named '" + productOrder + "' could not be found.");
-            Resolution errorResolution = null;
+            Resolution errorResolution;
 
             try {
                 errorResolution = getContext().getSourcePageResolution();
@@ -753,15 +758,18 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            // Save it!
-            productOrderDao.persist(editOrder);
-
             if (isSampleInitiation()) {
+                // Get comma separated list of e-mails from notificationList
+                String notificationList = notificationListTokenInput.getEmailList();
+
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0));
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
                 addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
             }
+
+            // Save it!
+            productOrderDao.persist(editOrder);
         } catch (Exception e) {
             addGlobalValidationError(e.toString());
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
@@ -1294,6 +1302,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(bspGroupCollectionTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("anyUsersAutocomplete")
+    public Resolution anyUsersAutocomplete() throws Exception {
+        return createTextResolution(notificationListTokenInput.getJsonString(getQ()));
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }
@@ -1682,5 +1695,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
         this.materialInfo = materialInfo;
+    }
+
+    public UserTokenInput getNotificationListTokenInput() {
+        return notificationListTokenInput;
+    }
+
+    public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
+        this.notificationListTokenInput = notificationListTokenInput;
     }
 }

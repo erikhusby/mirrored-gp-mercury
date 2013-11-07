@@ -17,6 +17,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Collections;
 
 /**
  * Integration tests for {@link BSPKitRequestService}.
@@ -30,7 +31,8 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     public static final long ELANDER_DOMAIN_USER_ID = 7062;
     public static final Site TEST_SITE = new Site(1, "site", "", "", "", false, false);
     public static final SampleCollection TEST_COLLECTION =
-            new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false);
+            new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false,
+                    Collections.singletonList("Animalia : Homo : Homo sapiens"));
     public static final long NUMBER_OF_SAMPLES = 96;
 
     @Inject
@@ -50,7 +52,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
                 ELANDER_DOMAIN_USER_ID, TEST_SITE, NUMBER_OF_SAMPLES,
-                materialInfo, TEST_COLLECTION);
+                materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org");
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -65,7 +67,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE,
-                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION);
+                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org");
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);

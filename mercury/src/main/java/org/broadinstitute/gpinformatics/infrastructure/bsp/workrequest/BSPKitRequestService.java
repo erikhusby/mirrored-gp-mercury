@@ -40,14 +40,18 @@ public class BSPKitRequestService {
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
      *
+     *
+     *
      * @param productOrder       the product order to create the kit request from
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
      * @param materialInfo       materialInfo of the kit request
+     * @param notificationList   comma separated list of e-mails
+     *
      * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialInfo materialInfo, SampleCollection collection) {
+                                                  MaterialInfo materialInfo, SampleCollection collection, String notificationList) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -72,7 +76,7 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialInfo, collection);
+                externalCollaboratorId, site, numberOfSamples, materialInfo, collection, notificationList);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
