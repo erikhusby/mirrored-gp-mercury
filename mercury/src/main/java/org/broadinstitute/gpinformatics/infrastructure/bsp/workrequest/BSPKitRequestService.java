@@ -39,9 +39,6 @@ public class BSPKitRequestService {
      * BSP lab's current workflow. The additional details required by BSP are extracted from the given PDO and site or
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
-     *
-     *
-     *
      * @param productOrder       the product order to create the kit request from
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit

@@ -35,6 +35,7 @@ public class BSPWorkRequestFactoryTest {
     public static final String WORK_REQUEST_NAME = "BSPKitRequestServiceTest.testBuildBspKitWorkRequest";
     public static final String REQUEST_USER = "breilly";
     public static final String PRODUCT_ORDER_ID = "PDO-1";
+    public static final String NOTIFICATION_LIST = "hrafal@broadinstitute.org";
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
@@ -46,7 +47,7 @@ public class BSPWorkRequestFactoryTest {
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE, NUMBER_OF_SAMPLES,
                 materialInfo,
-                TEST_COLLECTION, "hrafal@broadinstitute.org");
+                TEST_COLLECTION, NOTIFICATION_LIST);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));
@@ -56,7 +57,7 @@ public class BSPWorkRequestFactoryTest {
         assertThat(workRequest.getRequestUser(), equalTo(REQUEST_USER));
         assertThat(workRequest.getPdoId(), equalTo(PRODUCT_ORDER_ID));
         assertThat(workRequest.getStatus(), nullValue());
-        assertThat(workRequest.getNotificationList(), isEmptyString());
+        assertThat(workRequest.getNotificationList(), equalTo(NOTIFICATION_LIST));
         assertThat(workRequest.getErrors(), is(empty()));
         assertThat(workRequest.getWarnings(), is(empty()));
         assertThat(workRequest.getInfo(), is(empty()));

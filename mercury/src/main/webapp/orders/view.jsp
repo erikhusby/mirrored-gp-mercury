@@ -772,7 +772,6 @@
                                     </stripes:select>
                                 </div>
                             </div>
-                            <!-- Users to Notify because of shipment completion -->
                             <div class="control-group">
                                 <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
                                 <div class="controls">
