@@ -30,10 +30,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author breilly
@@ -259,8 +258,9 @@ public class LimsQueryResource {
      * Build an initial sample existence Map with all well positions from A01 through H12 and all false values.
      */
     private Map<String, Boolean> buildInitialSampleExistenceMap() {
-        // Initially fill all positions in the Map with false.
-        Map<String, Boolean> map = new HashMap<>();
+        // Initially fill all positions in the Map with false.  Use a TreeMap to keep keys in sorted order for
+        // readability.
+        Map<String, Boolean> map = new TreeMap<>();
         for (char r = 'A'; r <= 'H'; r++) {
             for (int c = 1; c <= 12; c++) {
                 map.put(String.format("%c%02d", r, c), false);
@@ -274,21 +274,6 @@ public class LimsQueryResource {
      */
     private Response buildResponse(@Nonnull Response.Status status, @Nonnull Map<String, Boolean> map) {
         return Response.status(status).entity(map).type(MediaType.APPLICATION_JSON).build();
-    }
-
-    /**
-     * Return a Map with all the same entries as the argument but which will iterate keys in standard 96 well vessel
-     * position order, i.e. A01, A02, A03,... H12.
-     */
-    private Map<String, Boolean> sortedWellMap(Map<String, Boolean> map) {
-        Map<String, Boolean> sortedMap = new LinkedHashMap<>();
-        for (char r = 'A'; r <= 'H'; r++) {
-            for (int c = 1; c <= 12; c++) {
-                String well = String.format("%c%02d", r, c);
-                sortedMap.put(well, map.get(well));
-            }
-        }
-        return sortedMap;
     }
 
     /**
@@ -317,8 +302,7 @@ public class LimsQueryResource {
             map.put(vesselPosition.name(), true);
         }
 
-        // Sort the well positions in the response for readability.
-        return buildResponse(Response.Status.OK, sortedWellMap(map));
+        return buildResponse(Response.Status.OK, map);
     }
 
     // TODO round 3: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
