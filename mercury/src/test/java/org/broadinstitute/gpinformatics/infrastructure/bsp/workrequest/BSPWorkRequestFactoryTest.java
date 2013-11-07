@@ -9,6 +9,8 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +27,8 @@ public class BSPWorkRequestFactoryTest {
     public static final Site TEST_SITE = new Site(4, "site", "", "", "", false, false);
     public static final long PRIMARY_INVESTIGATOR_ID = 1L;
     public static final SampleCollection TEST_COLLECTION =
-            new SampleCollection(6L, "", new Group(PRIMARY_INVESTIGATOR_ID, "", "", false), "", "", false);
+            new SampleCollection(6L, "", new Group(PRIMARY_INVESTIGATOR_ID, "", "", false), "", "", false,
+                    Collections.singletonList("Animalia : Homo : Homo sapiens"));
     public static final long NUMBER_OF_SAMPLES = 5L;
     public static final long PROJECT_MANAGER_ID = 2L;
     public static final long EXTERNAL_COLLABORATOR_ID = 3L;
