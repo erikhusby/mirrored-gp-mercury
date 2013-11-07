@@ -21,7 +21,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -333,7 +332,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(DNA_MATRIX_KIT_TYPE);
-        Collections.sort(dnaMatrixMaterialTypes, SampleManager.BY_BSP_NAME);
+        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
             addGlobalValidationError("No product order was specified.");
