@@ -410,6 +410,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
+            requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
+            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0, "an external collaborator", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
