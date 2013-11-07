@@ -45,6 +45,7 @@ public class MolecularIndexSchemeActionBean extends CoreActionBean {
         return new ForwardResolution(MOL_IND_SCHEME_PAGE);
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setSchemesTextFile(FileBean schemesTextFile) {
         this.schemesTextFile = schemesTextFile;
     }

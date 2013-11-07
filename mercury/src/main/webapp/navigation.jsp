@@ -115,8 +115,13 @@
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a>
                             </li>
+                        </security:authorizeBlock>
+                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
                             <li>
                                 <a tabindex="-1" href="${ctxpath}/reagent/molindscheme.action">Molecular Index Schemes</a>
+                            </li>
+                            <li>
+                                <a tabindex="-1" href="${ctxpath}/reagent/molindplate.action">Molecular Index Plates</a>
                             </li>
                         </security:authorizeBlock>
                         <li>
