@@ -23,7 +23,7 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
         super(SINGLE_LINE_FORMAT);
     }
 
-    public String getJsonString(String query, String collection) throws JSONException {
+    public String getJsonString(String query, Long collection) throws JSONException {
         return createItemListString(bspSiteList.find(query, collection));
     }
 

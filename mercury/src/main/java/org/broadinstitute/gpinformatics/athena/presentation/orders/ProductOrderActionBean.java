@@ -1328,12 +1328,19 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Long collectionId = null;
 
+        if (bspGroupCollectionTokenInput != null) {
+            selectedCollection = bspGroupCollectionTokenInput.getTokenObjects().get(0).getCollectionId().toString();
+        }
+
+
         if (selectedCollection == null) {
             addGlobalValidationError("Unable to search shipping locations without a selected collection first.");
             return getSourcePageResolution();
         }
 
-        return createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
+        // need to look up the selectedCollection to get the collection id... or change what we're passing here...
+        return createTextResolution(
+                bspShippingLocationTokenInput.getJsonString(getQ(), Long.parseLong(selectedCollection)));
     }
 
     @HandlesEvent("groupCollectionAutocomplete")
