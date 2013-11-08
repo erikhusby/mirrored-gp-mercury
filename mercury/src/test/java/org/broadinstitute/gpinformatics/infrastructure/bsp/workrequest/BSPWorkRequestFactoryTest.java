@@ -27,6 +27,7 @@ public class BSPWorkRequestFactoryTest {
     public static final SampleCollection TEST_COLLECTION =
             new SampleCollection(6L, "", new Group(PRIMARY_INVESTIGATOR_ID, "", "", false), "", "", false,
                     Collections.singletonList("Animalia : Homo : Homo sapiens"));
+    public static final String ORGANISM = "Human";
     public static final long NUMBER_OF_SAMPLES = 5L;
     public static final long PROJECT_MANAGER_ID = 2L;
     public static final long EXTERNAL_COLLABORATOR_ID = 3L;
@@ -44,7 +45,7 @@ public class BSPWorkRequestFactoryTest {
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE, NUMBER_OF_SAMPLES,
                 materialInfo,
-                TEST_COLLECTION, NOTIFICATION_LIST);
+                TEST_COLLECTION, ORGANISM, NOTIFICATION_LIST);
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));

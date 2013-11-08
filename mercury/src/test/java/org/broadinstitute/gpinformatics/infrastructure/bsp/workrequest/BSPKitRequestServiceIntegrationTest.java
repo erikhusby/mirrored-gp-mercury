@@ -33,6 +33,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
             new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false,
                     Collections.singletonList("Animalia : Homo : Homo sapiens"));
     public static final long NUMBER_OF_SAMPLES = 96;
+    private static String ORGANISM = "Human";
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -50,7 +51,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
                 ELANDER_DOMAIN_USER_ID, TEST_SITE, NUMBER_OF_SAMPLES,
-                materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org");
+                materialInfo, TEST_COLLECTION, ORGANISM, "hrafal@broadinstitute.org");
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -64,7 +65,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE,
-                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org");
+                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION, ORGANISM, "hrafal@broadinstitute.org");
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);

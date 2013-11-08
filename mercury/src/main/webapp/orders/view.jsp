@@ -69,6 +69,16 @@
                             resultsFormatter: formatInput
                         }
                 );
+
+                $j("#organism").tokenInput(
+                        "${ctxpath}/orders/order.action?organismsAutocomplete=", {
+                            hintText: "Enter an organism",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.organismListTokenInput.completeData)},
+                            tokenDelimiter: "${actionBean.organismListTokenInput.separator}",
+                            tokenLimit: 1
+                            resultsFormatter: formatInput
+                        }
+                );
             });
 
             var bspDataCount = 0;
@@ -749,6 +759,13 @@
                                             id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
                                             class="defaultText"
                                             title="Search for collection and group"/>
+                                </div>
+                            </div>
+
+                            <div class="control-group">
+                                <stripes:label for="organismList" class="control-label">Organism</stripes:label>
+                                <div class="controls">
+                                    <stripes:text id="organismList" name="organismListTokenInput.listOfKeys" />
                                 </div>
                             </div>
 

@@ -22,7 +22,6 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
-    private String tokenObject;
 
     public ProjectTokenInput() {
         super(SINGLE_LINE_FORMAT);

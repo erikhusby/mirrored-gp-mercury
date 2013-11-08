@@ -55,6 +55,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.OrganismTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -225,6 +226,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private UserTokenInput notificationListTokenInput;
+
+    @Inject
+    private OrganismTokenInput organismListTokenInput;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -433,6 +437,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
             requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
             requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0, "an external collaborator", action);
+            requireField(!organismListTokenInput.getTokenObjects().isEmpty(), "an organism", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -791,9 +796,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // Get comma separated list of e-mails from notificationList
                 String notificationList = notificationListTokenInput.getEmailList();
 
+                String organism = organismListTokenInput.getOrganism();
+
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0), organism, notificationList);
                 addMessage("Created BSP work request \'{0}\' for this order.", workRequestBarcode);
             }
 
@@ -1732,5 +1739,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
+    }
+
+    public OrganismTokenInput getOrganismListTokenInput() {
+        return organismListTokenInput;
+    }
+
+    public void setOrganismListTokenInput(OrganismTokenInput organismListTokenInput) {
+        this.organismListTokenInput = organismListTokenInput;
     }
 }
