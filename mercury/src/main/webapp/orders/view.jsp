@@ -50,8 +50,7 @@ $j(document).ready(function () {
     );
 
     $j("#shippingLocation").tokenInput(
-            getShippingLocationURL
-            , {
+            getShippingLocationURL, {
                 hintText: "Search for shipping location",
                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
                 resultsFormatter: formatInput,
