@@ -17,17 +17,9 @@ import java.util.List;
  */
 public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParser {
 
-//	private enum Columns {
-//		BROAD_BARCODE(3, "Broad Barcode");
-//
-//		final int columnIndex;
-//		final String columnName;
-//
-//		Columns(final int index, final String name) {
-//			this.columnIndex = index;
-//			this.columnName = name;
-//		}
-//	}
+    private final DataFormatter dataFormatter = new DataFormatter();
+
+    private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
 
     abstract class ColumnParser {
         public abstract int getColumnIndex();
@@ -143,10 +135,6 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
         return parsers;
     }
 
-    private final DataFormatter dataFormatter = new DataFormatter();
-
-    private final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
-
     @Override
     public List<PlateWellIndexAssociation> parseInputStream(InputStream inputStream) {
         Sheet sheet;
@@ -206,5 +194,9 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
                                 ", but found " + headerString);
             }
         }
+    }
+
+    String getTechnology() {
+        return technology;
     }
 }
