@@ -49,10 +49,9 @@ $j(document).ready(function () {
             }
     );
 
-    $j("#kitCollection").change(reInitShippingSites);
-
     $j("#shippingLocation").tokenInput(
-            "${ctxpath}/orders/order.action?shippingLocationAutocomplete=", {
+            getShippingLocationURL
+            , {
                 hintText: "Search for shipping location",
                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
                 resultsFormatter: formatInput,
@@ -72,12 +71,9 @@ $j(document).ready(function () {
     );
 });
 
-// Once a collection is selected we want to filter the available shipping sites to only ones in that collection.
-function reInitShippingSites() {
-    $j("#token-input-shippingLocation").remove();
-    <%--$j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollectionSelection li.token-input-token p').text().trim() + "&shippingLocationAutocomplete=");--%>
-    <%--$j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?bspGroupCollectionTokenInput=" + $j('#kitCollection').tokenInput('get') + "&shippingLocationAutocomplete=");--%>
-    $j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollection').val() + "&shippingLocationAutocomplete=");
+// This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
+function getShippingLocationURL() {
+    return "${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollection').val() + "&shippingLocationAutocomplete=";
 }
 
 var bspDataCount = 0;
