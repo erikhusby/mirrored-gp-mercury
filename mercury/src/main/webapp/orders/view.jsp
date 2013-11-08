@@ -76,8 +76,8 @@ $j(document).ready(function () {
 function reInitShippingSites() {
     $j("#token-input-shippingLocation").remove();
     <%--$j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollectionSelection li.token-input-token p').text().trim() + "&shippingLocationAutocomplete=");--%>
-    $j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?bspGroupCollectionTokenInput=" + $j('#kitCollection').getTokenInput('get') + "&shippingLocationAutocomplete=");
-
+    <%--$j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?bspGroupCollectionTokenInput=" + $j('#kitCollection').tokenInput('get') + "&shippingLocationAutocomplete=");--%>
+    $j("#shippingLocation").tokenInput("${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollection').val() + "&shippingLocationAutocomplete=");
 }
 
 var bspDataCount = 0;

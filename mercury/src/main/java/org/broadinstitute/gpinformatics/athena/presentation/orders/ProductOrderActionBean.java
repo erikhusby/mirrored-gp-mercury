@@ -311,7 +311,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
-    private String selectedCollection;
+    private Long selectedCollection;
 
     /*
      * The search query.
@@ -1326,21 +1326,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
 
-        Long collectionId = null;
-
-        if (bspGroupCollectionTokenInput != null) {
-            selectedCollection = bspGroupCollectionTokenInput.getTokenObjects().get(0).getCollectionId().toString();
-        }
-
-
         if (selectedCollection == null) {
             addGlobalValidationError("Unable to search shipping locations without a selected collection first.");
             return getSourcePageResolution();
         }
 
-        // need to look up the selectedCollection to get the collection id... or change what we're passing here...
         return createTextResolution(
-                bspShippingLocationTokenInput.getJsonString(getQ(), Long.parseLong(selectedCollection)));
+                bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
     }
 
     @HandlesEvent("groupCollectionAutocomplete")
@@ -1755,11 +1747,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return dnaMatrixMaterialTypes;
     }
 
-    public String getSelectedCollection() {
+    public Long getSelectedCollection() {
         return selectedCollection;
     }
 
-    public void setSelectedCollection(String selectedCollection) {
+    public void setSelectedCollection(Long selectedCollection) {
         this.selectedCollection = selectedCollection;
     }
 }
