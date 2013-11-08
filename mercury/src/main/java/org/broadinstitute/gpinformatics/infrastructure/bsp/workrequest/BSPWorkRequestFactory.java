@@ -35,7 +35,8 @@ public class BSPWorkRequestFactory {
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Site site, long numberOfSamples,
-                                                              MaterialInfo materialInfo, SampleCollection collection, String notificationList) {
+                                                              MaterialInfo materialInfo, SampleCollection collection,
+                                                              String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -55,7 +56,8 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 collection.getCollectionId(),
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialInfo
+                materialInfo,
+                organismId
         );
     }
 }

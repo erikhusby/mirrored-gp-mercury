@@ -790,10 +790,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (isSampleInitiation()) {
                 // Get comma separated list of e-mails from notificationList
                 String notificationList = notificationListTokenInput.getEmailList();
-
+                long organismId = 1; //todo replace with UI selection
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList, organismId);
                 addMessage("Created BSP work request \'{0}\' for this order.", workRequestBarcode);
             }
 

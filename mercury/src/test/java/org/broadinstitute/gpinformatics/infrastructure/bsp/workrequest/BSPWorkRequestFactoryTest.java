@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
@@ -24,9 +26,10 @@ public class BSPWorkRequestFactoryTest {
 
     public static final Site TEST_SITE = new Site(4, "site", "", "", "", false, false);
     public static final long PRIMARY_INVESTIGATOR_ID = 1L;
+    public static final Pair<Long, String> HUMAN_ORGANISM = new ImmutablePair(1L, "Animalia : Homo : Homo sapiens");
     public static final SampleCollection TEST_COLLECTION =
             new SampleCollection(6L, "", new Group(PRIMARY_INVESTIGATOR_ID, "", "", false), "", "", false,
-                    Collections.singletonList("Animalia : Homo : Homo sapiens"));
+                    Collections.singletonList(HUMAN_ORGANISM));
     public static final long NUMBER_OF_SAMPLES = 5L;
     public static final long PROJECT_MANAGER_ID = 2L;
     public static final long EXTERNAL_COLLABORATOR_ID = 3L;
@@ -44,7 +47,7 @@ public class BSPWorkRequestFactoryTest {
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE, NUMBER_OF_SAMPLES,
                 materialInfo,
-                TEST_COLLECTION, NOTIFICATION_LIST);
+                TEST_COLLECTION, NOTIFICATION_LIST, HUMAN_ORGANISM.getLeft());
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));
