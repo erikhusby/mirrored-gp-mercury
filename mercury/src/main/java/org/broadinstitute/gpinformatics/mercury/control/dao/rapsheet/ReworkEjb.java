@@ -151,19 +151,21 @@ public class ReworkEjb {
                 Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
+                    if (!sample.getProductOrder().isDraft()) {
 
-                    ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
-                            sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                            sample.getProductOrder(), vessel);
+                        ReworkCandidate candidate = new ReworkCandidate(entryMap.getKey(),
+                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
+                                sample.getProductOrder(), vessel);
 
-                    if (!sample.getProductOrder().getProduct()
-                            .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
-                        candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                       " for Sample " + entryMap.getKey() +
-                                                       " is not part of the Exome family");
+                        if (!sample.getProductOrder().getProduct()
+                                .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                           " for Sample " + entryMap.getKey() +
+                                                           " is not part of the Exome family");
+                        }
+
+                        reworkCandidates.add(candidate);
                     }
-
-                    reworkCandidates.add(candidate);
                 }
             }
         }
