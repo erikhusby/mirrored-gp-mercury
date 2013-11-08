@@ -24,7 +24,7 @@
             <c:out value="${enumValue}"/>
         </c:forEach>
         <p>Subsequent lines contain an optional name, and index sequences in the same order as the headers.</p>
-        <stripes:form beanclass="${actionBean.class.name}">
+        <stripes:form beanclass="${actionBean.class.name}" id="schemeForm">
             <div class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="schemesTextFile" class="control-label">

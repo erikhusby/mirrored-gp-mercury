@@ -39,8 +39,8 @@ public class MolecularIndexPlateActionBean extends CoreActionBean {
                         IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE,
                         platesFile.getInputStream());
                 addMessage("Uploaded " + mapBarcodeToPlate.size() + " plates");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                addGlobalValidationError(e.getMessage());
             }
         }
         return new ForwardResolution(MOL_IND_PLATE_PAGE);

@@ -13,7 +13,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}">
+        <stripes:form beanclass="${actionBean.class.name}" id="platesForm">
             <div class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="platesFile" class="control-label">
