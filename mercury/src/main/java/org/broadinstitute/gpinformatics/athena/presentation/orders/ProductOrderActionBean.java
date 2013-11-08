@@ -20,6 +20,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -126,6 +127,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             return displayName;
         }
     }
+
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
@@ -309,9 +311,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
-    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
-        return dnaMatrixMaterialTypes;
-    }
+    private String selectedCollection;
+
     /*
      * The search query.
      */
@@ -432,7 +433,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
             requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
-            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0, "an external collaborator", action);
+            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0,
+                    "an external collaborator", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -1323,7 +1325,15 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
-        return createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
+
+        Long collectionId = null;
+
+        if (selectedCollection == null) {
+            addGlobalValidationError("Unable to search shipping locations without a selected collection first.");
+            return getSourcePageResolution();
+        }
+
+        return createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
     }
 
     @HandlesEvent("groupCollectionAutocomplete")
@@ -1732,5 +1742,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
+    }
+
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
+        return dnaMatrixMaterialTypes;
+    }
+
+    public String getSelectedCollection() {
+        return selectedCollection;
+    }
+
+    public void setSelectedCollection(String selectedCollection) {
+        this.selectedCollection = selectedCollection;
     }
 }

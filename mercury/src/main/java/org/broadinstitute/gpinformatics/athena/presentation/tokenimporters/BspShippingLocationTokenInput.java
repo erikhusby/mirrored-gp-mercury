@@ -23,8 +23,8 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
         super(SINGLE_LINE_FORMAT);
     }
 
-    public String getJsonString(String query) throws JSONException {
-        return createItemListString(bspSiteList.find(query));
+    public String getJsonString(String query, String collection) throws JSONException {
+        return createItemListString(bspSiteList.find(query, collection));
     }
 
     @Override
@@ -41,6 +41,7 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
      * Reformat an address so its lines split into different menu lines, when shown in the HTML drop down menu.
      *
      * @param address the address, with embedded CRs
+     *
      * @return the HTML formatted address text
      */
     private static String formatAddress(String address) {
