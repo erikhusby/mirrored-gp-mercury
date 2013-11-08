@@ -1343,6 +1343,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(notificationListTokenInput.getJsonString(getQ()));
     }
 
+    @HandlesEvent("organismsAutocomplete")
+    public Resolution organismsAutocomplete() throws Exception {
+        return createTextResolution(organismListTokenInput.getJsonString(getQ()));
+    }
+
     public List<String> getAddOnKeys() {
         return addOnKeys;
     }

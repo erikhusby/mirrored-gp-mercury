@@ -71,7 +71,7 @@
                 );
 
                 $j("#organism").tokenInput(
-                        "${ctxpath}/orders/order.action?organismsAutocomplete=", {
+                        generateOrganismUrl, {
                             hintText: "Enter an organism",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.organismListTokenInput.completeData)},
                             tokenDelimiter: "${actionBean.organismListTokenInput.separator}",
@@ -82,6 +82,12 @@
             });
 
             var bspDataCount = 0;
+
+            function generateOrganismUrl() {
+                var organismUrl = "${ctxpath}/orders/order.action?organismsAutocomplete=";
+                organismUrl += "&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").value();
+                return organismUrl;
+            }
 
             function setupDialogs() {
                 $j("#confirmDialog").dialog({
