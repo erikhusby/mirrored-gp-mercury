@@ -134,13 +134,13 @@ portal:
 quote:
 
     DEV:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    crspuser
+      password: 880S4inyButton
       url:      http://quotedev:8080
 
     QA:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    crspuser
+      password: 880S4inyButton
       url:      http://quoteqa:8080
 
     PROD:
