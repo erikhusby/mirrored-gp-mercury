@@ -1345,7 +1345,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("organismsAutocomplete")
     public Resolution organismsAutocomplete() throws Exception {
-        return createTextResolution(organismListTokenInput.getJsonString(getQ()));
+        return createTextResolution(
+                organismListTokenInput.getJsonString(getQ(), bspGroupCollectionTokenInput.getCollection()));
     }
 
     public List<String> getAddOnKeys() {

@@ -70,12 +70,12 @@
                         }
                 );
 
-                $j("#organism").tokenInput(
+                $j("#organismList").tokenInput(
                         generateOrganismUrl, {
                             hintText: "Enter an organism",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.organismListTokenInput.completeData)},
                             tokenDelimiter: "${actionBean.organismListTokenInput.separator}",
-                            tokenLimit: 1
+                            tokenLimit: 1,
                             resultsFormatter: formatInput
                         }
                 );
@@ -85,7 +85,7 @@
 
             function generateOrganismUrl() {
                 var organismUrl = "${ctxpath}/orders/order.action?organismsAutocomplete=";
-                organismUrl += "&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").value();
+                organismUrl += "&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
                 return organismUrl;
             }
 
