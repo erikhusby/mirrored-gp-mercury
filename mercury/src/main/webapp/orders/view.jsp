@@ -14,7 +14,7 @@
 <script type="text/javascript">
 $j(document).ready(function () {
     updateFundsRemaining();
-
+    updateUIForCollectionChoice();
     setupDialogs();
 
     $j.ajax({
@@ -76,7 +76,7 @@ function updateUIForCollectionChoice() {
 
     var collectionKey = $j("#kitCollection").val();
     if ((collectionKey == null) || (collectionKey == "")) {
-        $j("#selectedOrganism").text('Organisms are shown by collection');
+        $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
     } else {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
