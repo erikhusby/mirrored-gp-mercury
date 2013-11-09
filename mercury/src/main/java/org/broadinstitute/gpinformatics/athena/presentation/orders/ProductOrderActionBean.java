@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
@@ -17,10 +18,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
-import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -56,7 +57,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.OrganismTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -90,6 +90,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -229,8 +230,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private UserTokenInput notificationListTokenInput;
 
-    @Inject
-    private OrganismTokenInput organismListTokenInput;
+    private Long organismId;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -439,7 +439,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
             requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0,
                     "an external collaborator", action);
-            requireField(!organismListTokenInput.getTokenObjects().isEmpty(), "an organism", action);
+            requireField(organismId, "an organism", action);
         }
         requireField(editOrder.getResearchProject(), "a research project", action);
         if (!Deployment.isCRSP) {
@@ -797,8 +797,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (isSampleInitiation()) {
                 // Get comma separated list of e-mails from notificationList
                 String notificationList = notificationListTokenInput.getEmailList();
-
-                String organism = organismListTokenInput.getOrganism();
 
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
@@ -1352,10 +1350,27 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(notificationListTokenInput.getJsonString(getQ()));
     }
 
-    @HandlesEvent("organismsAutocomplete")
-    public Resolution organismsAutocomplete() throws Exception {
-        return createTextResolution(
-                organismListTokenInput.getJsonString(getQ(), bspGroupCollectionTokenInput.getCollection()));
+    @HandlesEvent("collectionOrganisms")
+    public Resolution collectionOrganisms() throws Exception {
+
+        Collection<Pair<Long, String>> organisms = bspGroupCollectionTokenInput.getCollection().getOrganisms();
+
+        JSONObject collectionAndList = new JSONObject();
+        collectionAndList.put("collectionName", bspGroupCollectionTokenInput.getCollection().getCollectionName());
+
+        // Create the json array of items for the chunk
+        JSONArray itemList = new JSONArray();
+        collectionAndList.put("organisms", itemList);
+
+        for (Pair<Long, String> organism : organisms) {
+            JSONObject item = new JSONObject();
+            item.put("id", organism.getLeft());
+            item.put("name", organism.getRight());
+
+            itemList.put(item);
+        }
+
+        return new StreamingResolution("text", new StringReader(collectionAndList.toString()));
     }
 
     public List<String> getAddOnKeys() {
@@ -1756,12 +1771,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public OrganismTokenInput getOrganismListTokenInput() {
-        return organismListTokenInput;
+    public Long getOrganismId() {
+        return organismId;
     }
 
-    public void setOrganismListTokenInput(OrganismTokenInput organismListTokenInput) {
-        this.organismListTokenInput = organismListTokenInput;
+    public void setOrganismId(Long organismId) {
+        this.organismId = organismId;
     }
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {

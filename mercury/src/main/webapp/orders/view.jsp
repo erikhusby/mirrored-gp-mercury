@@ -43,6 +43,8 @@ $j(document).ready(function () {
             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                 hintText: "Search for group and collection",
                 prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
+                onAdd: updateUIForCollectionChoice,
+                onDelete: updateUIForCollectionChoice,
                 resultsFormatter: formatInput,
                 tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
                 tokenLimit: 1
@@ -69,6 +71,41 @@ $j(document).ready(function () {
             }
     );
 });
+
+function updateUIForCollectionChoice() {
+
+    var collectionKey = $j("#kitCollection").val();
+    if ((collectionKey == null) || (collectionKey == "")) {
+        $j("#selectedOrganism").text('Organisms are shown by collection');
+    } else {
+        $j.ajax({
+            url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
+            dataType: 'json',
+            success: setupMenu
+        });
+    }
+}
+
+function setupMenu(data) {
+    var collection = data.collectionName;
+
+    var organisms = data.organisms;
+    if ((organisms == null) || (organisms.length == 0)) {
+        $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
+        return;
+    }
+
+    var organismSelect = '<select name="organismId">';
+    $j.each(organisms, function(index, organism) {
+        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '"</option>';
+    });
+    organismSelect += '</select>';
+
+    var duration = {'duration' : 800};
+    $j("#selectedOrganism").hide();
+    $j("#selectedOrganism").html(organismSelect);
+    $j("#selectedOrganism").fadeIn(duration);
+}
 
 // This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
 function getShippingLocationURL() {
@@ -786,6 +823,13 @@ function formatInput(item) {
                             class="defaultText"
                             title="Search for collection and group"/>
                 </div>
+            </div>
+
+            <div class="control-group">
+                <stripes:label for="selectedOrganism" class="control-label">
+                    Organism
+                </stripes:label>
+                <div id="selectedOrganism" class="controls"> </div>
             </div>
 
             <div class="control-group">

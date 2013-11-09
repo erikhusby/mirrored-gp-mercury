@@ -36,8 +36,6 @@ public class BSPWorkRequestFactory {
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Site site, long numberOfSamples,
                                                               MaterialInfo materialInfo, SampleCollection collection,
-                                                              String organism, String notificationList) {
-                                                              MaterialInfo materialInfo, SampleCollection collection,
                                                               String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
