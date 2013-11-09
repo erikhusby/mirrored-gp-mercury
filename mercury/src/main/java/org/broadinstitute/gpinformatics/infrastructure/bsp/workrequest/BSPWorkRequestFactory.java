@@ -16,8 +16,6 @@ public class BSPWorkRequestFactory {
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
      *
-     *
-     *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
      * @param productOrderId         the product order associated with the request
@@ -39,6 +37,8 @@ public class BSPWorkRequestFactory {
                                                               Site site, long numberOfSamples,
                                                               MaterialInfo materialInfo, SampleCollection collection,
                                                               String organism, String notificationList) {
+                                                              MaterialInfo materialInfo, SampleCollection collection,
+                                                              String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -58,7 +58,8 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 collection.getCollectionId(),
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialInfo
+                materialInfo,
+                organismId
         );
     }
 }
