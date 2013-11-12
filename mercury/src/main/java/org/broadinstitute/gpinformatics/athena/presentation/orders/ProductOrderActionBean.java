@@ -435,7 +435,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
-            requireField(numberOfSamples > 0, "a specified number of tubes", action);
+            requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
