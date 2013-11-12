@@ -77,6 +77,7 @@ public class ImportFromSquidTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
+        // change dataSourceEnvironment parameter to "prod" when importing from production.
         return DeploymentBuilder.buildMercuryWar(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
