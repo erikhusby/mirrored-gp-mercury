@@ -365,12 +365,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                if (isSampleInitiation()) {
+                    dnaMatrixMaterialTypes =
+                            bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitTypeName());
+                    Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
+                }
             }
-        }
-        if (isSampleInitiation()) {
-            dnaMatrixMaterialTypes =
-                    bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitTypeName());
-            Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
         }
     }
 
@@ -804,7 +804,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
                         bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList, organismId);
-                addMessage("Created BSP work request \'{0}\' for this order.", workRequestBarcode);
+                addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
             // Save it!
