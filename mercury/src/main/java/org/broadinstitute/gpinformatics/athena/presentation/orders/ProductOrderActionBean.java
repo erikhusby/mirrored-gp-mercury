@@ -1743,14 +1743,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return ProductOrder.OrderStatus.values();
     }
 
-    public static Log getLogger() {
-        return logger;
-    }
-
-    public static void setLogger(Log logger) {
-        ProductOrderActionBean.logger = logger;
-    }
-
     public String getMaterialInfoString() {
         return materialInfoString;
     }
