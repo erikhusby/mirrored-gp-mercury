@@ -111,7 +111,7 @@ import java.util.Set;
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
     public enum KitType {
-        DNA_MATRIX("DNA Matrix Kit", "0.75mL");
+        DNA_MATRIX("DNA Matrix Kit", "Matrix Tube [0.75mL]");
 
         private final String kitTypeName;
         private final String displayName;
