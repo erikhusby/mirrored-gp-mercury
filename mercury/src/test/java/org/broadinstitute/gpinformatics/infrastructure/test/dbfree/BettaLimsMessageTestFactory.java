@@ -158,15 +158,15 @@ public class BettaLimsMessageTestFactory {
 
     /**
      * Build a rack to plate transfer event for the specified rack and plate barcodes and for the tube barcodes
-     * at the specified well positions.
+     * at the specified well names.
      */
     public PlateTransferEventType buildRackToPlate(@Nonnull String eventType, @Nonnull String rackBarcode,
-                                                   @Nonnull Map<String, String> tubeBarcodesToWellPositions,
+                                                   @Nonnull Map<String, String> tubeBarcodesToWellNames,
                                                    @Nonnull String plateBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
         setStationEventData(eventType, plateTransferEvent);
 
-        plateTransferEvent.setSourcePositionMap(buildPositionMap(rackBarcode, tubeBarcodesToWellPositions));
+        plateTransferEvent.setSourcePositionMap(buildPositionMap(rackBarcode, tubeBarcodesToWellNames));
         plateTransferEvent.setSourcePlate(buildRack(rackBarcode));
 
         plateTransferEvent.setPlate(buildPlate(plateBarcode));

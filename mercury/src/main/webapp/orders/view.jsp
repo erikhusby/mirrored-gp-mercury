@@ -97,7 +97,7 @@ function setupMenu(data) {
 
     var organismSelect = '<select name="organismId">';
     $j.each(organisms, function(index, organism) {
-        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '"</option>';
+        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
     });
     organismSelect += '</select>';
 
