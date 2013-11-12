@@ -979,15 +979,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getSummary")
     public Resolution getSummary() throws Exception {
         JSONArray itemList = new JSONArray();
+        if (editOrder != null) {
+            List<String> comments = editOrder.getSampleSummaryComments();
+            for (String comment : comments) {
+                JSONObject item = new JSONObject();
+                item.put("comment", comment);
 
-        List<String> comments = editOrder.getSampleSummaryComments();
-        for (String comment : comments) {
-            JSONObject item = new JSONObject();
-            item.put("comment", comment);
-
-            itemList.put(item);
+                itemList.put(item);
+            }
         }
-
         return createTextResolution(itemList.toString());
     }
 
