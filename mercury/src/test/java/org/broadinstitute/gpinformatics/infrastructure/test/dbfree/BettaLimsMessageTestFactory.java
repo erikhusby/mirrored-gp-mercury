@@ -158,7 +158,7 @@ public class BettaLimsMessageTestFactory {
 
     /**
      * Build a rack to plate transfer event for the specified rack and plate barcodes and for the tube barcodes
-     * at the specified well positions.
+     * at the specified well names.
      */
     public PlateTransferEventType buildRackToPlate(@Nonnull String eventType, @Nonnull String rackBarcode,
                                                    @Nonnull Map<String, String> tubeBarcodesToWellNames,
