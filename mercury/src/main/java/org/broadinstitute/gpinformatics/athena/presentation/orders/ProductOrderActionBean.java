@@ -315,6 +315,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
+    @Validate(required = true, on = "shippingLocationAutocomplete")
     private Long selectedCollection;
 
     /*
@@ -1330,11 +1331,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
-
-        if (selectedCollection == null) {
-            addGlobalValidationError("Unable to search shipping locations without a selected collection first.");
-            return getSourcePageResolution();
-        }
 
         return createTextResolution(
                 bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
