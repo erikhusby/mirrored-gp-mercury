@@ -110,25 +110,6 @@ import java.util.Set;
 @SuppressWarnings("unused")
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
-    public enum KitType {
-        DNA_MATRIX("DNA Matrix Kit", "Matrix Tube [0.75mL]");
-
-        private final String kitTypeName;
-        private final String displayName;
-
-        private KitType(String kitTypeName, String displayName) {
-            this.kitTypeName = kitTypeName;
-            this.displayName = displayName;
-        }
-
-        public String getKitTypeName() {
-            return kitTypeName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
 
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
@@ -305,7 +286,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private long numberOfSamples;
 
-    private KitType plasticware;
+    private BSPKitRequestService.KitType plasticware;
 
     private Site site;
 
@@ -367,7 +348,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
                 if (isSampleInitiation()) {
                     dnaMatrixMaterialTypes =
-                            bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitTypeName());
+                            bspManagerFactory.createSampleManager().getMaterialInfoObjects(
+                                    BSPKitRequestService.KitType.DNA_MATRIX.getKitTypeName());
                     Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
                 }
             }
@@ -1709,11 +1691,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.numberOfSamples = numberOfSamples;
     }
 
-    public KitType getPlasticware() {
+    public BSPKitRequestService.KitType getPlasticware() {
         return plasticware;
     }
 
-    public void setPlasticware(KitType plasticware) {
+    public void setPlasticware(BSPKitRequestService.KitType plasticware) {
         this.plasticware = plasticware;
     }
 

@@ -812,7 +812,7 @@ function formatInput(item) {
                 <div class="controls">
                     <stripes:select id="kitType" name="plasticware">
                         <stripes:options-enumeration label="displayName"
-                                                     enum="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean.KitType"
+                                                     enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService.KitType"
                                 />
                     </stripes:select>
                 </div>
