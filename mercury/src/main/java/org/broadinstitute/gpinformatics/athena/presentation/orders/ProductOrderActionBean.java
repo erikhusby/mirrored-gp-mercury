@@ -432,6 +432,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         }
 
+        ResearchProject researchProject = editOrder.getResearchProject();
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
@@ -439,12 +440,16 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
-            requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
-            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0,
-                    "an external collaborator", action);
+            // Avoid NPE if Research Project isn't set yet.
+            if (researchProject != null) {
+                requireField(researchProject.getBroadPIs().length > 0,
+                        "a Research Project with a primary investigator", action);
+                requireField(researchProject.getExternalCollaborators().length > 0,
+                        "a Research Project with an external collaborator", action);
+            }
             requireField(organismId, "an organism", action);
         }
-        requireField(editOrder.getResearchProject(), "a research project", action);
+        requireField(researchProject, "a research project", action);
         if (!Deployment.isCRSP) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
