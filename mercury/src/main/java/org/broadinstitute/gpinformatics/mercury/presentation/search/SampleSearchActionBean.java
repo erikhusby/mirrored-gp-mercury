@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +35,8 @@ public class SampleSearchActionBean extends SearchActionBean {
 
     private Map<String, BSPSampleDTO> sampleDTOMap = new HashMap<>();
 
-    private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new HashMap<>();
+    // order of samples in result list should match input order from text area; hence LinkedHashMap
+    private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new LinkedHashMap<>();
 
     public Map<MercurySample, Set<LabVessel>> getMercurySampleToVessels() {
         return mercurySampleToVessels;
@@ -64,9 +66,6 @@ public class SampleSearchActionBean extends SearchActionBean {
             for (LabVessel vessel : vessels) {
                 allVessels.addAll(vessel.getAncestorVessels());
                 allVessels.addAll(vessel.getDescendantVessels());
-            }
-            for (LabVessel vessel : allVessels) {
-                samples.addAll(vessel.getMercurySamples());
             }
             if (!samples.isEmpty()) {
                 List<String> sampleNames = new ArrayList<>();
