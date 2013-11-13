@@ -11,6 +11,11 @@
                        sectionTitle="Review Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
+<style type="text/css">
+    div.token-input-dropdown,
+    ul.token-input-list,
+    ul.token-input-list li input {width:220px !important;}
+</style>
 <script type="text/javascript">
 $j(document).ready(function () {
     updateFundsRemaining();
@@ -802,7 +807,7 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="kitType" class="control-label">
-                    Kit Type
+                    Kit Type *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select id="kitType" name="plasticware">
@@ -815,7 +820,7 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="kitCollection" class="control-label">
-                    Group and Collection
+                    Group and Collection *
                 </stripes:label>
                 <div class="controls" id="kitCollectionSelection">
                     <stripes:text
@@ -827,14 +832,14 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="selectedOrganism" class="control-label">
-                    Organism
+                    Organism  *
                 </stripes:label>
                 <div id="selectedOrganism" class="controls"> </div>
             </div>
 
             <div class="control-group">
                 <stripes:label for="shippingLocation" class="control-label">
-                    Shipping Location
+                    Shipping Location  *
                 </stripes:label>
                 <div class="controls">
                     <stripes:text
@@ -845,7 +850,7 @@ function formatInput(item) {
             </div>
             <div class="control-group">
                 <stripes:label for="materialInfo" class="control-label">
-                    Material Information
+                    Material Information  *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="materialInfoString">
