@@ -29,7 +29,7 @@ $j(document).ready(function () {
 
     var CHUNK_SIZE = 100;
 
-    // If there are no samples, set up the filter, otherwise kick off some javascript
+    // If there are samples, kick off AJAX requests to load the sample data from BSP, CHUNK_SIZE samples at a time.
     if (sampleNameFields.length > 0) {
         var i, j, tempArray;
         for (i = 0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
@@ -73,7 +73,6 @@ $j(document).ready(function () {
 });
 
 function updateUIForCollectionChoice() {
-
     var collectionKey = $j("#kitCollection").val();
     if ((collectionKey == null) || (collectionKey == "")) {
         $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
@@ -109,7 +108,7 @@ function setupMenu(data) {
 
 // This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
 function getShippingLocationURL() {
-    return "${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollection').val() + "&shippingLocationAutocomplete=";
+    return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
 }
 
 var bspDataCount = 0;
