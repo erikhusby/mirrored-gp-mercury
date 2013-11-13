@@ -92,7 +92,7 @@ public class ProductEjb {
         product.getAddOns().clear();
         product.getAddOns().addAll(addOnTokenInput.getTokenObjects());
 
-        product.setPrimaryPriceItem(priceItemTokenInput.getTokenObject());
+        product.setPrimaryPriceItem(priceItemTokenInput.getItem());
 
         product.getAllowableMaterialTypes().clear();
         product.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());

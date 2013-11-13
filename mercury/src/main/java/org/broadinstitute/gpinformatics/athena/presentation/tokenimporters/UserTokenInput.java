@@ -13,8 +13,6 @@ import java.util.List;
 
 /**
  * Token Input support for users.
- *
- * @author hrafal
  */
 public class UserTokenInput extends TokenInput<BspUser> {
 
@@ -42,8 +40,8 @@ public class UserTokenInput extends TokenInput<BspUser> {
 
     @Override
     protected String formatMessage(String messageString, BspUser bspUser) {
-        return MessageFormat.format(
-            messageString, bspUser.getFullName(), bspUser.getUsername() + " " + bspUser.getEmail());
+        return MessageFormat.format(messageString, bspUser.getFullName(),
+                bspUser.getUsername() + " " + bspUser.getEmail());
     }
 
     @Override
@@ -54,7 +52,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     public List<Long> getOwnerIds() {
         List<BspUser> users = getTokenObjects();
 
-        List<Long> businessKeyList = new ArrayList<>();
+        List<Long> businessKeyList = new ArrayList<>(users.size());
         for (BspUser user : users) {
             businessKeyList.add(user.getUserId());
         }
@@ -65,7 +63,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     public List<String> getBusinessKeyList() {
         List<BspUser> users = getTokenObjects();
 
-        List<String> businessKeyList = new ArrayList<>();
+        List<String> businessKeyList = new ArrayList<>(users.size());
         for (BspUser user : users) {
             businessKeyList.add(user.getUserId().toString());
         }
@@ -77,11 +75,12 @@ public class UserTokenInput extends TokenInput<BspUser> {
      * Returns a comma separated list of e-mail addresses.
      */
     public String getEmailList() {
-        List<String> notificationList = new ArrayList<>(getTokenObjects().size());
-        for (BspUser user : getTokenObjects()) {
-            notificationList.add(user.getEmail());
+        List<BspUser> users = getTokenObjects();
+        List<String> emailList = new ArrayList<>(users.size());
+        for (BspUser user : users) {
+            emailList.add(user.getEmail());
         }
 
-        return StringUtils.join(notificationList, ", ");
+        return StringUtils.join(emailList, ", ");
     }
 }

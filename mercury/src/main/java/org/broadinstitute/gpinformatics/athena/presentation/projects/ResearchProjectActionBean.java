@@ -306,7 +306,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
 
-        editResearchProject.setParentResearchProject(researchProjectDao.findByBusinessKey(projectTokenInput.getTokenObject()));
+        ResearchProject tokenProject = projectTokenInput.getTokenObject();
+        editResearchProject.setParentResearchProject(tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
     }
 
     @HandlesEvent("view")
