@@ -22,6 +22,7 @@
         <ssl.truststorefile>mercuryssl.truststore</ssl.truststorefile>
         <ssl.keystore.password>changeit</ssl.keystore.password>
         <ssl.truststore.password>changeit</ssl.truststore.password>
+        <crsp.enable>false</crsp.enable>
     </properties>
 
     <repositories>
@@ -60,6 +61,7 @@
                 <roleprefix>CRSP-</roleprefix>
                 <ssl.keystore.password>?</ssl.keystore.password>
                 <ssl.truststore.password>?</ssl.truststore.password>
+                <crsp.enable>true</crsp.enable>
             </properties>
         </profile>
 

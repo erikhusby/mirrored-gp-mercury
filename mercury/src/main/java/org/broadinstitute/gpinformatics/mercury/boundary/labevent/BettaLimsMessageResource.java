@@ -142,6 +142,7 @@ public class BettaLimsMessageResource {
     @TransactionAttribute(value = TransactionAttributeType.REQUIRED)
     public void storeAndProcess(String message) throws Exception {
         Date now = new Date();
+        boolean logStacktrace=true;
         //noinspection OverlyBroadCatchBlock
         try {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
@@ -226,16 +227,20 @@ public class BettaLimsMessageResource {
             if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
                 String error = bettaLimsResponse.getMessage();
                 if (error.startsWith("The specified user does not exist")) {
-                    log.info(error);
-                } else {
-                    throw new RuntimeException(error);
+                    logStacktrace = false;
                 }
+                throw new RuntimeException(error);
             }
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
-            log.error("Failed to process run", e);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
-                    e.getMessage());
+            String logMessage = "Failed to process run";
+            if (logStacktrace) {
+                log.error(logMessage, e);
+            } else {
+                log.error(logMessage);
+            }
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                    "[Mercury] Failed to process message", e.getMessage());
             throw e;
         }
     }
