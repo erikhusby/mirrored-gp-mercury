@@ -797,7 +797,7 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="tubesPerKit" class="control-label">
-                    Number of Samples
+                    Number of Samples *
                 </stripes:label>
                 <div class="controls">
                     <stripes:text id="tubesPerKit" name="numberOfSamples"
