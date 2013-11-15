@@ -189,4 +189,16 @@
         </preConditions>
         <dropColumn tableName="product_order_aud" columnName="REQUISITION_KEY" />
     </changeSet>
+
+    <changeSet id="GPLIM-329-4a" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_ledger_session" schemaName="athena"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="fk_ledger_session" baseTableSchemaName="athena"
+                                 baseTableName="billing_ledger" baseColumnNames="billing_session"
+                                 referencedTableName="billing_session" referencedColumnNames="billing_session_id"/>
+    </changeSet>
 </databaseChangeLog>
