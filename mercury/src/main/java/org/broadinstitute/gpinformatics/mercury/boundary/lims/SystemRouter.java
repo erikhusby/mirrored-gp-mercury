@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -140,8 +142,31 @@ public class SystemRouter implements Serializable {
     }
 
     private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
-        Set<System> routingOptions = EnumSet.noneOf(System.class);
+        if (intent == Intent.SYSTEM_OF_RECORD) {
+            // If the intent is SYSTEM_OF_RECORD, attempt to short circuit the sample instance evaluation which
+            // can return SQUID results for samples lab events that should be MERCURY.  Look for the system of
+            // record on any in-place or transfer to events.
+            Set<LabEventType.SystemOfRecord> systemOfRecordSet = EnumSet.noneOf(LabEventType.SystemOfRecord.class);
+            for (LabVessel labVessel : labVessels) {
+                for (LabEvent labEvent : labVessel.getInPlaceAndTransferToEvents()) {
+                    systemOfRecordSet.add(labEvent.getLabEventType().getSystemOfRecord());
+                }
+            }
 
+            // If the System of record is unambiguous in these events and is either SQUID or MERCURY, short circuit
+            // any further evaluation.
+            if (systemOfRecordSet.size() == 1) {
+                LabEventType.SystemOfRecord systemOfRecord = systemOfRecordSet.iterator().next();
+                switch (systemOfRecord) {
+                case SQUID:
+                    return System.SQUID;
+                case MERCURY:
+                    return System.MERCURY;
+                }
+            }
+        }
+
+        Set<System> routingOptions = EnumSet.noneOf(System.class);
         // Determine which samples might be controls
         Set<SampleInstance> possibleControls = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
@@ -188,7 +213,7 @@ public class SystemRouter implements Serializable {
      *
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
-     *  * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
+     * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
      * that, for system-of-record determination, controls defer to their travel partners.
      *
      * @param vessels a collection of LabVessels for which system routing is to be determined
@@ -196,6 +221,7 @@ public class SystemRouter implements Serializable {
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
      * @param intent whether to return one routing option, or multiple
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     *         routed.
      */
     @DaoFree
     public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,

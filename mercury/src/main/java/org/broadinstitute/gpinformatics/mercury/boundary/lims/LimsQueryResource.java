@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author breilly
@@ -246,9 +247,9 @@ public class LimsQueryResource {
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
         switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
-                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+                return new TreeMap<>(limsQueries.fetchParentRackContentsForPlate(plateBarcode));
             case SQUID:
-                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+                return new TreeMap<>(thriftService.fetchParentRackContentsForPlate(plateBarcode));
             default:
                 throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
