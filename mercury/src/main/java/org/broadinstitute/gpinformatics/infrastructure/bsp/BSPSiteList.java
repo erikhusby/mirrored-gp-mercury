@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.site.AllSitesResponse;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
@@ -29,6 +30,8 @@ public class BSPSiteList extends AbstractCache implements Serializable {
     private final BSPManagerFactory bspManagerFactory;
 
     private Map<Long, Site> sites;
+
+    private BspSiteManager bspSiteManager;
 
     /**
      * @return map of bsp sites, keyed by site ID.
@@ -66,10 +69,14 @@ public class BSPSiteList extends AbstractCache implements Serializable {
             return Collections.emptyList();
         }
 
+        if (bspSiteManager == null) {
+            this.bspSiteManager = bspManagerFactory.createSiteManager();
+        }
+
         Collection<Site> siteResults = null;
         // If there is a collection selected we will filter based off the collection.
         if (collectionId != null) {
-            siteResults = bspManagerFactory.createSiteManager().getApplicableSites(collectionId).getResult();
+            siteResults = bspSiteManager.getApplicableSites(collectionId).getResult();
         } else {
             siteResults = getSites().values();
         }
@@ -119,7 +126,11 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-        AllSitesResponse response = bspManagerFactory.createSiteManager().getAllSites();
+        if (bspSiteManager == null) {
+            this.bspSiteManager = bspManagerFactory.createSiteManager();
+        }
+
+        AllSitesResponse response = bspSiteManager.getAllSites();
         if (!response.isSuccess()) {
             if (sites == null) {
                 sites = new HashMap<>();
@@ -147,5 +158,13 @@ public class BSPSiteList extends AbstractCache implements Serializable {
         }
 
         sites = ImmutableMap.copyOf(siteMap);
+    }
+
+    public BspSiteManager getBspSiteManager() {
+        return bspSiteManager;
+    }
+
+    public void setBspSiteManager(BspSiteManager bspSiteManager) {
+        this.bspSiteManager = bspSiteManager;
     }
 }
