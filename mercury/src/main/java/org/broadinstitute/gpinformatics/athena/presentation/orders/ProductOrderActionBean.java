@@ -22,6 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -314,9 +315,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String materialInfoString;
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
-
-    @Validate(required = true, on = "shippingLocationAutocomplete")
-    private Long selectedCollection;
 
     /*
      * The search query.
@@ -1332,8 +1330,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
 
-        return createTextResolution(
-                bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
+        SampleCollection selectedCollection = getSelectedCollection();
+        if (selectedCollection != null) {
+            return createTextResolution(
+                    bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
+        }
+        return null;
     }
 
     @HandlesEvent("groupCollectionAutocomplete")
@@ -1779,11 +1781,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return dnaMatrixMaterialTypes;
     }
 
-    public Long getSelectedCollection() {
-        return selectedCollection;
-    }
-
-    public void setSelectedCollection(Long selectedCollection) {
-        this.selectedCollection = selectedCollection;
+    private SampleCollection getSelectedCollection() {
+        List<SampleCollection> collections = bspGroupCollectionTokenInput.getTokenObjects();
+        if (collections.isEmpty()) {
+            return null;
+        }
+        return collections.get(0);
     }
 }

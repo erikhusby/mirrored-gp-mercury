@@ -13,6 +13,17 @@
 <stripes:layout-component name="extraHead">
 <script type="text/javascript">
 $j(document).ready(function () {
+
+    $j("#shippingLocation").tokenInput(
+            getShippingLocationURL, {
+                hintText: "Search for shipping location",
+                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
+                resultsFormatter: formatInput,
+                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
+                tokenLimit: 1
+            }
+    );
+
     updateFundsRemaining();
     updateUIForCollectionChoice();
     setupDialogs();
@@ -29,7 +40,7 @@ $j(document).ready(function () {
 
     var CHUNK_SIZE = 100;
 
-    // If there are no samples, set up the filter, otherwise kick off some javascript
+    // If there are samples, kick off AJAX requests to load the sample data from BSP, CHUNK_SIZE samples at a time.
     if (sampleNameFields.length > 0) {
         var i, j, tempArray;
         for (i = 0, j = sampleNameFields.length; i < j; i += CHUNK_SIZE) {
@@ -51,15 +62,6 @@ $j(document).ready(function () {
             }
     );
 
-    $j("#shippingLocation").tokenInput(
-            getShippingLocationURL, {
-                hintText: "Search for shipping location",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
 
     $j("#notificationList").tokenInput(
             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
@@ -77,12 +79,19 @@ function updateUIForCollectionChoice() {
     var collectionKey = $j("#kitCollection").val();
     if ((collectionKey == null) || (collectionKey == "")) {
         $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
+
+        $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
+        $j("#shippingLocationSelection").hide();
+        $j("#shippingLocation").tokenInput("clear");
     } else {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
             dataType: 'json',
             success: setupMenu
         });
+
+        $j("#sitePrompt").remove();
+        $("#shippingLocationSelection").show();
     }
 }
 
@@ -96,12 +105,12 @@ function setupMenu(data) {
     }
 
     var organismSelect = '<select name="organismId">';
-    $j.each(organisms, function(index, organism) {
+    $j.each(organisms, function (index, organism) {
         organismSelect += '  <option value="' + organism.id + '">' + organism.name + '"</option>';
     });
     organismSelect += '</select>';
 
-    var duration = {'duration' : 800};
+    var duration = {'duration': 800};
     $j("#selectedOrganism").hide();
     $j("#selectedOrganism").html(organismSelect);
     $j("#selectedOrganism").fadeIn(duration);
@@ -109,7 +118,7 @@ function setupMenu(data) {
 
 // This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
 function getShippingLocationURL() {
-    return "${ctxpath}/orders/order.action?selectedCollection=" + $j('#kitCollection').val() + "&shippingLocationAutocomplete=";
+    return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
 }
 
 var bspDataCount = 0;
@@ -829,14 +838,14 @@ function formatInput(item) {
                 <stripes:label for="selectedOrganism" class="control-label">
                     Organism
                 </stripes:label>
-                <div id="selectedOrganism" class="controls"> </div>
+                <div id="selectedOrganism" class="controls"></div>
             </div>
 
             <div class="control-group">
-                <stripes:label for="shippingLocation" class="control-label">
+                <stripes:label for="shippingLocationSelection" class="control-label">
                     Shipping Location
                 </stripes:label>
-                <div class="controls">
+                <div class="controls" id="shippingLocationSelection">
                     <stripes:text
                             id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
                             class="defaultText"
