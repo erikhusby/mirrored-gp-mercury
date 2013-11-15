@@ -233,8 +233,7 @@ public class SolexaRunResource {
             }
         }
 
-        if (EnumSet.of(SystemRouter.System.MERCURY, SystemRouter.System.BOTH)
-                .contains(route)) {
+        if (EnumSet.of(SystemRouter.System.MERCURY, SystemRouter.System.BOTH).contains(route)) {
             if (run == null) {
                 throw new ResourceException("There is no run found in mercury for " + runBarcode,
                         Response.Status.NOT_FOUND);
