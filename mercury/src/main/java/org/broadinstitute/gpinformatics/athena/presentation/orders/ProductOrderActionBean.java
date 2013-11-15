@@ -1537,7 +1537,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if this is a sample initiation PDO; false otherwise
      */
     public boolean isSampleInitiation() {
-        return editOrder.getProduct().isSampleInitiationProduct();
+        return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
     }
 
     /**
