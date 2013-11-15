@@ -192,9 +192,7 @@ public class SolexaRunResource {
     @Produces({"application/json"})
     @Path("/storeRunReadStructure")
     public Response storeRunReadStructure(ReadStructureRequest readStructureRequest) {
-
         ReadStructureRequest requestToReturn = null;
-
         Response callerResponse = null;
 
         String runBarcode = readStructureRequest.getRunBarcode();
