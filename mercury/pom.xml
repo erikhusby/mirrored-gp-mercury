@@ -87,7 +87,7 @@
             <id>Broad Maven</id>
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
-            <url>http://maven.broadinstitute.org/maven</url>
+            <url>http://maven.broadinstitute.org:8000/maven</url>
 
         </repository>
 
