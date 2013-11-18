@@ -5,7 +5,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Add Rework" sectionTitle="Add Rework">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $(document).ready(function () {
+            $j(document).ready(function () {
                 $j('#vesselBarcode').change(function () {
                     var barcode = $j("#vesselBarcode").val();
                     if (barcode) {
