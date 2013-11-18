@@ -51,32 +51,27 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
     /**
      * Returns a list of sites whose name, address, shipper or description match the given query.  If the query is
-     * null then it will return an empty list. If a collection id is passed then the results will be further filtered
-     * by sites within the collection.
+     * null then it will return an empty list.
      *
-     * @param query        the query string to match on
-     * @param collectionId the id of the collection to filter the sites off
+     * @param query the query string to match on
      *
      * @return a list of matching sites
      */
     @Nonnull
-    public List<Site> find(String query, Long collectionId) {
+    public List<Site> find(String query) {
+        return find(getSites().values(), query);
+    }
+
+    @Nonnull
+    public static List<Site> find(Collection<Site> sites, String query) {
         if (StringUtils.isBlank(query)) {
             // no query string supplied
             return Collections.emptyList();
         }
 
-        Collection<Site> siteResults = null;
-        // If there is a collection selected we will filter based off the collection.
-        if (collectionId != null) {
-            siteResults = bspManagerFactory.createSiteManager().getApplicableSites(collectionId).getResult();
-        } else {
-            siteResults = getSites().values();
-        }
-
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Site> results = new ArrayList<>();
-        for (Site site : siteResults) {
+        for (Site site : sites) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched
