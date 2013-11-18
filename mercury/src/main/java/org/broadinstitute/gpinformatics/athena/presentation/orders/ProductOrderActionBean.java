@@ -64,6 +64,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -286,7 +287,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private long numberOfSamples;
 
-    private BSPKitRequestService.KitType plasticware;
+    private KitType kitType;
 
     private Site site;
 
@@ -349,7 +350,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 if (isSampleInitiation()) {
                     dnaMatrixMaterialTypes =
                             bspManagerFactory.createSampleManager().getMaterialInfoObjects(
-                                    BSPKitRequestService.KitType.DNA_MATRIX.getKitTypeName());
+                                    KitType.DNA_MATRIX.getKitName());
                     Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
                 }
             }
@@ -484,7 +485,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (!StringUtils.isBlank(materialInfoString)) {
-            materialInfo = new MaterialInfo(plasticware.getKitTypeName(), materialInfoString);
+            materialInfo = new MaterialInfo(kitType.getKitName() , materialInfoString);
             if (!dnaMatrixMaterialTypes.contains(materialInfo)) {
                 addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
                         materialInfoString);
@@ -1691,12 +1692,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.numberOfSamples = numberOfSamples;
     }
 
-    public BSPKitRequestService.KitType getPlasticware() {
-        return plasticware;
+    public KitType getKitType() {
+        return kitType;
     }
 
-    public void setPlasticware(BSPKitRequestService.KitType plasticware) {
-        this.plasticware = plasticware;
+    public void setKitType(KitType kitType) {
+        this.kitType = kitType;
     }
 
     public Site getSite() {
