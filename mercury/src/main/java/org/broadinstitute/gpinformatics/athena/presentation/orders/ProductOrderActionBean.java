@@ -1338,15 +1338,15 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
 
-        JSONObject collectionAndList = new JSONObject();
+        JSONObject collectionAndOrganismsList = new JSONObject();
         if (sampleCollection != null) {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
-            collectionAndList.put("collectionName", sampleCollection.getCollectionName());
+            collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
 
             // Create the json array of items for the chunk
             JSONArray itemList = new JSONArray();
-            collectionAndList.put("organisms", itemList);
+            collectionAndOrganismsList.put("organisms", itemList);
 
             for (Pair<Long, String> organism : organisms) {
                 JSONObject item = new JSONObject();
@@ -1357,7 +1357,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        return new StreamingResolution("text", new StringReader(collectionAndList.toString()));
+        return new StreamingResolution("text", new StringReader(collectionAndOrganismsList.toString()));
     }
 
     public List<String> getAddOnKeys() {

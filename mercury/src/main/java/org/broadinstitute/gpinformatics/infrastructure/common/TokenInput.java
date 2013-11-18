@@ -102,7 +102,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     /**
-     * Use this method when using a token input to select a single element.
+     * This method should only be used when a TokenInput is being used to select a single element. (e.g. using
+     * tokenLimit: 1).
      * @return the currently selected object, or null if no object is selected.
      */
     @Nullable
