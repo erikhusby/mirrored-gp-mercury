@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
@@ -73,5 +74,35 @@ public class LimsQueryObjectFactory {
         lane.setLoadingVesselLabel(loadingVesselLabel);
         lane.setDerivedVesselLabel(startingVesselLabel);
         return lane;
+    }
+
+    /**
+     * Create a ReadStructureRequest object based on available parameters
+     *
+     * @param runBarcode
+     * @param runName
+     * @param setupReadStructure
+     * @param actualReadStructure
+     * @param imagedArea
+     * @param lanesSequenced
+     * @param error
+     *
+     * @return a newly created ReadStructureRequest.
+     */
+    public static ReadStructureRequest createReadStructureRequest(@Nullable String runName, @Nullable String runBarcode,
+                                                                  @Nonnull String setupReadStructure,
+                                                                  @Nonnull String actualReadStructure,
+                                                                  @Nonnull Double imagedArea,
+                                                                  @Nonnull String lanesSequenced,
+                                                                  @Nullable String error) {
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunName(runName);
+        readStructureRequest.setRunBarcode(runBarcode);
+        readStructureRequest.setSetupReadStructure(setupReadStructure);
+        readStructureRequest.setActualReadStructure(actualReadStructure);
+        readStructureRequest.setImagedArea(imagedArea);
+        readStructureRequest.setLanesSequenced(lanesSequenced);
+        readStructureRequest.setError(error);
+        return readStructureRequest;
     }
 }

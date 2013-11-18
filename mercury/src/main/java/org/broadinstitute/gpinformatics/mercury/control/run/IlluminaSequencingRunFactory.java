@@ -71,6 +71,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
 
         ReadStructureRequest returnValue = new ReadStructureRequest();
         returnValue.setRunBarcode(run.getRunBarcode());
+        returnValue.setRunName(run.getRunName());
 
         returnValue.setActualReadStructure(run.getActualReadStructure());
         returnValue.setSetupReadStructure(run.getSetupReadStructure());
