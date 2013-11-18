@@ -36,16 +36,12 @@ public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
 
     @Override
     protected String formatMessage(String messageString, SampleCollection collection) {
-        return MessageFormat.format(
-            messageString, collection.getGroup().getGroupName() + " - " + collection.getCollectionName());
+        return MessageFormat.format(messageString,
+                collection.getGroup().getGroupName() + " - " + collection.getCollectionName());
     }
 
     @Override
     protected SampleCollection getById(String key) {
         return bspCollectionList.getById(Long.valueOf(key));
-    }
-
-    public SampleCollection getCollection() {
-        return getTokenObjects().get(0);
     }
 }
