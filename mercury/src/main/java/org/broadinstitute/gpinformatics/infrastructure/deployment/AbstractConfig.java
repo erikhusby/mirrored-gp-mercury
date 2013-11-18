@@ -78,8 +78,6 @@ public abstract class AbstractConfig {
     }
 
     public static String getHttpScheme() {
-//        return (Deployment.isCRSP)?"https://":"http://";
-        //FIXME SGM CRSP-69:  temporarily forcing back to non-ssl until ssl issues are resolved
-        return "http://";
+        return (Deployment.isCRSP)?"https://":"http://";
     }
 }
