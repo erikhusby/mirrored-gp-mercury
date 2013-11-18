@@ -7,7 +7,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search Vessels">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $(document).ready(function () {
+            $j(document).ready(function () {
 
                 $j("#accordion").accordion({  collapsible:true, active:false, heightStyle:"content", autoHeight:false});
                 $j("#accordion").show();

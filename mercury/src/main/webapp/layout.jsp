@@ -71,7 +71,7 @@
         </script>
 
         <script>
-            $(document).ready(function () {
+            $j(document).ready(function () {
                 $j('.dropdown-toggle').dropdown();
                 $j('#userBadge').popover({ trigger:"hover", html:true });
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
