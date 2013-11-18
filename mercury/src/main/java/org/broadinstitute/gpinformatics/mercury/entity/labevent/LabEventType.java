@@ -441,6 +441,8 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // From BSP UI
+    SAMPLE_PACKAGE("SamplePackage", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAMPLE_RECEIPT("SampleReceipt", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
