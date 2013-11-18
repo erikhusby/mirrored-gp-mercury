@@ -1582,7 +1582,7 @@
             <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
             file as well until such a time that we reconfigure the mercury structure to have a dependant project or something.
              -->
-            <version>1.3.34</version>
+            <version>1.3.33</version>
         </dependency>
 
         <dependency>
@@ -1984,8 +1984,7 @@
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>VesselRegistration.xsd</schemaFiles>
                             <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
-                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated
-                            </packageName>
+                            <packageName>org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.VesselRegistrationXjcStaleFlag</staleFile>
                             <!-- all executions, except the first, need clearOutputDir set to false -->

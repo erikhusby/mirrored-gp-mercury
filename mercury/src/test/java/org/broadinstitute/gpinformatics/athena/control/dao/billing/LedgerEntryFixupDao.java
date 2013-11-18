@@ -5,9 +5,12 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.StandardBasicTypes;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
@@ -38,7 +41,7 @@ public class LedgerEntryFixupDao extends GenericDao {
 
                 CriteriaBuilder cb = getCriteriaBuilder();
 
-                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
+//                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
 
                 criteriaQuery.where(
                         // Filter out ledgers that already have a quote assigned.
@@ -46,7 +49,7 @@ public class LedgerEntryFixupDao extends GenericDao {
                         // A predicate for billed ledgers only as we want unbilled ledgers to keep their null quote IDs
                         // until billing.  The predicate for this purpose is that the ledgers' billing session must
                         // exist (this is an inner join) and have a non-null billed date.
-                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
+//                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
                         // Only select ledger entries that were successfully billed.
                         cb.equal(root.get(LedgerEntry_.billingMessage), BillingSession.SUCCESS));
 
@@ -54,6 +57,19 @@ public class LedgerEntryFixupDao extends GenericDao {
                 root.fetch(LedgerEntry_.productOrderSample);
             }
         });
+    }
+
+    /**
+     * Fetch the ledger entries that we know have a session id that does not have a session
+     *
+     * @return List of billed Ledger Entries with null quote IDs.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Long> getEntriesWithOrphanedSession(final long sessionId) {
+        String queryString = String.format("select LEDGER_ID as id from athena.BILLING_LEDGER where BILLING_SESSION=%d", sessionId);
+        Query query = getEntityManager().createNativeQuery(queryString);
+        query.unwrap(SQLQuery.class).addScalar("id", StandardBasicTypes.LONG);
+        return query.getResultList();
     }
 
     /**
@@ -68,12 +84,11 @@ public class LedgerEntryFixupDao extends GenericDao {
 
                 CriteriaBuilder cb = getCriteriaBuilder();
 
-                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
+//                Join<LedgerEntry, BillingSession> ledgerBillingSessionJoin = root.join(LedgerEntry_.billingSession);
 
                 // If it has a session and there is a quote, then this was billed to the quote server
                 criteriaQuery.where(
-                        cb.isNotNull(root.get(LedgerEntry_.quoteId)),
-                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)));
+                        cb.isNotNull(root.get(LedgerEntry_.quoteId)));
 
                 // This runs very slowly without this fetch as we would singleton select thousands of ProductOrderSamples.
                 root.fetch(LedgerEntry_.productOrderSample);

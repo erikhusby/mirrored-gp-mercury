@@ -13,6 +13,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
     /**
      * @param id key of site to look up
+     *
      * @return if found, the site, otherwise null
      */
     public Site getById(long id) {
@@ -49,21 +51,32 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
     /**
      * Returns a list of sites whose name, address, shipper or description match the given query.  If the query is
-     * null then it will return an empty list.
+     * null then it will return an empty list. If a collection id is passed then the results will be further filtered
+     * by sites within the collection.
      *
-     * @param query the query string to match on
+     * @param query        the query string to match on
+     * @param collectionId the id of the collection to filter the sites off
+     *
      * @return a list of matching sites
      */
     @Nonnull
-    public List<Site> find(String query) {
+    public List<Site> find(String query, Long collectionId) {
         if (StringUtils.isBlank(query)) {
             // no query string supplied
             return Collections.emptyList();
         }
 
+        Collection<Site> siteResults = null;
+        // If there is a collection selected we will filter based off the collection.
+        if (collectionId != null) {
+            siteResults = bspManagerFactory.createSiteManager().getApplicableSites(collectionId).getResult();
+        } else {
+            siteResults = getSites().values();
+        }
+
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<Site> results = new ArrayList<>();
-        for (Site site : getSites().values()) {
+        for (Site site : siteResults) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched

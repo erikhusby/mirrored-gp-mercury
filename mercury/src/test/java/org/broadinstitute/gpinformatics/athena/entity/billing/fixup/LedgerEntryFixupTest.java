@@ -200,4 +200,23 @@ public class LedgerEntryFixupTest extends Arquillian {
         // the entities modified above.
         ledgerEntryFixupDao.persistAll(Collections.emptyList());
     }
+
+    /**
+     * At one point the name of the session column in ledger was changed and that implicitly dropped the
+     * foreign key constraint on session. Somehow there was an orphaned session entry, 1591. This needs to be
+     * removed from the ledger so that we can place the constraint back. This required going in and changing the actual
+     * LedgerEntry object to make the session a LONG instead of a BillingSession. To get that to run I also needed to
+     * comment out a lot of DAO calls on the ledger
+     */
+    @Test(enabled = false)
+    public void removeOrphanedSession() {
+        List<Long> ledgerEntryIds = ledgerEntryFixupDao.getEntriesWithOrphanedSession(1591);
+        for (Long entryId : ledgerEntryIds) {
+            LedgerEntry entry = ledgerEntryFixupDao.findById(LedgerEntry.class, entryId);
+            entry.setBillingSession(null);
+        }
+
+        // Persist all the clears
+        ledgerEntryFixupDao.persistAll(Collections.emptyList());
+    }
 }

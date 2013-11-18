@@ -188,8 +188,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
             @Override
             public List<MaterialInfo> getMaterialInfoObjects() {
                 List<MaterialInfo> materialInfoList = new ArrayList<>();
-                materialInfoList.add(new MaterialInfo("DNA Matrix Kit", "DNA Derived from Whole Blood",
-                        new MaterialType("DNA:DNA Somatic")));
+                materialInfoList.add(new MaterialInfo("DNA Matrix Kit", "DNA Derived from Whole Blood"));
                 return materialInfoList;
             }
 

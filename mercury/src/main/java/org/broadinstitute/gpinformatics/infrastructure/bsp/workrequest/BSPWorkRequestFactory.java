@@ -16,7 +16,6 @@ public class BSPWorkRequestFactory {
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
      *
-     *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
      * @param productOrderId         the product order associated with the request
@@ -27,7 +26,8 @@ public class BSPWorkRequestFactory {
      * @param numberOfSamples        the total number of samples that the kit should contain
      * @param materialInfo           the material type
      * @param collection             the collection to use for the sample kit work task
-     * @param notificationList       the comma separated list of users to notify via completion
+     * @param notificationList       the comma separated list of users to notify on kit shipment.
+     * @param organismId             the organism that the user selected
      *
      * @return a new SampleKitWorkRequest
      */
@@ -35,7 +35,8 @@ public class BSPWorkRequestFactory {
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Site site, long numberOfSamples,
-                                                              MaterialInfo materialInfo, SampleCollection collection, String notificationList) {
+                                                              MaterialInfo materialInfo, SampleCollection collection,
+                                                              String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -55,7 +56,8 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 collection.getCollectionId(),
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialInfo
+                materialInfo,
+                organismId
         );
     }
 }

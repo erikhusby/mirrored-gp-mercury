@@ -38,10 +38,11 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         }
     }
 
-    public BSPManagerFactoryImpl () {
+    @SuppressWarnings("unused")
+    public BSPManagerFactoryImpl() {
     }
 
-    public BSPManagerFactoryImpl (BSPConfig params) {
+    public BSPManagerFactoryImpl(BSPConfig params) {
         this.params = params;
     }
 

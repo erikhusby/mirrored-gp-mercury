@@ -39,19 +39,17 @@ public class BSPKitRequestService {
      * BSP lab's current workflow. The additional details required by BSP are extracted from the given PDO and site or
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
-     *
-     *
-     *
      * @param productOrder       the product order to create the kit request from
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
      * @param materialInfo       materialInfo of the kit request
-     * @param notificationList   comma separated list of e-mails
-     *
-     * @return the BSP work request ID
+     * @param notificationList   comma separated list of e-mail addresses to send notifications to upon kit shipment.
+     * @param organismId         the organism to use
+     *  @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialInfo materialInfo, SampleCollection collection, String notificationList) {
+                                                  MaterialInfo materialInfo, SampleCollection collection,
+                                                  String notificationList, long organismId) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -76,7 +74,8 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialInfo, collection, notificationList);
+                externalCollaboratorId, site, numberOfSamples, materialInfo, collection, notificationList,
+                organismId);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
@@ -103,4 +102,5 @@ public class BSPKitRequestService {
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
         return bspWorkRequestClientService.submitWorkRequest(workRequestBarcode, bspWorkRequestManager);
     }
+
 }

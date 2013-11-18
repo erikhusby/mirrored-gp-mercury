@@ -7,6 +7,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
@@ -17,6 +18,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
@@ -62,6 +64,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -88,6 +91,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -107,6 +111,7 @@ import java.util.Set;
 @SuppressWarnings("unused")
 @UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+
     private static Log logger = LogFactory.getLog(ProductOrderActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
@@ -125,7 +130,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     private static final String PLACE_ORDER = "placeOrder";
-    private static final String DNA_MATRIX_KIT_TYPE = "DNA Matrix Kit";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -208,6 +212,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private UserTokenInput notificationListTokenInput;
 
+    private Long organismId;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
@@ -281,17 +287,19 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private long numberOfSamples;
 
-    private String plasticware;
+    private KitType kitType;
 
     private Site site;
 
     private MaterialInfo materialInfo;
 
+    private String materialInfoString;
+
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
-    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
-        return dnaMatrixMaterialTypes;
-    }
+    @Validate(required = true, on = "shippingLocationAutocomplete")
+    private Long selectedCollection;
+
     /*
      * The search query.
      */
@@ -331,8 +339,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION})
     public void editInit() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-        dnaMatrixMaterialTypes = bspManagerFactory.createSampleManager().getMaterialInfoObjects(DNA_MATRIX_KIT_TYPE);
-        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
         // If there's no product order parameter, send an error.
         if (StringUtils.isBlank(productOrder)) {
             addGlobalValidationError("No product order was specified.");
@@ -341,6 +347,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                if (isSampleInitiation()) {
+                    dnaMatrixMaterialTypes =
+                            bspManagerFactory.createSampleManager().getMaterialInfoObjects(
+                                    KitType.DNA_MATRIX.getKitName());
+                    Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
+                }
             }
         }
     }
@@ -403,17 +415,24 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         }
 
+        ResearchProject researchProject = editOrder.getResearchProject();
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
-            requireField(numberOfSamples > 0, "a specified number of tubes", action);
+            requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(site, "a site", action);
             requireField(materialInfo, "a material type", action);
             requireField(!bspGroupCollectionTokenInput.getTokenObjects().isEmpty(), "a collection", action);
-            requireField(editOrder.getResearchProject().getBroadPIs().length > 0, "a primary investigator", action);
-            requireField(editOrder.getResearchProject().getExternalCollaborators().length > 0, "an external collaborator", action);
+            // Avoid NPE if Research Project isn't set yet.
+            if (researchProject != null) {
+                requireField(researchProject.getBroadPIs().length > 0,
+                        "a Research Project with a primary investigator", action);
+                requireField(researchProject.getExternalCollaborators().length > 0,
+                        "a Research Project with an external collaborator", action);
+            }
+            requireField(organismId, "an organism", action);
         }
-        requireField(editOrder.getResearchProject(), "a research project", action);
+        requireField(researchProject, "a research project", action);
         if (!Deployment.isCRSP) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
@@ -463,6 +482,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<Site> sites = bspShippingLocationTokenInput.getTokenObjects();
         if (!sites.isEmpty()) {
             site = sites.get(0);
+        }
+
+        if (!StringUtils.isBlank(materialInfoString)) {
+            materialInfo = new MaterialInfo(kitType.getKitName() , materialInfoString);
+            if (!dnaMatrixMaterialTypes.contains(materialInfo)) {
+                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
+                        materialInfoString);
+            }
         }
 
         doValidation(action);
@@ -764,8 +791,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
                         editOrder, site, numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList);
-                addMessage("Created BSP work request '{0}' for this order.", workRequestBarcode);
+                        bspGroupCollectionTokenInput.getTokenObjects().get(0), notificationList, organismId);
+                addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
             // Save it!
@@ -940,15 +967,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getSummary")
     public Resolution getSummary() throws Exception {
         JSONArray itemList = new JSONArray();
+        if (editOrder != null) {
+            List<String> comments = editOrder.getSampleSummaryComments();
+            for (String comment : comments) {
+                JSONObject item = new JSONObject();
+                item.put("comment", comment);
 
-        List<String> comments = editOrder.getSampleSummaryComments();
-        for (String comment : comments) {
-            JSONObject item = new JSONObject();
-            item.put("comment", comment);
-
-            itemList.put(item);
+                itemList.put(item);
+            }
         }
-
         return createTextResolution(itemList.toString());
     }
 
@@ -1294,7 +1321,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
-        return createTextResolution(bspShippingLocationTokenInput.getJsonString(getQ()));
+
+        return createTextResolution(
+                bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
     }
 
     @HandlesEvent("groupCollectionAutocomplete")
@@ -1305,6 +1334,29 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("anyUsersAutocomplete")
     public Resolution anyUsersAutocomplete() throws Exception {
         return createTextResolution(notificationListTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("collectionOrganisms")
+    public Resolution collectionOrganisms() throws Exception {
+
+        Collection<Pair<Long, String>> organisms = bspGroupCollectionTokenInput.getCollection().getOrganisms();
+
+        JSONObject collectionAndList = new JSONObject();
+        collectionAndList.put("collectionName", bspGroupCollectionTokenInput.getCollection().getCollectionName());
+
+        // Create the json array of items for the chunk
+        JSONArray itemList = new JSONArray();
+        collectionAndList.put("organisms", itemList);
+
+        for (Pair<Long, String> organism : organisms) {
+            JSONObject item = new JSONObject();
+            item.put("id", organism.getLeft());
+            item.put("name", organism.getRight());
+
+            itemList.put(item);
+        }
+
+        return new StreamingResolution("text", new StringReader(collectionAndList.toString()));
     }
 
     public List<String> getAddOnKeys() {
@@ -1486,7 +1538,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if this is a sample initiation PDO; false otherwise
      */
     public boolean isSampleInitiation() {
-        return editOrder.getProduct().isSampleInitiationProduct();
+        return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
     }
 
     /**
@@ -1640,12 +1692,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.numberOfSamples = numberOfSamples;
     }
 
-    public String getPlasticware() {
-        return plasticware;
+    public KitType getKitType() {
+        return kitType;
     }
 
-    public void setPlasticware(String plasticware) {
-        this.plasticware = plasticware;
+    public void setKitType(KitType kitType) {
+        this.kitType = kitType;
     }
 
     public Site getSite() {
@@ -1681,20 +1733,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         return ProductOrder.OrderStatus.values();
     }
 
-    public static Log getLogger() {
-        return logger;
+    public String getMaterialInfoString() {
+        return materialInfoString;
     }
 
-    public static void setLogger(Log logger) {
-        ProductOrderActionBean.logger = logger;
-    }
-
-    public MaterialInfo getMaterialInfo() {
-        return materialInfo;
-    }
-
-    public void setMaterialInfo(MaterialInfo materialInfo) {
-        this.materialInfo = materialInfo;
+    public void setMaterialInfoString(String materialInfoString) {
+        this.materialInfoString = materialInfoString;
     }
 
     public UserTokenInput getNotificationListTokenInput() {
@@ -1703,5 +1747,25 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
+    }
+
+    public Long getOrganismId() {
+        return organismId;
+    }
+
+    public void setOrganismId(Long organismId) {
+        this.organismId = organismId;
+    }
+
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
+        return dnaMatrixMaterialTypes;
+    }
+
+    public Long getSelectedCollection() {
+        return selectedCollection;
+    }
+
+    public void setSelectedCollection(Long selectedCollection) {
+        this.selectedCollection = selectedCollection;
     }
 }

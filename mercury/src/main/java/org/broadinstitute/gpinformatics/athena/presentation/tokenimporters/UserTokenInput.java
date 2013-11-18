@@ -73,9 +73,11 @@ public class UserTokenInput extends TokenInput<BspUser> {
         return businessKeyList;
     }
 
-    // Get comma separated list of e-mails from notificationList.
+    /**
+     * Returns a comma separated list of e-mail addresses.
+     */
     public String getEmailList() {
-        List<String> notificationList = new ArrayList<>();
+        List<String> notificationList = new ArrayList<>(getTokenObjects().size());
         for (BspUser user : getTokenObjects()) {
             notificationList.add(user.getEmail());
         }

@@ -102,6 +102,27 @@ public class VesselContainer<T extends LabVessel> {
         this.embedder = embedder;
     }
 
+    /**
+     * Find the source rack for the specified LabVessel.
+     */
+    @Nullable
+    public LabVessel getSourceRack() {
+
+        // Find shortest paths to the first rack, if any.
+        List<List<LabEvent>> listOfLabEventLists =
+                shortestPathsToVesselsSatisfyingPredicate(IS_LAB_VESSEL_A_RACK);
+
+        if (listOfLabEventLists.isEmpty()) {
+            return null;
+        }
+
+        List<LabEvent> labEventList = listOfLabEventLists.iterator().next();
+        // The path Lists should always be nonempty, get the last element in the List for the source rack.
+        LabEvent firstEvent = labEventList.get(labEventList.size() - 1);
+        // There will only be one source rack.
+        return firstEvent.getSourceLabVessels().iterator().next();
+    }
+
     @Nullable
     public T getVesselAtPosition(VesselPosition position) {
         //noinspection unchecked
