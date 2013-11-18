@@ -15,8 +15,11 @@
             <!-- todo jmt this doesn't seem to work -->
             <property name="org.hibernate.flushMode" value="COMMIT" />
             <property name="hibernate.jdbc.batch_size" value="50"/>
+            <!-- todo jmt These settings dramatically improve performance of import of molecular index plates, but
+            may cause unique constraints in SampleReceiptResource.  HHH-3683 suggests it's fixed in Hibernate 4.3.
             <property name="hibernate.order_inserts" value="true"/>
             <property name="hibernate.order_updates" value="true"/>
+            -->
         </properties>
     </persistence-unit>
 <!--
