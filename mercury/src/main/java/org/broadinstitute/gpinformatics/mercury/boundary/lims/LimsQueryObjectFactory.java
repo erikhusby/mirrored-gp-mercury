@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -92,8 +93,7 @@ public class LimsQueryObjectFactory {
     public static ReadStructureRequest createReadStructureRequest(@Nullable String runName, @Nullable String runBarcode,
                                                                   @Nonnull String setupReadStructure,
                                                                   @Nonnull String actualReadStructure,
-                                                                  @Nonnull Double imagedArea,
-                                                                  @Nonnull String lanesSequenced,
+                                                                  double imagedArea, @Nonnull String lanesSequenced,
                                                                   @Nullable String error) {
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
         readStructureRequest.setRunName(runName);
@@ -104,5 +104,18 @@ public class LimsQueryObjectFactory {
         readStructureRequest.setLanesSequenced(lanesSequenced);
         readStructureRequest.setError(error);
         return readStructureRequest;
+    }
+
+    /**
+     * Create a ReadStructureRequest given a SequencingRun.
+     *
+     * @param sequencingRun a non-null SequencingRun.
+     *
+     * @return a newly created ReadStructureRequest.
+     */
+    public static ReadStructureRequest createReadStructureRequest(@Nonnull SequencingRun sequencingRun) {
+        return createReadStructureRequest(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
+                sequencingRun.getSetupReadStructure(), sequencingRun.getActualReadStructure(),
+                sequencingRun.getImagedAreaPerMM2(), sequencingRun.getLanesSequenced(), null);
     }
 }
