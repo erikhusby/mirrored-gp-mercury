@@ -339,7 +339,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -367,8 +367,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testGetReadStructureByBarcode() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
@@ -397,9 +396,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertNull(readStructureResult.getActualReadStructure());
         Assert.assertNull(readStructureResult.getImagedArea());
 
-        
         readStructure.setActualReadStructure(ACTUAL_READ_STRUCTURE);
-
 
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
@@ -453,7 +450,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         ReadStructureRequest readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
-
 
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
