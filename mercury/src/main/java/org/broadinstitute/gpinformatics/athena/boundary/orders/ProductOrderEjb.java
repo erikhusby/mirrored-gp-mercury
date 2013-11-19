@@ -29,14 +29,18 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -77,12 +81,15 @@ public class ProductOrderEjb {
 
     private final BSPSampleDataFetcher sampleDataFetcher;
 
+    private final MercuryClientService mercuryClientService;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
-        this(null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null);
     }
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public ProductOrderEjb(ProductOrderDao productOrderDao,
                            ProductDao productDao,
@@ -91,7 +98,8 @@ public class ProductOrderEjb {
                            UserBean userBean,
                            BSPUserList userList,
                            LedgerEntryDao ledgerEntryDao,
-                           BSPSampleDataFetcher sampleDataFetcher) {
+                           BSPSampleDataFetcher sampleDataFetcher,
+                           MercuryClientService mercuryClientService) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -100,6 +108,7 @@ public class ProductOrderEjb {
         this.userList = userList;
         this.ledgerEntryDao = ledgerEntryDao;
         this.sampleDataFetcher = sampleDataFetcher;
+        this.mercuryClientService = mercuryClientService;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -342,6 +351,16 @@ public class ProductOrderEjb {
 
         // Set the create and modified information.
         editOrder.prepareToSave(user);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void handleSamplesAdded(String productOrderKey, Collection<ProductOrderSample> newSamples,
+                                   MessageReporter reporter) {
+        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(order, newSamples);
+        if (!samples.isEmpty()) {
+            reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
+        }
     }
 
     /**
@@ -746,7 +765,7 @@ public class ProductOrderEjb {
             throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
 
         try {
-            updateOrderStatus(jiraTicketKey);
+            updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         } catch (RuntimeException e) {
             // If we failed to update the order status be sure to log it here as the caller will not be receiving a
             // RuntimeException due to transaction rollback issues and will not be aware there was a problem.
@@ -767,7 +786,7 @@ public class ProductOrderEjb {
      * @throws JiraIssue.NoTransitionException
      *
      */
-    public boolean updateOrderStatus(@Nonnull String jiraTicketKey)
+    public void updateOrderStatus(@Nonnull String jiraTicketKey, MessageReporter reporter)
             throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
@@ -789,9 +808,9 @@ public class ProductOrderEjb {
                 issue.postTransition(transition.getStateName(),
                         getUserName() + " performed " + operation + " transition");
             }
-            return true;
+            // If the status was changed, let the user know.
+            reporter.addMessage("The order status is now {0}.", order.getOrderStatus());
         }
-        return false;
     }
 
     /**
@@ -865,5 +884,33 @@ public class ProductOrderEjb {
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
                 EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples);
+    }
+
+    /**
+     * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
+     * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
+     * if necessary.
+     *
+     * @param jiraTicketKey the PDO key
+     * @param samples the samples to add
+     */
+    public void addSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples,
+                           MessageReporter reporter)
+            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        ProductOrder order = findProductOrder(jiraTicketKey);
+        order.addSamples(samples);
+        order.prepareToSave(userBean.getBspUser());
+        productOrderDao.persist(order);
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+        reporter.addMessage("Added samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
+        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                order.getSampleString(),
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+
+        handleSamplesAdded(jiraTicketKey, samples, reporter);
+
+        updateOrderStatus(jiraTicketKey, reporter);
     }
 }

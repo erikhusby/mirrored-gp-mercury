@@ -513,7 +513,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         return samples;
     }
 
-    public void setSamples(@Nonnull List<ProductOrderSample> samples) {
+    public void setSamples(@Nonnull Collection<ProductOrderSample> samples) {
         if (samples.isEmpty()) {
             // FIXME: This seems incorrect in the case where current sample list is non-empty and incoming samples are empty.
             return;
@@ -527,7 +527,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         }
     }
 
-    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
+    private void addSamplesInternal(Collection<ProductOrderSample> newSamples, int samplePos) {
         for (ProductOrderSample sample : newSamples) {
             sample.setProductOrder(this);
             sample.setSamplePosition(samplePos++);
@@ -536,7 +536,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         sampleCounts.invalidate();
     }
 
-    public void addSamples(@Nonnull List<ProductOrderSample> newSamples) {
+    public void addSamples(@Nonnull Collection<ProductOrderSample> newSamples) {
         if (samples.isEmpty()) {
             setSamples(newSamples);
         } else {
@@ -552,7 +552,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      *
      * @return true, if the name lists are different
      */
-    private boolean isSampleListDifferent(List<ProductOrderSample> newSamples) {
+    private boolean isSampleListDifferent(Collection<ProductOrderSample> newSamples) {
         List<String> originalSampleNames = ProductOrderSample.getSampleNames(samples);
         List<String> newSampleNames = ProductOrderSample.getSampleNames(newSamples);
 
