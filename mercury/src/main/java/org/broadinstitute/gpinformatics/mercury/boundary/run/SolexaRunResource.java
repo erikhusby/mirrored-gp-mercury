@@ -194,15 +194,26 @@ public class SolexaRunResource {
     public Response storeRunReadStructure(ReadStructureRequest readStructureRequest) {
         ReadStructureRequest requestToReturn = null;
         Response callerResponse = null;
+        boolean searchByBarcode = false;
 
-        String runBarcode = readStructureRequest.getRunBarcode();
-        if (runBarcode == null) {
-            throw new ResourceException("No run barcode given.", Response.Status.NOT_FOUND);
+        String requestIdentifier = readStructureRequest.getRunName();
+        // We prefer to query by runName but if one is not supplied we will try to find the run by barcode.
+        if (StringUtils.isBlank(requestIdentifier)) {
+            requestIdentifier = readStructureRequest.getRunBarcode();
+            searchByBarcode = true;
+        }
+        if (requestIdentifier == null) {
+            throw new ResourceException("No run name or barcode given.", Response.Status.NOT_FOUND);
         }
         // in the absence of information, route to squid
         SystemRouter.System route = SystemRouter.System.SQUID;
 
-        IlluminaSequencingRun run = illuminaSequencingRunDao.findByBarcode(runBarcode);
+        IlluminaSequencingRun run;
+        if (searchByBarcode) {
+            run = illuminaSequencingRunDao.findByBarcode(requestIdentifier);
+        } else {
+            run = illuminaSequencingRunDao.findByRunName(requestIdentifier);
+        }
 
         if (run != null) {
             route = router.routeForVessels(Collections.<LabVessel>singletonList(run.getSampleCartridge()));
@@ -223,8 +234,8 @@ public class SolexaRunResource {
                     }
                 } catch (UniformInterfaceException t) {
                     requestToReturn.setError(
-                            "Failed while sending solexa_run_synopsis data to squid for " + runBarcode + ":" + t
-                                    .getMessage());
+                            String.format("Failed while sending solexa_run_synopsis data to squid for %s:%s",
+                                    requestIdentifier, t.getMessage()));
                     callerResponse = Response.status(t.getResponse().getClientResponseStatus().getStatusCode())
                             .entity(requestToReturn).build();
                 }
@@ -233,7 +244,7 @@ public class SolexaRunResource {
 
         if (EnumSet.of(SystemRouter.System.MERCURY, SystemRouter.System.BOTH).contains(route)) {
             if (run == null) {
-                throw new ResourceException("There is no run found in mercury for " + runBarcode,
+                throw new ResourceException("There is no run found in mercury for " + requestIdentifier,
                         Response.Status.NOT_FOUND);
             }
             // the run != null bit is there as a catch all.  if mercury knows the run, let's save the read structure data in mercury too!

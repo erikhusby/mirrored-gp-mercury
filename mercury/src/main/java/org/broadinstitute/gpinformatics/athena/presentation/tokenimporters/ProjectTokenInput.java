@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -11,7 +10,7 @@ import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * Token Input support for Research Projects.
@@ -40,7 +39,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
      * @throws JSONException
      */
     public String getJsonString(String query) throws JSONException {
-        return getJsonString(query, CollectionUtils.EMPTY_COLLECTION);
+        return getJsonString(query, Collections.<ResearchProject>emptySet());
     }
 
     /**
@@ -71,15 +70,5 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     @Override
     protected String formatMessage(String messageString, ResearchProject project) {
         return MessageFormat.format(messageString, project.getTitle());
-    }
-
-    public String getTokenObject() {
-        List<ResearchProject> projects = getTokenObjects();
-
-        if ((projects == null) || projects.isEmpty()) {
-            return "";
-        }
-
-        return projects.get(0).getBusinessKey();
     }
 }

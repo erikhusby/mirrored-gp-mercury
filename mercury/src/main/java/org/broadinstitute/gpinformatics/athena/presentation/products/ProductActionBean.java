@@ -32,8 +32,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -192,7 +190,7 @@ public class ProductActionBean extends CoreActionBean {
             addGlobalValidationError("Availability date must precede discontinued date.");
         }
 
-        if (priceItemTokenInput.getTokenObject() == null) {
+        if (priceItemTokenInput.getItem() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
 

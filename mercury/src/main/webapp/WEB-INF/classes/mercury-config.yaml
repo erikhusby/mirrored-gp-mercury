@@ -217,7 +217,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    DEV
-      thrift:   QA
+      thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
@@ -231,7 +231,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    DEV
-      thrift:   QA
+      thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV

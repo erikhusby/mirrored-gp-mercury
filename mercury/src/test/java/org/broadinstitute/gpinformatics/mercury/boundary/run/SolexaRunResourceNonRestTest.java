@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
@@ -142,12 +143,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private IlluminaFlowcell newFlowcell;
     private String miSeqBarcode;
     private IlluminaFlowcell miSeqFlowcell;
-    private boolean result;
     private String runBarcode;
     private String miSeqRunBarcode;
     private String reagentKitBarcode;
     private String runFileDirectory;
-    private String pdoKey;
     private ProductOrder exexOrder;
     private ResearchProject researchProject;
     private Product exExProduct;
@@ -156,6 +155,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private String machineName;
     private String pdo1JiraKey;
 
+    public static final double IMAGED_AREA = 276.4795532227;
+    public static final String LANES_SEQUENCED = "2,3";
+    public static final String ACTUAL_READ_STRUCTURE = "101T8B8B101T";
+    public static final String SETUP_READ_STRUCTURE = "71T8B8B101T";
+    
     @Inject
     BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -188,10 +192,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         exExProduct = productDao.findByPartNumber(
                 BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.AGILENT_EXOME_EXPRESS));
-
-        final String genomicSample1 = "SM-" + testPrefix + "_Genomic1" + runDate.getTime();
-
-        pdoKey = "PDO-" + runDate.getTime();
 
         bucketReadySamples1 = new ArrayList<>(2);
 
@@ -275,7 +275,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                            "testRoot" + File.separator + "finalPath" + runDate.getTime() +
                            File.separator + runName;
         File runFile = new File(runFileDirectory);
-        result = runFile.mkdirs();
+        runFile.mkdirs();
     }
 
     @AfterMethod(groups = EXTERNAL_INTEGRATION)
@@ -334,19 +334,45 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(targetFlowcell.getSequencingRuns().size(), 1);
     }
 
+
+    /**
+     * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
+     * method will also create a run to associate the read structures.
+     */
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    public void testGetReadStructureByName() {
+        SolexaRunResource runResource =
+                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
+                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+        SolexaRunBean runBean =
+                new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
+                        reagentKitBarcode);
+        runResource.registerRun(runBean, miSeqFlowcell);
+        IlluminaSequencingRun run = runDao.findByBarcode(miSeqRunBarcode);
+
+        ReadStructureRequest readStructureWithRunName = LimsQueryObjectFactory
+                .createReadStructureRequest(run.getRunName(), null, SETUP_READ_STRUCTURE, ACTUAL_READ_STRUCTURE,
+                        IMAGED_AREA, LANES_SEQUENCED, null);
+
+        Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructureWithRunName);
+
+        Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
+        ReadStructureRequest readStructureResultByName = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+
+        Assert.assertEquals(readStructureResultByName.getRunName(), run.getRunName());
+        Assert.assertEquals(readStructureResultByName.getRunBarcode(), miSeqRunBarcode);
+    }
+
     /**
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
     @Test(groups = EXTERNAL_INTEGRATION,
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    public void testSetReadStructure() {
-
-        Double imagedArea = new Double("276.4795532227");
-        String lanesSequenced = "2,3";
+    public void testGetReadStructureByBarcode() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
-        readStructure.setSetupReadStructure("71T8B8B101T");
+        readStructure.setSetupReadStructure(SETUP_READ_STRUCTURE);
 
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
@@ -361,49 +387,50 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
 
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
-        ReadStructureRequest readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+        ReadStructureRequest readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
-        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
-        Assert.assertNull(readstructureResult.getActualReadStructure());
-        Assert.assertNull(readstructureResult.getImagedArea());
+        Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readStructureResult.getSetupReadStructure());
+        Assert.assertEquals(readStructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNull(readStructureResult.getActualReadStructure());
+        Assert.assertNull(readStructureResult.getImagedArea());
 
-        readStructure.setActualReadStructure("101T8B8B101T");
+        
+        readStructure.setActualReadStructure(ACTUAL_READ_STRUCTURE);
 
 
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
-        readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+        readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
-        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
-        Assert.assertNotNull(readstructureResult.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertNull(readstructureResult.getImagedArea());
-        Assert.assertNull(readstructureResult.getLanesSequenced());
+        Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readStructureResult.getSetupReadStructure());
+        Assert.assertEquals(readStructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNotNull(readStructureResult.getActualReadStructure());
+        Assert.assertEquals(readStructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertNull(readStructureResult.getImagedArea());
+        Assert.assertNull(readStructureResult.getLanesSequenced());
 
-        readStructure.setImagedArea(imagedArea);
-        readStructure.setLanesSequenced(lanesSequenced);
+        readStructure.setImagedArea(IMAGED_AREA);
+        readStructure.setLanesSequenced(LANES_SEQUENCED);
 
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
-        readstructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+        readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
         run = runDao.findByBarcode(runBarcode);
 
-        Assert.assertEquals(readstructureResult.getRunBarcode(), run.getRunBarcode());
-        Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), run.getSetupReadStructure());
-        Assert.assertNotNull(readstructureResult.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getActualReadStructure(), run.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
-        Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
+        Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
+        Assert.assertNotNull(readStructureResult.getSetupReadStructure());
+        Assert.assertEquals(readStructureResult.getSetupReadStructure(), run.getSetupReadStructure());
+        Assert.assertNotNull(readStructureResult.getActualReadStructure());
+        Assert.assertEquals(readStructureResult.getActualReadStructure(), run.getActualReadStructure());
+        Assert.assertEquals(readStructureResult.getImagedArea(), IMAGED_AREA);
+        Assert.assertEquals(readStructureResult.getLanesSequenced(), LANES_SEQUENCED);
     }
 
     /**
@@ -413,14 +440,10 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Test(groups = EXTERNAL_INTEGRATION,
             dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testFailSetReadStructureInSquid() {
-
-        Double imagedArea = new Double("276.4795532227");
-        String lanesSequenced = "2,3";
         ReadStructureRequest readStructure = new ReadStructureRequest();
         final String squidRunBarcode = "squid" + runBarcode;
         readStructure.setRunBarcode(squidRunBarcode);
-        final String setupReadStructure = "71T8B8B101T";
-        readStructure.setSetupReadStructure(setupReadStructure);
+        readStructure.setSetupReadStructure(SETUP_READ_STRUCTURE);
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -434,12 +457,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), setupReadStructure);
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), SETUP_READ_STRUCTURE);
         Assert.assertNull(readstructureResult.getActualReadStructure());
         Assert.assertNull(readstructureResult.getImagedArea());
 
-        final String actualReadStructure = "101T8B8B101T";
-        readStructure.setActualReadStructure(actualReadStructure);
+        readStructure.setActualReadStructure(ACTUAL_READ_STRUCTURE);
 
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
@@ -447,14 +469,14 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), setupReadStructure);
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), SETUP_READ_STRUCTURE);
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getActualReadStructure(), actualReadStructure);
+        Assert.assertEquals(readstructureResult.getActualReadStructure(), ACTUAL_READ_STRUCTURE);
         Assert.assertNull(readstructureResult.getImagedArea());
         Assert.assertNull(readstructureResult.getLanesSequenced());
 
-        readStructure.setImagedArea(imagedArea);
-        readStructure.setLanesSequenced(lanesSequenced);
+        readStructure.setImagedArea(IMAGED_AREA);
+        readStructure.setLanesSequenced(LANES_SEQUENCED);
 
         readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
@@ -462,11 +484,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Assert.assertEquals(readstructureResult.getRunBarcode(), squidRunBarcode);
         Assert.assertNotNull(readstructureResult.getSetupReadStructure());
-        Assert.assertEquals(readstructureResult.getSetupReadStructure(), setupReadStructure);
+        Assert.assertEquals(readstructureResult.getSetupReadStructure(), SETUP_READ_STRUCTURE);
         Assert.assertNotNull(readstructureResult.getActualReadStructure());
-        Assert.assertEquals(readstructureResult.getActualReadStructure(), actualReadStructure);
-        Assert.assertEquals(readstructureResult.getImagedArea(), imagedArea);
-        Assert.assertEquals(readstructureResult.getLanesSequenced(), lanesSequenced);
+        Assert.assertEquals(readstructureResult.getActualReadStructure(), ACTUAL_READ_STRUCTURE);
+        Assert.assertEquals(readstructureResult.getImagedArea(), IMAGED_AREA);
+        Assert.assertEquals(readstructureResult.getLanesSequenced(), LANES_SEQUENCED);
     }
 
     /**

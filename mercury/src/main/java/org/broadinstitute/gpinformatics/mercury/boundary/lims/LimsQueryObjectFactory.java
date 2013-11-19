@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
@@ -73,5 +75,47 @@ public class LimsQueryObjectFactory {
         lane.setLoadingVesselLabel(loadingVesselLabel);
         lane.setDerivedVesselLabel(startingVesselLabel);
         return lane;
+    }
+
+    /**
+     * Create a ReadStructureRequest object based on available parameters
+     *
+     * @param runBarcode
+     * @param runName
+     * @param setupReadStructure
+     * @param actualReadStructure
+     * @param imagedArea
+     * @param lanesSequenced
+     * @param error
+     *
+     * @return a newly created ReadStructureRequest.
+     */
+    public static ReadStructureRequest createReadStructureRequest(@Nullable String runName, @Nullable String runBarcode,
+                                                                  @Nonnull String setupReadStructure,
+                                                                  @Nonnull String actualReadStructure,
+                                                                  double imagedArea, @Nonnull String lanesSequenced,
+                                                                  @Nullable String error) {
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunName(runName);
+        readStructureRequest.setRunBarcode(runBarcode);
+        readStructureRequest.setSetupReadStructure(setupReadStructure);
+        readStructureRequest.setActualReadStructure(actualReadStructure);
+        readStructureRequest.setImagedArea(imagedArea);
+        readStructureRequest.setLanesSequenced(lanesSequenced);
+        readStructureRequest.setError(error);
+        return readStructureRequest;
+    }
+
+    /**
+     * Create a ReadStructureRequest given a SequencingRun.
+     *
+     * @param sequencingRun a non-null SequencingRun.
+     *
+     * @return a newly created ReadStructureRequest.
+     */
+    public static ReadStructureRequest createReadStructureRequest(@Nonnull SequencingRun sequencingRun) {
+        return createReadStructureRequest(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
+                sequencingRun.getSetupReadStructure(), sequencingRun.getActualReadStructure(),
+                sequencingRun.getImagedAreaPerMM2(), sequencingRun.getLanesSequenced(), null);
     }
 }

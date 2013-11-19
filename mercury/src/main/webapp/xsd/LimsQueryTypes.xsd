@@ -119,6 +119,7 @@
     <xsd:complexType name="readStructureRequest">
         <xsd:sequence>
             <xsd:element name="runBarcode" type="xsd:string" />
+            <xsd:element name="runName" type="xsd:string" />
             <xsd:element name="setupReadStructure" type="xsd:string" />
             <xsd:element name="actualReadStructure" type="xsd:string" />
             <xsd:element name="imagedArea" type="xsd:double" nillable="true"/>
