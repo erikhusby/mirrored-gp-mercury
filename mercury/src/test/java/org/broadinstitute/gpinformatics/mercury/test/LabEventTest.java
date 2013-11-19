@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -1140,7 +1141,7 @@ public class LabEventTest extends BaseEventTest {
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDao);
 
         LabEventHandler labEventHandler = getLabEventHandler();
-        StaticPlate indexPlate = buildIndexPlate(null,
+        StaticPlate indexPlate = buildIndexPlate(null, null,
                 Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                 Collections.singletonList("IndexPlate")).get(0);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageTestFactory,
@@ -1329,18 +1330,21 @@ public class LabEventTest extends BaseEventTest {
      * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
      *
      * @param molecularIndexingSchemeDao DAO, nullable if in database free test
+     * @param molecularIndexDao DAO, nullable if in database free test
      * @param indexPositions             list of positions, e.g. P5, P7
      * @param indexPlateBarcodes         list of barcodes for plates to create
      */
-    public static List<StaticPlate> buildIndexPlate(@Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao,
-                                                    List<MolecularIndexingScheme.IndexPosition> indexPositions,
-                                                    List<String> indexPlateBarcodes) {
+    public static List<StaticPlate> buildIndexPlate(
+            @Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao,
+            @Nullable MolecularIndexDao molecularIndexDao,
+            List<MolecularIndexingScheme.IndexPosition> indexPositions,
+            List<String> indexPlateBarcodes) {
 
         char[] bases = {'A', 'C', 'T', 'G'};
 
         List<StaticPlate> indexPlates = new ArrayList<>();
         int arrayIndex = 0;
-        for (final MolecularIndexingScheme.IndexPosition indexPosition : indexPositions) {
+        for (MolecularIndexingScheme.IndexPosition indexPosition : indexPositions) {
             String indexPlateBarcode = indexPlateBarcodes.get(arrayIndex);
             StaticPlate indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             for (VesselPosition vesselPosition : SBSSection.ALL96.getWells()) {
@@ -1354,18 +1358,27 @@ public class LabEventTest extends BaseEventTest {
                     base4Ordinal = base4Ordinal / 4;
                 }
 
-                final String sequence = stringBuilder.toString();
+                // Re-use existing sequence, if any
+                String sequence = stringBuilder.toString();
+                MolecularIndex molecularIndex = null;
+                if (molecularIndexDao != null) {
+                    molecularIndex = molecularIndexDao.findBySequence(sequence);
+                }
+                if (molecularIndex == null) {
+                    molecularIndex = new MolecularIndex(sequence);
+                }
+
+                // Re-use existing scheme, if any
                 MolecularIndexingScheme testScheme = null;
                 if (molecularIndexingSchemeDao != null) {
-                    testScheme = molecularIndexingSchemeDao
-                            .findSingleIndexScheme(indexPosition, sequence);
+                    testScheme = molecularIndexingSchemeDao.findSingleIndexScheme(indexPosition, sequence);
                 }
                 if (testScheme == null) {
+                    EnumMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> mapPositionToIndex =
+                            new EnumMap<>(MolecularIndexingScheme.IndexPosition.class);
+                    mapPositionToIndex.put(indexPosition, molecularIndex);
                     testScheme = new MolecularIndexingScheme(
-                            new EnumMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>(
-                                    MolecularIndexingScheme.IndexPosition.class) {{
-                                put(indexPosition, new MolecularIndex(sequence));
-                            }});
+                            mapPositionToIndex);
                     if (molecularIndexingSchemeDao != null) {
                         molecularIndexingSchemeDao.persist(testScheme);
                         molecularIndexingSchemeDao.flush();

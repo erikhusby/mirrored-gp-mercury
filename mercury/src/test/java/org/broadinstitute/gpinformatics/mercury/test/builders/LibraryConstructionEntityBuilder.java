@@ -120,7 +120,7 @@ public class LibraryConstructionEntityBuilder {
         StaticPlate indexPlateP7;
         StaticPlate indexPlateP5 = null;
         if (indexing == Indexing.DUAL) {
-            List<StaticPlate> indexPlates = LabEventTest.buildIndexPlate(null,
+            List<StaticPlate> indexPlates = LabEventTest.buildIndexPlate(null, null,
                     new ArrayList<MolecularIndexingScheme.IndexPosition>() {{
                         add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
                         add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
@@ -133,7 +133,7 @@ public class LibraryConstructionEntityBuilder {
             indexPlateP7 = indexPlates.get(0);
             indexPlateP5 = indexPlates.get(1);
         } else {
-            indexPlateP7 = LabEventTest.buildIndexPlate(null,
+            indexPlateP7 = LabEventTest.buildIndexPlate(null, null,
                     Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                     Collections.singletonList(libraryConstructionJaxbBuilder.getP7IndexPlateBarcode())).get(0);
         }
