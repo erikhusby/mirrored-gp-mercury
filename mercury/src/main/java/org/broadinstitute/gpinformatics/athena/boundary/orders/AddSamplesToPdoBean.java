@@ -13,9 +13,11 @@ public class AddSamplesToPdoBean {
     private String username;
     private ParentVesselBean parentVesselBean;
 
-    public AddSamplesToPdoBean(String pdo, ParentVesselBean parentVesselBean) {
+    @SuppressWarnings("UnusedDeclaration")
+    public AddSamplesToPdoBean(String username, String pdo, ParentVesselBean parentVesselBean) {
         this.pdo = pdo;
         this.parentVesselBean = parentVesselBean;
+        this.username = username;
     }
 
     /** Used by JAXB */
@@ -46,7 +48,7 @@ public class AddSamplesToPdoBean {
     }
 
     @SuppressWarnings("UnusedDeclaration")
-    public void setParentVesselBeans(ParentVesselBean parentVesselBean) {
+    public void setParentVesselBean(ParentVesselBean parentVesselBean) {
         this.parentVesselBean = parentVesselBean;
     }
 }
