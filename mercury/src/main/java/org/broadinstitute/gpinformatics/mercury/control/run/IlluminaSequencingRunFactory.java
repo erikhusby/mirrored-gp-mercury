@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryObjectFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -69,16 +70,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
             run.setLanesSequenced(readStructureRequest.getLanesSequenced());
         }
 
-        ReadStructureRequest returnValue = new ReadStructureRequest();
-        returnValue.setRunBarcode(run.getRunBarcode());
-        returnValue.setRunName(run.getRunName());
-
-        returnValue.setActualReadStructure(run.getActualReadStructure());
-        returnValue.setSetupReadStructure(run.getSetupReadStructure());
-        returnValue.setImagedArea(run.getImagedAreaPerMM2());
-        returnValue.setLanesSequenced(run.getLanesSequenced());
-
-        return returnValue;
+        return LimsQueryObjectFactory.createReadStructureRequest(run);
     }
 
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {

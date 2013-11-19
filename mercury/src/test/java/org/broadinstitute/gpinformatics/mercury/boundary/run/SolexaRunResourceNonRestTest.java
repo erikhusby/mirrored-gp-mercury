@@ -359,8 +359,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
         ReadStructureRequest readStructureResultByName = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
-        Assert.assertNotNull(readStructureResultByName.getRunName());
-        Assert.assertNotNull(readStructureResultByName.getRunBarcode());
         Assert.assertEquals(readStructureResultByName.getRunName(), run.getRunName());
         Assert.assertEquals(readStructureResultByName.getRunBarcode(), miSeqRunBarcode);
     }

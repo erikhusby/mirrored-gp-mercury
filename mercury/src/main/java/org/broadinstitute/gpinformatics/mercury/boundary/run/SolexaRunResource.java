@@ -198,9 +198,9 @@ public class SolexaRunResource {
 
         String requestIdentifier = readStructureRequest.getRunName();
         // We prefer to query by runName but if one is not supplied we will try to find the run by barcode.
-        if (StringUtils.isBlank(requestIdentifier)){
+        if (StringUtils.isBlank(requestIdentifier)) {
             requestIdentifier = readStructureRequest.getRunBarcode();
-            searchByBarcode=true;
+            searchByBarcode = true;
         }
         if (requestIdentifier == null) {
             throw new ResourceException("No run name or barcode given.", Response.Status.NOT_FOUND);
