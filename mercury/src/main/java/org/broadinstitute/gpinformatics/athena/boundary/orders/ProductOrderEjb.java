@@ -808,8 +808,8 @@ public class ProductOrderEjb {
                 issue.postTransition(transition.getStateName(),
                         getUserName() + " performed " + operation + " transition");
             }
-            // If the status was changed, let the user know.
-            reporter.addMessage("The order status is now {0}.", order.getOrderStatus());
+            // The status was changed, let the user know.
+            reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
         }
     }
 
