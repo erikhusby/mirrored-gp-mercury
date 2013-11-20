@@ -142,7 +142,7 @@ public class BettaLimsMessageResource {
     @TransactionAttribute(value = TransactionAttributeType.REQUIRED)
     public void storeAndProcess(String message) throws Exception {
         Date now = new Date();
-        boolean logStacktrace=true;
+        boolean logStacktrace = true;
         //noinspection OverlyBroadCatchBlock
         try {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
@@ -225,19 +225,20 @@ public class BettaLimsMessageResource {
                 }
             }
             if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
-                String error = bettaLimsResponse.getMessage();
-                if (error.startsWith("The specified user does not exist")) {
+                // The intent here is to reduce log noise for certain cases which we can't control or act upon in
+                // Mercury. Throwing an exception is still useful to the client though so we shouldn't eliminate that.
+                String logMessage = bettaLimsResponse.getMessage();
+                if (logMessage.startsWith("The specified user does not exist")) {
                     logStacktrace = false;
                 }
-                throw new RuntimeException(error);
+                throw new RuntimeException(logMessage);
             }
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
-            String logMessage = "Failed to process run";
             if (logStacktrace) {
-                log.error(logMessage, e);
+                log.error(e.getMessage(), e);
             } else {
-                log.error(logMessage);
+                log.error(e.getMessage());
             }
             emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
                     "[Mercury] Failed to process message", e.getMessage());
