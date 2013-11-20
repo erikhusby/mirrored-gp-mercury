@@ -145,6 +145,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
 
+        private VesselPosition queryVesselPosition;
+
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
 
@@ -157,14 +159,15 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            if (context.getVesselPosition() != null) {
-                if (!result.containsKey(context.getVesselPosition())) {
-                    result.put(context.getVesselPosition(), false);
-                }
+            // The VesselPosition at hop count zero is the position for which we want to determine sample content.
+            if (context.getHopCount() == 0) {
+                queryVesselPosition = context.getVesselPosition();
+                result.put(queryVesselPosition, false);
             }
+
             if (context.getLabVessel() != null && context.getVesselContainer() != null) {
                 if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
-                    result.put(context.getVesselPosition(), true);
+                    result.put(queryVesselPosition, true);
                     return TraversalControl.StopTraversing;
                 }
             }
