@@ -840,7 +840,6 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
 
-        /**
         if (publicationDeadline != null) {
             listOfFields.add(new CustomField(submissionFields, JiraField.PUBLICATION_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(publicationDeadline)));
@@ -850,7 +849,6 @@ public class ProductOrder implements BusinessObject, Serializable {
             listOfFields.add(new CustomField(submissionFields, JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(getFundingDeadline())));
         }
-         **/
 
         if (comments != null) {
             listOfFields.add(new CustomField(submissionFields, JiraField.DESCRIPTION, comments));

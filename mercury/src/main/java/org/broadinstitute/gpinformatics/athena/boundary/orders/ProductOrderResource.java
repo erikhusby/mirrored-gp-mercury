@@ -242,7 +242,7 @@ public class ProductOrderResource {
             throw new ApplicationValidationException("No product order id specified");
         }
 
-        if (CollectionUtils.isEmpty(addSamplesToPdoBean.getParentVesselBean().getChildVesselBeans())) {
+        if (CollectionUtils.isEmpty(addSamplesToPdoBean.getParentVesselBeans())) {
             throw new ApplicationValidationException("No sample ids specified");
         }
 
@@ -255,14 +255,13 @@ public class ProductOrderResource {
 
         // Create the mercury vessel for the plate and each tube in the plate.
         BspUser bspUser = bspUserList.getByUsername(addSamplesToPdoBean.getUsername());
-        List<ParentVesselBean> parentVesselBeans = Collections.singletonList(addSamplesToPdoBean.getParentVesselBean());
         labVesselFactory.buildLabVessels(
-                parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
+                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
 
         // Get all the sample ids
         List<ProductOrderSample> samplesToAdd = new ArrayList<> ();
-        for (ChildVesselBean childVesselBean : addSamplesToPdoBean.getParentVesselBean().getChildVesselBeans()) {
-            samplesToAdd.add(new ProductOrderSample(childVesselBean.getSampleId()));
+        for (ParentVesselBean parentVesselBean : addSamplesToPdoBean.getParentVesselBeans()) {
+            samplesToAdd.add(new ProductOrderSample(parentVesselBean.getSampleId()));
         }
 
         // Add the samples
