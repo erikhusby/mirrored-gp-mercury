@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -42,6 +43,6 @@ public class BspGroupCollectionTokenInput extends TokenInput<SampleCollection> {
 
     @Override
     protected SampleCollection getById(String key) {
-        return bspCollectionList.getById(Long.valueOf(key));
+        return StringUtils.isNumeric(key) ? bspCollectionList.getById(Long.valueOf(key)) : null;
     }
 }
