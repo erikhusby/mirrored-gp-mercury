@@ -1170,7 +1170,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
-        productOrderEjb.addSamples(editOrder.getJiraTicketKey(), samplesToAdd, this);
+        productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         return createViewResolution();
     }
 

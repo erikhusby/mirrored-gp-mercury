@@ -894,12 +894,12 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the PDO key
      * @param samples the samples to add
      */
-    public void addSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples,
+    public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples,
                            MessageReporter reporter)
             throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
-        order.prepareToSave(userBean.getBspUser());
+        order.prepareToSave(bspUser);
         productOrderDao.persist(order);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
         reporter.addMessage("Added samples: {0}.", nameList);

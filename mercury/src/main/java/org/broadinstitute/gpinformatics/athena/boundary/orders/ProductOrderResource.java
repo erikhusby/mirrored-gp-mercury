@@ -259,7 +259,7 @@ public class ProductOrderResource {
 
         try {
             // Add the samples.
-            productOrderEjb.addSamples(pdoKey, samplesToAdd, MessageReporter.UNUSED);
+            productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
         } catch (ProductOrderEjb.NoSuchPDOException | IOException | JiraIssue.NoTransitionException e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
         }
