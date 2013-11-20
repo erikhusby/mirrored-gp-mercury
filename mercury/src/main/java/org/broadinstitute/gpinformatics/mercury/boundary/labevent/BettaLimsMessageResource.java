@@ -72,7 +72,7 @@ public class BettaLimsMessageResource {
      * workflow error message from Squid
      */
     private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
-
+    private static final String USER_ERROR_PREFIX = "The specified user does not exist";
     private static final Log log = LogFactory.getLog(BettaLimsMessageResource.class);
     private static final boolean VALIDATE_SCHEMA = false;
 
@@ -228,7 +228,7 @@ public class BettaLimsMessageResource {
                 // The intent here is to reduce log noise for certain cases which we can't control or act upon in
                 // Mercury. Throwing an exception is still useful to the client though so we shouldn't eliminate that.
                 String logMessage = bettaLimsResponse.getMessage();
-                if (logMessage.startsWith("The specified user does not exist")) {
+                if (logMessage.startsWith(USER_ERROR_PREFIX)) {
                     logStacktrace = false;
                 }
                 throw new RuntimeException(logMessage);
