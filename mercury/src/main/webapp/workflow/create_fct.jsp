@@ -25,7 +25,7 @@
                 }
             }
 
-            $(document).ready(function () {
+            $j(document).ready(function () {
                 $j('#tubeList').dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[

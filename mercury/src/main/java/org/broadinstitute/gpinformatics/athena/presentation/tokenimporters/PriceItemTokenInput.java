@@ -12,7 +12,6 @@ import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * This class is the user implementation of the token object.  The key is the concatenated key of the price item.
@@ -70,14 +69,8 @@ public class PriceItemTokenInput extends TokenInput<QuotePriceItem> {
         return super.createAutocomplete(quotePriceItem);
     }
 
-    public PriceItem getTokenObject() {
-        List<QuotePriceItem> quotePriceItems = getTokenObjects();
-
-        if ((quotePriceItems == null) || (quotePriceItems.isEmpty())) {
-            return null;
-        }
-
-        return getPriceItem(quotePriceItems.get(0));
+    public PriceItem getItem() {
+        return getPriceItem(getTokenObject());
     }
 
     private PriceItem getPriceItem(QuotePriceItem quotePriceItem) {

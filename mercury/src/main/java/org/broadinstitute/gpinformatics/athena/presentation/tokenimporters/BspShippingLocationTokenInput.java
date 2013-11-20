@@ -1,13 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
-import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSiteList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * Token Input support for Shipping Locations (aka Sites).
@@ -17,14 +20,26 @@ public class BspShippingLocationTokenInput extends TokenInput<Site> {
     private static final String ADDITIONAL_LINE_FORMAT = "<div class=\"ac-dropdown-multiline-subtext\">{0}</div>";
 
     @Inject
+    private BSPManagerFactory bspManagerFactory;
+
+    @Inject
     private BSPSiteList bspSiteList;
+
+    private List<Site> sites;
+
+    private long cachedCollectionId = -1;
 
     public BspShippingLocationTokenInput() {
         super(SINGLE_LINE_FORMAT);
     }
 
-    public String getJsonString(String query, Long collection) throws JSONException {
-        return createItemListString(bspSiteList.find(query, collection));
+    public String getJsonString(String query, SampleCollection collection) throws JSONException {
+        if (sites == null || cachedCollectionId != collection.getCollectionId()) {
+            cachedCollectionId = collection.getCollectionId();
+            BspSiteManager siteManager = bspManagerFactory.createSiteManager();
+            sites = siteManager.getApplicableSites(cachedCollectionId).getResult();
+        }
+        return createItemListString(BSPSiteList.find(sites, query));
     }
 
     @Override

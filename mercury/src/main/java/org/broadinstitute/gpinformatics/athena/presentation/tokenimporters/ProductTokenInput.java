@@ -54,16 +54,6 @@ public class ProductTokenInput extends TokenInput<Product> {
         return createItemListString(addOns);
     }
 
-    public String getTokenObject() {
-        List<Product> products = getTokenObjects();
-
-        if ((products == null) || products.isEmpty()) {
-            return "";
-        }
-
-        return products.get(0).getBusinessKey();
-    }
-
     public List<String> getBusinessKeyList() {
         List<Product> products = getTokenObjects();
 

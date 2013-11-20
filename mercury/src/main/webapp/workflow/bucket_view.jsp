@@ -24,7 +24,7 @@
             showJiraInfo();
         }
 
-        $(document).ready(function () {
+        $j(document).ready(function () {
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
                 "aaSorting": [[1,'asc'], [7,'asc']],
