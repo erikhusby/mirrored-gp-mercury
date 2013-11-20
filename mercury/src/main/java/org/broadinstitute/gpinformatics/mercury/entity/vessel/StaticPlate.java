@@ -145,6 +145,12 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
         private Map<VesselPosition, Boolean> result = new HashMap<>();
 
+        /**
+         * The current position in the query plate for which we are trying to determine sample containment.  This
+         * is recorded as a member variable of this TransferTraverserCriteria implementation to be visible across
+         * recursions.  The current VesselPosition in the Context may not be the same as the original query
+         * VesselPosition.
+         */
         private VesselPosition queryVesselPosition;
 
         @Override
@@ -159,10 +165,14 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
              * possible for that test to pass even with this check. Note that this may also make code coverage waver
              * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
              */
-            // The VesselPosition at hop count zero is the position for which we want to determine sample content.
+            // Record the VesselPosition at hop count zero as the query position.  The position at which we find the
+            // upstream tube (or empty slot in the rack) may be different, but the "sample containment" flag should
+            // be set for the query vessel position.
             if (context.getHopCount() == 0) {
                 queryVesselPosition = context.getVesselPosition();
-                result.put(queryVesselPosition, false);
+                if (!result.containsKey(queryVesselPosition)) {
+                    result.put(queryVesselPosition, false);
+                }
             }
 
             if (context.getLabVessel() != null && context.getVesselContainer() != null) {
