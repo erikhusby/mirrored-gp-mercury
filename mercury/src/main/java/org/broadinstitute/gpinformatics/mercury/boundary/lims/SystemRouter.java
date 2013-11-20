@@ -141,24 +141,27 @@ public class SystemRouter implements Serializable {
         return routeForVessels(labVessels, Intent.ROUTE);
     }
 
+    /**
+     * For SYSTEM_OF_RECORD queries, this first attempts to look for in place or transfer events for the specified
+     * LabVessels that unambiguously point to either SQUID or MERCURY.  If the intent is not SYSTEM_OF_RECORD or the
+     * systems of records on these events are ambiguous, fall through to sample instance analysis logic.
+     */
     private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
         if (intent == Intent.SYSTEM_OF_RECORD) {
-            // If the intent is SYSTEM_OF_RECORD, attempt to short circuit the sample instance evaluation which
-            // can return SQUID results for samples lab events that should be MERCURY.  Look for the system of
-            // record on any in-place or transfer to events.
-            Set<LabEventType.SystemOfRecord> systemOfRecordSet = EnumSet.noneOf(LabEventType.SystemOfRecord.class);
+            Set<LabEventType.SystemOfRecord> systemsOfRecord = EnumSet.noneOf(LabEventType.SystemOfRecord.class);
             for (LabVessel labVessel : labVessels) {
                 for (LabEvent labEvent : labVessel.getInPlaceAndTransferToEvents()) {
-                    systemOfRecordSet.add(labEvent.getLabEventType().getSystemOfRecord());
+                    systemsOfRecord.add(labEvent.getLabEventType().getSystemOfRecord());
                 }
             }
 
             // If the System of record is unambiguous in these events and is either SQUID or MERCURY, short circuit
             // any further evaluation.
-            if (systemOfRecordSet.size() == 1) {
-                LabEventType.SystemOfRecord systemOfRecord = systemOfRecordSet.iterator().next();
+            if (systemsOfRecord.size() == 1) {
+                LabEventType.SystemOfRecord systemOfRecord = systemsOfRecord.iterator().next();
                 switch (systemOfRecord) {
                 case SQUID:
+                    badCrspRouting();
                     return System.SQUID;
                 case MERCURY:
                     return System.MERCURY;
@@ -166,6 +169,7 @@ public class SystemRouter implements Serializable {
             }
         }
 
+        // Could not determine System by event analysis, fall through to sample instance analysis.
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         // Determine which samples might be controls
         Set<SampleInstance> possibleControls = new HashSet<>();
