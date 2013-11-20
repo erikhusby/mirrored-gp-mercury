@@ -107,6 +107,8 @@ public class BSPKitRequestService {
      * This enum is used to link the material info types to kit types. In the UI when selecting the Kit type,
      * It will help populate the MaterialInfo types.
      *
+     * In the future it would be good if this lived in bspClient and getMaterialInfoObjects took the EnumType
+     *
      * kitTypeName should map to KitTypeAllowanceSpecification in BSPCore
      *
      */

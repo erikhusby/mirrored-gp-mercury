@@ -342,6 +342,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
                 if (isSampleInitiation()) {
+                    // In the future it would be good if getMaterialInfoObjects took the EnumType
                     dnaMatrixMaterialTypes =
                             bspManagerFactory.createSampleManager().getMaterialInfoObjects(
                                     BSPKitRequestService.KitType.DNA_MATRIX.getKitTypeName());
