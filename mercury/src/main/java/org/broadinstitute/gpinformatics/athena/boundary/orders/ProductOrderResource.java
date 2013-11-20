@@ -19,8 +19,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.annotation.Nonnull;
@@ -58,16 +60,19 @@ public class ProductOrderResource {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    ProductOrderEjb productOrderEjb;
+    private ProductOrderEjb productOrderEjb;
 
     @Inject
     private BSPUserList bspUserList;
 
     @Inject
-    ResearchProjectDao researchProjectDao;
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
-    ProductDao productDao;
+    private ProductDao productDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private LabVesselFactory labVesselFactory;
@@ -248,8 +253,9 @@ public class ProductOrderResource {
 
         // Create the mercury vessel for the plate and each tube in the plate.
         BspUser bspUser = bspUserList.getByUsername(addSamplesToPdoBean.getUsername());
-        labVesselFactory.buildLabVessels(
+        List<LabVessel> vessels = labVesselFactory.buildLabVessels(
                 addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
+        labVesselDao.persistAll(vessels);
 
         // Get all the sample ids
         List<ProductOrderSample> samplesToAdd = new ArrayList<> (addSamplesToPdoBean.getParentVesselBeans().size());
