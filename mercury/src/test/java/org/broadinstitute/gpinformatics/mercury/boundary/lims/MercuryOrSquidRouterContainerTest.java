@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -93,6 +94,9 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
 
+    @Inject
+    private MolecularIndexDao molecularIndexDao;
+
     private ProductOrder testExExOrder;
     private ProductOrder squidProductOrder;
     private String squidPdoJiraKey;
@@ -130,7 +134,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         testPrefix = "bcode";
         ligationBarcode = "ligationPlate" + testPrefix;
 
-        ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao,
+        ligationPlate = LabEventTest.buildIndexPlate(molecularIndexingSchemeDao, molecularIndexDao,
                 Collections.singletonList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7),
                 Collections.singletonList(ligationBarcode)).get(0);
         vesselDao.persist(ligationPlate);

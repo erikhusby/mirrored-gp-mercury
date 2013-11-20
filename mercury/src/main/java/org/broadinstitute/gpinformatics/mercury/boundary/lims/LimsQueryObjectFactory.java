@@ -80,21 +80,12 @@ public class LimsQueryObjectFactory {
     /**
      * Create a ReadStructureRequest object based on available parameters
      *
-     * @param runBarcode
-     * @param runName
-     * @param setupReadStructure
-     * @param actualReadStructure
-     * @param imagedArea
-     * @param lanesSequenced
-     * @param error
-     *
      * @return a newly created ReadStructureRequest.
      */
-    public static ReadStructureRequest createReadStructureRequest(@Nullable String runName, @Nullable String runBarcode,
-                                                                  @Nonnull String setupReadStructure,
-                                                                  @Nonnull String actualReadStructure,
-                                                                  double imagedArea, @Nonnull String lanesSequenced,
-                                                                  @Nullable String error) {
+    public static ReadStructureRequest createReadStructureRequest(String runName, String runBarcode,
+                                                                  String setupReadStructure, String actualReadStructure,
+                                                                  Double imagedArea, String lanesSequenced,
+                                                                  String error) {
         ReadStructureRequest readStructureRequest = new ReadStructureRequest();
         readStructureRequest.setRunName(runName);
         readStructureRequest.setRunBarcode(runBarcode);
