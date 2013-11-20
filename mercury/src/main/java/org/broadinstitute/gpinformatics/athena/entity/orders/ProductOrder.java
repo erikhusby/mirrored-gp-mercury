@@ -9,7 +9,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -411,17 +410,6 @@ public class ProductOrder implements BusinessObject, Serializable {
 
         modifiedBy = userId;
         modifiedDate = now;
-    }
-
-    public Long[] getPeople() {
-        List<Long> people = new ArrayList<>();
-
-        final Set<ProjectPerson> associatedPeople = new HashSet<>();
-        for (ProjectPerson person : associatedPeople) {
-            people.add(person.getPersonId());
-        }
-
-        return people.toArray(new Long[people.size()]);
     }
 
     public String getTitle() {
