@@ -19,7 +19,6 @@
 <script type="text/javascript">
 $j(document).ready(function () {
     updateFundsRemaining();
-    updateUIForCollectionChoice();
     setupDialogs();
 
     $j.ajax({
@@ -43,78 +42,7 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
-
-    $j("#kitCollection").tokenInput(
-            "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
-                hintText: "Search for group and collection",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
-                onAdd: updateUIForCollectionChoice,
-                onDelete: updateUIForCollectionChoice,
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
-    $j("#shippingLocation").tokenInput(
-            getShippingLocationURL, {
-                hintText: "Search for shipping location",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
-    $j("#notificationList").tokenInput(
-            "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
-                hintText: "Enter a user name",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.completeData)},
-                tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
-                preventDuplicates: true,
-                resultsFormatter: formatInput
-            }
-    );
 });
-
-function updateUIForCollectionChoice() {
-    var collectionKey = $j("#kitCollection").val();
-    if ((collectionKey == null) || (collectionKey == "")) {
-        $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
-    } else {
-        $j.ajax({
-            url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
-            dataType: 'json',
-            success: setupMenu
-        });
-    }
-}
-
-function setupMenu(data) {
-    var collection = data.collectionName;
-
-    var organisms = data.organisms;
-    if ((organisms == null) || (organisms.length == 0)) {
-        $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
-        return;
-    }
-
-    var organismSelect = '<select name="organismId">';
-    $j.each(organisms, function(index, organism) {
-        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
-    });
-    organismSelect += '</select>';
-
-    var duration = {'duration' : 800};
-    $j("#selectedOrganism").hide();
-    $j("#selectedOrganism").html(organismSelect);
-    $j("#selectedOrganism").fadeIn(duration);
-}
-
-// This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
-function getShippingLocationURL() {
-    return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
-}
 
 var bspDataCount = 0;
 
@@ -789,85 +717,6 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.sampleInitiation && actionBean.editOrder.draft}">
-    <div class="form-horizontal span5">
-        <fieldset>
-            <legend><h4>Sample Kit Request</h4></legend>
-
-            <div class="control-group">
-                <stripes:label for="tubesPerKit" class="control-label">
-                    Number of Samples *
-                </stripes:label>
-                <div class="controls">
-                    <stripes:text id="tubesPerKit" name="numberOfSamples"
-                                  class="defaultText" title="Enter the number of samples"/>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <stripes:label for="kitType" class="control-label">
-                    Kit Type *
-                </stripes:label>
-                <div class="controls">
-                    <stripes:select id="kitType" name="kitType">
-                        <stripes:options-enumeration label="displayName"
-                                                     enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
-                                />
-                    </stripes:select>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <stripes:label for="kitCollection" class="control-label">
-                    Group and Collection *
-                </stripes:label>
-                <div class="controls" id="kitCollectionSelection">
-                    <stripes:text
-                            id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
-                            class="defaultText"
-                            title="Search for collection and group"/>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <stripes:label for="selectedOrganism" class="control-label">
-                    Organism  *
-                </stripes:label>
-                <div id="selectedOrganism" class="controls"> </div>
-            </div>
-
-            <div class="control-group">
-                <stripes:label for="shippingLocation" class="control-label">
-                    Shipping Location  *
-                </stripes:label>
-                <div class="controls">
-                    <stripes:text
-                            id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
-                            class="defaultText"
-                            title="Search for shipping location"/>
-                </div>
-            </div>
-            <div class="control-group">
-                <stripes:label for="materialInfo" class="control-label">
-                    Material Information  *
-                </stripes:label>
-                <div class="controls">
-                    <stripes:select name="materialInfoString">
-                        <stripes:option label="Choose..." value=""/>
-                        <stripes:options-collection value="bspName"
-                                                    collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
-                    </stripes:select>
-                </div>
-            </div>
-            <div class="control-group">
-                <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
-                <div class="controls">
-                    <stripes:text id="notificationList" name="notificationListTokenInput.listOfKeys"/>
-                </div>
-            </div>
-        </fieldset>
-    </div>
-</c:if>
 </div>
 
 <div class="borderHeader">
