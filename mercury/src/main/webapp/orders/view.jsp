@@ -14,7 +14,9 @@
 <style type="text/css">
     div.token-input-dropdown,
     ul.token-input-list,
-    ul.token-input-list li input {width:220px !important;}
+    ul.token-input-list li input {
+        width: 220px !important;
+    }
 </style>
 <script type="text/javascript">
 $j(document).ready(function () {
@@ -95,7 +97,7 @@ function updateUIForCollectionChoice() {
         });
 
         $j("#sitePrompt").remove();
-        $("#shippingLocationSelection").show();
+        $j("#shippingLocationSelection").show();
     }
 }
 
@@ -840,14 +842,14 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="selectedOrganism" class="control-label">
-                    Organism  *
+                    Organism *
                 </stripes:label>
-                <div id="selectedOrganism" class="controls"> </div>
+                <div id="selectedOrganism" class="controls"></div>
             </div>
 
             <div class="control-group">
                 <stripes:label for="shippingLocationSelection" class="control-label">
-                    Shipping Location  *
+                    Shipping Location *
                 </stripes:label>
                 <div class="controls" id="shippingLocationSelection">
                     <stripes:text
@@ -858,7 +860,7 @@ function formatInput(item) {
             </div>
             <div class="control-group">
                 <stripes:label for="materialInfo" class="control-label">
-                    Material Information  *
+                    Material Information *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="materialInfoString">
