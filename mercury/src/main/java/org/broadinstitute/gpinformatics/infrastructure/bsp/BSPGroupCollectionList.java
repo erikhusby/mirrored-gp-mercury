@@ -84,8 +84,16 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
     }
 
     private static boolean anyFieldMatches(String lowerQuery, SampleCollection collection) {
-        return lowerQuery.contains(StringUtils.lowerCase(collection.getCollectionName())) ||
-               lowerQuery.contains(StringUtils.lowerCase(collection.getGroup().getGroupName()));
+        return safeToLowerCase(collection.getCollectionName()).contains(lowerQuery) ||
+               safeToLowerCase(collection.getGroup().getGroupName()).contains(lowerQuery);
+    }
+
+    private static String safeToLowerCase(String s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s.toLowerCase();
+        }
     }
 
     public BSPGroupCollectionList() {
