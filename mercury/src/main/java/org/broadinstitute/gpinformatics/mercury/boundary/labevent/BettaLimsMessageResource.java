@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
@@ -160,7 +161,11 @@ public class BettaLimsMessageResource {
                 if (labEventType == null) {
                     throw new RuntimeException("Failed to find event type");
                 }
-                switch (labEventType.getSystemOfRecord()) {
+                LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
+                if (Deployment.isCRSP && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
+                    systemOfRecord = LabEventType.SystemOfRecord.MERCURY;
+                }
+                switch (systemOfRecord) {
                 case MERCURY:
                     processInMercury = true;
                     processInSquid = false;
@@ -202,12 +207,15 @@ public class BettaLimsMessageResource {
                     processInSquid = true;
                     break;
                 default:
-                    throw new RuntimeException("Unexpected enum value " + labEventType.getSystemOfRecord());
+                    throw new RuntimeException("Unexpected enum value " + systemOfRecord);
                 }
             }
 
             BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
             if (processInSquid) {
+                if (Deployment.isCRSP) {
+                    throw new RuntimeException("Cannot route CRSP messages to Squid.");
+                }
                 bettaLimsResponse = bettaLimsConnector.sendMessage(message);
             }
             if (processInMercury) {
