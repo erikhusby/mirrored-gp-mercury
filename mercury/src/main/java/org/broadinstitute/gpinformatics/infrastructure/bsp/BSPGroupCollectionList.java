@@ -84,22 +84,15 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
     }
 
     private static boolean anyFieldMatches(String lowerQuery, SampleCollection collection) {
-        return safeToLowerCase(collection.getCollectionName()).contains(lowerQuery) ||
-               safeToLowerCase(collection.getGroup().getGroupName()).contains(lowerQuery);
-    }
-
-    private static String safeToLowerCase(String s) {
-        if (s == null) {
-            return "";
-        } else {
-            return s.toLowerCase();
-        }
+        return lowerQuery.contains(StringUtils.lowerCase(collection.getCollectionName())) ||
+               lowerQuery.contains(StringUtils.lowerCase(collection.getGroup().getGroupName()));
     }
 
     public BSPGroupCollectionList() {
         this(null);
     }
 
+    // SuppressWarnings required due to intellij confusion about ambiguous injection.
     @Inject
     public BSPGroupCollectionList(@SuppressWarnings("CdiInjectionPointsInspection") BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
@@ -145,6 +138,8 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
             collectionsMap.put(collection.getCollectionId(), collection);
         }
 
+        // Create an immutable map since this is an application scoped object that's returned directly to the caller.
+        // We don't want to allow one thread to affect another by modifying this.
         collections = ImmutableMap.copyOf(collectionsMap);
     }
 }

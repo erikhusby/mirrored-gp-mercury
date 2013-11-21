@@ -43,8 +43,8 @@ public class BSPKitRequestService {
      * @param site               the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
      * @param materialInfo       materialInfo of the kit request
-     * @param organism           the organism to use
-     * @param notificationList   comma separated list of e-mails
+     * @param notificationList   comma separated list of e-mail addresses to send notifications to upon kit shipment.
+     * @param organismId         the organism to use
      *  @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
@@ -102,4 +102,5 @@ public class BSPKitRequestService {
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
         return bspWorkRequestClientService.submitWorkRequest(workRequestBarcode, bspWorkRequestManager);
     }
+
 }

@@ -5,7 +5,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Confirm Rework Addition" sectionTitle="Confirm Rework">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $(document).ready(function () {
+            $j(document).ready(function () {
                 $j('#selectedReworks').dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[

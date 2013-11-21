@@ -35,6 +35,7 @@
 
     <system-properties>
         <property name="MERCURY_DEPLOYMENT" value="DEV"/>
+        <property name="CRSP" value="${crsp.enable}"/>
         <!-- This is required to support pages that have more than 512 checkbox inputs in a form. -->
         <property name="org.apache.tomcat.util.http.Parameters.MAX_COUNT" value="-1"/>
     </system-properties>
@@ -396,10 +397,8 @@
             <configuration>
                 <jsp-configuration development="true"/>
             </configuration>
-            <!--FIXME SGM CRSP-69: Temporarily removing ssl redirect until ssl issues are resolved-->
-
-            <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http" />
-            <connector name="https" protocol="HTTP/1.1" scheme="https" socket-binding="https" secure="true">
+            <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http" redirect-port="8443"/>
+            <connector name="https" protocol="HTTP/1.1" scheme="https" socket-binding="https" secure="true" redirect-port="8443">
                 <ssl name="https" key-alias="mercury_ssl" password="${ssl.keystore.password}" certificate-key-file="${jboss.server.config.dir}/${ssl.keystorefile}" protocol="TLSv1" verify-client="want" ca-certificate-file="${jboss.server.config.dir}/${ssl.truststorefile}" ca-certificate-password="${ssl.truststore.password}"/>
             </connector>
             <virtual-server name="default-host" enable-welcome-root="true">

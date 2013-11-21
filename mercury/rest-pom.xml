@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury-Rest</artifactId>
-    <version>1.36-SNAPSHOT</version>
+    <version>1.38-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -84,7 +84,7 @@
             <id>Broad Maven</id>
             <name>Broad's Maven Repository</name>
             <layout>default</layout>
-            <url>http://maven.broadinstitute.org/maven</url>
+            <url>http://maven.broadinstitute.org:8000/maven</url>
         </repository>
 
         <!-- JBoss Repository for Arquillian, Hibernate, etc. -->
@@ -1146,7 +1146,7 @@
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <version>1.3.28</version>
+            <version>1.3.37</version>
         </dependency>
 
         <dependency>

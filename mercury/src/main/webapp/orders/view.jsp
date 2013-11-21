@@ -11,6 +11,11 @@
                        sectionTitle="Review Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
+<style type="text/css">
+    div.token-input-dropdown,
+    ul.token-input-list,
+    ul.token-input-list li input {width:220px !important;}
+</style>
 <script type="text/javascript">
 $j(document).ready(function () {
 
@@ -75,7 +80,6 @@ $j(document).ready(function () {
 });
 
 function updateUIForCollectionChoice() {
-
     var collectionKey = $j("#kitCollection").val();
     if ((collectionKey == null) || (collectionKey == "")) {
         $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
@@ -801,7 +805,7 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="tubesPerKit" class="control-label">
-                    Number of Samples
+                    Number of Samples *
                 </stripes:label>
                 <div class="controls">
                     <stripes:text id="tubesPerKit" name="numberOfSamples"
@@ -811,12 +815,12 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="kitType" class="control-label">
-                    Kit Type
+                    Kit Type *
                 </stripes:label>
                 <div class="controls">
-                    <stripes:select id="kitType" name="plasticware">
-                        <strips:options-enumeration label="displayName"
-                                                    enum="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean.KitType"
+                    <stripes:select id="kitType" name="kitType">
+                        <stripes:options-enumeration label="displayName"
+                                                     enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
                                 />
                     </stripes:select>
                 </div>
@@ -824,7 +828,7 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="kitCollection" class="control-label">
-                    Group and Collection
+                    Group and Collection *
                 </stripes:label>
                 <div class="controls" id="kitCollectionSelection">
                     <stripes:text
@@ -836,14 +840,14 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="selectedOrganism" class="control-label">
-                    Organism
+                    Organism  *
                 </stripes:label>
-                <div id="selectedOrganism" class="controls"></div>
+                <div id="selectedOrganism" class="controls"> </div>
             </div>
 
             <div class="control-group">
                 <stripes:label for="shippingLocationSelection" class="control-label">
-                    Shipping Location
+                    Shipping Location  *
                 </stripes:label>
                 <div class="controls" id="shippingLocationSelection">
                     <stripes:text
@@ -854,7 +858,7 @@ function formatInput(item) {
             </div>
             <div class="control-group">
                 <stripes:label for="materialInfo" class="control-label">
-                    Material Information
+                    Material Information  *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="materialInfoString">

@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -98,6 +99,22 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
 
         return tokenObjects;
+    }
+
+    /**
+     * This method should only be used when a TokenInput is being used to select a single element. (e.g. using
+     * tokenLimit: 1).
+     * @return the currently selected object, or null if no object is selected.
+     */
+    @Nullable
+    public TOKEN_OBJECT getTokenObject() {
+        List<TOKEN_OBJECT> objects = getTokenObjects();
+
+        if (CollectionUtils.isEmpty(objects)) {
+            return null;
+        }
+
+        return objects.get(0);
     }
 
     /**

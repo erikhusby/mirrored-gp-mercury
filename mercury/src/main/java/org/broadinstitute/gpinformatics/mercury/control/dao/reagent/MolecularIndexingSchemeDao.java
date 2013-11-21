@@ -25,7 +25,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findSingleIndexScheme(
-                                                                MolecularIndexingScheme.IndexPosition indexPosition,
+            MolecularIndexingScheme.IndexPosition indexPosition,
             String indexSequence) {
         Query query = getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findSingleIndexScheme");
@@ -43,7 +43,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findDualIndexScheme(
-                                                              MolecularIndexingScheme.IndexPosition indexPosition1,
+            MolecularIndexingScheme.IndexPosition indexPosition1,
             String indexSequence1,
             MolecularIndexingScheme.IndexPosition indexPosition2,
             String indexSequence2) {
@@ -65,7 +65,7 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findTripleIndexScheme(
-                                                                MolecularIndexingScheme.IndexPosition indexPosition1,
+            MolecularIndexingScheme.IndexPosition indexPosition1,
             String indexSequence1,
             MolecularIndexingScheme.IndexPosition indexPosition2,
             String indexSequence2,

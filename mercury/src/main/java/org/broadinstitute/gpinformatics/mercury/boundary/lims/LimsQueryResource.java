@@ -288,8 +288,14 @@ public class LimsQueryResource {
     public Response parentRackContents(@QueryParam("plateBarcode") @Nonnull String plateBarcode) {
 
         LabVessel labVessel = labVesselDao.findByIdentifier(plateBarcode);
-        LabVessel sourceRack = labVessel.getContainerRole().getSourceRack();
+        // If the barcode is not recognized labVessel will be null.
+        if (labVessel == null) {
+            // EMPTY_MAP does not have type parameters.
+            //noinspection unchecked
+            return buildResponse(Response.Status.BAD_REQUEST, MapUtils.EMPTY_MAP);
+        }
 
+        LabVessel sourceRack = labVessel.getContainerRole().getSourceRack();
         if (sourceRack == null) {
             // EMPTY_MAP does not have type parameters.
             //noinspection unchecked

@@ -128,7 +128,7 @@
                                               event="List">Show Workflows</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(LabUser, LabManager, Developer) %>" context="<%= ApplicationInstance.CRSP %>">
+                        <security:authorizeBlock roles="<%= roles(Developer) %>" context="<%= ApplicationInstance.CRSP %>">
                             <li>
                                 <stripes:link id="receiveSamples"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.ReceiveSamplesActionBean"

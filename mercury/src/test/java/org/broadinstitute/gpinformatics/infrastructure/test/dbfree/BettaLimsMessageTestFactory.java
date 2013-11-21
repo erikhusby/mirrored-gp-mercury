@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
+import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -148,6 +149,24 @@ public class BettaLimsMessageTestFactory {
         setStationEventData(eventType, plateTransferEvent);
 
         plateTransferEvent.setSourcePositionMap(buildPositionMap(rackBarcode, tubeBarcodes));
+        plateTransferEvent.setSourcePlate(buildRack(rackBarcode));
+
+        plateTransferEvent.setPlate(buildPlate(plateBarcode));
+
+        return plateTransferEvent;
+    }
+
+    /**
+     * Build a rack to plate transfer event for the specified rack and plate barcodes and for the tube barcodes
+     * at the specified well names.
+     */
+    public PlateTransferEventType buildRackToPlate(@Nonnull String eventType, @Nonnull String rackBarcode,
+                                                   @Nonnull Map<String, String> tubeBarcodesToWellNames,
+                                                   @Nonnull String plateBarcode) {
+        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
+        setStationEventData(eventType, plateTransferEvent);
+
+        plateTransferEvent.setSourcePositionMap(buildPositionMap(rackBarcode, tubeBarcodesToWellNames));
         plateTransferEvent.setSourcePlate(buildRack(rackBarcode));
 
         plateTransferEvent.setPlate(buildPlate(plateBarcode));
@@ -460,6 +479,29 @@ public class BettaLimsMessageTestFactory {
             addReceptacleToPositionMap(rackPosition, positionMap, barcode);
             rackPosition++;
         }
+        positionMap.setBarcode(rackBarcode);
+        return positionMap;
+    }
+
+    /**
+     * Return the 1-based well position corresponding to the specified 96 well plate / rack well name.
+     */
+    private int getRackPosition(@Nonnull String wellName) {
+        return (wellName.charAt(0) - 'A') * NUMBER_OF_RACK_COLUMNS + Integer.valueOf(wellName.substring(1));
+    }
+
+    /**
+     * Build a {@code PositionMapType} for tubes at the specified well names.
+     */
+    private PositionMapType buildPositionMap(@Nonnull String rackBarcode, @Nonnull Map<String, String> tubeBarcodesToWellNames) {
+        PositionMapType positionMap = new PositionMapType();
+
+        for (Map.Entry<String, String> entry : tubeBarcodesToWellNames.entrySet()) {
+            String tubeBarcode = entry.getKey();
+            String wellName = entry.getValue();
+            addReceptacleToPositionMap(getRackPosition(wellName), positionMap, tubeBarcode);
+        }
+
         positionMap.setBarcode(rackBarcode);
         return positionMap;
     }

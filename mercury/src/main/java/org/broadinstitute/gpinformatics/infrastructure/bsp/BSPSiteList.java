@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.site.AllSitesResponse;
-import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
@@ -30,8 +29,6 @@ public class BSPSiteList extends AbstractCache implements Serializable {
     private final BSPManagerFactory bspManagerFactory;
 
     private Map<Long, Site> sites;
-
-    private BspSiteManager bspSiteManager;
 
     /**
      * @return map of bsp sites, keyed by site ID.
@@ -66,15 +63,10 @@ public class BSPSiteList extends AbstractCache implements Serializable {
     }
 
     @Nonnull
-    public List<Site> find(Collection<Site> sites, String query) {
-
+    public static List<Site> find(Collection<Site> sites, String query) {
         if (StringUtils.isBlank(query)) {
             // no query string supplied
             return Collections.emptyList();
-        }
-
-        if (bspSiteManager == null) {
-            this.bspSiteManager = bspManagerFactory.createSiteManager();
         }
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
@@ -122,11 +114,7 @@ public class BSPSiteList extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-        if (bspSiteManager == null) {
-            this.bspSiteManager = bspManagerFactory.createSiteManager();
-        }
-
-        AllSitesResponse response = bspSiteManager.getAllSites();
+        AllSitesResponse response = bspManagerFactory.createSiteManager().getAllSites();
         if (!response.isSuccess()) {
             if (sites == null) {
                 sites = new HashMap<>();
@@ -154,13 +142,5 @@ public class BSPSiteList extends AbstractCache implements Serializable {
         }
 
         sites = ImmutableMap.copyOf(siteMap);
-    }
-
-    public BspSiteManager getBspSiteManager() {
-        return bspSiteManager;
-    }
-
-    public void setBspSiteManager(BspSiteManager bspSiteManager) {
-        this.bspSiteManager = bspSiteManager;
     }
 }

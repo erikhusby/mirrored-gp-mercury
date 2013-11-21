@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
@@ -142,6 +143,7 @@ public class BettaLimsMessageResource {
     @TransactionAttribute(value = TransactionAttributeType.REQUIRED)
     public void storeAndProcess(String message) throws Exception {
         Date now = new Date();
+        boolean logStacktrace=true;
         //noinspection OverlyBroadCatchBlock
         try {
             wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
@@ -159,7 +161,11 @@ public class BettaLimsMessageResource {
                 if (labEventType == null) {
                     throw new RuntimeException("Failed to find event type");
                 }
-                switch (labEventType.getSystemOfRecord()) {
+                LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
+                if (Deployment.isCRSP && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
+                    systemOfRecord = LabEventType.SystemOfRecord.MERCURY;
+                }
+                switch (systemOfRecord) {
                 case MERCURY:
                     processInMercury = true;
                     processInSquid = false;
@@ -201,12 +207,15 @@ public class BettaLimsMessageResource {
                     processInSquid = true;
                     break;
                 default:
-                    throw new RuntimeException("Unexpected enum value " + labEventType.getSystemOfRecord());
+                    throw new RuntimeException("Unexpected enum value " + systemOfRecord);
                 }
             }
 
             BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
             if (processInSquid) {
+                if (Deployment.isCRSP) {
+                    throw new RuntimeException("Cannot route CRSP messages to Squid.");
+                }
                 bettaLimsResponse = bettaLimsConnector.sendMessage(message);
             }
             if (processInMercury) {
@@ -226,16 +235,20 @@ public class BettaLimsMessageResource {
             if (bettaLimsResponse != null && bettaLimsResponse.getCode() != Response.Status.OK.getStatusCode()) {
                 String error = bettaLimsResponse.getMessage();
                 if (error.startsWith("The specified user does not exist")) {
-                    log.info(error);
-                } else {
-                    throw new RuntimeException(error);
+                    logStacktrace = false;
                 }
+                throw new RuntimeException(error);
             }
         } catch (Exception e) {
             wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
-            log.error("Failed to process run", e);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "[Mercury] Failed to process message",
-                    e.getMessage());
+            String logMessage = "Failed to process run";
+            if (logStacktrace) {
+                log.error(logMessage, e);
+            } else {
+                log.error(logMessage);
+            }
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                    "[Mercury] Failed to process message", e.getMessage());
             throw e;
         }
     }

@@ -26,8 +26,8 @@ public class BSPWorkRequestFactory {
      * @param numberOfSamples        the total number of samples that the kit should contain
      * @param materialInfo           the material type
      * @param collection             the collection to use for the sample kit work task
-     * @param organism               the organism that the user selected
-     * @param notificationList       the comma separated list of users to notify via completion
+     * @param notificationList       the comma separated list of users to notify on kit shipment.
+     * @param organismId             the organism that the user selected
      *
      * @return a new SampleKitWorkRequest
      */
