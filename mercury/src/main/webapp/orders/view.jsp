@@ -15,7 +15,7 @@
     div.token-input-dropdown,
     ul.token-input-list,
     ul.token-input-list li input {
-        width: 220px !important;
+        width: 250px !important;
     }
 </style>
 <script type="text/javascript">
@@ -83,12 +83,16 @@ $j(document).ready(function () {
 
 function updateUIForCollectionChoice() {
     var collectionKey = $j("#kitCollection").val();
-    if ((collectionKey == null) || (collectionKey == "")) {
+    if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
         $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
 
         $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
         $j("#shippingLocationSelection").hide();
-        $j("#shippingLocation").tokenInput("clear");
+
+        // This is not null safe, so we must make a check to ensure the UI is not affected.
+        if ($j("#shippingLocation").val() != null) {
+            $j("#shippingLocation").tokenInput("clear");
+        }
     } else {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
