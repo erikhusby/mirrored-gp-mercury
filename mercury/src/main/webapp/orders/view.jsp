@@ -15,11 +15,22 @@
     div.token-input-dropdown,
     ul.token-input-list,
     ul.token-input-list li input {
-        width: 220px !important;
+        width: 250px !important;
     }
 </style>
 <script type="text/javascript">
 $j(document).ready(function () {
+
+    $j("#shippingLocation").tokenInput(
+            getShippingLocationURL, {
+                hintText: "Search for shipping location",
+                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
+                resultsFormatter: formatInput,
+                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
+                tokenLimit: 1
+            }
+    );
+
     updateFundsRemaining();
     updateUIForCollectionChoice();
     setupDialogs();
@@ -58,15 +69,6 @@ $j(document).ready(function () {
             }
     );
 
-    $j("#shippingLocation").tokenInput(
-            getShippingLocationURL, {
-                hintText: "Search for shipping location",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
 
     $j("#notificationList").tokenInput(
             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
@@ -81,14 +83,25 @@ $j(document).ready(function () {
 
 function updateUIForCollectionChoice() {
     var collectionKey = $j("#kitCollection").val();
-    if ((collectionKey == null) || (collectionKey == "")) {
+    if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
         $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
+
+        $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
+        $j("#shippingLocationSelection").hide();
+
+        // This is not null safe, so we must make a check to ensure the UI is not affected.
+        if ($j("#shippingLocation").val() != null) {
+            $j("#shippingLocation").tokenInput("clear");
+        }
     } else {
         $j.ajax({
             url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
             dataType: 'json',
             success: setupMenu
         });
+
+        $j("#sitePrompt").remove();
+        $j("#shippingLocationSelection").show();
     }
 }
 
@@ -103,7 +116,7 @@ function setupMenu(data) {
 
     var organismSelect = '<select name="organismId">';
     $j.each(organisms, function (index, organism) {
-        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
+        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '"</option>';
     });
     organismSelect += '</select>';
 
@@ -841,10 +854,10 @@ function formatInput(item) {
             </div>
 
             <div class="control-group">
-                <stripes:label for="shippingLocation" class="control-label">
+                <stripes:label for="shippingLocationSelection" class="control-label">
                     Shipping Location *
                 </stripes:label>
-                <div class="controls">
+                <div class="controls" id="shippingLocationSelection">
                     <stripes:text
                             id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
                             class="defaultText"
