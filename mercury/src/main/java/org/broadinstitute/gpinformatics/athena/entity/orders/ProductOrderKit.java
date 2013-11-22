@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.envers.Audited;
 
@@ -55,14 +56,14 @@ public class ProductOrderKit implements Serializable {
     protected ProductOrderKit() {
     }
 
-    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId,
-                           String shippingLocation, String materialInfo, String notifications) {
+    public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
+                           long siteId, MaterialInfo materialInfo, String notifications) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.shippingLocation = shippingLocation;
-        this.materialInfo = materialInfo;
+//        this.materialInfo = materialInfo;
         this.notifications = notifications;
     }
 

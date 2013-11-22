@@ -41,11 +41,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamil
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
@@ -781,8 +777,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                         editOrder, bspShippingLocationTokenInput.getTokenObject(), numberOfSamples, materialInfo,
                         bspGroupCollectionTokenInput.getTokenObject(), notificationList, organismId);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-            }
 
+                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject(), organismId,
+                        bspShippingLocationTokenInput.getTokenObject(), materialInfo, notificationList));
+            }
             // Save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
