@@ -211,7 +211,7 @@ public class SolexaRunResource {
         // in the absence of information, route to squid
         SystemRouter.System route = SystemRouter.System.SQUID;
 
-        IlluminaSequencingRun run;
+        IlluminaSequencingRun run=null;
         if (searchByBarcode) {
             Collection<IlluminaSequencingRun> runs = illuminaSequencingRunDao.findByBarcode(requestIdentifier);
             if (runs.size() > 1) {
@@ -223,7 +223,9 @@ public class SolexaRunResource {
                         "%s sequencing runs found for barcode %s: %s. Please try supplying the run name instead.",
                         runs.size(), requestIdentifier, runNames), Response.Status.INTERNAL_SERVER_ERROR);
             }
-            run = runs.iterator().next();
+            if (!runs.isEmpty()) {
+                run = runs.iterator().next();
+            }
         } else {
             run = illuminaSequencingRunDao.findByRunName(requestIdentifier);
         }
