@@ -772,8 +772,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         bspGroupCollectionTokenInput.getTokenObject(), notificationList, organismId);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
 
-//                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject(), organismId,
-//                        bspShippingLocationTokenInput.getTokenObject(), materialInfo, notificationList));
+                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject().getCollectionId(), organismId,
+                        bspShippingLocationTokenInput.getTokenObject().getId(), materialInfo, notificationList));
             }
             // Save it!
             productOrderDao.persist(editOrder);
