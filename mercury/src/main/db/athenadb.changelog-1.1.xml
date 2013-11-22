@@ -226,8 +226,8 @@
             <column name="kit_type" type="varchar(255)"/>
             <column name="sample_collection_id" type="number(19,0)"/>
             <column name="organism_id" type="number(19,0)"/>
-            <column name="shipping_location" type="varchar(1024)"/>
-            <column name="material" type="varchar(255)"/>
+            <column name="site_id" type="number(19,0)"/>
+            <column name="material_bsp_name" type="varchar(255)"/>
             <column name="notifications" type="varchar(1024)"/>
         </createTable>
     </changeSet>
@@ -252,8 +252,8 @@
             <column name="kit_type" type="varchar(255)"/>
             <column name="sample_collection_id" type="number(19,0)"/>
             <column name="organism_id" type="number(19,0)"/>
-            <column name="shipping_location" type="varchar(1024)"/>
-            <column name="material" type="varchar(255)"/>
+            <column name="site_id" type="number(19,0)"/>
+            <column name="material_bsp_name" type="varchar(255)"/>
             <column name="notifications" type="varchar(1024)"/>
         </createTable>
 

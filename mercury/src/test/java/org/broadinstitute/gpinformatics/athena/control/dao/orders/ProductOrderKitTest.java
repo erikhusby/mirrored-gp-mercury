@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -34,7 +35,9 @@ public class ProductOrderKitTest extends ContainerTest {
     private UserTransaction utx;
 
     private ProductOrder order;
-    private final String dna = "DNA:DNA";
+    private final KitType kitType = KitType.DNA_MATRIX;
+    private final String bspName = "adsfasdf";
+    private final MaterialInfo materialInfo = new MaterialInfo(kitType.getKitName(), bspName);
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -46,7 +49,7 @@ public class ProductOrderKitTest extends ContainerTest {
         utx.begin();
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
-        order.setProductOrderKit(new ProductOrderKit(17L, KitType.DNA_MATRIX, 0L, 0L, "7CC", dna, null));
+        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, materialInfo, null));
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -67,7 +70,8 @@ public class ProductOrderKitTest extends ContainerTest {
         ProductOrderKit kit = pdo.getProductOrderKit();
         Assert.assertNotNull(kit);
         Assert.assertNotNull(kit.getProductOrderKitId());
-        Assert.assertEquals(kit.getMaterialInfo(), dna);
+        Assert.assertEquals(kit.getMaterialInfo().getBspName(), bspName);
+        Assert.assertEquals(kit.getMaterialInfo().getKitType(), kitType.getKitName());
     }
 
 }

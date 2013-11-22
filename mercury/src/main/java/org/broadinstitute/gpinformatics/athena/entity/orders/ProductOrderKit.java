@@ -9,8 +9,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
@@ -34,7 +32,7 @@ public class ProductOrderKit implements Serializable {
     private Long numberOfSamples;
 
     @Column(name="kit_type")
-    private KitType kitType;
+    private String kitTypeName;
 
     @Column(name="sample_collection_id")
     private Long sampleCollectionId;
@@ -42,11 +40,11 @@ public class ProductOrderKit implements Serializable {
     @Column(name="organism_id")
     private Long organismId;
 
-    @Column(name="shipping_location")
-    private String shippingLocation;
+    @Column(name="site_id")
+    private Long siteId;
 
-    @Column(name="material")
-    private String materialInfo;
+    @Column(name="material_bsp_name")
+    private String materialBspName;
 
     @Column(name="notifications")
     private String notifications;
@@ -59,11 +57,11 @@ public class ProductOrderKit implements Serializable {
     public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
                            long siteId, MaterialInfo materialInfo, String notifications) {
         this.numberOfSamples = numberOfSamples;
-        this.kitType = kitType;
+        this.kitTypeName = kitType.getKitName();
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
-        this.shippingLocation = shippingLocation;
-//        this.materialInfo = materialInfo;
+        this.siteId = siteId;
+        this.materialBspName = materialInfo.getBspName();
         this.notifications = notifications;
     }
 
@@ -84,11 +82,19 @@ public class ProductOrderKit implements Serializable {
     }
 
     public KitType getKitType() {
-        return kitType;
+        return KitType.valueOf(kitTypeName);
     }
 
     public void setKitType(KitType kitType) {
-        this.kitType = kitType;
+        kitTypeName = kitType.getKitName();
+    }
+
+    public String getKitTypeName() {
+        return kitTypeName;
+    }
+
+    public void setKitTypeName(String kitTypeName) {
+        this.kitTypeName = kitTypeName;
     }
 
     public Long getSampleCollectionId() {
@@ -107,20 +113,28 @@ public class ProductOrderKit implements Serializable {
         this.organismId = organismId;
     }
 
-    public String getShippingLocation() {
-        return shippingLocation;
+    public Long getSiteId() {
+        return siteId;
     }
 
-    public void setShippingLocation(String shippingLocation) {
-        this.shippingLocation = shippingLocation;
+    public void setSiteId(long siteId) {
+        this.siteId = siteId;
     }
 
-    public String getMaterialInfo() {
-        return materialInfo;
+    public MaterialInfo getMaterialInfo() {
+        return new MaterialInfo(kitTypeName, materialBspName);
     }
 
-    public void setMaterialInfo(String materialInfo) {
-        this.materialInfo = materialInfo;
+    public void setMaterialInfo(MaterialInfo materialInfo) {
+        materialBspName = materialInfo.getBspName();
+    }
+
+    public String getMaterialBspName() {
+        return materialBspName;
+    }
+
+    public void setMaterialBspName(String materialInfo) {
+        this.materialBspName = materialInfo;
     }
 
     public String getNotifications() {
