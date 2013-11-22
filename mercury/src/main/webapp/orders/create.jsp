@@ -154,12 +154,12 @@
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
                         dataType: 'json',
-                        success: setupMenu
+                        success: setupOrganismMenu
                     });
                 }
             }
 
-            function setupMenu(data) {
+            function setupOrganismMenu(data) {
                 var collection = data.collectionName;
 
                 var organisms = data.organisms;

@@ -338,12 +338,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-                if (isSampleInitiation()) {
-                    dnaMatrixMaterialTypes =
-                            bspManagerFactory.createSampleManager().getMaterialInfoObjects(
-                                    KitType.DNA_MATRIX.getKitName());
-                    Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
-                }
             }
         }
     }
@@ -778,8 +772,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         bspGroupCollectionTokenInput.getTokenObject(), notificationList, organismId);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
 
-                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject(), organismId,
-                        bspShippingLocationTokenInput.getTokenObject(), materialInfo, notificationList));
+//                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject(), organismId,
+//                        bspShippingLocationTokenInput.getTokenObject(), materialInfo, notificationList));
             }
             // Save it!
             productOrderDao.persist(editOrder);
@@ -1749,6 +1743,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {
+        dnaMatrixMaterialTypes =
+                bspManagerFactory.createSampleManager().getMaterialInfoObjects(
+                        KitType.DNA_MATRIX.getKitName());
+        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
+
         return dnaMatrixMaterialTypes;
     }
 }
