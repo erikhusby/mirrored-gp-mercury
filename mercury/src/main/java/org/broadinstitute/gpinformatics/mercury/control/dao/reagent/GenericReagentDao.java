@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.reagent;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent_;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -22,8 +22,9 @@ public class GenericReagentDao extends GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<GenericReagent> criteriaQuery = criteriaBuilder.createQuery(GenericReagent.class);
         Root<GenericReagent> root = criteriaQuery.from(GenericReagent.class);
-        criteriaQuery.where(criteriaBuilder.equal(root.get(GenericReagent_.name), reagentName));
-        criteriaQuery.where(criteriaBuilder.equal(root.get(GenericReagent_.lot), lot));
+        criteriaQuery.where(criteriaBuilder.and(
+                criteriaBuilder.equal(root.get(Reagent_.name), reagentName),
+                criteriaBuilder.equal(root.get(Reagent_.lot), lot)));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {
