@@ -262,6 +262,14 @@
     </changeSet>
 
     <changeSet id="GPLIM-2301-4a" author="epolk">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="product_order_kit" schemaName="athena"/>
+            </not>
+        </preConditions>
+	<addColumn tableName="product_order" schemaName="athena">
+	  <column name="product_order_kit" type="number(19,0)"/>
+	</addColumn>
 
         <addForeignKeyConstraint baseTableName="product_order" baseColumnNames="product_order_kit"
                                  baseTableSchemaName="athena" constraintName="fk_product_order_pdo_kit"
