@@ -1110,7 +1110,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
     public Resolution addSamplesToBucket(){
-        handleSamplesAdded(selectedProductOrderSamples);
+        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
