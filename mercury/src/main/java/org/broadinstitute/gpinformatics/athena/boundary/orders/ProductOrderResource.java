@@ -253,6 +253,11 @@ public class ProductOrderResource {
 
         // Create the mercury vessel for the plate and each tube in the plate.
         BspUser bspUser = bspUserList.getByUsername(addSamplesToPdoBean.getUsername());
+        if (bspUser == null) {
+            throw new ApplicationValidationException(
+                    "User: " + addSamplesToPdoBean.getUsername() + " is not found in Mercury");
+        }
+
         List<LabVessel> vessels = labVesselFactory.buildLabVessels(
                 addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
         labVesselDao.persistAll(vessels);
