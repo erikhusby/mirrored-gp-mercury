@@ -14,7 +14,9 @@
 <style type="text/css">
     div.token-input-dropdown,
     ul.token-input-list,
-    ul.token-input-list li input {width:220px !important;}
+    ul.token-input-list li input {
+        width: 220px !important;
+    }
 </style>
 <script type="text/javascript">
 $j(document).ready(function () {
@@ -100,12 +102,12 @@ function setupMenu(data) {
     }
 
     var organismSelect = '<select name="organismId">';
-    $j.each(organisms, function(index, organism) {
+    $j.each(organisms, function (index, organism) {
         organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
     });
     organismSelect += '</select>';
 
-    var duration = {'duration' : 800};
+    var duration = {'duration': 800};
     $j("#selectedOrganism").hide();
     $j("#selectedOrganism").html(organismSelect);
     $j("#selectedOrganism").fadeIn(duration);
@@ -276,14 +278,14 @@ function showSamples(sampleData) {
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
-            // Need to replace &#160; with empty string.
+            // Need to replace   with empty string.
             $j('#fingerprint-' + sampleId).text('');
         }
 
         if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
         } else {
-            // Need to replace &#160; with empty string.
+            // Need to replace   with empty string.
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
         }
 
@@ -303,6 +305,8 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
+                {"bSortable": true},                            // Shipped Date
+                {"bSortable": true},                            // Received Date
                 {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
@@ -570,7 +574,7 @@ function formatInput(item) {
         <div class="form-value">
             <c:choose>
                 <c:when test="${actionBean.editOrder.draft}">
-                    &#160;
+                     
                 </c:when>
                 <c:otherwise>
                     <a id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external"
@@ -831,14 +835,14 @@ function formatInput(item) {
 
             <div class="control-group">
                 <stripes:label for="selectedOrganism" class="control-label">
-                    Organism  *
+                    Organism *
                 </stripes:label>
-                <div id="selectedOrganism" class="controls"> </div>
+                <div id="selectedOrganism" class="controls"></div>
             </div>
 
             <div class="control-group">
                 <stripes:label for="shippingLocation" class="control-label">
-                    Shipping Location  *
+                    Shipping Location *
                 </stripes:label>
                 <div class="controls">
                     <stripes:text
@@ -849,7 +853,7 @@ function formatInput(item) {
             </div>
             <div class="control-group">
                 <stripes:label for="materialInfo" class="control-label">
-                    Material Information  *
+                    Material Information *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="materialInfoString">
@@ -916,6 +920,8 @@ function formatInput(item) {
             <th width="110">Collaborator Sample ID</th>
             <th width="60">Participant ID</th>
             <th width="110">Collaborator Participant ID</th>
+            <th>Shipped Date</th>
+            <th>Received Date</th>
             <th width="40">Volume</th>
             <th width="40">Concentration</th>
 
@@ -961,27 +967,37 @@ function formatInput(item) {
                         </c:otherwise>
                     </c:choose>
                 </td>
-                <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
-                <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
-                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
-                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
-                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+                <td id="collab-sample-${sample.productOrderSampleId}"> </td>
+                <td id="patient-${sample.productOrderSampleId}"> </td>
+                <td id="collab-patient-${sample.productOrderSampleId}"> </td>
+                <!-- TODO GPLIM-2148: fill in shipped date -->
+                <td>10/28/2013</td>
+                <td id="receipt-date">
+                    <c:if test="${actionBean.productOrderSampleReceipts[sample.name] != null}">
+                        <fmt:formatDate value="${actionBean.productOrderSampleReceipts[sample.name]}"
+                                        pattern="${actionBean.datePattern}"/>
+                    </c:if>
+                </td>
+                <td id="volume-${sample.productOrderSampleId}"> </td>
+                <td id="concentration-${sample.productOrderSampleId}"> </td>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="rin-${sample.productOrderSampleId}"> </td>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
                     <td>
                         <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
-                            &#160;</div>
+                             
+                        </div>
                     </td>
                 </c:if>
 
-                <td id="total-${sample.productOrderSampleId}">&#160; </td>
-                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
+                <td id="total-${sample.productOrderSampleId}"> </td>
+                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"> </td>
                 <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                    &#160; </td>
+                     
+                </td>
                 <td>${sample.riskString}</td>
                 <td>${sample.deliveryStatus.displayName}</td>
                 <td>${sample.sampleComment}</td>
