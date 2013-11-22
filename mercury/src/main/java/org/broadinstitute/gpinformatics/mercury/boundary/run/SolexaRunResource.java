@@ -35,8 +35,11 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
@@ -208,9 +211,21 @@ public class SolexaRunResource {
         // in the absence of information, route to squid
         SystemRouter.System route = SystemRouter.System.SQUID;
 
-        IlluminaSequencingRun run;
+        IlluminaSequencingRun run=null;
         if (searchByBarcode) {
-            run = illuminaSequencingRunDao.findByBarcode(requestIdentifier);
+            Collection<IlluminaSequencingRun> runs = illuminaSequencingRunDao.findByBarcode(requestIdentifier);
+            if (runs.size() > 1) {
+                List<String> runNames = new ArrayList<>(runs.size());
+                for (IlluminaSequencingRun illuminaSequencingRun : runs) {
+                    runNames.add(illuminaSequencingRun.getRunName());
+                }
+                throw new ResourceException(String.format(
+                        "%s sequencing runs found for barcode %s: %s. Please try supplying the run name instead.",
+                        runs.size(), requestIdentifier, runNames), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            if (!runs.isEmpty()) {
+                run = runs.iterator().next();
+            }
         } else {
             run = illuminaSequencingRunDao.findByRunName(requestIdentifier);
         }

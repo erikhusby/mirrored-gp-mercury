@@ -139,6 +139,28 @@ public class ResearchProjectDao extends GenericDao {
         return findByJiraTicketKeys(businessKeys);
     }
 
+    /**
+     * Finds a list of research projects whose JIRA ticket key matches the search term passed in.
+     *
+     * @param searchTerm The term to search on. (case insensitive)
+     *
+     * @return A list of research projects that matches the search term by JIRA ticket key.
+     */
+    public List<ResearchProject> findLikeJiraTicketKey(String searchTerm) {
+        return findListWithWildcard(ResearchProject.class, searchTerm, true, ResearchProject_.jiraTicketKey);
+    }
+
+    /**
+     * Finds a list of research projects whose title matches the search term passed in.
+     *
+     * @param searchTerm The term to search on. (case insensitive)
+     *
+     * @return A list of research projects that matches the search term by title.
+     */
+    public List<ResearchProject> findLikeTitle(String searchTerm) {
+        return findListWithWildcard(ResearchProject.class, searchTerm, true, ResearchProject_.title);
+    }
+
     public List<ResearchProject> findByJiraTicketKeys(List<String> jiraTicketKeys) {
         return findListByList(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKeys);
     }

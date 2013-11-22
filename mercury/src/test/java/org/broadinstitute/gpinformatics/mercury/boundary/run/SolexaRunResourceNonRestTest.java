@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -310,7 +311,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                         reagentKitBarcode);
         runResource.registerRun(runBean, miSeqFlowcell);
 
-        run = runDao.findByBarcode(miSeqRunBarcode);
+        run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getRunName(), runName);
         Assert.assertEquals(run.getMachineName(), machineName);
@@ -348,7 +349,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
                         reagentKitBarcode);
         runResource.registerRun(runBean, miSeqFlowcell);
-        IlluminaSequencingRun run = runDao.findByBarcode(miSeqRunBarcode);
+        IlluminaSequencingRun run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
 
         ReadStructureRequest readStructureWithRunName = LimsQueryObjectFactory
                 .createReadStructureRequest(run.getRunName(), null, SETUP_READ_STRUCTURE, ACTUAL_READ_STRUCTURE,
@@ -388,7 +389,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
         ReadStructureRequest readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
-        run = runDao.findByBarcode(runBarcode);
+        run = TestUtils.getFirst(runDao.findByBarcode(runBarcode));
 
         Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readStructureResult.getSetupReadStructure());
@@ -402,7 +403,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
         readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
-        run = runDao.findByBarcode(runBarcode);
+        run = TestUtils.getFirst(runDao.findByBarcode(runBarcode));
 
         Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readStructureResult.getSetupReadStructure());
@@ -419,7 +420,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
         readStructureResult = (ReadStructureRequest) readStructureStoreResponse.getEntity();
 
-        run = runDao.findByBarcode(runBarcode);
+        run = TestUtils.getFirst(runDao.findByBarcode(runBarcode));
 
         Assert.assertEquals(readStructureResult.getRunBarcode(), run.getRunBarcode());
         Assert.assertNotNull(readStructureResult.getSetupReadStructure());

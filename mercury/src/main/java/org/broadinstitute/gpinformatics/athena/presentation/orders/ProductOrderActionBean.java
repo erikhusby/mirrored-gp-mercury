@@ -68,7 +68,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -137,6 +136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String LEDGER_STATUS = "ledgerStatus";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
+    private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -218,10 +218,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private JiraService jiraService;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private MercuryClientService mercuryClientService;
-
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
@@ -251,7 +247,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET})
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
@@ -343,6 +339,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
                 if (isSampleInitiation()) {
+                    // In the future it would be good if getMaterialInfoObjects took the EnumType
                     dnaMatrixMaterialTypes =
                             bspManagerFactory.createSampleManager().getMaterialInfoObjects(
                                     KitType.DNA_MATRIX.getKitName());
@@ -794,7 +791,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        handleSamplesAdded(editOrder.getSamples());
+        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
 
         return createViewResolution();
     }
@@ -1060,7 +1057,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK}, priority = 0)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1092,14 +1089,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void updateOrderStatus()
-            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-        if (productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey())) {
-            // If the status was changed, let the user know.
-            addMessage("The order status is now {0}.", editOrder.getOrderStatus());
-        }
-    }
-
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -1113,9 +1102,16 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            updateOrderStatus();
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
+    }
+
+
+    @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
+    public Resolution addSamplesToBucket(){
+        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+        return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
     @HandlesEvent(SET_RISK)
@@ -1170,7 +1166,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
-            updateOrderStatus();
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
     }
@@ -1178,29 +1174,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
-        editOrder.addSamples(samplesToAdd);
-        editOrder.prepareToSave(getUserBean().getBspUser());
-        productOrderDao.persist(editOrder);
-        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
-        addMessage("Added samples: {0}.", nameList);
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
-        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                editOrder.getSampleString(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-
-        handleSamplesAdded(samplesToAdd);
-
-        updateOrderStatus();
-
+        productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         return createViewResolution();
-    }
-
-    private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
-        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
-        if (!samples.isEmpty()) {
-            addMessage("{0} samples have been added to the pico bucket.", samples.size());
-        }
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
