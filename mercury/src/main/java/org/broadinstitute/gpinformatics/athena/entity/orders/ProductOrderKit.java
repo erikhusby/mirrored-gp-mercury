@@ -65,6 +65,17 @@ public class ProductOrderKit implements Serializable {
         this.notifications = notifications;
     }
 
+    public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
+                           long siteId, String materialInfoString, String notifications) {
+        this.numberOfSamples = numberOfSamples;
+        this.kitTypeName = kitType != null ? kitType.getKitName() : null;
+        this.sampleCollectionId = sampleCollectionId;
+        this.organismId = organismId;
+        this.siteId = siteId;
+        this.materialBspName = materialInfoString;
+        this.notifications = notifications;
+    }
+
     public Long getProductOrderKitId() {
         return productOrderKitId;
     }

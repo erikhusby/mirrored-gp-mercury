@@ -764,6 +764,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
+                // todo xxx this doesn't look right... how should the kit be updated?
                 String notificationList = notificationListTokenInput.getEmailList();
                 ProductOrderKit kit = editOrder.getProductOrderKit();
                 kit.setNumberOfSamples(numberOfSamples);
@@ -861,7 +862,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             String notificationList = notificationListTokenInput.getEmailList();
             ProductOrderKit kit = new ProductOrderKit(numberOfSamples, kitType,
                     bspGroupCollectionTokenInput.getTokenObject().getCollectionId(), organismId,
-                    bspShippingLocationTokenInput.getTokenObject().getId(), materialInfo, notificationList);
+                    bspShippingLocationTokenInput.getTokenObject().getId(), materialInfoString, notificationList);
             editOrder.setProductOrderKit(kit);
         }
         // Save it!
