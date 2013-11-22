@@ -311,9 +311,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
-    public Map<String, Date> productOrderSampleReceipts;
+    private Map<String, Date> productOrderSampleReceiptDates;
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
@@ -349,7 +349,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
 
-                productOrderSampleReceipts = getMapOfProductSampleReceiptDates();
+                productOrderSampleReceiptDates = generateMapOfProductSampleReceiptDates();
 
                 if (isSampleInitiation()) {
                     // In the future it would be good if getMaterialInfoObjects took the EnumType
@@ -1600,7 +1600,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      *
      * @return A map of receipt dates for each product order sample.
      */
-    public Map<String, Date> getMapOfProductSampleReceiptDates() {
+    public Map<String, Date> generateMapOfProductSampleReceiptDates() {
         Map<String, Date> results = new HashMap<>();
         Map<String, Date> results2 = new HashMap<>();
 
@@ -1610,41 +1610,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         Map<String, List<LabVessel>> vesselMap = labVesselDao.findMapBySampleKeys(sampleIds);
 
-        for (String sampleId : vesselMap.keySet()) {
-            results.put(sampleId, getLabVesselEventDate(vesselMap.get(sampleId), LabEventType.SAMPLE_RECEIPT));
-            // We'll want to rework this method so that it will populate the two maps use for holding the receive and package date of a sample.
-            results2.put(sampleId, getLabVesselEventDate(vesselMap.get(sampleId), LabEventType.SAMPLE_PACKAGE));
+        for (Map.Entry<String, List<LabVessel>> entry : vesselMap.entrySet()) {
+            if (!CollectionUtils.isEmpty(entry.getValue())) {
+                results.put(entry.getKey(), LabEvent.getLabVesselEventDateByType(entry.getValue(),
+                        LabEventType.SAMPLE_RECEIPT));
+                // We'll want to rework this method so that it will populate the two maps use for holding the receive and package date of a sample.
+                results2.put(entry.getKey(), LabEvent.getLabVesselEventDateByType(vesselMap.get(entry.getValue()),
+                        LabEventType.SAMPLE_PACKAGE));
+            }
         }
 
         return results;
     }
 
-    /**
-     * Utility method used for grabbing the date of a specific lab vessel event.
-     * Note that this is designed specifically to grab an event date for an event that only happens once.
-     *
-     * @param vessels List of LabVessel objects.
-     *
-     * @return Lab vessel event date or null if there wasn't an event type found.
-     */
-    public Date getLabVesselEventDate(Collection<LabVessel> vessels, LabEventType eventType) {
 
-        for (LabVessel vessel : vessels) {
-            for (LabEvent event : vessel.getEvents()) {
-                if (event.getLabEventType() == eventType) {
-                    return event.getEventDate();
-                }
-            }
-        }
-        return null;
+    public Map<String, Date> getProductOrderSampleReceiptDates() {
+        return productOrderSampleReceiptDates;
     }
 
-    public Map<String, Date> getProductOrderSampleReceipts() {
-        return productOrderSampleReceipts;
-    }
-
-    public void setProductOrderSampleReceipts(Map<String, Date> productOrderSampleReceipts) {
-        this.productOrderSampleReceipts = productOrderSampleReceipts;
+    public void setProductOrderSampleReceiptDates(Map<String, Date> productOrderSampleReceipts) {
+        this.productOrderSampleReceiptDates = productOrderSampleReceipts;
     }
 
     /**

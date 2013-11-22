@@ -291,14 +291,14 @@ function showSamples(sampleData) {
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
-            // Need to replace   with empty string.
+            // Need to replace with empty string.
             $j('#fingerprint-' + sampleId).text('');
         }
 
         if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
         } else {
-            // Need to replace   with empty string.
+            // Need to replace with empty string.
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
         }
 
@@ -933,8 +933,8 @@ function formatInput(item) {
             <th width="110">Collaborator Sample ID</th>
             <th width="60">Participant ID</th>
             <th width="110">Collaborator Participant ID</th>
-            <th>Shipped Date</th>
-            <th>Received Date</th>
+            <th width="40">Shipped Date</th>
+            <th width="40">Received Date</th>
             <th width="40">Volume</th>
             <th width="40">Concentration</th>
 
@@ -986,8 +986,8 @@ function formatInput(item) {
                 <!-- TODO GPLIM-2148: fill in shipped date -->
                 <td>10/28/2013</td>
                 <td id="receipt-date">
-                    <c:if test="${actionBean.productOrderSampleReceipts[sample.name] != null}">
-                        <fmt:formatDate value="${actionBean.productOrderSampleReceipts[sample.name]}"
+                    <c:if test="${actionBean.productOrderSampleReceiptDates[sample.name] != null}">
+                        <fmt:formatDate value="${actionBean.productOrderSampleReceiptDates[sample.name]}"
                                         pattern="${actionBean.datePattern}"/>
                     </c:if>
                 </td>

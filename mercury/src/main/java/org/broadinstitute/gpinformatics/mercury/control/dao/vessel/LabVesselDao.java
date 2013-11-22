@@ -46,9 +46,9 @@ public class LabVesselDao extends GenericDao {
     }
 
     /**
-     * This is used to get a map containing a list of LabVessel objects keyed off the associated sample key.
+     * This is used to create a map containing a list of LabVessel objects keyed off the associated sample key.
      *
-     * @param sampleKeys List of sample keys
+     * @param sampleKeys The list of sample keys to search for associated LabVessel objects.
      *
      * @return A map containing a list of LabVessel objects keyed off the associated sample key.
      */
@@ -64,23 +64,23 @@ public class LabVesselDao extends GenericDao {
 
             criteriaQuery.where(labVessels.get(MercurySample_.sampleKey).in(sampleKeys));
 
-            List<LabVessel> resultList = new ArrayList<>();
+            List<LabVessel> resultList;
             try {
-                resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+                resultList = getEntityManager().createQuery(criteriaQuery).getResultList();
             } catch (NoResultException ignored) {
-                return resultMap;
+                return Collections.emptyMap();
             }
 
             // For each LabVessel found, add it to the list of LabVessel objects for the applicable sample in the map.
             for (LabVessel result : resultList) {
                 // A LabVessel can contain multiple samples (pooled samples) so we must loop through them.
                 for (MercurySample sample : result.getMercurySamples()) {
-                    List<LabVessel> vessels = resultMap.remove(sample.getSampleKey());
-                    if (CollectionUtils.isEmpty(vessels)) {
+                    List<LabVessel> vessels = resultMap.get(sample.getSampleKey());
+                    if (vessels == null) {
                         vessels = new ArrayList<>();
+                        resultMap.put(sample.getSampleKey(), vessels);
                     }
                     vessels.add(result);
-                    resultMap.put(sample.getSampleKey(), vessels);
                 }
             }
         }
