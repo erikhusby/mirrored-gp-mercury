@@ -404,10 +404,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
-            requireField(numberOfSamples > 0, "a specified number of samples", action);
-            requireField(bspShippingLocationTokenInput.getTokenObject(), "a site", action);
-            requireField(materialInfo, "a material type", action);
-            requireField(bspGroupCollectionTokenInput.getTokenObject(), "a collection", action);
+            ProductOrderKit kit = editOrder.getProductOrderKit();
+            requireField(kit.getNumberOfSamples() > 0, "a specified number of samples", action);
+            requireField(kit.getSiteId(), "a site", action);
+            requireField(kit.getMaterialInfo(), "a material type", action);
+            requireField(kit.getSampleCollectionId(), "a collection", action);
             // Avoid NPE if Research Project isn't set yet.
             if (researchProject != null) {
                 requireField(researchProject.getBroadPIs().length > 0,
@@ -415,7 +416,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
-            requireField(organismId, "an organism", action);
+            requireField(kit.getOrganismId(), "an organism", action);
         }
         requireField(researchProject, "a research project", action);
         if (!Deployment.isCRSP) {
@@ -764,21 +765,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
-                // todo xxx this doesn't look right... how should the kit be updated?
-                String notificationList = notificationListTokenInput.getEmailList();
+                // todo xxx jsp should directly update editOrder.getProductOrderKit()
                 ProductOrderKit kit = editOrder.getProductOrderKit();
-                kit.setNumberOfSamples(numberOfSamples);
-                kit.setKitType(kitType);
-                kit.setSampleCollectionId(bspGroupCollectionTokenInput.getTokenObject().getCollectionId());
-                kit.setOrganismId(organismId);
-                kit.setSiteId(bspShippingLocationTokenInput.getTokenObject().getId());
-                kit.setMaterialInfo(materialInfo);
-                kit.setNotifications(notificationList);
 
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
-                        editOrder, bspShippingLocationTokenInput.getTokenObject(),
+                        editOrder,
+                        bspShippingLocationTokenInput.getTokenObject(), //todo xxx from kit.siteId
                         kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                        bspGroupCollectionTokenInput.getTokenObject(), kit.getNotifications(), kit.getOrganismId());
+                        bspGroupCollectionTokenInput.getTokenObject(), //todo xxx from kit.sampleCollectionId
+                        kit.getNotifications(), kit.getOrganismId());
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
