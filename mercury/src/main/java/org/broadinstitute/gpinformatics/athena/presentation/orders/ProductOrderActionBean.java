@@ -136,6 +136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String LEDGER_STATUS = "ledgerStatus";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
+    private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -246,7 +247,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET})
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
@@ -1056,7 +1057,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK}, priority = 0)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1104,6 +1105,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
+    }
+
+
+    @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
+    public Resolution addSamplesToBucket(){
+        handleSamplesAdded(selectedProductOrderSamples);
+        return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
     @HandlesEvent(SET_RISK)

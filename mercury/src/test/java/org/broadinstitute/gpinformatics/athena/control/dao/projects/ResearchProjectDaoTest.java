@@ -91,6 +91,15 @@ public class ResearchProjectDaoTest extends ContainerTest {
         Assert.assertFalse(projectOrderCounts.isEmpty());
     }
 
+    public void testFindResearchProjectsLike() {
+        List<ResearchProject> projects = researchProjectDao.findLikeJiraTicketKey("RP-3");
+        Assert.assertNotNull(projects);
+        Assert.assertFalse(projects.isEmpty());
+
+        projects = researchProjectDao.findLikeTitle("WGS");
+        Assert.assertNotNull(projects);
+        Assert.assertFalse(projects.isEmpty());
+    }
 
     /**
      * Ugly positive test for the presence of PMs, this should be creating its own test data.

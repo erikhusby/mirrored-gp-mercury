@@ -196,10 +196,6 @@ public class ResearchProjectResource {
     @Consumes(MediaType.APPLICATION_XML)
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjectData create(@Nonnull ResearchProjectData data) {
-        if (data == null) {
-            throw new InformaticsServiceException(("No data found to define the new Research Project"));
-        }
-
         if (researchProjectDao.findByTitle(data.title) != null) {
             throw new InformaticsServiceException(
                     "Cannot create a project that already exists - the project name is already being used.");
@@ -220,5 +216,24 @@ public class ResearchProjectResource {
         researchProjectDao.flush();
 
         return new ResearchProjectData(bspUserList, project);
+    }
+
+    /**
+     * This method searches for research projects by either title or JIRA ticket key based on a search term.
+     * This executes a like search and is case insensitive.
+     *
+     * @param searchTerm The term to search by.
+     *
+     * @return ResearchProjects object that contains all of the matching projects.
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    @Path("match/{searchTerm}")
+    public ResearchProjects getResearchProjectsLike(@PathParam("searchTerm") String searchTerm) {
+        // Since the search term could be either title or JIRA id we search both.
+        List<ResearchProject> foundProjects = researchProjectDao.findLikeTitle(searchTerm);
+        foundProjects.addAll(researchProjectDao.findLikeJiraTicketKey(searchTerm));
+
+        return new ResearchProjects(bspUserList, foundProjects);
     }
 }
