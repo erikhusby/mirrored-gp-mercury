@@ -57,11 +57,11 @@ public class ProductOrderKit implements Serializable {
     public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
                            long siteId, MaterialInfo materialInfo, String notifications) {
         this.numberOfSamples = numberOfSamples;
-        this.kitTypeName = kitType.getKitName();
+        this.kitTypeName = kitType != null ? kitType.getKitName() : null;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
-        this.materialBspName = materialInfo.getBspName();
+        this.materialBspName = materialInfo != null ? materialInfo.getBspName() : null;
         this.notifications = notifications;
     }
 
@@ -86,7 +86,7 @@ public class ProductOrderKit implements Serializable {
     }
 
     public void setKitType(KitType kitType) {
-        kitTypeName = kitType.getKitName();
+        kitTypeName = kitType != null ? kitType.getKitName() : null;
     }
 
     public String getKitTypeName() {
@@ -126,7 +126,7 @@ public class ProductOrderKit implements Serializable {
     }
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
-        materialBspName = materialInfo.getBspName();
+        materialBspName = materialInfo != null ? materialInfo.getBspName() : null;
     }
 
     public String getMaterialBspName() {

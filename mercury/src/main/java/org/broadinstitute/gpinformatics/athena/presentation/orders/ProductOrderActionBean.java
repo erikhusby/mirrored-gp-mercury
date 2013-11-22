@@ -764,17 +764,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
-                // Get comma separated list of e-mails from notificationList
                 String notificationList = notificationListTokenInput.getEmailList();
+                ProductOrderKit kit = editOrder.getProductOrderKit();
+                kit.setNumberOfSamples(numberOfSamples);
+                kit.setKitType(kitType);
+                kit.setSampleCollectionId(bspGroupCollectionTokenInput.getTokenObject().getCollectionId());
+                kit.setOrganismId(organismId);
+                kit.setSiteId(bspShippingLocationTokenInput.getTokenObject().getId());
+                kit.setMaterialInfo(materialInfo);
+                kit.setNotifications(notificationList);
 
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
-                        editOrder, bspShippingLocationTokenInput.getTokenObject(), numberOfSamples, materialInfo,
-                        bspGroupCollectionTokenInput.getTokenObject(), notificationList, organismId);
+                        editOrder, bspShippingLocationTokenInput.getTokenObject(),
+                        kit.getNumberOfSamples(), kit.getMaterialInfo(),
+                        bspGroupCollectionTokenInput.getTokenObject(), kit.getNotifications(), kit.getOrganismId());
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-
-                editOrder.setProductOrderKit(new ProductOrderKit(numberOfSamples, kitType, bspGroupCollectionTokenInput.getTokenObject().getCollectionId(), organismId,
-                        bspShippingLocationTokenInput.getTokenObject().getId(), materialInfo, notificationList));
             }
+
             // Save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
@@ -850,6 +856,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
+        if (isSampleInitiation()) {
+            // Get comma separated list of e-mails from notificationList
+            String notificationList = notificationListTokenInput.getEmailList();
+            ProductOrderKit kit = new ProductOrderKit(numberOfSamples, kitType,
+                    bspGroupCollectionTokenInput.getTokenObject().getCollectionId(), organismId,
+                    bspShippingLocationTokenInput.getTokenObject().getId(), materialInfo, notificationList);
+            editOrder.setProductOrderKit(kit);
+        }
         // Save it!
         productOrderDao.persist(editOrder);
 
