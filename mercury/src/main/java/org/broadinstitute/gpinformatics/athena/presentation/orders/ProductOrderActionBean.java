@@ -62,6 +62,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -74,9 +75,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -348,8 +346,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-
-                productOrderSampleReceiptDates = generateMapOfProductSampleReceiptDates();
 
                 if (isSampleInitiation()) {
                     // In the future it would be good if getMaterialInfoObjects took the EnumType
@@ -994,6 +990,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (samples != null) {
             // Assuming all samples come from same product order here.
             ProductOrder.loadBspData(samples);
+            ProductOrder.loadLabEventSampleData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
@@ -1025,6 +1022,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", bspSampleDTO.getTotal());
         item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
         item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+
+        LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
+
+        if (labEventSampleDTO != null) {
+            item.put("packageDate", labEventSampleDTO.getSamplePackagedDate());
+            item.put("receiptDate", labEventSampleDTO.getSampleReceiptDate());
+        } else {
+            item.put("packageDate", "");
+            item.put("receiptDate", "");
+        }
     }
 
     private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
@@ -1048,6 +1055,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", "");
         item.put("hasFingerprint", "");
         item.put("hasSampleKitUploadRackscanMismatch", "");
+        item.put("packageDate", "");
+        item.put("receiptDate", "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -1594,35 +1603,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             return StringUtils.join(progressPieces, ", ");
         }
     }
-
-    /**
-     * Go through all of the samples in the selected product order and return a map of the receipt dates.
-     *
-     * @return A map of receipt dates for each product order sample.
-     */
-    public Map<String, Date> generateMapOfProductSampleReceiptDates() {
-        Map<String, Date> results = new HashMap<>();
-        Map<String, Date> results2 = new HashMap<>();
-
-        Collection<String> sampleIds = new ArrayList<>();
-        for (ProductOrderSample orderSample : editOrder.getSamples()) {
-            sampleIds.add(orderSample.getSampleKey());
-        }
-        Map<String, List<LabVessel>> vesselMap = labVesselDao.findMapBySampleKeys(sampleIds);
-
-        for (Map.Entry<String, List<LabVessel>> entry : vesselMap.entrySet()) {
-            if (!CollectionUtils.isEmpty(entry.getValue())) {
-                results.put(entry.getKey(), LabEvent.getLabVesselEventDateByType(entry.getValue(),
-                        LabEventType.SAMPLE_RECEIPT));
-                // We'll want to rework this method so that it will populate the two maps use for holding the receive and package date of a sample.
-                results2.put(entry.getKey(), LabEvent.getLabVesselEventDateByType(vesselMap.get(entry.getValue()),
-                        LabEventType.SAMPLE_PACKAGE));
-            }
-        }
-
-        return results;
-    }
-
 
     public Map<String, Date> getProductOrderSampleReceiptDates() {
         return productOrderSampleReceiptDates;

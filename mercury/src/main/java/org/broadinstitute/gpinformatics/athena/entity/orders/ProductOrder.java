@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -20,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -243,6 +246,30 @@ public class ProductOrder implements BusinessObject, Serializable {
         }
 
         return count;
+    }
+
+    /**
+     * Initializes the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO} for each
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample} with the
+     * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} associated with the ProductOrderSample so far.
+     *
+     * @param samples A list of ProductOrderSample objects to get the LabEvents for.
+     */
+    public static void loadLabEventSampleData(List<ProductOrderSample> samples) {
+
+        LabEventSampleDataFetcher labDataFetcher = ServiceAccessUtility.getBean(LabEventSampleDataFetcher.class);
+        List<String> sampleIds = new ArrayList<>();
+        for (ProductOrderSample sample : samples) {
+            sampleIds.add(sample.getSampleKey());
+        }
+
+        Map<String, List<LabVessel>> vesselMap = labDataFetcher.findMapBySampleKeys(sampleIds);
+        for (ProductOrderSample sample : samples) {
+            Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
+            if (!CollectionUtils.isEmpty(labVessels)) {
+                sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
+            }
+        }
     }
 
     public static void loadBspData(List<ProductOrderSample> samples) {

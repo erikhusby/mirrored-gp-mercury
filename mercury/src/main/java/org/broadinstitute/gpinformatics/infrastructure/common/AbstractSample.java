@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
@@ -15,6 +16,9 @@ import java.util.regex.Pattern;
  * useful for both areas in the application.
  */
 public abstract class AbstractSample {
+
+    @Transient
+    private LabEventSampleDTO labEventSampleDTO = new LabEventSampleDTO();
 
     // TODO: replace BSP specific sample data support with a generic API that can support other platforms.
     @Transient
@@ -107,4 +111,13 @@ public abstract class AbstractSample {
         }
         return getSampleKey();
     }
+
+    public LabEventSampleDTO getLabEventSampleDTO() {
+        return labEventSampleDTO;
+    }
+
+    public void setLabEventSampleDTO(LabEventSampleDTO labEventSampleDTO) {
+        this.labEventSampleDTO = labEventSampleDTO;
+    }
+
 }

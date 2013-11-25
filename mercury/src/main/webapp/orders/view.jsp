@@ -288,6 +288,9 @@ function showSamples(sampleData) {
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
+        $j('#package-date-' + sampleId).text(sampleData[x].packageDate);
+        $j('#receipt-date-' + sampleId).text(sampleData[x].receiptDate);
+
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
@@ -983,14 +986,8 @@ function formatInput(item) {
                 <td id="collab-sample-${sample.productOrderSampleId}"> </td>
                 <td id="patient-${sample.productOrderSampleId}"> </td>
                 <td id="collab-patient-${sample.productOrderSampleId}"> </td>
-                <!-- TODO GPLIM-2148: fill in shipped date -->
-                <td>10/28/2013</td>
-                <td id="receipt-date">
-                    <c:if test="${actionBean.productOrderSampleReceiptDates[sample.name] != null}">
-                        <fmt:formatDate value="${actionBean.productOrderSampleReceiptDates[sample.name]}"
-                                        pattern="${actionBean.datePattern}"/>
-                    </c:if>
-                </td>
+                <td id="package-date-${sample.productOrderSampleId}"></td>
+                <td id="receipt-date-${sample.productOrderSampleId}"></td>
                 <td id="volume-${sample.productOrderSampleId}"> </td>
                 <td id="concentration-${sample.productOrderSampleId}"> </td>
 
