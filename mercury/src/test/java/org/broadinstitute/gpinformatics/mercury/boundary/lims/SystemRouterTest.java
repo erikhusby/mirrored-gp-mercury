@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -115,6 +116,7 @@ public class SystemRouterTest extends BaseEventTest {
     private ControlDao mockControlDao;
     private AthenaClientService mockAthenaClientService;
     private BSPSampleDataFetcher mockBspSampleDataFetcher;
+    private BSPExportsService mockBspExportService;
     private int productOrderSequence = 1;
 
     private TwoDBarcodedTube tube1;
@@ -139,8 +141,9 @@ public class SystemRouterTest extends BaseEventTest {
         mockControlDao = mock(ControlDao.class);
         mockAthenaClientService = mock(AthenaClientService.class);
         mockBspSampleDataFetcher = mock(BSPSampleDataFetcher.class);
+        mockBspExportService = mock(BSPExportsService.class);
         systemRouter = new SystemRouter(mockLabVesselDao, mockControlDao,
-                new WorkflowLoader(), mockBspSampleDataFetcher);
+                new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
@@ -907,5 +910,14 @@ public class SystemRouterTest extends BaseEventTest {
                new Object[] {ApplicationInstance.RESEARCH},
 
         };
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testSystemOfRecordForSamplesLabTube(ApplicationInstance instance) {
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
+        LabEvent event = new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
+                "testSystemOfRecordForSamplesLabTube");
+        tube1.addInPlaceEvent(event);
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
     }
 }

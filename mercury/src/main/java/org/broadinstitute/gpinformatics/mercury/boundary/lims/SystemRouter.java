@@ -1,9 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections15.MultiMap;
+import org.apache.commons.collections15.multimap.MultiHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -75,17 +82,20 @@ public class SystemRouter implements Serializable {
     private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
     private BSPSampleDataFetcher bspSampleDataFetcher;
+    private BSPExportsService    bspExportsService;
 
     SystemRouter() {
     }
 
     @Inject
     public SystemRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
+                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher,
+                        BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
         this.controlDao = controlDao;
         this.workflowLoader = workflowLoader;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.bspExportsService = bspExportsService;
     }
 
     /**
@@ -119,8 +129,7 @@ public class SystemRouter implements Serializable {
      *
      * @param barcode the barcode of the tube to check
      *
-     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-     * routed.
+     * @return An instance of a System enum that determines to which system requests should be routed.
      */
     public System routeForVessel(String barcode) {
         return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.ROUTE);
@@ -139,6 +148,54 @@ public class SystemRouter implements Serializable {
      */
     public System routeForVessels(Collection<LabVessel> labVessels) {
         return routeForVessels(labVessels, Intent.ROUTE);
+    }
+
+    /**
+     * Query BSP for the export status of all labVessels given as parameters.  If none of these has been exported,
+     * route to Mercury.  If all have been exported to Sequencing, route to Squid.  If there is any other condition,
+     * throw an InformaticsServiceException as the situation is ambiguous.
+     */
+    private System determineSystemOfRecordPerBspExports(@Nonnull Collection<LabVessel> labVessels) {
+        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(labVessels);
+
+        MultiMap<System, String> systemToVessels = new MultiHashMap<>();
+        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+            Set<IsExported.ExternalSystem> destinations = exportResult.getExportDestinations();
+            String vesselBarcode = exportResult.getBarcode();
+            if (CollectionUtils.isEmpty(destinations)) {
+                // If there is no route but there is an error, assume BSP did not recognize the barcode so it must be
+                // a non-samples lab vessel.  Assume SQUID is the reasonable response in this case.
+                if (!StringUtils.isEmpty(exportResult.getError())) {
+                    systemToVessels.put(SQUID, vesselBarcode);
+                } else {
+                    // If there is no route and no error, this simply hasn't been exported.
+                    systemToVessels.put(MERCURY, vesselBarcode);
+                }
+            } else {
+                if (destinations.size() > 1) {
+                    // How can a vessel be exported to more than one destination?
+                    throw new InformaticsServiceException(
+                            String.format("Vessel exported to more than one destination: %s to %s.",
+                                    vesselBarcode, StringUtils.join(destinations, ", ")));
+                } else {
+                    System system = System.valueOf(destinations.iterator().next().name());
+                    systemToVessels.put(system, vesselBarcode);
+                }
+            }
+        }
+
+        if (systemToVessels.size() > 1) {
+            StringBuilder builder = new StringBuilder("Ambiguous systems of record for vessels: ");
+            for (Map.Entry<System, Collection<String>> entry : systemToVessels.entrySet()) {
+                String vesselBarcodes = StringUtils.join(entry.getValue(), ", ");
+                builder.append(entry.getKey()).append(": ").append(vesselBarcodes);
+            }
+
+            throw new InformaticsServiceException(builder.toString());
+        }
+
+        // Return the unique System key.
+        return systemToVessels.keySet().iterator().next();
     }
 
     /**
@@ -164,7 +221,8 @@ public class SystemRouter implements Serializable {
                     badCrspRouting();
                     return System.SQUID;
                 case MERCURY:
-                    return System.MERCURY;
+                    // If everything here has been exported to sequencing.
+                    return determineSystemOfRecordPerBspExports(labVessels);
                 }
             }
         }
