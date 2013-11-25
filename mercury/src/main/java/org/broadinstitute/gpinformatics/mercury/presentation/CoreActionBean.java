@@ -49,10 +49,8 @@ import java.util.List;
  * other classes to leverage.
  *
  * Converted this from abstract because the report.jsp needs to instantiate to get context info
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-public class CoreActionBean implements ActionBean {
+public class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     private static final String DATE_PATTERN = "MM/dd/yyyy";
@@ -280,7 +278,8 @@ public class CoreActionBean implements ActionBean {
      *
      * @param message The message to put into a SimpleMessage
      */
-    protected String addMessage(String message, Object... arguments) {
+    @Override
+    public String addMessage(String message, Object... arguments) {
         Message safeMessage = createSafeMessage(message, arguments);
         getContext().getMessages().add(safeMessage);
         return safeMessage.getMessage(getContext().getLocale());

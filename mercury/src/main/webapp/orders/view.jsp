@@ -2,6 +2,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -903,6 +904,11 @@ function formatInput(item) {
 
                             <stripes:button name="setRisk" value="Set Risk" class="btn"
                                             style="margin-left:5px;" onclick="showRiskDialog()"/>
+
+                                    <security:authorizeBlock roles="<%= roles(All) %>" context="<%= ApplicationInstance.CRSP %>">
+                                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
+                                                        style="margin-left:5px;" id="addToBucketButton" onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
+                                    </security:authorizeBlock>
                         </span>
 
             <div class="pull-right">

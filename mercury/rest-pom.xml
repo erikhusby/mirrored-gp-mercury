@@ -74,7 +74,7 @@
             <id>Prodinfo Maven</id>
             <name>Prodinfo's Maven2 Custom Repository</name>
             <layout>default</layout>
-            <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
+            <url>http://prodinfosvn.broadinstitute.org/m2-repository</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>

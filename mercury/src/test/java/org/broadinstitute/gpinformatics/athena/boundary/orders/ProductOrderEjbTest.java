@@ -35,7 +35,7 @@ public class ProductOrderEjbTest {
                         }});
                     }};
                 }
-            }));
+            }), null);
 
     public void testMapAliquotIdToSampleOne() throws Exception {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);
