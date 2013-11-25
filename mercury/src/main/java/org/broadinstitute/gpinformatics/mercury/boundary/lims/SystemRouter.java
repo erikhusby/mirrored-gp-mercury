@@ -179,9 +179,14 @@ public class SystemRouter implements Serializable {
                                     vesselBarcode, StringUtils.join(destinations, ", ")));
                 } else {
                     IsExported.ExternalSystem externalSystem = destinations.iterator().next();
-                    if (externalSystem == IsExported.ExternalSystem.Sequencing) {
+                    switch (externalSystem) {
+                    case Sequencing:
                         systemToVessels.put(SQUID, vesselBarcode);
-                    } else {
+                        break;
+                    case Mercury:
+                        systemToVessels.put(MERCURY, vesselBarcode);
+                        break;
+                    default:
                         throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
                     }
                 }
