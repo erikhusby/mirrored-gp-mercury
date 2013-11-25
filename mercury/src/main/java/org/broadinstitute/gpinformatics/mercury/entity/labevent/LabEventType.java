@@ -441,6 +441,9 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // From BSP UI
+    /**
+     * "Packaging" indicates the samples are being placed in a package for shipping.
+     */
     SAMPLE_PACKAGE("SamplePackage", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAMPLE_RECEIPT("SampleReceipt", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
@@ -628,6 +631,7 @@ public enum LabEventType {
         CreateSources(boolean value) {
             this.value = value;
         }
+
         public boolean booleanValue() {
             return value;
         }

@@ -289,6 +289,9 @@ function showSamples(sampleData) {
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
+        $j('#package-date-' + sampleId).text(sampleData[x].packageDate);
+        $j('#receipt-date-' + sampleId).text(sampleData[x].receiptDate);
+
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
@@ -319,6 +322,8 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
+                {"bSortable": true},                            // Shipped Date
+                {"bSortable": true},                            // Received Date
                 {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
@@ -937,6 +942,8 @@ function formatInput(item) {
             <th width="110">Collaborator Sample ID</th>
             <th width="60">Participant ID</th>
             <th width="110">Collaborator Participant ID</th>
+            <th width="40">Shipped Date</th>
+            <th width="40">Received Date</th>
             <th width="40">Volume</th>
             <th width="40">Concentration</th>
 
@@ -984,12 +991,14 @@ function formatInput(item) {
                 </td>
                 <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
                 <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
-                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
-                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
-                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
+                <td id="package-date-${sample.productOrderSampleId}">&#160; </td>
+                <td id="receipt-date-${sample.productOrderSampleId}">&#160; </td>
+                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
+                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">

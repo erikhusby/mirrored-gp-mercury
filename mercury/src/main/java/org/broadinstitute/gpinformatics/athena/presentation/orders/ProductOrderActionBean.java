@@ -62,6 +62,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -73,6 +74,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -98,6 +100,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -305,6 +308,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
 
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    private Map<String, Date> productOrderSampleReceiptDates;
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
@@ -338,6 +347,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+
                 if (isSampleInitiation()) {
                     // In the future it would be good if getMaterialInfoObjects took the EnumType
                     dnaMatrixMaterialTypes =
@@ -470,7 +480,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validatePlacedOrder(String action) {
         if (!StringUtils.isBlank(materialInfoString)) {
-            materialInfo = new MaterialInfo(kitType.getKitName() , materialInfoString);
+            materialInfo = new MaterialInfo(kitType.getKitName(), materialInfoString);
             if (!dnaMatrixMaterialTypes.contains(materialInfo)) {
                 addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
                         materialInfoString);
@@ -865,7 +875,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void updateTokenInputFields() {
         // Set the project, product and addOns for the order.
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
-        ResearchProject project = tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
+        ResearchProject project =
+                tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
@@ -980,6 +991,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (samples != null) {
             // Assuming all samples come from same product order here.
             ProductOrder.loadBspData(samples);
+            ProductOrder.loadLabEventSampleData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
@@ -1011,6 +1023,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", bspSampleDTO.getTotal());
         item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
         item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+
+        LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
+
+        if (labEventSampleDTO != null) {
+            item.put("packageDate", labEventSampleDTO.getSamplePackagedDate());
+            item.put("receiptDate", labEventSampleDTO.getSampleReceiptDate());
+        } else {
+            item.put("packageDate", "");
+            item.put("receiptDate", "");
+        }
     }
 
     private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
@@ -1034,6 +1056,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", "");
         item.put("hasFingerprint", "");
         item.put("hasSampleKitUploadRackscanMismatch", "");
+        item.put("packageDate", "");
+        item.put("receiptDate", "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -1586,6 +1610,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return StringUtils.join(progressPieces, ", ");
         }
+    }
+
+    public Map<String, Date> getProductOrderSampleReceiptDates() {
+        return productOrderSampleReceiptDates;
+    }
+
+    public void setProductOrderSampleReceiptDates(Map<String, Date> productOrderSampleReceipts) {
+        this.productOrderSampleReceiptDates = productOrderSampleReceipts;
     }
 
     /**
