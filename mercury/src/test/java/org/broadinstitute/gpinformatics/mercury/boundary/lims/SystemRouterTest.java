@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -526,6 +527,22 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testRouteForTubeInSamplesLab(ApplicationInstance instance) {
+        // This tube is not in a PDO and does not have any BSP messaging, so it should go to Squid
+        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+
+        // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury
+        // TODO: configure BSP service mock to say that the tube has not been exported to Squid
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
+        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+
+        // After export from BSP to Squid, Squid should once again be the system of record
+        // TODO: configure BSP service mock to say that the tube has been exported to Squid
+        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
 
     /*
