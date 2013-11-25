@@ -112,11 +112,21 @@ public abstract class AbstractSample {
         return getSampleKey();
     }
 
+    /**
+     * Provides a method of getting lab events associated with the sample.
+     *
+     * @return {@link LabEventSampleDTO} object tied to the sample
+     */
     public LabEventSampleDTO getLabEventSampleDTO() {
         return labEventSampleDTO;
     }
 
-    public void setLabEventSampleDTO(LabEventSampleDTO labEventSampleDTO) {
+    /**
+     * Set the sample lab event data manually. This is used when loading the sample data for a group of samples at once.
+     *
+     * @param labEventSampleDTO This object has the ability to get lab events for a specific mercury sample
+     */
+    public void setLabEventSampleDTO(@Nonnull LabEventSampleDTO labEventSampleDTO) {
         this.labEventSampleDTO = labEventSampleDTO;
     }
 
