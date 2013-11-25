@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -43,6 +44,9 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
+import org.mockito.Matchers;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -146,6 +150,24 @@ public class SystemRouterTest extends BaseEventTest {
         mockBspExportService = mock(BSPExportsService.class);
         systemRouter = new SystemRouter(mockLabVesselDao, mockControlDao,
                 new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
+
+        // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
+        when(mockBspExportService.findExportDestinations(Matchers.<Collection<LabVessel>>anyObject())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                EnumSet<IsExported.ExternalSystem> noExportDestinations =
+                        EnumSet.noneOf(IsExported.ExternalSystem.class);
+                Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+                Collection<LabVessel> labVessels = (Collection<LabVessel>) invocation.getArguments()[0];
+                for (LabVessel labVessel : labVessels) {
+                    IsExported.ExportResult exportResult = new IsExported.ExportResult();
+                    exportResult.setBarcode(labVessel.getLabel());
+                    exportResult.setExportDestinations(noExportDestinations);
+                    exportResultSet.add(exportResult);
+                }
+                return new IsExported.ExportResults(exportResultSet);
+            }
+        });
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
@@ -543,21 +565,64 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
-        // This tube is not in a PDO and does not have any BSP messaging, so it should go to Squid
+        // This tube is not in a PDO and does not have any BSP messaging, so it should go to Squid.
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
 
-        // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury
+        // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury.
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
         exportResult.setExportDestinations(EnumSet.noneOf(IsExported.ExternalSystem.class));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
 
-        // After export from BSP to Squid, Squid should once again be the system of record
+        // After export from BSP to Squid, Squid should once again be the system of record.
         exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Sequencing));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
 
-        // After export from BSP to Mercury, Mercury should be the system of record
+        // After export from BSP to Mercury, Mercury should be the system of record.
         exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeExportedToGAP(ApplicationInstance instance) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(MERCURY_TUBE_1);
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+        exportResultSet.add(exportResult);
+        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
+        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
+
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
+
+        // After export from BSP to GAP, Mercury should not be able to route the tube.
+        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.GAP));
+        try {
+            systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
+            Assert.fail("Expected exception for unexpected export destination: GAP");
+        } catch (InformaticsServiceException expected) {}
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeWithErrorFromBSPFindExportService(ApplicationInstance instance) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(MERCURY_TUBE_1);
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+        exportResultSet.add(exportResult);
+        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
+        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
+
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
+
+        // If there's an error determining the export destination, ???
+        exportResult.setError("Test error");
+/*
+        try {
+            systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
+            Assert.fail("Expected exception for unexpected export destination: GAP");
+        } catch (InformaticsServiceException expected) {}
+*/
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
 
