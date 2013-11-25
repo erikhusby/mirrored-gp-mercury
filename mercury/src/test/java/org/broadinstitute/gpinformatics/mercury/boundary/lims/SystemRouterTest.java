@@ -535,11 +535,10 @@ public class SystemRouterTest extends BaseEventTest {
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testSystemOfRecordForTubeInSamplesLab(ApplicationInstance instance) {
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+    public void testGetSystemOfRecordForTubeInSamplesLab(ApplicationInstance instance) {
         IsExported.ExportResult exportResult = new IsExported.ExportResult();
         exportResult.setBarcode(MERCURY_TUBE_1);
-        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
         exportResultSet.add(exportResult);
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
@@ -550,12 +549,16 @@ public class SystemRouterTest extends BaseEventTest {
         // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
-        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        exportResult.setExportDestinations(EnumSet.noneOf(IsExported.ExternalSystem.class));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
 
         // After export from BSP to Squid, Squid should once again be the system of record
         exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Sequencing));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+
+        // After export from BSP to Mercury, Mercury should be the system of record
+        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
 
     /*
