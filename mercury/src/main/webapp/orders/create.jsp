@@ -152,7 +152,8 @@
                     $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
                 } else {
                     $j.ajax({
-                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
+                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys="
+                                + $j("#kitCollection").val(),
                         dataType: 'json',
                         success: setupOrganismMenu
                     });
@@ -180,9 +181,11 @@
                 $j("#selectedOrganism").fadeIn(duration);
             }
 
-            // This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
+            // This function allows the shippingLocation input token to be able to automatically pass the selected
+            // collection id to filter the available shipping sites to only ones in that collection.
             function getShippingLocationURL() {
-                return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
+                return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys="
+                        + $j("#kitCollection").val();
             }
 
             function updateNumberOfLanesVisibility(data) {
@@ -466,7 +469,7 @@
                                 Number of Samples *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:text id="tubesPerKit" name="numberOfSamples"
+                                <stripes:text id="tubesPerKit" name="editOrderKit.numberOfSamples"
                                               class="defaultText" title="Enter the number of samples"/>
                             </div>
                         </div>

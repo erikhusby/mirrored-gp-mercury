@@ -240,6 +240,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes")
     })
     private ProductOrder editOrder;
+    private ProductOrderKit editOrderKit;
 
     // For create, we can also have a research project key to default.
     private String researchProjectKey;
@@ -281,8 +282,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private long numberOfSamples;
-
     private KitType kitType;
 
     private MaterialInfo materialInfo;
@@ -316,11 +315,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                editOrderKit = editOrder.getProductOrderKit();
             }
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
+            editOrderKit = new ProductOrderKit();
         }
     }
 
@@ -338,6 +339,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                editOrderKit = editOrder.getProductOrderKit();
             }
         }
     }
@@ -651,6 +653,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
         }
+        if (isSampleInitiation()) {
+            // Sets up the kit drop-downs.
+            //xxx kitTypeKeys.clear();
+            //xxx sampleCollectionKeys.clear();
+            //xxx organismKeys.clear();
+            //xxx shippingLocationKeys.clear();
+            //xxx materialKeys.clear();
+        }
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -724,6 +734,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         setSubmitString(CREATE_ORDER);
         populateTokenListsFromObjectData();
         owner.setup(userBean.getBspUser().getUserId());
+        editOrderKit = new ProductOrderKit();
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
@@ -765,11 +776,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
-                ProductOrderKit kit = editOrder.getProductOrderKit();
-
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder,
-                        kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(), kit.getSampleCollectionId(),
-                        kit.getNotifications(), kit.getOrganismId());
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
@@ -849,12 +856,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (isSampleInitiation()) {
-            // Get comma separated list of e-mails from notificationList
-            String notificationList = notificationListTokenInput.getEmailList();
-            ProductOrderKit kit = new ProductOrderKit(numberOfSamples, kitType,
-                    bspGroupCollectionTokenInput.getTokenObject().getCollectionId(), organismId,
-                    bspShippingLocationTokenInput.getTokenObject().getId(), materialInfoString, notificationList);
-            editOrder.setProductOrderKit(kit);
+            editOrderKit.setKitType(kitType);
+            editOrderKit.setSampleCollectionId(bspGroupCollectionTokenInput != null &&
+                                               bspGroupCollectionTokenInput.getTokenObject() != null ?
+                    bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
+            editOrderKit.setSiteId(bspShippingLocationTokenInput != null &&
+                                   bspShippingLocationTokenInput.getTokenObject() != null ?
+                    bspShippingLocationTokenInput.getTokenObject().getId() : null);
+            editOrderKit.setMaterialBspName(materialInfoString);
+            editOrderKit.setNotifications(notificationListTokenInput != null ?
+                    notificationListTokenInput.getEmailList() : null);
+            editOrder.setProductOrderKit(editOrderKit);
         }
         // Save it!
         productOrderDao.persist(editOrder);
@@ -1227,6 +1239,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setEditOrder(ProductOrder editOrder) {
         this.editOrder = editOrder;
+    }
+
+    public ProductOrderKit getEditOrderKit() {
+        return editOrderKit;
+    }
+
+    public void setEditOrderKit(ProductOrderKit editOrderKit) {
+        this.editOrderKit = editOrderKit;
     }
 
     public String getQuoteUrl(String quoteIdentifier) {
@@ -1681,14 +1701,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedLedgerStatuses(List<ProductOrder.LedgerStatus> selectedLedgerStatuses) {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
-    }
-
-    public long getNumberOfSamples() {
-        return numberOfSamples;
-    }
-
-    public void setNumberOfSamples(long numberOfSamples) {
-        this.numberOfSamples = numberOfSamples;
     }
 
     public KitType getKitType() {
