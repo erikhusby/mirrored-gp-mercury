@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -55,6 +56,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -533,19 +535,27 @@ public class SystemRouterTest extends BaseEventTest {
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubeInSamplesLab(ApplicationInstance instance) {
+    public void testSystemOfRecordForTubeInSamplesLab(ApplicationInstance instance) {
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(MERCURY_TUBE_1);
+        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        exportResultSet.add(exportResult);
+        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
+        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
+
         // This tube is not in a PDO and does not have any BSP messaging, so it should go to Squid
-        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
 
         // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury
-        // TODO: configure BSP service mock to say that the tube has not been exported to Squid
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
-        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
 
         // After export from BSP to Squid, Squid should once again be the system of record
-        // TODO: configure BSP service mock to say that the tube has been exported to Squid
-        assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Sequencing));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
 
     /*
@@ -700,7 +710,8 @@ public class SystemRouterTest extends BaseEventTest {
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(12.33f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
+                12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
