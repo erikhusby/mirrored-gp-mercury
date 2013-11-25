@@ -9,12 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Wrapper around {@link org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao} that allows
- * easy access to each {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} associated with samples.
+ * Wrapper around {@link LabVesselDao} that allows easy access to each {@link LabVessel} associated with samples.
  */
 public class LabEventSampleDataFetcher {
-
-    private static final long serialVersionUID = -1432207534876411738L;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -23,7 +20,7 @@ public class LabEventSampleDataFetcher {
     }
 
     /**
-     * For the passed samples, return a map of the {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} objects associated.
+     * For the passed samples, return a map of the {@link LabVessel} objects associated.
      *
      * @param sampleKeys List of mercury sample keys.
      *

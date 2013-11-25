@@ -294,14 +294,14 @@ function showSamples(sampleData) {
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
-            // Need to replace with empty string.
+            // Need to replace &#160; with empty string.
             $j('#fingerprint-' + sampleId).text('');
         }
 
         if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
         } else {
-            // Need to replace with empty string.
+            // Need to replace &#160; with empty string.
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
         }
 
@@ -590,7 +590,7 @@ function formatInput(item) {
         <div class="form-value">
             <c:choose>
                 <c:when test="${actionBean.editOrder.draft}">
-                     
+                    &#160;
                 </c:when>
                 <c:otherwise>
                     <a id="orderId" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external"
@@ -983,31 +983,29 @@ function formatInput(item) {
                         </c:otherwise>
                     </c:choose>
                 </td>
-                <td id="collab-sample-${sample.productOrderSampleId}"> </td>
-                <td id="patient-${sample.productOrderSampleId}"> </td>
-                <td id="collab-patient-${sample.productOrderSampleId}"> </td>
-                <td id="package-date-${sample.productOrderSampleId}"></td>
-                <td id="receipt-date-${sample.productOrderSampleId}"></td>
-                <td id="volume-${sample.productOrderSampleId}"> </td>
-                <td id="concentration-${sample.productOrderSampleId}"> </td>
+                <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
+                <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
+                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
+                <td id="package-date-${sample.productOrderSampleId}">&#160; </td>
+                <td id="receipt-date-${sample.productOrderSampleId}">&#160; </td>
+                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
+                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <td id="rin-${sample.productOrderSampleId}"> </td>
+                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
                     <td>
                         <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
-                             
-                        </div>
+                            &#160;</div>
                     </td>
                 </c:if>
 
-                <td id="total-${sample.productOrderSampleId}"> </td>
-                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"> </td>
+                <td id="total-${sample.productOrderSampleId}">&#160; </td>
+                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                 <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                     
-                </td>
+                    &#160; </td>
                 <td>${sample.riskString}</td>
                 <td>${sample.deliveryStatus.displayName}</td>
                 <td>${sample.sampleComment}</td>

@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.Date;
 
 /**
- * A class that fetches {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} objects
+ * A class that fetches {@link LabVessel} objects
  * associated with a sample from Mercury LIMS.
  */
 public class LabEventSampleDTO {

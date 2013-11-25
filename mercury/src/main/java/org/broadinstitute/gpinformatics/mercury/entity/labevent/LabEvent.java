@@ -472,9 +472,10 @@ todo jmt adder methods
      * Utility method used for grabbing the date of a specific lab vessel event.
      * Note that this is designed specifically to grab an event date for an event that only happens once.
      *
-     * @param vessels List of LabVessel objects.
+     * @param vessels   List of LabVessel objects.
+     * @param eventType LabEventType object indicating what type of event to grab.
      *
-     * @return Lab vessel event date or null if there wasn't an event type found.
+     * @return Lab vessel event date or null if there wasn't an event of this type found.
      */
     public static Date getLabVesselEventDateByType(Collection<LabVessel> vessels, LabEventType eventType) {
 

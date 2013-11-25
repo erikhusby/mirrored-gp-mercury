@@ -249,9 +249,8 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     /**
-     * Initializes the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO} for each
-     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample} with the
-     * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel} associated with the ProductOrderSample so far.
+     * Initializes the {@link LabEventSampleDTO} for each {@link ProductOrderSample} with the {@link LabVessel}
+     * associated with the ProductOrderSample so far.
      *
      * @param samples A list of ProductOrderSample objects to get the LabEvents for.
      */
