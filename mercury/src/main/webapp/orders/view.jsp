@@ -794,7 +794,6 @@ function formatInput(item) {
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${actionBean.editOrder.productOrderKit.notifications != null}">
-                                ${actionBean.editOrder.researchProject.broadPIs},
                                 ${actionBean.editOrder.productOrderKit.notifications}
                             </c:when>
                             <c:otherwise>
