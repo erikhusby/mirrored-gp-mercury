@@ -40,15 +40,16 @@ public class BSPKitRequestService {
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
      * @param productOrder       the product order to create the kit request from
-     * @param site               the site that the kit should be shipped to
+     * @param siteId             the site that the kit should be shipped to
      * @param numberOfSamples    the number of samples to put in the kit
      * @param materialInfo       materialInfo of the kit request
+     * @param sampleCollectionId the sample collection
      * @param notificationList   comma separated list of e-mail addresses to send notifications to upon kit shipment.
      * @param organismId         the organism to use
      *  @return the BSP work request ID
      */
-    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialInfo materialInfo, SampleCollection collection,
+    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Long siteId, long numberOfSamples,
+                                                  MaterialInfo materialInfo, Long sampleCollectionId,
                                                   String notificationList, long organismId) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
@@ -74,7 +75,7 @@ public class BSPKitRequestService {
 
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialInfo, collection, notificationList,
+                externalCollaboratorId, siteId, numberOfSamples, materialInfo, sampleCollectionId, notificationList,
                 organismId);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());

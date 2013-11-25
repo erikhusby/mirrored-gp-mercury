@@ -22,10 +22,10 @@ public class BSPWorkRequestFactory {
      * @param primaryInvestigatorId  the domain user ID for the Broad PI
      * @param projectManagerId       the domain user ID for the Broad PM
      * @param externalCollaboratorId the domain user ID for the external collaborator
-     * @param site                   the site that the sample kits will be shipped to
+     * @param siteId                 the site that the sample kits will be shipped to
      * @param numberOfSamples        the total number of samples that the kit should contain
      * @param materialInfo           the material type
-     * @param collection             the collection to use for the sample kit work task
+     * @param sampleCollectionId     the collection to use for the sample kit work task
      * @param notificationList       the comma separated list of users to notify on kit shipment.
      * @param organismId             the organism that the user selected
      *
@@ -34,8 +34,8 @@ public class BSPWorkRequestFactory {
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
-                                                              Site site, long numberOfSamples,
-                                                              MaterialInfo materialInfo, SampleCollection collection,
+                                                              Long siteId, long numberOfSamples,
+                                                              MaterialInfo materialInfo, Long sampleCollectionId,
                                                               String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
@@ -52,9 +52,9 @@ public class BSPWorkRequestFactory {
                 Collections.<String>emptyList(), // warnings
                 Collections.<String>emptyList(), // info
                 SampleKitWorkRequest.MoleculeType.DNA, // moleculeType
-                site.getId(),
+                siteId,
                 numberOfSamples,
-                collection.getCollectionId(),
+                sampleCollectionId,
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
                 materialInfo,
                 organismId

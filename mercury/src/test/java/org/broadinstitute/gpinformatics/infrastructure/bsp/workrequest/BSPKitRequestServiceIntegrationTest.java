@@ -52,8 +52,8 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
-                ELANDER_DOMAIN_USER_ID, TEST_SITE, NUMBER_OF_SAMPLES,
-                materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org", HUMAN_ORGANISM.getLeft());
+                ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(), NUMBER_OF_SAMPLES,
+                materialInfo, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org", HUMAN_ORGANISM.getLeft());
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -66,8 +66,8 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE,
-                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION, "hrafal@broadinstitute.org",
+                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
+                NUMBER_OF_SAMPLES, materialInfo, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
                 HUMAN_ORGANISM.getLeft());
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 

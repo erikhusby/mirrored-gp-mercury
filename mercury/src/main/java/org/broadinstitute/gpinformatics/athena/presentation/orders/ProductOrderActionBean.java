@@ -765,14 +765,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
-                // todo xxx jsp should directly update editOrder.getProductOrderKit()
                 ProductOrderKit kit = editOrder.getProductOrderKit();
 
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(
-                        editOrder,
-                        bspShippingLocationTokenInput.getTokenObject(), //todo xxx from kit.siteId
-                        kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                        bspGroupCollectionTokenInput.getTokenObject(), //todo xxx from kit.sampleCollectionId
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder,
+                        kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(), kit.getSampleCollectionId(),
                         kit.getNotifications(), kit.getOrganismId());
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }

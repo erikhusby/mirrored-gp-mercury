@@ -45,9 +45,9 @@ public class BSPWorkRequestFactoryTest {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 PRODUCT_ORDER_ID, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
-                TEST_SITE, NUMBER_OF_SAMPLES,
+                TEST_SITE.getId(), NUMBER_OF_SAMPLES,
                 materialInfo,
-                TEST_COLLECTION, NOTIFICATION_LIST, HUMAN_ORGANISM.getLeft());
+                TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST, HUMAN_ORGANISM.getLeft());
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));
