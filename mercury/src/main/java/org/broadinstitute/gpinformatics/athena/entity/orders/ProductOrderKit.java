@@ -1,8 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import net.sourceforge.stripes.action.StreamingResolution;
+import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.envers.Audited;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,6 +19,8 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.util.Collection;
 
 /**
  * Represents the Kit info which is associated with a Sample Initiation PDO.
@@ -124,12 +133,46 @@ public class ProductOrderKit implements Serializable {
         this.organismId = organismId;
     }
 
+    public String getOrganismName() {
+        //need method from bspclient to get organism by id
+/*        BspGroupCollectionTokenInput bspGroupCollectionTokenInput = new BspGroupCollectionTokenInput();
+        SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
+
+        JSONObject collectionAndOrganismsList = new JSONObject();
+        if (sampleCollection != null) {
+            Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
+
+            collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
+
+            // Create the json array of items for the chunk
+            JSONArray itemList = new JSONArray();
+            collectionAndOrganismsList.put("organisms", itemList);
+
+            for (Pair<Long, String> organism : organisms) {
+                JSONObject item = new JSONObject();
+                item.put("id", organism.getLeft());
+                item.put("name", organism.getRight());
+
+                itemList.put(item);
+            }
+        }
+
+        return new StreamingResolution("text", new StringReader(collectionAndOrganismsList.toString()));*/
+        return "";
+    }
+
     public Long getSiteId() {
         return siteId;
     }
 
     public void setSiteId(long siteId) {
         this.siteId = siteId;
+    }
+
+    public String getSiteName() {
+        //tried getting siteName but the following collection is empty.
+        BSPGroupCollectionList bspGroupCollectionList = new BSPGroupCollectionList();
+        return bspGroupCollectionList.getById(siteId).getCollectionName();
     }
 
     public MaterialInfo getMaterialInfo() {

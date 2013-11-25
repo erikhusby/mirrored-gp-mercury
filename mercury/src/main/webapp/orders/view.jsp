@@ -717,6 +717,96 @@ function formatInput(item) {
 </div>
 </div>
 
+<c:if test="${actionBean.sampleInitiation}">
+    <div class="form-horizontal span5">
+        <fieldset>
+            <legend><h4>Sample Kit Request</h4></legend>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Number of Samples</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
+                                ${actionBean.editOrder.productOrderKit.numberOfSamples}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Kit Type</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.kitTypeName != null}">
+                            ${actionBean.editOrder.productOrderKit.kitTypeName}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Group and Collection</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
+                                ${actionBean.editOrder.productOrderKit.sampleCollectionId}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Organism</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.organismId != null}">
+                            ${actionBean.editOrder.productOrderKit.organismId}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Shipping Location</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
+                            ${actionBean.editOrder.productOrderKit.siteId}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Material Information</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.materialInfo.bspName != null}">
+                            ${actionBean.editOrder.productOrderKit.materialInfo.bspName}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Notification List</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.productOrderKit.notifications != null}">
+                                ${actionBean.editOrder.researchProject.broadPIs},
+                                ${actionBean.editOrder.productOrderKit.notifications}
+                            </c:when>
+                            <c:otherwise>
+                                None
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+</c:if>
 </div>
 
 <div class="borderHeader">
