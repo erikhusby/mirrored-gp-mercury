@@ -604,7 +604,7 @@ public class SystemRouterTest extends BaseEventTest {
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testGetSystemOfRecordForTubeNotInPDONotInBSP(ApplicationInstance instance) {
+    public void testGetSystemOfRecordForTubeNotInExExPDONotInBSP(ApplicationInstance instance) {
         IsExported.ExportResult exportResult = new IsExported.ExportResult();
         exportResult.setBarcode(MERCURY_TUBE_1);
         Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
@@ -612,15 +612,16 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
-        // TODO add in place or transfer to events that unambiguously point to Mercury to cause the
-        // TODO SystemRouter#determineSystemOfRecordPerBspExports logic to be invoked.
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SHEARING_BUCKET, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
+
         // BSP lookup misses should route to Squid.
         exportResult.setNotFound("I know not this vessel of which thee speak.");
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testGetSystemOfRecordForTubeInPDONotInBSP(ApplicationInstance instance) {
+    public void testGetSystemOfRecordForTubeInExExPDONotInBSP(ApplicationInstance instance) {
         IsExported.ExportResult exportResult = new IsExported.ExportResult();
         exportResult.setBarcode(MERCURY_TUBE_1);
         Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
@@ -629,9 +630,27 @@ public class SystemRouterTest extends BaseEventTest {
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
         placeOrderForTube(tube1, exomeExpress);
+        // TODO: add another test case for a WORKFLOW_DEPENDENT LabEventType
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SHEARING_BUCKET, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
 
-        // TODO add in place or transfer to events that unambiguously point to Mercury to cause the
-        // TODO SystemRouter#determineSystemOfRecordPerBspExports logic to be invoked.
+        // If there's an error determining the export destination (not a lookup miss), we expect to see an exception.
+        exportResult.setNotFound("I know not this vessel of which thee speak.");
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeBSPError(ApplicationInstance instance) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(MERCURY_TUBE_1);
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+        exportResultSet.add(exportResult);
+        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
+        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
+
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
+                "testRouteForTubeInSamplesLab"));
+
         // If there's an error determining the export destination (not a lookup miss), we expect to see an exception.
         exportResult.setError("Test error");
         try {
@@ -641,8 +660,6 @@ public class SystemRouterTest extends BaseEventTest {
             // Okay!
         }
     }
-
-    // TODO: add test for when ExportResult.error is set -- should throw exception
 
     /*
      * Tests for routing and system of record for a validation LCSET

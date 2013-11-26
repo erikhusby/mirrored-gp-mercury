@@ -165,20 +165,14 @@ public class SystemRouter implements Serializable {
             if (CollectionUtils.isEmpty(destinations)) {
                 // If there are no export destinations given in the results, look for lookup misses or errors.
                 String error = exportResult.getError();
-                String notFound = exportResult.getNotFound();
 
-                System system;
-                if (error == null && notFound == null) {
+                if (error == null) {
                     // The vessel is recognized but was never exported, so this is MERCURY.
-                    system = MERCURY;
-                } else if (notFound != null) {
-                    // The vessel is not recognized by BSP, so route to SQUID.
-                    system = SQUID;
+                    systemToVessels.put(MERCURY, vesselBarcode);
                 } else {
                     // Error trying to look up vessel.
                     throw new InformaticsServiceException(error);
                 }
-                systemToVessels.put(system, vesselBarcode);
 
             } else {
                 if (destinations.size() > 1) {
@@ -243,6 +237,8 @@ public class SystemRouter implements Serializable {
                 case MERCURY:
                     // If everything here has been exported to sequencing.
                     return determineSystemOfRecordPerBspExports(labVessels);
+                case WORKFLOW_DEPENDENT:
+                    // Fall through.
                 }
             }
         }
