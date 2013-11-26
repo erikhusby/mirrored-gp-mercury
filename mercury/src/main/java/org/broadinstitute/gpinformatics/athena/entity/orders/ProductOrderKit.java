@@ -55,6 +55,7 @@ public class ProductOrderKit implements Serializable {
     @Column(name="material_bsp_name")
     private String materialBspName;
 
+    // notifications consists of Long values (bsp user ids) delimited by UserTokenInput.STRING_FORMAT_DELIMITER.
     @Column(name="notifications")
     private String notifications;
 

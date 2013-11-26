@@ -757,16 +757,27 @@ public class ProductOrderActionBean extends CoreActionBean {
                     new String[]{editOrder.getResearchProject().getBusinessKey()};
         }
 
-        String sampleCollectionKey = String.valueOf(editOrderKit.getSampleCollectionId());
-        bspGroupCollectionTokenInput.setup(
-                !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+        if (bspGroupCollectionTokenInput != null) {
+            String sampleCollectionKey = editOrderKit.getSampleCollectionId() != null ?
+                    String.valueOf(editOrderKit.getSampleCollectionId()) : null;
+            bspGroupCollectionTokenInput.setup(
+                    !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+        }
 
         if (bspShippingLocationTokenInput != null) {
-            String siteKey = String.valueOf(editOrderKit.getSiteId());
+            String siteKey = editOrderKit.getSiteId() != null ? String.valueOf(editOrderKit.getSiteId()) : null;
             bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         }
 
-// xxx long, not string        notificationListTokenInput.setup(new String[]{editOrderKit.getNotifications()});
+        if (notificationListTokenInput != null) {
+            List<Long> notificationIds = new ArrayList<>();
+            if (!StringUtils.isBlank(editOrderKit.getNotifications())) {
+                for (String id : editOrderKit.getNotifications().split(UserTokenInput.STRING_FORMAT_DELIMITER)) {
+                    notificationIds.add(Long.parseLong(id));
+                }
+            }
+            notificationListTokenInput.setup(notificationIds.toArray(new Long[0]));
+        }
     }
 
     @HandlesEvent(PLACE_ORDER)
@@ -864,7 +875,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                                    bspShippingLocationTokenInput.getTokenObject() != null ?
                     bspShippingLocationTokenInput.getTokenObject().getId() : null);
             editOrderKit.setNotifications(notificationListTokenInput != null ?
-                    notificationListTokenInput.getEmailList() : null);
+                    StringUtils.join(notificationListTokenInput.getBusinessKeyList(),
+                            UserTokenInput.STRING_FORMAT_DELIMITER) : null);
             editOrder.setProductOrderKit(editOrderKit);
         }
         // Save it!
