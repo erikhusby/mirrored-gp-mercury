@@ -70,6 +70,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
 
         return businessKeyList;
     }
+    public static final String STRING_FORMAT_DELIMITER = ", ";
 
     /**
      * Returns a comma separated list of e-mail addresses.
@@ -81,6 +82,6 @@ public class UserTokenInput extends TokenInput<BspUser> {
             emailList.add(user.getEmail());
         }
 
-        return StringUtils.join(emailList, ", ");
+        return StringUtils.join(emailList, STRING_FORMAT_DELIMITER);
     }
 }
