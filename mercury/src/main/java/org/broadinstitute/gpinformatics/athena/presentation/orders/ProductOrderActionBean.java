@@ -282,12 +282,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private KitType kitType;
-
-    private MaterialInfo materialInfo;
-
-    private String materialInfoString;
-
     private static List<MaterialInfo> dnaMatrixMaterialTypes;
 
     /*
@@ -409,6 +403,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderKit kit = editOrder.getProductOrderKit();
             requireField(kit.getNumberOfSamples() > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
+            if (!StringUtils.isBlank(kit.getMaterialBspName()) &&
+                !dnaMatrixMaterialTypes.contains(kit.getMaterialInfo())) {
+
+                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
+                        kit.getMaterialBspName());
+            }
             requireField(kit.getMaterialInfo(), "a material type", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
             // Avoid NPE if Research Project isn't set yet.
@@ -465,14 +465,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
-        if (!StringUtils.isBlank(materialInfoString)) {
-            materialInfo = new MaterialInfo(kitType.getKitName() , materialInfoString);
-            if (!dnaMatrixMaterialTypes.contains(materialInfo)) {
-                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
-                        materialInfoString);
-            }
-        }
-
         doValidation(action);
 
         if (!hasErrors()) {
@@ -765,7 +757,16 @@ public class ProductOrderActionBean extends CoreActionBean {
                     new String[]{editOrder.getResearchProject().getBusinessKey()};
         }
 
-        projectTokenInput.setup(projectKey);
+        String sampleCollectionKey = String.valueOf(editOrderKit.getSampleCollectionId());
+        bspGroupCollectionTokenInput.setup(
+                !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+
+        if (bspShippingLocationTokenInput != null) {
+            String siteKey = String.valueOf(editOrderKit.getSiteId());
+            bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
+        }
+
+// xxx long, not string        notificationListTokenInput.setup(new String[]{editOrderKit.getNotifications()});
     }
 
     @HandlesEvent(PLACE_ORDER)
@@ -856,14 +857,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         if (isSampleInitiation()) {
-            editOrderKit.setKitType(kitType);
             editOrderKit.setSampleCollectionId(bspGroupCollectionTokenInput != null &&
                                                bspGroupCollectionTokenInput.getTokenObject() != null ?
                     bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
             editOrderKit.setSiteId(bspShippingLocationTokenInput != null &&
                                    bspShippingLocationTokenInput.getTokenObject() != null ?
                     bspShippingLocationTokenInput.getTokenObject().getId() : null);
-            editOrderKit.setMaterialBspName(materialInfoString);
             editOrderKit.setNotifications(notificationListTokenInput != null ?
                     notificationListTokenInput.getEmailList() : null);
             editOrder.setProductOrderKit(editOrderKit);
@@ -1703,14 +1702,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedLedgerStatuses = selectedLedgerStatuses;
     }
 
-    public KitType getKitType() {
-        return kitType;
-    }
-
-    public void setKitType(KitType kitType) {
-        this.kitType = kitType;
-    }
-
     /**
      * @return Show the create title if this is a developer or PDM.
      */
@@ -1734,14 +1725,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public ProductOrder.OrderStatus[] getOrderStatuses() {
         return ProductOrder.OrderStatus.values();
-    }
-
-    public String getMaterialInfoString() {
-        return materialInfoString;
-    }
-
-    public void setMaterialInfoString(String materialInfoString) {
-        this.materialInfoString = materialInfoString;
     }
 
     public UserTokenInput getNotificationListTokenInput() {
