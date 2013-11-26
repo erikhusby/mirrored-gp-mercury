@@ -58,9 +58,8 @@ public class ProductOrderKit implements Serializable {
     @Column(name="notifications")
     private String notifications;
 
-    // Required by JPA.
-    @SuppressWarnings("UnusedDeclaration")
-    protected ProductOrderKit() {
+    // Required by JPA and used when creating new pdo.
+    public ProductOrderKit() {
     }
 
     public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,

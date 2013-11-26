@@ -8,6 +8,7 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
@@ -40,17 +41,9 @@ public class BSPKitRequestService {
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
      * @param productOrder       the product order to create the kit request from
-     * @param siteId             the site that the kit should be shipped to
-     * @param numberOfSamples    the number of samples to put in the kit
-     * @param materialInfo       materialInfo of the kit request
-     * @param sampleCollectionId the sample collection
-     * @param notificationList   comma separated list of e-mail addresses to send notifications to upon kit shipment.
-     * @param organismId         the organism to use
      *  @return the BSP work request ID
      */
-    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Long siteId, long numberOfSamples,
-                                                  MaterialInfo materialInfo, Long sampleCollectionId,
-                                                  String notificationList, long organismId) {
+    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -73,10 +66,11 @@ public class BSPKitRequestService {
         String workRequestName = String.format("%s - %s", productOrder.getName(), productOrder.getBusinessKey());
         String requesterId = creator.getUsername();
 
+        ProductOrderKit kit = productOrder.getProductOrderKit();
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, siteId, numberOfSamples, materialInfo, sampleCollectionId, notificationList,
-                organismId);
+                externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
+                kit.getSampleCollectionId(), kit.getNotifications(), kit.getOrganismId());
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
