@@ -604,7 +604,7 @@ public class SystemRouterTest extends BaseEventTest {
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testGetSystemOfRecordForTubeWithErrorFromBSPFindExportService(ApplicationInstance instance) {
+    public void testGetSystemOfRecordForTubeNotInPDONotInBSP(ApplicationInstance instance) {
         IsExported.ExportResult exportResult = new IsExported.ExportResult();
         exportResult.setBarcode(MERCURY_TUBE_1);
         Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
@@ -612,17 +612,24 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
-
-        // If there's an error determining the export destination, ???
+        // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
         exportResult.setError("Test error");
-/*
-        try {
-            systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
-            Assert.fail("Expected exception for unexpected export destination: GAP");
-        } catch (InformaticsServiceException expected) {}
-*/
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+    }
+
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeInPDONotInBSP(ApplicationInstance instance) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(MERCURY_TUBE_1);
+        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+        exportResultSet.add(exportResult);
+        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
+        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
+
+        placeOrderForTube(tube1, exomeExpress);
+
+        // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
+        exportResult.setError("Test error");
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
 
