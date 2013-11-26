@@ -613,6 +613,7 @@ public class SystemRouterTest extends BaseEventTest {
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
         // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
+        // TODO: change this to set flag that BSP does not recognize tube
         exportResult.setError("Test error");
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
@@ -629,9 +630,12 @@ public class SystemRouterTest extends BaseEventTest {
         placeOrderForTube(tube1, exomeExpress);
 
         // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
+        // TODO: change this to set flag that BSP does not recognize tube
         exportResult.setError("Test error");
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
+
+    // TODO: add test for when ExportResult.error is set -- should throw exception
 
     /*
      * Tests for routing and system of record for a validation LCSET
