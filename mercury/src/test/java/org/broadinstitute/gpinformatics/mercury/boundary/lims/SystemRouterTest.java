@@ -569,6 +569,7 @@ public class SystemRouterTest extends BaseEventTest {
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
 
         // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury.
+        assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
         exportResult.setExportDestinations(EnumSet.noneOf(IsExported.ExternalSystem.class));
@@ -592,6 +593,8 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
+        // Add a MERCURY samples lab event.
+        assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
 
@@ -612,7 +615,9 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SHEARING_BUCKET, new Date(), "SystemRouterTest", 0L, 0L,
+        // Add a WORKFLOW_DEPENDENT event.
+        assertThat(LabEventType.A_BASE.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.WORKFLOW_DEPENDENT));
+        tube1.addInPlaceEvent(new LabEvent(LabEventType.A_BASE, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
 
         // BSP lookup misses should route to Squid.
@@ -630,7 +635,8 @@ public class SystemRouterTest extends BaseEventTest {
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
         placeOrderForTube(tube1, exomeExpress);
-        // TODO: add another test case for a WORKFLOW_DEPENDENT LabEventType
+        // Add a MERCURY event.
+        assertThat(LabEventType.SHEARING_BUCKET.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SHEARING_BUCKET, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
 
@@ -648,6 +654,8 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
+        // Add a MERCURY samples lab event.
+        assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
         tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
                 "testRouteForTubeInSamplesLab"));
 
