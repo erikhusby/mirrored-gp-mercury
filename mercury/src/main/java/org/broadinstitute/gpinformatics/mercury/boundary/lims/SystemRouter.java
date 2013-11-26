@@ -163,14 +163,23 @@ public class SystemRouter implements Serializable {
             Set<IsExported.ExternalSystem> destinations = exportResult.getExportDestinations();
             String vesselBarcode = exportResult.getBarcode();
             if (CollectionUtils.isEmpty(destinations)) {
-                // If there is no route but there is an error, assume BSP did not recognize the barcode so it must be
-                // a non-samples lab vessel.  Assume SQUID is the reasonable response in this case.
-                if (!StringUtils.isEmpty(exportResult.getError())) {
-                    systemToVessels.put(SQUID, vesselBarcode);
+                // If there are no export destinations given in the results, look for lookup misses or errors.
+                String error = exportResult.getError();
+                String notFound = exportResult.getNotFound();
+
+                System system;
+                if (error == null && notFound == null) {
+                    // The vessel is recognized but was never exported, so this is MERCURY.
+                    system = MERCURY;
+                } else if (notFound != null) {
+                    // The vessel is not recognized by BSP, so route to SQUID.
+                    system = SQUID;
                 } else {
-                    // If there is no route and no error, this simply hasn't been exported.
-                    systemToVessels.put(MERCURY, vesselBarcode);
+                    // Error trying to look up vessel.
+                    throw new InformaticsServiceException(error);
                 }
+                systemToVessels.put(system, vesselBarcode);
+
             } else {
                 if (destinations.size() > 1) {
                     // How can a vessel be exported to more than one destination?
@@ -187,6 +196,8 @@ public class SystemRouter implements Serializable {
                         systemToVessels.put(MERCURY, vesselBarcode);
                         break;
                     default:
+                        // We are not currently expecting to see vessels exported to destinations other than Sequencing
+                        // or Mercury.
                         throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
                     }
                 }

@@ -612,9 +612,10 @@ public class SystemRouterTest extends BaseEventTest {
         IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
         when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
 
-        // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
-        // TODO: change this to set flag that BSP does not recognize tube
-        exportResult.setError("Test error");
+        // TODO add in place or transfer to events that unambiguously point to Mercury to cause the
+        // TODO SystemRouter#determineSystemOfRecordPerBspExports logic to be invoked.
+        // BSP lookup misses should route to Squid.
+        exportResult.setNotFound("I know not this vessel of which thee speak.");
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
 
@@ -629,10 +630,16 @@ public class SystemRouterTest extends BaseEventTest {
 
         placeOrderForTube(tube1, exomeExpress);
 
-        // If there's an error determining the export destination, then BSP does not know about the tube, so the routing should be workflow-dependent.
-        // TODO: change this to set flag that BSP does not recognize tube
+        // TODO add in place or transfer to events that unambiguously point to Mercury to cause the
+        // TODO SystemRouter#determineSystemOfRecordPerBspExports logic to be invoked.
+        // If there's an error determining the export destination (not a lookup miss), we expect to see an exception.
         exportResult.setError("Test error");
-        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+        try {
+            systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
+            Assert.fail("Expected exception for error data");
+        } catch (InformaticsServiceException e) {
+            // Okay!
+        }
     }
 
     // TODO: add test for when ExportResult.error is set -- should throw exception

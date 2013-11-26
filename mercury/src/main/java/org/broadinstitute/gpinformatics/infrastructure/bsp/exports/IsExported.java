@@ -36,6 +36,8 @@ public class IsExported {
 
         private String error;
 
+        private String notFound;
+
         private Set<ExternalSystem> exportDestinations;
 
         public String getBarcode() {
@@ -44,6 +46,14 @@ public class IsExported {
 
         public void setBarcode(String barcode) {
             this.barcode = barcode;
+        }
+
+        public String getNotFound() {
+            return notFound;
+        }
+
+        public void setNotFound(String notFound) {
+            this.notFound = notFound;
         }
 
         public void setError(String error) {
@@ -93,15 +103,6 @@ public class IsExported {
         @Override
         public int hashCode() {
             return barcode.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "ExportResult{" +
-                   "barcode='" + barcode + '\'' +
-                   ", error='" + error + '\'' +
-                   ", exportDestinations=" + exportDestinations +
-                   '}';
         }
     }
 
