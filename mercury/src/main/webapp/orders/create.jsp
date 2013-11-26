@@ -479,7 +479,7 @@
                                 Kit Type *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select id="kitType" name="kitType">
+                                <stripes:select id="kitType" name="editOrderKit.kitType">
                                     <stripes:options-enumeration label="displayName"
                                                                  enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
                                             />
@@ -522,7 +522,7 @@
                                 Material Information  *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select name="materialInfoString">
+                                <stripes:select name="editOrderKit.materialBspName">
                                     <stripes:option label="Choose..." value=""/>
                                     <stripes:options-collection value="bspName"
                                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
