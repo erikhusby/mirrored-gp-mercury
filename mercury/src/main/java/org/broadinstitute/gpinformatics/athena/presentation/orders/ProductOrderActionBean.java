@@ -1504,7 +1504,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject itemList = new JSONObject();
         if (sampleCollection != null) {
             itemList.put("collectionName", sampleCollection.getCollectionName());
-            itemList.put("organismName", editOrderKit.getOrganismId());
+            itemList.put("organismName", editOrderKit.getOrganismId());  // todo is this right?
             itemList.put("siteName", bspShippingLocationTokenInput.getTokenObject().getName());
         }
         return new StreamingResolution("text", new StringReader(itemList.toString()));

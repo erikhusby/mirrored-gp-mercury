@@ -789,9 +789,7 @@ function formatInput(item) {
                 <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
                 <div id="kitOrganism" class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.organismId != null}">
                             ${actionBean.editOrderKit.organismName}
-                        </c:if>
                     </div>
                 </div>
             </div>

@@ -479,7 +479,7 @@
                                 Kit Type *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select id="kitType" name="editOrderKit.kitType.name">
+                                <stripes:select id="kitType" name="editOrderKit.kitTypeName">
                                     <stripes:options-enumeration label="displayName"
                                                                  enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
                                             />
@@ -503,7 +503,8 @@
                             <stripes:label for="selectedOrganism" class="control-label">
                                 Organism  *
                             </stripes:label>
-                            <div id="selectedOrganism" class="controls"> </div>
+                            <div id="selectedOrganism" class="controls">
+                            </div>
                         </div>
 
                         <div class="control-group">
