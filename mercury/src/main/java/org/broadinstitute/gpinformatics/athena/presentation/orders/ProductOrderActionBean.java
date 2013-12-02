@@ -1481,6 +1481,38 @@ public class ProductOrderActionBean extends CoreActionBean {
     public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
         return bspShippingLocationTokenInput;
     }
+//=======================================================================================================================================
+    @HandlesEvent("collectionRequiredItems")
+    public Resolution collectionRequiredItems() throws Exception {
+
+        SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
+
+        JSONObject itemList = new JSONObject();
+        if (sampleCollection != null) {
+            itemList.put("collectionName", sampleCollection.getCollectionName());
+            itemList.put("organismName", sampleCollection.getOrganisms()); //having issues
+            itemList.put("siteName", bspShippingLocationTokenInput.getTokenObject().getName());
+        }
+        // Create the json array of items for the chunk
+        /*
+        Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
+
+        JSONArray itemList = new JSONArray();
+        collectionAndOrganismsList.put("organisms", itemList);
+
+        for (Pair<Long, String> organism : organisms) {
+            JSONObject item = new JSONObject();
+            item.put("id", organism.getLeft());
+            item.put("name", organism.getRight());
+
+            itemList.put(item);
+        }
+        */
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+
+//        return new StreamingResolution("text", sampleCollection.getCollectionName());
+    }
+    //=======================================================================================================================================
 
     public BspGroupCollectionTokenInput getBspGroupCollectionTokenInput() {
         return bspGroupCollectionTokenInput;

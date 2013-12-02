@@ -42,8 +42,44 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
-});
 
+    updateUIForCollection();
+});
+function updateUIForCollection() {
+    $j.ajax({
+        url: "${ctxpath}/orders/order.action?collectionRequiredItems=&bspGroupCollectionTokenInput.listOfKeys="
+                + ${actionBean.editOrder.productOrderKit.sampleCollectionId} + "&bspShippingLocationTokenInput.listOfKeys="
+                + ${actionBean.editOrder.productOrderKit.siteId},
+        dataType: 'json',
+        success: setupCollectionRequiredItems
+    });
+}
+function setupCollectionRequiredItems(data) {
+    var collection = data.collectionName;
+    var site = data.siteName;
+    var organism = data.organismName.name;
+
+    if ((collection == null) || (collection.length == 0)) {
+        $j("#kitCollection").text("None");
+    }
+    else {
+        $j("#kitCollection").text(collection);
+    }
+
+    if ((collection == null) || (collection.length == 0)) {
+        $j("#kitOrganism").text("None");
+    }
+    else {
+        $j("#kitOrganism").text(organism);
+    }
+
+    if ((site == null) || (site.length == 0)) {
+        $j("#kitSite").text("None");
+    }
+    else {
+        $j("#kitSite").text(site);
+    }
+}
 var bspDataCount = 0;
 
 function setupDialogs() {
@@ -727,7 +763,7 @@ function formatInput(item) {
                 <div class="controls">
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
-                                ${actionBean.editOrder.productOrderKit.numberOfSamples}
+                            ${actionBean.editOrder.productOrderKit.numberOfSamples}
                         </c:if>
                     </div>
                 </div>
@@ -745,36 +781,18 @@ function formatInput(item) {
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Group and Collection</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
-                                ${actionBean.editOrder.productOrderKit.sampleCollectionId}
-                        </c:if>
-                    </div>
-                </div>
+                <stripes:label for="kitCollection" class="control-label label-form">Group and Collection</stripes:label>
+                <div id="kitCollection" class="controls"> </div>
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Organism</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.organismId != null}">
-                            ${actionBean.editOrder.productOrderKit.organismId}
-                        </c:if>
-                    </div>
-                </div>
+                <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
+                <div id="kitOrganism" class="controls"> </div>
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Shipping Location</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
-                            ${actionBean.editOrder.productOrderKit.siteId}
-                        </c:if>
-                    </div>
-                </div>
+                <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
+                <div id="kitSite" class="controls"> </div>
             </div>
 
             <div class="view-control-group control-group">
