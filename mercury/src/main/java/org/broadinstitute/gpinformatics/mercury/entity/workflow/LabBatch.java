@@ -253,6 +253,13 @@ public class LabBatch {
         return batchName;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
     public void setJiraTicket(JiraTicket jiraTicket) {
         this.jiraTicket = jiraTicket;
         jiraTicket.setLabBatch(this);
