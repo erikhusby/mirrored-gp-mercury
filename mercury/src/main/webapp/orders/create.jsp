@@ -169,7 +169,7 @@
                     return;
                 }
 
-                var organismSelect = '<select name="organismId">';
+                var organismSelect = '<select name="editOrderKit.organismId">';
                 $j.each(organisms, function(index, organism) {
                     organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
                 });
@@ -522,7 +522,7 @@
                                 Material Information  *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select name="editOrderKit.materialBspName">
+                                <stripes:select name="editOrderKit.bspMaterialName">
                                     <stripes:option label="Choose..." value=""/>
                                     <stripes:options-collection value="bspName"
                                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>

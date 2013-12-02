@@ -41,7 +41,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamil
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.preference.NameValueDefinitionValue;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinitionValue;
@@ -207,8 +212,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private UserTokenInput notificationListTokenInput;
-
-    private Long organismId;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -403,11 +406,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderKit kit = editOrder.getProductOrderKit();
             requireField(kit.getNumberOfSamples() > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
-            if (!StringUtils.isBlank(kit.getMaterialBspName()) &&
+            if (!StringUtils.isBlank(kit.getBspMaterialName()) &&
                 !dnaMatrixMaterialTypes.contains(kit.getMaterialInfo())) {
 
                 addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
-                        kit.getMaterialBspName());
+                        kit.getBspMaterialName());
             }
             requireField(kit.getMaterialInfo(), "a material type", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
@@ -645,14 +648,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
         }
-        if (isSampleInitiation()) {
-            // Sets up the kit drop-downs.
-            //xxx kitTypeKeys.clear();
-            //xxx sampleCollectionKeys.clear();
-            //xxx organismKeys.clear();
-            //xxx shippingLocationKeys.clear();
-            //xxx materialKeys.clear();
-        }
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -762,6 +757,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                     String.valueOf(editOrderKit.getSampleCollectionId()) : null;
             bspGroupCollectionTokenInput.setup(
                     !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+
+            editOrderKit.setOrganismName(null);
+            if (editOrderKit.getOrganismId() != null) {
+                SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
+
+                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                    if (editOrderKit.getOrganismId().equals(organism.getLeft())) {
+                        editOrderKit.setOrganismName(organism.getRight());
+                    }
+                }
+            }
         }
 
         if (bspShippingLocationTokenInput != null) {
@@ -874,7 +880,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrderKit.setSiteId(bspShippingLocationTokenInput != null &&
                                    bspShippingLocationTokenInput.getTokenObject() != null ?
                     bspShippingLocationTokenInput.getTokenObject().getId() : null);
-            editOrderKit.setNotifications(notificationListTokenInput != null ?
+            editOrderKit.setNotifications((notificationListTokenInput != null &&
+                                           notificationListTokenInput.getBusinessKeyList() != null) ?
                     StringUtils.join(notificationListTokenInput.getBusinessKeyList(),
                             UserTokenInput.STRING_FORMAT_DELIMITER) : null);
             editOrder.setProductOrderKit(editOrderKit);
@@ -1777,14 +1784,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setNotificationListTokenInput(UserTokenInput notificationListTokenInput) {
         this.notificationListTokenInput = notificationListTokenInput;
-    }
-
-    public Long getOrganismId() {
-        return organismId;
-    }
-
-    public void setOrganismId(Long organismId) {
-        this.organismId = organismId;
     }
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {

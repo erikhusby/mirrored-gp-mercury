@@ -773,8 +773,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Kit Type</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.kitTypeName != null}">
-                            ${actionBean.editOrder.productOrderKit.kitTypeName}
+                        <c:if test="${actionBean.editOrderKit.kitTypeName != null}">
+                            ${actionBean.editOrderKit.kitTypeName}
                         </c:if>
                     </div>
                 </div>
@@ -799,8 +799,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Material Information</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.materialInfo.bspName != null}">
-                            ${actionBean.editOrder.productOrderKit.materialInfo.bspName}
+                        <c:if test="${actionBean.editOrderKit.bspMaterialName != null}">
+                            ${actionBean.editOrderKit.bspMaterialName}
                         </c:if>
                     </div>
                 </div>

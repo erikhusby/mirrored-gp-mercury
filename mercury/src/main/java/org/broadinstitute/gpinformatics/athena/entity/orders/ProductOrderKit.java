@@ -11,6 +11,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.Serializable;
 
 /**
@@ -44,35 +45,27 @@ public class ProductOrderKit implements Serializable {
     private Long siteId;
 
     @Column(name="material_bsp_name")
-    private String materialBspName;
+    private String bspMaterialName;
 
     // notifications consists of Long values (bsp user ids) delimited by UserTokenInput.STRING_FORMAT_DELIMITER.
     @Column(name="notifications")
     private String notifications;
 
+    @Transient
+    private String organismName;
+
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
     }
 
-    public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
-                           long siteId, MaterialInfo materialInfo, String notifications) {
+    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId,
+                           Long siteId, MaterialInfo materialInfo, String notifications) {
         this.numberOfSamples = numberOfSamples;
         this.kitTypeName = kitType != null ? kitType.getKitName() : null;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
-        this.materialBspName = materialInfo != null ? materialInfo.getBspName() : null;
-        this.notifications = notifications;
-    }
-
-    public ProductOrderKit(Long numberOfSamples, KitType kitType, long sampleCollectionId, Long organismId,
-                           long siteId, String materialInfoString, String notifications) {
-        this.numberOfSamples = numberOfSamples;
-        this.kitTypeName = kitType != null ? kitType.getKitName() : null;
-        this.sampleCollectionId = sampleCollectionId;
-        this.organismId = organismId;
-        this.siteId = siteId;
-        this.materialBspName = materialInfoString;
+        this.bspMaterialName = materialInfo != null ? materialInfo.getBspName() : null;
         this.notifications = notifications;
     }
 
@@ -124,28 +117,37 @@ public class ProductOrderKit implements Serializable {
         this.organismId = organismId;
     }
 
+    public void setOrganismName(String s) {
+        organismName = s;
+    }
+
+    /** This is only populated after actionBean.populateTokenListsFromObjectData() is run. */
+    public String getOrganismName() {
+        return organismName;
+    }
+
     public Long getSiteId() {
         return siteId;
     }
 
-    public void setSiteId(long siteId) {
+    public void setSiteId(Long siteId) {
         this.siteId = siteId;
     }
 
     public MaterialInfo getMaterialInfo() {
-        return new MaterialInfo(kitTypeName, materialBspName);
+        return new MaterialInfo(kitTypeName, bspMaterialName);
     }
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
-        materialBspName = materialInfo != null ? materialInfo.getBspName() : null;
+        bspMaterialName = materialInfo != null ? materialInfo.getBspName() : null;
     }
 
-    public String getMaterialBspName() {
-        return materialBspName;
+    public String getBspMaterialName() {
+        return bspMaterialName;
     }
 
-    public void setMaterialBspName(String materialInfo) {
-        this.materialBspName = materialInfo;
+    public void setBspMaterialName(String materialInfo) {
+        this.bspMaterialName = materialInfo;
     }
 
     public String getNotifications() {
