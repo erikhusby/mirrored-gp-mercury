@@ -337,6 +337,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
                 editOrderKit = editOrder.getProductOrderKit();
+                updateKitOrganismName();
             }
         }
     }
@@ -709,6 +710,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return errorResolution;
         }
+        editOrderKit = editOrder.getProductOrderKit();
 
         if (editOrder.isDraft()) {
             validateUser("place");
@@ -734,6 +736,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
+    private void updateKitOrganismName() {
+        if (bspGroupCollectionTokenInput != null) {
+            String sampleCollectionKey = editOrderKit.getSampleCollectionId() != null ?
+                    String.valueOf(editOrderKit.getSampleCollectionId()) : null;
+            bspGroupCollectionTokenInput.setup(
+                    !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+
+            editOrderKit.setOrganismName(null);
+
+            if (editOrderKit.getOrganismId() != null) {
+                SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
+                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                    if (editOrderKit.getOrganismId().equals(organism.getLeft())) {
+                        editOrderKit.setOrganismName(organism.getRight());
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
      * the pages have the values passed in.
@@ -751,24 +773,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             projectKey = (editOrder.getResearchProject() == null) ? new String[0] :
                     new String[]{editOrder.getResearchProject().getBusinessKey()};
         }
+        projectTokenInput.setup(projectKey);
 
-        if (bspGroupCollectionTokenInput != null) {
-            String sampleCollectionKey = editOrderKit.getSampleCollectionId() != null ?
-                    String.valueOf(editOrderKit.getSampleCollectionId()) : null;
-            bspGroupCollectionTokenInput.setup(
-                    !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
-
-            editOrderKit.setOrganismName(null);
-            if (editOrderKit.getOrganismId() != null) {
-                SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
-
-                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                    if (editOrderKit.getOrganismId().equals(organism.getLeft())) {
-                        editOrderKit.setOrganismName(organism.getRight());
-                    }
-                }
-            }
-        }
+        updateKitOrganismName();
 
         if (bspShippingLocationTokenInput != null) {
             String siteKey = editOrderKit.getSiteId() != null ? String.valueOf(editOrderKit.getSiteId()) : null;
@@ -1488,7 +1495,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
         return bspShippingLocationTokenInput;
     }
-//=======================================================================================================================================
+    //=======================================================================================================================================
     @HandlesEvent("collectionRequiredItems")
     public Resolution collectionRequiredItems() throws Exception {
 
@@ -1497,27 +1504,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject itemList = new JSONObject();
         if (sampleCollection != null) {
             itemList.put("collectionName", sampleCollection.getCollectionName());
-            itemList.put("organismName", sampleCollection.getOrganisms()); //having issues
+            itemList.put("organismName", editOrderKit.getOrganismId());
             itemList.put("siteName", bspShippingLocationTokenInput.getTokenObject().getName());
         }
-        // Create the json array of items for the chunk
-        /*
-        Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
-
-        JSONArray itemList = new JSONArray();
-        collectionAndOrganismsList.put("organisms", itemList);
-
-        for (Pair<Long, String> organism : organisms) {
-            JSONObject item = new JSONObject();
-            item.put("id", organism.getLeft());
-            item.put("name", organism.getRight());
-
-            itemList.put(item);
-        }
-        */
         return new StreamingResolution("text", new StringReader(itemList.toString()));
 
-//        return new StreamingResolution("text", sampleCollection.getCollectionName());
     }
     //=======================================================================================================================================
 

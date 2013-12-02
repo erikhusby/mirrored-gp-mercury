@@ -48,8 +48,8 @@ $j(document).ready(function () {
 function updateUIForCollection() {
     $j.ajax({
         url: "${ctxpath}/orders/order.action?collectionRequiredItems=&bspGroupCollectionTokenInput.listOfKeys="
-                + ${actionBean.editOrder.productOrderKit.sampleCollectionId} + "&bspShippingLocationTokenInput.listOfKeys="
-                + ${actionBean.editOrder.productOrderKit.siteId},
+                + ${actionBean.editOrderKit.sampleCollectionId} + "&bspShippingLocationTokenInput.listOfKeys="
+                + ${actionBean.editOrderKit.siteId},
         dataType: 'json',
         success: setupCollectionRequiredItems
     });
@@ -762,8 +762,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Number of Samples</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
-                            ${actionBean.editOrder.productOrderKit.numberOfSamples}
+                        <c:if test="${actionBean.editOrderKit.numberOfSamples != null}">
+                            ${actionBean.editOrderKit.numberOfSamples}
                         </c:if>
                     </div>
                 </div>
@@ -787,7 +787,13 @@ function formatInput(item) {
 
             <div class="view-control-group control-group">
                 <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
-                <div id="kitOrganism" class="controls"> </div>
+                <div id="kitOrganism" class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrderKit.organismId != null}">
+                            ${actionBean.editOrderKit.organismName}
+                        </c:if>
+                    </div>
+                </div>
             </div>
 
             <div class="view-control-group control-group">
@@ -811,8 +817,8 @@ function formatInput(item) {
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
-                            <c:when test="${actionBean.editOrder.productOrderKit.notifications != null}">
-                                ${actionBean.editOrder.productOrderKit.notifications}
+                            <c:when test="${actionBean.editOrderKit.notifications != null}">
+                                ${actionBean.editOrderKit.notifications}
                             </c:when>
                             <c:otherwise>
                                 None
