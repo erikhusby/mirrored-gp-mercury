@@ -142,4 +142,23 @@ public class LabBatchFixUpTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupGplim2355() {
+        List<String> batchNames = new ArrayList<>();
+        batchNames.add("EX-41050");
+        batchNames.add("EX-41052");
+        batchNames.add("EX-41054");
+        batchNames.add("EX-41056");
+        batchNames.add("EX-41058");
+        batchNames.add("EX-41060");
+        batchNames.add("EX-41062");
+        batchNames.add("EX-41066");
+        batchNames.add("EX-41068");
+        for (String batchName : batchNames) {
+            LabBatch labBatch = labBatchDao.findByName(batchName);
+            labBatch.setBatchName(batchName + "x");
+        }
+        labBatchDao.flush();
+    }
+
 }
