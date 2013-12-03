@@ -792,8 +792,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (notificationListTokenInput != null) {
             List<Long> notificationIds = new ArrayList<>();
             if (!StringUtils.isBlank(editOrder.getProductOrderKit().getNotifications())) {
-                for (String id : editOrder.getProductOrderKit().getNotifications().split(UserTokenInput.STRING_FORMAT_DELIMITER)) {
-                    notificationIds.add(Long.parseLong(id));
+                for (long id : editOrder.getProductOrderKit().getNotificationIds()) {
+                    notificationIds.add(id);
                 }
             }
             notificationListTokenInput.setup(notificationIds.toArray(new Long[0]));

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.envers.Audited;
 
@@ -178,5 +179,23 @@ public class ProductOrderKit implements Serializable {
 
     public void setNotifications(String notifications) {
         this.notifications = notifications;
+    }
+
+    /**
+     * This turns the stored list of notification ids into the appropriate long array. Since the
+     * notification member is storing the ids as a token separate list, use the token input object to
+     * split this apart.
+     *
+     * @return The array of longs.
+     */
+    public Long[] getNotificationIds() {
+        String[] keys = notifications.split(UserTokenInput.STRING_FORMAT_DELIMITER);
+        Long[] notificationIds = new Long[keys.length];
+        int i = 0;
+        for (String key : keys) {
+            notificationIds[i++] = Long.valueOf(key);
+        }
+
+        return notificationIds;
     }
 }
