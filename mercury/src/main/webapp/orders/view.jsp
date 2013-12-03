@@ -42,44 +42,8 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
-
-    updateUIForCollection();
 });
-function updateUIForCollection() {
-    $j.ajax({
-        url: "${ctxpath}/orders/order.action?collectionRequiredItems=&bspGroupCollectionTokenInput.listOfKeys="
-                + ${actionBean.editOrderKit.sampleCollectionId} + "&bspShippingLocationTokenInput.listOfKeys="
-                + ${actionBean.editOrderKit.siteId},
-        dataType: 'json',
-        success: setupCollectionRequiredItems
-    });
-}
-function setupCollectionRequiredItems(data) {
-    var collection = data.collectionName;
-    var site = data.siteName;
-    var organism = data.organismName.name;
 
-    if ((collection == null) || (collection.length == 0)) {
-        $j("#kitCollection").text("None");
-    }
-    else {
-        $j("#kitCollection").text(collection);
-    }
-
-    if ((collection == null) || (collection.length == 0)) {
-        $j("#kitOrganism").text("None");
-    }
-    else {
-        $j("#kitOrganism").text(organism);
-    }
-
-    if ((site == null) || (site.length == 0)) {
-        $j("#kitSite").text("None");
-    }
-    else {
-        $j("#kitSite").text(site);
-    }
-}
 var bspDataCount = 0;
 
 function setupDialogs() {
@@ -828,7 +792,7 @@ function formatInput(item) {
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${actionBean.editOrderKit.notifications != null}">
-                                ${actionBean.editOrderKit.notifications}
+                                ${actionBean.getUserListString(actionBean.editOrderKit.notifications)}
                             </c:when>
                             <c:otherwise>
                                 None

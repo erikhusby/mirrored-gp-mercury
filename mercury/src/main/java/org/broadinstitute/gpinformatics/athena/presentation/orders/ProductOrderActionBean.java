@@ -755,9 +755,25 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
             editOrderKit.setSampleCollectionName(sampleCollection.getCollectionName());
 
-            if (editOrderKit.getSiteId() != null) {
-//                editOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
+            if (bspShippingLocationTokenInput != null) {
+                String siteKey = editOrderKit.getSiteId() != null ?
+                        String.valueOf(editOrderKit.getSiteId()) : null;
+                bspShippingLocationTokenInput.setup(
+                        !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
+                if (editOrderKit.getSiteId() != null) {
+                    editOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
+                }
             }
+
+/*            if (notificationListTokenInput != null) {
+                String siteKey = editOrderKit.getNotifications() != null ?
+                        String.valueOf(editOrderKit.getNotifications()) : null;
+                notificationListTokenInput.setup(
+                        !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
+                if (editOrderKit.getNotifications() != null) {
+                    editOrderKit.setNotifications(notificationListTokenInput.getTokenObject().getFullName());
+                }
+            }*/
         }
     }
 
@@ -1500,22 +1516,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public BspShippingLocationTokenInput getBspShippingLocationTokenInput() {
         return bspShippingLocationTokenInput;
     }
-    //=======================================================================================================================================
-    @HandlesEvent("collectionRequiredItems")
-    public Resolution collectionRequiredItems() throws Exception {
-
-        SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
-
-        JSONObject itemList = new JSONObject();
-        if (sampleCollection != null) {
-            itemList.put("collectionName", sampleCollection.getCollectionName());
-            itemList.put("organismName", editOrderKit.getOrganismId());  // todo is this right?
-            itemList.put("siteName", bspShippingLocationTokenInput.getTokenObject().getName());
-        }
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
-
-    }
-    //=======================================================================================================================================
 
     public BspGroupCollectionTokenInput getBspGroupCollectionTokenInput() {
         return bspGroupCollectionTokenInput;
