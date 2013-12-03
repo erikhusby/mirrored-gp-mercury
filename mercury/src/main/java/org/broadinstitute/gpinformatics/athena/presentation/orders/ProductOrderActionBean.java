@@ -705,7 +705,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return errorResolution;
         }
-
+        updateFromInitiationTokenInputs();
         if (editOrder.isDraft()) {
             validateUser("place");
         }
@@ -729,6 +729,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
+    /**
+     * Set all the transients using the Injected Token Input, even though the JSP doesn't set them
+     */
     private void updateFromInitiationTokenInputs() {
         if (bspGroupCollectionTokenInput != null) {
             String sampleCollectionKey = editOrder.getProductOrderKit().getSampleCollectionId() != null ?
