@@ -337,7 +337,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
                 editOrderKit = editOrder.getProductOrderKit();
-                updateKitOrganismName();
             }
         }
     }
@@ -711,6 +710,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             return errorResolution;
         }
         editOrderKit = editOrder.getProductOrderKit();
+        updateKitOrganismName();
 
         if (editOrder.isDraft()) {
             validateUser("place");
@@ -745,13 +745,18 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             editOrderKit.setOrganismName(null);
 
+            SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
             if (editOrderKit.getOrganismId() != null) {
-                SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
                 for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
                     if (editOrderKit.getOrganismId().equals(organism.getLeft())) {
                         editOrderKit.setOrganismName(organism.getRight());
                     }
                 }
+            }
+            editOrderKit.setSampleCollectionName(sampleCollection.getCollectionName());
+
+            if (editOrderKit.getSiteId() != null) {
+//                editOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
             }
         }
     }

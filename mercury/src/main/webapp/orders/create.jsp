@@ -117,9 +117,6 @@
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
-                    $j("#samplesToAdd").val('');
-                    $j("#sampleListEdit").hide();
-                    $j("#sampleInitiationKitRequestEdit").val('');
                     $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
                     $j.ajax({
@@ -139,7 +136,6 @@
                         $j("#sampleListEdit").hide();
                         $j("#sampleInitiationKitRequestEdit").show();
                     } else {
-                        $j("#sampleInitiationKitRequestEdit").val('');
                         $j("#sampleInitiationKitRequestEdit").hide();
                         $j("#sampleListEdit").show();
                     }
@@ -162,6 +158,7 @@
 
             function setupOrganismMenu(data) {
                 var collection = data.collectionName;
+                var selectedOrganismId = ${actionBean.editOrderKit.organismId};
 
                 var organisms = data.organisms;
                 if ((organisms == null) || (organisms.length == 0)) {
@@ -171,7 +168,8 @@
 
                 var organismSelect = '<select name="editOrderKit.organismId">';
                 $j.each(organisms, function(index, organism) {
-                    organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
+                    var selectedString = (organism.id == selectedOrganismId) ? 'selected="selected"' : '';
+                    organismSelect += '  <option value="' + organism.id + '" ' + selectedString + '>' + organism.name + '</option>';
                 });
                 organismSelect += '</select>';
 

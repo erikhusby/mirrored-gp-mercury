@@ -782,7 +782,13 @@ function formatInput(item) {
 
             <div class="view-control-group control-group">
                 <stripes:label for="kitCollection" class="control-label label-form">Group and Collection</stripes:label>
-                <div id="kitCollection" class="controls"> </div>
+                <div id="kitCollection" class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrderKit.sampleCollectionId != null}">
+                            ${actionBean.editOrderKit.sampleCollectionName}
+                        </c:if>
+                    </div>
+                </div>
             </div>
 
             <div class="view-control-group control-group">
@@ -796,7 +802,13 @@ function formatInput(item) {
 
             <div class="view-control-group control-group">
                 <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
-                <div id="kitSite" class="controls"> </div>
+                <div id="kitSite" class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrderKit.siteId != null}">
+                            ${actionBean.editOrderKit.siteName}
+                        </c:if>
+                    </div>
+                </div>
             </div>
 
             <div class="view-control-group control-group">
