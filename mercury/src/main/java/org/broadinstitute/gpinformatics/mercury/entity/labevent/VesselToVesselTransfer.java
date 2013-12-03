@@ -15,7 +15,7 @@ import javax.persistence.ManyToOne;
  */
 @Entity
 @Audited
-public class VesselToVesselTransfer extends VesselTransfer{
+public class VesselToVesselTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;

@@ -59,7 +59,7 @@ import java.util.Set;
  * In this model, LabEvents have to be quite aware of
  * the particulars of their inputs and outputs.  This
  * means it must be easy for lab staff to change expected
- * inputs and outputs based bot on the event definition
+ * inputs and outputs based both on the event definition
  * (think: Bravo protocol file) as well as the workflow.
  * <p/>
  * LabEvents can be re-used in different workflows, with
