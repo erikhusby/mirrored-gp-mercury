@@ -54,6 +54,12 @@ public class ProductOrderKit implements Serializable {
     @Transient
     private String organismName;
 
+    @Transient
+    private String siteName;
+
+    @Transient
+    private String sampleCollectionName;
+
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
     }
@@ -105,8 +111,16 @@ public class ProductOrderKit implements Serializable {
         return sampleCollectionId;
     }
 
+    public String getSampleCollectionName() {
+        return sampleCollectionName;
+    }
+
     public void setSampleCollectionId(Long sampleCollectionId) {
         this.sampleCollectionId = sampleCollectionId;
+    }
+
+    public void setSampleCollectionName(String s) {
+        sampleCollectionName = s;
     }
 
     public Long getOrganismId() {
@@ -130,8 +144,16 @@ public class ProductOrderKit implements Serializable {
         return siteId;
     }
 
+    public String getSiteName() {
+        return siteName;
+    }
+
     public void setSiteId(Long siteId) {
         this.siteId = siteId;
+    }
+
+    public void setSiteName(String s) {
+        siteName = s;
     }
 
     public MaterialInfo getMaterialInfo() {
