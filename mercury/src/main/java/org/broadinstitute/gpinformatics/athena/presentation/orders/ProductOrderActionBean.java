@@ -301,7 +301,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductFamily> productFamilies;
 
     /**
-     * Initialize the product with the passed in key for display in the form or create it, if not seditOrderpecified.
+     * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
