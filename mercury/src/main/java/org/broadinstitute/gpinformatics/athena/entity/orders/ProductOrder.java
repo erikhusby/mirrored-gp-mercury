@@ -925,6 +925,10 @@ public class ProductOrder implements BusinessObject, Serializable {
     }
 
     public ProductOrderKit getProductOrderKit() {
+        if (productOrderKit == null) {
+            productOrderKit = new ProductOrderKit();
+        }
+
         return productOrderKit;
     }
 

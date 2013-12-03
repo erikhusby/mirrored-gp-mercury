@@ -726,8 +726,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Number of Samples</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.numberOfSamples != null}">
-                            ${actionBean.editOrderKit.numberOfSamples}
+                        <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
+                            ${actionBean.editOrder.productOrderKit.numberOfSamples}
                         </c:if>
                     </div>
                 </div>
@@ -737,8 +737,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Kit Type</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.kitTypeName != null}">
-                            ${actionBean.editOrderKit.kitTypeName}
+                        <c:if test="${actionBean.editOrder.productOrderKit.kitTypeName != null}">
+                            ${actionBean.editOrder.productOrderKit.kitTypeName}
                         </c:if>
                     </div>
                 </div>
@@ -748,8 +748,8 @@ function formatInput(item) {
                 <stripes:label for="kitCollection" class="control-label label-form">Group and Collection</stripes:label>
                 <div id="kitCollection" class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.sampleCollectionId != null}">
-                            ${actionBean.editOrderKit.sampleCollectionName}
+                        <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
+                            ${actionBean.editOrder.productOrderKit.sampleCollectionName}
                         </c:if>
                     </div>
                 </div>
@@ -759,7 +759,7 @@ function formatInput(item) {
                 <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
                 <div id="kitOrganism" class="controls">
                     <div class="form-value">
-                            ${actionBean.editOrderKit.organismName}
+                            ${actionBean.editOrder.productOrderKit.organismName}
                     </div>
                 </div>
             </div>
@@ -768,8 +768,8 @@ function formatInput(item) {
                 <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
                 <div id="kitSite" class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.siteId != null}">
-                            ${actionBean.editOrderKit.siteName}
+                        <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
+                            ${actionBean.editOrder.productOrderKit.siteName}
                         </c:if>
                     </div>
                 </div>
@@ -779,8 +779,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Material Information</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrderKit.bspMaterialName != null}">
-                            ${actionBean.editOrderKit.bspMaterialName}
+                        <c:if test="${actionBean.editOrder.productOrderKit.bspMaterialName != null}">
+                            ${actionBean.editOrder.productOrderKit.bspMaterialName}
                         </c:if>
                     </div>
                 </div>
@@ -791,8 +791,8 @@ function formatInput(item) {
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
-                            <c:when test="${actionBean.editOrderKit.notifications != null}">
-                                ${actionBean.getUserListString(actionBean.editOrderKit.notifications)}
+                            <c:when test="${actionBean.editOrder.productOrderKit.notifications != null}">
+                                ${actionBean.editOrder.productOrderKit.notifications}
                             </c:when>
                             <c:otherwise>
                                 None

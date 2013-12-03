@@ -243,7 +243,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes")
     })
     private ProductOrder editOrder;
-    private ProductOrderKit editOrderKit;
 
     // For create, we can also have a research project key to default.
     private String researchProjectKey;
@@ -302,7 +301,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductFamily> productFamilies;
 
     /**
-     * Initialize the product with the passed in key for display in the form or create it, if not specified.
+     * Initialize the product with the passed in key for display in the form or create it, if not seditOrderpecified.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {"!" + LIST_ACTION, "!getQuoteFunding", "!" + VIEW_ACTION})
@@ -312,13 +311,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-                editOrderKit = editOrder.getProductOrderKit();
             }
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
-            editOrderKit = new ProductOrderKit();
         }
     }
 
@@ -336,7 +333,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-                editOrderKit = editOrder.getProductOrderKit();
             }
         }
     }
@@ -709,8 +705,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return errorResolution;
         }
-        editOrderKit = editOrder.getProductOrderKit();
-        updateKitOrganismName();
 
         if (editOrder.isDraft()) {
             validateUser("place");
@@ -723,7 +717,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         setSubmitString(CREATE_ORDER);
         populateTokenListsFromObjectData();
         owner.setup(userBean.getBspUser().getUserId());
-        editOrderKit = new ProductOrderKit();
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
@@ -736,44 +729,37 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
-    private void updateKitOrganismName() {
+    private void updateFromInitiationTokenInputs() {
         if (bspGroupCollectionTokenInput != null) {
-            String sampleCollectionKey = editOrderKit.getSampleCollectionId() != null ?
-                    String.valueOf(editOrderKit.getSampleCollectionId()) : null;
+            String sampleCollectionKey = editOrder.getProductOrderKit().getSampleCollectionId() != null ?
+                    String.valueOf(editOrder.getProductOrderKit().getSampleCollectionId()) : null;
             bspGroupCollectionTokenInput.setup(
                     !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
 
-            editOrderKit.setOrganismName(null);
+            editOrder.getProductOrderKit().setOrganismName(null);
 
             SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
-            if (editOrderKit.getOrganismId() != null) {
-                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                    if (editOrderKit.getOrganismId().equals(organism.getLeft())) {
-                        editOrderKit.setOrganismName(organism.getRight());
+            if (sampleCollection != null) {
+                if (editOrder.getProductOrderKit().getOrganismId() != null) {
+                    for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                        if (editOrder.getProductOrderKit().getOrganismId().equals(organism.getLeft())) {
+                            editOrder.getProductOrderKit().setOrganismName(organism.getRight());
+                        }
                     }
                 }
+
+                editOrder.getProductOrderKit().setSampleCollectionName(sampleCollection.getCollectionName());
             }
-            editOrderKit.setSampleCollectionName(sampleCollection.getCollectionName());
 
             if (bspShippingLocationTokenInput != null) {
-                String siteKey = editOrderKit.getSiteId() != null ?
-                        String.valueOf(editOrderKit.getSiteId()) : null;
+                String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
+                        String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
                 bspShippingLocationTokenInput.setup(
                         !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
-                if (editOrderKit.getSiteId() != null) {
-                    editOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
+                if (editOrder.getProductOrderKit().getSiteId() != null) {
+                    editOrder.getProductOrderKit().setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
                 }
             }
-
-/*            if (notificationListTokenInput != null) {
-                String siteKey = editOrderKit.getNotifications() != null ?
-                        String.valueOf(editOrderKit.getNotifications()) : null;
-                notificationListTokenInput.setup(
-                        !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
-                if (editOrderKit.getNotifications() != null) {
-                    editOrderKit.setNotifications(notificationListTokenInput.getTokenObject().getFullName());
-                }
-            }*/
         }
     }
 
@@ -796,17 +782,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         projectTokenInput.setup(projectKey);
 
-        updateKitOrganismName();
+        updateFromInitiationTokenInputs();
 
         if (bspShippingLocationTokenInput != null) {
-            String siteKey = editOrderKit.getSiteId() != null ? String.valueOf(editOrderKit.getSiteId()) : null;
+            String siteKey = editOrder.getProductOrderKit().getSiteId() != null ? String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
             bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         }
 
         if (notificationListTokenInput != null) {
             List<Long> notificationIds = new ArrayList<>();
-            if (!StringUtils.isBlank(editOrderKit.getNotifications())) {
-                for (String id : editOrderKit.getNotifications().split(UserTokenInput.STRING_FORMAT_DELIMITER)) {
+            if (!StringUtils.isBlank(editOrder.getProductOrderKit().getNotifications())) {
+                for (String id : editOrder.getProductOrderKit().getNotifications().split(UserTokenInput.STRING_FORMAT_DELIMITER)) {
                     notificationIds.add(Long.parseLong(id));
                 }
             }
@@ -901,19 +887,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
-        if (isSampleInitiation()) {
-            editOrderKit.setSampleCollectionId(bspGroupCollectionTokenInput != null &&
-                                               bspGroupCollectionTokenInput.getTokenObject() != null ?
-                    bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
-            editOrderKit.setSiteId(bspShippingLocationTokenInput != null &&
-                                   bspShippingLocationTokenInput.getTokenObject() != null ?
-                    bspShippingLocationTokenInput.getTokenObject().getId() : null);
-            editOrderKit.setNotifications((notificationListTokenInput != null &&
-                                           notificationListTokenInput.getBusinessKeyList() != null) ?
-                    StringUtils.join(notificationListTokenInput.getBusinessKeyList(),
-                            UserTokenInput.STRING_FORMAT_DELIMITER) : null);
-            editOrder.setProductOrderKit(editOrderKit);
-        }
         // Save it!
         productOrderDao.persist(editOrder);
 
@@ -931,6 +904,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
         BspUser tokenOwner = owner.getTokenObject();
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
+
+        // For sample initiation fields we will set token input fields.
+        if (isSampleInitiation()) {
+            editOrder.getProductOrderKit().setSampleCollectionId(
+                    bspGroupCollectionTokenInput != null && bspGroupCollectionTokenInput.getTokenObject() != null ?
+                            bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
+            editOrder.getProductOrderKit().setSiteId(
+                    bspShippingLocationTokenInput != null && bspShippingLocationTokenInput.getTokenObject() != null ?
+                            bspShippingLocationTokenInput.getTokenObject().getId() : null);
+            editOrder.getProductOrderKit().setNotifications(
+                    notificationListTokenInput != null && notificationListTokenInput.getBusinessKeyList() != null ?
+                            StringUtils.join(notificationListTokenInput.getBusinessKeyList(),
+                                    UserTokenInput.STRING_FORMAT_DELIMITER) : null);
+        }
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -1285,14 +1272,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setEditOrder(ProductOrder editOrder) {
         this.editOrder = editOrder;
-    }
-
-    public ProductOrderKit getEditOrderKit() {
-        return editOrderKit;
-    }
-
-    public void setEditOrderKit(ProductOrderKit editOrderKit) {
-        this.editOrderKit = editOrderKit;
     }
 
     public String getQuoteUrl(String quoteIdentifier) {

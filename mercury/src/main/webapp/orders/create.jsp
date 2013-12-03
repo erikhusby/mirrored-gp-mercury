@@ -158,7 +158,6 @@
 
             function setupOrganismMenu(data) {
                 var collection = data.collectionName;
-                var selectedOrganismId = ${actionBean.editOrderKit.organismId};
 
                 var organisms = data.organisms;
                 if ((organisms == null) || (organisms.length == 0)) {
@@ -166,7 +165,10 @@
                     return;
                 }
 
-                var organismSelect = '<select name="editOrderKit.organismId">';
+                // Even though the id is a long, if there is no value then this needs something empty, so using a string
+                // for the long or empty will work in the later comparison.
+                var selectedOrganismId = ${actionBean.ensureStringResult(actionBean.editOrder.productOrderKit.organismId)};
+                var organismSelect = '<select name="editOrder.productOrderKit.organismId">';
                 $j.each(organisms, function(index, organism) {
                     var selectedString = (organism.id == selectedOrganismId) ? 'selected="selected"' : '';
                     organismSelect += '  <option value="' + organism.id + '" ' + selectedString + '>' + organism.name + '</option>';
@@ -464,30 +466,29 @@
 
                         <div class="control-group">
                             <stripes:label for="tubesPerKit" class="control-label">
-                                Number of Samples *
+                                Number of Samples
                             </stripes:label>
                             <div class="controls">
-                                <stripes:text id="tubesPerKit" name="editOrderKit.numberOfSamples"
+                                <stripes:text id="tubesPerKit" name="editOrder.productOrderKit.numberOfSamples"
                                               class="defaultText" title="Enter the number of samples"/>
                             </div>
                         </div>
 
                         <div class="control-group">
                             <stripes:label for="kitType" class="control-label">
-                                Kit Type *
+                                Kit Type
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select id="kitType" name="editOrderKit.kitTypeName">
+                                <stripes:select id="kitType" name="editOrder.productOrderKit.kitTypeName">
                                     <stripes:options-enumeration label="displayName"
-                                                                 enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
-                                            />
+                                                                 enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
                                 </stripes:select>
                             </div>
                         </div>
 
                         <div class="control-group">
                             <stripes:label for="kitCollection" class="control-label">
-                                Group and Collection *
+                                Group and Collection
                             </stripes:label>
                             <div class="controls" id="kitCollectionSelection">
                                 <stripes:text
@@ -499,7 +500,7 @@
 
                         <div class="control-group">
                             <stripes:label for="selectedOrganism" class="control-label">
-                                Organism  *
+                                Organism
                             </stripes:label>
                             <div id="selectedOrganism" class="controls">
                             </div>
@@ -507,7 +508,7 @@
 
                         <div class="control-group">
                             <stripes:label for="shippingLocation" class="control-label">
-                                Shipping Location  *
+                                Shipping Location
                             </stripes:label>
                             <div class="controls">
                                 <stripes:text
@@ -518,10 +519,10 @@
                         </div>
                         <div class="control-group">
                             <stripes:label for="materialInfo" class="control-label">
-                                Material Information  *
+                                Material Information
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select name="editOrderKit.bspMaterialName">
+                                <stripes:select name="editOrder.productOrderKit.bspMaterialName">
                                     <stripes:option label="Choose..." value=""/>
                                     <stripes:options-collection value="bspName"
                                                                 collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
