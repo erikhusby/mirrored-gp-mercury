@@ -6,7 +6,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.athena.presentation.filters.CacheFilter;
-import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.scannotation.AnnotationDB;
 import org.scannotation.ClasspathUrlFinder;
 import org.scannotation.WarUrlFinder;
@@ -385,14 +385,14 @@ public class MercuryConfiguration {
     }
 
     private static String getConfigPath() {
-        if (Deployment.isCRSP) {
+        if (ApplicationInstance.CRSP.isCurrent()) {
             return CRSP_MERCURY_CONFIG;
         }
         return MERCURY_CONFIG;
     }
 
     private static String getLocalConfigPath() {
-        if (Deployment.isCRSP) {
+        if (ApplicationInstance.CRSP.isCurrent()) {
             return CRSP_MERCURY_CONFIG_LOCAL;
         }
         return MERCURY_CONFIG_LOCAL;

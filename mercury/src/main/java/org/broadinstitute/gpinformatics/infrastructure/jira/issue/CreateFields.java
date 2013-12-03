@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.NameableTypeJsonSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.Nameable;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
@@ -105,7 +105,7 @@ public class CreateFields extends UpdateFields {
          */
         ProjectType(String projectName, String keyPrefix, String crspKeyPrefix) {
             this.projectName = projectName;
-            this.keyPrefix = Deployment.isCRSP ? crspKeyPrefix : keyPrefix;
+            this.keyPrefix = ApplicationInstance.CRSP.isCurrent() ? crspKeyPrefix : keyPrefix;
         }
 
         // TODO: currently unused. Can use someday to look up prefix in JIRA instead of hardcoding it here.
@@ -146,7 +146,7 @@ public class CreateFields extends UpdateFields {
          * @param crspPrefix the prefix for CRSP JIRA, if any
          */
         IssueType(String jiraName, String crspPrefix) {
-            this.jiraName = Deployment.isCRSP ? crspPrefix + jiraName : jiraName;
+            this.jiraName = ApplicationInstance.CRSP.isCurrent() ? crspPrefix + jiraName : jiraName;
         }
 
         /** The name for this Issue Type in JIRA. */
