@@ -94,6 +94,7 @@
 
                     $j("#fundingDeadline").datepicker();
                     $j("#publicationDeadline").datepicker();
+                    $j("#sampleListEdit").hide();
 
                     updateUIForProductChoice();
                     updateFundsRemaining();
@@ -119,6 +120,8 @@
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                     $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
+                    $j("#sampleListEdit").show();
+
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                         dataType: 'json',
@@ -137,7 +140,6 @@
                         $j("#sampleInitiationKitRequestEdit").show();
                     } else {
                         $j("#sampleInitiationKitRequestEdit").hide();
-                        $j("#sampleListEdit").show();
                     }
                 }
             }
