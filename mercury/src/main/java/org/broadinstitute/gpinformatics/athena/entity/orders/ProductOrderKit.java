@@ -30,26 +30,26 @@ public class ProductOrderKit implements Serializable {
     @Column(name="product_order_kit_id", unique=true, nullable=false)
     private Long productOrderKitId;
 
-    @Column(name="number_samples")
+    @Column(name = "number_samples")
     private Long numberOfSamples;
 
-    @Column(name="kit_type")
+    @Column(name = "kit_type")
     private String kitTypeName;
 
-    @Column(name="sample_collection_id")
+    @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
 
-    @Column(name="organism_id")
+    @Column(name = "organism_id")
     private Long organismId;
 
-    @Column(name="site_id")
+    @Column(name = "site_id")
     private Long siteId;
 
-    @Column(name="material_bsp_name")
+    @Column(name = "material_bsp_name")
     private String bspMaterialName;
 
     // notifications consists of Long values (bsp user ids) delimited by UserTokenInput.STRING_FORMAT_DELIMITER.
-    @Column(name="notifications")
+    @Column(name = "notifications")
     private String notifications;
 
     @Transient
