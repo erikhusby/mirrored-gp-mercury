@@ -134,7 +134,7 @@
                         success: updateNumberOfLanesVisibility
                     });
                     if (productKey == "P-ESH-0001") {
-                        //Product is Sample Initiation
+                        // Product is Sample Initiation.
                         $j("#samplesToAdd").val('');
                         $j("#sampleListEdit").hide();
                         $j("#sampleInitiationKitRequestEdit").show();
@@ -146,15 +146,25 @@
 
             function updateUIForCollectionChoice() {
                 var collectionKey = $j("#kitCollection").val();
-                if ((collectionKey == null) || (collectionKey == "")) {
+                if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
                     $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
+
+                    $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
+                    $j("#shippingLocationSelection").hide();
+
+                    // This is not null safe, so we must make a check to ensure the UI is not affected.
+                    if ($j("#shippingLocation").val() != null) {
+                        $j("#shippingLocation").tokenInput("clear");
+                    }
                 } else {
                     $j.ajax({
-                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys="
-                                + $j("#kitCollection").val(),
+                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
                         dataType: 'json',
                         success: setupOrganismMenu
                     });
+
+                    $j("#sitePrompt").remove();
+                    $j("#shippingLocationSelection").show();
                 }
             }
 
@@ -512,7 +522,7 @@
                             <stripes:label for="shippingLocation" class="control-label">
                                 Shipping Location
                             </stripes:label>
-                            <div class="controls">
+                            <div class="controls" id="shippingLocationSelection">
                                 <stripes:text
                                         id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
                                         class="defaultText"
