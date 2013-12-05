@@ -1588,6 +1588,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
     }
 
+    public String getSampleInitiationProductPartNumber() {
+        return new Product().getSampleInitiationPartNumber();
+    }
+
     /**
      * Convenience method for verifying whether a PDO is able to be abandoned.
      *

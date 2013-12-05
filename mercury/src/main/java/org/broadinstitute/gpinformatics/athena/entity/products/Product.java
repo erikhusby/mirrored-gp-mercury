@@ -550,6 +550,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return partNumber.equals(SAMPLE_INITIATION_PART_NUMBER);
     }
 
+    public String getSampleInitiationPartNumber() {
+        return SAMPLE_INITIATION_PART_NUMBER;
+    }
+
     public List<RiskCriterion> getRiskCriteria() {
         return riskCriteria;
     }

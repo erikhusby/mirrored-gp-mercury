@@ -121,6 +121,14 @@
                     $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
                     $j("#sampleListEdit").show();
+                    if (productKey == "${actionBean.getSampleInitiationProductPartNumber()}") {
+                        // Product is Sample Initiation "P-ESH-0001".
+                        $j("#samplesToAdd").val('');
+                        $j("#sampleListEdit").hide();
+                        $j("#sampleInitiationKitRequestEdit").show();
+                    } else {
+                        $j("#sampleInitiationKitRequestEdit").hide();
+                    }
 
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
@@ -133,14 +141,6 @@
                         dataType: 'json',
                         success: updateNumberOfLanesVisibility
                     });
-                    if (productKey == "P-ESH-0001") {
-                        // Product is Sample Initiation.
-                        $j("#samplesToAdd").val('');
-                        $j("#sampleListEdit").hide();
-                        $j("#sampleInitiationKitRequestEdit").show();
-                    } else {
-                        $j("#sampleInitiationKitRequestEdit").hide();
-                    }
                 }
             }
 
