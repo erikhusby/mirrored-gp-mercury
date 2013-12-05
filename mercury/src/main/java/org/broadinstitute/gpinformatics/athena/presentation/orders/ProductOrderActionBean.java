@@ -125,12 +125,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     private static final String PLACE_ORDER = "placeOrder";
+    private static final String VALIDATE_ORDER = "validate";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -319,6 +321,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void setupMaterialTypes() {
+        dnaMatrixMaterialTypes =
+                bspManagerFactory.createSampleManager().getMaterialInfoObjects(
+                        KitType.DNA_MATRIX.getKitName());
+        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
+    }
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
@@ -464,6 +474,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
+        updateTokenInputFields();
+
         doValidation(action);
 
         if (!hasErrors()) {
@@ -649,7 +661,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
             on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION})
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -859,7 +871,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getBusinessKey());
     }
 
-    @HandlesEvent("validate")
+    @HandlesEvent(VALIDATE_ORDER)
     public Resolution validate() {
         validatePlacedOrder("validate");
         if (!hasErrors()) {
@@ -1769,11 +1781,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {
-        dnaMatrixMaterialTypes =
-                bspManagerFactory.createSampleManager().getMaterialInfoObjects(
-                        KitType.DNA_MATRIX.getKitName());
-        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
-
         return dnaMatrixMaterialTypes;
     }
 }
