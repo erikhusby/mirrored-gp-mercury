@@ -413,7 +413,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(kit.getNumberOfSamples() > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
             if (!StringUtils.isBlank(kit.getBspMaterialName()) &&
-                !dnaMatrixMaterialTypes.contains(kit.getMaterialInfo())) {
+                !materialTypesContains(kit.getBspMaterialName())) {
 
                 addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
                         kit.getBspMaterialName());
@@ -447,6 +447,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    private boolean materialTypesContains(String bspMaterialName) {
+        for (MaterialInfo info : dnaMatrixMaterialTypes) {
+            if (info.getBspName().equalsIgnoreCase(bspMaterialName)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void doOnRiskUpdate() {
         try {
             // Calculate risk here and get back any error message.
@@ -474,13 +484,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
-        updateTokenInputFields();
 
         doValidation(action);
 
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
+
+        updateFromInitiationTokenInputs();
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
