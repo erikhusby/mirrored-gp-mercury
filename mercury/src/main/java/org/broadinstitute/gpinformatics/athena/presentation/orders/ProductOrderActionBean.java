@@ -732,6 +732,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return errorResolution;
         }
+
         updateFromInitiationTokenInputs();
         if (editOrder.isDraft()) {
             validateUser("place");
@@ -831,6 +832,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
+        String originalBusinessKey = editOrder.getBusinessKey();
+
         try {
             editOrder.prepareToSave(userBean.getBspUser());
             editOrder.placeOrder();
@@ -841,9 +844,18 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
-            // Save it!
+            originalBusinessKey = null;
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
+
+            // If we get here with an original business key, then clear out the session and refetch the order.
+            if (originalBusinessKey != null) {
+                productOrderDao.clear();
+                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
+            }
+
+            updateFromInitiationTokenInputs();
+
             addGlobalValidationError(e.toString());
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
             entryInit();
@@ -851,10 +863,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
-
         productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
 
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    private Resolution handlePlaceError(Exception e) {
+        addGlobalValidationError(e.toString());
+        entryInit();
+        return getSourcePageResolution();
     }
 
     private SampleCollection getSelectedCollection() {
@@ -880,9 +897,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
     }
 
-    private Resolution createViewResolution() {
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
-                editOrder.getBusinessKey());
+    private Resolution createViewResolution(String businessKey) {
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
+                PRODUCT_ORDER_PARAMETER, businessKey);
     }
 
     @HandlesEvent(VALIDATE_ORDER)
@@ -920,7 +937,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
     private void updateTokenInputFields() {
@@ -1193,7 +1210,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
 
@@ -1214,7 +1231,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} set manual on risk to {2} for {1} samples.",
                 userBean.getLoginUserName(), selectedProductOrderSampleIds.size(), riskStatus));
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
     @HandlesEvent(RECALCULATE_RISK)
@@ -1238,7 +1255,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError(ex.getMessage());
         }
 
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
     @HandlesEvent(ABANDON_SAMPLES_ACTION)
@@ -1258,14 +1275,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
-        return createViewResolution();
+        return createViewResolution(editOrder.getBusinessKey());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
