@@ -63,6 +63,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -780,7 +781,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getProductOrderKit().setSampleCollectionName(sampleCollection.getCollectionName());
             }
 
-            if (bspShippingLocationTokenInput != null) {
+            if ((bspShippingLocationTokenInput != null) && (bspShippingLocationTokenInput.getTokenObject() != null)) {
                 String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
                         String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
                 bspShippingLocationTokenInput.setup(
@@ -826,7 +827,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            notificationListTokenInput.setup(notificationIds.toArray(new Long[0]));
+            notificationListTokenInput.setup(notificationIds.toArray(new Long[notificationIds.size()]));
         }
     }
 
@@ -1057,6 +1058,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (samples != null) {
             // Assuming all samples come from same product order here.
             ProductOrder.loadBspData(samples);
+            ProductOrder.loadLabEventSampleData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
@@ -1088,6 +1090,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", bspSampleDTO.getTotal());
         item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
         item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+
+        LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
+
+        if (labEventSampleDTO != null) {
+            item.put("packageDate", labEventSampleDTO.getSamplePackagedDate());
+            item.put("receiptDate", labEventSampleDTO.getSampleReceiptDate());
+        } else {
+            item.put("packageDate", "");
+            item.put("receiptDate", "");
+        }
     }
 
     private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
@@ -1111,6 +1123,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", "");
         item.put("hasFingerprint", "");
         item.put("hasSampleKitUploadRackscanMismatch", "");
+        item.put("packageDate", "");
+        item.put("receiptDate", "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -1134,7 +1148,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK}, priority = 0)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET}, priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1182,6 +1196,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
+    }
+
+
+    @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
+    public Resolution addSamplesToBucket(){
+        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+        return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
     @HandlesEvent(SET_RISK)
@@ -1661,6 +1682,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             return StringUtils.join(progressPieces, ", ");
         }
+    }
+
+    public Map<String, Date> getProductOrderSampleReceiptDates() {
+        return productOrderSampleReceiptDates;
+    }
+
+    public void setProductOrderSampleReceiptDates(Map<String, Date> productOrderSampleReceipts) {
+        this.productOrderSampleReceiptDates = productOrderSampleReceipts;
     }
 
     /**
