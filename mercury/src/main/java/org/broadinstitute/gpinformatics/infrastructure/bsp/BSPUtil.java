@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import java.util.regex.Pattern;
@@ -33,7 +33,7 @@ public class BSPUtil {
      */
     public static boolean isInBspFormat(@Nonnull String sampleName) {
         return  BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() ||
-                (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && Deployment.isCRSP);
+                (CRSP_BSP_SAMPLE_SHORT_BARCODE_PATTERN.matcher(sampleName).matches() && ApplicationInstance.CRSP.isCurrent());
     }
 
 }

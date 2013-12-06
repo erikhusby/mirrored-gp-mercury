@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -300,7 +300,7 @@ public class SystemRouter implements Serializable {
     }
 
     private void badCrspRouting() {
-        if(Deployment.isCRSP) {
+        if(ApplicationInstance.CRSP.isCurrent()) {
             throw new RouterException("For a CRSP Deployment, Squid should never be a routing option")  ;
         }
     }

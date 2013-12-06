@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.inject.Inject;
 
@@ -60,7 +60,7 @@ public class SampleLink {
 
         static Format fromSample(AbstractSample sample) {
             if (sample.isInBspFormat()) {
-                if (Deployment.isCRSP) {
+                if (ApplicationInstance.CRSP.isCurrent()) {
                     return Format.CRSP;
                 } else {
                     return Format.BSP;
