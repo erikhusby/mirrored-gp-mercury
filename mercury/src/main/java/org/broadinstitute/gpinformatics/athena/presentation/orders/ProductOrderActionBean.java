@@ -63,7 +63,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -101,7 +100,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -827,6 +825,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     notificationIds.add(id);
                 }
             }
+
             notificationListTokenInput.setup(notificationIds.toArray(new Long[0]));
         }
     }
@@ -1167,14 +1166,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private void updateOrderStatus()
-            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-        if (productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey())) {
-            // If the status was changed, let the user know.
-            addMessage("The order status is now {0}.", editOrder.getOrderStatus());
-        }
-    }
-
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -1188,7 +1179,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                     editOrder.getSampleString(),
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            updateOrderStatus();
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
     }
@@ -1241,11 +1232,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 samples.remove();
             }
         }
+
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
             addMessage("Abandoned samples: {0}.",
                     StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
-            updateOrderStatus();
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution();
     }
