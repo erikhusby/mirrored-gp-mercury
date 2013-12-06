@@ -12,13 +12,6 @@
                        sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
-<style type="text/css">
-    div.token-input-dropdown,
-    ul.token-input-list,
-    ul.token-input-list li input {
-        width: 250px !important;
-    }
-</style>
 <script type="text/javascript">
 $j(document).ready(function () {
     updateFundsRemaining();
@@ -45,78 +38,7 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
-
-    $j("#kitCollection").tokenInput(
-            "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
-                hintText: "Search for group and collection",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
-                onAdd: updateUIForCollectionChoice,
-                onDelete: updateUIForCollectionChoice,
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
-    $j("#shippingLocation").tokenInput(
-            getShippingLocationURL, {
-                hintText: "Search for shipping location",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
-    $j("#notificationList").tokenInput(
-            "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
-                hintText: "Enter a user name",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.completeData)},
-                tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
-                preventDuplicates: true,
-                resultsFormatter: formatInput
-            }
-    );
 });
-
-function updateUIForCollectionChoice() {
-    var collectionKey = $j("#kitCollection").val();
-    if ((collectionKey == null) || (collectionKey == "")) {
-        $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
-    } else {
-        $j.ajax({
-            url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
-            dataType: 'json',
-            success: setupMenu
-        });
-    }
-}
-
-function setupMenu(data) {
-    var collection = data.collectionName;
-
-    var organisms = data.organisms;
-    if ((organisms == null) || (organisms.length == 0)) {
-        $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
-        return;
-    }
-
-    var organismSelect = '<select name="organismId">';
-    $j.each(organisms, function(index, organism) {
-        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '</option>';
-    });
-    organismSelect += '</select>';
-
-    var duration = {'duration' : 800};
-    $j("#selectedOrganism").hide();
-    $j("#selectedOrganism").html(organismSelect);
-    $j("#selectedOrganism").fadeIn(duration);
-}
-
-// This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
-function getShippingLocationURL() {
-    return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
-}
 
 var bspDataCount = 0;
 

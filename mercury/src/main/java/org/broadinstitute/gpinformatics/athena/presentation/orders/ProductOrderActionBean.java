@@ -760,36 +760,34 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Set all the transients using the Injected Token Input, even though the JSP doesn't set them
      */
     private void updateFromInitiationTokenInputs() {
-        if (bspGroupCollectionTokenInput != null) {
-            String sampleCollectionKey = editOrder.getProductOrderKit().getSampleCollectionId() != null ?
-                    String.valueOf(editOrder.getProductOrderKit().getSampleCollectionId()) : null;
-            bspGroupCollectionTokenInput.setup(
-                    !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
+        String sampleCollectionKey = editOrder.getProductOrderKit().getSampleCollectionId() != null ?
+                String.valueOf(editOrder.getProductOrderKit().getSampleCollectionId()) : null;
+        bspGroupCollectionTokenInput.setup(
+                !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
 
-            editOrder.getProductOrderKit().setOrganismName(null);
+        editOrder.getProductOrderKit().setOrganismName(null);
 
-            SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
-            if (sampleCollection != null) {
-                if (editOrder.getProductOrderKit().getOrganismId() != null) {
-                    for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                        if (editOrder.getProductOrderKit().getOrganismId().equals(organism.getLeft())) {
-                            editOrder.getProductOrderKit().setOrganismName(organism.getRight());
-                        }
+        SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
+        if (sampleCollection != null) {
+            if (editOrder.getProductOrderKit().getOrganismId() != null) {
+                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                    if (editOrder.getProductOrderKit().getOrganismId().equals(organism.getLeft())) {
+                        editOrder.getProductOrderKit().setOrganismName(organism.getRight());
                     }
                 }
-
-                editOrder.getProductOrderKit().setSampleCollectionName(sampleCollection.getCollectionName());
             }
 
-            if ((bspShippingLocationTokenInput != null) && (bspShippingLocationTokenInput.getTokenObject() != null)) {
-                String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
-                        String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
-                bspShippingLocationTokenInput.setup(
-                        !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
-                if (editOrder.getProductOrderKit().getSiteId() != null) {
-                    editOrder.getProductOrderKit().setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
-                }
-            }
+            editOrder.getProductOrderKit().setSampleCollectionName(sampleCollection.getCollectionName());
+        }
+
+        String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
+                String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
+
+        // For view, there are no token input objects, so need to set it up here.
+        bspShippingLocationTokenInput.setup(
+                !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
+        if (editOrder.getProductOrderKit().getSiteId() != null) {
+            editOrder.getProductOrderKit().setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
         }
     }
 
