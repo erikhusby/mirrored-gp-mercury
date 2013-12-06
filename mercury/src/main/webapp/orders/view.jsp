@@ -733,8 +733,8 @@ function formatInput(item) {
                 <label class="control-label label-form">Kit Type</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.kitTypeName != null}">
-                            ${actionBean.editOrder.productOrderKit.kitTypeName}
+                        <c:if test="${actionBean.editOrder.productOrderKit.kitTypeDisplayName != null}">
+                            ${actionBean.editOrder.productOrderKit.kitTypeDisplayName}
                         </c:if>
                     </div>
                 </div>

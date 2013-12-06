@@ -100,8 +100,12 @@ public class ProductOrderKit implements Serializable {
         kitTypeName = kitType != null ? kitType.getKitName() : null;
     }
 
-    public String getKitTypeName() {
-        return kitTypeName;
+    public String getKitTypeDisplayName() {
+        if (getKitType() == null) {
+            return null;
+        }
+
+        return getKitType().getDisplayName();
     }
 
     public void setKitTypeName(String kitTypeName) {
@@ -158,7 +162,7 @@ public class ProductOrderKit implements Serializable {
     }
 
     public MaterialInfo getMaterialInfo() {
-        return new MaterialInfo(kitTypeName, bspMaterialName);
+        return new MaterialInfo(KitType.valueOf(kitTypeName).getKitName(), bspMaterialName);
     }
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
