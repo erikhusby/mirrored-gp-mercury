@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import java.util.Collection;
 
 /**
  * Data Access Object for sequencing runs
@@ -18,7 +19,15 @@ public class IlluminaSequencingRunDao extends GenericDao{
         return findSingle(IlluminaSequencingRun.class, IlluminaSequencingRun_.runName, runName);
     }
 
-    public IlluminaSequencingRun findByBarcode(String runBarcode) {
-        return findSingle(IlluminaSequencingRun.class, IlluminaSequencingRun_.runBarcode, runBarcode);
+    /**
+     * Find IlluminaSequencingRuns matching runBarcode. This method could return more then one run.
+     * To guarantee a single result call findByRunName (if you know the run name).
+     *
+     * @param runBarcode the barcode for the run you are searching
+     *
+     * @return A Collection of IlluminaSequencingRuns with barcode matching runBarcode.
+     */
+    public Collection<IlluminaSequencingRun> findByBarcode(String runBarcode) {
+        return findList(IlluminaSequencingRun.class, IlluminaSequencingRun_.runBarcode, runBarcode);
     }
 }

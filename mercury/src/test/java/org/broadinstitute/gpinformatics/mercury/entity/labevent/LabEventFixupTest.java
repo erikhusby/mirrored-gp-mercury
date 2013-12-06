@@ -2,13 +2,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -21,6 +24,12 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private LabEventDao labEventDao;
+
+    @Inject
+    private LabBatchDao labBatchDao;
+
+    @Inject
+    private GenericReagentDao reagentDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -131,6 +140,37 @@ public class LabEventFixupTest extends Arquillian {
     @Test(enabled = false)
     public void fixupGplim2250() {
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 245583L);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp1181v1() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 304946L);
+        LabBatch labBatch = labBatchDao.findById(LabBatch.class, 51107L);
+        // nulling out LabBatch with ID 51107 (BP-46374) to correct swapped dilution and black plate issue.
+        labEvent.setLabBatch(null);
+        labBatch.getLabEvents().remove(labEvent);
+
+        labEventDao.persist(labEvent);
+        labBatchDao.persist(labBatch);
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp1181v2() {
+        // Fixup v1 did not do the trick, Mercury would still overflow the stack chasing these transfers.  v2 deletes
+        // the event altogether.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 304946L);
+        VesselTransfer vesselTransfer = labEventDao.findById(VesselTransfer.class, 79056L);
+        labEventDao.remove(vesselTransfer);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
+    public void fixupBsp1181v3() {
+        // Delete the Pico buffer addition event on the dilution plate.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 304947L);
+        GenericReagent reagent = reagentDao.findByReagentNameAndLot("Pico", "RG-5652");
+        labEvent.getReagents().remove(reagent);
         labEventDao.remove(labEvent);
     }
 }

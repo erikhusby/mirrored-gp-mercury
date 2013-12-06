@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * A lab event isn't just at the granularity
  * of what we now consider a station event.
- *
+ * <p/>
  * Any lab event has the potential to change the
  * molecular state (see MolecularEnvelope) of the
  * lab vessels it references.  Some lab events may
@@ -44,7 +44,7 @@ import java.util.Set;
  * that do, we expect the LabEvent to know the "expected"
  * molecular envelope of the input materials.  The event
  * itself can also alter the molecular envelope.
- *
+ * <p/>
  * This isn't too far off base: a Bravo protocol might
  * add adaptors.  The covaris event shears target DNA.
  * Both events change the molecular state; in order for
@@ -55,24 +55,24 @@ import java.util.Set;
  * meet the requirements, bad things happen, which
  * we expose via throwing InvalidPriorMolecularStateException
  * in applyMolecularStateChanges() method.
- *
+ * <p/>
  * In this model, LabEvents have to be quite aware of
  * the particulars of their inputs and outputs.  This
  * means it must be easy for lab staff to change expected
- * inputs and outputs based bot on the event definition
+ * inputs and outputs based both on the event definition
  * (think: Bravo protocol file) as well as the workflow.
- *
+ * <p/>
  * LabEvents can be re-used in different workflows, with
  * different expected ranges, and project managers might
  * want to override these ranges.
  */
 // todo rename to "Event"--everything is an event, including
-    // deltas in an aggregation in zamboni
+// deltas in an aggregation in zamboni
 @Entity
 @Audited
 @Table(schema = "mercury",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"EVENT_LOCATION", "EVENT_DATE", "DISAMBIGUATOR"}),
-       name = "lab_event")
+        uniqueConstraints = @UniqueConstraint(columnNames = {"EVENT_LOCATION", "EVENT_DATE", "DISAMBIGUATOR"}),
+        name = "lab_event")
 public class LabEvent {
 
     public static final String UI_EVENT_LOCATION = "User Interface";
@@ -118,24 +118,34 @@ public class LabEvent {
     @JoinTable(schema = "mercury")
     private Set<Reagent> reagents = new HashSet<>();
 
-    /** for transfers using a tip box, e.g. Bravo */
+    /**
+     * for transfers using a tip box, e.g. Bravo
+     */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<SectionTransfer> sectionTransfers = new HashSet<>();
 
-    /** for random access transfers, e.g. MultiProbe */
+    /**
+     * for random access transfers, e.g. MultiProbe
+     */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<CherryPickTransfer> cherryPickTransfers = new HashSet<>();
 
-    /** for transfers from a single vessel to an entire section, e.g. from a tube to a plate */
+    /**
+     * for transfers from a single vessel to an entire section, e.g. from a tube to a plate
+     */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<VesselToSectionTransfer> vesselToSectionTransfers = new HashSet<>();
 
-    /** Typically for tube to tube transfers */
+    /**
+     * Typically for tube to tube transfers
+     */
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "labEvent")
     private Set<VesselToVesselTransfer> vesselToVesselTransfers = new HashSet<>();
 
-    /** For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
-     * instrument, entry into a bucket */
+    /**
+     * For plate / tube events, that don't involve a transfer e.g. anonymous reagent addition, loading onto an
+     * instrument, entry into a bucket
+     */
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
@@ -153,7 +163,9 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
-    /** Set by transfer traversal, based on ancestor lab batches and transfers. */
+    /**
+     * Set by transfer traversal, based on ancestor lab batches and transfers.
+     */
     @Transient
     private Set<LabBatch> computedLcSets = new HashSet<>();
 
@@ -165,7 +177,9 @@ public class LabEvent {
     @Transient
     private Set<LabBatch> manualOverrideLcSet;
 
-    /** For JPA */
+    /**
+     * For JPA
+     */
     protected LabEvent() {
     }
 
@@ -209,9 +223,9 @@ public class LabEvent {
      */
     public Set<LabVessel> getTargetVesselTubes() {
         Set<LabVessel> eventVessels = new HashSet<>();
-        for(LabVessel targetVessel: getTargetLabVessels()) {
-            if(targetVessel.getContainerRole() != null &&
-               OrmUtil.proxySafeIsInstance(targetVessel , TubeFormation.class)) {
+        for (LabVessel targetVessel : getTargetLabVessels()) {
+            if (targetVessel.getContainerRole() != null &&
+                OrmUtil.proxySafeIsInstance(targetVessel, TubeFormation.class)) {
                 eventVessels.addAll(targetVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(targetVessel);
@@ -222,9 +236,9 @@ public class LabEvent {
 
     public Set<LabVessel> getSourceVesselTubes() {
         Set<LabVessel> eventVessels = new HashSet<>();
-        for(LabVessel sourceVessel: getSourceLabVessels()) {
-            if(sourceVessel.getContainerRole() != null &&
-               OrmUtil.proxySafeIsInstance(sourceVessel ,TubeFormation.class)) {
+        for (LabVessel sourceVessel : getSourceLabVessels()) {
+            if (sourceVessel.getContainerRole() != null &&
+                OrmUtil.proxySafeIsInstance(sourceVessel, TubeFormation.class)) {
                 eventVessels.addAll(sourceVessel.getContainerRole().getContainedVessels());
             } else {
                 eventVessels.add(sourceVessel);
@@ -237,6 +251,7 @@ public class LabEvent {
     /**
      * For transfer events, this returns the sources
      * of the transfer
+     *
      * @return may return null
      */
     public Set<LabVessel> getSourceLabVessels() {
@@ -264,8 +279,9 @@ public class LabEvent {
     /**
      * Returns all the lab vessels involved in this
      * operation, regardless of source/destination.
-     *
+     * <p/>
      * Useful convenience method for alerts
+     *
      * @return
      */
     public Collection<LabVessel> getAllLabVessels() {
@@ -285,7 +301,7 @@ public class LabEvent {
         return eventLocation;
     }
 
-    public Long getEventOperator () {
+    public Long getEventOperator() {
         return eventOperator;
     }
 
@@ -357,18 +373,18 @@ todo jmt adder methods
      * between the vessel and the PO that is driving the work.  When
      * vessels are pulled out of a bucket, we record an event.  That
      * event associates zero or one {@link String product orders}.
-     *
+     * <p/>
      * This method is the way to mark the transfer graph such that all
      * downstream nodes are considered to be "for" the product order
      * returned here.
-     *
+     * <p/>
      * Most events will return null.
      */
-    public String getProductOrderId () {
+    public String getProductOrderId() {
         return productOrderId;
     }
 
-    public void setProductOrderId( String productOrder) {
+    public void setProductOrderId(String productOrder) {
         productOrderId = productOrder;
     }
 
@@ -395,6 +411,7 @@ todo jmt adder methods
 
     /**
      * Gets computed LCSET(s) for this transfer, based on the source vessels.
+     *
      * @return LCSETs, empty if the source vessels are not associated with an LCSET.
      */
     public Set<LabBatch> getComputedLcSets() {
@@ -450,4 +467,26 @@ todo jmt adder methods
         }
         return computedLcSets;
     }
+
+    /**
+     * Utility method used for grabbing the date of a specific lab vessel event.
+     * Note that this is designed specifically to grab an event date for an event that only happens once.
+     *
+     * @param vessels   List of LabVessel objects.
+     * @param eventType LabEventType object indicating what type of event to grab.
+     *
+     * @return Lab vessel event date or null if there wasn't an event of this type found.
+     */
+    public static Date getLabVesselEventDateByType(Collection<LabVessel> vessels, LabEventType eventType) {
+
+        for (LabVessel vessel : vessels) {
+            for (LabEvent event : vessel.getEvents()) {
+                if (event.getLabEventType() == eventType) {
+                    return event.getEventDate();
+                }
+            }
+        }
+        return null;
+    }
+
 }

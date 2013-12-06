@@ -63,18 +63,19 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
@@ -100,6 +101,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -140,6 +142,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String LEDGER_STATUS = "ledgerStatus";
     private static final String DATE = "date";
     private static final String OWNER = "owner";
+    private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -219,10 +222,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private JiraService jiraService;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private MercuryClientService mercuryClientService;
-
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
@@ -252,7 +251,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET})
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
@@ -301,6 +300,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // Search uses product family list.
     private List<ProductFamily> productFamilies;
+
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    private Map<String, Date> productOrderSampleReceiptDates;
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
@@ -849,7 +854,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        handleSamplesAdded(editOrder.getSamples());
+        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
 
         return createViewResolution();
     }
@@ -923,7 +928,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void updateTokenInputFields() {
         // Set the project, product and addOns for the order.
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
-        ResearchProject project = tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
+        ResearchProject project =
+                tokenProject != null ? projectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null;
         Product tokenProduct = productTokenInput.getTokenObject();
         Product product = tokenProduct != null ? productDao.findByPartNumber(tokenProduct.getPartNumber()) : null;
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);

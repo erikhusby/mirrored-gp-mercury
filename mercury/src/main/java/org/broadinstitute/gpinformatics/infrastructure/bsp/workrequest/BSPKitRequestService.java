@@ -98,4 +98,32 @@ public class BSPKitRequestService {
         return bspWorkRequestClientService.submitWorkRequest(workRequestBarcode, bspWorkRequestManager);
     }
 
+    /**
+     * This enum is used to link the material info types to kit types. In the UI when selecting the Kit type,
+     * It will help populate the MaterialInfo types.
+     *
+     * In the future it would be good if this lived in bspClient and getMaterialInfoObjects took the EnumType
+     *
+     * kitTypeName should map to KitTypeAllowanceSpecification in BSPCore
+     *
+     */
+    public enum KitType {
+        DNA_MATRIX("DNA Matrix Kit", "Matrix Tube [0.75mL]");
+
+        private final String kitTypeName;
+        private final String displayName;
+
+        private KitType(String kitTypeName, String displayName) {
+            this.kitTypeName = kitTypeName;
+            this.displayName = displayName;
+        }
+
+        public String getKitTypeName() {
+            return kitTypeName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
 }

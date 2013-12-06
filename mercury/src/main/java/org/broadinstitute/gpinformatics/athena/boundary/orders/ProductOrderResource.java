@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,9 +14,16 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -30,6 +38,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -43,22 +52,30 @@ import java.util.List;
 @Stateful
 @RequestScoped
 public class ProductOrderResource {
-    final private static Log log = LogFactory.getLog(ProductOrderResource.class);
+    private static final Log log = LogFactory.getLog(ProductOrderResource.class);
+
+    private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
 
     @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
-    ProductOrderEjb productOrderEjb;
+    private ProductOrderEjb productOrderEjb;
 
     @Inject
     private BSPUserList bspUserList;
 
     @Inject
-    ResearchProjectDao researchProjectDao;
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
-    ProductDao productDao;
+    private ProductDao productDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
+
+    @Inject
+    private LabVesselFactory labVesselFactory;
 
     /**
      * Return the information on the newly created {@link ProductOrder} that has Draft status.
@@ -206,6 +223,59 @@ public class ProductOrderResource {
                 productOrderDao.findListByBusinessKeys(businessKeyList);
 
         return buildProductOrdersFromList(productOrderList, includeSamples);
+    }
+
+    /**
+     * <p>
+     * Method to add a set of samples to a PDO.
+     * <p/>
+     * <p>
+     * This will add all the sample ids to the specified PDO in the same order sent in.
+     *
+     * @param addSamplesToPdoBean the PDO and list of samples to add
+     */
+    @POST
+    public String addSamplesToPdo(AddSamplesToPdoBean addSamplesToPdoBean) throws ApplicationValidationException {
+
+        String pdoKey = addSamplesToPdoBean.getPdo();
+        if (StringUtils.isBlank(pdoKey)) {
+            throw new ApplicationValidationException("No product order id specified");
+        }
+
+        if (CollectionUtils.isEmpty(addSamplesToPdoBean.getParentVesselBeans())) {
+            throw new ApplicationValidationException("No sample ids specified");
+        }
+
+        ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+        if (order == null) {
+            throw new ApplicationValidationException("No product order found for id: " + pdoKey);
+        }
+
+        // Create the mercury vessel for the plate and each tube in the plate.
+        BspUser bspUser = bspUserList.getByUsername(addSamplesToPdoBean.getUsername());
+        if (bspUser == null) {
+            throw new ApplicationValidationException(
+                    "User: " + addSamplesToPdoBean.getUsername() + " is not found in Mercury");
+        }
+
+        List<LabVessel> vessels = labVesselFactory.buildLabVessels(
+                addSamplesToPdoBean.parentVesselBeans, bspUser.getUsername(), new Date(), LabEventType.SAMPLE_PACKAGE);
+        labVesselDao.persistAll(vessels);
+
+        // Get all the sample ids
+        List<ProductOrderSample> samplesToAdd = new ArrayList<> (addSamplesToPdoBean.getParentVesselBeans().size());
+        for (ParentVesselBean parentVesselBean : addSamplesToPdoBean.getParentVesselBeans()) {
+            samplesToAdd.add(new ProductOrderSample(parentVesselBean.getSampleId()));
+        }
+
+        try {
+            // Add the samples.
+            productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
+        } catch (ProductOrderEjb.NoSuchPDOException | IOException | JiraIssue.NoTransitionException e) {
+            throw new ApplicationValidationException("Could not add samples due to error: " + e);
+        }
+
+        return SAMPLES_ADDED_RESPONSE;
     }
 
     /**

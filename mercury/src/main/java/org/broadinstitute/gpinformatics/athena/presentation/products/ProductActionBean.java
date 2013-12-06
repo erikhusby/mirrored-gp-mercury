@@ -149,12 +149,17 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     /**
-     * If the product exists then set the family id so that the selection option will be selected correctly
+     * If the product exists then set any value that needs to be set up for display.
      */
     @After(stages = LifecycleStage.EventHandling, on = {CREATE_ACTION, EDIT_ACTION})
     public void populateFamilyId() {
-        if ((editProduct != null) && (editProduct.getProductFamily() != null)) {
-            productFamilyId = editProduct.getProductFamily().getProductFamilyId();
+        if (editProduct != null) {
+            if (editProduct.getProductFamily() != null) {
+                productFamilyId = editProduct.getProductFamily().getProductFamilyId();
+            }
+
+            // Set the workflow value from the edit product.
+            workflow = editProduct.getWorkflow();
         }
     }
 
@@ -459,8 +464,22 @@ public class ProductActionBean extends CoreActionBean {
         return mercuryClientService.getAnalysisTypes();
     }
 
-    public Workflow[] getWorkflowList() {
-        return Workflow.values();
+    /**
+     * Get the list of workflows with NONE removed.
+     *
+     * @return The workflows
+     */
+    public Workflow[] getVisibleWorkflowList() {
+        // remove the none from the list because the names are stored in the DB and NONE is null for that.
+        Workflow[] workflows = new Workflow[Workflow.values().length - 1];
+        int i = 0;
+        for (Workflow currentWorkflow : Workflow.values()) {
+            if (currentWorkflow != Workflow.NONE) {
+                workflows[i++] = currentWorkflow;
+            }
+        }
+
+        return workflows;
     }
 
     public Workflow getWorkflow() {

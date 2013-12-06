@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-import org.apache.http.cookie.SM;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -21,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import javax.persistence.Query;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -300,16 +301,24 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
+    class LogReporter implements MessageReporter {
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            String formattedMessage = MessageFormat.format(message, arguments);
+            log.info(formattedMessage);
+            return formattedMessage;
+        }
+    }
+
     @Test(enabled = false)
     public void fixupPDOCompleteStatus()
             throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
+        LogReporter reporter = new LogReporter();
         for (ProductOrder order : orders) {
-            if (productOrderEjb.updateOrderStatus(order.getBusinessKey())) {
-                log.info(String.format("Changed %s to status %s", order.getJiraTicketKey(), order.getOrderStatus()));
-            }
+            productOrderEjb.updateOrderStatus(order.getBusinessKey(), reporter);
         }
     }
 
@@ -365,6 +374,11 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void changeProjectForPdo_GPLIM_2349() throws IOException {
+        changeProjectForPdo("PDO-1489", "RP-24");
+    }
+
+    @Test(enabled = false)
     public void changePdoName() throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey("PDO-1928");
         if (order != null) {
@@ -413,7 +427,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderSampleDao.persistAll(sampleList);
-        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey());
+        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new LogReporter());
     }
 
 
