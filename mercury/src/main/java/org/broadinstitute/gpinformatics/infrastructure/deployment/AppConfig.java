@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -32,7 +33,7 @@ public class AppConfig extends AbstractConfig implements Serializable {
         if (!StringUtils.isBlank(port)) {
             return getHttpScheme() + host + ":" + port + "/Mercury/";
         }
-        return getHttpScheme() + host + ((Deployment.isCRSP) ? ":8443" : "") + "/Mercury/";
+        return getHttpScheme() + host + ((ApplicationInstance.CRSP.isCurrent()) ? ":8443" : "") + "/Mercury/";
     }
 
     public void setHost(String host) {

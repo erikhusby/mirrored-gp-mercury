@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 public class SecurityFilter implements Filter {
 
-    private final boolean isSecure = Deployment.isCRSP;
+    private final boolean isSecure = ApplicationInstance.CRSP.isCurrent();
     private int securePort;
 
     private static final Log log = LogFactory.getLog(AuthorizationFilter.class);

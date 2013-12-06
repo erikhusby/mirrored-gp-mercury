@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
@@ -162,7 +162,7 @@ public class BettaLimsMessageResource {
                     throw new RuntimeException("Failed to find event type");
                 }
                 LabEventType.SystemOfRecord systemOfRecord = labEventType.getSystemOfRecord();
-                if (Deployment.isCRSP && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
+                if (ApplicationInstance.CRSP.isCurrent() && systemOfRecord == LabEventType.SystemOfRecord.BOTH) {
                     systemOfRecord = LabEventType.SystemOfRecord.MERCURY;
                 }
                 switch (systemOfRecord) {
@@ -213,7 +213,7 @@ public class BettaLimsMessageResource {
 
             BettaLimsConnector.BettaLimsResponse bettaLimsResponse = null;
             if (processInSquid) {
-                if (Deployment.isCRSP) {
+                if (ApplicationInstance.CRSP.isCurrent()) {
                     throw new RuntimeException("Cannot route CRSP messages to Squid.");
                 }
                 bettaLimsResponse = bettaLimsConnector.sendMessage(message);

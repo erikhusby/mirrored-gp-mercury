@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -43,7 +44,7 @@ public class DeploymentBuilder {
         WebArchive war = ShrinkWrap.create(ExplodedImporter.class, MERCURY_WAR)
                 .importDirectory("src/main/webapp")
                 .as(WebArchive.class)
-                .addAsWebInfResource(new File("src/test/resources/" + ((Deployment.isCRSP) ? "crsp-" : "") + "mercury-"
+                .addAsWebInfResource(new File("src/test/resources/" + ((ApplicationInstance.CRSP.isCurrent()) ? "crsp-" : "") + "mercury-"
                                               + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
