@@ -7,6 +7,8 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -33,8 +35,9 @@ public class ProductOrderKit implements Serializable {
     @Column(name = "number_samples")
     private Long numberOfSamples;
 
+    @Enumerated(value = EnumType.STRING)
     @Column(name = "kit_type")
-    private String kitTypeName;
+    private KitType kitType;
 
     @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
@@ -68,7 +71,7 @@ public class ProductOrderKit implements Serializable {
     public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId,
                            Long siteId, MaterialInfo materialInfo, String notifications) {
         this.numberOfSamples = numberOfSamples;
-        this.kitTypeName = kitType != null ? kitType.getKitName() : null;
+        this.kitType = kitType;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
@@ -93,11 +96,11 @@ public class ProductOrderKit implements Serializable {
     }
 
     public KitType getKitType() {
-        return KitType.valueOf(kitTypeName);
+        return kitType;
     }
 
     public void setKitType(KitType kitType) {
-        kitTypeName = kitType != null ? kitType.getKitName() : null;
+        this.kitType = kitType;
     }
 
     public String getKitTypeDisplayName() {
@@ -106,10 +109,6 @@ public class ProductOrderKit implements Serializable {
         }
 
         return getKitType().getDisplayName();
-    }
-
-    public void setKitTypeName(String kitTypeName) {
-        this.kitTypeName = kitTypeName;
     }
 
     public Long getSampleCollectionId() {
@@ -162,7 +161,7 @@ public class ProductOrderKit implements Serializable {
     }
 
     public MaterialInfo getMaterialInfo() {
-        return new MaterialInfo(KitType.valueOf(kitTypeName).getKitName(), bspMaterialName);
+        return new MaterialInfo(kitType.getKitName(), bspMaterialName);
     }
 
     public void setMaterialInfo(MaterialInfo materialInfo) {

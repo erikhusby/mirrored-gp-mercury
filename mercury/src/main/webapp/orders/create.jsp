@@ -491,7 +491,7 @@
                                 Kit Type
                             </stripes:label>
                             <div class="controls">
-                                <stripes:select id="kitType" name="editOrder.productOrderKit.kitTypeName">
+                                <stripes:select id="kitType" name="editOrder.productOrderKit.kitType">
                                     <stripes:options-enumeration label="displayName"
                                                                  enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
                                 </stripes:select>
