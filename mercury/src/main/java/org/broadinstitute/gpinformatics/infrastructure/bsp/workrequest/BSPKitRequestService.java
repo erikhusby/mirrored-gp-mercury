@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
@@ -7,10 +8,13 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * High-level APIs for using the BSP work request service to create sample kit requests.
@@ -67,10 +71,22 @@ public class BSPKitRequestService {
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                kit.getSampleCollectionId(), kit.getNotifications(), kit.getOrganismId());
+                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId());
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
+    }
+
+    /**
+     * Returns a comma separated list of e-mail addresses.
+     */
+    public String getEmailList(Long[] notificationIds) {
+        List<String> emailList = new ArrayList<>(notificationIds.length);
+        for (Long notificationId : notificationIds) {
+            emailList.add(bspUserList.getById(notificationId).getEmail());
+        }
+
+        return StringUtils.join(emailList, UserTokenInput.STRING_FORMAT_DELIMITER);
     }
 
     /**
