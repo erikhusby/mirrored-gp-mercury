@@ -1253,29 +1253,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
-        editOrder.addSamples(samplesToAdd);
-        editOrder.prepareToSave(getUserBean().getBspUser());
-        productOrderDao.persist(editOrder);
-        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
-        addMessage("Added samples: {0}.", nameList);
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
-        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                editOrder.getSampleString(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-
-        handleSamplesAdded(samplesToAdd);
-
-        updateOrderStatus();
-
+        productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         return createViewResolution();
-    }
-
-    private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
-        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
-        if (!samples.isEmpty()) {
-            addMessage("{0} samples have been added to the pico bucket.", samples.size());
-        }
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
