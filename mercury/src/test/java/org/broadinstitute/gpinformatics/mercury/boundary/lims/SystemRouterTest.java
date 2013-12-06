@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsSer
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -44,7 +45,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructio
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcellPath;
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
-import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
@@ -52,6 +52,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,19 +70,25 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.addInPlaceEvent;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.doSectionTransfer;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.A_BASE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.PREFLIGHT_CLEANUP;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.SAMPLE_RECEIPT;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.Eppendorf96;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.or;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -152,22 +159,24 @@ public class SystemRouterTest extends BaseEventTest {
                 new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
-        when(mockBspExportService.findExportDestinations(Matchers.<Collection<LabVessel>>anyObject())).thenAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                EnumSet<IsExported.ExternalSystem> noExportDestinations =
-                        EnumSet.noneOf(IsExported.ExternalSystem.class);
-                Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-                Collection<LabVessel> labVessels = (Collection<LabVessel>) invocation.getArguments()[0];
-                for (LabVessel labVessel : labVessels) {
-                    IsExported.ExportResult exportResult = new IsExported.ExportResult();
-                    exportResult.setBarcode(labVessel.getLabel());
-                    exportResult.setExportDestinations(noExportDestinations);
-                    exportResultSet.add(exportResult);
-                }
-                return new IsExported.ExportResults(exportResultSet);
-            }
-        });
+        when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(
+                new Answer<IsExported.ExportResults>() {
+                    @Override
+                    public IsExported.ExportResults answer(InvocationOnMock invocation) throws Throwable {
+                        EnumSet<IsExported.ExternalSystem> noExportDestinations =
+                                EnumSet.noneOf(IsExported.ExternalSystem.class);
+                        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+                        @SuppressWarnings("unchecked")
+                        Collection<LabVessel> labVessels = (Collection<LabVessel>) invocation.getArguments()[0];
+                        for (LabVessel labVessel : labVessels) {
+                            IsExported.ExportResult exportResult = new IsExported.ExportResult();
+                            exportResult.setBarcode(labVessel.getLabel());
+                            exportResult.setExportDestinations(noExportDestinations);
+                            exportResultSet.add(exportResult);
+                        }
+                        return new IsExported.ExportResults(exportResultSet);
+                    }
+                });
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
@@ -363,11 +372,12 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithExomeExpressOrders(ApplicationInstance instance) {
-        ProductOrder order1 = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
-        ProductOrder order2 = placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
+        placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        placeOrderForTubeAndBucket(tube2, exomeExpress, picoBucket);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2);
-        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
-                is(MERCURY));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
+
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
@@ -375,9 +385,9 @@ public class SystemRouterTest extends BaseEventTest {
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControls(ApplicationInstance instance) {
         placeOrderForTubesAndBatch(new HashSet<LabVessel>(Arrays.asList(tube1, tube2)), exomeExpress, picoBucket);
         final List<String> testBarcodes = Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2, CONTROL_TUBE);
-        assertThat(systemRouter.routeForVesselBarcodes(
-                testBarcodes),
-                is(MERCURY));
+
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
+
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
         verify(mockBspSampleDataFetcher).fetchSamplesFromBSP(Arrays.asList(CONTROL_SAMPLE_ID));
@@ -400,8 +410,7 @@ public class SystemRouterTest extends BaseEventTest {
         doSectionTransfer(makeTubeFormation(tube1, tube2, controlTube), plate);
         doSectionTransfer(plate, makeTubeFormation(target1, target2, target3));
 
-        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
-                is(MERCURY));
+        assertThat(systemRouter.routeForVesselBarcodes(testBarcodes), is(MERCURY));
 
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         verify(mockControlDao).findAllActive();
@@ -549,118 +558,371 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubeInMercuryWithExomeExpressOrder(ApplicationInstance instance) {
-        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         assertThat(systemRouter.routeForVessel(MERCURY_TUBE_1), is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }});
     }
 
+    /*
+     * Tests for system-of-record for samples lab vessels.
+     *
+     * Unlike for routing, system-of-record doesn't have the advantage of a LabEventType to help with making the
+     * decision. This tends to call Squid the system-of-record for lab vessels that are actually in the samples lab.
+     * Since Squid doesn't handle any sample lab informatics, these should all be handled by Mercury.
+     *
+     * The solution is to expand the scope of Mercury's system-of-record to include vessels that are the target of a
+     * LabEventType configured with {@link SystemOfRecord.MERCURY} AND has not been exported from BSP to "Sequencing".
+     * These test methods test system-of-record questions with those conditions.
+     */
+
+    /**
+     * Determines how to configure ExportResult's notFound and error properties returned by mockBspExportService.
+     */
+    private enum KnownToBSP { YES, NO, ERROR }
+
+    /**
+     * Determines how to configure ExportResult's exportDestinations property returned by mockBspExportService.
+     */
+    private enum ExportFromBSP { NONE, GAP, MERCURY, SEQUENCING }
+
+    /**
+     * Determines whether or not to use a tube barcode that mockLabVesselDao will return a LabVessel for.
+     */
+    private enum KnownToMercury { YES, NO }
+
+    /**
+     * Determines whether or not to put the tube in a PDO and what type of PDO to use. When testing system-of-record,
+     * NON_EXEX can be used to test both Squid-only and parallel work because Squid is the system of record in both
+     * cases.
+     */
+    private enum InPDO { NONE, EXEX, NON_EXEX }
+
+    /**
+     * Determines whether or not to put any events on the tube and what the event type's system of record should be. The
+     * specific event type is unspecified because only the type's system-of-record that matters here.
+     */
+    private enum MercuryEvent { NONE, MERCURY, SQUID, WORKFLOW_DEPENDENT }
+
+    /**
+     * Scenarios for
+     * {@link #testSystemOfRecord(String, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.KnownToMercury, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.InPDO, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.MercuryEvent, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.KnownToBSP, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouterTest.ExportFromBSP, org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System)}.
+     */
+    @DataProvider(name = "systemOfRecordScenarios")
+    public Object[][] getSystemOfRecordScenarios() {
+        return new Object[][] {
+                new Object[] { "squidIntermediateLCTube",   KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.NO,    ExportFromBSP.NONE,       SQUID },
+                new Object[] { "bspIntermediateTube",       KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.YES,   ExportFromBSP.NONE,       SQUID },
+                new Object[] { "inSamplesLab",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
+                new Object[] { "exportedToMercury",         KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.MERCURY,    MERCURY },
+                new Object[] { "exportedToSequencing",      KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING, SQUID },
+                new Object[] { "exportedToGap",             KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.GAP,        null },
+                new Object[] { "errorFromBSP",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.ERROR, ExportFromBSP.NONE,       null },
+                new Object[] { "parallelTubeInSamplesLab",  KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
+                new Object[] { "parallelTubeExported",      KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING, SQUID },
+                new Object[] { "parallelTubeInSeqLab",      KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,       SQUID },
+                new Object[] { "exExTubeInSamplesLab",      KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
+                new Object[] { "exExTubeExported",          KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.MERCURY,    MERCURY },
+                new Object[] { "exExTubeInSeqLab",          KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,       MERCURY },
+        };
+    }
+
+    /**
+     * Test
+     * {@link org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter#getSystemOfRecordForVessel(String)}
+     * using various scenarios specified by a data provider. See enums for details about the various conditions. A
+     * expectedSystemOfRecord value of null is a signal that an exception is expected to be thrown.
+     *
+     * @param tubeBarcode               the tube barcode to query; also a short description of the scenario
+     * @param knownToMercury            whether or not the tube is known to Mercury
+     * @param inPDO                     whether or not the tube is related to a PDO and what type of PDO
+     * @param mercuryEvent              the system-of-record classification of the event targeting the tube
+     * @param knownToBSP                whether or not the tube is known to BSP
+     * @param exportFromBSP             whether or not the tube has been exported from BSP and where it was exported to
+     * @param expectedSystemOfRecord    the expected system-of-record for the scenario; null if an exception is expected
+     */
+    @Test(groups = DATABASE_FREE, dataProvider = "systemOfRecordScenarios")
+    public void testSystemOfRecord(String tubeBarcode, KnownToMercury knownToMercury, InPDO inPDO,
+                                   MercuryEvent mercuryEvent, KnownToBSP knownToBSP, ExportFromBSP exportFromBSP,
+                                   SystemRouter.System expectedSystemOfRecord) {
+
+        LabVessel tube = configureMercury(tubeBarcode, knownToMercury, inPDO, mercuryEvent);
+        // If Mercury doesn't know the tube, it should never ask BSP anything about it.
+        if (tube != null) {
+            configureBSP(tube, knownToBSP, exportFromBSP);
+        }
+
+        try {
+            SystemRouter.System systemOfRecord = systemRouter.getSystemOfRecordForVessel(tubeBarcode);
+            if (expectedSystemOfRecord == null) {
+                Assert.fail("Expected an exception");
+            }
+            assertThat(systemOfRecord, equalTo(expectedSystemOfRecord));
+        } catch (InformaticsServiceException e) {
+            if (expectedSystemOfRecord != null) {
+                throw e;
+            }
+        }
+
+        // If Mercury doesn't know about the tube, it should not attempt to find out the export status from BSP.
+        if (knownToMercury == KnownToMercury.NO) {
+            verify(mockBspExportService, never()).findExportDestinations(anyCollectionOf(LabVessel.class));
+        }
+    }
+
+    /**
+     * Create an object graph appropriate for the given scenario conditions.
+     *
+     * @param tubeBarcode       the barcode of the tube to (possibly) create in Mercury
+     * @param knownToMercury    whether or not the tube is known to Mercury
+     * @param inPDO             whether or not the tube is related to a PDO and what type of PDO
+     * @param mercuryEvent      the system-of-record classification of the event targeting the tube
+     * @return a new tube if Mercury should know about the tube; null otherwise
+     */
+    private LabVessel configureMercury(final String tubeBarcode, KnownToMercury knownToMercury, InPDO inPDO,
+                                       MercuryEvent mercuryEvent) {
+        switch (knownToMercury) {
+        case NO:
+            assertThat(inPDO, equalTo(InPDO.NONE));
+            assertThat(mercuryEvent, equalTo(MercuryEvent.NONE));
+            return null;
+        case YES:
+            final TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
+            when(mockLabVesselDao.findByBarcodes(Arrays.asList(tubeBarcode)))
+                    .thenReturn(new HashMap<String, LabVessel>() {{
+                        put(tubeBarcode, tube);
+                    }});
+
+            switch (inPDO) {
+            case EXEX:
+                placeOrderForTubeAndBucket(tube, exomeExpress, picoBucket);
+                break;
+            case NON_EXEX:
+                placeOrderForTube(tube, testProduct);
+                break;
+            case NONE:
+                // do nothing
+                break;
+            }
+
+            switch (mercuryEvent) {
+            case MERCURY:
+                assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
+                addInPlaceEvent(SAMPLE_RECEIPT, tube);
+                break;
+            case SQUID:
+                assertThat(LabEventType.PREFLIGHT_CLEANUP.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.SQUID));
+                addInPlaceEvent(PREFLIGHT_CLEANUP, tube);
+                break;
+            case WORKFLOW_DEPENDENT:
+                assertThat(LabEventType.A_BASE.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.WORKFLOW_DEPENDENT));
+                addInPlaceEvent(A_BASE, tube);
+                break;
+            case NONE:
+                // do nothing
+                break;
+            }
+            return tube;
+        default:
+            throw new RuntimeException("Unrecognized KnownToMercury value: " + knownToMercury);
+        }
+    }
+
+    /**
+     * Configure BSP mock/stub behavior appropriate for the given scenario conditions.
+     *
+     * @param tube             the tube that will be queried
+     * @param knownToBSP       whether or not the tube is known to BSP
+     * @param exportFromBSP    whether or not the tube has been exported from BSP and where it was exported to
+     */
+    private void configureBSP(@Nonnull LabVessel tube, KnownToBSP knownToBSP, ExportFromBSP exportFromBSP) {
+        IsExported.ExportResults exportResults = null;
+        switch (knownToBSP) {
+        case ERROR:
+            exportResults = makeExportResultsError(tube.getLabel(), "BSP error");
+            break;
+        case NO:
+            exportResults = makeExportResultsNotFound(tube.getLabel(), "Unknown tube");
+            break;
+        case YES:
+            IsExported.ExternalSystem externalSystem = null;
+            switch (exportFromBSP) {
+            case GAP:
+                externalSystem = IsExported.ExternalSystem.GAP;
+                break;
+            case MERCURY:
+                externalSystem = IsExported.ExternalSystem.Mercury;
+                break;
+            case SEQUENCING:
+                externalSystem = IsExported.ExternalSystem.Sequencing;
+                break;
+            case NONE:
+                // Keep initialized null value.
+                break;
+            }
+            if (externalSystem == null) {
+                exportResults = makeExportResults(tube.getLabel());
+            } else {
+                exportResults = makeExportResults(tube.getLabel(), externalSystem);
+            }
+            break;
+        }
+        when(mockFindExportDestinations(tube)).thenReturn(exportResults);
+    }
+
+    /**
+     * Test a tube with an in-place samples lab event. The system of record should be Mercury for tubes that:
+     * <ul>
+     *     <li>are known to BSP</li>
+     *     <li>have NOT been exported from BSP</li>
+     *     <li>are known to Mercury</li>
+     *     <li>are NOT in a PDO</li>
+     *     <li>are targeted by a SystemOfRecord.MERCURY event</li>
+     * </ul>
+     */
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testGetSystemOfRecordForTubeInSamplesLab(ApplicationInstance instance) {
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(MERCURY_TUBE_1);
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-        exportResultSet.add(exportResult);
-        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
-        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
-
         // This tube is not in a PDO and does not have any BSP messaging, so it should go to Squid.
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
 
         // Add an event that is hard-wired for Mercury as the system of record and routing should now go to Mercury.
         assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
-        exportResult.setExportDestinations(EnumSet.noneOf(IsExported.ExternalSystem.class));
-        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
-
-        // After export from BSP to Squid, Squid should once again be the system of record.
-        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Sequencing));
-        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
-
-        // After export from BSP to Mercury, Mercury should be the system of record.
-        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.Mercury));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
+        when(mockFindExportDestinations(tube1)).thenReturn(makeExportResults(tube1.getLabel()));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
 
+    /**
+     * Test a tube that has been exported to Mercury. The system of record should be Mercury for tubes that:
+     * <ul>
+     *     <li>are known to BSP</li>
+     *     <li>have been exported from BSP to Mercury</li>
+     *     <li>are known to Mercury</li>
+     *     <li>are NOT in a PDO</li>
+     *     <li>are targeted by a SystemOfRecord.MERCURY event</li>
+     * </ul>
+     */
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeExportedToMercury(ApplicationInstance instance) {
+        // Add a SystemOfRecord.MERCURY samples lab event.
+        assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
+
+        // After export from BSP to Squid, Squid should once again be the system of record.
+        when(mockFindExportDestinations(tube1)).thenReturn(makeExportResults(tube1.getLabel(), IsExported.ExternalSystem.Mercury));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
+    }
+
+    /**
+     * Test a tube that has been exported to Sequencing. The system of record should be Squid for tubes that:
+     * <ul>
+     *     <li>are known to BSP</li>
+     *     <li>have been exported from BSP to Sequencing</li>
+     *     <li>are known to Mercury</li>
+     *     <li>are NOT in a PDO</li>
+     *     <li>are targeted by a SystemOfRecord.MERCURY event</li>
+     * </ul>
+     */
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeExportedToSequencing(ApplicationInstance instance) {
+        // Add a SystemOfRecord.MERCURY samples lab event.
+        assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
+
+        // After export from BSP to Squid, Squid should once again be the system of record.
+        when(mockFindExportDestinations(tube1))
+                .thenReturn(makeExportResults(tube1.getLabel(), IsExported.ExternalSystem.Sequencing));
+        assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
+    }
+
+    /**
+     * Test a tube that has been exported to GAP. Mercury should return an error when attempting to return the system of
+     * record for tubes that:
+     * <ul>
+     *     <li>are known to BSP</li>
+     *     <li>have been exported from BSP to GAP</li>
+     *     <li>are known to Mercury</li>
+     *     <li>are NOT in a PDO</li>
+     *     <li>are targeted by a SystemOfRecord.MERCURY event</li>
+     * </ul>
+     */
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testGetSystemOfRecordForTubeExportedToGAP(ApplicationInstance instance) {
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(MERCURY_TUBE_1);
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-        exportResultSet.add(exportResult);
-        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
-        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
-
-        // Add a MERCURY samples lab event.
+        // Add a SystemOfRecord.MERCURY samples lab event.
         assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
 
         // After export from BSP to GAP, Mercury should not be able to route the tube.
-        exportResult.setExportDestinations(EnumSet.of(IsExported.ExternalSystem.GAP));
+        when(mockFindExportDestinations(tube1)).thenReturn(makeExportResults(tube1.getLabel(), IsExported.ExternalSystem.GAP));
         try {
             systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
             Assert.fail("Expected exception for unexpected export destination: GAP");
         } catch (InformaticsServiceException expected) {}
     }
 
+    /**
+     * Test a tube that is not known to Mercury or BSP. The system of record should be Squid for tubes that:
+     * <ul>
+     *     <li>are NOT known to BSP</li>
+     *     <li>have NOT been exported from BSP</li>
+     *     <li>are NOT known to Mercury</li>
+     *     <li>are NOT in a PDO</li>
+     *     <li>have NO events in Mercury</li>
+     * </ul>
+     * This is a common case for intermediate LC libraries in Squid.
+     */
+    @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
+    public void testGetSystemOfRecordForTubeNotInMercuryNotInBSP(ApplicationInstance instance) {
+        assertThat(systemRouter.getSystemOfRecordForVessel("nonMercuryTube"), equalTo(SQUID));
+        verify(mockBspExportService, never()).findExportDestinations(anyCollectionOf(LabVessel.class));
+    }
+
+    /**
+     * Test a tube that is not known to BSP (e.g., intermediate sequencing lab tube) and is not part of an Exome Express
+     * PDO in Mercury. The system of record should be Squid for tubes that:
+     * <ul>
+     *     <li>are NOT known to BSP</li>
+     *     <li>have NOT been exported from BSP</li>
+     *     <li>are known to Mercury</li>
+     *     <li>are in a PDO</li>
+     *     <li>are targeted by a SystemOfRecord.WORKFLOW_DEPENDENT event</li>
+     * </ul>
+     * This is similar to the case of a validation set running in parallel in Mercury and Squid.
+     */
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testGetSystemOfRecordForTubeNotInExExPDONotInBSP(ApplicationInstance instance) {
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(MERCURY_TUBE_1);
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-        exportResultSet.add(exportResult);
-        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
-        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
-
-        // Add a WORKFLOW_DEPENDENT event.
+        // Add a SystemOfRecord.WORKFLOW_DEPENDENT event.
         assertThat(LabEventType.A_BASE.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.WORKFLOW_DEPENDENT));
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.A_BASE, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.A_BASE, tube1);
 
         // BSP lookup misses should route to Squid.
-        exportResult.setNotFound("I know not this vessel of which thee speak.");
+        when(mockFindExportDestinations(tube1))
+                .thenReturn(makeExportResultsNotFound(tube1.getLabel(), "I know not this vessel of which thee speak."));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(SQUID));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testGetSystemOfRecordForTubeInExExPDONotInBSP(ApplicationInstance instance) {
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(MERCURY_TUBE_1);
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-        exportResultSet.add(exportResult);
-        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
-        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
-
         placeOrderForTube(tube1, exomeExpress);
-        // Add a MERCURY event.
+        // Add a SystemOfRecord.MERCURY event.
         assertThat(LabEventType.SHEARING_BUCKET.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SHEARING_BUCKET, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SHEARING_BUCKET, tube1);
 
         // If there's an error determining the export destination (not a lookup miss), we expect to see an exception.
-        exportResult.setNotFound("I know not this vessel of which thee speak.");
+        when(mockFindExportDestinations(tube1))
+                .thenReturn(makeExportResultsNotFound(tube1.getLabel(), "I know not this vessel of which thee speak."));
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), equalTo(MERCURY));
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testGetSystemOfRecordForTubeBSPError(ApplicationInstance instance) {
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(MERCURY_TUBE_1);
-        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
-        exportResultSet.add(exportResult);
-        IsExported.ExportResults exportResults = new IsExported.ExportResults(exportResultSet);
-        when(mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(tube1))).thenReturn(exportResults);
-
-        // Add a MERCURY samples lab event.
+        // Add a SystemOfRecord.MERCURY samples lab event.
         assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
-        tube1.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
-                "testRouteForTubeInSamplesLab"));
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
 
         // If there's an error determining the export destination (not a lookup miss), we expect to see an exception.
-        exportResult.setError("Test error");
+        when(mockFindExportDestinations(tube1)).thenReturn(makeExportResultsError(tube1.getLabel(), "Test error"));
         try {
             systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1);
             Assert.fail("Expected exception for error data");
@@ -700,7 +962,7 @@ public class SystemRouterTest extends BaseEventTest {
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext", enabled = true)
     public void testGetSystemOfRecordForVesselInValidationLCSET(ApplicationInstance instance) {
-        ProductOrder order = placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
+        placeOrderForTubeAndBucket(tube1, exomeExpress, picoBucket);
         tube1.getAllLabBatches().iterator().next().setValidationBatch(true);
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
@@ -1037,9 +1299,87 @@ public class SystemRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testSystemOfRecordForSamplesLabTube(ApplicationInstance instance) {
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(SQUID));
-        LabEvent event = new LabEvent(LabEventType.SAMPLE_RECEIPT, new Date(), "SystemRouterTest", 0L, 0L,
-                "testSystemOfRecordForSamplesLabTube");
-        tube1.addInPlaceEvent(event);
+        LabEventTestFactory.addInPlaceEvent(LabEventType.SAMPLE_RECEIPT, tube1);
         assertThat(systemRouter.getSystemOfRecordForVessel(MERCURY_TUBE_1), is(MERCURY));
+    }
+
+    /*
+     * Utility and factory methods for dealing with mocking results from the BSP export query service.
+     */
+
+    /**
+     * Convenience for specifying a mock call to
+     * {@link org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService#findExportDestinations(java.util.Collection)}
+     * that uses varargs instead of making the caller construct a collection.
+     *
+     * @param labVessels    the vessels to expect
+     * @return the mock result, suitable as an argument to {@link org.mockito.Mockito#when(Object)}
+     */
+    private IsExported.ExportResults mockFindExportDestinations(LabVessel... labVessels) {
+        /*
+         * Must use a List here in order for argument matching to work because {@link SystemRouter} currently uses a
+         * List in its implementation. The parameter type is Collection<LabVessel> and the specific collection type
+         * could be changed without affecting the behavior. In that case, the type passed in here needs to change to
+         * match.
+         *
+         * It would be better if we didn't have to do this, but doing so would require a matcher that enforces the
+         * contract of Collection.equals() without enforcing the contract of any specific collection type. It may be
+         * possible to use argThat() with a Hamcrest collection matcher.
+         */
+        return mockBspExportService.findExportDestinations(Arrays.<LabVessel>asList(labVessels));
+    }
+
+    /**
+     * Make an ExportResults object with a result for a single vessel.
+     *
+     * @param tubeBarcode
+     * @param systems      the systems (can be none) to use in the result
+     * @return a new ExportResults
+     */
+    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem... systems) {
+        return new IsExported.ExportResults(new HashSet<>(Arrays.asList(makeExportResult(tubeBarcode, systems))));
+    }
+
+    private static IsExported.ExportResults makeExportResultsNotFound(String tubeBarcode, String notFoundMessage) {
+        return new IsExported.ExportResults(
+                new HashSet<>(Arrays.asList(makeExportResultNotFound(tubeBarcode, notFoundMessage))));
+    }
+
+    private static IsExported.ExportResults makeExportResultsError(String tubeBarcode, String errorMessage) {
+        return new IsExported.ExportResults(
+                new HashSet<>(Arrays.asList(makeExportResultError(tubeBarcode, errorMessage))));
+    }
+
+    /**
+     * Make an ExportResult for the given vessel.
+     *
+     * @param tubeBarcode
+     * @param systems      the systems (can be none) to use in the result
+     * @return a new ExportResult
+     */
+    private static IsExported.ExportResult makeExportResult(String tubeBarcode, IsExported.ExternalSystem... systems) {
+        /*
+         * This isn't the most efficient way to build a set of enum values, but, since this is just for unit tests, this
+         * method is optimized for optimal convenience in calling rather than for runtime performance.
+         */
+        Set<IsExported.ExternalSystem> systemSet = new HashSet<>(Arrays.asList(systems));
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(tubeBarcode);
+        exportResult.setExportDestinations(systemSet);
+        return exportResult;
+    }
+
+    private static IsExported.ExportResult makeExportResultNotFound(String tubeBarcode, String notFoundMessage) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(tubeBarcode);
+        exportResult.setNotFound(notFoundMessage);
+        return exportResult;
+    }
+
+    private static IsExported.ExportResult makeExportResultError(String tubeBarcode, String errorMessage) {
+        IsExported.ExportResult exportResult = new IsExported.ExportResult();
+        exportResult.setBarcode(tubeBarcode);
+        exportResult.setError(errorMessage);
+        return exportResult;
     }
 }
