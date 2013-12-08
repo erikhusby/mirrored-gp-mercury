@@ -470,16 +470,7 @@ public class ProductActionBean extends CoreActionBean {
      * @return The workflows
      */
     public Workflow[] getVisibleWorkflowList() {
-        // remove the none from the list because the names are stored in the DB and NONE is null for that.
-        Workflow[] workflows = new Workflow[Workflow.values().length - 1];
-        int i = 0;
-        for (Workflow currentWorkflow : Workflow.values()) {
-            if (currentWorkflow != Workflow.NONE) {
-                workflows[i++] = currentWorkflow;
-            }
-        }
-
-        return workflows;
+        return Workflow.getVisibleWorkflowList();
     }
 
     public Workflow getWorkflow() {
