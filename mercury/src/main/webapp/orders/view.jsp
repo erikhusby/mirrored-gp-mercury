@@ -729,7 +729,7 @@ function formatInput(item) {
             </legend>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Number of Samples</label>
+                <label class="control-label label-form">Samples Requested</label>
                 <div class="controls">
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
@@ -812,125 +812,128 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<div class="borderHeader">
-    <h4 style="display:inline">Samples</h4>
+<c:if test="${!actionBean.editOrder.draft || !actionBean.sampleInitiation}">
 
-    <c:if test="${!actionBean.editOrder.draft}">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                        <span class="actionButtons">
-                            <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                            style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
+    <div class="borderHeader">
+        <h4 style="display:inline">Samples</h4>
 
-                            <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                            style="margin-left:15px;"
-                                            onclick="showConfirm('abandonSamples', 'abandon')"/>
+        <c:if test="${!actionBean.editOrder.draft}">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <span class="actionButtons">
+                                <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                                style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
 
-                            <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                            style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+                                <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                                style="margin-left:15px;"
+                                                onclick="showConfirm('abandonSamples', 'abandon')"/>
 
-                            <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                            style="margin-left:5px;" onclick="showRiskDialog()"/>
-                        </span>
+                                <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                                style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
 
-            <div class="pull-right">
-                <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
-                <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
-            </div>
-        </security:authorizeBlock>
-    </c:if>
-</div>
+                                <stripes:button name="setRisk" value="Set Risk" class="btn"
+                                                style="margin-left:5px;" onclick="showRiskDialog()"/>
+                            </span>
 
-<div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
-    <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
-</div>
+                <div class="pull-right">
+                    <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
+                    <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
+                </div>
+            </security:authorizeBlock>
+        </c:if>
+    </div>
 
-<c:if test="${not empty actionBean.editOrder.samples}">
-    <table id="sampleData" class="table simple">
-        <thead>
-        <tr>
-            <th width="20">
-                <c:if test="${!actionBean.editOrder.draft}">
-                    <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
-                </c:if>
-            </th>
-            <th width="10">#</th>
-            <th width="90">ID</th>
-            <th width="110">Collaborator Sample ID</th>
-            <th width="60">Participant ID</th>
-            <th width="110">Collaborator Participant ID</th>
-            <th width="40">Volume</th>
-            <th width="40">Concentration</th>
+    <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
+        <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
+    </div>
 
-            <c:if test="${actionBean.supportsRin}">
-                <th width="40">RIN</th>
-            </c:if>
-
-            <c:if test="${actionBean.supportsPico}">
-                <th width="70">Last Pico Run Date</th>
-            </c:if>
-            <th width="40">Yield Amount</th>
-            <th width="60">FP Status</th>
-            <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
-            <th>On Risk</th>
-            <th width="40">Status</th>
-            <th width="200">Comment</th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach items="${actionBean.editOrder.samples}" var="sample">
+    <c:if test="${not empty actionBean.editOrder.samples}">
+        <table id="sampleData" class="table simple">
+            <thead>
             <tr>
-                <td>
+                <th width="20">
                     <c:if test="${!actionBean.editOrder.draft}">
-                        <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
-                                          name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                        <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                     </c:if>
-                </td>
-                <td>
-                        ${sample.samplePosition + 1}
-                </td>
-                <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
-                        <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
-                    <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
-                    <c:choose>
-                        <c:when test="${sampleLink.hasLink}">
-                            <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}"
-                                          href="${sampleLink.url}">
-                                ${sample.name}
-                            </stripes:link>
-                        </c:when>
-                        <c:otherwise>
-                            ${sample.name}
-                        </c:otherwise>
-                    </c:choose>
-                </td>
-                <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
-                <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
-                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
-                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
-                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+                </th>
+                <th width="10">#</th>
+                <th width="90">ID</th>
+                <th width="110">Collaborator Sample ID</th>
+                <th width="60">Participant ID</th>
+                <th width="110">Collaborator Participant ID</th>
+                <th width="40">Volume</th>
+                <th width="40">Concentration</th>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    <th width="40">RIN</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
-                    <td>
-                        <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
-                            &#160;</div>
-                    </td>
+                    <th width="70">Last Pico Run Date</th>
                 </c:if>
-
-                <td id="total-${sample.productOrderSampleId}">&#160; </td>
-                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
-                <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                    &#160; </td>
-                <td>${sample.riskString}</td>
-                <td>${sample.deliveryStatus.displayName}</td>
-                <td>${sample.sampleComment}</td>
+                <th width="40">Yield Amount</th>
+                <th width="60">FP Status</th>
+                <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
+                <th>On Risk</th>
+                <th width="40">Status</th>
+                <th width="200">Comment</th>
             </tr>
-        </c:forEach>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.editOrder.samples}" var="sample">
+                <tr>
+                    <td>
+                        <c:if test="${!actionBean.editOrder.draft}">
+                            <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
+                                              name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                        </c:if>
+                    </td>
+                    <td>
+                            ${sample.samplePosition + 1}
+                    </td>
+                    <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                            <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
+                        <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
+                        <c:choose>
+                            <c:when test="${sampleLink.hasLink}">
+                                <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}"
+                                              href="${sampleLink.url}">
+                                    ${sample.name}
+                                </stripes:link>
+                            </c:when>
+                            <c:otherwise>
+                                ${sample.name}
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
+                    <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="volume-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+
+                    <c:if test="${actionBean.supportsRin}">
+                        <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    </c:if>
+
+                    <c:if test="${actionBean.supportsPico}">
+                        <td>
+                            <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
+                                &#160;</div>
+                        </td>
+                    </c:if>
+
+                    <td id="total-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
+                    <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
+                        &#160; </td>
+                    <td>${sample.riskString}</td>
+                    <td>${sample.deliveryStatus.displayName}</td>
+                    <td>${sample.sampleComment}</td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </c:if>
 </c:if>
 </stripes:form>
 </stripes:layout-component>

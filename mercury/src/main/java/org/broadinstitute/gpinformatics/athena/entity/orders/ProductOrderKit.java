@@ -78,7 +78,7 @@ public class ProductOrderKit implements Serializable {
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
-        this.bspMaterialName = materialInfo != null ? materialInfo.getBspName() : null;
+        setMaterialInfo(materialInfo);
         this.notifications = notifications;
     }
 
@@ -188,11 +188,11 @@ public class ProductOrderKit implements Serializable {
     }
 
     /**
-     * This turns the stored list of notification ids into the appropriate long array. Since the
+     * This turns the stored list of notification ids into the appropriate array of Longs. Since the
      * notification member is storing the ids as a token separate list, use the token input object to
      * split this apart.
      *
-     * @return The array of longs.
+     * @return The array of Longs.
      */
     public Long[] getNotificationIds() {
         String[] keys = notifications.split(UserTokenInput.STRING_FORMAT_DELIMITER);

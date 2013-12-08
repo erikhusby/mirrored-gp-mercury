@@ -180,9 +180,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors
      */
     protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject) throws JSONException {
-        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject));
-        item.put("dropdownItem", formatMessage(formatString, tokenObject));
-        return item;
+        return createAutocomplete(tokenObject, false);
     }
 
     protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject, boolean readonly) throws JSONException {

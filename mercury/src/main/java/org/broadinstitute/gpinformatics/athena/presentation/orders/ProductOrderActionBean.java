@@ -428,6 +428,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
             requireField(kit.getMaterialInfo(), "a material type", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
+            requireField(kit.getOrganismId(), "an organism", action);
+
             // Avoid NPE if Research Project isn't set yet.
             if (researchProject != null) {
                 requireField(researchProject.getBroadPIs().length > 0,
@@ -435,7 +437,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
-            requireField(kit.getOrganismId(), "an organism", action);
         }
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
@@ -765,34 +766,37 @@ public class ProductOrderActionBean extends CoreActionBean {
      * Set all the transients using the Injected Token Input, even though the JSP doesn't set them
      */
     private void updateFromInitiationTokenInputs() {
-        String sampleCollectionKey = editOrder.getProductOrderKit().getSampleCollectionId() != null ?
-                String.valueOf(editOrder.getProductOrderKit().getSampleCollectionId()) : null;
+        ProductOrderKit productOrderKit = editOrder.getProductOrderKit();
+
+        String sampleCollectionKey = productOrderKit.getSampleCollectionId() != null ?
+                String.valueOf(productOrderKit.getSampleCollectionId()) : null;
         bspGroupCollectionTokenInput.setup(
                 !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
 
-        editOrder.getProductOrderKit().setOrganismName(null);
+        productOrderKit.setOrganismName(null);
 
         SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
         if (sampleCollection != null) {
-            if (editOrder.getProductOrderKit().getOrganismId() != null) {
+            if (productOrderKit.getOrganismId() != null) {
                 for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                    if (editOrder.getProductOrderKit().getOrganismId().equals(organism.getLeft())) {
-                        editOrder.getProductOrderKit().setOrganismName(organism.getRight());
+                    if (productOrderKit.getOrganismId().equals(organism.getLeft())) {
+                        productOrderKit.setOrganismName(organism.getRight());
+                        break;
                     }
                 }
             }
 
-            editOrder.getProductOrderKit().setSampleCollectionName(sampleCollection.getCollectionName());
+            productOrderKit.setSampleCollectionName(sampleCollection.getCollectionName());
         }
 
-        String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
-                String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
+        String siteKey = productOrderKit.getSiteId() != null ?
+                String.valueOf(productOrderKit.getSiteId()) : null;
 
         // For view, there are no token input objects, so need to set it up here.
         bspShippingLocationTokenInput.setup(
                 !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
-        if (editOrder.getProductOrderKit().getSiteId() != null) {
-            editOrder.getProductOrderKit().setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
+        if (productOrderKit.getSiteId() != null) {
+            productOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
         }
     }
 
@@ -1617,10 +1621,6 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     public boolean isSampleInitiation() {
         return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
-    }
-
-    public String getSampleInitiationProductPartNumber() {
-        return new Product().getSampleInitiationPartNumber();
     }
 
     /**

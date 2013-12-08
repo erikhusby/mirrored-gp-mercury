@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -121,7 +122,7 @@
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                     $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
-                    if (productKey == "${actionBean.getSampleInitiationProductPartNumber()}") {
+                    if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>')  {
                         // Product is Sample Initiation "P-ESH-0001".
                         $j("#samplesToAdd").val('');
                         $j("#sampleListEdit").hide();
@@ -497,11 +498,11 @@
                     </legend>
 
                     <div class="control-group">
-                        <stripes:label for="tubesPerKit" class="control-label">
+                        <stripes:label for="numberOfSamples" class="control-label">
                             Number of Samples
                         </stripes:label>
                         <div class="controls">
-                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="tubesPerKit" name="editOrder.productOrderKit.numberOfSamples"
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"
                                           class="defaultText" title="Enter the number of samples"/>
                         </div>
                     </div>
