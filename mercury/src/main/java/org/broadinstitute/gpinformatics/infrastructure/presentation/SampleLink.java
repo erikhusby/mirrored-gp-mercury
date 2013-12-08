@@ -12,13 +12,11 @@ import javax.inject.Inject;
 public class SampleLink {
 
     private final BSPConfig bspConfig;
-    private final JiraLink jiraLink;
     private final AbstractSample sample;
     private final Format format;
 
-    private SampleLink(BSPConfig bspConfig, JiraLink jiraLink, AbstractSample sample) {
+    private SampleLink(BSPConfig bspConfig, AbstractSample sample) {
         this.bspConfig = bspConfig;
-        this.jiraLink = jiraLink;
         this.sample = sample;
         format = Format.fromSample(sample);
     }
@@ -38,7 +36,6 @@ public class SampleLink {
     public String getUrl() {
         switch (format) {
         case CRSP:
-//            return jiraLink.browseUrl(sample.getSampleKey());
         case BSP:
             return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
         default:
@@ -73,11 +70,9 @@ public class SampleLink {
     public static class Factory {
         @Inject
         private BSPConfig bspConfig;
-        @Inject
-        private JiraLink jiraLink;
 
         public SampleLink create(AbstractSample sample) {
-            return new SampleLink(bspConfig, jiraLink, sample);
+            return new SampleLink(bspConfig, sample);
         }
     }
 }

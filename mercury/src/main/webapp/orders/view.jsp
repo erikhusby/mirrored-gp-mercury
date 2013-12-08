@@ -716,7 +716,17 @@ function formatInput(item) {
 <c:if test="${actionBean.sampleInitiation}">
     <div class="form-horizontal span5">
         <fieldset>
-            <legend><h4>Sample Kit Request</h4></legend>
+            <legend>
+                <h4>
+                    Sample Kit Request:
+
+                    <c:if test="${!actionBean.editOrder.draft}">
+                        <a href="${actionBean.workRequestUrl}" target="BSP">
+                            ${actionBean.editOrder.productOrderKit.workRequestId}
+                        </a>
+                    </c:if>
+                </h4>
+            </legend>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Number of Samples</label>

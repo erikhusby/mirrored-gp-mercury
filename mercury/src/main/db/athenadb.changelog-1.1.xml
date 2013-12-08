@@ -267,9 +267,9 @@
                 <columnExists tableName="product_order" columnName="product_order_kit" schemaName="athena"/>
             </not>
         </preConditions>
-	<addColumn tableName="product_order" schemaName="athena">
-	  <column name="product_order_kit" type="number(19,0)"/>
-	</addColumn>
+        <addColumn tableName="product_order" schemaName="athena">
+          <column name="product_order_kit" type="number(19,0)"/>
+        </addColumn>
 
         <addForeignKeyConstraint baseTableName="product_order" baseColumnNames="product_order_kit"
                                  baseTableSchemaName="athena" constraintName="fk_product_order_pdo_kit"
@@ -287,5 +287,28 @@
 	  <column name="product_order_kit" type="number(19,0)"/>
 	</addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-2301-6" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_kit" columnName="WORK_REQUEST_ID" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_kit">
+            <column name="WORK_REQUEST_ID" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1957-7" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_kit_aud" columnName="WORK_REQUEST_ID" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_kit_aud">
+            <column name="WORK_REQUEST_ID" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
 
 </databaseChangeLog>

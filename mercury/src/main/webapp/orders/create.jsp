@@ -63,7 +63,8 @@
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
                                 hintText: "Search for group and collection",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft))
+                            },
                                 onAdd: updateUIForCollectionChoice,
                                 onDelete: updateUIForCollectionChoice,
                                 resultsFormatter: formatInput,
@@ -75,7 +76,7 @@
                     $j("#shippingLocation").tokenInput(
                             getShippingLocationURL, {
                                 hintText: "Search for shipping location",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
                                 tokenLimit: 1
@@ -85,7 +86,7 @@
                     $j("#notificationList").tokenInput(
                             "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
                                 hintText: "Enter a user name",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.completeData)},
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
                                 tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
                                 preventDuplicates: true,
                                 resultsFormatter: formatInput
@@ -120,13 +121,13 @@
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                     $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
-                    $j("#sampleListEdit").show();
                     if (productKey == "${actionBean.getSampleInitiationProductPartNumber()}") {
                         // Product is Sample Initiation "P-ESH-0001".
                         $j("#samplesToAdd").val('');
                         $j("#sampleListEdit").hide();
                         $j("#sampleInitiationKitRequestEdit").show();
                     } else {
+                        $j("#sampleListEdit").show();
                         $j("#sampleInitiationKitRequestEdit").hide();
                     }
 
@@ -180,7 +181,7 @@
                 // Even though the id is a long, if there is no value then this needs something empty, so using a string
                 // for the long or empty will work in the later comparison.
                 var selectedOrganismId = ${actionBean.ensureStringResult(actionBean.editOrder.productOrderKit.organismId)};
-                var organismSelect = '<select name="editOrder.productOrderKit.organismId">';
+                var organismSelect = '<select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.organismId">';
                 $j.each(organisms, function(index, organism) {
                     var selectedString = (organism.id == selectedOrganismId) ? 'selected="selected"' : '';
                     organismSelect += '  <option value="' + organism.id + '" ' + selectedString + '>' + organism.name + '</option>';
@@ -459,7 +460,7 @@
 
             <div id="sampleListEdit" class="help-block span4">
                 <c:choose>
-                    <c:when test="${actionBean.allowSampleListEdit}">
+                    <c:when test="${actionBean.editOrder.draft}">
                         Enter sample names in this box, one per line. When you save the order, the view page will show
                         all sample details.
                     </c:when>
@@ -469,86 +470,94 @@
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.allowSampleListEdit}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
             <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
-                <div class="form-horizontal span5">
-                    <fieldset>
-                        <legend><h4>Sample Kit Request</h4></legend>
+            <div class="form-horizontal span5">
+                <fieldset>
+                    <legend>
+                        <h4>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                Sample Kit Request:
+                                <a href="${actionBean.workRequestUrl}" target="BSP">
+                                        ${actionBean.editOrder.productOrderKit.workRequestId}
+                                </a>
+                            </c:if>
+                        </h4>
+                    </legend>
 
-                        <div class="control-group">
-                            <stripes:label for="tubesPerKit" class="control-label">
-                                Number of Samples
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:text id="tubesPerKit" name="editOrder.productOrderKit.numberOfSamples"
-                                              class="defaultText" title="Enter the number of samples"/>
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="tubesPerKit" class="control-label">
+                            Number of Samples
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="tubesPerKit" name="editOrder.productOrderKit.numberOfSamples"
+                                          class="defaultText" title="Enter the number of samples"/>
                         </div>
+                    </div>
 
-                        <div class="control-group">
-                            <stripes:label for="kitType" class="control-label">
-                                Kit Type
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:select id="kitType" name="editOrder.productOrderKit.kitType">
-                                    <stripes:options-enumeration label="displayName"
-                                                                 enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
-                                </stripes:select>
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="kitType" class="control-label">
+                            Kit Type
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">
+                                <stripes:options-enumeration label="displayName"
+                                                             enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
+                            </stripes:select>
                         </div>
+                    </div>
 
-                        <div class="control-group">
-                            <stripes:label for="kitCollection" class="control-label">
-                                Group and Collection
-                            </stripes:label>
-                            <div class="controls" id="kitCollectionSelection">
-                                <stripes:text
-                                        id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
-                                        class="defaultText"
-                                        title="Search for collection and group"/>
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="kitCollection" class="control-label">
+                            Group and Collection
+                        </stripes:label>
+                        <div class="controls" id="kitCollectionSelection">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}"
+                                    id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Search for collection and group"/>
                         </div>
+                    </div>
 
-                        <div class="control-group">
-                            <stripes:label for="selectedOrganism" class="control-label">
-                                Organism
-                            </stripes:label>
-                            <div id="selectedOrganism" class="controls">
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="selectedOrganism" class="control-label">
+                            Organism
+                        </stripes:label>
+                        <div id="selectedOrganism" class="controls">
                         </div>
+                    </div>
 
-                        <div class="control-group">
-                            <stripes:label for="shippingLocation" class="control-label">
-                                Shipping Location
-                            </stripes:label>
-                            <div class="controls" id="shippingLocationSelection">
-                                <stripes:text
-                                        id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
-                                        class="defaultText"
-                                        title="Search for shipping location"/>
-                            </div>
+                    <div class="control-group">
+                        <stripes:label for="shippingLocation" class="control-label">
+                            Shipping Location
+                        </stripes:label>
+                        <div class="controls" id="shippingLocationSelection">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}"
+                                    id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Search for shipping location"/>
                         </div>
-                        <div class="control-group">
-                            <stripes:label for="materialInfo" class="control-label">
-                                Material Information
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:select name="editOrder.productOrderKit.bspMaterialName">
-                                    <stripes:option label="Choose..." value=""/>
-                                    <stripes:options-collection value="bspName"
-                                                                collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
-                                </stripes:select>
-                            </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="materialInfo" class="control-label">
+                            Material Information
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
+                                <stripes:option label="Choose..." value=""/>
+                                <stripes:options-collection value="bspName"
+                                                            collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                            </stripes:select>
                         </div>
-                        <div class="control-group">
-                            <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
-                            <div class="controls">
-                                <stripes:text id="notificationList" name="notificationListTokenInput.listOfKeys"/>
-                            </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
+                        <div class="controls">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="notificationList" name="notificationListTokenInput.listOfKeys"/>
                         </div>
-                    </fieldset>
-                </div>
+                    </div>
+                </fieldset>
             </div>
         </stripes:form>
 

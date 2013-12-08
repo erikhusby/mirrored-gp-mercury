@@ -125,9 +125,20 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException if an error occurs
      */
     public String generateCompleteData() throws JSONException {
+        return generateCompleteData(false);
+    }
+
+    /**
+     * Generate the completion data for this TokenInput.  Only called by TokenInput itself.  Subclasses should return
+     * the empty string, not null, for cases where no completions exist.
+     *
+     * @return the completion data
+     * @throws JSONException if an error occurs
+     */
+    public String generateCompleteData(boolean readOnly) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
-            itemList.put(createAutocomplete(tokenObject));
+            itemList.put(createAutocomplete(tokenObject, readOnly));
         }
 
         return itemList.toString();
@@ -185,6 +196,12 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         return item;
     }
 
+    protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject, boolean readonly) throws JSONException {
+        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject), readonly);
+        item.put("dropdownItem", formatMessage(formatString, tokenObject));
+        return item;
+    }
+
     /** Used to build the generic JSON object for token input */
     protected abstract String getTokenId(TOKEN_OBJECT tokenObject);
     protected abstract String getTokenName(TOKEN_OBJECT tokenObject);
@@ -207,7 +224,15 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      */
     public final String getCompleteData() throws JSONException {
         if (completeDataCache == null) {
-            completeDataCache = generateCompleteData();
+            completeDataCache = getCompleteData(false);
+        }
+
+        return completeDataCache;
+    }
+
+    public final String getCompleteData(boolean readOnly) throws JSONException {
+        if (completeDataCache == null) {
+            completeDataCache = generateCompleteData(readOnly);
         }
 
         return completeDataCache;
@@ -237,6 +262,24 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         item.put("id", id);
         item.put("name", name);
         item.put("readonly", false);
+        return item;
+    }
+
+    /**
+     * Given the arguments, create a JSON object that represents it.  This is used to create the response for a
+     * JQeury Tokeninput auto-complete UI.
+     *
+     * @param id the ID
+     * @param name the name
+     * @param readonly If it's read only
+     * @return the JSON object that contains these fields.
+     * @throws JSONException
+     */
+    public static JSONObject getJSONObject(String id, String name, boolean readonly) throws JSONException {
+        JSONObject item = new JSONObject();
+        item.put("id", id);
+        item.put("name", name);
+        item.put("readonly", readonly);
         return item;
     }
 }

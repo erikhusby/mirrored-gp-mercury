@@ -55,6 +55,9 @@ public class ProductOrderKit implements Serializable {
     @Column(name = "notifications")
     private String notifications;
 
+    @Column(name = "work_request_id")
+    private String workRequestId;
+
     @Transient
     private String organismName;
 
@@ -200,5 +203,13 @@ public class ProductOrderKit implements Serializable {
         }
 
         return notificationIds;
+    }
+
+    public void setWorkRequestId(String workRequestId) {
+        this.workRequestId = workRequestId;
+    }
+
+    public String getWorkRequestId() {
+        return workRequestId;
     }
 }

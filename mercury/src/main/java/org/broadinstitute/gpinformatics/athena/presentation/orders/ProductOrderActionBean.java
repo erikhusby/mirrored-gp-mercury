@@ -61,6 +61,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspSh
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
@@ -216,6 +217,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private UserTokenInput notificationListTokenInput;
+
+    @Inject
+    private BSPConfig bspConfig;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -841,6 +845,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             if (isSampleInitiation()) {
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
+                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
             }
 
@@ -1505,16 +1510,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return owner;
     }
 
-    /**
-     * Sample list edit is only enabled if this is a DRAFT order.  Once an order has been placed, users must use the
-     * UI in the view PDO page to edit the samples in an order.
-     *
-     * @return true if user can edit the sample list
-     */
-    public boolean getAllowSampleListEdit() {
-        return editOrder.isDraft();
-    }
-
     public String getQ() {
         return q;
     }
@@ -1814,5 +1809,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public List<MaterialInfo> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
+    }
+
+    public String getWorkRequestUrl() {
+        return bspConfig.getWorkRequestLink(editOrder.getProductOrderKit().getWorkRequestId());
     }
 }
