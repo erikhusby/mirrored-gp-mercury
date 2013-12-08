@@ -94,7 +94,9 @@ public class ProductOrderTest {
                 .ignoreProperty("fundingDeadline")
                 .ignoreProperty("requisitionKey")
                 .ignoreProperty("requisitionName")
-                .ignoreProperty("publicationDeadline").build();
+                .ignoreProperty("publicationDeadline")
+                .ignoreProperty("productOrderKit")
+                .build();
         tester.testBean(ProductOrder.class, configuration);
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
