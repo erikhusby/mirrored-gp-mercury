@@ -124,18 +124,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @return the completion data
      * @throws JSONException if an error occurs
      */
-    public String generateCompleteData() throws JSONException {
-        return generateCompleteData(false);
-    }
-
-    /**
-     * Generate the completion data for this TokenInput.  Only called by TokenInput itself.  Subclasses should return
-     * the empty string, not null, for cases where no completions exist.
-     *
-     * @return the completion data
-     * @throws JSONException if an error occurs
-     */
-    public String generateCompleteData(boolean readOnly) throws JSONException {
+    private String generateCompleteData(boolean readOnly) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
             itemList.put(createAutocomplete(tokenObject, readOnly));
@@ -223,11 +212,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors generating JSON
      */
     public final String getCompleteData() throws JSONException {
-        if (completeDataCache == null) {
-            completeDataCache = getCompleteData(false);
-        }
-
-        return completeDataCache;
+        return getCompleteData(false);
     }
 
     public final String getCompleteData(boolean readOnly) throws JSONException {

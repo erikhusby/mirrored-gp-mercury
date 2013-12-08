@@ -181,7 +181,17 @@
                 // Even though the id is a long, if there is no value then this needs something empty, so using a string
                 // for the long or empty will work in the later comparison.
                 var selectedOrganismId = ${actionBean.ensureStringResult(actionBean.editOrder.productOrderKit.organismId)};
-                var organismSelect = '<select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.organismId">';
+
+                var organismSelect =
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        '<select name="editOrder.productOrderKit.organismId">';
+                    </c:when>
+                    <c:otherwise>
+                        '<select disabled="true" name="editOrder.productOrderKit.organismId">';
+                    </c:otherwise>
+                </c:choose>
+
                 $j.each(organisms, function(index, organism) {
                     var selectedString = (organism.id == selectedOrganismId) ? 'selected="selected"' : '';
                     organismSelect += '  <option value="' + organism.id + '" ' + selectedString + '>' + organism.name + '</option>';
