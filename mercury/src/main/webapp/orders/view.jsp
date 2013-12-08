@@ -718,10 +718,10 @@ function formatInput(item) {
         <fieldset>
             <legend>
                 <h4>
-                    Sample Kit Request:
+                    Sample Kit Request
 
                     <c:if test="${!actionBean.editOrder.draft}">
-                        <a href="${actionBean.workRequestUrl}" target="BSP">
+                        - <a href="${actionBean.workRequestUrl}" target="BSP">
                             ${actionBean.editOrder.productOrderKit.workRequestId}
                         </a>
                     </c:if>
