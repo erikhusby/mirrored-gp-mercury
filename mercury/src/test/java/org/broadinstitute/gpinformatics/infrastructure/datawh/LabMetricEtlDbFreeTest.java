@@ -43,7 +43,6 @@ public class LabMetricEtlDbFreeTest {
     private final String labBatchName = "LCSET-123";
     private final Set<LabVessel> vesselList = new HashSet<>();
     private final Set<SampleInstance> sampleInstList = new HashSet<>();
-    private final Set<LabBatch> workflowLabBatches = new HashSet<>();
     private final String vesselPosition = "D4";
     private LabMetricEtl tst;
 
@@ -69,8 +68,6 @@ public class LabMetricEtlDbFreeTest {
         vesselList.add(vessel);
         sampleInstList.clear();
         sampleInstList.add(sampleInst);
-        workflowLabBatches.clear();
-        workflowLabBatches.add(labBatch);
 
         tst = new LabMetricEtl(dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
@@ -124,7 +121,7 @@ public class LabMetricEtlDbFreeTest {
                 EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
-        EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
+        EasyMock.expect(sampleInst.getLabBatch()).andReturn(labBatch);
         EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
@@ -149,7 +146,7 @@ public class LabMetricEtlDbFreeTest {
                 EasyMock.anyObject(LabBatch.LabBatchType.class))).andReturn(sampleInstList);
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(null);
-        EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(Collections.<LabBatch>emptyList());
+        EasyMock.expect(sampleInst.getLabBatch()).andReturn(null);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
         EasyMock.expect(sample.getSampleKey()).andReturn(sampleKey);
@@ -174,7 +171,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
-        EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
+        EasyMock.expect(sampleInst.getLabBatch()).andReturn(labBatch);
         EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
@@ -204,7 +201,7 @@ public class LabMetricEtlDbFreeTest {
         EasyMock.expect(sampleInst.getStartingSample()).andReturn(sample);
         EasyMock.expect(sampleInst.getProductOrderKey()).andReturn(pdoKey);
         EasyMock.expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
-        EasyMock.expect(sampleInst.getAllWorkflowLabBatches()).andReturn(workflowLabBatches);
+        EasyMock.expect(sampleInst.getLabBatch()).andReturn(labBatch);
         EasyMock.expect(labBatch.getBatchName()).andReturn(labBatchName);
 
         EasyMock.expect(obj.getLabMetricId()).andReturn(entityId);
