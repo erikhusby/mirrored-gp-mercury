@@ -418,7 +418,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-            requireField(kit.getNumberOfSamples() > 0, "a specified number of samples", action);
+            Long numberOfSamples = kit.getNumberOfSamples();
+            if (kit.getNumberOfSamples() == null) {
+                numberOfSamples = Long.valueOf(0);
+            }
+            requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
             if (!StringUtils.isBlank(kit.getBspMaterialName()) &&
                 !materialTypesContains(kit.getBspMaterialName())) {
