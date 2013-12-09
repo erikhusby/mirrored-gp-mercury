@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     private String listOfKeys = "";
 
     /** A cache of the key list as a list of tokens. */
+    // FIXME: make this final
     private List<TOKEN_OBJECT> tokenObjects = Collections.emptyList();
 
     /** A cache of the result of calling generateCompleteData. */
@@ -91,6 +93,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         return listOfKeys;
     }
 
+    @Nonnull
     public List<TOKEN_OBJECT> getTokenObjects() {
         // setListOfKeys updates the objects, so when the action bean first populates the list of keys
         // directly, there will be no objects. This ensures that there will be objects around later.
@@ -99,6 +102,18 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
 
         return tokenObjects;
+    }
+
+    @Nonnull
+    public List<String> getTokenBusinessKeys() {
+        List<TOKEN_OBJECT> objects = getTokenObjects();
+
+        List<String> businessKeys = new ArrayList<>(objects.size());
+        for (TOKEN_OBJECT object : objects) {
+            businessKeys.add(getTokenId(object));
+        }
+
+        return businessKeys;
     }
 
     /**
@@ -110,7 +125,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     public TOKEN_OBJECT getTokenObject() {
         List<TOKEN_OBJECT> objects = getTokenObjects();
 
-        if (CollectionUtils.isEmpty(objects)) {
+        if (objects.isEmpty()) {
             return null;
         }
 
@@ -223,11 +238,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     protected abstract TOKEN_OBJECT getById(String key);
 
-    public void setup(Long... longIds) {
-        setListOfKeys(StringUtils.join(longIds, getSeparator()));
-    }
-
-    public void setup(String... ids) {
+    public void setup(Object... ids) {
         setListOfKeys(StringUtils.join(ids, getSeparator()));
     }
 

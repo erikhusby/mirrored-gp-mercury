@@ -796,14 +796,7 @@ function formatInput(item) {
                 <label class="control-label label-form">Notification List</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editOrder.productOrderKit.notifications != null}">
-                                ${actionBean.getUserListString(actionBean.editOrder.productOrderKit.notificationIds)}
-                            </c:when>
-                            <c:otherwise>
-                                None
-                            </c:otherwise>
-                        </c:choose>
+                            ${actionBean.getUserListString(actionBean.editOrder.productOrderKit.notificationIds)}
                     </div>
                 </div>
             </div>
