@@ -1307,7 +1307,7 @@ public class LabEventTest extends BaseEventTest {
     }
 
     public static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
-        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null);
+        SystemRouter systemRouter = new SystemRouter(null, null, new WorkflowLoader(), null, null);
         SystemRouter.System system = systemRouter.routeForVessels(labVessels,
                 controlCollaboratorIdList, mapSampleNameToDto, SystemRouter.Intent.ROUTE);
         Assert.assertEquals(system, expectedRouting);

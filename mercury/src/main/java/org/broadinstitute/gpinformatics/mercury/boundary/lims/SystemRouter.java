@@ -1,12 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections15.MultiMap;
+import org.apache.commons.collections15.multimap.MultiHashMap;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -73,17 +83,20 @@ public class SystemRouter implements Serializable {
     private ControlDao           controlDao;
     private WorkflowLoader       workflowLoader;
     private BSPSampleDataFetcher bspSampleDataFetcher;
+    private BSPExportsService    bspExportsService;
 
     SystemRouter() {
     }
 
     @Inject
     public SystemRouter(LabVesselDao labVesselDao, ControlDao controlDao,
-                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher) {
+                        WorkflowLoader workflowLoader, BSPSampleDataFetcher bspSampleDataFetcher,
+                        BSPExportsService bspExportsService) {
         this.labVesselDao = labVesselDao;
         this.controlDao = controlDao;
         this.workflowLoader = workflowLoader;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.bspExportsService = bspExportsService;
     }
 
     /**
@@ -117,8 +130,7 @@ public class SystemRouter implements Serializable {
      *
      * @param barcode the barcode of the tube to check
      *
-     * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
-     * routed.
+     * @return An instance of a System enum that determines to which system requests should be routed.
      */
     public System routeForVessel(String barcode) {
         return routeForVesselBarcodes(Collections.singletonList(barcode), Intent.ROUTE);
@@ -139,9 +151,101 @@ public class SystemRouter implements Serializable {
         return routeForVessels(labVessels, Intent.ROUTE);
     }
 
-    private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
-        Set<System> routingOptions = EnumSet.noneOf(System.class);
+    /**
+     * Query BSP for the export status of all labVessels given as parameters.  If none of these has been exported,
+     * route to Mercury.  If all have been exported to Sequencing, route to Squid.  If there is any other condition,
+     * throw an InformaticsServiceException as the situation is ambiguous.
+     */
+    private System determineSystemOfRecordPerBspExports(@Nonnull Collection<LabVessel> labVessels) {
+        IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(labVessels);
 
+        MultiMap<System, String> systemToVessels = new MultiHashMap<>();
+        for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
+            Set<IsExported.ExternalSystem> destinations = exportResult.getExportDestinations();
+            String vesselBarcode = exportResult.getBarcode();
+            if (CollectionUtils.isEmpty(destinations)) {
+                // If there are no export destinations given in the results, look for lookup misses or errors.
+                String error = exportResult.getError();
+
+                if (error == null) {
+                    // The vessel is recognized but was never exported, so this is MERCURY.
+                    systemToVessels.put(MERCURY, vesselBarcode);
+                } else {
+                    // Error trying to look up vessel.
+                    throw new InformaticsServiceException(error);
+                }
+
+            } else {
+                if (destinations.size() > 1) {
+                    // How can a vessel be exported to more than one destination?
+                    throw new InformaticsServiceException(
+                            String.format("Vessel exported to more than one destination: %s to %s.",
+                                    vesselBarcode, StringUtils.join(destinations, ", ")));
+                } else {
+                    IsExported.ExternalSystem externalSystem = destinations.iterator().next();
+                    switch (externalSystem) {
+                    case Sequencing:
+                        systemToVessels.put(SQUID, vesselBarcode);
+                        break;
+                    case Mercury:
+                        systemToVessels.put(MERCURY, vesselBarcode);
+                        break;
+                    default:
+                        // We are not currently expecting to see vessels exported to destinations other than Sequencing
+                        // or Mercury.
+                        throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
+                    }
+                }
+            }
+        }
+
+        if (systemToVessels.size() > 1) {
+            StringBuilder builder = new StringBuilder("Ambiguous systems of record for vessels: ");
+            for (Map.Entry<System, Collection<String>> entry : systemToVessels.entrySet()) {
+                String vesselBarcodes = StringUtils.join(entry.getValue(), ", ");
+                builder.append(entry.getKey()).append(": ").append(vesselBarcodes);
+            }
+
+            throw new InformaticsServiceException(builder.toString());
+        }
+
+        // Return the unique System key.
+        return systemToVessels.keySet().iterator().next();
+    }
+
+    /**
+     * For SYSTEM_OF_RECORD queries, this first attempts to look for in place or transfer events for the specified
+     * LabVessels that unambiguously point to either SQUID or MERCURY.  If the intent is not SYSTEM_OF_RECORD or the
+     * systems of records on these events are ambiguous, fall through to sample instance analysis logic.
+     */
+    private System routeForVessels(Collection<LabVessel> labVessels, Intent intent) {
+        if (intent == Intent.SYSTEM_OF_RECORD) {
+            Set<LabEventType.SystemOfRecord> systemsOfRecord = EnumSet.noneOf(LabEventType.SystemOfRecord.class);
+            for (LabVessel labVessel : labVessels) {
+                for (LabEvent labEvent : labVessel.getInPlaceAndTransferToEvents()) {
+                    systemsOfRecord.add(labEvent.getLabEventType().getSystemOfRecord());
+                }
+            }
+
+            // If the System of record is unambiguous in these events and is either SQUID or MERCURY, short circuit
+            // any further evaluation.
+            if (systemsOfRecord.size() == 1) {
+                LabEventType.SystemOfRecord systemOfRecord = systemsOfRecord.iterator().next();
+                switch (systemOfRecord) {
+                case SQUID:
+                    badCrspRouting();
+                    return System.SQUID;
+                case MERCURY:
+                    // If everything here has been exported to sequencing.
+                    return determineSystemOfRecordPerBspExports(labVessels);
+                case WORKFLOW_DEPENDENT:
+                    // Fall through.
+                }
+            }
+        }
+
+        // Could not determine System by event analysis, fall through to sample instance analysis.
+        Set<System> routingOptions = EnumSet.noneOf(System.class);
         // Determine which samples might be controls
         Set<SampleInstance> possibleControls = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
@@ -188,7 +292,7 @@ public class SystemRouter implements Serializable {
      *
      * The logic within this method will utilize the vessel to navigate back to the correct PDO and determine what
      * routing is configured for the workflow associated with the PDO.
-     *  * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
+     * When the intent is system-of-record and a control tube is given, null will be returned. This reflects the fact
      * that, for system-of-record determination, controls defer to their travel partners.
      *
      * @param vessels a collection of LabVessels for which system routing is to be determined
@@ -196,6 +300,7 @@ public class SystemRouter implements Serializable {
      * @param mapSampleNameToDto map from sample name to BSP sample DTO
      * @param intent whether to return one routing option, or multiple
      * @return An instance of a MercuryOrSquid enum that will assist in determining to which system requests should be
+     *         routed.
      */
     @DaoFree
     public System routeForVessels(Collection<LabVessel> vessels, List<String> controlCollaboratorSampleIds,
