@@ -222,8 +222,10 @@ public class SystemRouter implements Serializable {
         if (intent == Intent.SYSTEM_OF_RECORD) {
             Set<LabEventType.SystemOfRecord> systemsOfRecord = EnumSet.noneOf(LabEventType.SystemOfRecord.class);
             for (LabVessel labVessel : labVessels) {
-                for (LabEvent labEvent : labVessel.getInPlaceAndTransferToEvents()) {
-                    systemsOfRecord.add(labEvent.getLabEventType().getSystemOfRecord());
+                if (labVessel != null) {
+                    for (LabEvent labEvent : labVessel.getInPlaceAndTransferToEvents()) {
+                        systemsOfRecord.add(labEvent.getLabEventType().getSystemOfRecord());
+                    }
                 }
             }
 
