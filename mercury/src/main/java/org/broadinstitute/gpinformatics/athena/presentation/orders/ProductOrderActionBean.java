@@ -420,17 +420,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderKit kit = editOrder.getProductOrderKit();
             Long numberOfSamples = kit.getNumberOfSamples();
             if (kit.getNumberOfSamples() == null) {
-                numberOfSamples = Long.valueOf(0);
+                numberOfSamples = (long) 0;
             }
             requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
-            if (!StringUtils.isBlank(kit.getBspMaterialName()) &&
-                !materialTypesContains(kit.getBspMaterialName())) {
-
-                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
-                        kit.getBspMaterialName());
-            }
-            requireField(kit.getMaterialInfo(), "a material type", action);
+            requireField(kit.getKitType().getKitName(), "a kit type", action);
+            requireField(kit.getBspMaterialName(), "a material information", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
             requireField(kit.getOrganismId(), "an organism", action);
 
