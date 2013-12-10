@@ -1,10 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -12,10 +13,14 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Represents the Kit info which is associated with a Sample Initiation PDO.
@@ -35,7 +40,7 @@ public class ProductOrderKit implements Serializable {
     @Column(name = "number_samples")
     private Long numberOfSamples;
 
-    @Enumerated(value = EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     @Column(name = "kit_type")
     private KitType kitType;
 
@@ -51,9 +56,10 @@ public class ProductOrderKit implements Serializable {
     @Column(name = "material_bsp_name")
     private String bspMaterialName;
 
-    // notifications consists of Long values (bsp user ids) delimited by UserTokenInput.STRING_FORMAT_DELIMITER.
-    @Column(name = "notifications")
-    private String notifications;
+    @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    @BatchSize(size = 500)
+    private final Set<ProductOrderKitPerson> notificationPeople = new HashSet<>();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -71,15 +77,15 @@ public class ProductOrderKit implements Serializable {
     public ProductOrderKit() {
     }
 
-    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId,
-                           Long siteId, MaterialInfo materialInfo, String notifications) {
+    // Only used by tests.
+    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
+                           MaterialInfo materialInfo) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
         setMaterialInfo(materialInfo);
-        this.notifications = notifications;
     }
 
     public Long getProductOrderKitId() {
@@ -175,34 +181,26 @@ public class ProductOrderKit implements Serializable {
         return bspMaterialName;
     }
 
-    public void setBspMaterialName(String materialInfo) {
-        this.bspMaterialName = materialInfo;
+    public void setBspMaterialName(String bspMaterialName) {
+        this.bspMaterialName = bspMaterialName;
     }
 
-    public String getNotifications() {
-        return notifications;
-    }
-
-    public void setNotifications(String notifications) {
-        this.notifications = notifications;
-    }
-
-    /**
-     * This turns the stored list of notification ids into the appropriate array of Longs. Since the
-     * notification member is storing the ids as a token separate list, use the token input object to
-     * split this apart.
-     *
-     * @return The array of Longs.
-     */
     public Long[] getNotificationIds() {
-        String[] keys = notifications.split(UserTokenInput.STRING_FORMAT_DELIMITER);
-        Long[] notificationIds = new Long[keys.length];
+        Long[] ids = new Long[notificationPeople.size()];
+
         int i = 0;
-        for (String key : keys) {
-            notificationIds[i++] = Long.valueOf(key);
+        for (ProductOrderKitPerson person : notificationPeople) {
+            ids[i++] = person.getPersonId();
         }
 
-        return notificationIds;
+        return ids;
+    }
+
+    public void setNotificationIds(List<String> ids) {
+        notificationPeople.clear();
+        for (String id : ids) {
+            notificationPeople.add(new ProductOrderKitPerson(this, Long.valueOf(id)));
+        }
     }
 
     public void setWorkRequestId(String workRequestId) {
