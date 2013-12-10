@@ -34,6 +34,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,8 @@ public class LabEventResource {
             @QueryParam("plateBarcodes") @Nonnull List<String> plateBarcodes) {
         Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(plateBarcodes).values();
 
-        List<LabEvent> labEvents = new ArrayList<>();
+        // This is a Set as LabEvents should be unique in the results.
+        Set<LabEvent> labEvents = new HashSet<>();
 
         for (LabVessel labVessel : labVessels) {
             // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
@@ -148,13 +150,21 @@ public class LabEventResource {
             }
 
             VesselContainer<?> vesselContainer = labVessel.getContainerRole();
-            labEvents = vesselContainer.getTransfersToNearestAncestorRack();
+
+            List<List<LabEvent>> resultsForThisVessel =
+                    vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
+            // Flatten the result as the current caller does not expect more than one List of transfers to be found
+            // per query barcode.
+            for (List<LabEvent> labEventList : resultsForThisVessel) {
+                labEvents.addAll(labEventList);
+            }
         }
 
-        Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);
+        List<LabEvent> sortedLabEvents = new ArrayList<>(labEvents);
+        Collections.sort(sortedLabEvents, LabEvent.BY_EVENT_DATE);
 
         List<LabEventBean> labEventBeans =
-                buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
+                buildLabEventBeans(sortedLabEvents, new DefaultLabEventRefDataFetcher());
 
         return new LabEventResponseBean(labEventBeans);
     }

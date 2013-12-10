@@ -527,41 +527,6 @@ public interface TransferTraverserCriteria {
 
     }
 
-    /**
-     * Similar to NearestTubeAncestorCriteria, this criteria records the set of transfers to the first
-     * ancestor rack.
-     */
-    class NearestRackAncestorCriteria implements TransferTraverserCriteria {
-
-        private List<LabEvent> transfers = new ArrayList<>();
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getEvent() != null) {
-                transfers.add(context.getEvent());
-            }
-
-            if (OrmUtil.proxySafeIsInstance(context.getVesselContainer(), TubeFormation.class)) {
-                return TraversalControl.StopTraversing;
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {
-
-        }
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {
-
-        }
-
-        public List<LabEvent> getTransfers() {
-            return transfers;
-        }
-    }
-
     public class VesselTypeDescendantCriteria<T extends LabVessel> implements TransferTraverserCriteria {
         private Collection<T> descendantsOfVesselType = new HashSet<>();
         private final Class<T> typeParameterClass;

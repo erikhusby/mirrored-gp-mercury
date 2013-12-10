@@ -254,13 +254,6 @@ public class VesselContainer<T extends LabVessel> {
         return traversalResults;
     }
 
-    private void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
-                                  TransferTraverserCriteria.TraversalDirection traversalDirection,
-                                  LabEvent labEvent, int hopCount) {
-        TransferTraverserCriteria.Context context =
-                new TransferTraverserCriteria.Context(this.getEmbedder(), labEvent, hopCount, traversalDirection);
-    }
-
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
                                  int hopCount) {
@@ -724,6 +717,9 @@ public class VesselContainer<T extends LabVessel> {
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
 
+    /**
+     * Utility class to encapsulate intermediate solutions when recursively searching vessel container transfers.
+     */
     private static class LabEventPaths {
         private List<List<LabEvent>> paths = new ArrayList<>();
 
@@ -741,32 +737,39 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         public boolean shouldContinue(int hopCount) {
-            return !paths.isEmpty() && currentSolutionLength() <= hopCount;
+            // Continue if we have no solutions or this would be searching a solution that is not longer than
+            // the current solution.
+            return paths.isEmpty() || currentSolutionLength() >= hopCount;
+        }
+
+        public List<List<LabEvent>> getPaths() {
+            return paths;
         }
     }
 
     /**
      * Returns a path that is a copy of {@code currentPath} extended by {@code labEvent}.
      */
-    private List<LabEvent> duplicatePathExtendedByNewEvent(@Nonnull List<LabEvent> currentPath,
-                                                           @Nonnull LabEvent labEvent) {
+    private static List<LabEvent> copyAndExtendPath(@Nonnull List<LabEvent> currentPath,
+                                                    @Nonnull LabEvent labEvent) {
         List<LabEvent> newPath = new ArrayList<>(currentPath.size() + 1);
-        Collections.copy(newPath, currentPath);
+        newPath.addAll(currentPath);
         newPath.add(labEvent);
         return newPath;
     }
 
-    private void recurseTransfers(@Nonnull LabEventPaths currentSolutions, @Nonnull List<LabEvent> currentPath,
-                                  @Nonnull Predicate<LabVessel> predicate, int hopCount) {
+    private static void recurseTransfers(@Nonnull LabEventPaths currentSolutions, @Nonnull List<LabEvent> currentPath,
+                                         @Nonnull VesselContainer<? extends LabVessel> vesselContainer,
+                                         @Nonnull Predicate<LabVessel> predicate, int hopCount) {
 
-        for (LabEvent labEvent : getTransfersTo()) {
+        for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
             for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                List<LabEvent> nextPath = duplicatePathExtendedByNewEvent(currentPath, labEvent);
+                List<LabEvent> nextPath = copyAndExtendPath(currentPath, labEvent);
                 if (predicate.apply(labVessel)) {
                     currentSolutions.addPath(nextPath);
                 } else {
                     if (currentSolutions.shouldContinue(hopCount + 1)) {
-                        recurseTransfers(currentSolutions, nextPath, predicate, hopCount + 1);
+                        recurseTransfers(currentSolutions, nextPath, labVessel.getContainerRole(), predicate, hopCount + 1);
                     }
                 }
             }
@@ -782,68 +785,10 @@ public class VesselContainer<T extends LabVessel> {
      */
     public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
 
-        List<List<LabEvent>> foundEventLists = new ArrayList<>();
+        LabEventPaths labEventPaths = new LabEventPaths();
+        recurseTransfers(labEventPaths, new ArrayList<LabEvent>(), this, predicate, 0);
 
-        // Keep track of the List of LabEvents that lead to a source potentially satisfying the predicate.
-        List<Map<LabVessel, List<LabEvent>>> currentTransfers = new ArrayList<>();
-
-        for (LabEvent labEvent : getTransfersTo()) {
-            for (LabVessel vessel : labEvent.getSourceLabVessels()) {
-                Map<LabVessel, List<LabEvent>> currentTransfer = new HashMap<>();
-                currentTransfer.put(vessel, Collections.singletonList(labEvent));
-                currentTransfers.add(currentTransfer);
-            }
-        }
-
-        // Continue until finding LabVessels satisfying the predicate or running out of LabVessels to test.
-        while (true) {
-            // Search for LabVessels satisfying the predicate.
-            for (Map<LabVessel, List<LabEvent>> currentTransfer : currentTransfers) {
-                for (Map.Entry<LabVessel, List<LabEvent>> entry : currentTransfer.entrySet()) {
-                    if (predicate.apply(entry.getKey())) {
-                        foundEventLists.add(entry.getValue());
-                    }
-                }
-            }
-
-            // If any satisfying LabVessels at this depth were found, terminate the search.
-            if (!foundEventLists.isEmpty()) {
-                return foundEventLists;
-            }
-
-            // Search for transfers one level deeper from the current set of transfers.
-            List<Map<LabVessel, List<LabEvent>>> previousTransfers = currentTransfers;
-            currentTransfers = new ArrayList<>();
-
-            for (Map<LabVessel, List<LabEvent>> previousTransfer : previousTransfers) {
-
-                for (Map.Entry<LabVessel, List<LabEvent>> entry : previousTransfer.entrySet()) {
-                    LabVessel vessel = entry.getKey();
-                    List<LabEvent> labEvents = entry.getValue();
-                    Map<LabVessel, List<LabEvent>> vesselMap = new HashMap<>();
-
-                    for (LabEvent labEvent : vessel.getTransfersTo()) {
-                        for (LabVessel sourceVessel : labEvent.getSourceLabVessels()) {
-                            if (!vesselMap.containsKey(sourceVessel)) {
-                                vesselMap.put(sourceVessel, new ArrayList<>(labEvents));
-                            }
-                            vesselMap.get(sourceVessel).add(labEvent);
-                        }
-                    }
-
-                    // Add non-empty Maps from LabVessels to Lists of LabEvents to the List of current transfers.
-                    if (!vesselMap.isEmpty()) {
-                        currentTransfers.add(vesselMap);
-                    }
-                }
-            }
-
-            // If there are no transfers left to search, terminate.
-            if (currentTransfers.isEmpty()) {
-                return foundEventLists;
-            }
-        }
-
+        return labEventPaths.getPaths();
     }
 
 }
