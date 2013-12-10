@@ -208,24 +208,26 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupBsp934And1005() {
+    public void fixupBsp934And1005And1218() {
         Map<String, String> kitToContainer = new HashMap<String, String>() {{
-            //put("SK-247T", "CO-7496163");
-            put("SK-24EI", "CO-6635472");
-            put("SK-24EK", "CO-7506733");
-            put("SK-24EM", "CO-7506736");
-            put("SK-24EO", "CO-7507178");
-            put("SK-24EQ", "CO-6633920");
-            put("SK-24ET", "CO-7507180");
-            put("SK-24EU", "CO-7507181");
-            put("SK-24EV", "CO-6633823");
-            put("SK-24EY", "CO-7506735");
-            put("SK-24F1", "CO-6580265");
-            put("SK-24F2", "CO-7506732");
-
-            put("SK-24EL", "CO-7506734");
-            put("SK-24EW", "CO-6578422");
-            put("SK-24F3", "CO-6633726");
+//            put("SK-247T", "CO-7496163");
+//            put("SK-24EI", "CO-6635472");
+//            put("SK-24EK", "CO-7506733");
+//            put("SK-24EM", "CO-7506736");
+//            put("SK-24EO", "CO-7507178");
+//            put("SK-24EQ", "CO-6633920");
+//            put("SK-24ET", "CO-7507180");
+//            put("SK-24EU", "CO-7507181");
+//            put("SK-24EV", "CO-6633823");
+//            put("SK-24EY", "CO-7506735");
+//            put("SK-24F1", "CO-6580265");
+//            put("SK-24F2", "CO-7506732");
+//
+//            put("SK-24EL", "CO-7506734");
+//            put("SK-24EW", "CO-6578422");
+//            put("SK-24F3", "CO-6633726");
+            put("SK-28CT", "CO-7158262");
+            put("SK-28CU", "CO-7160207");
         }};
 
         for (Map.Entry<String, String> entry : kitToContainer.entrySet()) {
