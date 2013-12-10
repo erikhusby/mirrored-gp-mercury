@@ -148,15 +148,7 @@ public class LabEventResource {
             }
 
             VesselContainer<?> vesselContainer = labVessel.getContainerRole();
-
-            List<List<LabEvent>> listOfLabEventLists =
-                    vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
-
-            // Flatten the result as the current caller does not expect more than one List of transfers to be found
-            // per query barcode.
-            for (List<LabEvent> labEventList : listOfLabEventLists) {
-                labEvents.addAll(labEventList);
-            }
+            labEvents = vesselContainer.getTransfersToNearestAncestorRack();
         }
 
         Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);

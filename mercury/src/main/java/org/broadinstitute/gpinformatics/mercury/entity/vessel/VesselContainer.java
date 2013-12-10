@@ -254,6 +254,13 @@ public class VesselContainer<T extends LabVessel> {
         return traversalResults;
     }
 
+    private void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
+                                  TransferTraverserCriteria.TraversalDirection traversalDirection,
+                                  LabEvent labEvent, int hopCount) {
+        TransferTraverserCriteria.Context context =
+                new TransferTraverserCriteria.Context(this.getEmbedder(), labEvent, hopCount, traversalDirection);
+    }
+
     public void evaluateCriteria(VesselPosition position, TransferTraverserCriteria transferTraverserCriteria,
                                  TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
                                  int hopCount) {
@@ -717,6 +724,54 @@ public class VesselContainer<T extends LabVessel> {
         return new ArrayList<>(criteria.getVesselAndPositions());
     }
 
+    private static class LabEventPaths {
+        private List<List<LabEvent>> paths = new ArrayList<>();
+
+        private int currentSolutionLength() {
+            return paths.get(0).size();
+        }
+
+        public void addPath(@Nonnull List<LabEvent> solution) {
+            if (!paths.isEmpty() && currentSolutionLength() > solution.size()) {
+                // If the new solution path is shorter than the solution paths so far, clear out the current
+                // List of paths before adding this new shorter path.
+                paths.clear();
+            }
+            paths.add(solution);
+        }
+
+        public boolean shouldContinue(int hopCount) {
+            return !paths.isEmpty() && currentSolutionLength() <= hopCount;
+        }
+    }
+
+    /**
+     * Returns a path that is a copy of {@code currentPath} extended by {@code labEvent}.
+     */
+    private List<LabEvent> duplicatePathExtendedByNewEvent(@Nonnull List<LabEvent> currentPath,
+                                                           @Nonnull LabEvent labEvent) {
+        List<LabEvent> newPath = new ArrayList<>(currentPath.size() + 1);
+        Collections.copy(newPath, currentPath);
+        newPath.add(labEvent);
+        return newPath;
+    }
+
+    private void recurseTransfers(@Nonnull LabEventPaths currentSolutions, @Nonnull List<LabEvent> currentPath,
+                                  @Nonnull Predicate<LabVessel> predicate, int hopCount) {
+
+        for (LabEvent labEvent : getTransfersTo()) {
+            for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
+                List<LabEvent> nextPath = duplicatePathExtendedByNewEvent(currentPath, labEvent);
+                if (predicate.apply(labVessel)) {
+                    currentSolutions.addPath(nextPath);
+                } else {
+                    if (currentSolutions.shouldContinue(hopCount + 1)) {
+                        recurseTransfers(currentSolutions, nextPath, predicate, hopCount + 1);
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Returns the shortest paths of LabEvents from this VesselContainer to source vessels satisfying the predicate.
