@@ -311,13 +311,13 @@
     </changeSet>
 
 
-    <changeSet id="GPLIM-2361-1" author="pshapiro">
+    <changeSet id="GPLIM-2361-1A" author="pshapiro">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="product_order_kit_person" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="seq_pdo_kit_person_index" startValue="1" incrementBy="50" schemaName="athena"/>
+        <createSequence sequenceName="seq_pdo_kit_person" startValue="1" incrementBy="50" schemaName="athena"/>
         <createTable tableName="product_order_kit_person">
             <column name="product_order_kit_person_id" type="number(19,0)">
                 <constraints nullable="false" primaryKey="true"/>
@@ -330,7 +330,7 @@
             </column>
         </createTable>
         <addForeignKeyConstraint baseTableName="product_order_kit_person" baseColumnNames="product_order_kit"
-                                 constraintName="fk_sample_kit_person_product"
+                                 constraintName="fk_person_to_pdo_kit"
                                  referencedTableName="product_order_kit"
                                  referencedColumnNames="product_order_kit_id"/>
         <dropColumn tableName="product_order_kit" columnName="notifications" schemaName="athena"/>
