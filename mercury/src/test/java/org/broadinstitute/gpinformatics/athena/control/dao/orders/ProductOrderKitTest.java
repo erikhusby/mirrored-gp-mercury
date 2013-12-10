@@ -49,7 +49,7 @@ public class ProductOrderKitTest extends ContainerTest {
         utx.begin();
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
-        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, materialInfo, null));
+        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, materialInfo));
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();

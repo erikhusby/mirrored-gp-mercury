@@ -516,6 +516,9 @@
                                 <stripes:options-enumeration label="displayName"
                                                              enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
                             </stripes:select>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <stripes:hidden name="editOrder.productOrderKit.kitType"/>
+                            </c:if>
                         </div>
                     </div>
 
@@ -560,6 +563,9 @@
                                 <stripes:options-collection value="bspName"
                                                             collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
                             </stripes:select>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
+                            </c:if>
                         </div>
                     </div>
                     <div class="control-group">

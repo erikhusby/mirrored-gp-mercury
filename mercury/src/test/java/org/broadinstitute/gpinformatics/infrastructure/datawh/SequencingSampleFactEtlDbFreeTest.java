@@ -184,8 +184,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 .andReturn(sampleInstances).anyTimes();
 
         for (SampleInstance sampleInstance1 : sampleInstances) {
-            EasyMock.expect(sampleInstance1.getAllWorkflowLabBatches()).andReturn(
-                    Collections.<LabBatch>singletonList(workflowBatch)).anyTimes();
+            EasyMock.expect(sampleInstance1.getLabBatch()).andReturn(workflowBatch).anyTimes();
         }
     }
 

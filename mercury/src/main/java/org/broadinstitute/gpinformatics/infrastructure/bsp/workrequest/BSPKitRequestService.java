@@ -8,7 +8,6 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
@@ -26,6 +25,8 @@ public class BSPKitRequestService {
     private final BSPManagerFactory bspManagerFactory;
 
     private final BSPUserList bspUserList;
+
+    private static final String EMAIL_LIST_DELIMITER = ", ";
 
     @Inject
     public BSPKitRequestService(BSPWorkRequestClientService bspWorkRequestClientService,
@@ -80,13 +81,13 @@ public class BSPKitRequestService {
     /**
      * Returns a comma separated list of e-mail addresses.
      */
-    public String getEmailList(Long[] notificationIds) {
+    private String getEmailList(Long[] notificationIds) {
         List<String> emailList = new ArrayList<>(notificationIds.length);
         for (Long notificationId : notificationIds) {
             emailList.add(bspUserList.getById(notificationId).getEmail());
         }
 
-        return StringUtils.join(emailList, UserTokenInput.STRING_FORMAT_DELIMITER);
+        return StringUtils.join(emailList, EMAIL_LIST_DELIMITER);
     }
 
     /**

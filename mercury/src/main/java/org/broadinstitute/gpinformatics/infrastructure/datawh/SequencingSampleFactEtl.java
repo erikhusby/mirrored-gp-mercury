@@ -280,9 +280,8 @@ public class SequencingSampleFactEtl extends GenericEntityEtl<SequencingRun, Seq
                     for (SampleInstance si : sampleInstances) {
                         String productOrderId = null;
                         String researchProjectId = null;
-                        Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
-                        String batchName = batches.size() == 0 ? NONE :
-                                batches.size() == 1 ? batches.iterator().next().getBatchName() : MULTIPLE;
+                        LabBatch labBatch = si.getLabBatch();
+                        String batchName = labBatch != null ? labBatch.getBatchName() : LabEventEtl.NONE;
                         String pdoKey = si.getProductOrderKey();
                         if (pdoKey != null) {
                             // Does cache lookup and fills cache as needed.

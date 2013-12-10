@@ -420,17 +420,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderKit kit = editOrder.getProductOrderKit();
             Long numberOfSamples = kit.getNumberOfSamples();
             if (kit.getNumberOfSamples() == null) {
-                numberOfSamples = Long.valueOf(0);
+                numberOfSamples = (long) 0;
             }
             requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
-            if (!StringUtils.isBlank(kit.getBspMaterialName()) &&
-                !materialTypesContains(kit.getBspMaterialName())) {
-
-                addValidationError("Material Information", "\"{0}\" is not a valid type for MaterialInfo",
-                        kit.getBspMaterialName());
-            }
-            requireField(kit.getMaterialInfo(), "a material type", action);
+            requireField(kit.getKitType().getKitName(), "a kit type", action);
+            requireField(kit.getBspMaterialName(), "a material information", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
             requireField(kit.getOrganismId(), "an organism", action);
 
@@ -667,7 +662,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         definitionValue.put(DATE, getDateRange().createDateStrings());
 
-        definitionValue.put(OWNER, owner.getBusinessKeyList());
+        definitionValue.put(OWNER, owner.getTokenBusinessKeys());
 
         preferenceEjb.add(userBean.getBspUser().getUserId(), PreferenceType.PDO_SEARCH, definitionValue);
     }
@@ -830,16 +825,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         }
 
-        if (notificationListTokenInput != null) {
-            List<Long> notificationIds = new ArrayList<>();
-            if (!StringUtils.isBlank(editOrder.getProductOrderKit().getNotifications())) {
-                for (long id : editOrder.getProductOrderKit().getNotificationIds()) {
-                    notificationIds.add(id);
-                }
-            }
-
-            notificationListTokenInput.setup(notificationIds.toArray(new Long[notificationIds.size()]));
-        }
+        notificationListTokenInput.setup(editOrder.getProductOrderKit().getNotificationIds());
     }
 
     @HandlesEvent(PLACE_ORDER)
@@ -885,14 +871,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         addGlobalValidationError(e.toString());
         entryInit();
         return getSourcePageResolution();
-    }
-
-    private SampleCollection getSelectedCollection() {
-        List<SampleCollection> collections = bspGroupCollectionTokenInput.getTokenObjects();
-        if (collections.isEmpty()) {
-            return null;
-        }
-        return collections.get(0);
     }
 
     /**
@@ -968,15 +946,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
             editOrder.getProductOrderKit().setSampleCollectionId(
-                    bspGroupCollectionTokenInput != null && bspGroupCollectionTokenInput.getTokenObject() != null ?
+                    bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
             editOrder.getProductOrderKit().setSiteId(
-                    bspShippingLocationTokenInput != null && bspShippingLocationTokenInput.getTokenObject() != null ?
+                    bspShippingLocationTokenInput.getTokenObject() != null ?
                             bspShippingLocationTokenInput.getTokenObject().getId() : null);
-            editOrder.getProductOrderKit().setNotifications(
-                    notificationListTokenInput != null && notificationListTokenInput.getBusinessKeyList() != null ?
-                            StringUtils.join(notificationListTokenInput.getBusinessKeyList(),
-                                    UserTokenInput.STRING_FORMAT_DELIMITER) : null);
+            editOrder.getProductOrderKit().setNotificationIds(notificationListTokenInput.getTokenBusinessKeys());
         }
     }
 
@@ -1410,7 +1385,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("shippingLocationAutocomplete")
     public Resolution shippingLocationAutocomplete() throws Exception {
-        SampleCollection selectedCollection = getSelectedCollection();
+        SampleCollection selectedCollection = bspGroupCollectionTokenInput.getTokenObject();
         if (selectedCollection != null) {
             return createTextResolution(
                     bspShippingLocationTokenInput.getJsonString(getQ(), selectedCollection));
