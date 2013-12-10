@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
@@ -21,6 +22,16 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
  * @author breilly
  */
 public class LabEventTestFactory {
+
+    public static LabEvent addInPlaceEvent(LabVessel target) {
+        return addInPlaceEvent(A_BASE, target);
+    }
+
+    public static LabEvent addInPlaceEvent(LabEventType labEventType, LabVessel target) {
+        LabEvent event = new LabEvent(labEventType, new Date(), "LabEventTestFactory", 0L, 0L, "labEventTestFactory");
+        target.addInPlaceEvent(event);
+        return event;
+    }
 
     public static TubeFormation makeTubeFormation(TwoDBarcodedTube... tubes) {
         Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
