@@ -405,8 +405,8 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="workflow" id="workflow">
-                            <stripes:option value="">Select a Workflow</stripes:option>
-                            <stripes:options-collection collection="${actionBean.workflowList}"/>
+                            <stripes:option value="">None</stripes:option>
+                            <stripes:options-collection collection="${actionBean.visibleWorkflowList}" label="workflowName"/>
                         </stripes:select>
                     </div>
                     </security:authorizeBlock>

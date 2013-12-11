@@ -1,18 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
-import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.site.Site;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * High-level APIs for using the BSP work request service to create sample kit requests.
@@ -24,6 +25,8 @@ public class BSPKitRequestService {
     private final BSPManagerFactory bspManagerFactory;
 
     private final BSPUserList bspUserList;
+
+    private static final String EMAIL_LIST_DELIMITER = ", ";
 
     @Inject
     public BSPKitRequestService(BSPWorkRequestClientService bspWorkRequestClientService,
@@ -40,16 +43,9 @@ public class BSPKitRequestService {
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
      * @param productOrder       the product order to create the kit request from
-     * @param site               the site that the kit should be shipped to
-     * @param numberOfSamples    the number of samples to put in the kit
-     * @param materialInfo       materialInfo of the kit request
-     * @param notificationList   comma separated list of e-mail addresses to send notifications to upon kit shipment.
-     * @param organismId         the organism to use
      *  @return the BSP work request ID
      */
-    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder, Site site, long numberOfSamples,
-                                                  MaterialInfo materialInfo, SampleCollection collection,
-                                                  String notificationList, long organismId) {
+    public String createAndSubmitKitRequestForPDO(ProductOrder productOrder) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
 
         Long primaryInvestigatorId = null;
@@ -72,13 +68,26 @@ public class BSPKitRequestService {
         String workRequestName = String.format("%s - %s", productOrder.getName(), productOrder.getBusinessKey());
         String requesterId = creator.getUsername();
 
+        ProductOrderKit kit = productOrder.getProductOrderKit();
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, site, numberOfSamples, materialInfo, collection, notificationList,
-                organismId);
+                externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
+                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId());
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
+    }
+
+    /**
+     * Returns a comma separated list of e-mail addresses.
+     */
+    private String getEmailList(Long[] notificationIds) {
+        List<String> emailList = new ArrayList<>(notificationIds.length);
+        for (Long notificationId : notificationIds) {
+            emailList.add(bspUserList.getById(notificationId).getEmail());
+        }
+
+        return StringUtils.join(emailList, EMAIL_LIST_DELIMITER);
     }
 
     /**
@@ -101,34 +110,5 @@ public class BSPKitRequestService {
     public WorkRequestResponse submitKitRequest(String workRequestBarcode) {
         WorkRequestManager bspWorkRequestManager = bspManagerFactory.createWorkRequestManager();
         return bspWorkRequestClientService.submitWorkRequest(workRequestBarcode, bspWorkRequestManager);
-    }
-
-    /**
-     * This enum is used to link the material info types to kit types. In the UI when selecting the Kit type,
-     * It will help populate the MaterialInfo types.
-     *
-     * In the future it would be good if this lived in bspClient and getMaterialInfoObjects took the EnumType
-     *
-     * kitTypeName should map to KitTypeAllowanceSpecification in BSPCore
-     *
-     */
-    public enum KitType {
-        DNA_MATRIX("DNA Matrix Kit", "Matrix Tube [0.75mL]");
-
-        private final String kitTypeName;
-        private final String displayName;
-
-        private KitType(String kitTypeName, String displayName) {
-            this.kitTypeName = kitTypeName;
-            this.displayName = displayName;
-        }
-
-        public String getKitTypeName() {
-            return kitTypeName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
     }
 }

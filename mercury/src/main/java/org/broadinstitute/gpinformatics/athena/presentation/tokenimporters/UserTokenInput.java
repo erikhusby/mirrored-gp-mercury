@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
@@ -58,29 +57,5 @@ public class UserTokenInput extends TokenInput<BspUser> {
         }
 
         return businessKeyList;
-    }
-
-    public List<String> getBusinessKeyList() {
-        List<BspUser> users = getTokenObjects();
-
-        List<String> businessKeyList = new ArrayList<>(users.size());
-        for (BspUser user : users) {
-            businessKeyList.add(user.getUserId().toString());
-        }
-
-        return businessKeyList;
-    }
-
-    /**
-     * Returns a comma separated list of e-mail addresses.
-     */
-    public String getEmailList() {
-        List<BspUser> users = getTokenObjects();
-        List<String> emailList = new ArrayList<>(users.size());
-        for (BspUser user : users) {
-            emailList.add(user.getEmail());
-        }
-
-        return StringUtils.join(emailList, ", ");
     }
 }

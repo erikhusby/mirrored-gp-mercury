@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.inject.Inject;
 
@@ -12,13 +12,11 @@ import javax.inject.Inject;
 public class SampleLink {
 
     private final BSPConfig bspConfig;
-    private final JiraLink jiraLink;
     private final AbstractSample sample;
     private final Format format;
 
-    private SampleLink(BSPConfig bspConfig, JiraLink jiraLink, AbstractSample sample) {
+    private SampleLink(BSPConfig bspConfig, AbstractSample sample) {
         this.bspConfig = bspConfig;
-        this.jiraLink = jiraLink;
         this.sample = sample;
         format = Format.fromSample(sample);
     }
@@ -38,7 +36,6 @@ public class SampleLink {
     public String getUrl() {
         switch (format) {
         case CRSP:
-//            return jiraLink.browseUrl(sample.getSampleKey());
         case BSP:
             return bspConfig.getUrl(BSPConfig.SEARCH_PATH + sample.getSampleKey());
         default:
@@ -60,7 +57,7 @@ public class SampleLink {
 
         static Format fromSample(AbstractSample sample) {
             if (sample.isInBspFormat()) {
-                if (Deployment.isCRSP) {
+                if (ApplicationInstance.CRSP.isCurrent()) {
                     return Format.CRSP;
                 } else {
                     return Format.BSP;
@@ -73,11 +70,9 @@ public class SampleLink {
     public static class Factory {
         @Inject
         private BSPConfig bspConfig;
-        @Inject
-        private JiraLink jiraLink;
 
         public SampleLink create(AbstractSample sample) {
-            return new SampleLink(bspConfig, jiraLink, sample);
+            return new SampleLink(bspConfig, sample);
         }
     }
 }

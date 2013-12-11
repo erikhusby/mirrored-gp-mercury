@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     private String listOfKeys = "";
 
     /** A cache of the key list as a list of tokens. */
+    // FIXME: make this final
     private List<TOKEN_OBJECT> tokenObjects = Collections.emptyList();
 
     /** A cache of the result of calling generateCompleteData. */
@@ -91,6 +93,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         return listOfKeys;
     }
 
+    @Nonnull
     public List<TOKEN_OBJECT> getTokenObjects() {
         // setListOfKeys updates the objects, so when the action bean first populates the list of keys
         // directly, there will be no objects. This ensures that there will be objects around later.
@@ -99,6 +102,18 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
 
         return tokenObjects;
+    }
+
+    @Nonnull
+    public List<String> getTokenBusinessKeys() {
+        List<TOKEN_OBJECT> objects = getTokenObjects();
+
+        List<String> businessKeys = new ArrayList<>(objects.size());
+        for (TOKEN_OBJECT object : objects) {
+            businessKeys.add(getTokenId(object));
+        }
+
+        return businessKeys;
     }
 
     /**
@@ -110,7 +125,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     public TOKEN_OBJECT getTokenObject() {
         List<TOKEN_OBJECT> objects = getTokenObjects();
 
-        if (CollectionUtils.isEmpty(objects)) {
+        if (objects.isEmpty()) {
             return null;
         }
 
@@ -124,10 +139,10 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @return the completion data
      * @throws JSONException if an error occurs
      */
-    public String generateCompleteData() throws JSONException {
+    private String generateCompleteData(boolean readOnly) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
-            itemList.put(createAutocomplete(tokenObject));
+            itemList.put(createAutocomplete(tokenObject, readOnly));
         }
 
         return itemList.toString();
@@ -180,7 +195,11 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors
      */
     protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject) throws JSONException {
-        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject));
+        return createAutocomplete(tokenObject, false);
+    }
+
+    protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject, boolean readonly) throws JSONException {
+        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject), readonly);
         item.put("dropdownItem", formatMessage(formatString, tokenObject));
         return item;
     }
@@ -206,8 +225,12 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors generating JSON
      */
     public final String getCompleteData() throws JSONException {
+        return getCompleteData(false);
+    }
+
+    public final String getCompleteData(boolean readOnly) throws JSONException {
         if (completeDataCache == null) {
-            completeDataCache = generateCompleteData();
+            completeDataCache = generateCompleteData(readOnly);
         }
 
         return completeDataCache;
@@ -215,11 +238,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     protected abstract TOKEN_OBJECT getById(String key);
 
-    public void setup(Long... longIds) {
-        setListOfKeys(StringUtils.join(longIds, getSeparator()));
-    }
-
-    public void setup(String... ids) {
+    public void setup(Object... ids) {
         setListOfKeys(StringUtils.join(ids, getSeparator()));
     }
 
@@ -237,6 +256,24 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         item.put("id", id);
         item.put("name", name);
         item.put("readonly", false);
+        return item;
+    }
+
+    /**
+     * Given the arguments, create a JSON object that represents it.  This is used to create the response for a
+     * JQeury Tokeninput auto-complete UI.
+     *
+     * @param id the ID
+     * @param name the name
+     * @param readonly If it's read only
+     * @return the JSON object that contains these fields.
+     * @throws JSONException
+     */
+    public static JSONObject getJSONObject(String id, String name, boolean readonly) throws JSONException {
+        JSONObject item = new JSONObject();
+        item.put("id", id);
+        item.put("name", name);
+        item.put("readonly", readonly);
         return item;
     }
 }

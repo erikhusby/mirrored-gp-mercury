@@ -201,4 +201,160 @@
                                  baseTableName="billing_ledger" baseColumnNames="billing_session"
                                  referencedTableName="billing_session" referencedColumnNames="billing_session_id"/>
     </changeSet>
+
+    <changeSet id="GPLIM-2301-1" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_PRODUCT_ORDER_KIT" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_PRODUCT_ORDER_KIT" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2301-2a" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_kit" />
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_kit" schemaName="athena">
+            <column name="product_order_kit_id" type="number(19,0)" >
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="number_samples" type="number(19,0)"/>
+            <column name="kit_type" type="varchar(255)"/>
+            <column name="sample_collection_id" type="number(19,0)"/>
+            <column name="organism_id" type="number(19,0)"/>
+            <column name="site_id" type="number(19,0)"/>
+            <column name="material_bsp_name" type="varchar(255)"/>
+            <column name="notifications" type="varchar(1024)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-2301-3a" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_kit_aud" />
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_kit_aud" schemaName="athena">
+            <column name="product_order_kit_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="number_samples" type="number(19,0)"/>
+            <column name="kit_type" type="varchar(255)"/>
+            <column name="sample_collection_id" type="number(19,0)"/>
+            <column name="organism_id" type="number(19,0)"/>
+            <column name="site_id" type="number(19,0)"/>
+            <column name="material_bsp_name" type="varchar(255)"/>
+            <column name="notifications" type="varchar(1024)"/>
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_kit_aud" schemaName="athena"
+		       columnNames="product_order_kit_id, rev"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2301-4a" author="epolk">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="product_order_kit" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+          <column name="product_order_kit" type="number(19,0)"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseTableName="product_order" baseColumnNames="product_order_kit"
+                                 baseTableSchemaName="athena" constraintName="fk_product_order_pdo_kit"
+				 referencedTableName="product_order_kit" referencedColumnNames="product_order_kit_id"
+                                 referencedTableSchemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2301-5a" author="epolk">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_aud" columnName="product_order_kit" schemaName="athena"/>
+            </not>
+        </preConditions>
+	<addColumn tableName="product_order_aud" schemaName="athena">
+	  <column name="product_order_kit" type="number(19,0)"/>
+	</addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2301-6" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_kit" columnName="WORK_REQUEST_ID" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_kit">
+            <column name="WORK_REQUEST_ID" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-1957-7" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_kit_aud" columnName="WORK_REQUEST_ID" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_kit_aud">
+            <column name="WORK_REQUEST_ID" type="VARCHAR(20)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-2361-1A" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_order_kit_person" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="seq_pdo_kit_person" startValue="1" incrementBy="50" schemaName="athena"/>
+        <createTable tableName="product_order_kit_person">
+            <column name="product_order_kit_person_id" type="number(19,0)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="product_order_kit" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="person_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="product_order_kit_person" baseColumnNames="product_order_kit"
+                                 constraintName="fk_person_to_pdo_kit"
+                                 referencedTableName="product_order_kit"
+                                 referencedColumnNames="product_order_kit_id"/>
+        <dropColumn tableName="product_order_kit" columnName="notifications" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2361-2" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_order_kit_person_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_kit_person_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order_kit_person_id" type="number(19,0)"/>
+            <column name="product_order_kit" type="number(19,0)"/>
+            <column name="person_id" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_order_kit_person_aud" columnNames="rev, product_order_kit_person_id"/>
+        <dropColumn tableName="product_order_kit_aud" columnName="notifications" schemaName="athena"/>
+    </changeSet>
+
 </databaseChangeLog>

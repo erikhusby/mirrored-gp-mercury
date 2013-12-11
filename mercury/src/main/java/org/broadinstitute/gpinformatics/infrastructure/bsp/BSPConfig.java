@@ -76,4 +76,7 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
         return produce(BSPConfig.class, deployment);
     }
 
+    public String getWorkRequestLink(String workRequestId) {
+        return getUrl(BSPConfig.SEARCH_PATH + workRequestId);
+    }
 }

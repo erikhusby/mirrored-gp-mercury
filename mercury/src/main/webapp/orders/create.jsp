@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.products.Product" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -60,12 +61,46 @@
                             tokenLimit: 1
                         }
                     );
+                    $j("#kitCollection").tokenInput(
+                            "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
+                                hintText: "Search for group and collection",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.getCompleteData(!actionBean.editOrder.draft))
+                            },
+                                onAdd: updateUIForCollectionChoice,
+                                onDelete: updateUIForCollectionChoice,
+                                resultsFormatter: formatInput,
+                                tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
+                                tokenLimit: 1
+                            }
+                    );
+
+                    $j("#shippingLocation").tokenInput(
+                            getShippingLocationURL, {
+                                hintText: "Search for shipping location",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                resultsFormatter: formatInput,
+                                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
+                                tokenLimit: 1
+                            }
+                    );
+
+                    $j("#notificationList").tokenInput(
+                            "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
+                                hintText: "Enter a user name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.getCompleteData(!actionBean.editOrder.draft))},
+                                tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
+                                preventDuplicates: true,
+                                resultsFormatter: formatInput
+                            }
+                    );
 
                     $j("#fundingDeadline").datepicker();
                     $j("#publicationDeadline").datepicker();
+                    $j("#sampleListEdit").hide();
 
                     updateUIForProductChoice();
                     updateFundsRemaining();
+                    updateUIForCollectionChoice();
                 }
             );
 
@@ -85,7 +120,18 @@
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
+                    $j("#sampleInitiationKitRequestEdit").hide();
                 } else {
+                    if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>')  {
+                        // Product is Sample Initiation "P-ESH-0001".
+                        $j("#samplesToAdd").val('');
+                        $j("#sampleListEdit").hide();
+                        $j("#sampleInitiationKitRequestEdit").show();
+                    } else {
+                        $j("#sampleListEdit").show();
+                        $j("#sampleInitiationKitRequestEdit").hide();
+                    }
+
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                         dataType: 'json',
@@ -100,6 +146,71 @@
                 }
             }
 
+            function updateUIForCollectionChoice() {
+                var collectionKey = $j("#kitCollection").val();
+                if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
+                    $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
+
+                    $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
+                    $j("#shippingLocationSelection").hide();
+
+                    // This is not null safe, so we must make a check to ensure the UI is not affected.
+                    if ($j("#shippingLocation").val() != null) {
+                        $j("#shippingLocation").tokenInput("clear");
+                    }
+                } else {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
+                        dataType: 'json',
+                        success: setupOrganismMenu
+                    });
+
+                    $j("#sitePrompt").remove();
+                    $j("#shippingLocationSelection").show();
+                }
+            }
+
+            function setupOrganismMenu(data) {
+                var collection = data.collectionName;
+
+                var organisms = data.organisms;
+                if ((organisms == null) || (organisms.length == 0)) {
+                    $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
+                    return;
+                }
+
+                // Even though the id is a long, if there is no value then this needs something empty, so using a string
+                // for the long or empty will work in the later comparison.
+                var selectedOrganismId = ${actionBean.ensureStringResult(actionBean.editOrder.productOrderKit.organismId)};
+
+                var organismSelect =
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        '<select name="editOrder.productOrderKit.organismId">';
+                    </c:when>
+                    <c:otherwise>
+                        '<select disabled="true" name="editOrder.productOrderKit.organismId">';
+                    </c:otherwise>
+                </c:choose>
+
+                $j.each(organisms, function(index, organism) {
+                    var selectedString = (organism.id == selectedOrganismId) ? 'selected="selected"' : '';
+                    organismSelect += '  <option value="' + organism.id + '" ' + selectedString + '>' + organism.name + '</option>';
+                });
+                organismSelect += '</select>';
+
+                var duration = {'duration' : 800};
+                $j("#selectedOrganism").hide();
+                $j("#selectedOrganism").html(organismSelect);
+                $j("#selectedOrganism").fadeIn(duration);
+            }
+
+            // This function allows the shippingLocation input token to be able to automatically pass the selected
+            // collection id to filter the available shipping sites to only ones in that collection.
+            function getShippingLocationURL() {
+                return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys="
+                        + $j("#kitCollection").val();
+            }
 
             function updateNumberOfLanesVisibility(data) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv");
@@ -358,10 +469,10 @@
                 </div>
             </div>
 
-            <div class="help-block span4">
+            <div id="sampleListEdit" class="help-block span4">
                 <c:choose>
-                    <c:when test="${actionBean.allowSampleListEdit}">
-                        Enter samples names in this box, one per line. When you save the order, the view page will show
+                    <c:when test="${actionBean.editOrder.draft}">
+                        Enter sample names in this box, one per line. When you save the order, the view page will show
                         all sample details.
                     </c:when>
                     <c:otherwise>
@@ -370,7 +481,100 @@
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.allowSampleListEdit}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+            </div>
+            <div id="sampleInitiationKitRequestEdit" class="help-block span4" style="display: none">
+            <div class="form-horizontal span5">
+                <fieldset>
+                    <legend>
+                        <h4>
+                            Sample Kit Request
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                - <a href="${actionBean.workRequestUrl}" target="BSP">
+                                        ${actionBean.editOrder.productOrderKit.workRequestId}
+                                </a>
+                            </c:if>
+                        </h4>
+                    </legend>
+
+                    <div class="control-group">
+                        <stripes:label for="numberOfSamples" class="control-label">
+                            Number of Samples
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"
+                                          class="defaultText" title="Enter the number of samples"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="kitType" class="control-label">
+                            Kit Type
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">
+                                <stripes:options-enumeration label="displayName"
+                                                             enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
+                            </stripes:select>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <stripes:hidden name="editOrder.productOrderKit.kitType"/>
+                            </c:if>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="kitCollection" class="control-label">
+                            Group and Collection
+                        </stripes:label>
+                        <div class="controls" id="kitCollectionSelection">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}"
+                                    id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Search for collection and group"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="selectedOrganism" class="control-label">
+                            Organism
+                        </stripes:label>
+                        <div id="selectedOrganism" class="controls">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="shippingLocation" class="control-label">
+                            Shipping Location
+                        </stripes:label>
+                        <div class="controls" id="shippingLocationSelection">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}"
+                                    id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Search for shipping location"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="materialInfo" class="control-label">
+                            Material Information
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
+                                <stripes:option label="Choose..." value=""/>
+                                <stripes:options-collection value="bspName"
+                                                            collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                            </stripes:select>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
+                            </c:if>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
+                        <div class="controls">
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="notificationList" name="notificationListTokenInput.listOfKeys"/>
+                        </div>
+                    </div>
+                </fieldset>
             </div>
         </stripes:form>
 

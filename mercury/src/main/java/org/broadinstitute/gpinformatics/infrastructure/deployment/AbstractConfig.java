@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
@@ -78,6 +79,6 @@ public abstract class AbstractConfig {
     }
 
     public static String getHttpScheme() {
-        return (Deployment.isCRSP)?"https://":"http://";
+        return (ApplicationInstance.CRSP.isCurrent())?"https://":"http://";
     }
 }

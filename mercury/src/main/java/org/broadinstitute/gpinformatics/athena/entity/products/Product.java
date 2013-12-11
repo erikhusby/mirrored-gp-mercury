@@ -51,7 +51,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public static final boolean TOP_LEVEL_PRODUCT = true;
 
     /** The part number for the sample initiation product. */
-    private static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
+    public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")

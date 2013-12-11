@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -33,6 +34,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -150,6 +152,10 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     @Column(name = "REQUISITION_NAME", length = 256)
     private String requisitionName;
+
+    // this should not cause n+1 select performance issue if it is LAZY and mandatory
+    @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    private ProductOrderKit productOrderKit;
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -943,6 +949,18 @@ public class ProductOrder implements BusinessObject, Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
+    }
+
+    public ProductOrderKit getProductOrderKit() {
+        if (productOrderKit == null) {
+            productOrderKit = new ProductOrderKit();
+        }
+
+        return productOrderKit;
+    }
+
+    public void setProductOrderKit(ProductOrderKit productOrderKit) {
+        this.productOrderKit = productOrderKit;
     }
 
     /**

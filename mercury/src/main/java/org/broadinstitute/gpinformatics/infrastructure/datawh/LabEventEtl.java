@@ -315,10 +315,8 @@ public class LabEventEtl extends GenericEntityEtl<LabEvent, LabEvent> {
                             MercurySample sample = si.getStartingSample();
                             if (sample != null) {
 
-                                Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
-                                LabBatch labBatch = batches.size() == 1 ? batches.iterator().next() : null;
-                                String batchName = labBatch != null ? labBatch.getBatchName() :
-                                        batches.size() == 0 ? NONE : MULTIPLE;
+                                LabBatch labBatch = si.getLabBatch();
+                                String batchName = labBatch != null ? labBatch.getBatchName() : NONE;
 
                                 String workflowName = labBatch != null ? labBatch.getWorkflowName() : null;
                                 if (StringUtils.isBlank(workflowName) && pdo != null) {

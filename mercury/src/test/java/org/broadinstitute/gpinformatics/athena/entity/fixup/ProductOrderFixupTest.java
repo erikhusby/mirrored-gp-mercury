@@ -374,6 +374,11 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void changeProjectForPdo_GPLIM_2349() throws IOException {
+        changeProjectForPdo("PDO-1489", "RP-24");
+    }
+
+    @Test(enabled = false)
     public void changePdoName() throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey("PDO-1928");
         if (order != null) {

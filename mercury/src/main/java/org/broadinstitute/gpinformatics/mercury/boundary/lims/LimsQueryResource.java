@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author breilly
@@ -232,6 +233,14 @@ public class LimsQueryResource {
     }
 
     /**
+     * Return a copy of the input Map that will iterate its entries with the well name keys in row major order,
+     * e.g. A01, A02,..., H12.
+     */
+    private static Map<String, Boolean> sortWellNameKeys(@Nonnull Map<String, Boolean> wellNamesToBooleans) {
+        return new TreeMap<>(wellNamesToBooleans);
+    }
+
+    /**
      * Returns a map of well position to boolean indicating whether or not the
      * well contains any material that was transferred from an upstream tube
      * rack.
@@ -246,9 +255,9 @@ public class LimsQueryResource {
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
         switch (systemRouter.getSystemOfRecordForVessel(plateBarcode)) {
             case MERCURY:
-                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+                return sortWellNameKeys(limsQueries.fetchParentRackContentsForPlate(plateBarcode));
             case SQUID:
-                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+                return sortWellNameKeys(thriftService.fetchParentRackContentsForPlate(plateBarcode));
             default:
                 throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }

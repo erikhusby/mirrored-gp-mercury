@@ -8,32 +8,13 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Review Product Order: ${actionBean.editOrder.title}"
-                       sectionTitle="Review Product Order: ${actionBean.editOrder.title}"
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order: ${actionBean.editOrder.title}"
+                       sectionTitle="View Product Order: ${actionBean.editOrder.title}"
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
-<style type="text/css">
-    div.token-input-dropdown,
-    ul.token-input-list,
-    ul.token-input-list li input {
-        width: 250px !important;
-    }
-</style>
 <script type="text/javascript">
 $j(document).ready(function () {
-
-    $j("#shippingLocation").tokenInput(
-            getShippingLocationURL, {
-                hintText: "Search for shipping location",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspShippingLocationTokenInput.completeData)},
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspShippingLocationTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
     updateFundsRemaining();
-    updateUIForCollectionChoice();
     setupDialogs();
 
     $j.ajax({
@@ -57,80 +38,7 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
-
-    $j("#kitCollection").tokenInput(
-            "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
-                hintText: "Search for group and collection",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.bspGroupCollectionTokenInput.completeData)},
-                onAdd: updateUIForCollectionChoice,
-                onDelete: updateUIForCollectionChoice,
-                resultsFormatter: formatInput,
-                tokenDelimiter: "${actionBean.bspGroupCollectionTokenInput.separator}",
-                tokenLimit: 1
-            }
-    );
-
-
-    $j("#notificationList").tokenInput(
-            "${ctxpath}/orders/order.action?anyUsersAutocomplete=", {
-                hintText: "Enter a user name",
-                prePopulate: ${actionBean.ensureStringResult(actionBean.notificationListTokenInput.completeData)},
-                tokenDelimiter: "${actionBean.notificationListTokenInput.separator}",
-                preventDuplicates: true,
-                resultsFormatter: formatInput
-            }
-    );
 });
-
-function updateUIForCollectionChoice() {
-    var collectionKey = $j("#kitCollection").val();
-    if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
-        $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
-
-        $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
-        $j("#shippingLocationSelection").hide();
-
-        // This is not null safe, so we must make a check to ensure the UI is not affected.
-        if ($j("#shippingLocation").val() != null) {
-            $j("#shippingLocation").tokenInput("clear");
-        }
-    } else {
-        $j.ajax({
-            url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
-            dataType: 'json',
-            success: setupMenu
-        });
-
-        $j("#sitePrompt").remove();
-        $j("#shippingLocationSelection").show();
-    }
-}
-
-function setupMenu(data) {
-    var collection = data.collectionName;
-
-    var organisms = data.organisms;
-    if ((organisms == null) || (organisms.length == 0)) {
-        $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
-        return;
-    }
-
-    var organismSelect = '<select name="organismId">';
-    $j.each(organisms, function (index, organism) {
-        organismSelect += '  <option value="' + organism.id + '">' + organism.name + '"</option>';
-    });
-    organismSelect += '</select>';
-
-    var duration = {'duration': 800};
-    $j("#selectedOrganism").hide();
-    $j("#selectedOrganism").html(organismSelect);
-    $j("#selectedOrganism").fadeIn(duration);
-}
-
-// This function allows the shippingLocation input token to be able to automatically pass the selected collection id to filter the available shipping sites to only ones in that collection.
-function getShippingLocationURL() {
-    return "${ctxpath}/orders/order.action?shippingLocationAutocomplete=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val();
-}
 
 var bspDataCount = 0;
 
@@ -289,9 +197,6 @@ function showSamples(sampleData) {
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
-        $j('#package-date-' + sampleId).text(sampleData[x].packageDate);
-        $j('#receipt-date-' + sampleId).text(sampleData[x].receiptDate);
-
         if (sampleData[x].hasFingerprint) {
             $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
         } else {
@@ -322,8 +227,6 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // Collaborator Sample ID
                 {"bSortable": true},                            // Participant ID
                 {"bSortable": true},                            // Collaborator Participant ID
-                {"bSortable": true},                            // Shipped Date
-                {"bSortable": true},                            // Received Date
                 {"bSortable": true, "sType": "numeric"},        // Volume
                 {"bSortable": true, "sType": "numeric"},        // Concentration
 
@@ -810,80 +713,91 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.sampleInitiation && actionBean.editOrder.draft}">
+<c:if test="${actionBean.sampleInitiation}">
     <div class="form-horizontal span5">
         <fieldset>
-            <legend><h4>Sample Kit Request</h4></legend>
+            <legend>
+                <h4>
+                    Sample Kit Request
 
-            <div class="control-group">
-                <stripes:label for="tubesPerKit" class="control-label">
-                    Number of Samples *
-                </stripes:label>
+                    <c:if test="${!actionBean.editOrder.draft}">
+                        - <a href="${actionBean.workRequestUrl}" target="BSP">
+                            ${actionBean.editOrder.productOrderKit.workRequestId}
+                        </a>
+                    </c:if>
+                </h4>
+            </legend>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Samples Requested</label>
                 <div class="controls">
-                    <stripes:text id="tubesPerKit" name="numberOfSamples"
-                                  class="defaultText" title="Enter the number of samples"/>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
+                            ${actionBean.editOrder.productOrderKit.numberOfSamples}
+                        </c:if>
+                    </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <stripes:label for="kitType" class="control-label">
-                    Kit Type *
-                </stripes:label>
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Kit Type</label>
                 <div class="controls">
-                    <stripes:select id="kitType" name="kitType">
-                        <stripes:options-enumeration label="displayName"
-                                                     enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"
-                                />
-                    </stripes:select>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.kitType != null}">
+                            ${actionBean.editOrder.productOrderKit.kitType.displayName}
+                        </c:if>
+                    </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <stripes:label for="kitCollection" class="control-label">
-                    Group and Collection *
-                </stripes:label>
-                <div class="controls" id="kitCollectionSelection">
-                    <stripes:text
-                            id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
-                            class="defaultText"
-                            title="Search for collection and group"/>
+            <div class="view-control-group control-group">
+                <stripes:label for="kitCollection" class="control-label label-form">Group and Collection</stripes:label>
+                <div id="kitCollection" class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
+                            ${actionBean.editOrder.productOrderKit.sampleCollectionName}
+                        </c:if>
+                    </div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <stripes:label for="selectedOrganism" class="control-label">
-                    Organism *
-                </stripes:label>
-                <div id="selectedOrganism" class="controls"></div>
-            </div>
-
-            <div class="control-group">
-                <stripes:label for="shippingLocationSelection" class="control-label">
-                    Shipping Location *
-                </stripes:label>
-                <div class="controls" id="shippingLocationSelection">
-                    <stripes:text
-                            id="shippingLocation" name="bspShippingLocationTokenInput.listOfKeys"
-                            class="defaultText"
-                            title="Search for shipping location"/>
+            <div class="view-control-group control-group">
+                <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
+                <div id="kitOrganism" class="controls">
+                    <div class="form-value">
+                            ${actionBean.editOrder.productOrderKit.organismName}
+                    </div>
                 </div>
             </div>
-            <div class="control-group">
-                <stripes:label for="materialInfo" class="control-label">
-                    Material Information *
-                </stripes:label>
+
+            <div class="view-control-group control-group">
+                <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
+                <div id="kitSite" class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
+                            ${actionBean.editOrder.productOrderKit.siteName}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Material Information</label>
                 <div class="controls">
-                    <stripes:select name="materialInfoString">
-                        <stripes:option label="Choose..." value=""/>
-                        <stripes:options-collection value="bspName"
-                                                    collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
-                    </stripes:select>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.productOrderKit.bspMaterialName != null}">
+                            ${actionBean.editOrder.productOrderKit.bspMaterialName}
+                        </c:if>
+                    </div>
                 </div>
             </div>
-            <div class="control-group">
-                <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Notification List</label>
                 <div class="controls">
-                    <stripes:text id="notificationList" name="notificationListTokenInput.listOfKeys"/>
+                    <div class="form-value">
+                            ${actionBean.getUserListString(actionBean.editOrder.productOrderKit.notificationIds)}
+                    </div>
                 </div>
             </div>
         </fieldset>
@@ -891,134 +805,128 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<div class="borderHeader">
-    <h4 style="display:inline">Samples</h4>
+<c:if test="${!actionBean.editOrder.draft || !actionBean.sampleInitiation}">
 
-    <c:if test="${!actionBean.editOrder.draft}">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                        <span class="actionButtons">
-                            <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                            style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
+    <div class="borderHeader">
+        <h4 style="display:inline">Samples</h4>
 
-                            <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                            style="margin-left:15px;"
-                                            onclick="showConfirm('abandonSamples', 'abandon')"/>
+        <c:if test="${!actionBean.editOrder.draft}">
+            <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                            <span class="actionButtons">
+                                <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                                style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
 
-                            <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                            style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+                                <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                                style="margin-left:15px;"
+                                                onclick="showConfirm('abandonSamples', 'abandon')"/>
 
-                            <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                            style="margin-left:5px;" onclick="showRiskDialog()"/>
+                                <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                                style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
 
-                                    <security:authorizeBlock roles="<%= roles(All) %>" context="<%= ApplicationInstance.CRSP %>">
-                                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                                        style="margin-left:5px;" id="addToBucketButton" onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                                    </security:authorizeBlock>
-                        </span>
+                                <stripes:button name="setRisk" value="Set Risk" class="btn"
+                                                style="margin-left:5px;" onclick="showRiskDialog()"/>
+                            </span>
 
-            <div class="pull-right">
-                <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
-                <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
-            </div>
-        </security:authorizeBlock>
-    </c:if>
-</div>
+                <div class="pull-right">
+                    <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
+                    <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
+                </div>
+            </security:authorizeBlock>
+        </c:if>
+    </div>
 
-<div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
-    <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
-</div>
+    <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
+        <img src="${ctxpath}/images/spinner.gif" alt="spinner"/>
+    </div>
 
-<c:if test="${not empty actionBean.editOrder.samples}">
-    <table id="sampleData" class="table simple">
-        <thead>
-        <tr>
-            <th width="20">
-                <c:if test="${!actionBean.editOrder.draft}">
-                    <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
-                </c:if>
-            </th>
-            <th width="10">#</th>
-            <th width="90">ID</th>
-            <th width="110">Collaborator Sample ID</th>
-            <th width="60">Participant ID</th>
-            <th width="110">Collaborator Participant ID</th>
-            <th width="40">Shipped Date</th>
-            <th width="40">Received Date</th>
-            <th width="40">Volume</th>
-            <th width="40">Concentration</th>
-
-            <c:if test="${actionBean.supportsRin}">
-                <th width="40">RIN</th>
-            </c:if>
-
-            <c:if test="${actionBean.supportsPico}">
-                <th width="70">Last Pico Run Date</th>
-            </c:if>
-            <th width="40">Yield Amount</th>
-            <th width="60">FP Status</th>
-            <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
-            <th>On Risk</th>
-            <th width="40">Status</th>
-            <th width="200">Comment</th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach items="${actionBean.editOrder.samples}" var="sample">
+    <c:if test="${not empty actionBean.editOrder.samples}">
+        <table id="sampleData" class="table simple">
+            <thead>
             <tr>
-                <td>
+                <th width="20">
                     <c:if test="${!actionBean.editOrder.draft}">
-                        <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
-                                          name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                        <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                     </c:if>
-                </td>
-                <td>
-                        ${sample.samplePosition + 1}
-                </td>
-                <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
-                        <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
-                    <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
-                    <c:choose>
-                        <c:when test="${sampleLink.hasLink}">
-                            <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}"
-                                          href="${sampleLink.url}">
-                                ${sample.name}
-                            </stripes:link>
-                        </c:when>
-                        <c:otherwise>
-                            ${sample.name}
-                        </c:otherwise>
-                    </c:choose>
-                </td>
-                <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
-                <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
-                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
-                <td id="package-date-${sample.productOrderSampleId}">&#160; </td>
-                <td id="receipt-date-${sample.productOrderSampleId}">&#160; </td>
-                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
-                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+                </th>
+                <th width="10">#</th>
+                <th width="90">ID</th>
+                <th width="110">Collaborator Sample ID</th>
+                <th width="60">Participant ID</th>
+                <th width="110">Collaborator Participant ID</th>
+                <th width="40">Volume</th>
+                <th width="40">Concentration</th>
 
                 <c:if test="${actionBean.supportsRin}">
-                    <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    <th width="40">RIN</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
-                    <td>
-                        <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
-                            &#160;</div>
-                    </td>
+                    <th width="70">Last Pico Run Date</th>
                 </c:if>
-
-                <td id="total-${sample.productOrderSampleId}">&#160; </td>
-                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
-                <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                    &#160; </td>
-                <td>${sample.riskString}</td>
-                <td>${sample.deliveryStatus.displayName}</td>
-                <td>${sample.sampleComment}</td>
+                <th width="40">Yield Amount</th>
+                <th width="60">FP Status</th>
+                <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
+                <th>On Risk</th>
+                <th width="40">Status</th>
+                <th width="200">Comment</th>
             </tr>
-        </c:forEach>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            <c:forEach items="${actionBean.editOrder.samples}" var="sample">
+                <tr>
+                    <td>
+                        <c:if test="${!actionBean.editOrder.draft}">
+                            <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
+                                              name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                        </c:if>
+                    </td>
+                    <td>
+                            ${sample.samplePosition + 1}
+                    </td>
+                    <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                            <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
+                        <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
+                        <c:choose>
+                            <c:when test="${sampleLink.hasLink}">
+                                <stripes:link class="external" target="${sampleLink.target}" title="${sampleLink.label}"
+                                              href="${sampleLink.url}">
+                                    ${sample.name}
+                                </stripes:link>
+                            </c:when>
+                            <c:otherwise>
+                                ${sample.name}
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                    <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
+                    <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="volume-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+
+                    <c:if test="${actionBean.supportsRin}">
+                        <td id="rin-${sample.productOrderSampleId}">&#160; </td>
+                    </c:if>
+
+                    <c:if test="${actionBean.supportsPico}">
+                        <td>
+                            <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
+                                &#160;</div>
+                        </td>
+                    </c:if>
+
+                    <td id="total-${sample.productOrderSampleId}">&#160; </td>
+                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
+                    <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
+                        &#160; </td>
+                    <td>${sample.riskString}</td>
+                    <td>${sample.deliveryStatus.displayName}</td>
+                    <td>${sample.sampleComment}</td>
+                </tr>
+            </c:forEach>
+            </tbody>
+        </table>
+    </c:if>
 </c:if>
 </stripes:form>
 </stripes:layout-component>

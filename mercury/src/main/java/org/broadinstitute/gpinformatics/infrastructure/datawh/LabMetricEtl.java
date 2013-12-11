@@ -77,10 +77,8 @@ public class LabMetricEtl extends GenericEntityEtl<LabMetric, LabMetric> {
                             String pdoKey = si.getProductOrderKey();
                             ProductOrder pdo = (pdoKey != null) ? pdoDao.findByBusinessKey(pdoKey) : null;
 
-                            Collection<LabBatch> batches = si.getAllWorkflowLabBatches();
-                            LabBatch labBatch = batches.size() == 1 ? batches.iterator().next() : null;
-                            String batchName = labBatch != null ? labBatch.getBatchName() :
-                                    batches.size() == 0 ? LabEventEtl.NONE : LabEventEtl.MULTIPLE;
+                            LabBatch labBatch = si.getLabBatch();
+                            String batchName = labBatch != null ? labBatch.getBatchName() : LabEventEtl.NONE;
 
                             records.add(genericRecord(etlDateStr, isDelete,
                                     entity.getLabMetricId(),
