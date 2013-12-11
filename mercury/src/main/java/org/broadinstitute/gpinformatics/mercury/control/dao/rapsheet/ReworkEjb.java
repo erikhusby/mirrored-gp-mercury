@@ -339,8 +339,9 @@ public class ReworkEjb {
                 getReworkLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(), userName);
 
         Collection<String> validationMessages =
-                validateReworkItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                        bucketCandidate.getProductOrderKey(), bucketCandidate.getSampleKey());
+                validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
+                        bucketCandidate.getProductOrderKey(), bucketCandidate.getSampleKey(),
+                        bucketCandidate.isReworkItem());
 
         addRework(reworkVessel, bucketCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
                 userName);
@@ -360,18 +361,21 @@ public class ReworkEjb {
     }
 
     /**
-     * validateReworkItem will execute certain validation rules on a rework sample in order to inform a submitter of
+     * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
+     *
      *
      * @param reworkVessel    a LabVessel instance being submitted for rework
      * @param bucketDef       the bucket that the reworks will be added to
      * @param productOrderKey the product order that the vessel is being reworked for
      * @param sampleKey       the sample being reworked in the vessel
      *
+     * @param reworkItem
      * @return Collection of validation messages
      */
-    public Collection<String> validateReworkItem(@Nonnull LabVessel reworkVessel, @Nonnull WorkflowBucketDef bucketDef,
-                                                 @Nonnull String productOrderKey, @Nonnull String sampleKey)
+    public Collection<String> validateBucketItem(@Nonnull LabVessel reworkVessel, @Nonnull WorkflowBucketDef bucketDef,
+                                                 @Nonnull String productOrderKey, @Nonnull String sampleKey,
+                                                 boolean reworkItem)
             throws ValidationException {
 
         List<String> validationMessages = new ArrayList<>();
@@ -385,7 +389,7 @@ public class ReworkEjb {
             throw new ValidationException(error);
         }
 
-        if (!reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
+        if (reworkItem && !reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
                                    "No ancestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
