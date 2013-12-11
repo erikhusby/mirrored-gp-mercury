@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +54,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private static final String REWORK_SAMPLE_ACTION = "reworkSample";
 
     private LabVessel labVessel;
-    private List<ReworkEjb.ReworkCandidate> reworkCandidates = new ArrayList<>();
+    private List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
     private List<WorkflowBucketDef> buckets = new ArrayList<>();
 
     @Validate(required = true, on = {VESSEL_INFO_ACTION})
@@ -66,7 +65,7 @@ public class AddReworkActionBean extends CoreActionBean {
     private List<String> noResultQueryTerms = new ArrayList<>();
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
-    private List<String> selectedReworkCandidates;
+    private List<String> selectedBucketCandidates;
 
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
@@ -89,14 +88,14 @@ public class AddReworkActionBean extends CoreActionBean {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
 
-        for (String selectedReworkCandidate : selectedReworkCandidates) {
-            reworkCandidates.add(ReworkEjb.ReworkCandidate.fromString(selectedReworkCandidate));
+        for (String selectedBucketCandidate : selectedBucketCandidates) {
+            bucketCandidates.add(ReworkEjb.BucketCandidate.fromString(selectedBucketCandidate));
         }
 
         try {
-            Collection<String> validationMessages = reworkEjb.addAndValidateReworks(reworkCandidates, reworkReason,
+            Collection<String> validationMessages = reworkEjb.addAndValidateReworks(bucketCandidates, reworkReason,
                     commentText, getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
-            addMessage("{0} vessel(s) have been added to the {1} bucket.", reworkCandidates.size(), bucketName);
+            addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
                 for (String validationMessage : validationMessages) {
@@ -144,13 +143,13 @@ public class AddReworkActionBean extends CoreActionBean {
     public void setUpReworkCandidates() {
         List<String> searchTerms = SearchActionBean.cleanInputStringForSamples(vesselLabel);
         numQueryInputs = searchTerms.size();
-        reworkCandidates = new ArrayList<>(reworkEjb.findReworkCandidates(searchTerms));
+        bucketCandidates = new ArrayList<>(reworkEjb.findReworkCandidates(searchTerms));
 
         Set<String> barcodes = new HashSet<>();
         Set<String> sampleIds = new HashSet<>();
-        for (ReworkEjb.ReworkCandidate reworkCandidate : reworkCandidates) {
-            barcodes.add(reworkCandidate.getTubeBarcode());
-            sampleIds.add(reworkCandidate.getSampleKey());
+        for (ReworkEjb.BucketCandidate bucketCandidate : bucketCandidates) {
+            barcodes.add(bucketCandidate.getTubeBarcode());
+            sampleIds.add(bucketCandidate.getSampleKey());
         }
         for (String searchTerm : searchTerms) {
             if (!barcodes.contains(searchTerm) && !sampleIds.contains(searchTerm)) {
@@ -235,15 +234,15 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucketName = bucketName;
     }
 
-    public List<ReworkEjb.ReworkCandidate> getReworkCandidates() {
-        return reworkCandidates;
+    public List<ReworkEjb.BucketCandidate> getBucketCandidates() {
+        return bucketCandidates;
     }
 
-    public List<String> getSelectedReworkCandidates() {
-        return selectedReworkCandidates;
+    public List<String> getselectedBucketCandidates() {
+        return selectedBucketCandidates;
     }
 
-    public void setSelectedReworkCandidates(List<String> selectedReworkCandidates) {
-        this.selectedReworkCandidates = selectedReworkCandidates;
+    public void setselectedBucketCandidates(List<String> selectedBucketCandidates) {
+        this.selectedBucketCandidates = selectedBucketCandidates;
     }
 }

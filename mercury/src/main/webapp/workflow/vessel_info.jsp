@@ -5,7 +5,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
 <script type="text/javascript">
     $j(document).ready(function () {
-        $j('#reworkCandidates').dataTable({
+        $j('#bucketCandidates').dataTable({
             "sDom": sDomNoTableToolsButtons,
             "bSort": false
         }).rowGrouping({
@@ -35,7 +35,7 @@
 
 <stripes:form partial="true" beanclass="${actionBean.class}">
 <c:choose>
-    <c:when test="${actionBean.reworkCandidates.isEmpty()}">
+    <c:when test="${actionBean.bucketCandidates.isEmpty()}">
         <div class="control-group">
             <div class="controls">
                 <div id="error" class="text-error">Mercury does not recognize tube barcode or sample ID: ${actionBean.vesselLabel}.
@@ -52,7 +52,7 @@
                         <br>No results found for: ${actionBean.noResultQueryTerms}
                     </c:if>
                 </div>
-                <table id="reworkCandidates" class="table simple">
+                <table id="bucketCandidates" class="table simple">
                     <thead>
                     <tr>
                         <th width="30px">
@@ -65,13 +65,14 @@
                         <th>Product</th>
                         <th>Batches</th>
                         <th>Workflow</th>
+                        <th>Rework?</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <c:forEach items="${actionBean.reworkCandidates}" var="candidate">
+                    <c:forEach items="${actionBean.bucketCandidates}" var="candidate">
                         <tr class="candidate-row">
                             <td>
-                                <stripes:checkbox class="rework-checkbox" name="selectedReworkCandidates"
+                                <stripes:checkbox class="rework-checkbox" name="selectedBucketCandidates"
                                                   value="${candidate}"/>
                             </td>
                             <td>${candidate.tubeBarcode}</td>
@@ -86,6 +87,9 @@
                                 </c:forEach>
                             </td>
                             <td>${candidate.productOrder.product.workflow.workflowName}</td>
+                            <td>
+                                <stripes:checkbox name=""
+                            </td>
                         </tr>
                     </c:forEach>
                     </tbody>
