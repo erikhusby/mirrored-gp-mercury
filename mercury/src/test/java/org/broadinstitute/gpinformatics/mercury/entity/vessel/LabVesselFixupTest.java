@@ -1,11 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -262,5 +265,50 @@ public class LabVesselFixupTest extends Arquillian {
                 }
             }
         }
+    }
+
+
+    @Test(enabled = false)
+    public void fixupGplim2362() {
+        List<Pair<String, String>> listOfPairs = new ArrayList<Pair<String, String>>() {{
+            add(new ImmutablePair<>("1084962682", "0150675790"));
+            add(new ImmutablePair<>("0156293762", "0154845206"));
+            add(new ImmutablePair<>("0156293822", "0154845124"));
+            add(new ImmutablePair<>("0156293797", "0145504452"));
+            add(new ImmutablePair<>("0156293819", "0154845172"));
+            add(new ImmutablePair<>("0156490381", "0154845129"));
+            add(new ImmutablePair<>("0156293799", "0154845134"));
+            add(new ImmutablePair<>("0156293157", "0154845205"));
+            add(new ImmutablePair<>("0156300375", "0154845207"));
+            add(new ImmutablePair<>("0156300374", "0154845138"));
+            add(new ImmutablePair<>("0156300376", "0154845182"));
+            add(new ImmutablePair<>("0156300380", "0154861404"));
+            add(new ImmutablePair<>("0156300373", "0150675776"));
+            add(new ImmutablePair<>("0156300378", "0154449829"));
+            add(new ImmutablePair<>("0156300249", "0154845148"));
+            add(new ImmutablePair<>("0156300379", "0154845186"));
+            add(new ImmutablePair<>("0156300381", "0154862171"));
+            add(new ImmutablePair<>("0156300377", "0154845133"));
+            add(new ImmutablePair<>("0156300250", "0150673621"));
+            add(new ImmutablePair<>("0156293801", "0150675799"));
+        }};
+        for (Pair<String, String> pair : listOfPairs) {
+            LabVessel labVesselOld = labVesselDao.findByIdentifier(pair.getLeft());
+            LabVessel labVesselNew = labVesselDao.findByIdentifier(pair.getRight());
+            Set<BucketEntry> bucketEntries = labVesselOld.getModifiableBucketEntries();
+            BucketEntry bucketEntry = null;
+            for (BucketEntry currentBucketEntry : bucketEntries) {
+                if (currentBucketEntry.getLabBatch().getBatchName().equals("LCSET-4641")) {
+                    bucketEntry = currentBucketEntry;
+                }
+            }
+            if (bucketEntry == null) {
+                throw new RuntimeException("Failed to find bucket entry for " + labVesselOld.getLabel());
+            }
+            bucketEntry.setLabVessel(labVesselNew);
+            labVesselNew.addBucketEntry(bucketEntry);
+            bucketEntries.remove(bucketEntry);
+        }
+        labVesselDao.flush();
     }
 }
