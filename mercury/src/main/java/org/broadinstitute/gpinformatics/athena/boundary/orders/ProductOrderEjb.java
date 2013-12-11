@@ -448,6 +448,7 @@ public class ProductOrderEjb {
                 JiraTransition.DEVELOPER_EDIT.getStateName());
 
         List<PDOUpdateField> pdoUpdateFields = new ArrayList<>(Arrays.asList(
+                new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
                         productOrder.getProduct().getProductFamily().getName()),
