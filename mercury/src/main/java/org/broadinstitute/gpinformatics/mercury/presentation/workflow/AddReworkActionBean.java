@@ -51,7 +51,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
     private static final String VESSEL_INFO_ACTION = "vesselInfo";
-    private static final String REWORK_SAMPLE_ACTION = "reworkSample";
+    private static final String REWORK_SAMPLE_ACTION = "addSample";
 
     private LabVessel labVessel;
     private List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
@@ -83,7 +83,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
 
     @HandlesEvent(REWORK_SAMPLE_ACTION)
-    public Resolution reworkSample() {
+    public Resolution addSample() {
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
@@ -93,7 +93,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         try {
-            Collection<String> validationMessages = reworkEjb.addAndValidateReworks(bucketCandidates, reworkReason,
+            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, reworkReason,
                     commentText, getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
@@ -143,7 +143,7 @@ public class AddReworkActionBean extends CoreActionBean {
     public void setUpReworkCandidates() {
         List<String> searchTerms = SearchActionBean.cleanInputStringForSamples(vesselLabel);
         numQueryInputs = searchTerms.size();
-        bucketCandidates = new ArrayList<>(reworkEjb.findReworkCandidates(searchTerms));
+        bucketCandidates = new ArrayList<>(reworkEjb.findBucketCandidates(searchTerms));
 
         Set<String> barcodes = new HashSet<>();
         Set<String> sampleIds = new HashSet<>();

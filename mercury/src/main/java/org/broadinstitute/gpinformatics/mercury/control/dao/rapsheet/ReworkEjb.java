@@ -111,8 +111,8 @@ public class ReworkEjb {
      *
      * @return tube/sample/PDO selections that are valid for rework
      */
-    public Collection<BucketCandidate> findReworkCandidates(String query) {
-        return findReworkCandidates(Collections.singletonList(query));
+    public Collection<BucketCandidate> findBucketCandidates(String query) {
+        return findBucketCandidates(Collections.singletonList(query));
     }
 
     /**
@@ -124,7 +124,7 @@ public class ReworkEjb {
      *
      * @return tube/sample/PDO selections that are valid for rework
      */
-    public Collection<BucketCandidate> findReworkCandidates(List<String> query) {
+    public Collection<BucketCandidate> findBucketCandidates(List<String> query) {
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
 
         List<LabVessel> labVessels = new ArrayList<>();
@@ -207,6 +207,7 @@ public class ReworkEjb {
      * <p/>
      * TODO: make this @DaoFree; can't right now because of an eventual call to persist from LabEventFactory
      *
+     *
      * @param reworkVessel    the vessel being reworked
      * @param productOrderKey the product order that the vessel is being reworked for
      * @param reworkReason    why the rework is being done
@@ -215,30 +216,36 @@ public class ReworkEjb {
      * @param comment         text describing why you are doing this
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
+     * @param reworkCandidate
      * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
      * @throws ValidationException
      */
-    public LabVessel addRework(@Nonnull LabVessel reworkVessel, @Nonnull String productOrderKey,
-                               @Nonnull ReworkEntry.ReworkReason reworkReason, @Nonnull LabEventType reworkFromStep,
-                               @Nonnull Bucket bucket, @Nonnull String comment, @Nonnull String userName)
+    public LabVessel addCandidate(@Nonnull LabVessel reworkVessel, @Nonnull String productOrderKey,
+                                  @Nonnull ReworkEntry.ReworkReason reworkReason, @Nonnull LabEventType reworkFromStep,
+                                  @Nonnull Bucket bucket, @Nonnull String comment, @Nonnull String userName,
+                                  boolean reworkCandidate)
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
-                .add(Collections.singleton(reworkVessel), bucket, BucketEntry.BucketEntryType.REWORK_ENTRY, userName,
-                        LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, reworkFromStep, productOrderKey);
+                .add(Collections.singleton(reworkVessel), bucket,
+                        reworkCandidate?BucketEntry.BucketEntryType.REWORK_ENTRY:BucketEntry.BucketEntryType.PDO_ENTRY,
+                        userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
+                        reworkFromStep, productOrderKey);
 
         // TODO: create the event in this scope instead of getting the "latest" event
-        for (BucketEntry bucketEntry : bucketEntries) {
-            ReworkDetail reworkDetail =
-                    new ReworkDetail(reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                            reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
-            bucketEntry.setReworkDetail(reworkDetail);
+        if (reworkCandidate) {
+            for (BucketEntry bucketEntry : bucketEntries) {
+                ReworkDetail reworkDetail =
+                        new ReworkDetail(reworkReason, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                                reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
+                bucketEntry.setReworkDetail(reworkDetail);
+            }
         }
 
         return reworkVessel;
     }
 
-    private LabVessel getReworkLabVessel(String tubeBarcode, String sampleKey, String userName) {
+    private LabVessel getLabVessel(String tubeBarcode, String sampleKey, String userName) {
         LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
@@ -264,17 +271,18 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of any Lab Vessel will not allow the
      *                             method to continue
      */
-    public Collection<String> addAndValidateReworks(@Nonnull Collection<BucketCandidate> bucketCandidates,
-                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                                    @Nonnull String comment, @Nonnull String userName,
-                                                    @Nonnull Workflow workflow, @Nonnull String bucketName)
+    public Collection<String> addAndValidateCandidates(@Nonnull Collection<BucketCandidate> bucketCandidates,
+                                                       @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                                       @Nonnull String comment, @Nonnull String userName,
+                                                       @Nonnull Workflow workflow, @Nonnull String bucketName)
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
                 validationMessages.addAll(
-                        addAndValidateRework(bucketCandidate, reworkReason, bucket, comment, workflow, userName));
+                        addAndValidateBucketCandidate(bucketCandidate, reworkReason, bucket, comment, workflow,
+                                userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -284,6 +292,8 @@ public class ReworkEjb {
 
     /**
      * Validate and add a single rework to the specified bucket.
+     *
+     * This Currently appears to only be used by Test cases
      *
      * @param bucketCandidate tube/sample/PDO that is to be reworked
      * @param reworkReason    predefined text describing why the given vessel needs to be reworked
@@ -297,6 +307,7 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
+    //FIXME: This Currently appears to only be used by Test cases.  Is there a better solution?
     public Collection<String> addAndValidateRework(@Nonnull BucketCandidate bucketCandidate,
                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
                                                    @Nonnull String bucketName,
@@ -306,7 +317,7 @@ public class ReworkEjb {
             throws ValidationException {
 
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
-        return addAndValidateRework(bucketCandidate, reworkReason, bucket, comment, workflow, userName);
+        return addAndValidateBucketCandidate(bucketCandidate, reworkReason, bucket, comment, workflow, userName);
     }
 
     /**
@@ -324,27 +335,27 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private Collection<String> addAndValidateRework(@Nonnull BucketCandidate bucketCandidate,
-                                                    @Nonnull ReworkEntry.ReworkReason reworkReason,
-                                                    @Nonnull Bucket bucket,
-                                                    @Nonnull String comment,
-                                                    @Nonnull Workflow workflow,
-                                                    @Nonnull String userName)
+    private Collection<String> addAndValidateBucketCandidate(@Nonnull BucketCandidate bucketCandidate,
+                                                             @Nonnull ReworkEntry.ReworkReason reworkReason,
+                                                             @Nonnull Bucket bucket,
+                                                             @Nonnull String comment,
+                                                             @Nonnull Workflow workflow,
+                                                             @Nonnull String userName)
             throws ValidationException {
 
         WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
         LabVessel reworkVessel =
-                getReworkLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(), userName);
+                getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(), userName);
 
         Collection<String> validationMessages =
                 validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
                         bucketCandidate.getProductOrderKey(), bucketCandidate.getSampleKey(),
                         bucketCandidate.isReworkItem());
 
-        addRework(reworkVessel, bucketCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
-                userName);
+        addCandidate(reworkVessel, bucketCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
+                userName, bucketCandidate.isReworkItem());
 
         return validationMessages;
     }
@@ -407,7 +418,7 @@ public class ReworkEjb {
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode, String userName)
             throws ValidationException {
         BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode, true);
-        LabVessel reworkVessel = getReworkLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(),
+        LabVessel reworkVessel = getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(),
                 userName
         );
         batch.addReworks(Arrays.asList(reworkVessel));

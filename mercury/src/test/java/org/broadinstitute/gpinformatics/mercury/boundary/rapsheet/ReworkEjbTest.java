@@ -535,7 +535,7 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            candidates.addAll(reworkEjb.findReworkCandidates(barcode));
+            candidates.addAll(reworkEjb.findBucketCandidates(barcode));
         }
 
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
@@ -555,7 +555,7 @@ public class ReworkEjbTest extends Arquillian {
                     twoDBarcodedTubeDao.findByBarcode(barcode), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
-            Assert.assertEquals(reworkEjb.findReworkCandidates(barcode).size(), 0);
+            Assert.assertEquals(reworkEjb.findBucketCandidates(barcode).size(), 0);
         }
     }
 
@@ -572,7 +572,7 @@ public class ReworkEjbTest extends Arquillian {
         }
 
         Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.findReworkCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
+                reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
@@ -597,7 +597,7 @@ public class ReworkEjbTest extends Arquillian {
             bucketDao.persist(pBucket);
 
             candidates
-                    .addAll(reworkEjb.findReworkCandidates(tube.getMercurySamples().iterator().next().getSampleKey()));
+                    .addAll(reworkEjb.findBucketCandidates(tube.getMercurySamples().iterator().next().getSampleKey()));
         }
 
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
@@ -626,7 +626,7 @@ public class ReworkEjbTest extends Arquillian {
             sampleIds.add(tube.getMercurySamples().iterator().next().getSampleKey());
         }
 
-        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findReworkCandidates(sampleIds);
+        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(sampleIds);
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
@@ -637,7 +637,7 @@ public class ReworkEjbTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testSingleSampleTwoPDOs() throws Exception {
 
-        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findReworkCandidates(genomicSample3);
+        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(genomicSample3);
         Assert.assertEquals(candidates.size(), 2);
 
         /*
@@ -694,7 +694,7 @@ public class ReworkEjbTest extends Arquillian {
 
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 candidates.addAll(reworkEjb
-                        .findReworkCandidates(currEntry.getValue().getSampleNames().iterator().next()));
+                        .findBucketCandidates(currEntry.getValue().getSampleNames().iterator().next()));
             }
         }
 
@@ -725,7 +725,7 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            candidates.addAll(reworkEjb.findReworkCandidates(barcode));
+            candidates.addAll(reworkEjb.findBucketCandidates(barcode));
         }
 
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
@@ -774,7 +774,7 @@ public class ReworkEjbTest extends Arquillian {
 
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 candidates.addAll(reworkEjb
-                        .findReworkCandidates(currEntry.getValue().getSampleNames().iterator().next()));
+                        .findBucketCandidates(currEntry.getValue().getSampleNames().iterator().next()));
             }
         }
 
@@ -834,7 +834,7 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidates.add(new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey(), true));
         }
         Collection<String> validationMessages = reworkEjb
-                .addAndValidateReworks(bucketCandidates, ReworkEntry.ReworkReason.UNKNOWN_ERROR, "test Rework",
+                .addAndValidateCandidates(bucketCandidates, ReworkEntry.ReworkReason.UNKNOWN_ERROR, "test Rework",
                         "jowalsh", Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
@@ -1165,7 +1165,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (Map.Entry<String, TwoDBarcodedTube> tubes : mapBarcodeToTube.entrySet()) {
 
-            candidates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+            candidates.addAll(reworkEjb.findBucketCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
 
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size() * 2);
@@ -1207,7 +1207,7 @@ public class ReworkEjbTest extends Arquillian {
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
 
-            candidates.addAll(reworkEjb.findReworkCandidates(tubes.getValue().getSampleNames().iterator().next()));
+            candidates.addAll(reworkEjb.findBucketCandidates(tubes.getValue().getSampleNames().iterator().next()));
         }
 
         // genomicSample3 is in 3 PDOs and somaticSample3 is in 2 PDOs

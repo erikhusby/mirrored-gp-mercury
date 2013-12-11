@@ -63,7 +63,7 @@
             <%--<stripes:hidden name="bucketName"  />--%>
             <div class="control-group">
                 <div class="controls">
-                    <stripes:submit name="reworkSample" value="Rework Sample" class="btn btn-primary"/>
+                    <stripes:submit name="addSample" value="Add Sample To Bucket" class="btn btn-primary"/>
                 </div>
             </div>
         </stripes:form>

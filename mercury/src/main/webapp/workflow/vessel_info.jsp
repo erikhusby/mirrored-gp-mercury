@@ -15,6 +15,12 @@
             sGroupLabelPrefix2: 'Sample(s): '
         });
 
+        $j('.bucketCandidate-checkbox').enableCheckboxRangeSelection({
+            checkAllClass: 'bucketCandidate-checkAll',
+            countDisplayClass: 'bucketCandidate-checkedCount',
+            checkboxClass: 'bucketCandidate-checkbox'
+        });
+
         $j('.rework-checkbox').enableCheckboxRangeSelection({
             checkAllClass: 'rework-checkAll',
             countDisplayClass: 'rework-checkedCount',
@@ -27,7 +33,7 @@
         });
 
         // Prevent the above click handler on the row from being invoked and causing another toggle
-        $j('.rework-checkbox').click(function(event) {
+        $j('.bucketCandidate-checkbox').click(function(event) {
             event.stopPropagation();
         })
     });
@@ -56,8 +62,8 @@
                     <thead>
                     <tr>
                         <th width="30px">
-                            <input type="checkbox" class="rework-checkAll"/>
-                            <span id="count" class="rework-checkedCount"/>
+                            <input type="checkbox" class="bucketCandidate-checkAll"/>
+                            <span id="count" class="bucketCandidate-checkedCount"/>
                         </th>
                         <th>Barcode</th>
                         <th>Sample</th>
@@ -65,14 +71,17 @@
                         <th>Product</th>
                         <th>Batches</th>
                         <th>Workflow</th>
-                        <th>Rework?</th>
+                        <th>Rework?
+                            <input type="checkbox" class="rework-checkAll"/>
+                            <span id="reworkcount" class="rework-checkedCount"/>
+                        </th>
                     </tr>
                     </thead>
                     <tbody>
                     <c:forEach items="${actionBean.bucketCandidates}" var="candidate">
                         <tr class="candidate-row">
                             <td>
-                                <stripes:checkbox class="rework-checkbox" name="selectedBucketCandidates"
+                                <stripes:checkbox class="bucketCandidate-checkbox" name="selectedBucketCandidates"
                                                   value="${candidate}"/>
                             </td>
                             <td>${candidate.tubeBarcode}</td>
@@ -88,7 +97,7 @@
                             </td>
                             <td>${candidate.productOrder.product.workflow.workflowName}</td>
                             <td>
-                                <stripes:checkbox name=""
+                                <stripes:checkbox name="${candidate.reworkItem}" />
                             </td>
                         </tr>
                     </c:forEach>
