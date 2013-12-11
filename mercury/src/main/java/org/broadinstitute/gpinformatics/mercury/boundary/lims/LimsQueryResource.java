@@ -5,7 +5,6 @@ import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
 import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
 import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
 import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
-import org.apache.commons.collections15.MapUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -30,10 +29,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * @author breilly
@@ -301,14 +300,14 @@ public class LimsQueryResource {
         if (labVessel == null) {
             // EMPTY_MAP does not have type parameters.
             //noinspection unchecked
-            return buildResponse(Response.Status.BAD_REQUEST, MapUtils.EMPTY_MAP);
+            return buildResponse(Response.Status.BAD_REQUEST, Collections.<String, Boolean>emptyMap());
         }
 
         LabVessel sourceRack = labVessel.getContainerRole().getSourceRack();
         if (sourceRack == null) {
             // EMPTY_MAP does not have type parameters.
             //noinspection unchecked
-            return buildResponse(Response.Status.BAD_REQUEST, MapUtils.EMPTY_MAP);
+            return buildResponse(Response.Status.BAD_REQUEST, Collections.<String, Boolean>emptyMap());
         }
 
         Map<String, Boolean> map = buildInitialSampleExistenceMap();
