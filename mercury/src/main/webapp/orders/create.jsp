@@ -433,7 +433,7 @@
                         Number of Lanes Per Sample
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
+                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
                             title="Enter Number of Lanes"/>
                     </div>
                 </div>

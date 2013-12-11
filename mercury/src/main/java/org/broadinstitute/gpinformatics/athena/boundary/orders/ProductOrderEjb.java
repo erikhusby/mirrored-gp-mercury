@@ -457,6 +457,10 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
 
+        if (productOrder.getProduct().getSupportsNumberOfLanes()) {
+            pdoUpdateFields.add(
+                    new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
+        }
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME, productOrder.getRequisitionName()));

@@ -1011,6 +1011,7 @@ public class ProductOrder implements BusinessObject, Serializable {
         DESCRIPTION("Description"),
         STATUS("Status"),
         REQUISITION_ID("Requisition ID"),
+        LANES_PER_SAMPLE("Lanes Per Sample"),
         REQUISITION_NAME("Requisition Name");
 
         private final String fieldName;
