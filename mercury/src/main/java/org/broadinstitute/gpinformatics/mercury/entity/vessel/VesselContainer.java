@@ -718,61 +718,141 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     /**
-     * Utility class to encapsulate intermediate solutions when recursively searching vessel container transfers.
+     * Internal utility class to abstract a time ordered sequence of {@code LabEvent} transfers.
      */
-    private static class LabEventPaths {
-        private List<List<LabEvent>> paths = new ArrayList<>();
+    private static class Path {
+        /**
+         *  The last LabEvent in the internal {@code List} of LabEvents is the earliest chronologically.
+         */
+        private List<LabEvent> labEvents;
 
-        private int currentSolutionLength() {
-            return paths.get(0).size();
+        /**
+         * Public constructor for use by calling code in creating a base Path from a single LabEvent.
+         */
+        public Path(@Nonnull LabEvent labEvent) {
+            labEvents = new ArrayList<>();
+            labEvents.add(labEvent);
         }
 
-        public void addPath(@Nonnull List<LabEvent> solution) {
-            if (!paths.isEmpty() && currentSolutionLength() > solution.size()) {
-                // If the new solution path is shorter than the solution paths so far, clear out the current
-                // List of paths before adding this new shorter path.
-                paths.clear();
+        /**
+         * Copy constructor used internally for extending Paths.
+         */
+        private Path(@Nonnull Path path) {
+            labEvents = new ArrayList<>();
+            labEvents.addAll(path.labEvents);
+        }
+
+        /**
+         * The earliest LabEvent chronologically is the last one in the internal {@code List}.
+         */
+        private LabEvent getOldestLabEvent() {
+            return labEvents.get(labEvents.size() - 1);
+        }
+
+        /**
+         * Return the {@code Set} of source {@code LabVessel}s on the earlier {@code LabEvent} in
+         * this {@code Path}.
+         */
+        private Set<LabVessel> getSourceLabVessels() {
+            return getOldestLabEvent().getSourceLabVessels();
+        }
+
+        /**
+         * Extend this {@code Path} by the specified {@code LabEvent}, this mutates the receiver.
+         */
+        private Path extend(@Nonnull LabEvent labEvent) {
+            Path newPath = new Path(this);
+            newPath.labEvents.add(labEvent);
+            return newPath;
+        }
+
+        /**
+         * Return a {@code List} of {@code Path}s that represent the extension of the current Path by another
+         * set of older transfers ({@code LabEvent}s) to the source vessels on the oldest LabEvent.
+         */
+        public List<Path> extendedPaths() {
+            List<Path> paths = new ArrayList<>();
+            for (LabVessel labVessel : getSourceLabVessels()) {
+                // Note this will not add Paths to the results that cannot be extended due to a lack of
+                // transfer events into a particular VesselContainer.  This is the desired behavior when
+                // a transfer history has been exhausted.
+                for (LabEvent labEvent : labVessel.getContainerRole().getTransfersTo()) {
+                    paths.add(new Path(this).extend(labEvent));
+                }
             }
-            paths.add(solution);
-        }
-
-        public boolean shouldContinue(int hopCount) {
-            // Continue if we have no solutions or this would be searching a solution that is not longer than
-            // the current solution.
-            return paths.isEmpty() || currentSolutionLength() >= hopCount;
-        }
-
-        public List<List<LabEvent>> getPaths() {
             return paths;
+        }
+
+        public List<LabEvent> getLabEvents() {
+            return labEvents;
+        }
+
+        /**
+         * Does the {@code Predicate} apply to any of the source {@code LabVessel}s on this {@code Path}?
+         */
+        public boolean sourceVesselsApply(@Nonnull Predicate<LabVessel> predicate) {
+            for (LabVessel labVessel : getSourceLabVessels()) {
+                if (predicate.apply(labVessel)) {
+                    // This source satisfies the predicate, no need to continue searching.
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
     /**
-     * Returns a path that is a copy of {@code currentPath} extended by {@code labEvent}.
+     * Return only those {@code Path}s in the input {@code List} whose oldest {@code LabEvent} has at least one source
+     * {@code LabVessel} that satisfies the {@code Predicate}.
      */
-    private static List<LabEvent> copyAndExtendPath(@Nonnull List<LabEvent> currentPath,
-                                                    @Nonnull LabEvent labEvent) {
-        List<LabEvent> newPath = new ArrayList<>(currentPath.size() + 1);
-        newPath.addAll(currentPath);
-        newPath.add(labEvent);
-        return newPath;
+    private static List<Path> filterPathsBySourceLabVessels(@Nonnull List<Path> paths,
+                                                            @Nonnull Predicate<LabVessel> predicate) {
+        List<Path> filtered = new ArrayList<>();
+        for (Path path : paths) {
+            // Does the predicate apply to the source vessels of this Path?
+            if (path.sourceVesselsApply(predicate)) {
+                filtered.add(path);
+            }
+        }
+        return filtered;
     }
 
-    private static void recurseTransfers(@Nonnull LabEventPaths currentSolutions, @Nonnull List<LabEvent> currentPath,
-                                         @Nonnull VesselContainer<? extends LabVessel> vesselContainer,
-                                         @Nonnull Predicate<LabVessel> predicate, int hopCount) {
+    /**
+     * Return a {@code List} of {@code Path}s that represent the extension of the input Paths by traversing to an
+     * older generation of {@code LabEvent}s.  If a Path cannot be extended it will not be represented in the
+     * output List.
+     */
+    private static List<Path> copyAndExtendPaths(@Nonnull List<Path> paths) {
+        List<Path> ret = new ArrayList<>();
+        for (Path path : paths) {
+            ret.addAll(path.extendedPaths());
+        }
+        return ret;
+    }
 
-        for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
-            for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
-                List<LabEvent> nextPath = copyAndExtendPath(currentPath, labEvent);
-                if (predicate.apply(labVessel)) {
-                    currentSolutions.addPath(nextPath);
-                } else {
-                    if (currentSolutions.shouldContinue(hopCount + 1)) {
-                        recurseTransfers(currentSolutions, nextPath, labVessel.getContainerRole(), predicate, hopCount + 1);
-                    }
-                }
-            }
+    /**
+     * Search the {@code List} of {@code Path}s for {@code LabVessel}s in the transfer history satisfying the
+     * {@code Predicate}.  This is a breadth-first search, no transfer history will be explored at a depth
+     * greater than that required of the shortest Path satisfying the Predicate.
+     */
+    private static List<Path> searchPathsForVesselsSatisfyingPredicate(@Nonnull List<Path> paths, @Nonnull Predicate<LabVessel> predicate) {
+        // Search the sources on the last LabEvent of each path.
+        List<Path> filtered = filterPathsBySourceLabVessels(paths, predicate);
+        if (!filtered.isEmpty()) {
+            // There were vessels at this depth satisfying the predicate, return the paths of LabEvents to
+            // those vessels.
+            return filtered;
+        }
+
+        // There were not vessels at this depth satisfying the predicate, so extend the paths and recurse to
+        // continue checking source lab vessels.
+        List<Path> extendedPaths = copyAndExtendPaths(paths);
+        if (!extendedPaths.isEmpty()) {
+            // Continue recursing if the predicate has not been satisfied and there are more paths to explore.
+            return searchPathsForVesselsSatisfyingPredicate(extendedPaths, predicate);
+        } else {
+            // No paths were found satisfying the predicate.
+            return Collections.emptyList();
         }
     }
 
@@ -784,11 +864,19 @@ public class VesselContainer<T extends LabVessel> {
      * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
      */
     public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
+        List<Path> initialPaths = new ArrayList<>();
+        for (LabEvent labEvent : getTransfersTo()) {
+            initialPaths.add(new Path(labEvent));
+        }
 
-        LabEventPaths labEventPaths = new LabEventPaths();
-        recurseTransfers(labEventPaths, new ArrayList<LabEvent>(), this, predicate, 0);
+        List<Path> paths = searchPathsForVesselsSatisfyingPredicate(initialPaths, predicate);
+        List<List<LabEvent>> ret = new ArrayList<>();
 
-        return labEventPaths.getPaths();
+        for (Path path : paths) {
+            ret.add(path.getLabEvents());
+        }
+
+        return ret;
     }
 
 }
