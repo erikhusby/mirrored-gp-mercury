@@ -155,7 +155,7 @@ public class ReworkEjb {
 
                         BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
                                 sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel, true);
+                                sample.getProductOrder(), vessel, false);
 
                         if (!sample.getProductOrder().getProduct()
                                 .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
@@ -186,7 +186,7 @@ public class ReworkEjb {
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                     final BucketCandidate candidate =
                             new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                    tubeBarcode, sample.getProductOrder(), null, true);
+                                    tubeBarcode, sample.getProductOrder(), null, false);
                     if (!sample.getProductOrder().getProduct()
                             .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                         candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
@@ -457,7 +457,7 @@ public class ReworkEjb {
         private ProductOrder productOrder;
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
-        private final boolean reworkItem;
+        private boolean reworkItem;
 
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
@@ -522,10 +522,14 @@ public class ReworkEjb {
             return reworkItem;
         }
 
+        public void setReworkItem(boolean reworkItem) {
+            this.reworkItem = reworkItem;
+        }
+
         @Override
         public String toString() {
             return String.format("%s|%s|%s|%s", tubeBarcode, sampleKey, productOrderKey, (reworkItem)?
-                    REWORK_INDICATOR :"");
+                    BucketEntry.BucketEntryType.REWORK_ENTRY.name() : BucketEntry.BucketEntryType.PDO_ENTRY.name());
         }
 
         public static BucketCandidate fromString(String s) {
@@ -534,7 +538,7 @@ public class ReworkEjb {
             String sampleKey = parts[1];
             String productOrderKey = parts[2];
             String indicator = parts[3];
-            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey, indicator.equals(REWORK_INDICATOR));
+            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey, indicator.equals(BucketEntry.BucketEntryType.REWORK_ENTRY.name()));
         }
     }
 }

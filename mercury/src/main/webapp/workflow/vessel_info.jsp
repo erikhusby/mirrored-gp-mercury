@@ -35,6 +35,10 @@
         // Prevent the above click handler on the row from being invoked and causing another toggle
         $j('.bucketCandidate-checkbox').click(function(event) {
             event.stopPropagation();
+        });
+        // Prevent the above click handler on the row from being invoked and causing another toggle
+        $j('.rework-checkbox').click(function(event) {
+            event.stopPropagation();
         })
     });
 </script>
@@ -97,7 +101,7 @@
                             </td>
                             <td>${candidate.productOrder.product.workflow.workflowName}</td>
                             <td>
-                                <stripes:checkbox name="${candidate.reworkItem}" />
+                                <stripes:checkbox class="rework-checkbox" name="${candidate.reworkItem}" />
                             </td>
                         </tr>
                     </c:forEach>
