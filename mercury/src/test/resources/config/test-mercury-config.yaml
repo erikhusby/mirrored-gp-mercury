@@ -55,8 +55,8 @@ quote:
 
     QA:
 
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    mercuryquote
+      password: ml1m5qu0t3
       url:      http://quoteqa:8080
 
     # also no PROD here
