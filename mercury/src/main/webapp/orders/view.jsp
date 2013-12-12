@@ -2,7 +2,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -211,6 +210,13 @@ function showSamples(sampleData) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
         }
 
+        if (sampleData[x].completelyBilled) {
+            $j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+        } else {
+            // Need to replace &#160; with empty string.
+            $j('#completelyBilled-' + sampleId).text('');
+        }
+
         bspDataCount--;
     }
 
@@ -242,6 +248,7 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": true},                            // Status
+                {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
             ]
         });
@@ -868,6 +875,7 @@ function formatInput(item) {
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th width="40">Status</th>
+                <th width="40">Billed</th>
                 <th width="200">Comment</th>
             </tr>
             </thead>
@@ -921,6 +929,7 @@ function formatInput(item) {
                         &#160; </td>
                     <td>${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
+                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"> &#160; </td>
                     <td>${sample.sampleComment}</td>
                 </tr>
             </c:forEach>

@@ -4,6 +4,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
  * This adds abandonment tracking to the progress counter object.
  */
 public class ProductOrderCompletionStatus {
+    private final int abandoned;
+    private final int completed;
+    private final int inProgress;
     private final int total;
 
     private final int percentCompleted;
@@ -12,14 +15,18 @@ public class ProductOrderCompletionStatus {
 
     // Completed and Total are known up front.
     public ProductOrderCompletionStatus(int abandoned, int completed, int total) {
+        this.abandoned = abandoned;
+        this.completed = completed;
         this.total = total;
 
         if (total == 0) {
             percentInProgress = 0;
             percentCompleted = 0;
             percentAbandoned = 0;
+            inProgress = 0;
         } else {
-            percentInProgress = ((total - (completed + abandoned)) * 100) / total;
+            inProgress = total - (completed + abandoned);
+            percentInProgress = (inProgress * 100) / total;
             int calculatedCompleted = (completed * 100) / total;
             percentAbandoned = (abandoned * 100) / total;
 
@@ -33,13 +40,25 @@ public class ProductOrderCompletionStatus {
                 int updatedPercentComplete = calculatedCompleted + lostPercent;
 
                 // Don't mind rounding up percent complete EXCEPT when the total is going to 100 and we are not really done.
-                if ((updatedPercentComplete >= 100) && ((abandoned + completed) != total)) {
+                if (updatedPercentComplete >= 100 && abandoned + completed != total) {
                     updatedPercentComplete = 99;
                 }
 
                 percentCompleted = updatedPercentComplete;
             }
         }
+    }
+
+    public int getNumberAbandoned() {
+        return abandoned;
+    }
+
+    public int getNumberInProgress() {
+        return inProgress;
+    }
+
+    public int getNumberCompleted() {
+        return completed;
     }
 
     public int getPercentInProgress() {
