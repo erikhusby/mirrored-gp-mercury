@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -787,18 +788,6 @@ public class VesselContainer<T extends LabVessel> {
             return labEvents;
         }
 
-        /**
-         * Does the {@code Predicate} apply to any of the source {@code LabVessel}s on this {@code Path}?
-         */
-        public boolean sourceVesselsApply(@Nonnull Predicate<LabVessel> predicate) {
-            for (LabVessel labVessel : getSourceLabVessels()) {
-                if (predicate.apply(labVessel)) {
-                    // This source satisfies the predicate, no need to continue searching.
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 
     /**
@@ -809,8 +798,8 @@ public class VesselContainer<T extends LabVessel> {
                                                             @Nonnull Predicate<LabVessel> predicate) {
         List<Path> filtered = new ArrayList<>();
         for (Path path : paths) {
-            // Does the predicate apply to the source vessels of this Path?
-            if (path.sourceVesselsApply(predicate)) {
+            // Does the predicate apply to any of the source vessels of this Path?
+            if (Iterables.any(path.getSourceLabVessels(), predicate)) {
                 filtered.add(path);
             }
         }
@@ -833,7 +822,7 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * Search the {@code List} of {@code Path}s for {@code LabVessel}s in the transfer history satisfying the
      * {@code Predicate}.  This is a breadth-first search, no transfer history will be explored at a depth
-     * greater than that required of the shortest Path satisfying the Predicate.
+     * greater than that of the shortest Path satisfying the Predicate.
      */
     private static List<Path> searchPathsForVesselsSatisfyingPredicate(@Nonnull List<Path> paths, @Nonnull Predicate<LabVessel> predicate) {
         // Search the sources on the last LabEvent of each path.
@@ -848,10 +837,10 @@ public class VesselContainer<T extends LabVessel> {
         // continue checking source lab vessels.
         List<Path> extendedPaths = copyAndExtendPaths(paths);
         if (!extendedPaths.isEmpty()) {
-            // Continue recursing if the predicate has not been satisfied and there are more paths to explore.
+            // Continue recursing as the predicate has not been satisfied and there are more paths to explore.
             return searchPathsForVesselsSatisfyingPredicate(extendedPaths, predicate);
         } else {
-            // No paths were found satisfying the predicate.
+            // No paths are left to explore and none were found to satisfy the predicate.
             return Collections.emptyList();
         }
     }
@@ -864,6 +853,7 @@ public class VesselContainer<T extends LabVessel> {
      * (i.e. the source LabVessel satisfying the predicate is among the sources on the last LabEvent).
      */
     public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
+        // The initial List of Paths represents the transfers directly into this VesselContainer.
         List<Path> initialPaths = new ArrayList<>();
         for (LabEvent labEvent : getTransfersTo()) {
             initialPaths.add(new Path(labEvent));

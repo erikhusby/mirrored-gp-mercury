@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -144,7 +146,8 @@ public class LabEventResource {
         Set<LabEvent> labEvents = new HashSet<>();
 
         for (LabVessel labVessel : labVessels) {
-            // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
+            // This is not checking that all queried barcodes were accounted for in the results,
+            // that is up to the caller.
             if (labVessel == null || labVessel.getContainerRole() == null) {
                 continue;
             }
@@ -153,11 +156,9 @@ public class LabEventResource {
 
             List<List<LabEvent>> resultsForThisVessel =
                     vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
-            // Flatten the result as the current caller does not expect more than one List of transfers to be found
-            // per query barcode.
-            for (List<LabEvent> labEventList : resultsForThisVessel) {
-                labEvents.addAll(labEventList);
-            }
+            // Flatten the result to get an Iterable of LabEvents, keep unique copies by putting the LabEvents
+            // in a Set.
+            labEvents.addAll(Sets.newHashSet(Iterables.concat(resultsForThisVessel)));
         }
 
         List<LabEvent> sortedLabEvents = new ArrayList<>(labEvents);
