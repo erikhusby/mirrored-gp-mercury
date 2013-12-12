@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections15.MultiMap;
 import org.apache.commons.collections15.multimap.MultiHashMap;
 import org.apache.commons.lang3.StringUtils;
@@ -8,10 +7,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.IsExported;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -161,9 +159,9 @@ public class SystemRouter implements Serializable {
 
         MultiMap<System, String> systemToVessels = new MultiHashMap<>();
         for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            Set<IsExported.ExternalSystem> destinations = exportResult.getExportDestinations();
+            IsExported.ExternalSystem externalSystem = exportResult.getExportDestination();
             String vesselBarcode = exportResult.getBarcode();
-            if (CollectionUtils.isEmpty(destinations)) {
+            if (externalSystem == null) {
                 // If there are no export destinations given in the results, look for lookup misses or errors.
                 String error = exportResult.getError();
 
@@ -174,27 +172,18 @@ public class SystemRouter implements Serializable {
                     // Error trying to look up vessel.
                     throw new InformaticsServiceException(error);
                 }
-
             } else {
-                if (destinations.size() > 1) {
-                    // How can a vessel be exported to more than one destination?
-                    throw new InformaticsServiceException(
-                            String.format("Vessel exported to more than one destination: %s to %s.",
-                                    vesselBarcode, StringUtils.join(destinations, ", ")));
-                } else {
-                    IsExported.ExternalSystem externalSystem = destinations.iterator().next();
-                    switch (externalSystem) {
-                    case Sequencing:
-                        systemToVessels.put(SQUID, vesselBarcode);
-                        break;
-                    case Mercury:
-                        systemToVessels.put(MERCURY, vesselBarcode);
-                        break;
-                    default:
-                        // We are not currently expecting to see vessels exported to destinations other than Sequencing
-                        // or Mercury.
-                        throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
-                    }
+                switch (externalSystem) {
+                case Sequencing:
+                    systemToVessels.put(SQUID, vesselBarcode);
+                    break;
+                case Mercury:
+                    systemToVessels.put(MERCURY, vesselBarcode);
+                    break;
+                default:
+                    // We are not currently expecting to see vessels exported to destinations other than Sequencing
+                    // or Mercury.
+                    throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
                 }
             }
         }

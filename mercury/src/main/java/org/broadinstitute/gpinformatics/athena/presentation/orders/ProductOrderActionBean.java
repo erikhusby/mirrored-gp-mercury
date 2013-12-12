@@ -800,7 +800,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * For the pre-populate to work on opening create and edit page, we need to take values from the editOrder. After,
      * the pages have the values passed in.
      */
     private void populateTokenListsFromObjectData() {

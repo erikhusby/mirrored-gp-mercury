@@ -141,6 +141,11 @@ public class BucketEntry {
         return labVessel;
     }
 
+    /** For fixups only */
+    public void setLabVessel(LabVessel labVessel) {
+        this.labVessel = labVessel;
+    }
+
     /**
      * accessor for the Business key of the product order associated with this entry in a bucket
      *

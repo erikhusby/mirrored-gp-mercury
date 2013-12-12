@@ -972,6 +972,11 @@ public abstract class LabVessel implements Serializable {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
+    /** For fixups only. */
+    Set<BucketEntry> getModifiableBucketEntries() {
+        return bucketEntries;
+    }
+
     public void addBucketEntry(BucketEntry bucketEntry) {
         boolean added = bucketEntries.add(bucketEntry);
         if (!added) {

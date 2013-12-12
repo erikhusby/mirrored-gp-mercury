@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.exports;
 
-import org.apache.commons.collections.CollectionUtils;
-
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Suite of DTOs to support the /exports/isExported webservice in BSP.
@@ -38,7 +36,7 @@ public class IsExported {
 
         private String notFound;
 
-        private Set<ExternalSystem> exportDestinations;
+        private ExternalSystem exportDestination;
 
         public String getBarcode() {
             return barcode;
@@ -64,12 +62,12 @@ public class IsExported {
             return error;
         }
 
-        public Set<ExternalSystem> getExportDestinations() {
-            return exportDestinations;
+        public ExternalSystem getExportDestination() {
+            return exportDestination;
         }
 
-        public void setExportDestinations(Set<ExternalSystem> exportDestinations) {
-            this.exportDestinations = exportDestinations;
+        public void setExportDestination(ExternalSystem exportDestination) {
+            this.exportDestination = exportDestination;
         }
 
         /**
@@ -78,12 +76,17 @@ public class IsExported {
         public ExportResult() {
         }
 
+        public ExportResult(String barcode, ExternalSystem exportDestination) {
+            this.barcode = barcode;
+            this.exportDestination = exportDestination;
+        }
+
         public boolean isError() {
             return error != null;
         }
 
         public boolean isExportedToSequencing() {
-            return !CollectionUtils.isEmpty(exportDestinations) && exportDestinations.contains(ExternalSystem.Sequencing);
+            return exportDestination == ExternalSystem.Sequencing;
         }
 
         @Override
@@ -112,22 +115,22 @@ public class IsExported {
     @XmlRootElement
     public static class ExportResults {
 
-        private Set<ExportResult> exportResult = new HashSet<>();
+        private List<ExportResult> exportResult = new ArrayList<>();
 
         // This actually is used by the JAX-RS runtime.
         @SuppressWarnings("UnusedDeclaration")
         public ExportResults() {
         }
 
-        public ExportResults(Set<ExportResult> exportResult) {
+        public ExportResults(List<ExportResult> exportResult) {
             this.exportResult = exportResult;
         }
 
-        public Set<ExportResult> getExportResult() {
+        public List<ExportResult> getExportResult() {
             return exportResult;
         }
 
-        public void setExportResult(Set<ExportResult> exportResult) {
+        public void setExportResult(List<ExportResult> exportResult) {
             this.exportResult = exportResult;
         }
     }

@@ -61,7 +61,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -163,18 +162,13 @@ public class SystemRouterTest extends BaseEventTest {
                 new Answer<IsExported.ExportResults>() {
                     @Override
                     public IsExported.ExportResults answer(InvocationOnMock invocation) throws Throwable {
-                        EnumSet<IsExported.ExternalSystem> noExportDestinations =
-                                EnumSet.noneOf(IsExported.ExternalSystem.class);
-                        Set<IsExported.ExportResult> exportResultSet = new HashSet<>();
+                        List<IsExported.ExportResult> exportResults = new ArrayList<>();
                         @SuppressWarnings("unchecked")
                         Collection<LabVessel> labVessels = (Collection<LabVessel>) invocation.getArguments()[0];
                         for (LabVessel labVessel : labVessels) {
-                            IsExported.ExportResult exportResult = new IsExported.ExportResult();
-                            exportResult.setBarcode(labVessel.getLabel());
-                            exportResult.setExportDestinations(noExportDestinations);
-                            exportResultSet.add(exportResult);
+                            exportResults.add(new IsExported.ExportResult(labVessel.getLabel(), null));
                         }
-                        return new IsExported.ExportResults(exportResultSet);
+                        return new IsExported.ExportResults(exportResults);
                     }
                 });
 
@@ -761,11 +755,7 @@ public class SystemRouterTest extends BaseEventTest {
                 // Keep initialized null value.
                 break;
             }
-            if (externalSystem == null) {
-                exportResults = makeExportResults(tube.getLabel());
-            } else {
-                exportResults = makeExportResults(tube.getLabel(), externalSystem);
-            }
+            exportResults = makeExportResults(tube.getLabel(), externalSystem);
             break;
         }
         when(mockFindExportDestinations(tube)).thenReturn(exportResults);
@@ -1173,40 +1163,19 @@ public class SystemRouterTest extends BaseEventTest {
      * Make an ExportResults object with a result for a single vessel.
      *
      * @param tubeBarcode
-     * @param systems      the systems (can be none) to use in the result
+     * @param system      the system (can be null) to use in the result
      * @return a new ExportResults
      */
-    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem... systems) {
-        return new IsExported.ExportResults(new HashSet<>(Arrays.asList(makeExportResult(tubeBarcode, systems))));
+    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem system) {
+        return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, system)));
     }
 
     private static IsExported.ExportResults makeExportResultsNotFound(String tubeBarcode, String notFoundMessage) {
-        return new IsExported.ExportResults(
-                new HashSet<>(Arrays.asList(makeExportResultNotFound(tubeBarcode, notFoundMessage))));
+        return new IsExported.ExportResults(Arrays.asList(makeExportResultNotFound(tubeBarcode, notFoundMessage)));
     }
 
     private static IsExported.ExportResults makeExportResultsError(String tubeBarcode, String errorMessage) {
-        return new IsExported.ExportResults(
-                new HashSet<>(Arrays.asList(makeExportResultError(tubeBarcode, errorMessage))));
-    }
-
-    /**
-     * Make an ExportResult for the given vessel.
-     *
-     * @param tubeBarcode
-     * @param systems      the systems (can be none) to use in the result
-     * @return a new ExportResult
-     */
-    private static IsExported.ExportResult makeExportResult(String tubeBarcode, IsExported.ExternalSystem... systems) {
-        /*
-         * This isn't the most efficient way to build a set of enum values, but, since this is just for unit tests, this
-         * method is optimized for optimal convenience in calling rather than for runtime performance.
-         */
-        Set<IsExported.ExternalSystem> systemSet = new HashSet<>(Arrays.asList(systems));
-        IsExported.ExportResult exportResult = new IsExported.ExportResult();
-        exportResult.setBarcode(tubeBarcode);
-        exportResult.setExportDestinations(systemSet);
-        return exportResult;
+        return new IsExported.ExportResults(Arrays.asList(makeExportResultError(tubeBarcode, errorMessage)));
     }
 
     private static IsExported.ExportResult makeExportResultNotFound(String tubeBarcode, String notFoundMessage) {

@@ -23,8 +23,8 @@ import javax.persistence.Table;
 public class ProductOrderKitPerson {
 
     @Id
-    @SequenceGenerator(name="seq_pdo_kit_person_index", schema = "athena", sequenceName="seq_pdo_kit_person_index")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_pdo_kit_person_index")
+    @SequenceGenerator(name="seq_pdo_kit_person", schema = "athena", sequenceName="seq_pdo_kit_person")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_pdo_kit_person")
     private Long productOrderKitPersonId;
 
     /**
