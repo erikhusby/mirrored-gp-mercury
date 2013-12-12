@@ -155,7 +155,7 @@ public class ReworkEjb {
 
                         BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
                                 sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel, false);
+                                sample.getProductOrder(), vessel);
 
                         if (!sample.getProductOrder().getProduct()
                                 .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
@@ -186,7 +186,7 @@ public class ReworkEjb {
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                     final BucketCandidate candidate =
                             new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                    tubeBarcode, sample.getProductOrder(), null, false);
+                                    tubeBarcode, sample.getProductOrder(), null);
                     if (!sample.getProductOrder().getProduct()
                             .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                         candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
@@ -417,7 +417,7 @@ public class ReworkEjb {
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode, String userName)
             throws ValidationException {
-        BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode, true);
+        BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode);
         LabVessel reworkVessel = getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(),
                 userName
         );
@@ -464,28 +464,28 @@ public class ReworkEjb {
          * specified, the tube's sample had better be in only one PDO.
          *
          * @param tubeBarcode
-         * @param reworkItem
+         *
          */
         @Deprecated
-        public BucketCandidate(@Nonnull String tubeBarcode, boolean reworkItem) {
+        public BucketCandidate(@Nonnull String tubeBarcode) {
             this.tubeBarcode = tubeBarcode;
             this.reworkItem = reworkItem;
         }
 
-        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey, boolean reworkItem) {
-            this(tubeBarcode, reworkItem);
+        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey) {
+            this(tubeBarcode);
             this.productOrderKey = productOrderKey;
         }
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
-                               @Nonnull String productOrderKey, boolean reworkItem) {
-            this(tubeBarcode,productOrderKey, reworkItem);
+                               @Nonnull String productOrderKey) {
+            this(tubeBarcode,productOrderKey);
             this.sampleKey = sampleKey;
         }
 
         public BucketCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
-                               ProductOrder productOrder, LabVessel labVessel, boolean reworkItem) {
-            this(tubeBarcode, sampleKey, productOrderKey,reworkItem);
+                               ProductOrder productOrder, LabVessel labVessel) {
+            this(tubeBarcode, sampleKey, productOrderKey);
             this.productOrder = productOrder;
             this.labVessel = labVessel;
         }
@@ -528,8 +528,7 @@ public class ReworkEjb {
 
         @Override
         public String toString() {
-            return String.format("%s|%s|%s|%s", tubeBarcode, sampleKey, productOrderKey, (reworkItem)?
-                    BucketEntry.BucketEntryType.REWORK_ENTRY.name() : BucketEntry.BucketEntryType.PDO_ENTRY.name());
+            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrderKey);
         }
 
         public static BucketCandidate fromString(String s) {
@@ -537,8 +536,7 @@ public class ReworkEjb {
             String tubeBarcode = parts[0];
             String sampleKey = parts[1];
             String productOrderKey = parts[2];
-            String indicator = parts[3];
-            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey, indicator.equals(BucketEntry.BucketEntryType.REWORK_ENTRY.name()));
+            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey);
         }
     }
 }

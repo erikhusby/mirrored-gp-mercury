@@ -10,7 +10,9 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
@@ -67,20 +69,38 @@ public class AddReworkActionBean extends CoreActionBean {
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private List<String> selectedBucketCandidates;
 
+    private Set<String> selectedReworkVessels = new HashSet<>();
+
     @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private String bucketName;
 
     private WorkflowBucketDef bucket;
 
-    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
     private ReworkEntry.ReworkReason reworkReason;
-    @Validate(required = true, on = REWORK_SAMPLE_ACTION, label = "Comments")
+
     private String commentText;
 
     private static final String VIEW_PAGE = "/workflow/add_rework.jsp";
     private static final String VESSEL_INFO_PAGE = "/workflow/vessel_info.jsp";
     private LabEventType reworkStep;
 
+    /**
+     * Since the functionality of this page supports both rework and non rework vessels, validation of the mandatory
+     * rework fields now needs to be conditional based on if any of the selected vessels are indicated to be rework
+     * vessels.
+     */
+    @ValidationMethod(on = REWORK_SAMPLE_ACTION)
+    public void validateAddSampleInput() {
+        if (CollectionUtils.isNotEmpty(selectedReworkVessels)) {
+            if (reworkReason == null) {
+                addValidationError("reworkReason", "A reason is required for rework vessels");
+            }
+
+            if(StringUtils.isEmpty(commentText)) {
+                addValidationError("commentText", "A Comment is required for rework vessels");
+            }
+        }
+    }
 
     @HandlesEvent(REWORK_SAMPLE_ACTION)
     public Resolution addSample() {
@@ -89,7 +109,9 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         for (String selectedBucketCandidate : selectedBucketCandidates) {
-            bucketCandidates.add(ReworkEjb.BucketCandidate.fromString(selectedBucketCandidate));
+            ReworkEjb.BucketCandidate candidate = ReworkEjb.BucketCandidate.fromString(selectedBucketCandidate);
+            candidate.setReworkItem(selectedReworkVessels.contains(candidate.toString()));
+            bucketCandidates.add(candidate);
         }
 
         try {
@@ -244,5 +266,13 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public void setselectedBucketCandidates(List<String> selectedBucketCandidates) {
         this.selectedBucketCandidates = selectedBucketCandidates;
+    }
+
+    public Set<String> getSelectedReworkVessels() {
+        return selectedReworkVessels;
+    }
+
+    public void setSelectedReworkVessels(Set<String> selectedReworkVessels) {
+        this.selectedReworkVessels = selectedReworkVessels;
     }
 }

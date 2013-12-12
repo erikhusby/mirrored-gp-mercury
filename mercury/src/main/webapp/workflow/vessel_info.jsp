@@ -39,7 +39,12 @@
         // Prevent the above click handler on the row from being invoked and causing another toggle
         $j('.rework-checkbox').click(function(event) {
             event.stopPropagation();
-        })
+        });
+        //The checkboxes that this function is checking against is found in vessel_info which is retrieved through
+        //the Ajax call defined above
+        $j('.rework-checkbox').click(function() {
+            toggleReworkComponents();
+        });
     });
 </script>
 
@@ -101,7 +106,7 @@
                             </td>
                             <td>${candidate.productOrder.product.workflow.workflowName}</td>
                             <td>
-                                <stripes:checkbox class="rework-checkbox" name="${candidate.reworkItem}" />
+                                <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels" value="${candidate}" />
                             </td>
                         </tr>
                     </c:forEach>
