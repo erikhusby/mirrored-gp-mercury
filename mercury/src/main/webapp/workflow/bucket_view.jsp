@@ -4,15 +4,6 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
-    <style type="text/css">
-        .tdfield {
-            width: 300px;
-            height: 15px;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-    </style>
     <script type="text/javascript">
         function submitBucket() {
             $j('#bucketForm').submit();
@@ -199,7 +190,7 @@
                             ${entry.poBusinessKey}
                     </td>
                     <td>
-                        <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
                     <td>
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}

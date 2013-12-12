@@ -67,7 +67,7 @@
                                 ${entry.poBusinessKey}
                         </td>
                         <td>
-                            <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                            <div class="ellipsis" style="width: 300px;">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                         </td>
                         <td>
                                 ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
