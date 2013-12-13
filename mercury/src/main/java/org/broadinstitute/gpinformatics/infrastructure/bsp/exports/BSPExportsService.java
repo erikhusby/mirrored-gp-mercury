@@ -43,7 +43,7 @@ public class BSPExportsService {
         MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
         parameters.put("barcode", barcodes);
         // Copy the resource above with the query parameters added.
-        String url = bspConfig.getUrl("/rest/exports/isExported");
+        String url = bspConfig.getUrl("rest/exports/isExported");
         WebResource resource = client.resource(url).queryParams(parameters);
 
         return resource.accept(MediaType.APPLICATION_XML_TYPE).get(IsExported.ExportResults.class);
