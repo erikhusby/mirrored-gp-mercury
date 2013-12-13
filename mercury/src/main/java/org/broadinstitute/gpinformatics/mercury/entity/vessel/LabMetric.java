@@ -176,6 +176,13 @@ public class LabMetric implements Comparable<LabMetric> {
         return value;
     }
 
+    /**
+     * For fixups only.
+     */
+    public void setValue(BigDecimal value) {
+        this.value = value;
+    }
+
     public MetricType getName() {
         return metricType;
     }
