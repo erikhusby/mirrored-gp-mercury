@@ -103,7 +103,7 @@ public class ReagentKitTransferTest {
                     Matchers.equalTo(LabEventType.DENATURE_TO_REAGENT_KIT_TRANSFER.getName()));
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
             bettaLIMSMessage.getPlateCherryPickEvent().add(transferEventType);
-            final String message = BettaLimsMessageBeanTest.marshalMessage(bettaLIMSMessage);
+            final String message = BettaLimsMessageTestFactory.marshal(bettaLIMSMessage);
             Assert.assertFalse(message.isEmpty());
         }
     }
