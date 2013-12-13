@@ -85,7 +85,7 @@
                             <li>
                                 <stripes:link id="addRework"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
-                                              event="view">Add To Bucket</stripes:link>
+                                              event="view">Add Sample(s) To Bucket</stripes:link>
                             </li>
 
                         </security:authorizeBlock>

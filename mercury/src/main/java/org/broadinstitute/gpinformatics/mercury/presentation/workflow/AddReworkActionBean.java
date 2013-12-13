@@ -91,6 +91,9 @@ public class AddReworkActionBean extends CoreActionBean {
      */
     @ValidationMethod(on = REWORK_SAMPLE_ACTION)
     public void validateAddSampleInput() {
+        if(StringUtils.isEmpty(bucketName)) {
+            addValidationError("bucketName", "Please select a bucket to add samples to");
+        }
         if (CollectionUtils.isNotEmpty(selectedReworkVessels)) {
             if (reworkReason == null) {
                 addValidationError("reworkReason", "A reason is required for rework vessels");

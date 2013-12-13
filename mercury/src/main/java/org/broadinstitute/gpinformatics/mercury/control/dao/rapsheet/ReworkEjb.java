@@ -51,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -153,9 +154,12 @@ public class ReworkEjb {
                 for (ProductOrderSample sample : productOrderSamples) {
                     if (!sample.getProductOrder().isDraft()) {
 
+                        List<LabEvent> eventList= new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
+                        Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
+
                         BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
                                 sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel);
+                                sample.getProductOrder(), vessel, eventList.get(eventList.size()-1).getLabEventType().getName());
 
                         if (!sample.getProductOrder().getProduct()
                                 .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
@@ -186,7 +190,7 @@ public class ReworkEjb {
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                     final BucketCandidate candidate =
                             new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                    tubeBarcode, sample.getProductOrder(), null);
+                                    tubeBarcode, sample.getProductOrder(), null, "");
                     if (!sample.getProductOrder().getProduct()
                             .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                         candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
@@ -458,6 +462,7 @@ public class ReworkEjb {
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
         private boolean reworkItem;
+        private String lastEventStep;
 
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
@@ -484,10 +489,11 @@ public class ReworkEjb {
         }
 
         public BucketCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
-                               ProductOrder productOrder, LabVessel labVessel) {
+                               ProductOrder productOrder, LabVessel labVessel, String lastEventStep) {
             this(tubeBarcode, sampleKey, productOrderKey);
             this.productOrder = productOrder;
             this.labVessel = labVessel;
+            this.lastEventStep = lastEventStep;
         }
 
         public String getSampleKey() {
@@ -524,6 +530,10 @@ public class ReworkEjb {
 
         public void setReworkItem(boolean reworkItem) {
             this.reworkItem = reworkItem;
+        }
+
+        public String getLastEventStep() {
+            return lastEventStep;
         }
 
         @Override

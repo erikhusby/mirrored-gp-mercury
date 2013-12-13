@@ -27,9 +27,11 @@
             checkboxClass: 'rework-checkbox'
         });
 
+//        $j("#selectedBucket").prop("selectedIndex", -1);
+
         // Cause checkbox toggle when clicking on the row
         $j('.candidate-row').click(function(event) {
-            $j(':checkbox', this).click();
+            $j('.bucketCandidate-checkbox:checkbox', this).click();
         });
 
         // Prevent the above click handler on the row from being invoked and causing another toggle
@@ -37,12 +39,14 @@
             event.stopPropagation();
         });
         // Prevent the above click handler on the row from being invoked and causing another toggle
-        $j('.rework-checkbox').click(function(event) {
-            event.stopPropagation();
-        });
         //The checkboxes that this function is checking against is found in vessel_info which is retrieved through
         //the Ajax call defined above
-        $j('.rework-checkbox').click(function() {
+        $j('.rework-checkbox').click(function(event) {
+            toggleReworkComponents();
+            event.stopPropagation();
+        });
+
+        $j('.rework-checkAll').click(function(event) {
             toggleReworkComponents();
         });
     });
@@ -76,14 +80,15 @@
                         </th>
                         <th>Barcode</th>
                         <th>Sample</th>
+                        <th>
+                            <input type="checkbox" class="rework-checkAll"/>
+                            <span id="reworkcount" class="rework-checkedCount"/> Rework(s)?
+                        </th>
                         <th>PDO</th>
                         <th>Product</th>
                         <th>Batches</th>
                         <th>Workflow</th>
-                        <th>Rework?
-                            <input type="checkbox" class="rework-checkAll"/>
-                            <span id="reworkcount" class="rework-checkedCount"/>
-                        </th>
+                        <th>Last Workflow Step</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -95,6 +100,9 @@
                             </td>
                             <td>${candidate.tubeBarcode}</td>
                             <td>${candidate.sampleKey}</td>
+                            <td>
+                                <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels" value="${candidate}" />
+                            </td>
                             <td>${candidate.productOrderKey}</td>
                             <td>${candidate.productOrder.product.productName}</td>
                             <td>
@@ -105,9 +113,7 @@
                                 </c:forEach>
                             </td>
                             <td>${candidate.productOrder.product.workflow.workflowName}</td>
-                            <td>
-                                <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels" value="${candidate}" />
-                            </td>
+                            <td>${candidate.lastEventStep}</td>
                         </tr>
                     </c:forEach>
                     </tbody>
@@ -116,11 +122,12 @@
         </div>
         <div class="control-group">
             <stripes:label for="selectedBucket" class="control-label">
-                Rework To Bucket
+                Bucket Name
             </stripes:label>
             <div class="controls">
 
                 <select id="selectedBucket" name="bucketName">
+                    <%--<option selected="selected"> </option>--%>
                     <c:forEach items="${actionBean.buckets}" var="bucket">
                         <option>${bucket.name}</option>
                     </c:forEach>

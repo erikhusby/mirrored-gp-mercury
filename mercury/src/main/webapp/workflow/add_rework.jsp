@@ -2,7 +2,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Add To Bucket" sectionTitle="Add To Bucket">
+<stripes:layout-render name="/layout.jsp" pageTitle="Add Sample(s) To Bucket" sectionTitle="Add To Bucket">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
@@ -57,6 +57,7 @@
                     <stripes:textarea id="vesselBarcode" name="vesselLabel" rows="3" cols="16"/>
                 </div>
             </div>
+            <!-- FIXME SGM:  Move the definition of the vessel_info JSP to here instead of making it an Ajax insert -->
             <div id="vesselInfo"></div>
             <div class="control-group">
                 <stripes:label for="reworkReason" class="control-label" id="rework-reason-label">
