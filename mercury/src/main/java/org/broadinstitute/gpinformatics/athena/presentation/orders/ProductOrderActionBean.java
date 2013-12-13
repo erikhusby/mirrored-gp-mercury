@@ -273,6 +273,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    @Validate(required = true, on = ABANDON_SAMPLES_ACTION)
+    private String abandonComment;
+
     // This is used for prompting why the abandon button is disabled.
     private String abandonDisabledReason;
 
@@ -1256,12 +1259,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
                 samples.remove();
             }
+            sample.setSampleComment(abandonComment);
         }
 
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
             addMessage("Abandoned samples: {0}.",
-                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
+                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1556,6 +1560,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public String getAbandonComment() {
+        return abandonComment;
+    }
+
+    public void setAbandonComment(String abandonComment) {
+        this.abandonComment = abandonComment;
     }
 
     public CompletionStatusFetcher getProgressFetcher() {

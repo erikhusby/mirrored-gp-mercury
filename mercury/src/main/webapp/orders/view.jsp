@@ -112,6 +112,31 @@ function setupDialogs() {
         ]
     });
 
+    $j("#abandonDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "abandonOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#abandonOkButton").attr("disabled", "disabled");
+                    $j("#abandonStatus").attr("value", $j("#abandonDialogId").attr("checked") != undefined);
+                    $j("#abandonComment").attr("value", $j("#abandonSampleCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
     $j("#deleteConfirmation").dialog({
         modal: true,
         autoOpen: false,
@@ -341,6 +366,18 @@ function showRiskDialog() {
     }
 }
 
+function showAbandonDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "abandonSamples");
+        $j("#abandonSelectedSamplesCountId").text(numChecked);
+        $j("#abandonDialog").dialog("open").dialog("option", "width", 600);
+    } else {
+        $j("#noneSelectedDialogMessage").text("Abandon Samples");
+        $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
 function showDeleteConfirm(action) {
     $j("#dialogAction").attr("name", action);
     $j("#deleteConfirmation").dialog("open");
@@ -403,6 +440,16 @@ function formatInput(item) {
     <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="abandonDialog" style="width:600px;display:none;">
+    <p>Abandon Samples (<span id="abandonSelectedSamplesCountId"> </span> selected)</p>
+
+    <p style="clear:both">
+        <label for="abandonSampleCommentId">Comment:</label>
+    </p>
+
+    <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
+
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
 
@@ -426,6 +473,7 @@ function formatInput(item) {
 <stripes:hidden id="dialogAction" name=""/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
+<stripes:hidden id="abandonComment" name="abandonComment" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -825,7 +873,7 @@ function formatInput(item) {
 
                                 <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                                 style="margin-left:15px;"
-                                                onclick="showConfirm('abandonSamples', 'abandon')"/>
+                                                onclick="showAbandonDialog()"/>
 
                                 <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                                 style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
