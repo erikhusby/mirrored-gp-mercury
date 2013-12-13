@@ -235,7 +235,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @param label barcode
      */
-    public void setLabel(String label) {
+    void setLabel(String label) {
         this.label = label;
     }
 

@@ -336,33 +336,15 @@
                                         title="Enter the research project for this order"/>
                             </div>
                         </div>
-
-                        <div class="control-group">
-                            <stripes:label for="fundingDeadline" class="control-label">
-                                Funding Deadline
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
-                                              title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
-                            </div>
-                        </div>
-
-                        <div class="control-group">
-                            <stripes:label for="publicationDeadline" class="control-label">
-                                Publication Deadline
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
-                                              title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
-                            </div>
-                        </div>
                     </c:when>
                     <c:otherwise>
                         <div class="view-control-group control-group" style="margin-bottom: 20px;">
                             <label class="control-label">Research Project</label>
+
                             <div class="controls">
                                 <div class="form-value">
-                                    <stripes:hidden name="projectTokenInput.listOfKeys" value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
+                                    <stripes:hidden name="projectTokenInput.listOfKeys"
+                                                    value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
                                     <stripes:link title="Research Project"
                                                   beanclass="<%=ResearchProjectActionBean.class.getName()%>"
                                                   event="view">
@@ -370,34 +352,36 @@
                                                        value="${actionBean.editOrder.researchProject.businessKey}"/>
                                         ${actionBean.editOrder.researchProject.title}
                                     </stripes:link>
-                                    (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
+                                    (<a target="JIRA"
+                                        href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}"
+                                        class="external" target="JIRA">
                                         ${actionBean.editOrder.researchProject.jiraTicketKey}
-                                    </a>)
+                                </a>)
                                 </div>
                             </div>
                         </div>
+                    </c:otherwise></c:choose>
 
-                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
-                            <label class="control-label">Funding Deadline</label>
-                            <div class="controls">
-                                <div class="form-value">
-                                    <fmt:formatDate value="${actionBean.editOrder.fundingDeadline}"
-                                                    pattern="${actionBean.datePattern}"/>
-                                </div>
-                            </div>
-                        </div>
+                <div class="control-group">
+                    <stripes:label for="fundingDeadline" class="control-label">
+                        Funding Deadline
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
+                                      title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy"/>
+                    </div>
+                </div>
 
-                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
-                            <label class="control-label">Publication Deadline</label>
-                            <div class="controls">
-                                <div class="form-value">
-                                    <fmt:formatDate value="${actionBean.editOrder.publicationDeadline}"
-                                                    pattern="${actionBean.datePattern}"/>
-                                </div>
-                            </div>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                <div class="control-group">
+                    <stripes:label for="publicationDeadline" class="control-label">
+                        Publication Deadline
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
+                                      title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy"/>
+                    </div>
+                </div>
+
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
@@ -433,7 +417,7 @@
                         Number of Lanes Per Sample
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
+                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
                             title="Enter Number of Lanes"/>
                     </div>
                 </div>

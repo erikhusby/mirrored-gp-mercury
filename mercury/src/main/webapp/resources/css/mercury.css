@@ -174,3 +174,6 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .accordion .ui-state-active .ui-icon { background-image: url("/Mercury/images/ui-icons_2e83ff_256x240.png") !important;}
 
 .workflow-image { background-color: #d3d3d3; padding: 10px; }
+
+/* Add to block or inline-block elements to truncate their content with ellipsis. When using with fixed-width table columns, width must be set on the td element with this class. */
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

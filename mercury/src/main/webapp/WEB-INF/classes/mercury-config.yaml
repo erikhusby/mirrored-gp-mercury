@@ -92,18 +92,18 @@ portal:
 quote:
 
     DEV:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    mercuryquote
+      password: ml1m5qu0t3
       url:      http://quotedev:8080
 
     QA:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    mercuryquote
+      password: ml1m5qu0t3
       url:      http://quoteqa:8080
 
     PROD:
-      login:    rnordin@broadinstitute.org
-      password: Squ1d_us3r
+      login:    mercuryquote
+      password: ml1m5qu0t3
       url:      http://quoteprod:8080
 
 

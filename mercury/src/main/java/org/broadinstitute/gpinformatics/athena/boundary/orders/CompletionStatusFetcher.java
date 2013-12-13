@@ -35,13 +35,28 @@ public class CompletionStatusFetcher {
     }
 
     @DaoFree
+    public int getNumberAbandoned(String orderKey) {
+        return progressByBusinessKey.get(orderKey).getNumberAbandoned();
+    }
+
+    @DaoFree
     public int getPercentCompleted(String orderKey) {
         return progressByBusinessKey.get(orderKey).getPercentCompleted();
     }
 
     @DaoFree
+    public int getNumberCompleted(String orderKey) {
+        return progressByBusinessKey.get(orderKey).getNumberCompleted();
+    }
+
+    @DaoFree
     public int getPercentInProgress(String orderKey) {
         return progressByBusinessKey.get(orderKey).getPercentInProgress();
+    }
+
+    @DaoFree
+    public int getNumberInProgress(String orderKey) {
+        return progressByBusinessKey.get(orderKey).getNumberInProgress();
     }
 
     @DaoFree
