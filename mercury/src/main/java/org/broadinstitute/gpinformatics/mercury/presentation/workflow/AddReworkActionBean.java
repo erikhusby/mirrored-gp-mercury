@@ -80,7 +80,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private String commentText;
 
-    private static final String VIEW_PAGE = "/workflow/add_rework.jsp";
+    private static final String VIEW_PAGE = "/workflow/add_to_bucket.jsp";
     private static final String VESSEL_INFO_PAGE = "/workflow/vessel_info.jsp";
     private LabEventType reworkStep;
 

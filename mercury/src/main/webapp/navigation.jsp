@@ -83,7 +83,7 @@
                     <ul class="dropdown-menu" role="menu">
                         <security:authorizeBlock roles="<%= roles(LabUser, LabManager, PDM, PM, Developer) %>">
                             <li>
-                                <stripes:link id="addRework"
+                                <stripes:link id="addToBucket"
                                               beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.AddReworkActionBean"
                                               event="view">Add Sample(s) To Bucket</stripes:link>
                             </li>

@@ -105,7 +105,7 @@ public class WsMessageStoreImpl implements WsMessageStore {
             if (!errorDirectory.mkdirs()) {
                 // mkdirs can fail if two threads attempt it simultaneously, so try again
                 if (!errorDirectory.mkdirs()) {
-                    throw new RuntimeException("Failed to create error directory");
+                    throw new RuntimeException("Failed to create error directory for " + resourceType);
                 }
             }
         }
