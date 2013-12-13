@@ -21,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -367,5 +368,13 @@ public class LabVesselFixupTest extends Arquillian {
         TwoDBarcodedTube twoDBarcodedTube1 = mapPositionToVessel.get(oldPosition);
         mapPositionToVessel.put(newPosition, twoDBarcodedTube1);
         mapPositionToVessel.remove(oldPosition);
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2375() {
+        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0116400440");
+        LabMetric labMetric = twoDBarcodedTube.getMetrics().iterator().next();
+        labMetric.setValue(new BigDecimal("21.75"));
+        twoDBarcodedTubeDao.flush();
     }
 }
