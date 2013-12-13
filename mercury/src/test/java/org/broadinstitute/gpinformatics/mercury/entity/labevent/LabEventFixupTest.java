@@ -173,4 +173,10 @@ public class LabEventFixupTest extends Arquillian {
         labEvent.getReagents().remove(reagent);
         labEventDao.remove(labEvent);
     }
+
+    @Test(enabled = true)
+    public void fixupGplim2377() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 319206L);
+        labEventDao.remove(labEvent);
+    }
 }
