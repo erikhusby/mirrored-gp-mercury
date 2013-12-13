@@ -273,7 +273,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
-    @Validate(required = true, on = ABANDON_SAMPLES_ACTION)
     private String abandonComment;
 
     // This is used for prompting why the abandon button is disabled.
@@ -1259,7 +1258,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
                 samples.remove();
             }
-            sample.setSampleComment(abandonComment);
+            if (!StringUtils.isBlank(abandonComment)) {
+                sample.setSampleComment(abandonComment);
+            }
         }
 
         if (!selectedProductOrderSamples.isEmpty()) {
