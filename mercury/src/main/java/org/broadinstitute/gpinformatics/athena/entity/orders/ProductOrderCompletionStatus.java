@@ -40,7 +40,7 @@ public class ProductOrderCompletionStatus {
                 int updatedPercentComplete = calculatedCompleted + lostPercent;
 
                 // Don't mind rounding up percent complete EXCEPT when the total is going to 100 and we are not really done.
-                if (updatedPercentComplete >= 100 && abandoned + completed != total) {
+                if ((updatedPercentComplete >= 100) && ((abandoned + completed) != total)) {
                     updatedPercentComplete = 99;
                 }
 
