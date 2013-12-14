@@ -157,9 +157,14 @@ public class ReworkEjb {
                         List<LabEvent> eventList= new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
                         Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
 
+                        String eventName = "";
+                        if(!eventList.isEmpty()) {
+                            eventName = eventList.get(eventList.size()-1).getLabEventType().getName();
+                        }
+
                         BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
                                 sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel, eventList.get(eventList.size()-1).getLabEventType().getName());
+                                sample.getProductOrder(), vessel, eventName);
 
                         if (!sample.getProductOrder().getProduct()
                                 .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
