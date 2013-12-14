@@ -479,7 +479,6 @@ public class ReworkEjb {
         @Deprecated
         public BucketCandidate(@Nonnull String tubeBarcode) {
             this.tubeBarcode = tubeBarcode;
-            this.reworkItem = reworkItem;
         }
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey) {
