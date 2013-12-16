@@ -15,7 +15,7 @@
                         $j('#vesselInfo').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                         $j.ajax({
                             type: "POST",
-                            url:"${ctxpath}/workflow/AddRework.action?vesselInfo=",
+                            url:"${ctxpath}/workflow/AddToBucket.action?vesselInfo=",
                             data: { vesselLabel: barcode },
                             dataType:'html',
                             success:updateDetails
@@ -48,7 +48,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="reworkEntryForm">
+        <stripes:form beanclass="${actionBean.class.name}" class="form-horizontal" id="addToBucketEntryForm">
             <div class="control-group">
                 <stripes:label for="vesselLabel" class="control-label">
                     Barcodes or Sample IDs
