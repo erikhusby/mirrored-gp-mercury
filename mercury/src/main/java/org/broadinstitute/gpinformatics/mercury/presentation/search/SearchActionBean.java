@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ public class SearchActionBean extends CoreActionBean {
 
     private static final String SEARCH_LIST_PAGE = "/search/search.jsp";
     public static final String SEARCH_ACTION = "search";
-
+    private String resultSummaryString;
     /**
      * Action for handling when user enters search text in navigation form search textfield.
      */
@@ -103,26 +104,52 @@ public class SearchActionBean extends CoreActionBean {
         List<String> searchList = cleanInputString(searchKey);
         numSearchTerms = searchList.size();
         int count = 0;
-        long totalResults = 0l;
-
+        int totalResults = 0;
+        Set<String> foundNames=new HashSet<>(searchList.size());
+        Set<String> notFoundNames=new HashSet<>(searchList);
+        String searchNoun="";
         for (SearchType searchForItem : searchForItems) {
             switch (searchForItem) {
             case VESSELS_BY_BARCODE:
+                searchNoun="vessel";
                 foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
                 if (!foundVessels.isEmpty()) {
+                    for (LabVessel vessel : foundVessels) {
+                        foundNames.add(vessel.getLabel());
+                    }
                     count++;
                     totalResults += foundVessels.size();
                 }
                 break;
             case BATCH_BY_KEY:
+                searchNoun="batch";
                 foundBatches = labBatchDao.findByListIdentifier(searchList);
                 if (!foundBatches.isEmpty()) {
+                    for (LabBatch labBatch: foundBatches) {
+                        foundNames.add(labBatch.getBusinessKey());
+                    }
                     count++;
                     totalResults += foundBatches.size();
                 }
                 break;
             }
         }
+
+        notFoundNames.removeAll(foundNames);
+
+        String joinedNames = StringUtils.join(notFoundNames, ", ");
+        if (foundNames.isEmpty()) {
+            resultSummaryString = String.format("No %ss found, searched for %s.", searchNoun, joinedNames);
+        } else if (!notFoundNames.isEmpty()) {
+            String messageFormatString =
+                    "Searched for {0} {0, choice, 0#searchNouns|1#searchNoun|2#searchNouns}, found {1}. {2} {2, choice, 0#searchNouns were|1#searchNoun was|2#searchNouns were} not found: {3}.";
+
+            MessageFormat format = new MessageFormat(messageFormatString.replace("searchNoun", searchNoun));
+
+            Object[] formatArgs = {searchList.size(), foundNames.size(), notFoundNames.size(), joinedNames};
+            resultSummaryString = format.format(formatArgs);
+        }
+
 
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
@@ -258,5 +285,13 @@ public class SearchActionBean extends CoreActionBean {
 
     public void setNumSearchTerms(int numSearchTerms) {
         this.numSearchTerms = numSearchTerms;
+    }
+
+    public String getResultSummaryString() {
+        return resultSummaryString;
+    }
+
+    public void setResultSummaryString(String resultSummaryString) {
+        this.resultSummaryString = resultSummaryString;
     }
 }

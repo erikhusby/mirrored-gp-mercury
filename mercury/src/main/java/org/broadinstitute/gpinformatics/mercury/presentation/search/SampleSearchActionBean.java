@@ -39,7 +39,6 @@ public class SampleSearchActionBean extends SearchActionBean {
 
     // order of samples in result list should match input order from text area; hence LinkedHashMap
     private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new LinkedHashMap<>();
-    private String samplesNotFound;
 
     public Map<MercurySample, Set<LabVessel>> getMercurySampleToVessels() {
         return mercurySampleToVessels;
@@ -61,7 +60,7 @@ public class SampleSearchActionBean extends SearchActionBean {
         List<String> searchList = cleanInputString(getSearchKey());
         setNumSearchTerms(searchList.size());
         Set<String> foundSampleNames=new HashSet<>(searchList.size());
-        List<String> notFoundSampleNames=new ArrayList<>(searchList);
+        HashSet<String> notFoundSampleNames=new HashSet<>(searchList);
 
         for (String searchKey : searchList) {
             Set<MercurySample> samples = new HashSet<>();
@@ -91,12 +90,12 @@ public class SampleSearchActionBean extends SearchActionBean {
         notFoundSampleNames.removeAll(foundSampleNames);
         String joinedSampleNames = StringUtils.join(notFoundSampleNames, ", ");
         if (foundSampleNames.isEmpty()) {
-            samplesNotFound = "No samples found, searched for " + joinedSampleNames;
+            setResultSummaryString("No samples found, searched for " + joinedSampleNames);
         } else if (!notFoundSampleNames.isEmpty()) {
-            MessageFormat format =
-                    new MessageFormat("{0} {0, choice, 0#samples were|1#sample was|2#samples were} not found: {1}.");
-            Object[] formatArgs = {notFoundSampleNames.size(), joinedSampleNames};
-            samplesNotFound = format.format(formatArgs);
+            MessageFormat format = new MessageFormat(
+                    "Searched for {0} {0, choice, 0#samples|1#sample|2#samples}, found {1}. {2} {2, choice, 0#samples were|1#sample was|2#samples were} not found: {3}.");
+            Object[] formatArgs = {searchList.size(), foundSampleNames.size(), notFoundSampleNames.size(), joinedSampleNames};
+            setResultSummaryString(format.format(formatArgs));
         }
         setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
@@ -121,9 +120,5 @@ public class SampleSearchActionBean extends SearchActionBean {
             }
         }
         return filteredSamples;
-    }
-
-    public String getSamplesNotFound() {
-        return samplesNotFound;
     }
 }
