@@ -5,6 +5,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -13,11 +14,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +39,7 @@ public class SampleSearchActionBean extends SearchActionBean {
 
     // order of samples in result list should match input order from text area; hence LinkedHashMap
     private Map<MercurySample, Set<LabVessel>> mercurySampleToVessels = new LinkedHashMap<>();
+    private String samplesNotFound;
 
     public Map<MercurySample, Set<LabVessel>> getMercurySampleToVessels() {
         return mercurySampleToVessels;
@@ -57,6 +60,8 @@ public class SampleSearchActionBean extends SearchActionBean {
     public Resolution sampleSearch() throws Exception {
         List<String> searchList = cleanInputString(getSearchKey());
         setNumSearchTerms(searchList.size());
+        Set<String> foundSampleNames=new HashSet<>(searchList.size());
+        List<String> notFoundSampleNames=new ArrayList<>(searchList);
 
         for (String searchKey : searchList) {
             Set<MercurySample> samples = new HashSet<>();
@@ -79,8 +84,19 @@ public class SampleSearchActionBean extends SearchActionBean {
                     if (bspSampleDTO != null) {
                         sample.setBspSampleDTO(bspSampleDTO);
                     }
+                    foundSampleNames.add(sample.getSampleKey());
                 }
             }
+        }
+        notFoundSampleNames.removeAll(foundSampleNames);
+        String joinedSampleNames = StringUtils.join(notFoundSampleNames, ", ");
+        if (foundSampleNames.isEmpty()) {
+            samplesNotFound = "No samples found, searched for " + joinedSampleNames;
+        } else if (!notFoundSampleNames.isEmpty()) {
+            MessageFormat format =
+                    new MessageFormat("{0} {0, choice, 0#samples were|1#sample was|2#samples were} not found: {1}.");
+            Object[] formatArgs = {notFoundSampleNames.size(), joinedSampleNames};
+            samplesNotFound = format.format(formatArgs);
         }
         setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
@@ -105,5 +121,9 @@ public class SampleSearchActionBean extends SearchActionBean {
             }
         }
         return filteredSamples;
+    }
+
+    public String getSamplesNotFound() {
+        return samplesNotFound;
     }
 }
