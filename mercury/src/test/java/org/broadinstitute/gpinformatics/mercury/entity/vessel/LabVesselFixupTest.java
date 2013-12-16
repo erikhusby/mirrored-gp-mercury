@@ -377,4 +377,33 @@ public class LabVesselFixupTest extends Arquillian {
         labMetric.setValue(new BigDecimal("21.75"));
         twoDBarcodedTubeDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim2367Part2() {
+        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0156349661");
+        boolean found = false;
+        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+            for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
+                    found = true;
+                    // Intended to change position of two tubes, but discovered that the changed tube formation already
+                    // exists.
+//                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
+//                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
+//                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+//                    changePosition(mapPositionToVessel, VesselPosition.F02, VesselPosition.B01);
+//                    changePosition(mapPositionToVessel, VesselPosition.E02, VesselPosition.F01);
+//                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+                    SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
+                    LabVessel labVessel = labVesselDao.findByIdentifier("627037c8cfd770a62af72e8a1eb92b43");
+                    sectionTransfer.setTargetVesselContainer(labVessel.getContainerRole());
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Failed to find tube formation for daughter plate transfer");
+        }
+        twoDBarcodedTubeDao.flush();
+    }
+
 }
