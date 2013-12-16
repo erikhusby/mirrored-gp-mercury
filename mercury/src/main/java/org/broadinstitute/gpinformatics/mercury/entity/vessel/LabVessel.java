@@ -77,6 +77,12 @@ public abstract class LabVessel implements Serializable {
 
     private static final Log logger = LogFactory.getLog(LabVessel.class);
 
+    /** Determines whether diagnostics are printed.  This is done as a constant, rather than as a logging level,
+     * because the compiler should be smart enough to remove the printing code if the constant is false, whereas
+     * a logging level would require frequent checks in heavily used code.
+     */
+    public static final boolean DIAGNOSTICS = false;
+
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
     @Id
@@ -639,6 +645,9 @@ public abstract class LabVessel implements Serializable {
      * @return sample instances
      */
     public Set<SampleInstance> getSampleInstances(SampleType sampleType, @Nullable LabBatch.LabBatchType labBatchType) {
+        if (DIAGNOSTICS) {
+            System.out.println("getSampleInstances for " + label);
+        }
         if (preProcessedEvents == null) {
             preProcessedEvents = preProcessEvents();
         }

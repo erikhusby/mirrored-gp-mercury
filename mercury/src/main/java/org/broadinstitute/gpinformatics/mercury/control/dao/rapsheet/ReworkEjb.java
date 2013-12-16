@@ -51,7 +51,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -154,12 +153,12 @@ public class ReworkEjb {
                 for (ProductOrderSample sample : productOrderSamples) {
                     if (!sample.getProductOrder().isDraft()) {
 
-                        List<LabEvent> eventList= new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
+                        List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
                         Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
 
                         String eventName = "";
-                        if(!eventList.isEmpty()) {
-                            eventName = eventList.get(eventList.size()-1).getLabEventType().getName();
+                        if (!eventList.isEmpty()) {
+                            eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
                         }
 
                         BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
@@ -216,28 +215,29 @@ public class ReworkEjb {
      * <p/>
      * TODO: make this @DaoFree; can't right now because of an eventual call to persist from LabEventFactory
      *
+     * @param candidateVessel the vessel being added to the bucket
+     * @param productOrderKey the product order that the vessel is being added to the bucket for
+     * @param reworkReason    If this is a rework, why the rework is being done
+     * @param reworkFromStep  If this is a rework, where the rework should be reworked from
+     * @param bucket          the bucket to which the sample is to be added
+     * @param comment         If this is a rework, text describing why you are doing this
+     * @param userName        the user adding the sample to the bucket, in case vessels/samples need to be created
+     *                        on-the-fly
+     * @param reworkCandidate Indicates whether the sample being added is for a rework
      *
-     * @param reworkVessel    the vessel being reworked
-     * @param productOrderKey the product order that the vessel is being reworked for
-     * @param reworkReason    why the rework is being done
-     * @param reworkFromStep  where the rework should be reworked from
-     * @param bucket          the bucket to add the rework to
-     * @param comment         text describing why you are doing this
-     * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
-     *
-     * @param reworkCandidate
      * @return The LabVessel instance related to the 2D Barcode given in the method call
      *
      * @throws ValidationException
      */
-    public LabVessel addCandidate(@Nonnull LabVessel reworkVessel, @Nonnull String productOrderKey,
-                                  @Nonnull ReworkEntry.ReworkReason reworkReason, @Nonnull LabEventType reworkFromStep,
-                                  @Nonnull Bucket bucket, @Nonnull String comment, @Nonnull String userName,
+    public LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
+                                  ReworkEntry.ReworkReason reworkReason, LabEventType reworkFromStep,
+                                  @Nonnull Bucket bucket, String comment, @Nonnull String userName,
                                   boolean reworkCandidate)
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
-                .add(Collections.singleton(reworkVessel), bucket,
-                        reworkCandidate?BucketEntry.BucketEntryType.REWORK_ENTRY:BucketEntry.BucketEntryType.PDO_ENTRY,
+                .add(Collections.singleton(candidateVessel), bucket,
+                        reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
+                                BucketEntry.BucketEntryType.PDO_ENTRY,
                         userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
                         reworkFromStep, productOrderKey);
 
@@ -251,7 +251,7 @@ public class ReworkEjb {
             }
         }
 
-        return reworkVessel;
+        return candidateVessel;
     }
 
     private LabVessel getLabVessel(String tubeBarcode, String sampleKey, String userName) {
@@ -272,7 +272,7 @@ public class ReworkEjb {
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
      * @param userName         the user adding the reworks, in case vessels/samples need to be created on-the-fly
-     * @param workflow     name of the workflow in which these vessels are to be reworked
+     * @param workflow         name of the workflow in which these vessels are to be reworked
      * @param bucketName       the name of the bucket to add reworks to
      *
      * @return Collection of validation messages
@@ -301,14 +301,14 @@ public class ReworkEjb {
 
     /**
      * Validate and add a single rework to the specified bucket.
-     *
+     * <p/>
      * This Currently appears to only be used by Test cases
      *
      * @param bucketCandidate tube/sample/PDO that is to be reworked
      * @param reworkReason    predefined text describing why the given vessel needs to be reworked
      * @param bucketName      the name of the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflow    name of the workflow in which this vessel is to be reworked
+     * @param workflow        name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -336,7 +336,7 @@ public class ReworkEjb {
      * @param reworkReason    predefined Text describing why the given vessel needs to be reworked
      * @param bucket          the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflow    name of the workflow in which this vessel is to be reworked
+     * @param workflow        name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -384,38 +384,37 @@ public class ReworkEjb {
      * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
      *
+     * @param candidateVessel       a LabVessel instance being submitted to a bucket
+     * @param bucketDef             the bucket that the samples will be added to
+     * @param productOrderKey       the product order for which the vessel is being added to a bucket
+     * @param sampleKey             the sample being for which the vessel represents
+     * @param reworkItem            Indicates whether the sample being added is for rework
      *
-     * @param reworkVessel    a LabVessel instance being submitted for rework
-     * @param bucketDef       the bucket that the reworks will be added to
-     * @param productOrderKey the product order that the vessel is being reworked for
-     * @param sampleKey       the sample being reworked in the vessel
-     *
-     * @param reworkItem
      * @return Collection of validation messages
      */
-    public Collection<String> validateBucketItem(@Nonnull LabVessel reworkVessel, @Nonnull WorkflowBucketDef bucketDef,
+    public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel, @Nonnull WorkflowBucketDef bucketDef,
                                                  @Nonnull String productOrderKey, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
 
         List<String> validationMessages = new ArrayList<>();
 
-        if (reworkVessel.checkCurrentBucketStatus(productOrderKey, bucketDef.getName(),
+        if (candidateVessel.checkCurrentBucketStatus(productOrderKey, bucketDef.getName(),
                 BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                            reworkVessel.getLabel(), sampleKey, productOrderKey, bucketDef.getName());
+                            candidateVessel.getLabel(), sampleKey, productOrderKey, bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }
 
-        if (reworkItem && !reworkVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
+        if (reworkItem && !candidateVessel.hasAncestorBeenInBucket(bucketDef.getName())) {
             validationMessages.add("You have submitted a vessel to the bucket that may not be considered a rework.  " +
-                                   "No ancestor of " + reworkVessel.getLabel() + " has ever been in been in the " +
+                                   "No ancestor of " + candidateVessel.getLabel() + " has ever been in been in the " +
                                    bucketDef.getName() + " before.");
         }
 
-        if (!bucketDef.meetsBucketCriteria(reworkVessel)) {
+        if (!bucketDef.meetsBucketCriteria(candidateVessel)) {
             validationMessages.add("You have submitted a vessel to the bucket that contains at least one sample that " +
                                    "is not DNA");
         }
@@ -474,7 +473,6 @@ public class ReworkEjb {
          * specified, the tube's sample had better be in only one PDO.
          *
          * @param tubeBarcode
-         *
          */
         @Deprecated
         public BucketCandidate(@Nonnull String tubeBarcode) {
@@ -488,7 +486,7 @@ public class ReworkEjb {
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
                                @Nonnull String productOrderKey) {
-            this(tubeBarcode,productOrderKey);
+            this(tubeBarcode, productOrderKey);
             this.sampleKey = sampleKey;
         }
 
