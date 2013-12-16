@@ -273,6 +273,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    private String abandonComment;
+
     // This is used for prompting why the abandon button is disabled.
     private String abandonDisabledReason;
 
@@ -1093,6 +1095,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("total", bspSampleDTO.getTotal());
         item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
         item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+        item.put("completelyBilled", sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
 
@@ -1255,12 +1258,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
                 samples.remove();
             }
+            if (!StringUtils.isBlank(abandonComment)) {
+                sample.setSampleComment(abandonComment);
+            }
         }
 
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
             addMessage("Abandoned samples: {0}.",
-                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ","));
+                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1557,6 +1563,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.riskComment = riskComment;
     }
 
+    public String getAbandonComment() {
+        return abandonComment;
+    }
+
+    public void setAbandonComment(String abandonComment) {
+        this.abandonComment = abandonComment;
+    }
+
     public CompletionStatusFetcher getProgressFetcher() {
         return progressFetcher;
     }
@@ -1648,29 +1662,66 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
+     * Convenience method for PDO view page to show number of samples abandoned for the current PDO.
+     *
+     * @return Number of sample abandoned.
+     */
+    public int getNumberAbandoned() {
+        return progressFetcher.getNumberAbandoned(editOrder.getBusinessKey());
+    }
+
+
+    /**
+     * Convenience method for PDO view page to show number of samples completed for the current PDO.
+     *
+     * @return Number of sample completed.
+     */
+    public int getNumberCompleted() {
+        return progressFetcher.getNumberCompleted(editOrder.getBusinessKey());
+    }
+
+
+    /**
+     * Convenience method for PDO view page to show number of samples in progress for the current PDO.
+     *
+     * @return Number of sample in progress.
+     */
+    public int getNumberInProgress() {
+        return progressFetcher.getNumberInProgress(editOrder.getBusinessKey());
+    }
+
+    /**
      * Computes the String to show for sample progress, taking into account Draft status and excluding mention of
      * zero-valued progress categories.
      *
      * @return Progress String suitable for display under progress bar.
      */
     public String getProgressString() {
-
         if (editOrder.isDraft()) {
             return "Draft order, work has not begun";
         } else {
             List<String> progressPieces = new ArrayList<>();
             if (getPercentAbandoned() != 0) {
-                progressPieces.add(getPercentAbandoned() + "% Abandoned");
+                progressPieces.add(formatProgress(getNumberAbandoned(), getPercentAbandoned(), "Abandoned"));
             }
             if (getPercentCompleted() != 0) {
-                progressPieces.add(getPercentCompleted() + "% Completed");
+                progressPieces.add(formatProgress(getNumberCompleted(), getPercentCompleted(), "Completed"));
             }
             if (getPercentInProgress() != 0) {
-                progressPieces.add(getPercentInProgress() + "% In Progress");
+                progressPieces.add(formatProgress(getNumberInProgress(), getPercentInProgress(), "In Progress"));
             }
 
             return StringUtils.join(progressPieces, ", ");
         }
+    }
+
+    /**
+     * Format progress String
+     *
+     * @return Formatted progress string for display.
+     */
+    private String formatProgress(int number, int percentage, String identifier) {
+        return String.format("%d %s (%d%%)", number, identifier, percentage);
     }
 
     public Map<String, Date> getProductOrderSampleReceiptDates() {

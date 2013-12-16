@@ -7,9 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -19,6 +21,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -49,6 +52,9 @@ public class LabVesselFixupTest extends Arquillian {
 
     @Inject
     private StaticPlateDao staticPlateDao;
+
+    @Inject
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -313,4 +319,91 @@ public class LabVesselFixupTest extends Arquillian {
         }
         labVesselDao.flush();
     }
+
+    @Test(enabled = false)
+    public void fixupGplim2367() {
+        // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
+        // so it can be altered
+        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0159873624");
+        boolean found = false;
+        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+            for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
+                if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
+                    found = true;
+                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
+                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
+                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+                    changePosition(mapPositionToVessel, VesselPosition.A01, VesselPosition.A10);
+                    changePosition(mapPositionToVessel, VesselPosition.A02, VesselPosition.A11);
+                    changePosition(mapPositionToVessel, VesselPosition.A03, VesselPosition.A12);
+                    changePosition(mapPositionToVessel, VesselPosition.B01, VesselPosition.B10);
+                    changePosition(mapPositionToVessel, VesselPosition.B02, VesselPosition.B11);
+                    changePosition(mapPositionToVessel, VesselPosition.B03, VesselPosition.B12);
+                    changePosition(mapPositionToVessel, VesselPosition.C01, VesselPosition.C10);
+                    changePosition(mapPositionToVessel, VesselPosition.C02, VesselPosition.C11);
+                    changePosition(mapPositionToVessel, VesselPosition.C03, VesselPosition.C12);
+                    changePosition(mapPositionToVessel, VesselPosition.D01, VesselPosition.D10);
+                    changePosition(mapPositionToVessel, VesselPosition.D02, VesselPosition.D11);
+                    changePosition(mapPositionToVessel, VesselPosition.E01, VesselPosition.E10);
+                    changePosition(mapPositionToVessel, VesselPosition.E02, VesselPosition.E11);
+                    changePosition(mapPositionToVessel, VesselPosition.F01, VesselPosition.F10);
+                    changePosition(mapPositionToVessel, VesselPosition.F02, VesselPosition.F11);
+                    changePosition(mapPositionToVessel, VesselPosition.G01, VesselPosition.G10);
+                    changePosition(mapPositionToVessel, VesselPosition.G02, VesselPosition.G11);
+                    changePosition(mapPositionToVessel, VesselPosition.H01, VesselPosition.H10);
+                    changePosition(mapPositionToVessel, VesselPosition.H02, VesselPosition.H11);
+
+                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Failed to find tube formation for shearing transfer");
+        }
+        twoDBarcodedTubeDao.flush();
+    }
+
+    private void changePosition(Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel, VesselPosition oldPosition,
+            VesselPosition newPosition) {
+        TwoDBarcodedTube twoDBarcodedTube1 = mapPositionToVessel.get(oldPosition);
+        mapPositionToVessel.put(newPosition, twoDBarcodedTube1);
+        mapPositionToVessel.remove(oldPosition);
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2375() {
+        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0116400440");
+        LabMetric labMetric = twoDBarcodedTube.getMetrics().iterator().next();
+        labMetric.setValue(new BigDecimal("21.75"));
+        twoDBarcodedTubeDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2367Part2() {
+        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0156349661");
+        boolean found = false;
+        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+            for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
+                if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
+                    found = true;
+                    // Intended to change position of two tubes, but discovered that the changed tube formation already
+                    // exists.
+//                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
+//                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
+//                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+//                    changePosition(mapPositionToVessel, VesselPosition.F02, VesselPosition.B01);
+//                    changePosition(mapPositionToVessel, VesselPosition.E02, VesselPosition.F01);
+//                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
+                    SectionTransfer sectionTransfer = labEvent.getSectionTransfers().iterator().next();
+                    LabVessel labVessel = labVesselDao.findByIdentifier("627037c8cfd770a62af72e8a1eb92b43");
+                    sectionTransfer.setTargetVesselContainer(labVessel.getContainerRole());
+                }
+            }
+        }
+        if (!found) {
+            throw new RuntimeException("Failed to find tube formation for daughter plate transfer");
+        }
+        twoDBarcodedTubeDao.flush();
+    }
+
 }

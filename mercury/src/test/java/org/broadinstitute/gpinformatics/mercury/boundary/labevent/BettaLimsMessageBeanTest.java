@@ -19,10 +19,6 @@ import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,22 +35,10 @@ public class BettaLimsMessageBeanTest {
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
         String message = BettaLimsMessageTestFactory.marshal(bettaLIMSMessage);
-        sendJmsMessage(message);
+        sendJmsMessage(message, "broad.queue.mercury.bettalims.dev");
     }
 
-    public static String marshalMessage(BettaLIMSMessage bettaLIMSMessage) {
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(BettaLIMSMessage.class);
-            Marshaller marshaller = jaxbContext.createMarshaller();
-            StringWriter stringWriter = new StringWriter();
-            marshaller.marshal(bettaLIMSMessage, stringWriter);
-            return stringWriter.toString();
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static void sendJmsMessage(String message) {
+    public static void sendJmsMessage(String message, String queueName) {
         Connection connection = null;
         Session session = null;
         try {
@@ -71,7 +55,7 @@ public class BettaLimsMessageBeanTest {
             connection.start();
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = session.createQueue("broad.queue.mercury.bettalims.dev");
+            Destination destination = session.createQueue(queueName);
 //            Destination destination = session.createQueue("broad.queue.mercury.bettalims.production");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);

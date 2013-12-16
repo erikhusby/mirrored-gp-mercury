@@ -2,7 +2,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
-<%@ page import="org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -100,6 +99,31 @@ function setupDialogs() {
                     $j("#riskOkButton").attr("disabled", "disabled");
                     $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
                     $j("#riskComment").attr("value", $j("#riskCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
+    $j("#abandonDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "abandonOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#abandonOkButton").attr("disabled", "disabled");
+                    $j("#abandonStatus").attr("value", $j("#abandonDialogId").attr("checked") != undefined);
+                    $j("#abandonComment").attr("value", $j("#abandonSampleCommentId").val());
 
                     $j("#orderForm").submit();
                 }
@@ -211,6 +235,13 @@ function showSamples(sampleData) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).text('');
         }
 
+        if (sampleData[x].completelyBilled) {
+            $j('#completelyBilled-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+        } else {
+            // Need to replace &#160; with empty string.
+            $j('#completelyBilled-' + sampleId).text('');
+        }
+
         bspDataCount--;
     }
 
@@ -242,6 +273,7 @@ function showSamples(sampleData) {
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": true},                            // Status
+                {"bSortable": true, "sType": "title-string"},   // is billed
                 {"bSortable": true}                             // Comment
             ]
         });
@@ -334,6 +366,18 @@ function showRiskDialog() {
     }
 }
 
+function showAbandonDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "abandonSamples");
+        $j("#abandonSelectedSamplesCountId").text(numChecked);
+        $j("#abandonDialog").dialog("open").dialog("option", "width", 600);
+    } else {
+        $j("#noneSelectedDialogMessage").text("Abandon Samples");
+        $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
 function showDeleteConfirm(action) {
     $j("#dialogAction").attr("name", action);
     $j("#deleteConfirmation").dialog("open");
@@ -396,6 +440,16 @@ function formatInput(item) {
     <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="abandonDialog" style="width:600px;display:none;">
+    <p>Abandon Samples (<span id="abandonSelectedSamplesCountId"> </span> selected)</p>
+
+    <p style="clear:both">
+        <label for="abandonSampleCommentId">Comment:</label>
+    </p>
+
+    <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
+
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
 
@@ -419,6 +473,7 @@ function formatInput(item) {
 <stripes:hidden id="dialogAction" name=""/>
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
+<stripes:hidden id="abandonComment" name="abandonComment" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -818,7 +873,7 @@ function formatInput(item) {
 
                                 <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                                 style="margin-left:15px;"
-                                                onclick="showConfirm('abandonSamples', 'abandon')"/>
+                                                onclick="showAbandonDialog()"/>
 
                                 <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                                 style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
@@ -868,6 +923,7 @@ function formatInput(item) {
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th width="40">Status</th>
+                <th width="40">Billed</th>
                 <th width="200">Comment</th>
             </tr>
             </thead>
@@ -921,6 +977,7 @@ function formatInput(item) {
                         &#160; </td>
                     <td>${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
+                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"> &#160; </td>
                     <td>${sample.sampleComment}</td>
                 </tr>
             </c:forEach>

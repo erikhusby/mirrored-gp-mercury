@@ -130,11 +130,13 @@ public class ProductActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.CustomValidation, on = SAVE_ACTION)
     public void initAfterValidation() {
-        // The productFamilyId is required, so if the original is null or the id is different, set the product to the
-        // product family that is represented by the new id.
         // We set product family here because we need it to validate the risk criteria.
-        if ((editProduct.getProductFamily() == null) ||
-            productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+        if (productFamilyId == null) {
+            // by returning here, built-in validation of the required productFamilyId
+            // will tell the user that they need to select a product family
+            return;
+        }
+        if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
         }
     }
