@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -725,22 +726,20 @@ public class VesselContainer<T extends LabVessel> {
         /**
          *  The last LabEvent in the internal {@code List} of LabEvents is the earliest chronologically.
          */
-        private List<LabEvent> labEvents;
+        private final List<LabEvent> labEvents;
 
         /**
-         * Public constructor for use by calling code in creating a base Path from a single LabEvent.
+         * Constructor for use by calling code in creating a base Path from a single LabEvent.
          */
-        public Path(@Nonnull LabEvent labEvent) {
-            labEvents = new ArrayList<>();
-            labEvents.add(labEvent);
+        private Path(@Nonnull LabEvent labEvent) {
+            this(Collections.singletonList(labEvent));
         }
 
         /**
-         * Copy constructor used internally for extending Paths.
+         * Private general purpose constructor.
          */
-        private Path(@Nonnull Path path) {
-            labEvents = new ArrayList<>();
-            labEvents.addAll(path.labEvents);
+        private Path(@Nonnull Iterable<LabEvent> labEvents) {
+            this.labEvents = ImmutableList.copyOf(labEvents);
         }
 
         /**
@@ -759,32 +758,31 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         /**
-         * Extend this {@code Path} by the specified {@code LabEvent}, this mutates the receiver.
+         * Extend this {@code Path} by the specified {@code LabEvent}, this creates a new Path
+         * and does not mutate the receiver.
          */
-        private Path extend(@Nonnull LabEvent labEvent) {
-            Path newPath = new Path(this);
-            newPath.labEvents.add(labEvent);
-            return newPath;
+        private Path copyAndExtendBy(@Nonnull LabEvent labEvent) {
+            return new Path(Iterables.concat(labEvents, Collections.singletonList(labEvent)));
         }
 
         /**
          * Return a {@code List} of {@code Path}s that represent the extension of the current Path by another
          * set of older transfers ({@code LabEvent}s) to the source vessels on the oldest LabEvent.
          */
-        public List<Path> extendedPaths() {
+        private List<Path> extendedPaths() {
             List<Path> paths = new ArrayList<>();
             for (LabVessel labVessel : getSourceLabVessels()) {
                 // Note this will not add Paths to the results that cannot be extended due to a lack of
                 // transfer events into a particular VesselContainer.  This is the desired behavior when
                 // a transfer history has been exhausted.
                 for (LabEvent labEvent : labVessel.getContainerRole().getTransfersTo()) {
-                    paths.add(new Path(this).extend(labEvent));
+                    paths.add(copyAndExtendBy(labEvent));
                 }
             }
             return paths;
         }
 
-        public List<LabEvent> getLabEvents() {
+        private List<LabEvent> getLabEvents() {
             return labEvents;
         }
 
@@ -833,20 +831,20 @@ public class VesselContainer<T extends LabVessel> {
             return filtered;
         }
 
-        // There were not vessels at this depth satisfying the predicate, so extend the paths and recurse to
+        // There were no vessels at this depth satisfying the predicate, so extend the paths and recurse to
         // continue checking source lab vessels.
         List<Path> extendedPaths = copyAndExtendPaths(paths);
-        if (!extendedPaths.isEmpty()) {
-            // Continue recursing as the predicate has not been satisfied and there are more paths to explore.
-            return searchPathsForVesselsSatisfyingPredicate(extendedPaths, predicate);
-        } else {
+        if (extendedPaths.isEmpty()) {
             // No paths are left to explore and none were found to satisfy the predicate.
             return Collections.emptyList();
+        } else {
+            // Continue recursing as the predicate has not been satisfied and there are more paths to explore.
+            return searchPathsForVesselsSatisfyingPredicate(extendedPaths, predicate);
         }
     }
 
     /**
-     * Returns the shortest paths of LabEvents from this VesselContainer to source vessels satisfying the predicate.
+     * Returns the shortest Lists of LabEvents from this VesselContainer to source vessels satisfying the predicate.
      * In the event that multiple paths of equal length are found, all paths will be returned.
      *
      * The Lists of LabEvents in the returned List are ordered with the most recent LabEvents first
@@ -854,19 +852,19 @@ public class VesselContainer<T extends LabVessel> {
      */
     public List<List<LabEvent>> shortestPathsToVesselsSatisfyingPredicate(@Nonnull Predicate<LabVessel> predicate) {
         // The initial List of Paths represents the transfers directly into this VesselContainer.
-        List<Path> initialPaths = new ArrayList<>();
+        List<Path> initialPaths = new ArrayList<>(getTransfersTo().size());
         for (LabEvent labEvent : getTransfersTo()) {
             initialPaths.add(new Path(labEvent));
         }
 
         List<Path> paths = searchPathsForVesselsSatisfyingPredicate(initialPaths, predicate);
-        List<List<LabEvent>> ret = new ArrayList<>();
+        List<List<LabEvent>> result = new ArrayList<>();
 
         for (Path path : paths) {
-            ret.add(path.getLabEvents());
+            result.add(path.getLabEvents());
         }
 
-        return ret;
+        return result;
     }
 
 }
