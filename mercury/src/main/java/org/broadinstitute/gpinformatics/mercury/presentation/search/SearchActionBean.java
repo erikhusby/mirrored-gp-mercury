@@ -75,14 +75,6 @@ public class SearchActionBean extends CoreActionBean {
          * @return
          */
         protected String getSearchNoun(int count) {
-//            if (count == 0){
-//                return searchNounPlural;
-//            } else if (count ==1){
-//                return searchNounSingular;
-//            } else {
-//                return searchNounPlural;
-//            }
-
             return count == 1 ? this.searchNounSingular : this.searchNounPlural;
         }
     }
