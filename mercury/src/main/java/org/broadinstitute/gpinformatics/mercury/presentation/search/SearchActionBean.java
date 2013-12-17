@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -21,9 +22,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -37,8 +39,52 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
+    /**
+     * Enum of different search types. The constructor accepts two strings which represent the singular or plural form
+     * of the name of the type of thing you are searching for.
+     */
     protected enum SearchType {
-        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, BATCH_BY_KEY, VESSELS_BY_BARCODE
+        PDO_BY_KEY("PDO", "PDOs"),
+        RP_BY_KEY("RP", "RPs"),
+        P_BY_KEY("project", "projects"),
+        BATCH_BY_KEY("LCSET", "LCSETs"),
+        SAMPLES_BY_BARCODE("sample", "samples"),
+        VESSELS_BY_BARCODE("vessel", "vessels");
+
+        /** The singular form of the search type */
+        private final String searchNounSingular;
+
+        /** The plural form of the search type */
+        private final String searchNounPlural;
+
+        /**
+         * This constructor accepts two strings which represent the singular or plural form
+         * of the name for the type of search.
+         * @param searchNounSingular Singular form for the type of search.
+         * @param searchNounPlural   Plural form for the type of search.
+         */
+        SearchType(String searchNounSingular,
+                   String searchNounPlural) {
+            this.searchNounSingular = searchNounSingular;
+            this.searchNounPlural = searchNounPlural;
+        }
+
+        /**
+         * Given the value of count determine which form of the search noun should be used.
+         * @param count
+         * @return
+         */
+        protected String getSearchNoun(int count) {
+//            if (count == 0){
+//                return searchNounPlural;
+//            } else if (count ==1){
+//                return searchNounSingular;
+//            } else {
+//                return searchNounPlural;
+//            }
+
+            return count == 1 ? this.searchNounSingular : this.searchNounPlural;
+        }
     }
 
     private static final String SEPARATOR = ",";
@@ -71,6 +117,9 @@ public class SearchActionBean extends CoreActionBean {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private ProductDao productDao;
@@ -106,12 +155,9 @@ public class SearchActionBean extends CoreActionBean {
         int count = 0;
         int totalResults = 0;
         Set<String> foundNames=new HashSet<>(searchList.size());
-        Set<String> notFoundNames=new HashSet<>(searchList);
-        String searchNoun="";
         for (SearchType searchForItem : searchForItems) {
             switch (searchForItem) {
             case VESSELS_BY_BARCODE:
-                searchNoun="vessel";
                 foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
                 if (!foundVessels.isEmpty()) {
                     for (LabVessel vessel : foundVessels) {
@@ -122,10 +168,9 @@ public class SearchActionBean extends CoreActionBean {
                 }
                 break;
             case BATCH_BY_KEY:
-                searchNoun="batch";
                 foundBatches = labBatchDao.findByListIdentifier(searchList);
                 if (!foundBatches.isEmpty()) {
-                    for (LabBatch labBatch: foundBatches) {
+                    for (LabBatch labBatch : foundBatches) {
                         foundNames.add(labBatch.getBusinessKey());
                     }
                     count++;
@@ -133,27 +178,46 @@ public class SearchActionBean extends CoreActionBean {
                 }
                 break;
             }
+
+            resultSummaryString = createResultSummaryString(searchForItem, searchList, foundNames);
         }
-
-        notFoundNames.removeAll(foundNames);
-
-        String joinedNames = StringUtils.join(notFoundNames, ", ");
-        if (foundNames.isEmpty()) {
-            resultSummaryString = String.format("No %ss found, searched for %s.", searchNoun, joinedNames);
-        } else if (!notFoundNames.isEmpty()) {
-            String messageFormatString =
-                    "Searched for {0} {0, choice, 0#searchNouns|1#searchNoun|2#searchNouns}, found {1}. {2} {2, choice, 0#searchNouns were|1#searchNoun was|2#searchNouns were} not found: {3}.";
-
-            MessageFormat format = new MessageFormat(messageFormatString.replace("searchNoun", searchNoun));
-
-            Object[] formatArgs = {searchList.size(), foundNames.size(), notFoundNames.size(), joinedNames};
-            resultSummaryString = format.format(formatArgs);
-        }
-
-
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
         isSearchDone = true;
+    }
+
+    /**
+     * Create a summary of the search.
+     *
+     * @param searchType The SearchType of search
+     * @param searchList The search terms used.
+     * @param foundList  A list of results
+     *
+     * @return Returns a summary of the search containing how many items found and not found as well as which items were not found.
+     */
+    protected static String createResultSummaryString(@Nonnull SearchType searchType, Collection<String> searchList,
+                                                      Collection<String> foundList) {
+        String summary = "";
+
+        Set<String> notFoundNames = new HashSet<>(searchList);
+        notFoundNames.removeAll(foundList);
+
+        int searchCount = searchList.size();
+        int notFoundCount = notFoundNames.size();
+        String searchNoun = searchType.getSearchNoun(searchCount);
+        String notFoundNoun = searchType.getSearchNoun(notFoundCount);
+
+        String joinedNames = StringUtils.join(notFoundNames, ", ");
+        if (foundList.isEmpty()) {
+            summary = String.format("No %s found, searched for %s.", notFoundNoun, joinedNames);
+        } else if (!notFoundNames.isEmpty()) {
+            String wasWere = notFoundCount == 1 ? "was" : "were";
+
+            summary = String.format("Searched for %d %s, found %d. %d %s %s not found: %s.",
+                    searchCount, searchNoun, foundList.size(), notFoundCount, notFoundNoun, wasWere, joinedNames);
+        }
+
+        return summary;
     }
 
     @HandlesEvent(SEARCH_ACTION)

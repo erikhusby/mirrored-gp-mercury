@@ -5,7 +5,6 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
@@ -14,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,16 +85,8 @@ public class SampleSearchActionBean extends SearchActionBean {
                 }
             }
         }
-        notFoundSampleNames.removeAll(foundSampleNames);
-        String joinedSampleNames = StringUtils.join(notFoundSampleNames, ", ");
-        if (foundSampleNames.isEmpty()) {
-            setResultSummaryString("No samples found, searched for " + joinedSampleNames);
-        } else if (!notFoundSampleNames.isEmpty()) {
-            MessageFormat format = new MessageFormat(
-                    "Searched for {0} {0, choice, 0#samples|1#sample|2#samples}, found {1}. {2} {2, choice, 0#samples were|1#sample was|2#samples were} not found: {3}.");
-            Object[] formatArgs = {searchList.size(), foundSampleNames.size(), notFoundSampleNames.size(), joinedSampleNames};
-            setResultSummaryString(format.format(formatArgs));
-        }
+
+        setResultSummaryString(createResultSummaryString(SearchType.SAMPLES_BY_BARCODE, searchList, foundSampleNames));
         setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
