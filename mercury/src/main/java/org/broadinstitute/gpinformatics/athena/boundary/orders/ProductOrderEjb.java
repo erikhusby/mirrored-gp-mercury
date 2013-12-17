@@ -648,6 +648,7 @@ public class ProductOrderEjb {
      * @param acceptableStartingStatuses Acceptable staring statuses for samples.
      * @param targetStatus               New status for samples.
      * @param samples                    Samples to change.
+     * @param comment                    optional user supplied comment about this action.
      *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
@@ -655,19 +656,18 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
-                                                  Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                                  Set<DeliveryStatus> acceptableStartingStatuses,
                                                   DeliveryStatus targetStatus,
-                                                  Collection<ProductOrderSample> samples)
+                                                  Collection<ProductOrderSample> samples, String comment)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
-
-        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}",
+        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
                 getUserName(), targetStatus.getDisplayName(),
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ",")));
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","), StringUtils.stripToEmpty(comment)));
     }
 
     /**
@@ -892,16 +892,18 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey JIRA ticket key of the PDO in question
      * @param samples       the samples to abandon
+     * @param comment       optional user supplied comment about this action.
      *
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
      *
      * @throws NoSuchPDOException
      */
-    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
+    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples, String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
-                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples);
+                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples,
+                comment);
     }
 
     /**

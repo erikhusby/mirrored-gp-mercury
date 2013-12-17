@@ -122,7 +122,7 @@ public abstract class AbstractSpreadsheetExporter {
         style.setFillForegroundColor(foregroundColor.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_LEFT);
-        style.setWrapText(true);
+        style.setWrapText(false);
         Font font = wb.createFont();
         font.setBoldweight(Font.BOLDWEIGHT_BOLD);
         font.setColor(fontColor.getIndex());

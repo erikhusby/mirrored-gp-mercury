@@ -37,7 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@UrlBinding(value = "/workflow/AddRework.action")
+@UrlBinding(value = "/workflow/AddToBucket.action")
 public class AddReworkActionBean extends CoreActionBean {
 
     @Inject
@@ -53,7 +53,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
     private static final String VESSEL_INFO_ACTION = "vesselInfo";
-    private static final String REWORK_SAMPLE_ACTION = "addSample";
+    private static final String ADD_SAMPLE_ACTION = "addSample";
 
     private LabVessel labVessel;
     private List<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
@@ -66,12 +66,12 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private List<String> noResultQueryTerms = new ArrayList<>();
 
-    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
+    @Validate(required = true, on = ADD_SAMPLE_ACTION)
     private List<String> selectedBucketCandidates;
 
     private Set<String> selectedReworkVessels = new HashSet<>();
 
-    @Validate(required = true, on = REWORK_SAMPLE_ACTION)
+    @Validate(required = true, on = ADD_SAMPLE_ACTION)
     private String bucketName;
 
     private WorkflowBucketDef bucket;
@@ -89,7 +89,7 @@ public class AddReworkActionBean extends CoreActionBean {
      * rework fields now needs to be conditional based on if any of the selected vessels are indicated to be rework
      * vessels.
      */
-    @ValidationMethod(on = REWORK_SAMPLE_ACTION)
+    @ValidationMethod(on = ADD_SAMPLE_ACTION)
     public void validateAddSampleInput() {
         if(StringUtils.isEmpty(bucketName)) {
             addValidationError("bucketName", "Please select a bucket to add samples to");
@@ -105,7 +105,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
     }
 
-    @HandlesEvent(REWORK_SAMPLE_ACTION)
+    @HandlesEvent(ADD_SAMPLE_ACTION)
     public Resolution addSample() {
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
@@ -150,7 +150,7 @@ public class AddReworkActionBean extends CoreActionBean {
     }
 
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, REWORK_SAMPLE_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
         // Only supports Agilent Exome Express.

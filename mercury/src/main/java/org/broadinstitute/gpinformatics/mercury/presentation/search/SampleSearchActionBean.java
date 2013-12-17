@@ -16,8 +16,8 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +57,7 @@ public class SampleSearchActionBean extends SearchActionBean {
     public Resolution sampleSearch() throws Exception {
         List<String> searchList = cleanInputString(getSearchKey());
         setNumSearchTerms(searchList.size());
+        Set<String> foundSampleNames=new HashSet<>(searchList.size());
 
         for (String searchKey : searchList) {
             Set<MercurySample> samples = new HashSet<>();
@@ -79,9 +80,12 @@ public class SampleSearchActionBean extends SearchActionBean {
                     if (bspSampleDTO != null) {
                         sample.setBspSampleDTO(bspSampleDTO);
                     }
+                    foundSampleNames.add(sample.getSampleKey());
                 }
             }
         }
+
+        setResultSummaryString(SearchType.SAMPLES_BY_BARCODE.createSummaryString(searchList, foundSampleNames));
         setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }

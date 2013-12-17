@@ -173,4 +173,19 @@ public class LabEventFixupTest extends Arquillian {
         labEvent.getReagents().remove(reagent);
         labEventDao.remove(labEvent);
     }
+
+    @Test(enabled = false)
+    public void fixupGplim2377() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 319206L);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2367() {
+        // Delete cherry pick.  LabVessel.FixupTest.fixupGplim2367Part2 changes the tube formation to achieve the same
+        // affect, without confusing getSampleInstances.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 317839L);
+        labEvent.getCherryPickTransfers().clear();
+        labEventDao.remove(labEvent);
+    }
 }

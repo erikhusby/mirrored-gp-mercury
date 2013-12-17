@@ -588,7 +588,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JMS
-            BettaLimsMessageBeanTest.sendJmsMessage(BettaLimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
+            BettaLimsMessageBeanTest.sendJmsMessage(BettaLimsMessageTestFactory.marshal(bettaLIMSMessage),
+                    "broad.queue.mercury.bettalims.dev");
             try {
                 Thread.sleep(2000L);
             } catch (InterruptedException e) {

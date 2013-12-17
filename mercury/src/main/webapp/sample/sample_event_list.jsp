@@ -31,32 +31,46 @@
                         {"bSortable":true, "sType":"html"}
                     ],
                     "bRetrieve":true,
+                    "sScrollX":"100%",
                     "sScrollY":500
                 });
             });
         });
     </script>
 
-    <table id="sampleEventListView-${sample.sampleKey}" class="table simple" style="margin: 0 0; width: 100%;">
+    <style type="text/css">
+        .columnEventVessel { width: 5em; }
+        .columnPosition { width: 4em; }
+        .columnEventSample { width: 5em; }
+        .columnEvent { width: 20em; }
+        .columnDate { width: 5em; }
+        .columnLocation { width: 8em; }
+        .columnScript { width: 8em; }
+        .columnOperator { width: 5em; }
+        .columnIndex { width: 12em; }
+        .columnJirasAndPdos { width: 9em; }
+    </style>
+
+    <table id="sampleEventListView-${sample.sampleKey}" class="table simple" style="table-layout: fixed;">
         <thead>
         <tr>
-            <th>Event Vessel</th>
-            <th>Position</th>
-            <th>Event Sample</th>
-            <th>Event</th>
-            <th>Date</th>
-            <th>Location</th>
-            <th>Script</th>
-            <th>Operator</th>
-            <th>Index</th>
-            <th>JIRAs + PDOs</th>
+            <th class="columnEventVessel">Event Vessel</th>
+            <th class="columnPosition">Position</th>
+            <th class="columnEventSample">Event Sample</th>
+            <th class="columnEvent">Event</th>
+            <th class="columnDate">Date</th>
+            <th class="columnLocation">Location</th>
+            <th class="columnScript">Script</th>
+            <th class="columnOperator">Operator</th>
+            <th class="columnIndex">Index</th>
+            <th class="columnJirasAndPdos">JIRAs + PDOs</th>
         </tr>
         </thead>
         <tbody>
         <c:forEach items="${vessels}" var="vessel">
             <c:forEach items="${vessel.inPlaceAndTransferToEvents}" var="event">
                 <tr>
-                    <td>
+                    <td class="columnEventVessel">
                         <stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.VesselSearchActionBean"
                                 event="vesselSearch">
@@ -64,7 +78,7 @@
                             ${vessel.label}
                         </stripes:link>
                     </td>
-                    <td>
+                    <td class="columnPosition">
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
                                    var="sampleInstance">
                             <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>
@@ -76,7 +90,7 @@
                             </c:if>
                         </c:forEach>
                     </td>
-                    <td>
+                    <td class="columnEventSample">
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'ANY')}"
                                    var="sampleInstance">
                             <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
@@ -94,22 +108,22 @@
                             </c:choose>
                         </c:forEach>
                     </td>
-                    <td>
+                    <td class="columnEvent ellipsis">
                             ${event.labEventType.name}
                     </td>
-                    <td>
+                    <td class="columnDate">
                         <fmt:formatDate value="${event.eventDate}" pattern="${bean.dateTimePattern}"/>
                     </td>
-                    <td>
+                    <td class="columnLocation">
                             ${event.eventLocation}
                     </td>
-                    <td>
+                    <td class="columnScript ellipsis">
                             ${event.programName}
                     </td>
-                    <td>
+                    <td class="columnOperator">
                             ${bean.getUserFullName(event.eventOperator)}
                     </td>
-                    <td style="padding: 0;">
+                    <td class="columnIndex" style="padding: 0;">
                         <table style="padding: 0;">
                             <c:forEach items="${vessel.getIndexesForSample(sample)}" var="curIndex">
                                 <tr>
@@ -122,7 +136,7 @@
                             </c:forEach>
                         </table>
                     </td>
-                    <td style="padding: 0;">
+                    <td class="columnJirasAndPdos" style="padding: 0;">
                         <c:forEach items="${bean.getSampleInstancesForSample(vessel, sample, 'WITH_PDO')}"
                                    var="sampleInstance">
                             <%--@elvariable id="sampleInstance" type="org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance"--%>

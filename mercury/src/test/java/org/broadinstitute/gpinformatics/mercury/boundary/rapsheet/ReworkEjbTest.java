@@ -949,8 +949,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey()
-                    );
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
             validationMessages.addAll(reworkEjb
                     .addAndValidateRework(bucketCandidate,
