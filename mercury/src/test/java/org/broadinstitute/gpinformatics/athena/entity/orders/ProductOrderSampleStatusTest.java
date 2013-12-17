@@ -93,7 +93,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
         List<ProductOrderSample> samples = order.getSamples();
         List<ProductOrderSample> samplesToAbandon = Arrays.asList(samples.get(1), samples.get(3), samples.get(5));
-        productOrderEjb.abandonSamples(testKey, samplesToAbandon);
+        productOrderEjb.abandonSamples(testKey, samplesToAbandon, "Why I abandoned you let me count the ways...");
         Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
         for (ProductOrderSample sample : samples) {
