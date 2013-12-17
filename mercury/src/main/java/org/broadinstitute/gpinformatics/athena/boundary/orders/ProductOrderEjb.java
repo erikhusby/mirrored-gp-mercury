@@ -665,12 +665,9 @@ public class ProductOrderEjb {
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
-        if (comment ==null){
-            comment="";
-        }
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
                 getUserName(), targetStatus.getDisplayName(),
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","), comment));
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","), StringUtils.stripToEmpty(comment)));
     }
 
     /**
