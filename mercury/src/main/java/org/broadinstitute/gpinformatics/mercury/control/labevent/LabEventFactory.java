@@ -921,6 +921,9 @@ public class LabEventFactory implements Serializable {
                 throw new RuntimeException("Failed to find destination " + plateTransferEvent.getPlate().getBarcode());
             }
         }
+        if (sourceContainer.getLabel().equals(destinationContainer.getLabel())) {
+            throw new RuntimeException("Source and destination barcodes are the same " + sourceContainer.getLabel());
+        }
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceContainer.getContainerRole(),
                 SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),

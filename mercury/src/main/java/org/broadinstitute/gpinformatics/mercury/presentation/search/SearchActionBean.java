@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -23,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,8 +38,54 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
+    /**
+     * Enum of different search types. The constructor accepts two strings which represent the singular or plural form
+     * of the name of the type of thing you are searching for.
+     */
     protected enum SearchType {
-        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, BATCH_BY_KEY, VESSELS_BY_BARCODE
+        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, BATCH_BY_KEY, SAMPLES_BY_BARCODE, VESSELS_BY_BARCODE;
+
+
+        /**
+         * Given the value of count determine which form of the search noun should be used.
+         * @param count
+         * @return
+         */
+        private String getDspalyItemName(int count) {
+            return count == 1 ? "item": "items";
+        }
+
+        /**
+         * Create a summary of the search.
+         *
+         * @param searchList The search terms used.
+         * @param foundList  A list of results
+         *
+         * @return Returns a summary of the search containing how many items found and not found as well as which items were not found.
+         */
+
+        protected String createSummaryString(Collection<String> searchList, Collection<String> foundList) {
+            String summary = "";
+
+            Set<String> notFoundNames = new HashSet<>(searchList);
+            notFoundNames.removeAll(foundList);
+
+            int searchCount = searchList.size();
+            int notFoundCount = notFoundNames.size();
+            String searchItem = getDspalyItemName(searchCount);
+            String notFoundItem= getDspalyItemName(notFoundCount);
+
+            String joinedNames = StringUtils.join(notFoundNames, ", ");
+            if (foundList.isEmpty()) {
+                summary = String.format("No %s found, searched for %s.", notFoundItem, joinedNames);
+            } else if (!notFoundNames.isEmpty()) {
+                String wasWere = notFoundCount == 1 ? "was" : "were";
+
+                summary = String.format("Searched for %d %s, found %d. %d %s %s not found: %s.",
+                        searchCount, searchItem, foundList.size(), notFoundCount, notFoundItem, wasWere, joinedNames);
+            }
+            return summary;
+        }
     }
 
     private static final String SEPARATOR = ",";
@@ -50,7 +98,7 @@ public class SearchActionBean extends CoreActionBean {
 
     private static final String SEARCH_LIST_PAGE = "/search/search.jsp";
     public static final String SEARCH_ACTION = "search";
-
+    private String resultSummaryString;
     /**
      * Action for handling when user enters search text in navigation form search textfield.
      */
@@ -70,6 +118,9 @@ public class SearchActionBean extends CoreActionBean {
 
     @Inject
     private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
     private ProductDao productDao;
@@ -103,13 +154,16 @@ public class SearchActionBean extends CoreActionBean {
         List<String> searchList = cleanInputString(searchKey);
         numSearchTerms = searchList.size();
         int count = 0;
-        long totalResults = 0l;
-
+        int totalResults = 0;
+        Set<String> foundNames=new HashSet<>(searchList.size());
         for (SearchType searchForItem : searchForItems) {
             switch (searchForItem) {
             case VESSELS_BY_BARCODE:
                 foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
                 if (!foundVessels.isEmpty()) {
+                    for (LabVessel vessel : foundVessels) {
+                        foundNames.add(vessel.getLabel());
+                    }
                     count++;
                     totalResults += foundVessels.size();
                 }
@@ -117,13 +171,17 @@ public class SearchActionBean extends CoreActionBean {
             case BATCH_BY_KEY:
                 foundBatches = labBatchDao.findByListIdentifier(searchList);
                 if (!foundBatches.isEmpty()) {
+                    for (LabBatch labBatch : foundBatches) {
+                        foundNames.add(labBatch.getBusinessKey());
+                    }
                     count++;
                     totalResults += foundBatches.size();
                 }
                 break;
             }
-        }
 
+            resultSummaryString = searchForItem.createSummaryString(searchList, foundNames);
+        }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
         isSearchDone = true;
@@ -258,5 +316,13 @@ public class SearchActionBean extends CoreActionBean {
 
     public void setNumSearchTerms(int numSearchTerms) {
         this.numSearchTerms = numSearchTerms;
+    }
+
+    public String getResultSummaryString() {
+        return resultSummaryString;
+    }
+
+    public void setResultSummaryString(String resultSummaryString) {
+        this.resultSummaryString = resultSummaryString;
     }
 }

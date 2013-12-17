@@ -205,14 +205,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Set<LabVessel> reworks = new HashSet<>();
         Iterator<Map.Entry<String, TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
-        reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
+        reworkEjb.addAndValidateRework(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel()),
                 ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
                 Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
         barcodeTubeEntry = iterator.next();
-        reworkEjb.addAndValidateRework(new ReworkEjb.ReworkCandidate(barcodeTubeEntry.getValue().getLabel()),
+        reworkEjb.addAndValidateRework(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel()),
                 ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
                 Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
@@ -588,7 +588,8 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
         if (false) {
             // JMS
-            BettaLimsMessageBeanTest.sendJmsMessage(BettaLimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
+            BettaLimsMessageBeanTest.sendJmsMessage(BettaLimsMessageTestFactory.marshal(bettaLIMSMessage),
+                    "broad.queue.mercury.bettalims.dev");
             try {
                 Thread.sleep(2000L);
             } catch (InterruptedException e) {

@@ -46,7 +46,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
      * @param mapPositionToTube each entry is a position / tube pair
      * @return digest
      */
-    private static String makeDigest(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube) {
+    static String makeDigest(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube) {
         List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
         for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
             positionBarcodeList.add(new ImmutablePair<>(vesselPositionTwoDBarcodedTubeEntry.getKey(),

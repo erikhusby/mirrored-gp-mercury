@@ -461,6 +461,19 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
+
+        // Because funding deadline and publication deadline are not required fields, check for null before adding them.
+        if (productOrder.getFundingDeadline() != null) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
+        }
+
+        if (productOrder.getPublicationDeadline() != null) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline()))
+            );
+        }
+
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME, productOrder.getRequisitionName()));
@@ -635,6 +648,7 @@ public class ProductOrderEjb {
      * @param acceptableStartingStatuses Acceptable staring statuses for samples.
      * @param targetStatus               New status for samples.
      * @param samples                    Samples to change.
+     * @param comment                    optional user supplied comment about this action.
      *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
@@ -642,19 +656,18 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
-                                                  Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                                  Set<DeliveryStatus> acceptableStartingStatuses,
                                                   DeliveryStatus targetStatus,
-                                                  Collection<ProductOrderSample> samples)
+                                                  Collection<ProductOrderSample> samples, String comment)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
-
-        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}",
+        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
                 getUserName(), targetStatus.getDisplayName(),
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ",")));
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","), StringUtils.stripToEmpty(comment)));
     }
 
     /**
@@ -879,16 +892,18 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey JIRA ticket key of the PDO in question
      * @param samples       the samples to abandon
+     * @param comment       optional user supplied comment about this action.
      *
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
      *
      * @throws NoSuchPDOException
      */
-    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
+    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples, String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
-                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples);
+                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples,
+                comment);
     }
 
     /**

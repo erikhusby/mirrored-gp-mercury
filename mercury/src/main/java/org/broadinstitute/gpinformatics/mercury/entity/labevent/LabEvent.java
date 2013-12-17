@@ -429,6 +429,9 @@ todo jmt adder methods
                     sectionTransfer.getSourceSection()));
         }
         computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
+        }
         return computedLcSets;
     }
 
