@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,38 +43,48 @@ public class SearchActionBean extends CoreActionBean {
      * of the name of the type of thing you are searching for.
      */
     protected enum SearchType {
-        PDO_BY_KEY("PDO", "PDOs"),
-        RP_BY_KEY("RP", "RPs"),
-        P_BY_KEY("project", "projects"),
-        BATCH_BY_KEY("LCSET", "LCSETs"),
-        SAMPLES_BY_BARCODE("sample", "samples"),
-        VESSELS_BY_BARCODE("vessel", "vessels");
+        PDO_BY_KEY, RP_BY_KEY, P_BY_KEY, BATCH_BY_KEY, SAMPLES_BY_BARCODE, VESSELS_BY_BARCODE;
 
-        /** The singular form of the search type */
-        private final String searchNounSingular;
-
-        /** The plural form of the search type */
-        private final String searchNounPlural;
-
-        /**
-         * This constructor accepts two strings which represent the singular or plural form
-         * of the name for the type of search.
-         * @param searchNounSingular Singular form for the type of search.
-         * @param searchNounPlural   Plural form for the type of search.
-         */
-        SearchType(String searchNounSingular,
-                   String searchNounPlural) {
-            this.searchNounSingular = searchNounSingular;
-            this.searchNounPlural = searchNounPlural;
-        }
 
         /**
          * Given the value of count determine which form of the search noun should be used.
          * @param count
          * @return
          */
-        protected String getSearchNoun(int count) {
-            return count == 1 ? this.searchNounSingular : this.searchNounPlural;
+        private String getDspalyItemName(int count) {
+            return count == 1 ? "item": "items";
+        }
+
+        /**
+         * Create a summary of the search.
+         *
+         * @param searchList The search terms used.
+         * @param foundList  A list of results
+         *
+         * @return Returns a summary of the search containing how many items found and not found as well as which items were not found.
+         */
+
+        protected String createSummaryString(Collection<String> searchList, Collection<String> foundList) {
+            String summary = "";
+
+            Set<String> notFoundNames = new HashSet<>(searchList);
+            notFoundNames.removeAll(foundList);
+
+            int searchCount = searchList.size();
+            int notFoundCount = notFoundNames.size();
+            String searchItem = getDspalyItemName(searchCount);
+            String notFoundItem= getDspalyItemName(notFoundCount);
+
+            String joinedNames = StringUtils.join(notFoundNames, ", ");
+            if (foundList.isEmpty()) {
+                summary = String.format("No %s found, searched for %s.", notFoundItem, joinedNames);
+            } else if (!notFoundNames.isEmpty()) {
+                String wasWere = notFoundCount == 1 ? "was" : "were";
+
+                summary = String.format("Searched for %d %s, found %d. %d %s %s not found: %s.",
+                        searchCount, searchItem, foundList.size(), notFoundCount, notFoundItem, wasWere, joinedNames);
+            }
+            return summary;
         }
     }
 
@@ -171,45 +180,11 @@ public class SearchActionBean extends CoreActionBean {
                 break;
             }
 
-            resultSummaryString = createResultSummaryString(searchForItem, searchList, foundNames);
+            resultSummaryString = searchForItem.createSummaryString(searchList, foundNames);
         }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
         isSearchDone = true;
-    }
-
-    /**
-     * Create a summary of the search.
-     *
-     * @param searchType The SearchType of search
-     * @param searchList The search terms used.
-     * @param foundList  A list of results
-     *
-     * @return Returns a summary of the search containing how many items found and not found as well as which items were not found.
-     */
-    protected static String createResultSummaryString(@Nonnull SearchType searchType, Collection<String> searchList,
-                                                      Collection<String> foundList) {
-        String summary = "";
-
-        Set<String> notFoundNames = new HashSet<>(searchList);
-        notFoundNames.removeAll(foundList);
-
-        int searchCount = searchList.size();
-        int notFoundCount = notFoundNames.size();
-        String searchNoun = searchType.getSearchNoun(searchCount);
-        String notFoundNoun = searchType.getSearchNoun(notFoundCount);
-
-        String joinedNames = StringUtils.join(notFoundNames, ", ");
-        if (foundList.isEmpty()) {
-            summary = String.format("No %s found, searched for %s.", notFoundNoun, joinedNames);
-        } else if (!notFoundNames.isEmpty()) {
-            String wasWere = notFoundCount == 1 ? "was" : "were";
-
-            summary = String.format("Searched for %d %s, found %d. %d %s %s not found: %s.",
-                    searchCount, searchNoun, foundList.size(), notFoundCount, notFoundNoun, wasWere, joinedNames);
-        }
-
-        return summary;
     }
 
     @HandlesEvent(SEARCH_ACTION)

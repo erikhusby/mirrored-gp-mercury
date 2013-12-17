@@ -58,7 +58,6 @@ public class SampleSearchActionBean extends SearchActionBean {
         List<String> searchList = cleanInputString(getSearchKey());
         setNumSearchTerms(searchList.size());
         Set<String> foundSampleNames=new HashSet<>(searchList.size());
-        HashSet<String> notFoundSampleNames=new HashSet<>(searchList);
 
         for (String searchKey : searchList) {
             Set<MercurySample> samples = new HashSet<>();
@@ -86,7 +85,7 @@ public class SampleSearchActionBean extends SearchActionBean {
             }
         }
 
-        setResultSummaryString(createResultSummaryString(SearchType.SAMPLES_BY_BARCODE, searchList, foundSampleNames));
+        setResultSummaryString(SearchType.SAMPLES_BY_BARCODE.createSummaryString(searchList, foundSampleNames));
         setSearchDone(true);
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
