@@ -721,6 +721,7 @@ public class VesselContainer<T extends LabVessel> {
 
     /**
      * Internal utility class to abstract a time ordered sequence of {@code LabEvent} transfers.
+     * LabEvents are stored in time order, oldest to newest.
      */
     private static class Path {
         /**
@@ -821,6 +822,21 @@ public class VesselContainer<T extends LabVessel> {
      * Search the {@code List} of {@code Path}s for {@code LabVessel}s in the transfer history satisfying the
      * {@code Predicate}.  This is a breadth-first search, no transfer history will be explored at a depth
      * greater than that of the shortest Path satisfying the Predicate.
+     *
+     * The algorithm looks for source vessels on the most recent events of each Path in {@code paths} that
+     * satisfy the supplied {@code predicate}.  If any such vessels are found, the {@code Path}s leading to
+     * these source vessels are returned.
+     *
+     * If none of the candidate source vessels on the current List of Paths satisfy the predicate, a new List
+     * of Paths is built by extending the current List of Paths.  The extensions are made by traversing to the
+     * transfers <b>into</b> the current set of source vessels, if such transfers exist.  If no such transfers
+     * exist, a Path is not extended and eliminated from further examination.
+     *
+     * Having attempted to extend the current List of Paths, the new List of Paths is first examined for
+     * emptiness (if none of the current Paths is extensible, the new List of Paths will be empty).
+     * If the List of new Paths is empty, there are no source vessels anywhere in the transfer history of this
+     * VesselContainer satisfying the predicate and an empty List is returned.  If the new List of Paths is
+     * not empty, this method recurses to search the new List of Paths for source vessels satisfying the predicate.
      */
     private static List<Path> searchPathsForVesselsSatisfyingPredicate(@Nonnull List<Path> paths, @Nonnull Predicate<LabVessel> predicate) {
         // Search the sources on the last LabEvent of each path.
