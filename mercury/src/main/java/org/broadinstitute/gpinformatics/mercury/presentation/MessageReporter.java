@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
+import org.apache.commons.logging.Log;
+
 import java.text.MessageFormat;
 
 /**
@@ -26,4 +28,23 @@ public interface MessageReporter {
             return null;
         }
     };
+
+    /**
+     * A MessageReporter wrapper for the logging API, useful when writing tests that call APIs that use MessageReporter.
+     */
+    class LogReporter implements MessageReporter {
+
+        private final Log log;
+
+        public LogReporter(Log log) {
+            this.log = log;
+        }
+
+        @Override
+        public String addMessage(String message, Object... arguments) {
+            String formattedMessage = MessageFormat.format(message, arguments);
+            log.info(formattedMessage);
+            return formattedMessage;
+        }
+    }
 }

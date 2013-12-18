@@ -31,7 +31,6 @@ import javax.inject.Inject;
 import javax.persistence.Query;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -302,22 +301,13 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    class LogReporter implements MessageReporter {
-        @Override
-        public String addMessage(String message, Object... arguments) {
-            String formattedMessage = MessageFormat.format(message, arguments);
-            log.info(formattedMessage);
-            return formattedMessage;
-        }
-    }
-
     @Test(enabled = false)
     public void fixupPDOCompleteStatus()
             throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
-        LogReporter reporter = new LogReporter();
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
         for (ProductOrder order : orders) {
             productOrderEjb.updateOrderStatus(order.getBusinessKey(), reporter);
         }
@@ -425,7 +415,7 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderSampleDao.persistAll(sampleList);
-        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new LogReporter());
+        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
 
 
