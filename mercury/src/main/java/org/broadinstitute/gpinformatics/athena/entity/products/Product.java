@@ -550,6 +550,15 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return partNumber.equals(SAMPLE_INITIATION_PART_NUMBER);
     }
 
+    /**
+     * Adds the criterion if it's not already in the list
+     */
+    public void addRiskCriteria(RiskCriterion riskCriterion) {
+        if (!riskCriteria.contains(riskCriterion)) {
+            riskCriteria.add(riskCriterion);
+        }
+    }
+
     public List<RiskCriterion> getRiskCriteria() {
         return riskCriteria;
     }
