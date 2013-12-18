@@ -368,7 +368,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="fundingDeadline" name="editOrder.fundingDeadline" class="defaultText"
-                                      title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy"/>
+                                      title="Enter date (MM/dd/yyyy)" formatPattern="${actionBean.datePattern}"/>
                     </div>
                 </div>
 
@@ -378,7 +378,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="publicationDeadline" name="editOrder.publicationDeadline" class="defaultText"
-                                      title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy"/>
+                                      title="Enter date (MM/dd/yyyy)" formatPattern="${actionBean.datePattern}"/>
                     </div>
                 </div>
 

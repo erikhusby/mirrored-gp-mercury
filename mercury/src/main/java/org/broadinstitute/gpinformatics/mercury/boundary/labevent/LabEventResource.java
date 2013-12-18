@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -34,6 +36,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -139,30 +142,30 @@ public class LabEventResource {
             @QueryParam("plateBarcodes") @Nonnull List<String> plateBarcodes) {
         Collection<LabVessel> labVessels = labVesselDao.findByBarcodes(plateBarcodes).values();
 
-        List<LabEvent> labEvents = new ArrayList<>();
+        // This is a Set as LabEvents should be unique in the results.
+        Set<LabEvent> labEvents = new HashSet<>();
 
         for (LabVessel labVessel : labVessels) {
-            // Not checking that all queried barcodes were accounted for in the results, that is up to the caller.
+            // This is not checking that all queried barcodes were accounted for in the results,
+            // that is up to the caller.
             if (labVessel == null || labVessel.getContainerRole() == null) {
                 continue;
             }
 
             VesselContainer<?> vesselContainer = labVessel.getContainerRole();
 
-            List<List<LabEvent>> listOfLabEventLists =
+            List<List<LabEvent>> resultsForThisVessel =
                     vesselContainer.shortestPathsToVesselsSatisfyingPredicate(VesselContainer.IS_LAB_VESSEL_A_RACK);
-
-            // Flatten the result as the current caller does not expect more than one List of transfers to be found
-            // per query barcode.
-            for (List<LabEvent> labEventList : listOfLabEventLists) {
-                labEvents.addAll(labEventList);
-            }
+            // Flatten the result to get an Iterable of LabEvents, keep unique copies by putting the LabEvents
+            // in a Set.
+            labEvents.addAll(Sets.newHashSet(Iterables.concat(resultsForThisVessel)));
         }
 
-        Collections.sort(labEvents, LabEvent.BY_EVENT_DATE);
+        List<LabEvent> sortedLabEvents = new ArrayList<>(labEvents);
+        Collections.sort(sortedLabEvents, LabEvent.BY_EVENT_DATE);
 
         List<LabEventBean> labEventBeans =
-                buildLabEventBeans(labEvents, new DefaultLabEventRefDataFetcher());
+                buildLabEventBeans(sortedLabEvents, new DefaultLabEventRefDataFetcher());
 
         return new LabEventResponseBean(labEventBeans);
     }

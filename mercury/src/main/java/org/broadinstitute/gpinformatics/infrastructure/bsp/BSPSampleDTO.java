@@ -147,6 +147,21 @@ public class BSPSampleDTO {
         }
     }
 
+    /**
+     * Returns true if the sample has a rin score
+     * that can be converted to a number.  Otherwise,
+     * returns false.
+     */
+    public boolean canRinScoreBeUsedForOnRiskCalculation() {
+        boolean isOkay = true;
+        try {
+            getRin();
+        }
+        catch(NumberFormatException e) {
+            isOkay = false;
+        }
+        return isOkay;
+    }
 
     private Date getDate(BSPSampleSearchColumn column) {
         String dateString = getValue(column);
@@ -173,6 +188,23 @@ public class BSPSampleDTO {
         return getDate(BSPSampleSearchColumn.PICO_RUN_DATE);
     }
 
+    /**
+     * Returns the unmodified value of the "RIN Number"
+     * annotation from BSP.
+     * @see #getRin()
+     */
+    public String getRawRin() {
+        return getValue(BSPSampleSearchColumn.RIN);
+    }
+
+    /**
+     * If BSP's "RIN Number" is a range, this returns
+     * the lower of the two numbers.  If it's a single numeric value,
+     * that value is returned.  Otherwise, this blows
+     * up trying to convert to a number.
+     * @see #getRawRin() to get the unmodified rin value
+     * as a string.
+     */
     public double getRin() {
         double[] doubles = getDoubleOrRangeOfDoubles(BSPSampleSearchColumn.RIN);
         if (doubles.length == 1) {

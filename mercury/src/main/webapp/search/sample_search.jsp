@@ -56,13 +56,9 @@
             </stripes:form>
         </div>
         <div id="searchResults">
-            <c:if test="${empty actionBean.mercurySampleToVessels}">
-                No Results Found
-            </c:if>
+            <c:if test="${empty actionBean.mercurySampleToVessels}">${actionBean.resultSummaryString}</c:if>
             <c:if test="${not empty actionBean.mercurySampleToVessels}">
-                <div id="resultSummary">Searched for ${actionBean.numSearchTerms} sample(s),
-                    found ${fn:length(actionBean.mercurySampleToVessels)}.
-                </div>
+                <div id="resultSummary">${actionBean.resultSummaryString} </div>
 
                 <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.mercurySampleToVessels}" var="sampleToVessels" varStatus="status">

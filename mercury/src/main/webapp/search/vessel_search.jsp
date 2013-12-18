@@ -58,13 +58,9 @@
 
         </div>
         <div id="searchResults">
-            <c:if test="${not actionBean.resultsAvailable}">
-                No Results Found
-            </c:if>
+            <c:if test="${not actionBean.resultsAvailable}"> ${actionBean.resultSummaryString} </c:if>
             <c:if test="${not empty actionBean.foundVessels}">
-                <div id="resultSummary">Searched for ${actionBean.numSearchTerms} vessel(s),
-                    found ${fn:length(actionBean.foundVessels)}.
-                </div>
+                <div id="resultSummary">${actionBean.resultSummaryString} </div>
 
                 <div id="accordion" style="display:none;" class="accordion">
                     <c:forEach items="${actionBean.foundVessels}" var="vessel" varStatus="status">
