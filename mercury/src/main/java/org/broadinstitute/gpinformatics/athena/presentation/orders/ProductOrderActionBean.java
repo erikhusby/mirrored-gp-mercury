@@ -413,40 +413,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Returns true if the product for the PDO
-     * has a RIN risk criteria.  Otherwise returns false.
-     * We do this check because we don't want the user
-     * to have to wait for rin score checks unless it's
-     * really necessary.
-     */
-    boolean isRinScoreValidationRequired(ProductOrder pdo) {
-        boolean isRinCheckRequired = false;
-        if (pdo != null) {
-            Product product = pdo.getProduct();
-            if (product != null) {
-                for (RiskCriterion riskCriterion : product.getRiskCriteria()) {
-                    RiskCriterion.RiskCriteriaType riskType = riskCriterion.getType();
-                    if (RiskCriterion.RiskCriteriaType.RIN == riskType) {
-                        isRinCheckRequired = true;
-                        break;
-                    }
-
-                }
-            }
-        }
-        return isRinCheckRequired;
-    }
-
-    /**
      * Validates the rin scores for every
      * sample in the pdo.
      * @see #validateRinScores(java.util.Collection)
      */
-    void validateRinScores(ProductOrder pdo) {
-        if (pdo != null) {
-            if (isRinScoreValidationRequired(pdo)) {
-                validateRinScores(pdo.getSamples());
-            }
+    void validateRinScores(@Nonnull ProductOrder pdo) {
+        if (pdo.isRinScoreValidationRequired()) {
+            validateRinScores(pdo.getSamples());
         }
     }
 
@@ -457,30 +430,11 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
-            if (pdoSample.isInBspFormat()) {
-                if (!canRinScoreBeUsedForOnRiskCalculation(pdoSample.getBspSampleDTO())) {
-                    addGlobalValidationError("RIN Number '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() + " isn't a number."
-                                             + "  Please correct this by going to BSP -> Utilities -> Upload Sample Annotation and updating the 'RIN Number' annotation for this sample.");
-                }
+            if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
+                addGlobalValidationError("RIN '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() + " isn't a number."
+                                         + "  Please correct this by going to BSP -> Utilities -> Upload Sample Annotation and updating the 'RIN Number' annotation for this sample.");
             }
         }
-    }
-
-    /**
-     * Returns true if the sample has a rin score
-     * that can be converted to a number.  Otherwise,
-     * returns false.
-     */
-    boolean canRinScoreBeUsedForOnRiskCalculation(BSPSampleDTO bspSampleDTO) {
-        boolean isOkay = true;
-        String rawRinScore = bspSampleDTO.getRawRin();
-        try {
-            bspSampleDTO.getRin();
-        }
-        catch(NumberFormatException e) {
-            isOkay = false;
-        }
-        return isOkay;
     }
 
     private void doValidation(String action) {
@@ -531,7 +485,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException ex) {
             addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
         }
-        validateRinScores(editOrder);
+        if (editOrder != null) {
+            validateRinScores(editOrder);
+        }
     }
 
     private boolean materialTypesContains(String bspMaterialName) {
@@ -1341,7 +1297,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = RECALCULATE_RISK)
     public void validateRiskRecalculation() {
-        if (isRinScoreValidationRequired(editOrder)) {
+        if (editOrder.isRinScoreValidationRequired()) {
             validateRinScores(getSelectedProductOrderSamplesFor(editOrder,getSelectedProductOrderSampleIds()));
         }
     }

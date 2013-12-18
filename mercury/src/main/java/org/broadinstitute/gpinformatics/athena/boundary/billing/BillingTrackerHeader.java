@@ -18,10 +18,13 @@ public enum BillingTrackerHeader implements ColumnHeader {
     ORDER_ID("Product Order ID", 6, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE),
     PRODUCT_ORDER_NAME("Product Order Name", 7, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
     PROJECT_MANAGER("Project Manager", 8, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    WORK_COMPLETE_DATE("Date Completed", 10, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    QUOTE_ID("Quote ID", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    SORT_COLUMN("Sort Column", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    LANE_COUNT("Lane Count", 9, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER) {
+        @Override public boolean shouldShow(Product product) { return product.getSupportsNumberOfLanes(); }
+    },
+    AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
+    WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
+    QUOTE_ID("Quote ID", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    SORT_COLUMN("Sort Column", 13, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";
@@ -42,6 +45,17 @@ public enum BillingTrackerHeader implements ColumnHeader {
         this.requiredHeader = requiredHeader;
         this.requiredValue = requiredValue;
         this.isDate = isDate;
+    }
+
+    /**
+     * Returns whether or not to show this header/column for the given product. Individual enum values can override this
+     * method to allow for conditional display of columns.
+     *
+     * @param product    the product for the current billing tracker sheet
+     * @return true if the column should be displayed; false otherwise
+     */
+    public boolean shouldShow(Product product) {
+        return true;
     }
 
     @Override

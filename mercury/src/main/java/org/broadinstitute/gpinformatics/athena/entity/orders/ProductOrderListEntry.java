@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -23,6 +25,8 @@ public class ProductOrderListEntry implements Serializable {
 
     private final String productName;
 
+    private Product product;
+
     private final String productFamilyName;
 
     private final ProductOrder.OrderStatus orderStatus;
@@ -32,6 +36,8 @@ public class ProductOrderListEntry implements Serializable {
     private final Long ownerId;
 
     private final Date placedDate;
+
+    private Integer laneCount;
 
     private final String quoteId;
 
@@ -43,19 +49,24 @@ public class ProductOrderListEntry implements Serializable {
 
     private long readyForBillingCount;
 
-    private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                  String productName, String productFamilyName, String researchProjectTitle,
-                                  Long ownerId, Date placedDate, String quoteId, Long billingSessionId,
+    private ProductOrderListEntry(Long orderId, String title, String jiraTicketKey,
+                                  ProductOrder.OrderStatus orderStatus, String productName, Product product,
+                                  String productFamilyName,
+                                  String researchProjectTitle,
+                                  Long ownerId, Date placedDate, Integer laneCount, String quoteId,
+                                  Long billingSessionId,
                                   long constructedCount) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
         this.orderStatus = orderStatus;
         this.productName = productName;
+        this.product = product;
         this.productFamilyName = productFamilyName;
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
         this.placedDate = placedDate;
+        this.laneCount = laneCount;
         this.quoteId = quoteId;
         this.billingSessionId = billingSessionId;
 
@@ -70,12 +81,13 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     // This is called through reflection and only appears to be unused.
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                 String productName, String productFamilyName, String researchProjectTitle,
-                                 Long ownerId, Date placedDate, String quoteId) {
+                                 String productName, Product product, String productFamilyName,
+                                 String researchProjectTitle, Long ownerId,
+                                 Date placedDate, Integer laneCount, String quoteId) {
 
         // No billing session and a the constructed count is set to 0 because it is not used for this constructor.
-        this(orderId, title, jiraTicketKey, orderStatus, productName, productFamilyName, researchProjectTitle, ownerId,
-                placedDate, quoteId, null, 0);
+        this(orderId, title, jiraTicketKey, orderStatus, productName, product, productFamilyName,
+                researchProjectTitle, ownerId, placedDate, laneCount, quoteId, null, 0);
     }
 
     /**
@@ -86,7 +98,7 @@ public class ProductOrderListEntry implements Serializable {
     @SuppressWarnings("UnusedDeclaration")
     public ProductOrderListEntry(
         Long orderId, String jiraTicketKey, Long billingSessionId, long constructedCount) {
-        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, billingSessionId,
+        this(orderId, null, jiraTicketKey, null, null, null, null, null, null, null, null, null, billingSessionId,
                 constructedCount);
     }
 
@@ -114,6 +126,10 @@ public class ProductOrderListEntry implements Serializable {
         return productName;
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
     public String getProductFamilyName() {
         return productFamilyName;
     }
@@ -132,6 +148,10 @@ public class ProductOrderListEntry implements Serializable {
 
     public Date getPlacedDate() {
         return placedDate;
+    }
+
+    public Integer getLaneCount() {
+        return laneCount;
     }
 
     public String getQuoteId() {

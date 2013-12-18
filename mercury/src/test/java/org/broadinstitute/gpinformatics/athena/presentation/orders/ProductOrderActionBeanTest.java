@@ -126,21 +126,21 @@ public class ProductOrderActionBeanTest {
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testIsRinScoreValidationRequired() {
         setRinRiskProduct(pdo);
-        Assert.assertTrue(actionBean.isRinScoreValidationRequired(pdo));
+        Assert.assertTrue(pdo.isRinScoreValidationRequired());
         setNonRinRiskProduct(pdo);
-        Assert.assertFalse(actionBean.isRinScoreValidationRequired(pdo));
+        Assert.assertFalse(pdo.isRinScoreValidationRequired());
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testCanBadRinScoreBeUsedForOnRiskCalculation() {
         BSPSampleDTO badRinScoreSample = getSamplDTOWithBadRinScore();
-        Assert.assertFalse(actionBean.canRinScoreBeUsedForOnRiskCalculation(badRinScoreSample));
+        Assert.assertFalse(badRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testCanGoodRinScoreBeUsedForOnRiskCalculation() {
         BSPSampleDTO goodRinScoreSample = getSampleDTOWithGoodRinScore();
-        Assert.assertTrue(actionBean.canRinScoreBeUsedForOnRiskCalculation(goodRinScoreSample));
+        Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
