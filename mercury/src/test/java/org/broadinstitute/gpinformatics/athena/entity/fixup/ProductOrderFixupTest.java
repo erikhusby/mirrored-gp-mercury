@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -403,25 +404,22 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void unAbandonPDOSample() throws Exception {
-        ProductOrder order = productOrderDao.findByBusinessKey("PDO-190");
-        List<ProductOrderSample> pdoSamples = productOrderSampleDao.findByOrderAndName(order, "SM-1ISV5");
-        for (ProductOrderSample pdoSample : pdoSamples) {
-            pdoSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
-        }
-        List<String> samplesToUnAbandon = Arrays.asList(
-                "SM-2HJ9A",
-                "SM-2HMML",
-                "SM-2HMH9",
-                "SM-2IJBV",
-                "SM-2IJEK",
-                "SM-2LK3J");
+    public void unAbandonPDOSamples() throws Exception {
+        unAbandonPDOSamples("PDO-2670",
+                "SM-55WGG",
+                "SM-55WGJ",
+                "SM-55WGM",
+                "SM-55WGN");
+    }
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-652");
+    private void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
+            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        List<String> samples = Arrays.asList(samplesToUnAbandon);
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
         List<ProductOrderSample> sampleList = productOrder.getSamples();
 
         for (ProductOrderSample sample : sampleList) {
-            if (samplesToUnAbandon.contains(sample.getName())) {
+            if (samples.contains(sample.getName())) {
                 sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
             }
         }
