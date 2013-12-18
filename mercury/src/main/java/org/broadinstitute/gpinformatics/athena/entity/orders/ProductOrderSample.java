@@ -205,7 +205,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     public ProductOrderSample(@Nonnull String sampleName) {
         if (!StringUtils.isAsciiPrintable(sampleName)) {
-            throw new RuntimeException("Sample name is not ASCII printable");
+            throw new RuntimeException("Sample name " + sampleName + " is not ASCII printable");
         }
         this.sampleName = sampleName;
     }

@@ -53,6 +53,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefin
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -85,9 +86,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -143,6 +146,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DATE = "date";
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
+
+    public static final String JSON_RIN_KEY = "rin";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -407,6 +412,77 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Returns true if the product for the PDO
+     * has a RIN risk criteria.  Otherwise returns false.
+     * We do this check because we don't want the user
+     * to have to wait for rin score checks unless it's
+     * really necessary.
+     */
+    boolean isRinScoreValidationRequired(ProductOrder pdo) {
+        boolean isRinCheckRequired = false;
+        if (pdo != null) {
+            Product product = pdo.getProduct();
+            if (product != null) {
+                for (RiskCriterion riskCriterion : product.getRiskCriteria()) {
+                    RiskCriterion.RiskCriteriaType riskType = riskCriterion.getType();
+                    if (RiskCriterion.RiskCriteriaType.RIN == riskType) {
+                        isRinCheckRequired = true;
+                        break;
+                    }
+
+                }
+            }
+        }
+        return isRinCheckRequired;
+    }
+
+    /**
+     * Validates the rin scores for every
+     * sample in the pdo.
+     * @see #validateRinScores(java.util.Collection)
+     */
+    void validateRinScores(ProductOrder pdo) {
+        if (pdo != null) {
+            if (isRinScoreValidationRequired(pdo)) {
+                validateRinScores(pdo.getSamples());
+            }
+        }
+    }
+
+    /**
+     * Checks that the rin score is a numeric value
+     * for all BSP samples in the list of pdoSamples
+     * @param pdoSamples
+     */
+    void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
+        for (ProductOrderSample pdoSample : pdoSamples) {
+            if (pdoSample.isInBspFormat()) {
+                if (!canRinScoreBeUsedForOnRiskCalculation(pdoSample.getBspSampleDTO())) {
+                    addGlobalValidationError("RIN Number '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() + " isn't a number."
+                                             + "  Please correct this by going to BSP -> Utilities -> Upload Sample Annotation and updating the 'RIN Number' annotation for this sample.");
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns true if the sample has a rin score
+     * that can be converted to a number.  Otherwise,
+     * returns false.
+     */
+    boolean canRinScoreBeUsedForOnRiskCalculation(BSPSampleDTO bspSampleDTO) {
+        boolean isOkay = true;
+        String rawRinScore = bspSampleDTO.getRawRin();
+        try {
+            bspSampleDTO.getRin();
+        }
+        catch(NumberFormatException e) {
+            isOkay = false;
+        }
+        return isOkay;
+    }
+
     private void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
 
@@ -455,6 +531,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException ex) {
             addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
         }
+        validateRinScores(editOrder);
     }
 
     private boolean materialTypesContains(String bspMaterialName) {
@@ -1081,6 +1158,27 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    /**
+     * Adds the rin score from the sample dto to the item.
+     * @param item
+     * @param bspSampleDTO
+     * @throws JSONException
+     */
+    void putRinScore(@NotNull JSONObject item,@NotNull BSPSampleDTO bspSampleDTO) throws JSONException {
+        // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
+        // in which case we'll just display the raw rin value
+        String rinScore = bspSampleDTO.getRawRin();
+        if (!StringUtils.isEmpty(rinScore)) {
+            try {
+                rinScore = String.valueOf(bspSampleDTO.getRin());
+            }
+            catch(NumberFormatException e) {
+                // sometimes RIN scores aren't actually numbers (or ranges) in BSP
+            }
+        }
+        item.put(JSON_RIN_KEY,rinScore);
+    }
+
     private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
@@ -1090,7 +1188,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
         item.put("volume", bspSampleDTO.getVolume());
         item.put("concentration", bspSampleDTO.getConcentration());
-        item.put("rin", bspSampleDTO.getRin());
+        putRinScore(item, bspSampleDTO);
         item.put("picoDate", getBspPicoDate(bspSampleDTO));
         item.put("total", bspSampleDTO.getTotal());
         item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
@@ -1124,7 +1222,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("collaboratorParticipantId", "");
         item.put("volume", "");
         item.put("concentration", "");
-        item.put("rin", "");
+        item.put(JSON_RIN_KEY, "");
         item.put("picoDate", "");
         item.put("total", "");
         item.put("hasFingerprint", "");
@@ -1225,9 +1323,31 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution(editOrder.getBusinessKey());
     }
 
+    /**
+     * Builds a List of ProductOrderSamples by finding
+     * PDOSamples in the given pdo that have an id
+     * that matches an id in the pdoIds list.
+     */
+    private List<ProductOrderSample> getSelectedProductOrderSamplesFor(ProductOrder pdo,
+                                                                       Collection<Long> pdoIds) {
+        List<ProductOrderSample> selectedPdoSamples = new ArrayList(getSelectedProductOrderSampleIds().size());
+        for (ProductOrderSample pdoSample : editOrder.getSamples()) {
+            if (pdoIds.contains(pdoSample.getProductOrderSampleId())) {
+                selectedPdoSamples.add(pdoSample);
+            }
+        }
+        return selectedPdoSamples;
+    }
+
+    @ValidationMethod(on = RECALCULATE_RISK)
+    public void validateRiskRecalculation() {
+        if (isRinScoreValidationRequired(editOrder)) {
+            validateRinScores(getSelectedProductOrderSamplesFor(editOrder,getSelectedProductOrderSampleIds()));
+        }
+    }
+
     @HandlesEvent(RECALCULATE_RISK)
     public Resolution recalculateRisk() throws Exception {
-
         int originalOnRiskCount = editOrder.countItemsOnRisk();
 
         try {
