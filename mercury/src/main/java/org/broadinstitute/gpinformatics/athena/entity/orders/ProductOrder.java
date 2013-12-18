@@ -533,6 +533,11 @@ public class ProductOrder implements BusinessObject, Serializable {
         return samples;
     }
 
+    /**
+     * Replace the current list of samples with a new list of samples. The order of samples is preserved.
+     *
+     * @param samples the samples to set
+     */
     public void setSamples(@Nonnull Collection<ProductOrderSample> samples) {
         if (samples.isEmpty()) {
             // FIXME: This seems incorrect in the case where current sample list is non-empty and incoming samples are empty.
@@ -556,6 +561,11 @@ public class ProductOrder implements BusinessObject, Serializable {
         sampleCounts.invalidate();
     }
 
+    /**
+     * Add to the list of samples. The order of samples is preserved.
+     *
+     * @param newSamples the samples to add
+     */
     public void addSamples(@Nonnull Collection<ProductOrderSample> newSamples) {
         if (samples.isEmpty()) {
             setSamples(newSamples);
