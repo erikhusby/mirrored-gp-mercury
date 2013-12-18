@@ -9,6 +9,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -912,6 +913,25 @@ public class ProductOrder implements BusinessObject, Serializable {
     public boolean areAllSampleBSPFormat() {
         updateSampleCounts();
         return sampleCounts.bspSampleCount == sampleCounts.uniqueSampleCount;
+    }
+
+    /**
+     * Returns true if the product for this PDO
+     * has a RIN risk criteria.
+     */
+    public boolean isRinScoreValidationRequired() {
+        boolean isRinCheckRequired = false;
+        Product product = getProduct();
+        if (product != null) {
+            for (RiskCriterion riskCriterion : product.getRiskCriteria()) {
+                if (RiskCriterion.RiskCriteriaType.RIN == riskCriterion.getType()) {
+                    isRinCheckRequired = true;
+                    break;
+                }
+
+            }
+        }
+        return isRinCheckRequired;
     }
 
     /**

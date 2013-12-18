@@ -153,6 +153,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * Returns true if there's a RIN score for this sample and it can
+     * be converted to a number.  Otherwise, returns false;
+     */
+    public boolean canRinScoreBeUsedForOnRiskCalculation() {
+        boolean canRinScoreBeUsed = false;
+        if (isInBspFormat()) {
+            BSPSampleDTO bspDto = getBspSampleDTO();
+            if (bspDto != null) {
+                canRinScoreBeUsed = getBspSampleDTO().canRinScoreBeUsedForOnRiskCalculation();
+            }
+        }
+        return canRinScoreBeUsed;
+    }
+
+    /**
      * A sample is completely billed if its primary or replacement for the primary price item has been billed. If
      * only an add-on has been billed, it's not yet completely billed.
      *
