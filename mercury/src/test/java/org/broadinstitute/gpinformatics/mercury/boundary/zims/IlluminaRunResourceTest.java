@@ -157,6 +157,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         Assert.assertFalse(rawJson.contains("\"gssrSample\""));
         Assert.assertTrue(rawJson.contains("\"rootSample\""));
         Assert.assertTrue(rawJson.contains("\"productPartNumber\""));
+        Assert.assertTrue(rawJson.contains("\"workRequestType\""));
+        Assert.assertTrue(rawJson.contains("\"workRequestDomain\""));
 
         Assert.assertNotNull(run);
         Assert.assertEquals(run.getName(),RUN_NAME);
@@ -400,6 +402,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                 if (libBean.getLcSet() != null && zLib.getLcset() == null) {
                     Assert.fail("bean has lcset " + libBean.getLcSet() + ", but thrift library has no lc set.");
                 }
+                Assert.assertEquals(libBean.getWorkRequestType(), zLib.getWorkRequestType());
+                Assert.assertEquals(libBean.getWorkRequestDomain(), zLib.getWorkRequestDomain());
             }
         }
 
