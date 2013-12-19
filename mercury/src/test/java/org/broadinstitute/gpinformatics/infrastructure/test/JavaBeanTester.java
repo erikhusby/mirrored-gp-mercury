@@ -130,7 +130,7 @@ public class JavaBeanTester {
 	 // Add your own rules here
 
 		} else {
-			fail("Unable to build an instance of class " + clazz.getName() + ", please add some code to the "
+			Assert.fail("Unable to build an instance of class " + clazz.getName() + ", please add some code to the "
 					+ JavaBeanTester.class.getName() + " class to do this.");
 			return null; // for the compiler
 		}
