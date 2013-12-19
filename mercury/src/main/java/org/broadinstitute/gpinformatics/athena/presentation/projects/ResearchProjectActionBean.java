@@ -268,10 +268,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Resolution save() throws Exception {
         populateTokenListFields();
-        String createOrUpdate="creating";
+        String createOrUpdate = "creating";
         try {
             if (!StringUtils.isBlank(editResearchProject.getJiraTicketKey())) {
-                createOrUpdate="update";
+                createOrUpdate = "update";
                 researchProjectEjb.updateJiraIssue(editResearchProject);
             } else {
                 researchProjectEjb.submitToJira(editResearchProject);

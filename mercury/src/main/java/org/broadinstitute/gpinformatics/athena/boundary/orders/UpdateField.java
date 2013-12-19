@@ -25,6 +25,8 @@ import java.util.Map;
 
 public class UpdateField<T extends JiraProject> {
     private final Object newValue;
+    private final String UPDATE_FIELD_NAME = "name";
+    private final String UPDATE_FIELD_VALUE = "value";
 
     /**
      * True if the field being updated is a 'bulk' item.  This means that it should be shown as plural in the
@@ -37,7 +39,7 @@ public class UpdateField<T extends JiraProject> {
      * Return the update message appropriate for this field.  If there are no changes this will return the empty
      * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'".
      *
-     * @param jiraProject            the jira object
+     * @param jiraProject            the jira project
      * @param customFieldDefinitionMap contains the mapping from display names of fields to their JIRA IDs, needed
      *                                 to dig the old values contained in the fields out of the issueFieldsResponse
      * @param issueFieldsResponse      contains the old values
@@ -58,10 +60,10 @@ public class UpdateField<T extends JiraProject> {
         Object oldValueToCompare;
         if (previousValue instanceof HashMap) {
             Map previousValueMap = ((Map<?, ?>) previousValue);
-            if (previousValueMap.containsKey("value")) {
-                oldValueToCompare = previousValueMap.get("value").toString();
+            if (previousValueMap.containsKey(UPDATE_FIELD_VALUE)) {
+                oldValueToCompare = previousValueMap.get(UPDATE_FIELD_VALUE).toString();
             } else {
-                oldValueToCompare = previousValueMap.get("name").toString();
+                oldValueToCompare = previousValueMap.get(UPDATE_FIELD_NAME).toString();
             }
         } else {
             oldValueToCompare = (previousValue != null) ? previousValue : "";
@@ -70,13 +72,11 @@ public class UpdateField<T extends JiraProject> {
         // Jira stores booleans as Yes and No. We need to convert the test value to a "Jira boolean"
         // or we will not be able to figure out if it has changed and we will always add a jira comment that the value
         // has been updated when in fact it may not have been.
-        if (newValue instanceof Boolean){
-            newValueToCompare = StringUtils.capitalize(BooleanUtils.toStringYesNo((Boolean)newValue));
-        }
-
-        if (newValue instanceof CreateFields.Reporter) {
+        if (newValue instanceof Boolean) {
+            newValueToCompare = StringUtils.capitalize(BooleanUtils.toStringYesNo((Boolean) newValue));
+        } else if (newValue instanceof CreateFields.Reporter) {
             // Need to special case Reporter type for display and comparison.
-            oldValueToCompare = ((Map<?, ?>) previousValue).get("name").toString();
+            oldValueToCompare = ((Map<?, ?>) previousValue).get(UPDATE_FIELD_NAME).toString();
             newValueToCompare = ((CreateFields.Reporter) newValue).getName();
         }
         if (!oldValueToCompare.equals(newValueToCompare)) {

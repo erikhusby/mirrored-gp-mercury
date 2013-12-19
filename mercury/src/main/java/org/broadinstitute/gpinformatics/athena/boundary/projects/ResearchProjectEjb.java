@@ -80,7 +80,6 @@ public class ResearchProjectEjb {
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
                 cohortList.getCohortListString(researchProject.getCohortIds())));
 
-
         List<String> fundingSources = new ArrayList<>();
         for (ResearchProjectFunding fundingSrc : researchProject.getProjectFunding()) {
             fundingSources.add(fundingSrc.getFundingId());
@@ -177,7 +176,6 @@ public class ResearchProjectEjb {
                 first = false;
             }
         }
-
 
         if (!piList.toString().isEmpty()) {
             researchProjectUpdateFields
