@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
+import org.testng.Assert;
+
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * This helper class can be used to unit test the get/set methods of JavaBean-style Value Objects.
@@ -58,10 +62,12 @@ public class JavaBeanTester {
                         final Object expectedValue = value;
 						final Object actualValue = getter.invoke(bean);
 
-						assertEquals(String.format("Failed while testing property %s", prop.getName()), expectedValue, actualValue );
+                        Assert.assertEquals(expectedValue,
+                                String.format("Failed while testing property %s", prop.getName()));
 
 					} catch (Exception ex){
-						fail(String.format("An exception was thrown while testing the property %s: %s", prop.getName(), ex.toString()));
+						Assert.fail(String.format("An exception was thrown while testing the property %s: %s",
+                                prop.getName(), ex.toString()));
 					}
 				}
 			}
@@ -124,7 +130,7 @@ public class JavaBeanTester {
 	 // Add your own rules here
 
 		} else {
-			fail("Unable to build an instance of class " + clazz.getName() + ", please add some code to the "
+			Assert.fail("Unable to build an instance of class " + clazz.getName() + ", please add some code to the "
 					+ JavaBeanTester.class.getName() + " class to do this.");
 			return null; // for the compiler
 		}

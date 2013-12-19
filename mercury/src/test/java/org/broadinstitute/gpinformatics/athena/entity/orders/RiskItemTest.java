@@ -14,12 +14,6 @@ import org.testng.annotations.Test;
 import java.util.Date;
 import java.util.Random;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 1/22/13
- * Time: 5:00 PM
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RiskItemTest {
 

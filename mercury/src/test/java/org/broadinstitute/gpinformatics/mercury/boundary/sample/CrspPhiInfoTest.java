@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.sample;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiDTO;
+import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiInfo;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -17,8 +19,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.io.StringReader;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiDTO;
-import org.broadinstitute.gpinformatics.mercury.crsp.generated.CrspPhiInfo;
 
 /**
  * TODO scottmat fill in javadoc!!!

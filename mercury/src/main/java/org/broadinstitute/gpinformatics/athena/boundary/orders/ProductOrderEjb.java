@@ -368,65 +368,14 @@ public class ProductOrderEjb {
      * <p/>
      * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
      */
-    private static class PDOUpdateField {
-        private final String displayName;
-        private final Object newValue;
-        private final CustomField.SubmissionField field;
-
-        /**
-         * True if the field being updated is a 'bulk' item.  This means that it should be shown as plural in the
-         * message, and its contents won't be shown in the message.
-         */
-        private final boolean isBulkField;
-
-        /**
-         * Return the update message appropriate for this field.  If there are no changes this will return the empty
-         * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'".
-         *
-         * @param productOrder             contains the new values
-         * @param customFieldDefinitionMap contains the mapping from display names of fields to their JIRA IDs, needed
-         *                                 to dig the old values contained in the fields out of the issueFieldsResponse
-         * @param issueFieldsResponse      contains the old values
-         *
-         * @return the update message that goes in the JIRA ticket
-         */
-        public String getUpdateMessage(ProductOrder productOrder,
-                                       Map<String, CustomFieldDefinition> customFieldDefinitionMap,
-                                       IssueFieldsResponse issueFieldsResponse) {
-
-            if (!customFieldDefinitionMap.containsKey(displayName)) {
-                throw new RuntimeException(
-                        "Custom field '" + displayName + "' not found in issue " + productOrder.getJiraTicketKey());
-            }
-            CustomFieldDefinition customFieldDefinition = customFieldDefinitionMap.get(displayName);
-
-            Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
-
-            Object oldValueToCompare = (previousValue != null) ? previousValue : "";
-            Object newValueToCompare = newValue;
-
-            if (newValue instanceof CreateFields.Reporter) {
-                // Need to special case Reporter type for display and comparison.
-                oldValueToCompare = ((Map<?, ?>) previousValue).get("name").toString();
-                newValueToCompare = ((CreateFields.Reporter) newValue).getName();
-            }
-            if (!oldValueToCompare.equals(newValueToCompare)) {
-                return displayName + (isBulkField ? " have " : " has ") + "been updated" +
-                       (!isBulkField ? " from '" + oldValueToCompare + "' to '" + newValueToCompare + "'" : "") + ".\n";
-            }
-            return "";
-        }
-
+    private static class PDOUpdateField extends UpdateField<ProductOrder> {
         public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
                               boolean isBulkField) {
-            this.field = field;
-            displayName = field.getName();
-            this.newValue = newValue;
-            this.isBulkField = isBulkField;
+            super(field, newValue, isBulkField);
         }
 
         public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
-            this(field, newValue, false);
+            super(field, newValue);
         }
     }
 
@@ -481,7 +430,7 @@ public class ProductOrderEjb {
 
         int i = 0;
         for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
-            customFieldNames[i++] = pdoUpdateField.displayName;
+            customFieldNames[i++] = pdoUpdateField.getDisplayName();
         }
 
         Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getCustomFields(customFieldNames);
@@ -496,7 +445,7 @@ public class ProductOrderEjb {
         for (PDOUpdateField field : pdoUpdateFields) {
             String message = field.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
             if (!message.isEmpty()) {
-                customFields.add(new CustomField(customFieldDefinitions, field.field, field.newValue));
+                customFields.add(new CustomField(customFieldDefinitions, field.getField(), field.getNewValue()));
                 updateCommentBuilder.append(message);
             }
         }

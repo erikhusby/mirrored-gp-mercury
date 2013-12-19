@@ -91,7 +91,7 @@ public class IrbConverter {
         return returnValue;
     }
 
-    public static String getIrbCompleteData(String[] irbNumbers) throws JSONException {
+    public static String getIrbCompleteData(List<String> irbNumbers) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (String irbNumber : irbNumbers) {
             itemList.put(TokenInput.getJSONObject(irbNumber, irbNumber));

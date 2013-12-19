@@ -40,6 +40,9 @@ public class ResearchProjectResource {
     private ResearchProjectDao researchProjectDao;
 
     @Inject
+    private ResearchProjectEjb researchProjectEjb;
+
+    @Inject
     private BSPUserList bspUserList;
 
     @XmlRootElement
@@ -206,7 +209,7 @@ public class ResearchProjectResource {
         project.setCreatedBy(user.getUserId());
 
         try {
-            project.submitToJira();
+            researchProjectEjb.submitToJira(project);
         } catch (IOException e) {
             throw new InformaticsServiceException("Could not submit new research project to JIRA.");
         }

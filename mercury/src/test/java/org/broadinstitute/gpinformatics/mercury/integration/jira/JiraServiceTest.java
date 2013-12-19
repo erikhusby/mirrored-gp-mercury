@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -103,7 +103,7 @@ public class JiraServiceTest {
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
 
         CustomField mercuryUrlField = new CustomField(
-                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getName()),
+                allCustomFields.get(ResearchProjectEjb.RequiredSubmissionFields.MERCURY_URL.getName()),
                 "http://www.broadinstitute.org/");
         issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }
