@@ -720,6 +720,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
                     orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
+
+            ProductOrder.loadLabEventSampleData(editOrder.getSamples());
         }
     }
 
@@ -1096,7 +1098,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (samples != null) {
             // Assuming all samples come from same product order here.
             ProductOrder.loadBspData(samples);
-            ProductOrder.loadLabEventSampleData(samples);
 
             for (ProductOrderSample sample : samples) {
                 JSONObject item = new JSONObject();
