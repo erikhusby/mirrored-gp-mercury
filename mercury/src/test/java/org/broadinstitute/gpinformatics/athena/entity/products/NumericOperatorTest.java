@@ -4,12 +4,6 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 1/22/13
- * Time: 3:59 PM
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class NumericOperatorTest {
     @Test

@@ -6,12 +6,6 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 8/15/12
- * Time: 11:04 AM
- */
 public class ChangeEventTest {
     @Test(groups = {TestGroups.DATABASE_FREE})
     public void testDatePerson() throws Exception {
