@@ -420,4 +420,17 @@ public class LimsQueryResource {
         return sequencingTemplateFactory.fetchSequencingTemplate(id, queryVesselType, isPoolTest);
     }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getSystemOfRecordForVesselBarcodes")
+    public SystemRouter.System getSystemOfRecordForVesselBarcodes(@QueryParam("q") List<String> barcodes) {
+        return systemRouter.getSystemOfRecordForVesselBarcodes(barcodes);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/routeForVesselBarcodes")
+    public SystemRouter.System routeForVesselBarcodes(@QueryParam("q") List<String> barcodes) {
+        return systemRouter.routeForVesselBarcodes(barcodes);
+    }
 }
