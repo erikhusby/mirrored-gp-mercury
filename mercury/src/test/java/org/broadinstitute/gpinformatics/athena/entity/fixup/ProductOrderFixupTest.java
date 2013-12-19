@@ -31,7 +31,6 @@ import javax.inject.Inject;
 import javax.persistence.Query;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -301,22 +301,13 @@ public class ProductOrderFixupTest extends Arquillian {
         }
     }
 
-    class LogReporter implements MessageReporter {
-        @Override
-        public String addMessage(String message, Object... arguments) {
-            String formattedMessage = MessageFormat.format(message, arguments);
-            log.info(formattedMessage);
-            return formattedMessage;
-        }
-    }
-
     @Test(enabled = false)
     public void fixupPDOCompleteStatus()
             throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
-        LogReporter reporter = new LogReporter();
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
         for (ProductOrder order : orders) {
             productOrderEjb.updateOrderStatus(order.getBusinessKey(), reporter);
         }
@@ -403,31 +394,28 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void unAbandonPDOSample() throws Exception {
-        ProductOrder order = productOrderDao.findByBusinessKey("PDO-190");
-        List<ProductOrderSample> pdoSamples = productOrderSampleDao.findByOrderAndName(order, "SM-1ISV5");
-        for (ProductOrderSample pdoSample : pdoSamples) {
-            pdoSample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
-        }
-        List<String> samplesToUnAbandon = Arrays.asList(
-                "SM-2HJ9A",
-                "SM-2HMML",
-                "SM-2HMH9",
-                "SM-2IJBV",
-                "SM-2IJEK",
-                "SM-2LK3J");
+    public void unAbandonPDOSamples() throws Exception {
+        unAbandonPDOSamples("PDO-2670",
+                "SM-55WGG",
+                "SM-55WGJ",
+                "SM-55WGM",
+                "SM-55WGN");
+    }
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey("PDO-652");
+    private void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
+            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+        List<String> samples = Arrays.asList(samplesToUnAbandon);
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
         List<ProductOrderSample> sampleList = productOrder.getSamples();
 
         for (ProductOrderSample sample : sampleList) {
-            if (samplesToUnAbandon.contains(sample.getName())) {
+            if (samples.contains(sample.getName())) {
                 sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
             }
         }
 
         productOrderSampleDao.persistAll(sampleList);
-        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new LogReporter());
+        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
 
 

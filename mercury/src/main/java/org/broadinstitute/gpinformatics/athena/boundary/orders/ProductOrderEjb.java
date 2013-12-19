@@ -39,8 +39,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -89,6 +87,7 @@ public class ProductOrderEjb {
         this(null, null, null, null, null, null, null, null, null);
     }
 
+    // Intellij thinks that BSPSampleDataFetcher is ambiguous in this context.
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public ProductOrderEjb(ProductOrderDao productOrderDao,
@@ -353,9 +352,8 @@ public class ProductOrderEjb {
         editOrder.prepareToSave(user);
     }
 
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public void handleSamplesAdded(String productOrderKey, Collection<ProductOrderSample> newSamples,
-                                   MessageReporter reporter) {
+    public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
+                                   @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
         Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(order, newSamples);
         if (!samples.isEmpty()) {
@@ -797,14 +795,12 @@ public class ProductOrderEjb {
      *
      * @param jiraTicketKey the key to update
      *
-     * @return true if the status was changed
-     *
      * @throws NoSuchPDOException
      * @throws IOException
      * @throws JiraIssue.NoTransitionException
      *
      */
-    public void updateOrderStatus(@Nonnull String jiraTicketKey, MessageReporter reporter)
+    public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
@@ -899,7 +895,8 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      */
-    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples, String comment)
+    public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
+                               @Nonnull String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
                 EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples,
@@ -914,8 +911,9 @@ public class ProductOrderEjb {
      * @param jiraTicketKey the PDO key
      * @param samples the samples to add
      */
-    public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples,
-                           MessageReporter reporter)
+    public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
+                           @Nonnull Collection<ProductOrderSample> samples,
+                           @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
@@ -923,6 +921,7 @@ public class ProductOrderEjb {
         productOrderDao.persist(order);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
         reporter.addMessage("Added samples: {0}.", nameList);
+
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,

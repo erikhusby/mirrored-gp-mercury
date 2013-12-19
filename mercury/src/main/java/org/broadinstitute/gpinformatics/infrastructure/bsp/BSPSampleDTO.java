@@ -147,6 +147,21 @@ public class BSPSampleDTO {
         }
     }
 
+    /**
+     * Returns true if the sample has a rin score
+     * that can be converted to a number.  Otherwise,
+     * returns false.
+     */
+    public boolean canRinScoreBeUsedForOnRiskCalculation() {
+        boolean isOkay = true;
+        try {
+            getRin();
+        }
+        catch(NumberFormatException e) {
+            isOkay = false;
+        }
+        return isOkay;
+    }
 
     private Date getDate(BSPSampleSearchColumn column) {
         String dateString = getValue(column);

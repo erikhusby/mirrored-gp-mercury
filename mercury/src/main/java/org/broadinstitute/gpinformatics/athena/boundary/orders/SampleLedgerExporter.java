@@ -157,8 +157,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Write headers after placing an extra line
             getWriter().nextRow();
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
-                getWriter().writeCell(header.getText(), getFixedHeaderStyle());
-                getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
+                if (header.shouldShow(currentProduct)) {
+                    getWriter().writeCell(header.getText(), getFixedHeaderStyle());
+                    getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
+                }
             }
 
             // Get the ordered price items for the current product, add the spanning price item + product headers.
@@ -218,6 +220,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Project Manager - need to turn this into a user name.
         getWriter().writeCell(getBspFullName(sample.getProductOrder().getCreatedBy()));
+
+        // Lane Count
+        if (BillingTrackerHeader.LANE_COUNT.shouldShow(sample.getProductOrder().getProduct())) {
+            getWriter().writeCell(sample.getProductOrder().getLaneCount());
+        }
 
         // auto bill date is the date of any ledger items were auto billed by external messages.
         getWriter().writeCell(sample.getLatestAutoLedgerTimestamp(), getDateStyle());

@@ -44,7 +44,8 @@
                         {"bSortable": true},                            // Owner
                         {"bSortable": true, "sType": "date"},           // Placed
                         {"bSortable": true, "sType": "title-numeric"},  // % Complete
-                        {"bSortable": true, "sType": "numeric"},        // Count
+                        {"bSortable": true, "sType": "numeric"},        // Sample Count
+                        {"bSortable": true, "sType": "numeric"},        // Lane Count
                         {"bSortable": true, "sType": "html"},           // Quote
                         {"bSortable": true, "sType": "html"}]           // Ledger Status
                 }).fnSetFilteringDelay(300);
@@ -262,6 +263,7 @@
                         <th width="70">Placed</th>
                         <th width="80">Complete</th>
                         <th width="25">Sample Count</th>
+                        <th width="25">Lane Count</th>
                         <th style="min-width: 60px;">Quote</th>
                         <th width="35">Ledger Status</th>
                     </tr>
@@ -318,6 +320,11 @@
                                 </div>
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
+                            <td>
+                                <c:if test="${order.product.supportsNumberOfLanes}">
+                                    ${order.laneCount}
+                                </c:if>
+                            </td>
                             <td>
                                 <a href="${actionBean.getQuoteUrl(order.quoteId)}" class="external" target="QUOTE">
                                         ${order.quoteId}
