@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import junit.framework.Assert;
 import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.sample.Sample;
 import org.broadinstitute.bsp.client.sample.SampleKit;
@@ -18,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInsta
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
