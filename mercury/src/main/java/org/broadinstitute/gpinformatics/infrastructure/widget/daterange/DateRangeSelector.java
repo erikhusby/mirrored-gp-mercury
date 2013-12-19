@@ -9,7 +9,7 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.widget.daterange;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
