@@ -167,6 +167,13 @@ public class LibraryBean {
     @JsonProperty
     private String productPartNumber;
 
+    @JsonProperty("workRequestType")
+    private String workRequestType;
+
+    @JsonProperty("workRequestDomain")
+    private String workRequestDomain;
+
+
     public LibraryBean() {}
 
     /**
@@ -202,7 +209,7 @@ public class LibraryBean {
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, null, null);
     }
 
     /**
@@ -244,6 +251,8 @@ public class LibraryBean {
      *                     information is derived from bspSampleDTO; otherwise individual
      *                     sample fields are pulled from their constructor counterparts
      * @param productOrderSample the product order sample name (key).
+     * @param workRequestType squid work request type name
+     * @param workRequestDomain squid work request domain name
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
@@ -253,7 +262,8 @@ public class LibraryBean {
                        double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
                        TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
                        Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-                       String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
+                       String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample,
+                       String workRequestType, String workRequestDomain) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, bspSampleDTO,
                 labWorkflow, productOrderSample);
@@ -304,6 +314,8 @@ public class LibraryBean {
             }
         }
         this.lcSet = lcSet;
+        this.workRequestType = workRequestType;
+        this.workRequestDomain = workRequestDomain;
     }
 
     /**
@@ -518,6 +530,14 @@ public class LibraryBean {
 
     public String getProductOrderSample() {
         return productOrderSample;
+    }
+
+    public String getWorkRequestType() {
+        return workRequestType;
+    }
+
+    public String getWorkRequestDomain() {
+        return workRequestDomain;
     }
 
     public static final Comparator<LibraryBean> BY_SAMPLE_ID = new Comparator<LibraryBean> () {
