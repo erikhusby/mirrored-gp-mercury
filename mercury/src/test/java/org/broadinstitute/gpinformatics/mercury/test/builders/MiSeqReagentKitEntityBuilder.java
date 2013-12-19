@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.test.builders;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -10,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.testng.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
