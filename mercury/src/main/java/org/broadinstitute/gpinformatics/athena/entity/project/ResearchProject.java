@@ -8,23 +8,13 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,16 +32,13 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -61,7 +48,7 @@ import java.util.TreeSet;
 @Entity
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
-public class ResearchProject implements BusinessObject, Comparable<ResearchProject>, Serializable {
+public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
     /**
@@ -295,6 +282,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      *
      * @return a {@link String} that represents the unique Jira Ticket key
      */
+    @Override
     public String getJiraTicketKey() {
         return this.jiraTicketKey;
     }
@@ -335,6 +323,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return cohorts;
     }
 
+
     public void addCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.add(sampleCohort);
     }
@@ -351,11 +340,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         this.irbNotEngaged = irbNotEngaged;
     }
 
-    public String[] getIrbNumbers() {
-        int i = 0;
-        String[] irbNumberList = new String[irbNumbers.size()];
+    public List<String> getIrbNumbers() {
+        List<String> irbNumberList = new ArrayList<>(irbNumbers.size());
         for (ResearchProjectIRB irb : irbNumbers) {
-            irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
+            irbNumberList.add(irb.getIrb() + ": " + irb.getIrbType().getDisplayName());
         }
 
         return irbNumberList;
@@ -392,7 +380,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
      *
      * @return list of associated people based on their role type
      */
-    private Collection<ProjectPerson> findPeopleByType(RoleType role) {
+    public Collection<ProjectPerson> findPeopleByType(RoleType role) {
         List<ProjectPerson> foundPersonList = new ArrayList<>(associatedPeople.size());
 
         for (ProjectPerson person : associatedPeople) {
@@ -474,6 +462,10 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return fundingIds;
     }
 
+    public Set<ResearchProjectFunding> getProjectFunding() {
+        return projectFunding;
+    }
+
     public void addFunding(ResearchProjectFunding funding) {
         projectFunding.add(funding);
     }
@@ -490,87 +482,7 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         return productOrders;
     }
 
-    public void submitToJira() throws IOException {
-        if (jiraTicketKey != null) {
-            return;
-        }
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
 
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
-        List<CustomField> listOfFields = new ArrayList<>();
-
-        if (!sampleCohorts.isEmpty()) {
-            String[] cohortNames = new String[sampleCohorts.size()];
-
-            int i = 0;
-            for (ResearchProjectCohort cohort : sampleCohorts) {
-                cohortNames[i++] = cohort.getCohortId();
-            }
-
-            BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                    cohortList.getCohortListString(cohortNames)));
-        }
-
-        if (!projectFunding.isEmpty()) {
-            List<String> fundingSources = new ArrayList<>();
-            for (ResearchProjectFunding fundingSrc : projectFunding) {
-                fundingSources.add(fundingSrc.getFundingId());
-            }
-
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
-                    StringUtils.join(fundingSources, ',')));
-        }
-
-        if (!irbNumbers.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                    StringUtils.join(getIrbNumbers(), ',')));
-        }
-
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                irbNotEngaged));
-
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
-
-        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-        StringBuilder piList = new StringBuilder();
-        boolean first = true;
-        for (ProjectPerson currPI : findPeopleByType(RoleType.BROAD_PI)) {
-            if (null != bspUserList.getById(currPI.getPersonId())) {
-                if (!first) {
-                    piList.append("\n");
-                }
-                piList.append(bspUserList.getById(currPI.getPersonId()).getFullName());
-                first = false;
-            }
-        }
-
-        if (!piList.toString().isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
-        }
-        if (synopsis != null) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION, synopsis));
-        }
-
-        String username = bspUserList.getById(createdBy).getUsername();
-
-        // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
-        // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
-        JiraIssue issue = jiraService.createIssue(CreateFields.ProjectType.RESEARCH_PROJECTS, username,
-                CreateFields.IssueType.RESEARCH_PROJECT, title, listOfFields);
-        jiraTicketKey = issue.getKey();
-
-        // Update ticket with link back into Mercury
-        AppConfig appConfig = ServiceAccessUtility.getBean(AppConfig.class);
-        CustomField mercuryUrlField = new CustomField(
-                submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                ResearchProjectActionBean.VIEW_ACTION + "&" +
-                ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
-
-        issue.updateIssue(Collections.singleton(mercuryUrlField));
-    }
 
     public String getOriginalTitle() {
         return originalTitle;
@@ -750,29 +662,4 @@ public class ResearchProject implements BusinessObject, Comparable<ResearchProje
         }
     }
 
-    /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
-     * for Research Projects
-     */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
-        //        Sponsoring_Scientist("Sponsoring Scientist"),
-        COHORTS("Cohort(s)"),
-        FUNDING_SOURCE("Funding Source"),
-        IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
-        MERCURY_URL("Mercury URL"),
-        DESCRIPTION("Description"),
-        BROAD_PIS("Broad PI(s)"),;
-        private final String fieldName;
-
-        private RequiredSubmissionFields(String fieldNameIn) {
-            fieldName = fieldNameIn;
-        }
-
-        @Nonnull
-        @Override
-        public String getName() {
-            return fieldName;
-        }
-    }
 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -56,13 +57,14 @@ public class ResearchProjectTestFactory {
      * callers currently does.
      */
     public static ResearchProject createDummyResearchProject(
-            BSPUserList userList, String researchProjectTitle) throws IOException {
+            ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle) throws IOException {
         ResearchProject dummyProject =
                 new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
 
         BspUser user = userList.getById(TEST_CREATOR);
         dummyProject.addPeople(RoleType.PM, Collections.singletonList(user));
-        dummyProject.submitToJira();
+
+        researchProjectEjb.submitToJira(dummyProject);
         return dummyProject;
     }
 }

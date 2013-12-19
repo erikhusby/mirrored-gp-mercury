@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -24,11 +24,11 @@ public class JiraCustomFieldsUtil {
             new String[]{PROTOCOL, WORK_REQUEST_IDS, GSSR_IDS, DESCRIPTION,
                     ProductOrder.JiraField.PRODUCT_FAMILY.getName(),
                     ProductOrder.JiraField.QUOTE_ID.getName(),
-                    ResearchProject.RequiredSubmissionFields.FUNDING_SOURCE.getName(),
-                    ResearchProject.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getName(),
-                    ResearchProject.RequiredSubmissionFields.IRB_IACUC_NUMBER.getName(),
-                    ResearchProject.RequiredSubmissionFields.COHORTS.getName(),
-                    ResearchProject.RequiredSubmissionFields.DESCRIPTION.getName(),
+                    ResearchProjectEjb.RequiredSubmissionFields.FUNDING_SOURCE.getName(),
+                    ResearchProjectEjb.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getName(),
+                    ResearchProjectEjb.RequiredSubmissionFields.IRB_IACUC_NUMBER.getName(),
+                    ResearchProjectEjb.RequiredSubmissionFields.COHORTS.getName(),
+                    ResearchProjectEjb.RequiredSubmissionFields.DESCRIPTION.getName(),
                     LabBatch.TicketFields.PROTOCOL.getName(),
                     LabBatch.TicketFields.WORK_REQUEST_IDS.getName(),
                     LabBatch.TicketFields.POOLING_STATUS.getName(),

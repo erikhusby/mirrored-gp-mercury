@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -64,7 +65,7 @@ import java.util.Set;
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
-public class ProductOrder implements BusinessObject, Serializable {
+public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
     private static final String DRAFT_PREFIX = "Draft-";
@@ -609,6 +610,7 @@ public class ProductOrder implements BusinessObject, Serializable {
      *
      * @return a {@link String} that represents the unique Jira Ticket key.
      */
+    @Override
     public String getJiraTicketKey() {
         return jiraTicketKey;
     }

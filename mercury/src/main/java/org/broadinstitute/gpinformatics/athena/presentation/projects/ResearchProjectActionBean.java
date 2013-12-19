@@ -16,6 +16,7 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -131,6 +132,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    ResearchProjectEjb researchProjectEjb;
 
     private String irbList = "";
 
@@ -264,11 +268,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Resolution save() throws Exception {
         populateTokenListFields();
-
+        String createOrUpdate="creating";
         try {
-            editResearchProject.submitToJira();
+            if (!StringUtils.isBlank(editResearchProject.getJiraTicketKey())) {
+                createOrUpdate="update";
+                researchProjectEjb.updateJiraIssue(editResearchProject);
+            } else {
+                researchProjectEjb.submitToJira(editResearchProject);
+            }
         } catch (Exception ex) {
-            addGlobalValidationError("Error creating JIRA ticket for research project");
+            addGlobalValidationError("Error " + createOrUpdate + " JIRA ticket for research project");
             return new ForwardResolution(getContext().getSourcePage());
         }
 

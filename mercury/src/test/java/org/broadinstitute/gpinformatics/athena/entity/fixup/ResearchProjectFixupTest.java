@@ -2,12 +2,12 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.analysis.ReferenceSequence;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
@@ -27,6 +26,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Set @Test(enabled=false) after running once.
  */
 public class ResearchProjectFixupTest extends Arquillian {
+    @Inject
+    private ResearchProjectEjb researchProjectEjb;
 
     @Inject
     private ResearchProjectDao rpDao;
@@ -82,7 +83,7 @@ public class ResearchProjectFixupTest extends Arquillian {
         for (ResearchProject rp : rpList) {
             if (StringUtils.isBlank(rp.getJiraTicketKey())) {
                 try {
-                    rp.submitToJira();
+                    researchProjectEjb.submitToJira(rp);
                     rpListToPersist.add(rp);
                 } catch (Exception e) {
                     count++;
