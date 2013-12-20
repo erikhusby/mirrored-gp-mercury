@@ -67,6 +67,7 @@
                     <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                         <li>
                             <stripes:link
+                                    id="createProduct"
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
                                     tabindex="=1" event="create">Create</stripes:link>
                         </li>
