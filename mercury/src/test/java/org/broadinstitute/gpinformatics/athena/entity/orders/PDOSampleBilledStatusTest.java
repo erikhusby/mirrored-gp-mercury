@@ -1,0 +1,63 @@
+package org.broadinstitute.gpinformatics.athena.entity.orders;
+
+
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.text.MessageFormat;
+import java.util.Date;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+
+@Test(groups = TestGroups.DATABASE_FREE)
+public class PDOSampleBilledStatusTest {
+
+    private PriceItem primaryPriceItem = new PriceItem("1","Genomics Platform","Super Awesome Genomic Doodad","Misc");
+
+    private PriceItem notPrimaryPriceItem = new PriceItem("2","Burrito Making Platform","Chicken Burrito","Misc");
+
+    private ProductOrderSample pdoSample;
+
+    @BeforeMethod
+    public void setUp() {
+        pdoSample = new ProductOrderSample("A Sample");
+        ProductOrder pdo = new ProductOrder();
+        pdo.setProduct(new Product());
+        pdo.addSample(pdoSample);
+        pdo.getProduct().setPrimaryPriceItem(primaryPriceItem);
+        pdoSample.addLedgerItem(new Date(System.currentTimeMillis()), primaryPriceItem,3d);
+
+        BillingSession billingSession = new BillingSession(3L,pdoSample.getLedgerItems());
+        billingSession.setBilledDate(new Date(System.currentTimeMillis()));
+        pdoSample.getLedgerItems().iterator().next().setBillingSession(billingSession);
+    }
+
+    private void setBilledPriceItem(PriceItem priceItem) {
+        if (pdoSample.getLedgerItems().size() != 1) {
+            Assert.fail("This test is only setup to run with a single ledger item.");
+        }
+        pdoSample.getLedgerItems().iterator().next().setPriceItem(priceItem);
+    }
+
+    public void testPrimaryPriceItemIsBilled() {
+        // setup the billing session so its price item matches the primary price item
+        setBilledPriceItem(primaryPriceItem);
+        String message = MessageFormat
+                .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
+        assertThat(message,pdoSample.hasPrimaryPriceItemBeenBilled());
+    }
+
+    public void testNonPrimaryPriceItemIsBilled() {
+        // setup the billing session so that its price item is *not* the primary price item
+        setBilledPriceItem(notPrimaryPriceItem);
+        String message = MessageFormat
+                .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
+        assertThat(message,!pdoSample.hasPrimaryPriceItemBeenBilled());
+    }
+
+}
