@@ -376,25 +376,7 @@ public class ProductOrderResource {
         // todo arz actual implementation
     }
 
-    @DaoFree
-    public PDOSamplePairs convertToOutput(PDOSamplePairs requestedPdoSamplePairs, List<ProductOrderSample> pdoSamples) {
-        PDOSamplePairs pdoSamplePairsResults = new PDOSamplePairs();
-        for (PDOSamplePair requestedPdoSamplePair : requestedPdoSamplePairs.getPdoSamplePairs()) {
-            boolean foundIt = true;
-            String requestedPdoKey = requestedPdoSamplePair.getPdoKey();
-            String requestedSampleName = requestedPdoSamplePair.getSampleName();
-            for (ProductOrderSample pdoSample : pdoSamples) {
-                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
-                    pdoSamplePairsResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,pdoSample.hasPrimaryPriceItemBeenBilled());
-                }
-            }
-            if (!foundIt) {
-                String errorMessage = MessageFormat.format("Could not find sample {0} in PDO {1}.",requestedSampleName,requestedPdoKey);
-                pdoSamplePairsResults.addError(errorMessage);
-            }
-        }
-        return pdoSamplePairsResults;
-    }
+
 
 
 }

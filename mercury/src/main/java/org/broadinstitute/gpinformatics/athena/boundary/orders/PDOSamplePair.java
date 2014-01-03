@@ -6,16 +6,17 @@ public class PDOSamplePair {
 
     public PDOSamplePair() {}
 
-    public PDOSamplePair(String pdoKey,String sampleName) {
+    public PDOSamplePair(String pdoKey,String sampleName,Boolean hasPrimaryPriceItemBeenBilled) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
+        this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
     }
 
     private String pdoKey;
 
     private String sampleName;
 
-    private boolean hasPrimaryPriceItemBeenBilled;
+    private Boolean hasPrimaryPriceItemBeenBilled;
 
     public String getPdoKey() {
         return pdoKey;
@@ -33,11 +34,11 @@ public class PDOSamplePair {
         this.sampleName = sampleName;
     }
 
-    public boolean isHasPrimaryPriceItemBeenBilled() {
+    public Boolean isHasPrimaryPriceItemBeenBilled() {
         return hasPrimaryPriceItemBeenBilled;
     }
 
-    public void setHasPrimaryPriceItemBeenBilled(boolean hasPrimaryPriceItemBeenBilled) {
+    public void setHasPrimaryPriceItemBeenBilled(Boolean hasPrimaryPriceItemBeenBilled) {
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
     }
 

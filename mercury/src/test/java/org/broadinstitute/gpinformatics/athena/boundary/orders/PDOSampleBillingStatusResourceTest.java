@@ -64,7 +64,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         // check the base url for 0.0.0.0 or localhost
         // set  -Darquillian.server somewhere, see if that works
         List<PDOSamplePair> pdoSamplesList = new ArrayList<>();
-        pdoSamplesList.add(new PDOSamplePair("PDO-123", "SM-456"));
+        pdoSamplesList.add(new PDOSamplePair("PDO-123", "SM-456",null));
         PDOSamplePairs pdoSamplePairs = new PDOSamplePairs();
         pdoSamplePairs.setPdoSamplePairs(pdoSamplesList);
 
