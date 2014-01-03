@@ -364,4 +364,15 @@ public class ProductOrderResource {
 
         return new ProductOrders(productOrderDataList);
     }
+
+    @POST
+    @Path("pdoSampleBillingStatus")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PDOSamplePairs getPdoSampleBillingStatus(PDOSamplePairs pdoSamplePairs) {
+        throw new RuntimeException("Not implemented");
+        // todo arz actual implementation
+    }
+
+
 }
