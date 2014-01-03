@@ -52,7 +52,6 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testPDOSampleBilling(@ArquillianResource URL baseUrl) throws Exception {
-        // todo arz check the base url for 0.0.0.0 or localhost
         List<PDOSamplePair> pdoSamplesList = new ArrayList<>();
         PDOSamplePair pdoSample1 = new PDOSamplePair("PDO-872", "SM-47KKU",null);
         PDOSamplePair pdoSample2 = new PDOSamplePair("PDO-1133","0113404606",null);
@@ -64,10 +63,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         PDOSamplePairs pdoSamplePairs = new PDOSamplePairs();
         pdoSamplePairs.setPdoSamplePairs(pdoSamplesList);
 
-        // todo arz figure out why 0.0.0.0 barfs
-        URL fixedUrl = new URL(baseUrl.getProtocol(),"127.0.0.1",baseUrl.getPort(),baseUrl.getFile());
-
-        PDOSamplePairs returnedPdoSamples = makeWebResource(fixedUrl,"pdoSampleBillingStatus")
+        PDOSamplePairs returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamplePairs)
