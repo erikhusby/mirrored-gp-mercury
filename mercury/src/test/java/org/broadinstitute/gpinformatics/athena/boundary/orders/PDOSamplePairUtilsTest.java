@@ -8,16 +8,17 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class PDOSamplePairQueryResultConverterTest {
+public class PDOSamplePairUtilsTest {
 
     String sample1 = "123.0";
     String sample2 = "SM-123";
     String pdoKey = "PDO-123";
+    String pdoKey2 = "PDO-555";
 
     private List<ProductOrderSample> pdoSamples;
 
@@ -45,7 +46,8 @@ public class PDOSamplePairQueryResultConverterTest {
     }
 
     public void testAllSamplesAreFound() {
-        PDOSamplePairs pdoSamplePairsResult = PDOSamplePairQueryResultConverter.buildOutputPDOSamplePairsFromInputAndQueryResults(samplePairs,pdoSamples);
+        PDOSamplePairs pdoSamplePairsResult = PDOSamplePairUtils
+                .buildOutputPDOSamplePairsFromInputAndQueryResults(samplePairs, pdoSamples);
         Assert.assertEquals(pdoSamplePairsResult.getPdoSamplePairs().size(),2);
         Assert.assertTrue(pdoSamplePairsResult.getErrors().isEmpty());
         for (ProductOrderSample pdoSample : pdoSamples) {
@@ -66,11 +68,24 @@ public class PDOSamplePairQueryResultConverterTest {
     public void testSomeSamplesAreNotFound() {
         samplePairs.addPdoSamplePair("PDO-NOTFOUND","SM-NOTTHERE",null);
 
-        PDOSamplePairs pdoSamplePairsResult = PDOSamplePairQueryResultConverter.buildOutputPDOSamplePairsFromInputAndQueryResults(samplePairs,pdoSamples);
+        PDOSamplePairs pdoSamplePairsResult = PDOSamplePairUtils
+                .buildOutputPDOSamplePairsFromInputAndQueryResults(samplePairs, pdoSamples);
         Assert.assertEquals(pdoSamplePairsResult.getPdoSamplePairs().size(),3);
         Assert.assertEquals(pdoSamplePairsResult.getErrors().size(), 1);
         for (ProductOrderSample pdoSample : pdoSamples) {
             Assert.assertTrue(doesPdoSamplePairContainSample(pdoSamplePairsResult,pdoSample.getName()));
          }
+    }
+
+    public void testListToMapConversion() {
+        samplePairs.addPdoSamplePair(pdoKey2,sample1,null);
+        Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(samplePairs);
+        Assert.assertEquals(pdoToSamples.keySet().size(),2);
+        Assert.assertTrue(pdoToSamples.containsKey(pdoKey));
+        Assert.assertEquals(pdoToSamples.get(pdoKey).size(),2);
+        Assert.assertEquals(pdoToSamples.get(pdoKey2).size(),1);
+        Assert.assertTrue(pdoToSamples.get(pdoKey2).contains(sample1));
+        Assert.assertTrue(pdoToSamples.get(pdoKey).contains(sample1));
+        Assert.assertTrue(pdoToSamples.get(pdoKey).contains(sample2));
     }
 }

@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -44,8 +45,11 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Restful webservice to list and create product orders.
@@ -78,6 +82,9 @@ public class ProductOrderResource {
 
     @Inject
     private LabVesselFactory labVesselFactory;
+
+    @Inject
+    private ProductOrderSampleDao pdoSampleDao;
 
     /**
      * Return the information on the newly created {@link ProductOrder} that has Draft status.
@@ -372,9 +379,17 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PDOSamplePairs getPdoSampleBillingStatus(PDOSamplePairs pdoSamplePairs) {
-        throw new RuntimeException("Not implemented");
-        // todo arz actual implementation
+        List<ProductOrderSample> allPdoSamples = new ArrayList<>();
+        Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(pdoSamplePairs);
+        for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
+            String pdoKey = pdoKeyToSamplesList.getKey();
+            Set<String> sampleNames = pdoKeyToSamplesList.getValue();
+            List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
+            allPdoSamples.addAll(pdoSamples);
+        }
+        return PDOSamplePairUtils.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplePairs,allPdoSamples);
     }
+
 
 
 

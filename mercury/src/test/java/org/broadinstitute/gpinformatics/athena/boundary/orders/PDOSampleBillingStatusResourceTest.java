@@ -61,8 +61,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testPDOSampleBilling(@ArquillianResource URL baseUrl) throws Exception {
-        // check the base url for 0.0.0.0 or localhost
-        // set  -Darquillian.server somewhere, see if that works
+        // todo arz check the base url for 0.0.0.0 or localhost
         List<PDOSamplePair> pdoSamplesList = new ArrayList<>();
         pdoSamplesList.add(new PDOSamplePair("PDO-123", "SM-456",null));
         PDOSamplePairs pdoSamplePairs = new PDOSamplePairs();

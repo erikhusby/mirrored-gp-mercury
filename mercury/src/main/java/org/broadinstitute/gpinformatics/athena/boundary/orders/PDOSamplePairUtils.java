@@ -3,16 +3,16 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 
+import javax.annotation.Nonnull;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Takes the requested pdo sample pairs and database
- * query results and creates a new pdo sample pair
- * object that can be returned to the web client
- * @see org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderResource#getPdoSampleBillingStatus(PDOSamplePairs)
- */
-public class PDOSamplePairQueryResultConverter {
+public class PDOSamplePairUtils {
 
     /**
      * Lines up the PDOSamplePairs passed in
@@ -49,5 +49,25 @@ public class PDOSamplePairQueryResultConverter {
             }
         }
         return pdoSamplePairsResults;
+    }
+
+    /**
+     * Converts the list of pdo/sample tuples to a map
+     * where the key is the PDO key and the value is
+     * a list of sample names for that PDO.
+     * @param pdoSamplePairs
+     * @return
+     */
+    @DaoFree
+    public static Map<String,Set<String>> convertPdoSamplePairsListToMap(@Nonnull PDOSamplePairs pdoSamplePairs) {
+        Map<String,Set<String>> pdoToSamples = new HashMap<>();
+        for (PDOSamplePair pdoSamplePair : pdoSamplePairs.getPdoSamplePairs()) {
+            String pdoKey = pdoSamplePair.getPdoKey();
+            if (!pdoToSamples.containsKey(pdoKey)) {
+                pdoToSamples.put(pdoSamplePair.getPdoKey(),new HashSet<String>());
+            }
+            pdoToSamples.get(pdoKey).add(pdoSamplePair.getSampleName());
+        }
+        return pdoToSamples;
     }
 }
