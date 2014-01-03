@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
@@ -31,8 +32,28 @@ import java.util.Set;
 public class ProductOrderSampleDao extends GenericDao {
 
     /**
+     * For the given PDO, finds the PDO samples
+     * with the given sample names.
+     */
+    public List<ProductOrderSample> findByOrderKeyAndSampleNames(@Nonnull String pdoKey, @Nonnull Set sampleNames) {
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrderSample> criteriaQuery =
+                criteriaBuilder.createQuery(ProductOrderSample.class);
+        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+
+        criteriaQuery.where(criteriaBuilder.equal(productOrderSampleRoot.join(ProductOrderSample_.productOrder).get(ProductOrder_.jiraTicketKey),pdoKey),
+                            productOrderSampleRoot.get(ProductOrderSample_.sampleName).in(sampleNames));
+        try {
+            return entityManager.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
+    /**
      * Find by ProductOrder and sample name.
-     *
      * @param productOrder ProductOrder.
      * @param sampleName Name of sample.
      * @return The matching ProductOrderSample.
@@ -68,9 +89,6 @@ public class ProductOrderSampleDao extends GenericDao {
 
     /**
      * For a list of sample names, return corresponding ProductOrderSamples
-     *
-     *
-     *
      * @param sampleNames list of sample names
      * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
      * the key.
