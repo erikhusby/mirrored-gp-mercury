@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -39,6 +40,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -372,6 +374,26 @@ public class ProductOrderResource {
     public PDOSamplePairs getPdoSampleBillingStatus(PDOSamplePairs pdoSamplePairs) {
         throw new RuntimeException("Not implemented");
         // todo arz actual implementation
+    }
+
+    @DaoFree
+    public PDOSamplePairs convertToOutput(PDOSamplePairs requestedPdoSamplePairs, List<ProductOrderSample> pdoSamples) {
+        PDOSamplePairs pdoSamplePairsResults = new PDOSamplePairs();
+        for (PDOSamplePair requestedPdoSamplePair : requestedPdoSamplePairs.getPdoSamplePairs()) {
+            boolean foundIt = true;
+            String requestedPdoKey = requestedPdoSamplePair.getPdoKey();
+            String requestedSampleName = requestedPdoSamplePair.getSampleName();
+            for (ProductOrderSample pdoSample : pdoSamples) {
+                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
+                    pdoSamplePairsResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,pdoSample.hasPrimaryPriceItemBeenBilled());
+                }
+            }
+            if (!foundIt) {
+                String errorMessage = MessageFormat.format("Could not find sample {0} in PDO {1}.",requestedSampleName,requestedPdoKey);
+                pdoSamplePairsResults.addError(errorMessage);
+            }
+        }
+        return pdoSamplePairsResults;
     }
 
 
