@@ -34,6 +34,7 @@ public class PDOSamplePair {
         this.sampleName = sampleName;
     }
 
+    // todo arz figure out how to make this named right and still be bean compliant
     public Boolean isHasPrimaryPriceItemBeenBilled() {
         return hasPrimaryPriceItemBeenBilled;
     }
