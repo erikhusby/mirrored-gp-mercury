@@ -379,15 +379,24 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public PDOSamplePairs getPdoSampleBillingStatus(PDOSamplePairs pdoSamplePairs) {
-        List<ProductOrderSample> allPdoSamples = new ArrayList<>();
-        Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(pdoSamplePairs);
-        for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
-            String pdoKey = pdoKeyToSamplesList.getKey();
-            Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-            List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
-            allPdoSamples.addAll(pdoSamples);
+        PDOSamplePairs pdoSamplePairsResult = new PDOSamplePairs();
+        try {
+            List<ProductOrderSample> allPdoSamples = new ArrayList<>();
+            Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(pdoSamplePairs);
+            for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
+                String pdoKey = pdoKeyToSamplesList.getKey();
+                Set<String> sampleNames = pdoKeyToSamplesList.getValue();
+                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
+                allPdoSamples.addAll(pdoSamples);
+            }
+            pdoSamplePairsResult = PDOSamplePairUtils.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplePairs,allPdoSamples);
         }
-        return PDOSamplePairUtils.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplePairs,allPdoSamples);
+        catch(Throwable t) {
+            log.error("Failed to return PDO/Sample billing information.",t);
+            pdoSamplePairsResult.addError(t.getMessage());
+        }
+        // todo arz write integration test with chaos monkey pdoSampleDao injected, verify try/catch error
+        return pdoSamplePairsResult;
     }
 
 
