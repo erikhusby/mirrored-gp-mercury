@@ -77,6 +77,28 @@ public class PDOSamplePairUtilsTest {
          }
     }
 
+    /**
+     * This test covers the "double coverage" scenario where
+     * we have the same sample in a PDO more than once.  In that
+     * situation, we want to make sure that we return
+     * both pdo/sample pairs.
+     */
+    public void testSameSampleInPdoMoreThanOnce() {
+        ProductOrderSample duplicatePDOSample = pdoSamples.iterator().next();
+        pdoSamples.add(duplicatePDOSample);
+        PDOSamplePairs pdoSamplePairsResult = PDOSamplePairUtils
+                .buildOutputPDOSamplePairsFromInputAndQueryResults(samplePairs, pdoSamples);
+        Assert.assertEquals(pdoSamplePairsResult.getPdoSamplePairs().size(),3);
+
+        int numOccurrences = 0;
+        for (PDOSamplePair pdoSamplePair : pdoSamplePairsResult.getPdoSamplePairs()) {
+            if (pdoSamplePair.getSampleName().equals(duplicatePDOSample.getName()) && pdoSamplePair.getPdoKey().equals(duplicatePDOSample.getProductOrder().getBusinessKey())) {
+                numOccurrences++;
+            }
+        }
+        Assert.assertEquals(numOccurrences,2,"PDOs that have the same sample multiple times are not accounted for properly.");
+    }
+
     public void testListToMapConversion() {
         samplePairs.addPdoSamplePair(pdoKey2,sample1,null);
         Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(samplePairs);
