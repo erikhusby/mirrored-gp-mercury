@@ -395,7 +395,6 @@ public class ProductOrderResource {
             log.error("Failed to return PDO/Sample billing information.",t);
             pdoSamplePairsResult.addError(t.getMessage());
         }
-        // todo arz write integration test with chaos monkey pdoSampleDao injected, verify try/catch error
         return pdoSamplePairsResult;
     }
 

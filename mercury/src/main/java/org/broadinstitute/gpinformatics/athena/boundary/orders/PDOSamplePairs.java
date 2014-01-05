@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement
-// todo arz docs
+
+/**
+ * Simple bean class used for looking up pdo/sample
+ * billing information via WS.
+ */
 public class PDOSamplePairs {
 
     private List<PDOSamplePair> pdoSamplePairs = new ArrayList<>();
