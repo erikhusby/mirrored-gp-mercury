@@ -276,12 +276,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         modifiedDate = new Date();
     }
 
-    /**
-     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Research project is associated
-     *
-     * @return a {@link String} that represents the unique Jira Ticket key
-     */
     @Override
     public String getJiraTicketKey() {
         return this.jiraTicketKey;
@@ -322,7 +316,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
         return cohorts;
     }
-
 
     public void addCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.add(sampleCohort);
@@ -642,6 +635,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
                 child.collectAccessibleByUser(userId, accessibleProjects);
             }
         }
+    }
+
+    /**
+     * Test if this Project is saved in Jira. It has been persisted to Jira if it has a jiraTicketKey.
+     * @return true if it has a jiraTicketKey.
+     */
+    public boolean isSavedInJira() {
+        return !StringUtils.isBlank(getJiraTicketKey());
     }
 
     public enum Status implements StatusType {

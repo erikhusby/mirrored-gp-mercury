@@ -70,70 +70,61 @@ public class ResearchProjectEjb {
     }
 
     public void submitToJira(@Nonnull ResearchProject researchProject) throws IOException {
-        if (researchProject.getJiraTicketKey() != null) {
-            return;
-        }
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+        if (researchProject.isSavedInJira()) {
+            updateJiraIssue(researchProject);
+        } else {
+            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<>();
+            List<CustomField> listOfFields = new ArrayList<>();
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                cohortList.getCohortListString(researchProject.getCohortIds())));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
+                    cohortList.getCohortListString(researchProject.getCohortIds())));
 
-        List<String> fundingSources = new ArrayList<>();
-        for (ResearchProjectFunding fundingSrc : researchProject.getProjectFunding()) {
-            fundingSources.add(fundingSrc.getFundingId());
-        }
+            List<String> fundingSources = new ArrayList<>();
+            for (ResearchProjectFunding fundingSrc : researchProject.getProjectFunding()) {
+                fundingSources.add(fundingSrc.getFundingId());
+            }
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
-                StringUtils.join(fundingSources, ',')));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
+                    StringUtils.join(fundingSources, ',')));
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
                     StringUtils.join(researchProject.getIrbNumbers(), ',')));
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                researchProject.getIrbNotEngaged()));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
+                    researchProject.getIrbNotEngaged()));
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
-        StringBuilder piList = new StringBuilder();
-        boolean first = true;
-        for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
-            BspUser bspUser = userList.getById(currPI.getPersonId());
-            if (bspUser != null) {
-                if (!first) {
-                    piList.append("\n");
-                }
-                piList.append(bspUser.getFullName());
-                first = false;
+
+            String piNames = buildProjectPiJiraString(researchProject);
+            if (!StringUtils.isBlank(piNames)) {
+                listOfFields
+                        .add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piNames));
             }
+            if (researchProject.getSynopsis() != null) {
+                listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION,
+                        researchProject.getSynopsis()));
+            }
+
+            String username = userList.getById(researchProject.getCreatedBy()).getUsername();
+
+            // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
+            // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
+            JiraIssue issue = jiraService.createIssue(CreateFields.ProjectType.RESEARCH_PROJECTS, username,
+                    CreateFields.IssueType.RESEARCH_PROJECT, researchProject.getTitle(), listOfFields);
+            researchProject.setJiraTicketKey(issue.getKey());
+
+            // Update ticket with link back into Mercury
+            CustomField mercuryUrlField = new CustomField(
+                    submissionFields, RequiredSubmissionFields.MERCURY_URL,
+                    appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
+                    ResearchProjectActionBean.VIEW_ACTION + "&" +
+                    ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + issue.getKey());
+
+            issue.updateIssue(Collections.singleton(mercuryUrlField));
         }
-
-        if (!piList.toString().isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
-        }
-        if (researchProject.getSynopsis() != null) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION, researchProject.getSynopsis()));
-        }
-
-        String username = userList.getById(researchProject.getCreatedBy()).getUsername();
-
-        // Create the jira ticket and then assign the key right away because whatever else happens, this jira ticket
-        // IS created. If callers want to respond to errors, they can check for the key and decide what to do.
-        JiraIssue issue = jiraService.createIssue(CreateFields.ProjectType.RESEARCH_PROJECTS, username,
-                CreateFields.IssueType.RESEARCH_PROJECT, researchProject.getTitle(), listOfFields);
-        researchProject.setJiraTicketKey(issue.getKey());
-
-        // Update ticket with link back into Mercury
-        CustomField mercuryUrlField = new CustomField(
-                submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                appConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
-                ResearchProjectActionBean.VIEW_ACTION + "&" +
-                ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + issue.getKey());
-
-        issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
-
 
     public void updateJiraIssue(@Nonnull ResearchProject researchProject) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(researchProject.getJiraTicketKey(),
@@ -160,27 +151,9 @@ public class ResearchProjectEjb {
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
                         researchProject.getIrbNotEngaged()));
 
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                        researchProject.getIrbNotEngaged()));
-
-        StringBuilder piList = new StringBuilder();
-        boolean first = true;
-        for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
-            BspUser bspUser = userList.getById(currPI.getPersonId());
-            if (bspUser != null) {
-                if (!first) {
-                    piList.append("\n");
-                }
-                piList.append(bspUser.getFullName());
-                first = false;
-            }
-        }
-
-        if (!piList.toString().isEmpty()) {
-            researchProjectUpdateFields
-                    .add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS,
-                            piList.toString()));
+        String piNames = buildProjectPiJiraString(researchProject);
+        if (!StringUtils.isBlank(piNames)) {
+            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
         }
 
         String[] customFieldNames = new String[researchProjectUpdateFields.size()];
@@ -221,6 +194,20 @@ public class ResearchProjectEjb {
                          + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(researchProject.getJiraTicketKey(), transition, customFields, comment);
+    }
+
+    /**
+     * @return a String of PI's in project to send to Jira.
+     */
+    private String buildProjectPiJiraString(ResearchProject researchProject) {
+        List<String> piNameList = new ArrayList<>();
+        for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
+            BspUser bspUser = userList.getById(currPI.getPersonId());
+            if (bspUser != null) {
+                piNameList.add(bspUser.getFullName());
+            }
+        }
+        return StringUtils.join(piNameList, '\n');
     }
 
     /**

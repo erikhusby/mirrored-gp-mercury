@@ -269,13 +269,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
         String createOrUpdate = "creating";
+        if (editResearchProject.isSavedInJira()) {
+            createOrUpdate = "updating";
+        }
         try {
-            if (!StringUtils.isBlank(editResearchProject.getJiraTicketKey())) {
-                createOrUpdate = "update";
-                researchProjectEjb.updateJiraIssue(editResearchProject);
-            } else {
-                researchProjectEjb.submitToJira(editResearchProject);
-            }
+            researchProjectEjb.submitToJira(editResearchProject);
         } catch (Exception ex) {
             addGlobalValidationError("Error " + createOrUpdate + " JIRA ticket for research project");
             return new ForwardResolution(getContext().getSourcePage());

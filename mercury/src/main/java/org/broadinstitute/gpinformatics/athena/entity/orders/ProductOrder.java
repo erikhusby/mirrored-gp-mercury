@@ -608,12 +608,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
-    /**
-     * Allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Product ProductOrder is associated.
-     *
-     * @return a {@link String} that represents the unique Jira Ticket key.
-     */
     @Override
     public String getJiraTicketKey() {
         return jiraTicketKey;
