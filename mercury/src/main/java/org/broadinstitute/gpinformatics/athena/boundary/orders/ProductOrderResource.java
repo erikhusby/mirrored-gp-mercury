@@ -391,15 +391,14 @@ public class ProductOrderResource {
         PDOSamples pdoSamplesResult = new PDOSamples();
         try {
             List<ProductOrderSample> allPdoSamples = new ArrayList<>();
-            Map<String,Set<String>> pdoToSamples = PDOSampleUtils.convertPdoSamplePairsListToMap(pdoSamplePairs);
+            Map<String,Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
             for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
                 String pdoKey = pdoKeyToSamplesList.getKey();
                 Set<String> sampleNames = pdoKeyToSamplesList.getValue();
                 List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
                 allPdoSamples.addAll(pdoSamples);
             }
-            pdoSamplesResult = PDOSampleUtils
-                    .buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplePairs, allPdoSamples);
+            pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
         }
         catch(Throwable t) {
             log.error("Failed to return PDO/Sample billing information.",t);

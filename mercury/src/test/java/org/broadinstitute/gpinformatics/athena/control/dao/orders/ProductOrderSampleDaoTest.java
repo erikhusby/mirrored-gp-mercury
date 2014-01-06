@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
 @Test(enabled = true)
 public class ProductOrderSampleDaoTest extends ContainerTest {
 
@@ -91,7 +92,6 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
-        pdoSampleDao.clear();
 
         Set<String> sampleNamesSubset = new HashSet<>();
         sampleNamesSubset.add(sampleNames[0]);
@@ -102,9 +102,13 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         Assert.assertNotNull(pdoSamplesFromDb);
         Assert.assertEquals(pdoSamplesFromDb.size(), sampleNamesSubset.size());
 
+        List<String> returnedSampleNames = new ArrayList<>();
         for (ProductOrderSample productOrderSample : pdoSamplesFromDb) {
             Assert.assertFalse(sampleNames[1].equals(productOrderSample.getName()));  // our PDO has 3 samples, but we only queried for two of them
             Assert.assertEquals(productOrderSample.getProductOrder().getBusinessKey(),order.getBusinessKey());
+            returnedSampleNames.add(productOrderSample.getName());
         }
+
+        Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
     }
 }
