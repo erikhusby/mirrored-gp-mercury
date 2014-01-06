@@ -35,38 +35,38 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testPDOSampleBilling(@ArquillianResource URL baseUrl) throws Exception {
-        List<PDOSamplePair> pdoSamplesList = new ArrayList<>();
-        PDOSamplePair pdoSample1 = new PDOSamplePair("PDO-872", "SM-47KKU",null);
-        PDOSamplePair pdoSample2 = new PDOSamplePair("PDO-1133","0113404606",null);
-        PDOSamplePair pdoSample3 = new PDOSamplePair("PDO-ONE_BILLION","DooDoo",null);
+        List<PDOSample> pdoSamplesList = new ArrayList<>();
+        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU",null);
+        PDOSample pdoSample2 = new PDOSample("PDO-1133","0113404606",null);
+        PDOSample pdoSample3 = new PDOSample("PDO-ONE_BILLION","DooDoo",null);
         pdoSamplesList.add(pdoSample1);
         pdoSamplesList.add(pdoSample2);
         pdoSamplesList.add(pdoSample3);
 
-        PDOSamplePairs pdoSamplePairs = new PDOSamplePairs();
-        pdoSamplePairs.setPdoSamplePairs(pdoSamplesList);
+        PDOSamples pdoSamples = new PDOSamples();
+        pdoSamples.setPdoSamples(pdoSamplesList);
 
-        PDOSamplePairs returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .entity(pdoSamplePairs)
-                .post(PDOSamplePairs.class);
+                .entity(pdoSamples)
+                .post(PDOSamples.class);
 
         boolean foundPdoSample1 = false;
         boolean foundPdoSample2 = false;
         boolean foundPdoSample3 = false;
-        for (PDOSamplePair pdoSamplePair : returnedPdoSamples.getPdoSamplePairs()) {
-            if (pdoSamplePair.getSampleName().equals(pdoSample1.getSampleName())) {
+        for (PDOSample pdoSample : returnedPdoSamples.getPdoSamples()) {
+            if (pdoSample.getSampleName().equals(pdoSample1.getSampleName())) {
                 foundPdoSample1 = true;
-                Assert.assertTrue(pdoSamplePair.isHasPrimaryPriceItemBeenBilled());
+                Assert.assertTrue(pdoSample.isHasPrimaryPriceItemBeenBilled());
             }
-            if (pdoSamplePair.getSampleName().equals(pdoSample2.getSampleName())) {
+            if (pdoSample.getSampleName().equals(pdoSample2.getSampleName())) {
                 foundPdoSample2 = true;
-                Assert.assertFalse(pdoSamplePair.isHasPrimaryPriceItemBeenBilled());
+                Assert.assertFalse(pdoSample.isHasPrimaryPriceItemBeenBilled());
             }
-            if (pdoSamplePair.getSampleName().equals(pdoSample3.getSampleName())) {
+            if (pdoSample.getSampleName().equals(pdoSample3.getSampleName())) {
                 foundPdoSample3 = true;
-                Assert.assertNull(pdoSamplePair.isHasPrimaryPriceItemBeenBilled());
+                Assert.assertNull(pdoSample.isHasPrimaryPriceItemBeenBilled());
             }
         }
 
