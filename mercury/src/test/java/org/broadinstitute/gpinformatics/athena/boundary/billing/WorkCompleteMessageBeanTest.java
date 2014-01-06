@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
@@ -62,7 +63,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // NOTE: To run locally, you must change this to DEV.  Make sure you change it back before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -104,7 +105,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * This test doesn't actually connect to the JMS queue.  The test hands the message directly
      * to the MDB handler method.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessage() throws Exception {
         deliverMessage();
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
@@ -118,6 +119,13 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
             }
         }
         Assert.assertTrue(found, "Should find our message in message queue");
+
+        List<WorkCompleteMessage>
+                foundMessages = workCompleteMessageDao.findByPDOAndAliquot(TEST_PDO_NAME, TEST_ALIQUOT_ID);
+        Assert.assertEquals(foundMessages.size(), 1);
+        WorkCompleteMessage foundMessage = foundMessages.get(0);
+        Assert.assertEquals(foundMessage.getPdoName(), TEST_PDO_NAME);
+        Assert.assertEquals(foundMessage.getAliquotId(), TEST_ALIQUOT_ID);
     }
 
     // TODO: expand to test creating ledger entries from message
@@ -169,7 +177,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      */
     public void deliverMessage() throws JMSException {
         WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
-        workCompleteMessageBean.onMessage(createMessage(createSession()));
+        workCompleteMessageBean.processMessage(createMessage(createSession()));
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();
     }

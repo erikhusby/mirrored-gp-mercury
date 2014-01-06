@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.Date;
 import java.util.List;
 
@@ -29,5 +31,17 @@ public class WorkCompleteMessageDao extends GenericDao {
     public void markMessageProcessed(WorkCompleteMessage message) {
         // If the process date is non-null, then it's been processed.
         message.setProcessDate(new Date());
+    }
+
+    public List<WorkCompleteMessage> findByPDOAndAliquot(final String pdoId, final String aliquotId) {
+        return findAll(WorkCompleteMessage.class, new GenericDaoCallback<WorkCompleteMessage>() {
+            @Override
+            public void callback(CriteriaQuery<WorkCompleteMessage> criteriaQuery, Root<WorkCompleteMessage> root) {
+                criteriaQuery.where(
+                        getCriteriaBuilder().equal(root.get(WorkCompleteMessage_.pdoName), pdoId),
+                        getCriteriaBuilder().equal(root.get(WorkCompleteMessage_.aliquotId), aliquotId)
+                );
+            }
+        });
     }
 }
