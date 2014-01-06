@@ -24,8 +24,8 @@ import java.util.Map;
 
 public class UpdateField<PROJECT_TYPE extends JiraProject> {
     private final Object newValue;
-    private final String UPDATE_FIELD_NAME = "name";
-    private final String UPDATE_FIELD_VALUE = "value";
+    private final static String UPDATE_FIELD_NAME = "name";
+    private final static String UPDATE_FIELD_VALUE = "value";
 
     /**
      * True if the field being updated is a 'bulk' item.  This means that it should be shown as plural in the

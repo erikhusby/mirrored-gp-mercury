@@ -97,7 +97,7 @@ function setupDialogs() {
                 click: function () {
                     $j(this).dialog("close");
                     $j("#riskOkButton").attr("disabled", "disabled");
-                    $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
+                    $j("#riskStatus").attr("value", $j("#onRiskDialogId").is(':checked'));
                     $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
                     $j("#orderForm").submit();
