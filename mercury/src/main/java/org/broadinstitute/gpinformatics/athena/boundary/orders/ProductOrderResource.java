@@ -371,6 +371,18 @@ public class ProductOrderResource {
         return new ProductOrders(productOrderDataList);
     }
 
+    /**
+     * Web service that takes in a list of PDOSamples and marks
+     * which ones have had their primary price item billed.  The
+     * initial client is Manhattan (see BSP-811).  Whether or not
+     * the primary price item is billed is used by Manhattan to
+     * determine whether data generation is complete for
+     * a given PDO sample.  Put another way, Manhattan polls this
+     * service to see which PDO samples it should start assembling
+     * and analyzing.
+     * @param pdoSamplePairs
+     * @return
+     */
     @POST
     @Path("pdoSampleBillingStatus")
     @Produces(MediaType.APPLICATION_JSON)
