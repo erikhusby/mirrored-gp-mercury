@@ -117,8 +117,19 @@
                     <div class="control-group">
                         <stripes:label for="title" class="control-label">Name *</stripes:label>
                         <div class="controls">
-                            <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText input-create-form" title="Enter the project name"  maxlength="255"/>
+                            <c:choose>
+                                <c:when test="${actionBean.creating}">
+                                    <stripes:text name="editResearchProject.title"
+                                                  value="${actionBean.editResearchProject.title}"
+                                                  id="title" class="defaultText input-create-form"
+                                                  title="Enter the project name" maxlength="255"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <stripes:hidden name="editResearchProject.title" value="${actionBean.editResearchProject.title}" />
+                                    ${actionBean.editResearchProject.title}
+                                </c:otherwise>
+                            </c:choose>
+
                         </div>
                     </div>
 

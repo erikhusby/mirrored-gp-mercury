@@ -96,20 +96,11 @@ public class ResearchProjectEjb {
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
-            StringBuilder piList = new StringBuilder();
-            for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
-                BspUser bspUser = userList.getById(currPI.getPersonId());
-                if (bspUser != null) {
-                    if (piList.length() != 0) {
-                        piList.append("\n");
-                    }
-                    piList.append(bspUser.getFullName());
-                }
-            }
 
-            if (piList.length() != 0) {
+            String piNames = buildProjectPiJiraString(researchProject);
+            if (!StringUtils.isBlank(piNames)) {
                 listOfFields
-                        .add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
+                        .add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piNames));
             }
             if (researchProject.getSynopsis() != null) {
                 listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.DESCRIPTION,
@@ -134,7 +125,6 @@ public class ResearchProjectEjb {
             issue.updateIssue(Collections.singleton(mercuryUrlField));
         }
     }
-
 
     public void updateJiraIssue(@Nonnull ResearchProject researchProject) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(researchProject.getJiraTicketKey(),
@@ -161,27 +151,9 @@ public class ResearchProjectEjb {
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
                         researchProject.getIrbNotEngaged()));
 
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                        researchProject.getIrbNotEngaged()));
-
-        StringBuilder piList = new StringBuilder();
-        boolean first = true;
-        for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
-            BspUser bspUser = userList.getById(currPI.getPersonId());
-            if (bspUser != null) {
-                if (!first) {
-                    piList.append("\n");
-                }
-                piList.append(bspUser.getFullName());
-                first = false;
-            }
-        }
-
-        if (!piList.toString().isEmpty()) {
-            researchProjectUpdateFields
-                    .add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS,
-                            piList.toString()));
+        String piNames = buildProjectPiJiraString(researchProject);
+        if (!StringUtils.isBlank(piNames)) {
+            researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
         }
 
         String[] customFieldNames = new String[researchProjectUpdateFields.size()];
@@ -222,6 +194,20 @@ public class ResearchProjectEjb {
                          + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(researchProject.getJiraTicketKey(), transition, customFields, comment);
+    }
+
+    /**
+     * @return a String of PI's in project to send to Jira.
+     */
+    private String buildProjectPiJiraString(ResearchProject researchProject) {
+        List<String> piNameList = new ArrayList<>();
+        for (ProjectPerson currPI : researchProject.findPeopleByType(RoleType.BROAD_PI)) {
+            BspUser bspUser = userList.getById(currPI.getPersonId());
+            if (bspUser != null) {
+                piNameList.add(bspUser.getFullName());
+            }
+        }
+        return StringUtils.join(piNameList, '\n');
     }
 
     /**
