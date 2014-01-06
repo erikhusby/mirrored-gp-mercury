@@ -17,6 +17,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +49,7 @@ public class ProductOrderSampleDao extends GenericDao {
         try {
             return entityManager.createQuery(criteriaQuery).getResultList();
         } catch (NoResultException ignored) {
-            return null;
+            return Collections.emptyList();
         }
     }
 
