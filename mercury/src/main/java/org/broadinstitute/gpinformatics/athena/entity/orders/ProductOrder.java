@@ -562,6 +562,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         sampleCounts.invalidate();
     }
 
+    public void addSample(@Nonnull ProductOrderSample newSample) {
+        addSamples(Collections.singleton(newSample));
+    }
+
     /**
      * Add to the list of samples. The order of samples is preserved.
      *

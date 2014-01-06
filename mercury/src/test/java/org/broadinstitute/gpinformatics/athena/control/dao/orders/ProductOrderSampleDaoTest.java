@@ -14,13 +14,19 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Test(enabled = true)
 public class ProductOrderSampleDaoTest extends ContainerTest {
 
     @Inject
     ProductOrderDao productOrderDao;
+
+    @Inject ProductOrderSampleDao
+    pdoSampleDao;
 
     @Inject
     ProductDao productDao;
@@ -73,6 +79,32 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         // check the sample order, should be the same.
         for (int i = 0; i < sampleNames.length; i++) {
             Assert.assertEquals(samplesFromDb.get(i).getName(), sampleNames[i]);
+        }
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    public void testFindByPDOKeyAndSampleNames() {
+        String[] sampleNames = { "MS-1111", "MS-2222", "MS-3333" };
+
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao,sampleNames);
+
+        productOrderDao.persist(order);
+        productOrderDao.flush();
+        productOrderDao.clear();
+        pdoSampleDao.clear();
+
+        Set<String> sampleNamesSubset = new HashSet<>();
+        sampleNamesSubset.add(sampleNames[0]);
+        sampleNamesSubset.add(sampleNames[2]);
+        List<ProductOrderSample> pdoSamplesFromDb = pdoSampleDao.findByOrderKeyAndSampleNames(order.getBusinessKey(),
+                sampleNamesSubset);
+
+        Assert.assertNotNull(pdoSamplesFromDb);
+        Assert.assertEquals(pdoSamplesFromDb.size(), sampleNamesSubset.size());
+
+        for (ProductOrderSample productOrderSample : pdoSamplesFromDb) {
+            Assert.assertFalse(sampleNames[1].equals(productOrderSample.getName()));  // our PDO has 3 samples, but we only queried for two of them
+            Assert.assertEquals(productOrderSample.getProductOrder().getBusinessKey(),order.getBusinessKey());
         }
     }
 }

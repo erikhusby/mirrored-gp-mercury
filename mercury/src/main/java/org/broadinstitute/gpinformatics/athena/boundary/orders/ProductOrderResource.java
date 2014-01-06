@@ -7,6 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -15,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -39,11 +41,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Restful webservice to list and create product orders.
@@ -76,6 +82,9 @@ public class ProductOrderResource {
 
     @Inject
     private LabVesselFactory labVesselFactory;
+
+    @Inject
+    private ProductOrderSampleDao pdoSampleDao;
 
     /**
      * Return the information on the newly created {@link ProductOrder} that has Draft status.
@@ -364,4 +373,33 @@ public class ProductOrderResource {
 
         return new ProductOrders(productOrderDataList);
     }
+
+    @POST
+    @Path("pdoSampleBillingStatus")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PDOSamplePairs getPdoSampleBillingStatus(PDOSamplePairs pdoSamplePairs) {
+        PDOSamplePairs pdoSamplePairsResult = new PDOSamplePairs();
+        try {
+            List<ProductOrderSample> allPdoSamples = new ArrayList<>();
+            Map<String,Set<String>> pdoToSamples = PDOSamplePairUtils.convertPdoSamplePairsListToMap(pdoSamplePairs);
+            for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
+                String pdoKey = pdoKeyToSamplesList.getKey();
+                Set<String> sampleNames = pdoKeyToSamplesList.getValue();
+                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
+                allPdoSamples.addAll(pdoSamples);
+            }
+            pdoSamplePairsResult = PDOSamplePairUtils.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplePairs,allPdoSamples);
+        }
+        catch(Throwable t) {
+            log.error("Failed to return PDO/Sample billing information.",t);
+            pdoSamplePairsResult.addError(t.getMessage());
+        }
+        return pdoSamplePairsResult;
+    }
+
+
+
+
+
 }

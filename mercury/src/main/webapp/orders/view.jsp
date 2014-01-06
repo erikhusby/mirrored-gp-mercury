@@ -97,7 +97,7 @@ function setupDialogs() {
                 click: function () {
                     $j(this).dialog("close");
                     $j("#riskOkButton").attr("disabled", "disabled");
-                    $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
+                    $j("#riskStatus").attr("value", $j("#onRiskDialogId").is(':checked'));
                     $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
                     $j("#orderForm").submit();
@@ -893,7 +893,7 @@ function formatInput(item) {
             <tr>
                 <th width="20">
                     <c:if test="${!actionBean.editOrder.draft}">
-                        <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                        <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                     </c:if>
                 </th>
                 <th width="10">#</th>

@@ -613,4 +613,28 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
         sampleName = newName;
     }
+
+    /**
+     * Returns true if the primary price item has been
+     * billed.  Otherwise, returns false.
+     */
+    @Transient
+    public boolean hasPrimaryPriceItemBeenBilled() {
+        boolean hasBeenBilled = false;
+        Product product = getProductOrder().getProduct();
+        if (product != null) {
+            PriceItem primaryPriceItem = product.getPrimaryPriceItem();
+            if (primaryPriceItem != null) {
+                for (LedgerEntry ledgerItem : ledgerItems) {
+                    if (primaryPriceItem.equals(ledgerItem.getPriceItem())) {
+                        if (ledgerItem.isBilled()) {
+                            hasBeenBilled = true;
+                        }
+                    }
+                }
+            }
+
+        }
+        return hasBeenBilled;
+    }
 }
