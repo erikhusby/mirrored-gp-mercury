@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -53,7 +54,6 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefin
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -424,15 +424,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Checks that the rin score is a numeric value
-     * for all BSP samples in the list of pdoSamples
-     * @param pdoSamples
+     * Checks that the rin score is a numeric value for all BSP samples in the list of pdoSamples.
+     *
+     * @param pdoSamples The samples
      */
     void validateRinScores(Collection<ProductOrderSample> pdoSamples) {
         for (ProductOrderSample pdoSample : pdoSamples) {
             if (pdoSample.isInBspFormat() && !pdoSample.canRinScoreBeUsedForOnRiskCalculation()) {
-                addGlobalValidationError("RIN '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() + " isn't a number."
-                                         + "  Please correct this by going to BSP -> Utilities -> Upload Sample Annotation and updating the 'RIN Number' annotation for this sample.");
+                addGlobalValidationError(
+                        "RIN '" + pdoSample.getBspSampleDTO().getRawRin() + "' for " + pdoSample.getName() +
+                        " isn't a number." + "  Please correct this by going to BSP -> Utilities -> Upload Sample " +
+                        "Annotation and updating the 'RIN Number' annotation for this sample.");
             }
         }
     }
@@ -832,7 +834,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         bspShippingLocationTokenInput.setup(
                 !StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         if (productOrderKit.getSiteId() != null) {
-            productOrderKit.setSiteName(bspShippingLocationTokenInput.getTokenObject().getName());
+            Site tokenObject = bspShippingLocationTokenInput.getTokenObject();
+            if (tokenObject != null) {
+                productOrderKit.setSiteName(tokenObject.getName());
+            }
         }
     }
 
@@ -1117,23 +1122,25 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Adds the rin score from the sample dto to the item.
-     * @param item
-     * @param bspSampleDTO
+     *
+     * @param item The JSON item
+     * @param bspSampleDTO The BSP data object
+     *
      * @throws JSONException
      */
-    void putRinScore(@NotNull JSONObject item,@NotNull BSPSampleDTO bspSampleDTO) throws JSONException {
+    void putRinScore(@NotNull JSONObject item, @NotNull BSPSampleDTO bspSampleDTO) throws JSONException {
         // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
         // in which case we'll just display the raw rin value
         String rinScore = bspSampleDTO.getRawRin();
         if (!StringUtils.isEmpty(rinScore)) {
             try {
                 rinScore = String.valueOf(bspSampleDTO.getRin());
-            }
-            catch(NumberFormatException e) {
+            } catch(NumberFormatException e) {
                 // sometimes RIN scores aren't actually numbers (or ranges) in BSP
             }
         }
-        item.put(JSON_RIN_KEY,rinScore);
+
+        item.put(JSON_RIN_KEY, rinScore);
     }
 
     private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
@@ -1287,7 +1294,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private List<ProductOrderSample> getSelectedProductOrderSamplesFor(ProductOrder pdo,
                                                                        Collection<Long> pdoIds) {
-        List<ProductOrderSample> selectedPdoSamples = new ArrayList(getSelectedProductOrderSampleIds().size());
+        List<ProductOrderSample> selectedPdoSamples = new ArrayList<> (getSelectedProductOrderSampleIds().size());
         for (ProductOrderSample pdoSample : editOrder.getSamples()) {
             if (pdoIds.contains(pdoSample.getProductOrderSampleId())) {
                 selectedPdoSamples.add(pdoSample);
