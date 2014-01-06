@@ -5,22 +5,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
-@XmlRootElement
 
 /**
  * Simple bean class used for looking up pdo/sample
  * billing information via WS.
  */
-public class PDOSamplePairs {
+@XmlRootElement
+public class PDOSamples {
 
-    private List<PDOSamplePair> pdoSamplePairs = new ArrayList<>();
+    private List<PDOSample> pdoSamples = new ArrayList<>();
 
     private List<String> errors = new ArrayList<>();
 
-    public PDOSamplePairs() {}
+    public PDOSamples() {}
 
     public void addPdoSamplePair(@Nonnull String pdoKey,@Nonnull String sampleName,Boolean hasPrimaryPriceItemBeenBilled) {
-        pdoSamplePairs.add(new PDOSamplePair(pdoKey,sampleName,hasPrimaryPriceItemBeenBilled));
+        pdoSamples.add(new PDOSample(pdoKey,sampleName,hasPrimaryPriceItemBeenBilled));
     }
 
     public void addError(String errorMessage) {
@@ -31,11 +31,11 @@ public class PDOSamplePairs {
         return errors;
     }
 
-    public List<PDOSamplePair> getPdoSamplePairs() {
-        return pdoSamplePairs;
+    public List<PDOSample> getPdoSamples() {
+        return pdoSamples;
     }
 
-    public void setPdoSamplePairs(List<PDOSamplePair> pdoSamplePairs) {
-        this.pdoSamplePairs = pdoSamplePairs;
+    public void setPdoSamples(List<PDOSample> pdoSamples) {
+        this.pdoSamples = pdoSamples;
     }
 }

@@ -1,6 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
+import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
+import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
+import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.PlateTransfer;
+import edu.mit.broad.prodinfo.thrift.lims.PoolGroup;
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.WellAndSourceTube;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -63,6 +71,7 @@ public class LiveThriftService implements ThriftService {
                 try {
                     return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
                 } catch (TTransportException e) {
+                    String exceptionMessage = e.getMessage();
                     String type;
                     switch (e.getType()) {
                         case TTransportException.ALREADY_OPEN:
@@ -70,6 +79,10 @@ public class LiveThriftService implements ThriftService {
                             break;
                         case TTransportException.END_OF_FILE:
                             type = "end of file";
+                            if (StringUtils.isBlank(exceptionMessage)) {
+                                exceptionMessage = "Could not find one or more of these tube barcodes: " +
+                                                   StringUtils.join(tubeBarcodes, ", ");
+                            }
                             break;
                         case TTransportException.NOT_OPEN:
                             type = "not open";
@@ -83,7 +96,7 @@ public class LiveThriftService implements ThriftService {
                         default:
                             type = "unexpected error type";
                     }
-                    String message = "Thrift error: " + type + ": " + e.getMessage();
+                    String message = "Thrift error: " + type + ": " + exceptionMessage;
                     log.error(message, e);
                     throw new RuntimeException(message, e);
                 } catch (TException e) {

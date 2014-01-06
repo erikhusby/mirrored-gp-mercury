@@ -38,20 +38,20 @@ public class PdoSampleBillingExceptionHandlingTest extends RestServiceContainerT
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThatAnExceptionThrownInTheWebServiceIsCaughtAndAddedToTheListOfErrors(@ArquillianResource URL baseUrl) throws Exception {
-        List<PDOSamplePair> pdoSamplesList = new ArrayList<>();
-        PDOSamplePair pdoSample1 = new PDOSamplePair("PDO-872", "SM-47KKU",null);
+        List<PDOSample> pdoSamplesList = new ArrayList<>();
+        PDOSample pdoSample1 = new PDOSample("PDO-872", "SM-47KKU",null);
         pdoSamplesList.add(pdoSample1);
 
-        PDOSamplePairs pdoSamplePairs = new PDOSamplePairs();
-        pdoSamplePairs.setPdoSamplePairs(pdoSamplesList);
+        PDOSamples pdoSamples = new PDOSamples();
+        pdoSamples.setPdoSamples(pdoSamplesList);
 
-        PDOSamplePairs returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .entity(pdoSamplePairs)
-                .post(PDOSamplePairs.class);
+                .entity(pdoSamples)
+                .post(PDOSamples.class);
 
-        Assert.assertTrue(returnedPdoSamples.getPdoSamplePairs().isEmpty());
+        Assert.assertTrue(returnedPdoSamples.getPdoSamples().isEmpty());
         Assert.assertEquals(returnedPdoSamples.getErrors().size(),1);
     }
 }

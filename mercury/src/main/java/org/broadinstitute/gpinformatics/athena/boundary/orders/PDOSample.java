@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
-// todo arz docs
-public class PDOSamplePair {
+/**
+ * Bean used by web service to get billing status
+ * for a product order sample
+ */
+public class PDOSample {
 
-    public PDOSamplePair() {}
+    public PDOSample() {}
 
-    public PDOSamplePair(String pdoKey,String sampleName,Boolean hasPrimaryPriceItemBeenBilled) {
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
