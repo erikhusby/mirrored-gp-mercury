@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -303,17 +304,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
 
-        writeAllBillAndNewHeaders(priceListCache.getReplacementPriceItems(currentProduct), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct, priceListCache.getReplacementPriceItems(currentProduct), currentProduct.getAddOns());
     }
 
     private void writeAllBillAndNewHeaders(
-        Collection<QuotePriceItem> quotePriceItems, Set<Product> addOns) {
+            Product currentProduct, Collection<QuotePriceItem> quotePriceItems, Set<Product> addOns) {
 
         // The new row.
         getWriter().nextRow();
 
         // The empty fixed headers.
-        writeEmptyFixedHeaders();
+        writeEmptyFixedHeaders(currentProduct);
 
         // primary price item for main product.
         writeBillAndNewHeaders();
@@ -332,12 +333,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Freeze the first two rows so sort doesn't disturb them.
         getWriter().createFreezePane(0, 2);
+
+        getWriter().getCurrentSheet().setAutoFilter(new CellRangeAddress(2, 10, 0, 30));
     }
 
-    private void writeEmptyFixedHeaders() {
+    private void writeEmptyFixedHeaders(Product currentProduct) {
         // Write blank secondary header line for fixed columns, with default styling.
         for (BillingTrackerHeader ignored : BillingTrackerHeader.values()) {
-            getWriter().writeCell(" ");
+            if (ignored.shouldShow(currentProduct)) {
+                getWriter().writeCell(" ");
+            }
         }
     }
 

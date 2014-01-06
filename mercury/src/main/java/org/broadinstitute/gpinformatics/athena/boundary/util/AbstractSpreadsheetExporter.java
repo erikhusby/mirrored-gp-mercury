@@ -142,6 +142,11 @@ public abstract class AbstractSpreadsheetExporter {
         private Cell currentCell;
         private int rowNum;
         private int cellNum;
+
+        public Sheet getCurrentSheet() {
+            return currentSheet;
+        }
+
         private Sheet currentSheet;
 
         public void createSheet(String sheetName) {
