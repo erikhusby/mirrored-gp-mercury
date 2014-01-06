@@ -28,12 +28,18 @@ public class BillingRequirementTest {
         requirement.setOperator(Operator.GREATER_THAN);
         requirement.setValue(95.0);
 
+        BillingRequirement requirement2 = new BillingRequirement();
+        requirement2.setAttribute(CALL_RATE);
+        requirement2.setOperator(Operator.LESS_THAN);
+        requirement2.setValue(1.0);
+
         return new Object[][] {
                 new Object[] { requirement, makeMap(CALL_RATE, "100"), true },
                 new Object[] { requirement, makeMap(CALL_RATE, "95.1"), true },
                 new Object[] { requirement, makeMap(CALL_RATE, "95"), false },
                 new Object[] { requirement, makeMap(CALL_RATE, "0"), false },
-                new Object[] { requirement, Collections.emptyMap(), false }
+                new Object[] { requirement, Collections.emptyMap(), false },
+                new Object[] { requirement2, makeMap(CALL_RATE, "8.66E-4"), true }
         };
     }
 
