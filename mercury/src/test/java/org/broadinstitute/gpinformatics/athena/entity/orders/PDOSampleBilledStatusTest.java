@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -37,27 +38,29 @@ public class PDOSampleBilledStatusTest {
         pdoSample.getLedgerItems().iterator().next().setBillingSession(billingSession);
     }
 
-    private void setBilledPriceItem(PriceItem priceItem) {
+    private void setBilledPriceItem(PriceItem priceItem,LedgerEntry.PriceItemType priceItemType) {
         if (pdoSample.getLedgerItems().size() != 1) {
             Assert.fail("This test is only setup to run with a single ledger item.");
         }
+        LedgerEntry ledgerEntry = pdoSample.getLedgerItems().iterator().next();
+        ledgerEntry.setPriceItemType(priceItemType);
         pdoSample.getLedgerItems().iterator().next().setPriceItem(priceItem);
     }
 
     public void testPrimaryPriceItemIsBilled() {
         // setup the billing session so its price item matches the primary price item
-        setBilledPriceItem(primaryPriceItem);
+        setBilledPriceItem(primaryPriceItem, LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM);
         String message = MessageFormat
                 .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
-        assertThat(message,pdoSample.hasPrimaryPriceItemBeenBilled());
+        assertThat(message,pdoSample.isCompletelyBilled());
     }
 
     public void testNonPrimaryPriceItemIsBilled() {
         // setup the billing session so that its price item is *not* the primary price item
-        setBilledPriceItem(notPrimaryPriceItem);
+        setBilledPriceItem(notPrimaryPriceItem, LedgerEntry.PriceItemType.ADD_ON_PRICE_ITEM);
         String message = MessageFormat
                 .format("Sample {0} should have its primary price item billed already.", pdoSample.getName());
-        assertThat(message,!pdoSample.hasPrimaryPriceItemBeenBilled());
+        assertThat(message,!pdoSample.isCompletelyBilled());
     }
 
 }

@@ -37,7 +37,7 @@ public class PDOSamplePairUtils {
             String requestedSampleName = requestedPdoSamplePair.getSampleName();
             for (ProductOrderSample pdoSample : pdoSamples) {
                 if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
-                    pdoSamplePairsResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,pdoSample.hasPrimaryPriceItemBeenBilled());
+                    pdoSamplePairsResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,pdoSample.isCompletelyBilled());
                     foundIt = true;
                 }
             }
