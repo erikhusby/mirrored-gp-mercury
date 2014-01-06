@@ -93,6 +93,10 @@ public class LedgerEntry implements Serializable {
         this.autoLedgerTimestamp = autoLedgerTimestamp;
     }
 
+    public void setPriceItem(PriceItem priceItem) {
+        this.priceItem = priceItem;
+    }
+
     public PriceItem getPriceItem() {
         return priceItem;
     }

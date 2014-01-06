@@ -361,7 +361,7 @@
                     <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
                     <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
-                        <a class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
+                        <a id="addRiskCriteria" class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
                     </div>
                 </div>
 

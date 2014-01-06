@@ -13,17 +13,16 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
 import java.util.Map;
 
-public class UpdateField<T extends JiraProject> {
+public class UpdateField<PROJECT_TYPE extends JiraProject> {
     private final Object newValue;
     private final String UPDATE_FIELD_NAME = "name";
     private final String UPDATE_FIELD_VALUE = "value";
@@ -33,7 +32,7 @@ public class UpdateField<T extends JiraProject> {
      * message, and its contents won't be shown in the message.
      */
     private final boolean isBulkField;
-    private CustomField.SubmissionField field;
+    private final CustomField.SubmissionField field;
 
     /**
      * Return the update message appropriate for this field.  If there are no changes this will return the empty
@@ -46,7 +45,7 @@ public class UpdateField<T extends JiraProject> {
      *
      * @return the update message that goes in the JIRA ticket
      */
-    public String getUpdateMessage(T jiraProject,
+    public String getUpdateMessage(PROJECT_TYPE jiraProject,
                                    Map<String, CustomFieldDefinition> customFieldDefinitionMap,
                                    IssueFieldsResponse issueFieldsResponse) {
 
@@ -58,7 +57,7 @@ public class UpdateField<T extends JiraProject> {
 
         Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
         Object oldValueToCompare;
-        if (previousValue instanceof HashMap) {
+        if (previousValue instanceof Map) {
             Map previousValueMap = ((Map<?, ?>) previousValue);
             if (previousValueMap.containsKey(UPDATE_FIELD_VALUE)) {
                 oldValueToCompare = previousValueMap.get(UPDATE_FIELD_VALUE).toString();

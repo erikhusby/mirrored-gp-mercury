@@ -12,7 +12,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
 /**
- * Objects that implement this have a jira issue key
+ * Objects that implement this can make use of objects that update/create jira issues.
+ * @see org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField
  */
 public interface JiraProject {
     public String getJiraTicketKey();

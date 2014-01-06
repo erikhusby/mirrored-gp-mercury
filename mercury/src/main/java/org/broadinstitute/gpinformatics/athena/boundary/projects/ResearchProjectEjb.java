@@ -50,8 +50,8 @@ public class ResearchProjectEjb {
     private final JiraService jiraService;
     private final UserBean userBean;
     private final BSPUserList userList;
-    private BSPCohortList cohortList;
-    private AppConfig appConfig;
+    private final BSPCohortList cohortList;
+    private final AppConfig appConfig;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -215,7 +215,7 @@ public class ResearchProjectEjb {
         String updateComment = updateCommentBuilder.toString();
 
         // If we detect from the comment that nothing has changed, make a note of that.  The user may have changed
-        // something in the PDO that is not reflected in JIRA, like add-ons.
+        // something in the ResearchProject that is not reflected in JIRA.
         String comment = "\n" + researchProject.getJiraTicketKey() + " was edited by "
                          + userBean.getLoginUserName() + "\n\n"
                          + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
