@@ -26,6 +26,7 @@ public class AuthorizeBlockStripesTag extends TagSupport {
     public static final String ALLOW_ALL_ROLES = "All";
 
     private static final long serialVersionUID = 201300107L;
+
     @Inject
     UserBean userBean;
 
