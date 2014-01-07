@@ -37,7 +37,9 @@ public class BSPExportsService {
 
         List<String> barcodes = new ArrayList<>();
         for (LabVessel labVessel : labVessels) {
-            barcodes.add(labVessel.getLabel());
+            if (labVessel != null) {
+                barcodes.add(labVessel.getLabel());
+            }
         }
 
         MultivaluedMap<String, String> parameters = new MultivaluedMapImpl();
