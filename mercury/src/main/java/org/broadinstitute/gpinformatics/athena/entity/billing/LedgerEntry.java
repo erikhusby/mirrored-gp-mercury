@@ -93,6 +93,9 @@ public class LedgerEntry implements Serializable {
         this.autoLedgerTimestamp = autoLedgerTimestamp;
     }
 
+    /**
+     * Should only be used by test code
+     */
     public void setPriceItem(PriceItem priceItem) {
         this.priceItem = priceItem;
     }
