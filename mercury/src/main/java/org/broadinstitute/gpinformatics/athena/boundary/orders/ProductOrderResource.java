@@ -84,6 +84,13 @@ public class ProductOrderResource {
     private ProductOrderSampleDao pdoSampleDao;
 
     /**
+     * Should be used only by test code
+     */
+    void setProductOrderSampleDao(ProductOrderSampleDao pdoSampleDao) {
+        this.pdoSampleDao = pdoSampleDao;
+    }
+
+    /**
      * Return the information on the newly created {@link ProductOrder} that has Draft status.
      * <p/>
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
