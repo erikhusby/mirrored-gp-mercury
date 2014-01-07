@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 //import com.jprofiler.api.agent.Controller;
 
-import org.apache.commons.collections15.Factory;
-import org.apache.commons.collections15.map.LazySortedMap;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazySortedMap;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
@@ -156,7 +156,7 @@ public class LabEventTest extends BaseEventTest {
         private final List<String> labEventNames = new ArrayList<>();
 
         private final SortedMap<Integer, SortedSet<LabEvent>> labEventNamesByHopCount =
-                LazySortedMap.decorate(new TreeMap<Integer, SortedSet<LabEvent>>(),
+                LazySortedMap.lazySortedMap(new TreeMap<Integer, SortedSet<LabEvent>>(),
                         new Factory<SortedSet<LabEvent>>() {
                             @Override
                             public SortedSet<LabEvent> create() {

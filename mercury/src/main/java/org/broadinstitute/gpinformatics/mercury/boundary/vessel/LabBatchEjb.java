@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import org.apache.commons.collections15.Factory;
-import org.apache.commons.collections15.map.LazyMap;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -238,7 +238,7 @@ public class LabBatchEjb {
         Set<String> pdoKeys = new HashSet<>();
 
         Map<String, Integer> tubeBarcodeCounts =
-                LazyMap.decorate(new HashMap<String, Integer>(), new Factory<Integer>() {
+                LazyMap.lazyMap(new HashMap<String, Integer>(), new Factory<Integer>() {
                     @Override
                     public Integer create() {
                         return 0;

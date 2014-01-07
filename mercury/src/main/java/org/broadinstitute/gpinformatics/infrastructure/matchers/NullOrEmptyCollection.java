@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.matchers;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
