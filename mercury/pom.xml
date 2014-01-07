@@ -8,7 +8,7 @@
     <!-- Unfortunately (for now) there is also a rest-pom.xml.  Changes to this version should be reflected in that
     file as well until such a time that we reconfigure the mercury structure to have a dependant project or something
      that can inherit this version setting. -->
-    <version>1.40-SNAPSHOT</version>
+    <version>1.41-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
