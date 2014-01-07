@@ -79,9 +79,9 @@ public class LiveThriftService implements ThriftService {
                             break;
                         case TTransportException.END_OF_FILE:
                             type = "end of file";
-                            if (StringUtils.isBlank(exceptionMessage)) {
-                                exceptionMessage = "Could not find one or more of these tube barcodes: " +
-                                                   StringUtils.join(tubeBarcodes, ", ");
+                            if (StringUtils.isBlank(exceptionMessage) && !includeWorkRequestDetails) {
+                                // Thrift server doesn't pass in an exception message for this.
+                                exceptionMessage = "Thrift requires includeWorkRequestDetails=true";
                             }
                             break;
                         case TTransportException.NOT_OPEN:
