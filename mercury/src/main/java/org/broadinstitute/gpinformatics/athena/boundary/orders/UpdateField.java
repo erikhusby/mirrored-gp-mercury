@@ -68,13 +68,16 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
             oldValueToCompare = (previousValue != null) ? previousValue : "";
         }
         Object newValueToCompare = newValue;
-        // Jira stores booleans as Yes and No. We need to convert the test value to a "Jira boolean"
-        // or we will not be able to figure out if it has changed and we will always add a jira comment that the value
-        // has been updated when in fact it may not have been.
-        if (oldValueToCompare instanceof Double) {
+
+        // Jira stores numeric values as Doubles. If you save a field as '8', Jira will return '8.0' as the field's
+        // stored value. Therefore, equals will always return false.
+        if (oldValueToCompare instanceof Double && newValue instanceof Integer) {
             newValueToCompare = ((Integer) newValue).doubleValue();
         }
 
+        // Jira stores booleans as Yes and No. We need to convert the test value to a "Jira boolean"
+        // or we will not be able to figure out if it has changed and we will always add a jira comment that the value
+        // has been updated when in fact it may not have been.
         if (newValue instanceof Boolean) {
             newValueToCompare = StringUtils.capitalize(BooleanUtils.toStringYesNo((Boolean) newValue));
         } else if (newValue instanceof CreateFields.Reporter) {
