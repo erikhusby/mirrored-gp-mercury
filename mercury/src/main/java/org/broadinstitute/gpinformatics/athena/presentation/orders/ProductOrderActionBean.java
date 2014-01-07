@@ -15,13 +15,11 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfo;
 import org.broadinstitute.bsp.client.site.Site;
@@ -29,14 +27,13 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -56,6 +53,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
@@ -71,7 +69,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitReq
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -88,20 +85,12 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -169,9 +158,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private PriceItemDao priceItemDao;
-
-    @Inject
     private LedgerEntryDao ledgerEntryDao;
 
     @Inject
@@ -186,9 +172,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderUtil productOrderUtil;
-
-    @Inject
-    private PriceListCache priceListCache;
 
     @Inject
     private ProductOrderSampleDao sampleDao;
@@ -232,6 +215,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
+
+    @Inject
+    private SampleLedgerExporterFactory sampleLedgerExporterFactory;
 
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
@@ -999,15 +985,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() throws Exception {
-        Resolution resolution =
-                ProductOrderActionBean.getTrackerForOrders(
-                        this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
 
-        if (hasErrors()) {
+        SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(selectedProductOrders);
+
+        try {
+            return new BillingTrackerResolution(exporter);
+        } catch (IOException e) {
+            addGlobalValidationError("Got an exception trying to download the billing tracker: " + e.getMessage());
             setupListDisplay();
+            return getSourcePageResolution();
         }
-
-        return resolution;
     }
 
     /**
@@ -1397,54 +1384,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
-    }
-
-    public static Resolution getTrackerForOrders(
-            final CoreActionBean actionBean,
-            List<ProductOrder> productOrderList,
-            PriceItemDao priceItemDao,
-            BSPUserList bspUserList,
-            PriceListCache priceListCache) {
-
-        OutputStream outputStream = null;
-
-        try {
-            String filename =
-                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT
-                            .format(Calendar.getInstance().getTime());
-
-            // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
-            filename = filename.replaceAll(":", "_");
-
-            final File tempFile = File.createTempFile(filename, ".xls");
-            outputStream = new FileOutputStream(tempFile);
-
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrderList);
-            sampleLedgerExporter.writeToStream(outputStream);
-            IOUtils.closeQuietly(outputStream);
-
-            return new Resolution() {
-                @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-                    InputStream inputStream = new FileInputStream(tempFile);
-
-                    try {
-                        actionBean.setFileDownloadHeaders("application/excel", tempFile.getName());
-                        IOUtils.copy(inputStream, actionBean.getContext().getResponse().getOutputStream());
-                    } finally {
-                        IOUtils.closeQuietly(inputStream);
-                        FileUtils.deleteQuietly(tempFile);
-                    }
-                }
-            };
-        } catch (Exception ex) {
-            actionBean.addGlobalValidationError(
-                    "Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return actionBean.getSourcePageResolution();
-        } finally {
-            IOUtils.closeQuietly(outputStream);
-        }
     }
 
     public String getProductOrder() {
