@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -58,10 +59,10 @@ public class GetSampleInstancesTest {
         ProductOrder extractionProductOrder = new ProductOrder(101L, "Extraction PDO", extractionProductOrderSamples,
                 "SEQ-01", extractionProduct, sampleInitProductOrder.getResearchProject());
         // extraction set?
-        LabEvent labEvent = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(), "SUPERMAN", 1L,
-                101L, "Bravo");
 
         // Extraction transfer
+        LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(), "SUPERMAN",
+                1L, 101L, "Bravo");
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new HashMap<>();
         Iterator<LabVessel> iterator = starterVessels.iterator();
         mapPositionToSourceTube.put(VesselPosition.A01, (TwoDBarcodedTube) iterator.next());
@@ -77,8 +78,9 @@ public class GetSampleInstancesTest {
         mapPositionToExtractTube.put(VesselPosition.A02, tube2);
         TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
 
-        labEvent.getSectionTransfers().add(new SectionTransfer(sourceTubeFormation.getContainerRole(), SBSSection.ALL96,
-                targetTubeFormation.getContainerRole(), SBSSection.ALL96, labEvent));
+        extractionTransfer.getSectionTransfers().add(new SectionTransfer(
+                sourceTubeFormation.getContainerRole(), SBSSection.ALL96,
+                targetTubeFormation.getContainerRole(), SBSSection.ALL96, extractionTransfer));
 
         // sequencing PDO
         Product sequencingProduct = ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "HYBSEL-01");
@@ -102,7 +104,14 @@ public class GetSampleInstancesTest {
         LabBatch importLabBatch = new LabBatch("EX-1", new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
 
-        new TubeFormation(mapPositionToExtractTubeControl, RackOfTubes.RackType.Matrix96);
+        TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
+                RackOfTubes.RackType.Matrix96);
+        LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "SUPERMAN", 1L, 101L,
+                "Bravo");
+        StaticPlate shearingPlate = new StaticPlate("SHEAR", StaticPlate.PlateType.Eppendorf96);
+        shearingTransfer.getSectionTransfers().add(new SectionTransfer(
+                extractControlTubeFormation.getContainerRole(), SBSSection.ALL96,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, shearingTransfer));
         // P7 index
         // P5 index
         // bait
