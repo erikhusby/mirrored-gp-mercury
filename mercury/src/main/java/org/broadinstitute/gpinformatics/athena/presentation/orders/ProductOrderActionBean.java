@@ -90,7 +90,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -146,8 +145,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DATE = "date";
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
-
-    public static final String JSON_RIN_KEY = "rin";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -1120,53 +1117,30 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
-    /**
-     * Adds the rin score from the sample dto to the item.
-     *
-     * @param item The JSON item
-     * @param bspSampleDTO The BSP data object
-     *
-     * @throws JSONException
-     */
-    void putRinScore(@NotNull JSONObject item, @NotNull BSPSampleDTO bspSampleDTO) throws JSONException {
-        // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
-        // in which case we'll just display the raw rin value
-        String rinScore = bspSampleDTO.getRawRin();
-        if (!StringUtils.isEmpty(rinScore)) {
-            try {
-                rinScore = String.valueOf(bspSampleDTO.getRin());
-            } catch(NumberFormatException e) {
-                // sometimes RIN scores aren't actually numbers (or ranges) in BSP
-            }
-        }
-
-        item.put(JSON_RIN_KEY, rinScore);
-    }
-
     private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
-        item.put("sampleId", sample.getProductOrderSampleId());
-        item.put("collaboratorSampleId", bspSampleDTO.getCollaboratorsSampleName());
-        item.put("patientId", bspSampleDTO.getPatientId());
-        item.put("collaboratorParticipantId", bspSampleDTO.getCollaboratorParticipantId());
-        item.put("volume", bspSampleDTO.getVolume());
-        item.put("concentration", bspSampleDTO.getConcentration());
-        putRinScore(item, bspSampleDTO);
-        item.put("picoDate", getBspPicoDate(bspSampleDTO));
-        item.put("total", bspSampleDTO.getTotal());
-        item.put("hasFingerprint", bspSampleDTO.getHasFingerprint());
-        item.put("hasSampleKitUploadRackscanMismatch", bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
-        item.put("completelyBilled", sample.isCompletelyBilled());
+        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
+        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
+        item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
+        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, bspSampleDTO.getCollaboratorParticipantId());
+        item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
+        item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
+        item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
+        item.put(BSPSampleDTO.PICO_DATE, getBspPicoDate(bspSampleDTO));
+        item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
+        item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
+        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+        item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
 
         if (labEventSampleDTO != null) {
-            item.put("packageDate", labEventSampleDTO.getSamplePackagedDate());
-            item.put("receiptDate", labEventSampleDTO.getSampleReceiptDate());
+            item.put(BSPSampleDTO.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
+            item.put(BSPSampleDTO.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
         } else {
-            item.put("packageDate", "");
-            item.put("receiptDate", "");
+            item.put(BSPSampleDTO.PACKAGE_DATE, "");
+            item.put(BSPSampleDTO.RECEIPT_DATE, "");
         }
     }
 
@@ -1180,19 +1154,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        item.put("sampleId", sample.getProductOrderSampleId());
-        item.put("collaboratorSampleId", "");
-        item.put("patientId", "");
-        item.put("collaboratorParticipantId", "");
-        item.put("volume", "");
-        item.put("concentration", "");
-        item.put(JSON_RIN_KEY, "");
-        item.put("picoDate", "");
-        item.put("total", "");
-        item.put("hasFingerprint", "");
-        item.put("hasSampleKitUploadRackscanMismatch", "");
-        item.put("packageDate", "");
-        item.put("receiptDate", "");
+        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
+        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, "");
+        item.put(BSPSampleDTO.PATIENT_ID, "");
+        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, "");
+        item.put(BSPSampleDTO.VOLUME, "");
+        item.put(BSPSampleDTO.CONCENTRATION, "");
+        item.put(BSPSampleDTO.JSON_RIN_KEY, "");
+        item.put(BSPSampleDTO.PICO_DATE, "");
+        item.put(BSPSampleDTO.TOTAL, "");
+        item.put(BSPSampleDTO.HAS_FINGERPRINT, "");
+        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
+        item.put(BSPSampleDTO.PACKAGE_DATE, "");
+        item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -1204,7 +1178,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             Product product = productDao.findByBusinessKey(this.product);
             supportsNumberOfLanes = product.getSupportsNumberOfLanes();
         }
-        item.put("supportsNumberOfLanes", supportsNumberOfLanes);
+
+        item.put(BSPSampleDTO.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
 
         return createTextResolution(item.toString());
     }

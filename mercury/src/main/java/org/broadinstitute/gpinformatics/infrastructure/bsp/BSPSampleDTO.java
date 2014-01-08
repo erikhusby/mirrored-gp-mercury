@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  */
 public class BSPSampleDTO {
 
+    public static final String JSON_RIN_KEY = "rin";
     private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
 
     public static final String TUMOR_IND = "Tumor";
@@ -46,6 +47,20 @@ public class BSPSampleDTO {
     // points and digits after the decimal point (corresponding to the "1.5 - 2.5" example above), although examples
     // with decimal points and digits after the decimal points have not been observed in the wild.
     private static final Pattern RIN_RANGE = Pattern.compile("\\s*(\\d+(?:\\.\\d+)?)\\s*-\\s*(\\d+(?:\\.\\d+)?)\\s*");
+    public static final String SAMPLE_ID = "sampleId";
+    public static final String COLLABORATOR_SAMPLE_ID = "collaboratorSampleId";
+    public static final String PATIENT_ID = "patientId";
+    public static final String COLLABORATOR_PARTICIPANT_ID = "collaboratorParticipantId";
+    public static final String VOLUME = "volume";
+    public static final String CONCENTRATION = "concentration";
+    public static final String PICO_DATE = "picoDate";
+    public static final String TOTAL = "total";
+    public static final String HAS_FINGERPRINT = "hasFingerprint";
+    public static final String HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH = "hasSampleKitUploadRackscanMismatch";
+    public static final String COMPLETELY_BILLED = "completelyBilled";
+    public static final String PACKAGE_DATE = "packageDate";
+    public static final String RECEIPT_DATE = "receiptDate";
+    public static final String SUPPORTS_NUMBER_OF_LANES = "supportsNumberOfLanes";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 
@@ -409,4 +424,23 @@ public class BSPSampleDTO {
             return bspLabelBarcode;
         }
     }
+
+    /**
+     * Adds the rin score from the sample dto to the item.
+     */
+    public String getRinScore() {
+        // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
+        // in which case we'll just display the raw rin value.
+        String rinScore = getRawRin();
+        if (!StringUtils.isBlank(rinScore)) {
+            try {
+                rinScore = String.valueOf(getRin());
+            } catch(NumberFormatException e) {
+                // sometimes RIN scores in BSP are not actually numbers (ranges are a common cases)
+            }
+        }
+
+        return rinScore;
+    }
+
 }
