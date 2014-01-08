@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
-import net.sourceforge.stripes.action.ActionBeanContext;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -60,7 +59,7 @@ public class ProductOrderActionBeanTest {
      * @return
      */
     private Collection<ProductOrderSample> createPdoSamples() {
-        List<ProductOrderSample> pdoSamples = new ArrayList();
+        List<ProductOrderSample> pdoSamples = new ArrayList<> ();
         BSPSampleDTO sampleWithGoodRin = getSampleDTOWithGoodRinScore();
         BSPSampleDTO sampleWithBadRin = getSamplDTOWithBadRinScore();
         pdoSamples.add(new ProductOrderSample(sampleWithGoodRin.getSampleId(),sampleWithGoodRin));
@@ -92,8 +91,8 @@ public class ProductOrderActionBeanTest {
      */
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testNonNumericRinScore() throws JSONException {
-        actionBean.putRinScore(jsonObject,getSamplDTOWithBadRinScore());
-        Assert.assertEquals(jsonObject.get(ProductOrderActionBean.JSON_RIN_KEY),expectedNonNumericRinScore);
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRinScore());
+        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), expectedNonNumericRinScore);
     }
 
     /**
@@ -103,8 +102,8 @@ public class ProductOrderActionBeanTest {
      */
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testNumericRinScore() throws JSONException {
-        actionBean.putRinScore(jsonObject,getSampleDTOWithGoodRinScore());
-        Assert.assertEquals(Double.parseDouble((String)jsonObject.get(ProductOrderActionBean.JSON_RIN_KEY)),expectedNumericValue);
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRinScore());
+        Assert.assertEquals(Double.parseDouble((String)jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)), expectedNumericValue);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
