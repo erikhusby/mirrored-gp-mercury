@@ -6,12 +6,18 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -47,16 +53,23 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private final PriceItemDao priceItemDao;
     private final BSPUserList bspUserList;
     private final PriceListCache priceListCache;
+    private final WorkCompleteMessageDao workCompleteMessageDao;
+    private final BSPSampleDataFetcher sampleDataFetcher;
+    private Map<String,WorkCompleteMessage> workCompleteMessageBySample = new HashMap<>();
 
     public SampleLedgerExporter(
             PriceItemDao priceItemDao,
             BSPUserList bspUserList,
             PriceListCache priceListCache,
-            List<ProductOrder> productOrders) {
+            List<ProductOrder> productOrders,
+            WorkCompleteMessageDao workCompleteMessageDao,
+            BSPSampleDataFetcher sampleDataFetcher) {
 
         this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
+        this.workCompleteMessageDao = workCompleteMessageDao;
+        this.sampleDataFetcher = sampleDataFetcher;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -177,6 +190,20 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
                 productOrder.loadBspData();
+                List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
+                        productOrder.getBusinessKey());
+                for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
+                    String aliquotId = workCompleteMessage.getAliquotId();
+                    if (!BSPUtil.isInBspFormat(aliquotId)) {
+                        aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+                    }
+                    String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
+                    if (sampleName == null) {
+                        throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
+                    }
+                    workCompleteMessageBySample.put(sampleName, workCompleteMessage);
+                }
+
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
@@ -278,6 +305,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         } else {
             // Only use error style when there is an error in the string.
             getWriter().writeCell(billingError, getErrorMessageStyle());
+        }
+
+        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
+        if (workCompleteMessage != null) {
+            MessageDataValue pct_target_bases_20X = workCompleteMessage.getData().get("PCT_TARGET_BASES_20X");
+            if (pct_target_bases_20X != null) {
+                String value = pct_target_bases_20X.getValue();
+                if (!StringUtils.isEmpty(value)) {
+                    getWriter().writeCell(value);
+                }
+            }
         }
 
         if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {

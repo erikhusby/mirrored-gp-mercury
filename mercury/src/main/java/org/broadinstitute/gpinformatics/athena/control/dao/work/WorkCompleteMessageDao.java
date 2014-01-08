@@ -33,6 +33,10 @@ public class WorkCompleteMessageDao extends GenericDao {
         message.setProcessDate(new Date());
     }
 
+    public List<WorkCompleteMessage> findByPDO(final String pdoName) {
+        return findList(WorkCompleteMessage.class, WorkCompleteMessage_.pdoName, pdoName);
+    }
+
     public List<WorkCompleteMessage> findByPDOAndAliquot(final String pdoId, final String aliquotId) {
         return findAll(WorkCompleteMessage.class, new GenericDaoCallback<WorkCompleteMessage>() {
             @Override

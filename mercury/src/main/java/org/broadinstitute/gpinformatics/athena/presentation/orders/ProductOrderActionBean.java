@@ -990,7 +990,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             return new BillingTrackerResolution(exporter);
-        } catch (IOException e) {
+        } catch (Exception e) {
             addGlobalValidationError("Got an exception trying to download the billing tracker: " + e.getMessage());
             setupListDisplay();
             return getSourcePageResolution();

@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 
@@ -20,14 +22,22 @@ public class SampleLedgerExporterFactory {
 
     private final PriceListCache priceListCache;
 
+    private final WorkCompleteMessageDao workCompleteMessageDao;
+
+    private final BSPSampleDataFetcher sampleDataFetcher;
+
     @Inject
     public SampleLedgerExporterFactory(
             PriceItemDao priceItemDao,
             BSPUserList bspUserList,
-            PriceListCache priceListCache) {
+            PriceListCache priceListCache,
+            WorkCompleteMessageDao workCompleteMessageDao,
+            BSPSampleDataFetcher sampleDataFetcher) {
         this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
+        this.workCompleteMessageDao = workCompleteMessageDao;
+        this.sampleDataFetcher = sampleDataFetcher;
     }
 
     /**
@@ -37,6 +47,7 @@ public class SampleLedgerExporterFactory {
      * @return a new exporter
      */
     public SampleLedgerExporter makeExporter(List<ProductOrder> productOrders) {
-        return new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrders);
+        return new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrders,
+                workCompleteMessageDao, sampleDataFetcher);
     }
 }
