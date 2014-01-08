@@ -241,7 +241,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
-    private final Format dateFormatter = FastDateFormat.getInstance(getDatePattern());
+    private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
     @ValidateNestedProperties({
             @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION}),
@@ -336,8 +336,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void setupMaterialTypes() {
         dnaMatrixMaterialTypes =
-                bspManagerFactory.createSampleManager().getMaterialInfoObjects(
-                        KitType.DNA_MATRIX.getKitName());
+                bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitName());
         Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
     }
 
@@ -404,8 +403,8 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
-            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                    action, editOrder.getName(), name);
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", action, editOrder.getName(),
+                    name);
         }
     }
 
@@ -666,8 +665,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                         owner.getOwnerIds(), selectedLedgerStatuses);
 
 
-        progressFetcher.loadProgress(
-                productOrderDao, ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
+        progressFetcher.loadProgress(productOrderDao,
+                ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
@@ -928,8 +927,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private Resolution createViewResolution(String businessKey) {
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
-                PRODUCT_ORDER_PARAMETER, businessKey);
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
+                businessKey);
     }
 
     @HandlesEvent(VALIDATE_ORDER)
@@ -1117,7 +1116,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
-    private void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+    private static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
 
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
@@ -1127,7 +1126,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, getBspPicoDate(bspSampleDTO));
+        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
@@ -1144,8 +1143,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private String getBspPicoDate(BSPSampleDTO bspSampleDTO) {
-        Date picoRunDate = bspSampleDTO.getPicoRunDate();
+    private static String formatPicoRunDate(Date picoRunDate) {
         if (picoRunDate == null) {
             return "No Pico";
         }
@@ -1153,7 +1151,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return dateFormatter.format(picoRunDate);
     }
 
-    private void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
+    private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
         item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, "");
         item.put(BSPSampleDTO.PATIENT_ID, "");
@@ -1174,9 +1172,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         boolean supportsNumberOfLanes = false;
         JSONObject item = new JSONObject();
 
-        if (this.product != null) {
-            Product product = productDao.findByBusinessKey(this.product);
-            supportsNumberOfLanes = product.getSupportsNumberOfLanes();
+        if (product != null) {
+            supportsNumberOfLanes = productDao.findByBusinessKey(product).getSupportsNumberOfLanes();
         }
 
         item.put(BSPSampleDTO.SUPPORTS_NUMBER_OF_LANES, supportsNumberOfLanes);
