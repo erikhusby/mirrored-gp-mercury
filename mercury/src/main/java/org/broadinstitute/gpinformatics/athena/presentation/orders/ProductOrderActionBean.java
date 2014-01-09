@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -292,7 +292,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<MaterialInfo> dnaMatrixMaterialTypes;
+    private static List<MaterialInfoDto> dnaMatrixMaterialTypes;
 
     /*
      * The search query.
@@ -337,7 +337,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setupMaterialTypes() {
         dnaMatrixMaterialTypes =
                 bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitName());
-        Collections.sort(dnaMatrixMaterialTypes, MaterialInfo.BY_BSP_NAME);
+        Collections.sort(dnaMatrixMaterialTypes, MaterialInfoDto.BY_BSP_NAME);
     }
 
     /**
@@ -489,7 +489,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private boolean materialTypesContains(String bspMaterialName) {
-        for (MaterialInfo info : dnaMatrixMaterialTypes) {
+        for (MaterialInfoDto info : dnaMatrixMaterialTypes) {
             if (info.getBspName().equalsIgnoreCase(bspMaterialName)) {
                 return true;
             }
@@ -1893,7 +1893,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
+    public List<MaterialInfoDto> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
     }
 
