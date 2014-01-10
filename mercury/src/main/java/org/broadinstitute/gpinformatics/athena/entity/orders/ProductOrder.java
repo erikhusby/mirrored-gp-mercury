@@ -279,7 +279,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public static void loadOneThousandOrLessLabEventSampleData(List<ProductOrderSample> oneThousandOrLessSamples) {
+    /**
+     * Does the real work of #loadLabEventSampleData, in blocks of one thousand or less
+     * samples to accomodate oracle's in clause limit.
+     * @param oneThousandOrLessSamples Should have no more than 1,000 elements
+     *                                 or an oracle exception will be thrown
+     */
+    private static void loadOneThousandOrLessLabEventSampleData(List<ProductOrderSample> oneThousandOrLessSamples) {
         LabEventSampleDataFetcher labDataFetcher = ServiceAccessUtility.getBean(LabEventSampleDataFetcher.class);
         List<String> sampleIds = new ArrayList<>();
 
