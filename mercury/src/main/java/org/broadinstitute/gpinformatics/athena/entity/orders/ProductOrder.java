@@ -894,6 +894,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
         }
 
+        if (!addOns.isEmpty()) {
+            List<String> addOnsList = new ArrayList<>(addOns.size());
+            for (ProductOrderAddOn addOn : addOns) {
+                addOnsList.add(addOn.getAddOn().getDisplayName());
+            }
+            Collections.sort(addOnsList);
+            listOfFields.add(new CustomField(submissionFields, JiraField.ADD_ONS, StringUtils.join(addOnsList, "\n")));
+        }
+
         listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
 
         if (product.getSupportsNumberOfLanes()) {
@@ -1073,7 +1082,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         STATUS("Status"),
         REQUISITION_ID("Requisition ID"),
         LANES_PER_SAMPLE("Lanes Per Sample"),
-        REQUISITION_NAME("Requisition Name");
+        REQUISITION_NAME("Requisition Name"),
+        ADD_ONS("Add-ons");
 
         private final String fieldName;
 

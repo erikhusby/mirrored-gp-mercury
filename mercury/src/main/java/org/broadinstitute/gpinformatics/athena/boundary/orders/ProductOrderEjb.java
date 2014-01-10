@@ -46,6 +46,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -407,6 +408,14 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
+
+
+        List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
+        for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
+            addOnList.add(addOn.getAddOn().getDisplayName());
+        }
+        Collections.sort(addOnList);
+        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.ADD_ONS, StringUtils.join(addOnList, "\n")));
 
         if (!StringUtils.isBlank(productOrder.getComments())) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()));
