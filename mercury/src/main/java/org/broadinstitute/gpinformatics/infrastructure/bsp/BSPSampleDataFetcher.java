@@ -180,6 +180,17 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
         return results.get(0).get(BSPSampleSearchColumn.STOCK_SAMPLE);
     }
 
+    public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
+        Map<String, String> stockIdByAliquotId = new HashMap<>();
+        List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(aliquotIds,
+                BSPSampleSearchColumn.SAMPLE_ID, BSPSampleSearchColumn.STOCK_SAMPLE);
+        for (Map<BSPSampleSearchColumn, String> result : results) {
+            BSPSampleDTO dto = new BSPSampleDTO(result);
+            stockIdByAliquotId.put(dto.getSampleId(), dto.getStockSample());
+        }
+        return stockIdByAliquotId;
+    }
+
     /**
      * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
      */

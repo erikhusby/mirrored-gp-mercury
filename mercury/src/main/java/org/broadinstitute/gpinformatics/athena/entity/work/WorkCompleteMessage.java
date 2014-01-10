@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.work;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -92,5 +93,16 @@ public class WorkCompleteMessage {
 
     public void setProcessDate(Date processDate) {
         this.processDate = processDate;
+    }
+
+    public Double getPercentCoverageAt20X() {
+        MessageDataValue messageDataValue = data.get(MessageDataValue.PERCENT_COVERAGE_AT_20X);
+        if (messageDataValue != null) {
+            String value = messageDataValue.getValue();
+            if (!StringUtils.isEmpty(value)) {
+                return Double.parseDouble(value);
+            }
+        }
+        return null;
     }
 }

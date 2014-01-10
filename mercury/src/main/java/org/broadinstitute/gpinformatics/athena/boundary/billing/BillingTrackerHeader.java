@@ -23,6 +23,7 @@ public enum BillingTrackerHeader implements ColumnHeader {
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
     WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
+    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE, false),
     QUOTE_ID("Quote ID", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
     SORT_COLUMN("Sort Column", 13, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 

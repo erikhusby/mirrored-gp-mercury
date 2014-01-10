@@ -34,6 +34,7 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle dateStyle;
     private final CellStyle riskStyle;
     private final CellStyle abandonedStyle;
+    private final CellStyle percentageStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -50,6 +51,7 @@ public abstract class AbstractSpreadsheetExporter {
         dateStyle = buildDateStyle(workbook);
         riskStyle = buildColorStyle(workbook, IndexedColors.YELLOW, IndexedColors.BLACK);
         abandonedStyle = buildColorCellStyle(workbook, IndexedColors.ROSE);
+        percentageStyle = buildPercentageCellStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -67,6 +69,7 @@ public abstract class AbstractSpreadsheetExporter {
     protected CellStyle getRiskStyle() {
         return riskStyle;
     }
+
     protected CellStyle getAbandonedStyle() {
         return abandonedStyle;
     }
@@ -86,6 +89,8 @@ public abstract class AbstractSpreadsheetExporter {
     protected CellStyle getBilledAmountStyle() {
         return billedAmountStyle;
     }
+
+    protected CellStyle getPercentageStyle() { return percentageStyle; }
 
     protected Workbook getWorkbook() {
         return workbook;
@@ -134,6 +139,12 @@ public abstract class AbstractSpreadsheetExporter {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(foregroundColor.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        return style;
+    }
+
+    protected CellStyle buildPercentageCellStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setDataFormat(workbook.createDataFormat().getFormat("0.000%"));
         return style;
     }
 

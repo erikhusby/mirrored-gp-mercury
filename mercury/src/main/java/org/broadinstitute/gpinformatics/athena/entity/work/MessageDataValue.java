@@ -14,6 +14,8 @@ import java.text.MessageFormat;
 @Table(name= "MESSAGE_DATA_VALUE", schema = "athena")
 public class MessageDataValue {
 
+    public static final String PERCENT_COVERAGE_AT_20X = "PCT_TARGET_BASES_20X";
+
     protected MessageDataValue() {
     }
 

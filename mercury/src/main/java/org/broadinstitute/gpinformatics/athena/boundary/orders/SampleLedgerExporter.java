@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -55,7 +54,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private final PriceListCache priceListCache;
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BSPSampleDataFetcher sampleDataFetcher;
-    private Map<String,WorkCompleteMessage> workCompleteMessageBySample = new HashMap<>();
 
     public SampleLedgerExporter(
             PriceItemDao priceItemDao,
@@ -190,22 +188,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
                 productOrder.loadBspData();
-                List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
-                        productOrder.getBusinessKey());
-                for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
-                    String aliquotId = workCompleteMessage.getAliquotId();
-                    if (!BSPUtil.isInBspFormat(aliquotId)) {
-                        aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
-                    }
-                    String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
-                    if (sampleName == null) {
-                        throw new RuntimeException("Couldn't find a sample for aliquot: " + aliquotId);
-                    }
-                    workCompleteMessageBySample.put(sampleName, workCompleteMessage);
-                }
-
+                Map<String, WorkCompleteMessage> workCompleteMessageBySample =
+                        getWorkCompleteMessageBySample(productOrder);
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
+                    writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++, workCompleteMessageBySample);
                 }
             }
         }
@@ -213,7 +199,37 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWorkbook().write(out);
     }
 
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample, int sortOrder) {
+    private Map<String, WorkCompleteMessage> getWorkCompleteMessageBySample(ProductOrder productOrder) {
+        List<WorkCompleteMessage> workCompleteMessages = workCompleteMessageDao.findByPDO(
+                productOrder.getBusinessKey());
+
+        List<String> aliquotIds = new ArrayList<>();
+        for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
+            String aliquotId = workCompleteMessage.getAliquotId();
+            if (!BSPUtil.isInBspFormat(aliquotId)) {
+                aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+            }
+            aliquotIds.add(aliquotId);
+        }
+        Map<String, String> stockIdByAliquotId = sampleDataFetcher.getStockIdByAliquotId(aliquotIds);
+
+        Map<String, WorkCompleteMessage> workCompleteMessageBySample = new HashMap<>();
+        for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
+            String aliquotId = workCompleteMessage.getAliquotId();
+            if (!BSPUtil.isInBspFormat(aliquotId)) {
+                aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+            }
+            String stockId = stockIdByAliquotId.get("SM-" + aliquotId);
+            if (stockId == null) {
+                throw new RuntimeException("Couldn't find a stock sample for aliquot: " + aliquotId);
+            }
+            workCompleteMessageBySample.put(stockId, workCompleteMessage);
+        }
+        return workCompleteMessageBySample;
+    }
+
+    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample,
+                          int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample) {
         getWriter().nextRow();
 
         // sample name.
@@ -260,6 +276,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // work complete date is the date of any ledger items that are ready to be billed.
         getWriter().writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
+        // % coverage at 20x
+        Double percentCoverageAt20x = null;
+        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
+        if (workCompleteMessage != null) {
+            percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
+        }
+        if (percentCoverageAt20x != null) {
+            getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
+        } else {
+            getWriter().writeCell("");
+        }
+
         // Quote ID.
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
 
@@ -305,17 +333,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         } else {
             // Only use error style when there is an error in the string.
             getWriter().writeCell(billingError, getErrorMessageStyle());
-        }
-
-        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
-        if (workCompleteMessage != null) {
-            MessageDataValue pct_target_bases_20X = workCompleteMessage.getData().get("PCT_TARGET_BASES_20X");
-            if (pct_target_bases_20X != null) {
-                String value = pct_target_bases_20X.getValue();
-                if (!StringUtils.isEmpty(value)) {
-                    getWriter().writeCell(value);
-                }
-            }
         }
 
         if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {
