@@ -262,21 +262,39 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @param samples A list of ProductOrderSample objects to get the LabEvents for.
      */
     public static void loadLabEventSampleData(List<ProductOrderSample> samples) {
+        if (samples.size() < 1000) {
+            loadOneThousandOrLessLabEventSampleData(samples);
+        }
+        else {
+            List<ProductOrderSample> allSamples = new ArrayList<>(samples.size());
+            allSamples.addAll(samples);
 
+            while (!allSamples.isEmpty()) {
+                List<ProductOrderSample> smallerListOfSamples = new ArrayList<>(1000);
+                while (smallerListOfSamples.size() < 1000 && !allSamples.isEmpty()) {
+                    smallerListOfSamples.add(allSamples.remove(0));
+                }
+                loadOneThousandOrLessLabEventSampleData(smallerListOfSamples);
+            }
+        }
+    }
+
+    public static void loadOneThousandOrLessLabEventSampleData(List<ProductOrderSample> oneThousandOrLessSamples) {
         LabEventSampleDataFetcher labDataFetcher = ServiceAccessUtility.getBean(LabEventSampleDataFetcher.class);
         List<String> sampleIds = new ArrayList<>();
-        for (ProductOrderSample sample : samples) {
-            sampleIds.add(sample.getSampleKey());
-        }
 
+        for (ProductOrderSample pdoSample : oneThousandOrLessSamples) {
+            sampleIds.add(pdoSample.getSampleKey());
+        }
         Map<String, List<LabVessel>> vesselMap = labDataFetcher.findMapBySampleKeys(sampleIds);
-        for (ProductOrderSample sample : samples) {
+        for (ProductOrderSample sample : oneThousandOrLessSamples) {
             Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
             if (!CollectionUtils.isEmpty(labVessels)) {
                 sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
             }
         }
     }
+
 
     public static void loadBspData(List<ProductOrderSample> samples) {
 
