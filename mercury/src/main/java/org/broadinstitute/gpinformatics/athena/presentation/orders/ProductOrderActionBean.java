@@ -23,9 +23,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
+import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -68,7 +69,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -292,7 +292,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<MaterialInfoDto> dnaMatrixMaterialTypes;
+    private static List<String> dnaMatrixMaterialTypes;
 
     /*
      * The search query.
@@ -335,9 +335,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void setupMaterialTypes() {
-        dnaMatrixMaterialTypes =
-                bspManagerFactory.createSampleManager().getMaterialInfoObjects(KitType.DNA_MATRIX.getKitName());
-        Collections.sort(dnaMatrixMaterialTypes, MaterialInfoDto.BY_BSP_NAME);
+        dnaMatrixMaterialTypes=new ArrayList<>(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo().length);
+        for (MaterialInfo materialInfo : KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo()) {
+            dnaMatrixMaterialTypes.add(materialInfo.getText());
+        }
+
+        Collections.sort(dnaMatrixMaterialTypes);
     }
 
     /**
@@ -486,16 +489,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder != null) {
             validateRinScores(editOrder);
         }
-    }
-
-    private boolean materialTypesContains(String bspMaterialName) {
-        for (MaterialInfoDto info : dnaMatrixMaterialTypes) {
-            if (info.getBspName().equalsIgnoreCase(bspMaterialName)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void doOnRiskUpdate() {
@@ -1893,7 +1886,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public List<MaterialInfoDto> getDnaMatrixMaterialTypes() {
+    public List<String> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
     }
 

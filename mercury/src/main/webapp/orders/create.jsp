@@ -544,8 +544,7 @@
                         <div class="controls">
                             <stripes:select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
                                 <stripes:option label="Choose..." value=""/>
-                                <stripes:options-collection value="bspName"
-                                                            collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                                <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}"/>
                             </stripes:select>
                             <c:if test="${!actionBean.editOrder.draft}">
                                 <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
