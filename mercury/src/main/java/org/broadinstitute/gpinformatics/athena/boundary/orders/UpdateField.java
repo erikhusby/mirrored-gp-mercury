@@ -68,6 +68,14 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
             oldValueToCompare = (previousValue != null) ? previousValue : "";
         }
         Object newValueToCompare = newValue;
+
+        // When JAX-RS converts numeric values from Jira, it assumes they are of type java.lang.Double. If you save
+        // a field as '8', the JAX-RS converted value will be '8.0' which will cause the comparison between new and
+        // old values to always return false when they may be the same value.
+        if (previousValue instanceof Double && newValue instanceof Integer) {
+            newValueToCompare = ((Integer) newValue).doubleValue();
+        }
+
         // Jira stores booleans as Yes and No. We need to convert the test value to a "Jira boolean"
         // or we will not be able to figure out if it has changed and we will always add a jira comment that the value
         // has been updated when in fact it may not have been.

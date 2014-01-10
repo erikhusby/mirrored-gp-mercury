@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.apache.commons.collections15.MultiMap;
-import org.apache.commons.collections15.multimap.MultiHashMap;
+import org.apache.commons.collections4.MultiMap;
+import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -157,7 +157,7 @@ public class SystemRouter implements Serializable {
     private System determineSystemOfRecordPerBspExports(@Nonnull Collection<LabVessel> labVessels) {
         IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(labVessels);
 
-        MultiMap<System, String> systemToVessels = new MultiHashMap<>();
+        MultiMap<System, String> systemToVessels = new MultiValueMap<>();
         for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
             IsExported.ExternalSystem externalSystem = exportResult.getExportDestination();
             String vesselBarcode = exportResult.getBarcode();
@@ -190,8 +190,8 @@ public class SystemRouter implements Serializable {
 
         if (systemToVessels.size() > 1) {
             StringBuilder builder = new StringBuilder("Ambiguous systems of record for vessels: ");
-            for (Map.Entry<System, Collection<String>> entry : systemToVessels.entrySet()) {
-                String vesselBarcodes = StringUtils.join(entry.getValue(), ", ");
+            for (Map.Entry<System, Object> entry : systemToVessels.entrySet()) {
+                String vesselBarcodes = StringUtils.join((Collection<?>) entry.getValue(), ", ");
                 builder.append(entry.getKey()).append(": ").append(vesselBarcodes);
             }
 

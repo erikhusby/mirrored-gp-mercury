@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;

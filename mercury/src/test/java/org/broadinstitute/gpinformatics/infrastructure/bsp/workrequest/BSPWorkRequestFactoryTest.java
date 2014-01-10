@@ -4,7 +4,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -40,13 +40,13 @@ public class BSPWorkRequestFactoryTest {
 
     @Test
     public void testBuildBspKitWorkRequest() throws Exception {
-        MaterialInfo materialInfo =
-                new MaterialInfo("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
+        MaterialInfoDto MaterialInfoDto =
+                new MaterialInfoDto("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 PRODUCT_ORDER_ID, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
                 TEST_SITE.getId(), NUMBER_OF_SAMPLES,
-                materialInfo,
+                MaterialInfoDto,
                 TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST, HUMAN_ORGANISM.getLeft());
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.collections15.map.LRUMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;

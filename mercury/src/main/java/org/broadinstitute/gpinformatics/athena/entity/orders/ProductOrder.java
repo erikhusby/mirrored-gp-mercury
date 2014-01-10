@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -893,6 +893,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
 
         listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
+
+        if (product.getSupportsNumberOfLanes()) {
+            listOfFields.add(
+                    new CustomField(submissionFields, ProductOrder.JiraField.LANES_PER_SAMPLE, laneCount));
+        }
 
         if (publicationDeadline != null) {
             listOfFields.add(new CustomField(submissionFields, JiraField.PUBLICATION_DEADLINE,

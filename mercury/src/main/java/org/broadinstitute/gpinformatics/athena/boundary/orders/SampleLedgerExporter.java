@@ -333,8 +333,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Freeze the first two rows so sort doesn't disturb them.
         getWriter().createFreezePane(0, 2);
-
-        getWriter().getCurrentSheet().setAutoFilter(new CellRangeAddress(2, 10, 0, 30));
     }
 
     private void writeEmptyFixedHeaders(Product currentProduct) {

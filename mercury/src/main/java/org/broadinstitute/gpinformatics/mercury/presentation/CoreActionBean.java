@@ -53,7 +53,7 @@ import java.util.List;
 public class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
-    private static final String DATE_PATTERN = "MM/dd/yyyy";
+    public static final String DATE_PATTERN = "MM/dd/yyyy";
     private static final String DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm";
     private static final String PRECISE_DATE_TIME_PATTERN = "MM/dd/yyyy HH:mm:ss.S";
 

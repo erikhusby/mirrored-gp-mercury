@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -395,7 +395,6 @@ public class ProductOrderEjb {
                 JiraTransition.DEVELOPER_EDIT.getStateName());
 
         List<PDOUpdateField> pdoUpdateFields = new ArrayList<>(Arrays.asList(
-                new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
                         productOrder.getProduct().getProductFamily().getName()),
@@ -407,6 +406,10 @@ public class ProductOrderEjb {
         if (productOrder.getProduct().getSupportsNumberOfLanes()) {
             pdoUpdateFields.add(
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
+        }
+
+        if (!StringUtils.isBlank(productOrder.getComments())) {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()));
         }
 
         // Because funding deadline and publication deadline are not required fields, check for null before adding them.

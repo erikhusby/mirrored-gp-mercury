@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -37,7 +37,7 @@ public class ProductOrderKitTest extends ContainerTest {
     private ProductOrder order;
     private final KitType kitType = KitType.DNA_MATRIX;
     private final String bspName = "adsfasdf";
-    private final MaterialInfo materialInfo = new MaterialInfo(kitType.getKitName(), bspName);
+    private final MaterialInfoDto MaterialInfoDto = new MaterialInfoDto(kitType.getKitName(), bspName);
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -49,7 +49,7 @@ public class ProductOrderKitTest extends ContainerTest {
         utx.begin();
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
-        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, materialInfo));
+        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, MaterialInfoDto));
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
