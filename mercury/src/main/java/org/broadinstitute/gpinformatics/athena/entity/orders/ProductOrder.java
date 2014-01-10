@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -262,6 +262,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @param samples A list of ProductOrderSample objects to get the LabEvents for.
      */
     public static void loadLabEventSampleData(List<ProductOrderSample> samples) {
+        // todo arz as part of code review feedback, move all this logic down to dao and replace
+        // with splitter class and/or GenericDao's findListByList
         if (samples.size() < 1000) {
             loadOneThousandOrLessLabEventSampleData(samples);
         }
