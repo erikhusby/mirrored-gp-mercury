@@ -368,4 +368,15 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-2386-1" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_BSV_LAB_BATCH"
+                baseTableName="batch_starting_vessels" baseTableSchemaName="mercury" baseColumnNames="lab_batch"
+                referencedTableName="lab_batch" referencedTableSchemaName="mercury" referencedColumnNames="lab_batch_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2386-2" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_BSV_LAB_VESSEL"
+                baseTableName="batch_starting_vessels" baseTableSchemaName="mercury" baseColumnNames="lab_vessel"
+                referencedTableName="lab_vessel" referencedTableSchemaName="mercury" referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+
 </databaseChangeLog>
