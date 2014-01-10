@@ -14,13 +14,6 @@ import javax.inject.Inject;
 
 public class GPLIM2417Test extends ContainerTest {
 
-    /*
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD
-    }
-    */
-
     @Inject
     ProductOrderDao pdoDao;
 
