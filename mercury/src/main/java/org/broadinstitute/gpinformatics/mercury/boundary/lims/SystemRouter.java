@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
@@ -159,9 +160,9 @@ public class SystemRouter implements Serializable {
 
         MultiMap<System, String> systemToVessels = new MultiValueMap<>();
         for (IsExported.ExportResult exportResult : exportResults.getExportResult()) {
-            IsExported.ExternalSystem externalSystem = exportResult.getExportDestination();
+            Set<IsExported.ExternalSystem> externalSystems = exportResult.getExportDestinations();
             String vesselBarcode = exportResult.getBarcode();
-            if (externalSystem == null) {
+            if (CollectionUtils.isEmpty(externalSystems)) {
                 // If there are no export destinations given in the results, look for lookup misses or errors.
                 String error = exportResult.getError();
 
@@ -173,17 +174,18 @@ public class SystemRouter implements Serializable {
                     throw new InformaticsServiceException(error);
                 }
             } else {
-                switch (externalSystem) {
-                case Sequencing:
+                // Non-ExEx racks will be exported to both Squid and Mercury, but for the purposes of system of
+                // record determination this should give priority to Squid.
+                if (externalSystems.contains(IsExported.ExternalSystem.Sequencing)) {
                     systemToVessels.put(SQUID, vesselBarcode);
-                    break;
-                case Mercury:
+                } else if (externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
                     systemToVessels.put(MERCURY, vesselBarcode);
-                    break;
-                default:
+                } else {
                     // We are not currently expecting to see vessels exported to destinations other than Sequencing
                     // or Mercury.
-                    throw new InformaticsServiceException("Unexpected export destination for vessel " + vesselBarcode + ": " + externalSystem.name());
+                    String message = String.format("Unexpected export destination(s) for vessel '%s': %s",
+                            vesselBarcode, StringUtils.join(externalSystems, ", "));
+                    throw new InformaticsServiceException(message);
                 }
             }
         }

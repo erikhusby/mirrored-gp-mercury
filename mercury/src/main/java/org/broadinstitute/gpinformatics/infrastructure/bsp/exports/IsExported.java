@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.exports;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlEnum;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Suite of DTOs to support the /exports/isExported webservice in BSP.
@@ -36,7 +38,7 @@ public class IsExported {
 
         private String notFound;
 
-        private ExternalSystem exportDestination;
+        private Set<ExternalSystem> exportDestinations;
 
         public String getBarcode() {
             return barcode;
@@ -62,12 +64,13 @@ public class IsExported {
             return error;
         }
 
-        public ExternalSystem getExportDestination() {
-            return exportDestination;
+        @XmlElement(name = "exportDestination")
+        public Set<ExternalSystem> getExportDestinations() {
+            return exportDestinations;
         }
 
-        public void setExportDestination(ExternalSystem exportDestination) {
-            this.exportDestination = exportDestination;
+        public void setExportDestinations(Set<ExternalSystem> exportDestinations) {
+            this.exportDestinations = exportDestinations;
         }
 
         /**
@@ -76,9 +79,9 @@ public class IsExported {
         public ExportResult() {
         }
 
-        public ExportResult(String barcode, ExternalSystem exportDestination) {
+        public ExportResult(String barcode, Set<ExternalSystem> exportDestinations) {
             this.barcode = barcode;
-            this.exportDestination = exportDestination;
+            this.exportDestinations = exportDestinations;
         }
 
         public boolean isError() {
@@ -86,7 +89,7 @@ public class IsExported {
         }
 
         public boolean isExportedToSequencing() {
-            return exportDestination == ExternalSystem.Sequencing;
+            return exportDestinations.contains(ExternalSystem.Sequencing);
         }
 
         @Override

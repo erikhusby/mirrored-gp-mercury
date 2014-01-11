@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.apache.commons.collections4.SetUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -1167,7 +1168,9 @@ public class SystemRouterTest extends BaseEventTest {
      * @return a new ExportResults
      */
     private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem system) {
-        return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, system)));
+        // If the system is null create an empty Set, otherwise a singleton Set.
+        Set<IsExported.ExternalSystem> exportsSet = system == null ? Collections.<IsExported.ExternalSystem>emptySet() : Collections.singleton(system);
+        return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, exportsSet)));
     }
 
     private static IsExported.ExportResults makeExportResultsNotFound(String tubeBarcode, String notFoundMessage) {
