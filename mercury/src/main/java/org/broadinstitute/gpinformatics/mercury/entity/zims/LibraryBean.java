@@ -147,6 +147,9 @@ public class LibraryBean {
     @JsonProperty
     private String productOrderSample;
 
+    @JsonProperty
+    private String libraryCreationDate;
+
     @JsonProperty("labWorkflow")
     private String labWorkflow;
     /**
@@ -184,7 +187,7 @@ public class LibraryBean {
      */
     LibraryBean(String gssrLsid, String gssrMaterialType, String gssrCollaboratorSampleId, String gssrOrganism,
                 String gssrSpecies, String gssrStrain, String gssrIndividual, BSPSampleDTO bspSampleDTO,
-                String labWorkflow, String productOrderSample) {
+                String labWorkflow, String productOrderSample, String libraryCreationDate) {
         sampleLSID = gssrLsid;
         materialType = gssrMaterialType;
         collaboratorSampleId = gssrCollaboratorSampleId;
@@ -192,24 +195,26 @@ public class LibraryBean {
         this.productOrderSample = productOrderSample;
         species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
         collaboratorParticipantId = gssrIndividual;
+        this.libraryCreationDate = libraryCreationDate;
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
     public LibraryBean(String library, String initiative, Long workRequest, MolecularIndexingScheme indexingScheme,
-                       Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
-                       String referenceSequence, String referenceSequenceVersion, String organism, String species,
-                       String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
-                       double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
-                       Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-                       String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample) {
+            Boolean hasIndexingRead, String expectedInsertSize, String analysisType,
+            String referenceSequence, String referenceSequenceVersion, String organism, String species,
+            String strain, String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait,
+            double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+            TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
+            Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
+            String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String libraryCreationDate,
+            String productOrderSample) {
 
         // project was always null in the calls here, so don't send it through. Can add back later.
         this(library, null, initiative, workRequest, indexingScheme, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, null, null);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, productOrderSample, null, null);
     }
 
     /**
@@ -255,18 +260,18 @@ public class LibraryBean {
      * @param workRequestDomain squid work request domain name
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
-                       MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
-                       String analysisType, String referenceSequence, String referenceSequenceVersion,
-                       String collaboratorSampleId, String organism, String species, String strain, String sampleLSID,
-                       String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait, String individual,
-                       double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
-                       Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-                       String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample,
-                       String workRequestType, String workRequestDomain) {
+            MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
+            String analysisType, String referenceSequence, String referenceSequenceVersion,
+            String collaboratorSampleId, String organism, String species, String strain, String sampleLSID,
+            String aligner, String rrbsSizeRange, String restrictionEnzyme, String bait, String individual,
+            double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+            TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
+            Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
+            String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String libraryCreationDate,
+            String productOrderSample, String workRequestType, String workRequestDomain) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, bspSampleDTO,
-                labWorkflow, productOrderSample);
+                labWorkflow, productOrderSample, libraryCreationDate);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -530,6 +535,10 @@ public class LibraryBean {
 
     public String getProductOrderSample() {
         return productOrderSample;
+    }
+
+    public String getLibraryCreationDate() {
+        return libraryCreationDate;
     }
 
     public String getWorkRequestType() {

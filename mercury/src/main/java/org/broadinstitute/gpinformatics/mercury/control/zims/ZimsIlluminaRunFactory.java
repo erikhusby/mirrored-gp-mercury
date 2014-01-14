@@ -248,10 +248,12 @@ public class ZimsIlluminaRunFactory {
     }
 
     private LibraryBean createLibraryBean(
-        LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
-        MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
-        edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
-        Map<String, Control> mapNameToControl, String pdoSampleName) {
+            LabVessel labVessel, ProductOrder productOrder, BSPSampleDTO bspSampleDTO, String lcSet, String baitName,
+            MolecularIndexingScheme indexingSchemeEntity, List<String> catNames, String labWorkflow,
+            edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto,
+            Map<String, Control> mapNameToControl, String pdoSampleName) {
+
+        Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
         String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
@@ -320,13 +322,14 @@ public class ZimsIlluminaRunFactory {
                 analysisType = "HybridSelection." + analysisType;
             }
         }
+        String libraryCreationDate = dateFormat.format(labVessel.getCreatedOn());
 
         return new LibraryBean(
                 library, initiative, workRequest, indexingSchemeDto, hasIndexingRead, expectedInsertSize,
                 analysisType, referenceSequence, referenceSequenceVersion, organism, species,
                 strain, aligner, rrbsSizeRange, restrictionEnzyme, bait, labMeasuredInsertSize,
                 positiveControl, negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation,
-                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, pdoSampleName);
+                catNames, productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, pdoSampleName);
     }
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
