@@ -104,6 +104,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -869,7 +870,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", null,
-                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.AGILENT_EXOME_EXPRESS);
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
+                            Workflow.AGILENT_EXOME_EXPRESS);
 
             LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                     runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
@@ -884,7 +886,8 @@ public class LabEventTest extends BaseEventTest {
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
-                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName", Workflow.AGILENT_EXOME_EXPRESS);
+                            ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
+                            Workflow.AGILENT_EXOME_EXPRESS);
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -1099,6 +1102,78 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(
                 targetRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
                 1, "Wrong number of sample instances");
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testDaughterPlateTransferFromMultipleSources() {
+        //        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        ProductOrder productOrder =
+                ProductOrderTestFactory.buildHybridSelectionProductOrder((NUM_POSITIONS_IN_RACK - 2) * 2,
+                        "A");
+        AthenaClientServiceStub.addProductOrder(productOrder);
+        Date runDate = new Date();
+
+        // Create 2 racks of tubes
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = new LinkedHashMap<>();
+        int rackPosition = 0;
+        for (ProductOrderSample poSample : productOrder.getSamples()) {
+            String barcode = "R" + rackPosition;
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(poSample.getName()));
+
+            if (rackPosition >= 94) {
+                mapBarcodeToTube2.put(barcode, bspAliquot);
+            } else {
+                mapBarcodeToTube.put(barcode, bspAliquot);
+            }
+            Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
+            dataMap.put(BSPSampleSearchColumn.SAMPLE_ID, poSample.getName());
+            mapSampleNameToDto.put(poSample.getName(), new BSPSampleDTO(dataMap));
+
+            rackPosition++;
+        }
+
+        // Swap wells from rack 1 with wells from rack 2
+        List<Integer> wellsToReplace = new ArrayList<>();
+        wellsToReplace.add(5);
+        wellsToReplace.add(35);
+        wellsToReplace.add(88);
+
+        TubeFormation daughterTubeFormation =
+                mismatchedDaughterPlateTransfer(mapBarcodeToTube, mapBarcodeToTube2, wellsToReplace);
+
+
+        Set<String> keys = new LinkedHashSet<>();
+        keys.addAll(mapBarcodeToTube.keySet());
+        Set<Map.Entry<String, TwoDBarcodedTube>> entries = mapBarcodeToTube2.entrySet();
+        for (Integer well : wellsToReplace) {
+            String key = keys.toArray(new String[keys.size()])[well];
+            Map.Entry entry = entries.toArray(new Map.Entry[entries.size()])[well];
+
+            mapBarcodeToTube.remove(key);
+            mapBarcodeToTube.put((String) entry.getKey(), (TwoDBarcodedTube) entry.getValue());
+        }
+
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
+        workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        // Now run the pico process to make sure that routing works.
+        runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                String.valueOf(runDate.getTime()), "1", true);
+//        Controller.stopCPURecording();
     }
 
     /**
@@ -1330,7 +1405,7 @@ public class LabEventTest extends BaseEventTest {
      * a merged P5/P7 scheme is also created, so {@link SampleInstance#addReagent(Reagent)} can find it.
      *
      * @param molecularIndexingSchemeDao DAO, nullable if in database free test
-     * @param molecularIndexDao DAO, nullable if in database free test
+     * @param molecularIndexDao          DAO, nullable if in database free test
      * @param indexPositions             list of positions, e.g. P5, P7
      * @param indexPlateBarcodes         list of barcodes for plates to create
      */
