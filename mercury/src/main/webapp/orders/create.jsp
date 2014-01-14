@@ -245,6 +245,7 @@ function updateSkipQuoteVisibility(data) {
 
     var duration = {'duration' : 800};
 
+    // todo arz: clear and disable the quote field.  have a separate method to do this
     data.supportsSkippingQuote ? skipQuoteDiv.fadeIn(duration) : skipQuoteDiv.fadeOut(duration);
 }
 

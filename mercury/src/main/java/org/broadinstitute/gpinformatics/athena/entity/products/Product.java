@@ -663,7 +663,7 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
         return productFamilyName.getFamilyName().equals(this.productFamily.getName());
     }
 
-    // todo arz fixme
+    // todo arz fixme, testme, move to product family?
     public boolean getSupportsSkippingQuote() {
         return true;
     }

@@ -1160,6 +1160,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
+    // todo arz testme with dao mock for supports and doesn't support
+    // todo arz move the num lanes thing to the product too
     @HandlesEvent("getSupportsSkippingQuote")
     public Resolution getSupportsSkippingQuote() throws Exception {
         boolean supportsSkippingQuote = false;
