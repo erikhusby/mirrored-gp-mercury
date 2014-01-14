@@ -623,6 +623,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         case TUBE_FORMATION:
         case STRIP_TUBE:
         case FLOWCELL:
+        case MISEQ_REAGENT_KIT:
             ContainerVertex containerVertex = new ContainerVertex(embedder.getContainerRole());
             if (containerVertex.render(graph, alternativeIds)) {
                 vesselVertexQueue.add(containerVertex);
