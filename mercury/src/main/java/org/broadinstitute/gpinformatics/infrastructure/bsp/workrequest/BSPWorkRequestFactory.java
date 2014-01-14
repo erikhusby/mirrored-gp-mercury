@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A factory class for creating BSP WorkRequest objects of various types (e.g., SampleKitWorkRequest) from data
@@ -27,6 +29,10 @@ public class BSPWorkRequestFactory {
      * @param notificationList       the comma separated list of users to notify on kit shipment.
      * @param organismId             the organism that the user selected
      *
+     * @param postReceiveOptions
+     * @param notes
+     * @param exExKit
+     * @param transferMethod
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
@@ -34,7 +40,10 @@ public class BSPWorkRequestFactory {
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Long siteId, long numberOfSamples,
                                                               MaterialInfoDto MaterialInfoDto, Long sampleCollectionId,
-                                                              String notificationList, long organismId) {
+                                                              String notificationList, long organismId,
+                                                              List<PostReceiveOption> postReceiveOptions, String notes,
+                                                              boolean exExKit,
+                                                              SampleKitWorkRequest.TransferMethod transferMethod) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -53,9 +62,12 @@ public class BSPWorkRequestFactory {
                 siteId,
                 numberOfSamples,
                 sampleCollectionId,
-                SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
+                transferMethod, // transferMethod
                 MaterialInfoDto,
-                organismId
+                organismId,
+                postReceiveOptions,
+                notes,
+                exExKit
         );
     }
 }
