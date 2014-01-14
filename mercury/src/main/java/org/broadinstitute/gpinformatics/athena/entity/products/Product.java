@@ -50,6 +50,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public static final boolean TOP_LEVEL_PRODUCT = true;
 
+    public static final String SUPPORTS_SKIPPING_QUOTE = "supportsSkippingQuote";
+
     /** The part number for the sample initiation product. */
     public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
 
@@ -659,5 +661,10 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
 
     public boolean isSameProductFamily(ProductFamily.ProductFamilyName productFamilyName) {
         return productFamilyName.getFamilyName().equals(this.productFamily.getName());
+    }
+
+    // todo arz fixme
+    public boolean getSupportsSkippingQuote() {
+        return true;
     }
 }

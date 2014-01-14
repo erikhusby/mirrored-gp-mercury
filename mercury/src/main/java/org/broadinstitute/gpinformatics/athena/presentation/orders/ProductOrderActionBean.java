@@ -1160,6 +1160,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
+    @HandlesEvent("getSupportsSkippingQuote")
+    public Resolution getSupportsSkippingQuote() throws Exception {
+        boolean supportsSkippingQuote = false;
+        JSONObject item = new JSONObject();
+        if (product != null) {
+            supportsSkippingQuote = productDao.findByBusinessKey(product).getSupportsSkippingQuote();
+        }
+        item.put(Product.SUPPORTS_SKIPPING_QUOTE, supportsSkippingQuote);
+        return createTextResolution(item.toString());
+    }
+
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean supportsNumberOfLanes = false;
