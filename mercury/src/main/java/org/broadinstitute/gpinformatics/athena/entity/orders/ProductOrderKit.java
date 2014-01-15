@@ -87,7 +87,7 @@ public class ProductOrderKit implements Serializable {
     private String sampleCollectionName;
 
     private String comments;
-    private boolean exomeExpress;
+    private Boolean exomeExpress;
     @Enumerated(EnumType.STRING)
     private SampleKitWorkRequest.TransferMethod transferMethod;
 
