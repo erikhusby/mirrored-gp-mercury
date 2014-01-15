@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +27,7 @@ import java.util.Map;
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPUserList.class);
+    private static final long serialVersionUID = -8290793988380748612L;
 
     @Inject
     private Deployment deployment;
@@ -82,7 +82,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @param badgeId    the user's badge ID
      * @return the BSP user or null
      */
-    public BspUser getByBadgeId(@NotNull String badgeId) {
+    public BspUser getByBadgeId(@Nonnull String badgeId) {
         for (BspUser user : getUsers().values()) {
             if (badgeId.equalsIgnoreCase(user.getBadgeNumber())) {
                 return user;

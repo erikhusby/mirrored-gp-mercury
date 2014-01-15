@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.collect.Multimap;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -24,9 +26,9 @@ public class LabEventSampleDataFetcher {
      *
      * @param sampleKeys List of mercury sample keys.
      *
-     * @return
+     * @return A mapping of the sample keys to the found vessels
      */
-    public Map<String, List<LabVessel>> findMapBySampleKeys(Collection<String> sampleKeys) {
-        return labVesselDao.findMapBySampleKeys(sampleKeys);
+    public Multimap<String, LabVessel> findMapBySampleKeys(Collection<ProductOrderSample> samples) {
+        return labVesselDao.findMapBySampleKeys(samples);
     }
 }
