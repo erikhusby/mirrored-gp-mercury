@@ -41,7 +41,7 @@ public class BillingTrackerResolution implements Resolution {
         // Colon is a meta-character in Windows separating the drive letter from the rest of the path.
         filename = filename.replaceAll(":", "_");
 
-        tempFile = File.createTempFile(filename, ".xls");
+        tempFile = File.createTempFile(filename, ".xlsx");
         try (OutputStream outputStream = new FileOutputStream(tempFile)) {
             exporter.writeToStream(outputStream);
         }
@@ -54,7 +54,7 @@ public class BillingTrackerResolution implements Resolution {
     @Override
     public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
         try (InputStream inputStream = new FileInputStream(tempFile)) {
-            CoreActionBean.setFileDownloadHeaders("application/excel", tempFile.getName(), response);
+            CoreActionBean.setFileDownloadHeaders("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", tempFile.getName(), response);
             IOUtils.copy(inputStream, response.getOutputStream());
         } finally {
             FileUtils.deleteQuietly(tempFile);
