@@ -19,9 +19,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Integration tests for {@link BSPKitRequestService}.
@@ -39,8 +39,11 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
             new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false,
                     Collections.singletonList(HUMAN_ORGANISM));
     public static final long NUMBER_OF_SAMPLES = 96;
-    public static final List<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS =
-            Arrays.asList(PostReceiveOption.FLUIDIGM_FINGERPRINTING, PostReceiveOption.DNA_EXTRACTION);
+    public static final Set<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS = new HashSet<PostReceiveOption>() {{
+        add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        add(PostReceiveOption.DNA_EXTRACTION);
+    }};
+
     private static final String COMMENTS = "This is not a kit";
     private static final boolean IS_EX_EX = true;
     private static final SampleKitWorkRequest.TransferMethod TRANSFER_METHOD =

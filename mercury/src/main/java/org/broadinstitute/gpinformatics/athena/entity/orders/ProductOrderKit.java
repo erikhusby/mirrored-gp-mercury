@@ -72,7 +72,7 @@ public class ProductOrderKit implements Serializable {
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
-    private final List<PostReceiveOption> postReceiveOptions = new ArrayList<>();
+    private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -229,7 +229,7 @@ public class ProductOrderKit implements Serializable {
         return workRequestId;
     }
 
-    public List<PostReceiveOption> getPostReceiveOptions() {
+    public Set<PostReceiveOption> getPostReceiveOptions() {
         return postReceiveOptions;
     }
 

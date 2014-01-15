@@ -4,8 +4,9 @@ import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * A factory class for creating BSP WorkRequest objects of various types (e.g., SampleKitWorkRequest) from data
@@ -15,6 +16,7 @@ public class BSPWorkRequestFactory {
 
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
+     *
      *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
@@ -40,7 +42,7 @@ public class BSPWorkRequestFactory {
                                                               Long siteId, long numberOfSamples,
                                                               MaterialInfoDto MaterialInfoDto, Long sampleCollectionId,
                                                               String notificationList, long organismId,
-                                                              List<PostReceiveOption> postReceiveOptions, String notes,
+                                                              Set<PostReceiveOption> postReceiveOptions, String notes,
                                                               boolean exExKit,
                                                               SampleKitWorkRequest.TransferMethod transferMethod) {
 
@@ -64,7 +66,7 @@ public class BSPWorkRequestFactory {
                 transferMethod, // transferMethod
                 MaterialInfoDto,
                 organismId,
-                postReceiveOptions,
+                new ArrayList<>(postReceiveOptions),
                 notes,
                 exExKit
         );
