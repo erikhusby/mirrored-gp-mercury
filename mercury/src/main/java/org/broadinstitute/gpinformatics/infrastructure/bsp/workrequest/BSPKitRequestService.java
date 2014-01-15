@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
-import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
@@ -14,7 +13,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,7 +72,8 @@ public class BSPKitRequestService {
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId());
+                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId(),
+                kit.getPostReceiveOptions(),kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod());
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

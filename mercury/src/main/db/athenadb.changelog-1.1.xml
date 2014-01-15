@@ -411,4 +411,41 @@
                                  referencedColumnNames="REV_INFO_ID"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2390-5" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT" columnName="comments"/>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT" columnName="exome_express"/>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT" columnName="transfer_method"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT">
+            <column name="comments" type="varchar2(255 char)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT">
+            <column name="exome_express" type="number(1,0)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT">
+            <column name="transfer_method" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2390-6" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD" columnName="comments"/>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD" columnName="exome_express"/>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD" columnName="transfer_method"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD">
+            <column name="comments" type="varchar2(255 char)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD">
+            <column name="exome_express" type="number(1,0)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_KIT_AUD">
+            <column name="transfer_method" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

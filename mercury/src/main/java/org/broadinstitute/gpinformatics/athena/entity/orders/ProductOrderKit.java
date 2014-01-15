@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
@@ -84,6 +85,11 @@ public class ProductOrderKit implements Serializable {
 
     @Transient
     private String sampleCollectionName;
+
+    private String comments;
+    private boolean exomeExpress;
+    @Enumerated(EnumType.STRING)
+    private SampleKitWorkRequest.TransferMethod transferMethod;
 
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
@@ -245,5 +251,33 @@ public class ProductOrderKit implements Serializable {
             options.add(postReceiveOption.getText());
         }
         return StringUtils.join(options, delimiter);
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
+    public boolean isExomeExpress() {
+        return exomeExpress;
+    }
+
+    public void setExomeExpress(Boolean exomeExpress) {
+        this.exomeExpress = exomeExpress;
+    }
+
+    public void setExomeExpress(boolean exomeExpress) {
+        this.exomeExpress = exomeExpress;
+    }
+
+    public void setTransferMethod(SampleKitWorkRequest.TransferMethod transferMethod) {
+        this.transferMethod = transferMethod;
+    }
+
+    public SampleKitWorkRequest.TransferMethod getTransferMethod() {
+        return transferMethod;
     }
 }

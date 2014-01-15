@@ -845,7 +845,7 @@ function formatInput(item) {
                 <label class="control-label label-form">Post-Received Options</label>
                 <div class="controls">
                     <div class="form-value">
-                        <div class="form-value">${actionBean.postReceivedOptionsAsString()}</div>
+                        <div class="form-value">${actionBean.postReceivedOptionsAsString}</div>
                     </div>
                 </div>
             </div>

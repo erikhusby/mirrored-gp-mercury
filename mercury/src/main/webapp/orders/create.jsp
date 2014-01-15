@@ -591,6 +591,19 @@
                         </div>
                     </div>
                     <div class="control-group">
+                        <stripes:label for="transferMethod" class="control-label">
+                            Transfer Method
+                        </stripes:label>
+                        <div class="controls">
+                        <stripes:select name="editOrder.productOrderKit.transferMethod" id="transferMethod">
+                            <stripes:options-enumeration
+                                    enum="org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest.TransferMethod"
+                                    label="value"/>
+                        </stripes:select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
                         <stripes:label for="materialInfo" class="control-label">
                             Material Information
                         </stripes:label>
@@ -604,6 +617,22 @@
                             </c:if>
                         </div>
                     </div>
+                    <div class="control-group">
+                        <stripes:label for="isExomeExpress" class="control-label">
+                            Exome Express?
+                        </stripes:label>
+                        <div class="controls">
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.draft}">
+                                    <stripes:checkbox name="editOrder.productOrderKit.exomeExpress"
+                                                      id="isExomeExpress" />
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="form-value">${actionBean.editOrder.productOrderKit.exomeExpress}</div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
                     <div id="postReceiveCheckboxGroup" class="control-group">
                         <stripes:label for="selectedPostReceiveOptions" class="control-label">
                             Post-Receive Options
@@ -613,7 +642,16 @@
                     <div class="control-group">
                         <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>
                         <div class="controls">
-                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="notificationList" name="notificationListTokenInput.listOfKeys"/>
+                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="notificationList"
+                                          name="notificationListTokenInput.listOfKeys"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <stripes:label for="comments" class="control-label">Comments</stripes:label>
+                        <div class="controls">
+                            <stripes:textarea style="box-sizing: border-box; width: 100%;"
+                                              readonly="${!actionBean.editOrder.draft}"
+                                              id="comments" name="editOrder.productOrderKit.comments"/>
                         </div>
                     </div>
                 </fieldset>
