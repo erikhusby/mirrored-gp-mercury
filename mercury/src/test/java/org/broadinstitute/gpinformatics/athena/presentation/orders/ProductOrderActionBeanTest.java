@@ -203,4 +203,25 @@ public class ProductOrderActionBeanTest {
         stripesResolution.execute(request,response);
         return response;
     }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testQuoteSkippingValidation() {
+        actionBean.setSkipQuote(true);
+        actionBean.setSkipQuoteReason("");
+        actionBean.validateSkipQuoteReason();
+        Assert.assertEquals(actionBean.getValidationErrors().size(), 1);
+
+        actionBean.clearValidationErrors();
+        actionBean.setSkipQuote(false);
+        actionBean.setSkipQuoteReason("");
+        actionBean.validateSkipQuoteReason();
+        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
+
+        actionBean.setSkipQuote(true);
+        actionBean.setSkipQuoteReason("The dog ate my quote");
+        actionBean.validateSkipQuoteReason();
+
+        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
+
+    }
 }

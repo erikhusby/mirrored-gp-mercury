@@ -237,6 +237,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
 
+    private String skipQuoteReason;
+
+    private boolean skipQuote = false;
+
     private List<Long> sampleIdsForGetBspData;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
@@ -1912,5 +1916,29 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     void setProductDao(ProductDao productDao) {
         this.productDao = productDao;
+    }
+
+    public void validateSkipQuoteReason() {
+        if (skipQuote) {
+            if (StringUtils.isEmpty(skipQuoteReason)) {
+                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+            }
+        }
+    }
+
+    public String getSkipQuoteReason() {
+        return skipQuoteReason;
+    }
+
+    public void setSkipQuoteReason(String skipQuoteReason) {
+        this.skipQuoteReason = skipQuoteReason;
+    }
+
+    public boolean isSkipQuote() {
+        return skipQuote;
+    }
+
+    public void setSkipQuote(boolean skipQuote) {
+        this.skipQuote = skipQuote;
     }
 }
