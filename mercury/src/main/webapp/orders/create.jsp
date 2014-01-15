@@ -121,9 +121,13 @@ function toggleSkipQuote() {
     if (skipQuote) {
         $j("#skipQuoteReasonDiv").show();
         $j("#quote").val('');
+        $j("#quote").hide();
+        $j("#fundsRemaining").hide();
     }
     else {
         $j("#skipQuoteReasonDiv").hide();
+        $j("#quote").show();
+        $j("#fundsRemaining").show();
     }
 }
 
@@ -242,11 +246,12 @@ function updateNumberOfLanesVisibility(data) {
 
 function updateSkipQuoteVisibility(data) {
     var skipQuoteDiv = $j("#skipQuoteDiv");
-
-    var duration = {'duration' : 800};
-
-    // todo arz: clear and disable the quote field.  have a separate method to do this
-    data.supportsSkippingQuote ? skipQuoteDiv.fadeIn(duration) : skipQuoteDiv.fadeOut(duration);
+      if (data.supportsSkippingQuote) {
+            skipQuoteDiv.show();
+        }
+        else {
+          skipQuoteDiv.hide();
+      }
 }
 
 
@@ -439,8 +444,6 @@ function formatUser(item) {
                           title="Enter the Quote ID for this order"/>
             <div id="fundsRemaining"> </div>
 
-            <!-- todo arz logic to check whether this is an initiation PDO.  if so, enabled the option to skip the quote. -->
-            <!-- todo arz test getSupportsSkippingQuote action -->
             <div id="skipQuoteDiv">
                 <stripes:checkbox id="skipQuote" name="editOrder.skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
                 <div id="skipQuoteReasonDiv">
