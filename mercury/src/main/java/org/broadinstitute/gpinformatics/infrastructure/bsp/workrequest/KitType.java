@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
 /**
  * This enum is used to link the material info types to kit types. In the UI when selecting the Kit type,
- * It will help populate the MaterialInfo types.
+ * It will help populate the MaterialInfoDto types.
  *
  * name should map to KitTypeAllowanceSpecification in BSPCore
  *

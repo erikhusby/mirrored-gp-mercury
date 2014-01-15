@@ -2,8 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
-import org.apache.commons.collections15.Factory;
-import org.apache.commons.collections15.map.LazyMap;
+import org.apache.commons.collections4.Factory;
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -331,7 +331,7 @@ public class ZimsIlluminaRunFactory {
 
     private static class PipelineTransformationCriteria implements TransferTraverserCriteria {
 
-        private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.decorate(
+        private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.lazyMap(
                 new TreeMap<Integer, Set<LabVessel>>(),
                 new Factory<Set<LabVessel>>() {
             @Override

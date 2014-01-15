@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
@@ -79,13 +79,13 @@ public class ProductOrderKit implements Serializable {
 
     // Only used by tests.
     public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
-                           MaterialInfo materialInfo) {
+                           MaterialInfoDto MaterialInfoDto) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.sampleCollectionId = sampleCollectionId;
         this.organismId = organismId;
         this.siteId = siteId;
-        setMaterialInfo(materialInfo);
+        setMaterialInfo(MaterialInfoDto);
     }
 
     public Long getProductOrderKitId() {
@@ -169,12 +169,12 @@ public class ProductOrderKit implements Serializable {
         siteName = s;
     }
 
-    public MaterialInfo getMaterialInfo() {
-        return new MaterialInfo(kitType.getKitName(), bspMaterialName);
+    public MaterialInfoDto getMaterialInfo() {
+        return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
     }
 
-    public void setMaterialInfo(MaterialInfo materialInfo) {
-        bspMaterialName = materialInfo != null ? materialInfo.getBspName() : null;
+    public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
+        bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
     }
 
     public String getBspMaterialName() {

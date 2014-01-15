@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory.CherryPick;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
@@ -48,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -147,9 +150,9 @@ public class BaseEventTest {
         final FlowcellMessageHandler flowcellMessageHandler =
                 new FlowcellMessageHandler();
         flowcellMessageHandler.setJiraService(JiraServiceProducer.stubInstance());
-        flowcellMessageHandler.setEmailSender( new EmailSender());
+        flowcellMessageHandler.setEmailSender(new EmailSender());
         flowcellMessageHandler.setAppConfig(new AppConfig(
-                        Deployment.DEV));
+                Deployment.DEV));
 
         EventHandlerSelector eventHandlerSelector =
                 new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
@@ -371,7 +374,7 @@ public class BaseEventTest {
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param workflow     The workflow name for the current workflow.
+     * @param workflow         The workflow name for the current workflow.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
@@ -404,9 +407,9 @@ public class BaseEventTest {
                                                                       String fctTicket,
                                                                       ProductionFlowcellPath productionFlowcellPath,
                                                                       String designationName, Workflow workflow) {
-        int flowcellLanes=8;
-        if (workflow == Workflow.AGILENT_EXOME_EXPRESS){
-            flowcellLanes=2;
+        int flowcellLanes = 8;
+        if (workflow == Workflow.AGILENT_EXOME_EXPRESS) {
+            flowcellLanes = 2;
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
@@ -456,15 +459,145 @@ public class BaseEventTest {
      * @return destination tube formation
      */
     public TubeFormation daughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+        List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
+        return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
+    }
+
+    /**
+     * Simulates a BSP daughter plate transfer with a mismatched layout prior to export from BSP to Mercury,
+     * then does a re-array to add controls.
+     *
+     * @param mapBarcodeToTube  source tubes
+     * @param mapBarcodeToTube2 second rack of source tubes
+     *
+     * @return destination tube formation
+     */
+    public TubeFormation mismatchedDaughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                                         Map<String, TwoDBarcodedTube> mapBarcodeToTube2,
+                                                         List<Integer> wellsToReplace) {
+        List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
+        return getDaughterTubeFormationCherryPick(mapBarcodeToTube, mapBarcodeToTube2, daughterTubeBarcodes,
+                wellsToReplace);
+    }
+
+    /**
+     * Generates the daughter tube barcodes for the destination tube formation .
+     *
+     * @param mapBarcodeToTube source tubes
+     *
+     * @return list of daughter tube barcodes
+     */
+    private List<String> generateDaughterTubeBarcodes(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
         // Daughter plate transfer that doesn't include controls
         List<String> daughterTubeBarcodes = new ArrayList<>();
         for (int i = 0; i < mapBarcodeToTube.size(); i++) {
             daughterTubeBarcodes.add("D" + i);
         }
+        return daughterTubeBarcodes;
+    }
+
+    /**
+     * Creates a daughter tube formation using a rack to rack transfer.
+     *
+     * @param mapBarcodeToTube     source tubes
+     * @param daughterTubeBarcodes destination tubes
+     *
+     * @return destination tube formation
+     */
+    private TubeFormation getDaughterTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                                   List<String> daughterTubeBarcodes) {
         PlateTransferEventType daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
                         new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack", daughterTubeBarcodes);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        LabEvent daughterPlateTransferEntity =
+                labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
+        TubeFormation daughterPlate =
+                (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
+
+        Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
+                    twoDBarcodedTube);
+        }
+
+        // Controls are added in a re-array
+        TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
+        BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
+                }});
+        posControlTube.addSample(new MercurySample(POSITIVE_CONTROL, bspSampleDtoPos));
+        mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
+        mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
+
+        TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
+        BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
+                new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                    put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
+                }});
+        negControlTube.addSample(new MercurySample(NEGATIVE_CONTROL, bspSampleDtoNeg));
+        mapSampleNameToDto.put(NEGATIVE_CONTROL, bspSampleDtoNeg);
+        mapBarcodeToDaughterTube.put(VesselPosition.H12, negControlTube);
+
+        return new TubeFormation(mapBarcodeToDaughterTube, RackOfTubes.RackType.Matrix96);
+    }
+
+    /**
+     * Creates a daughter tube formation using cherry pick transfers.
+     *
+     * @param mapBarcodeToTube     source tubes
+     * @param mapBarcodeToTube2    second rack of source tubes
+     * @param daughterTubeBarcodes destination tubes
+     * @param wellsToReplace       wells to switch from rack 1 to rack 2
+     *
+     * @return destination tube formation
+     */
+    private TubeFormation getDaughterTubeFormationCherryPick(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                                             Map<String, TwoDBarcodedTube> mapBarcodeToTube2,
+                                                             List<String> daughterTubeBarcodes,
+                                                             List<Integer> wellsToReplace) {
+
+        List<String> sourceTubeBarcodes = new ArrayList<>(mapBarcodeToTube.keySet());
+        List<String> sourceTubeBarcodes2 = new ArrayList<>(mapBarcodeToTube2.keySet());
+
+        List<CherryPick> cherryPicks = new ArrayList<>();
+
+        for (int i = 0; i < mapBarcodeToTube.size(); i++) {
+            if (!wellsToReplace.isEmpty() && wellsToReplace.contains(i)) {
+                cherryPicks.add(new CherryPick(
+                        "MotherRack2",
+                        VesselGeometry.G12x8.getVesselPositions()[i].name(),
+                        "DaughterRack",
+                        VesselGeometry.G12x8.getVesselPositions()[i].name()));
+            } else {
+                cherryPicks.add(new CherryPick(
+                        "MotherRack",
+                        VesselGeometry.G12x8.getVesselPositions()[i].name(),
+                        "DaughterRack",
+                        VesselGeometry.G12x8.getVesselPositions()[i].name()));
+            }
+        }
+
+        List<String> sourceRacks = new ArrayList<>();
+        sourceRacks.add("MotherRack");
+        sourceRacks.add("MotherRack2");
+
+        List<String> destinationRacks = new ArrayList<>();
+        destinationRacks.add("DaughterRack");
+
+        List<List<String>> sourceTubes = new ArrayList<>();
+        sourceTubes.add(sourceTubeBarcodes);
+        sourceTubes.add(sourceTubeBarcodes2);
+
+        List<List<String>> daughterTubes = new ArrayList<>();
+        daughterTubes.add(daughterTubeBarcodes);
+
+        PlateCherryPickEvent daughterPlateTransferJaxb =
+                bettaLimsMessageTestFactory.buildCherryPick("SamplesDaughterPlateCreation", sourceRacks,
+                        sourceTubes, destinationRacks, daughterTubes, cherryPicks);
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
+        mapBarcodeToVessel.putAll(mapBarcodeToTube2);
         LabEvent daughterPlateTransferEntity =
                 labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
         TubeFormation daughterPlate =

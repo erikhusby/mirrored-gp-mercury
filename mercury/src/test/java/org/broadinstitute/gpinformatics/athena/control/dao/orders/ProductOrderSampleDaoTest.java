@@ -111,4 +111,22 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
 
         Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
     }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    public void testFindByPDOKeyAndSampleNamesWithLotsOfSamples() {
+        ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-1312");
+        Assert.assertTrue(pdo.getSamples().size() > 1000);
+
+        List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdo.getBusinessKey(),getSampleNames(pdo));
+
+        Assert.assertTrue(pdoSamples.size() == pdo.getSamples().size());
+    }
+
+    private Set<String> getSampleNames(ProductOrder pdo) {
+        Set<String> sampleNames = new HashSet<>();
+        for (ProductOrderSample pdoSample : pdo.getSamples()) {
+            sampleNames.add(pdoSample.getName());
+        }
+        return sampleNames;
+    }
 }

@@ -67,6 +67,16 @@ public class SampleInstance {
      */
     private String productOrderKey;
 
+    private boolean eventApplied = false;
+
+    public boolean isEventApplied() {
+        return eventApplied;
+    }
+
+    public void setEventApplied(boolean eventApplied) {
+        this.eventApplied = eventApplied;
+    }
+
     public SampleInstance(MercurySample sample) {
         this.sample = sample;
     }

@@ -69,9 +69,10 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
         }
         Object newValueToCompare = newValue;
 
-        // Jira stores numeric values as Doubles. If you save a field as '8', Jira will return '8.0' as the field's
-        // stored value. Therefore, equals will always return false.
-        if (oldValueToCompare instanceof Double && newValue instanceof Integer) {
+        // When JAX-RS converts numeric values from Jira, it assumes they are of type java.lang.Double. If you save
+        // a field as '8', the JAX-RS converted value will be '8.0' which will cause the comparison between new and
+        // old values to always return false when they may be the same value.
+        if (previousValue instanceof Double && newValue instanceof Integer) {
             newValueToCompare = ((Integer) newValue).doubleValue();
         }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -82,6 +83,7 @@ public abstract class LabVessel implements Serializable {
      * a logging level would require frequent checks in heavily used code.
      */
     public static final boolean DIAGNOSTICS = false;
+    public static final boolean EVENT_DIAGNOSTICS = false;
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -751,13 +753,18 @@ public abstract class LabVessel implements Serializable {
          * other levels.
          */
         public void completeLevel() {
-            if (!sampleInstances.isEmpty() && !reagents.isEmpty()) {
+            if (!sampleInstances.isEmpty()) {
                 for (SampleInstance sampleInstance : sampleInstances) {
-                    for (Reagent reagent : reagents) {
-                        sampleInstance.addReagent(reagent);
+                    if (!reagents.isEmpty()) {
+                        for (Reagent reagent : reagents) {
+                            sampleInstance.addReagent(reagent);
+                        }
                     }
+                    sampleInstance.setEventApplied(false);
                 }
-                reagents.clear();
+                if (!reagents.isEmpty()) {
+                    reagents.clear();
+                }
             }
         }
 
@@ -768,18 +775,42 @@ public abstract class LabVessel implements Serializable {
          * @param labVessel plastic involved in the event
          */
         public void applyEvent(@Nonnull LabEvent labEvent, @Nonnull LabVessel labVessel) {
+            if (EVENT_DIAGNOSTICS) {
+                System.out.println("applyEvent " + labEvent.getLabEventType().getName() +
+                                   (CollectionUtils.isEmpty(labVessel.getBucketEntries()) ? "" : " with bucket entry"));
+            }
             Set<LabBatch> computedLcSets1 = labEvent.getComputedLcSets();
             if (computedLcSets1.size() == 1) {
                 LabBatch labBatch = computedLcSets1.iterator().next();
                 for (SampleInstance sampleInstance : getSampleInstances()) {
+                    if (labEvent.getLabEventType() == LabEventType.POOLING_TRANSFER) {
+                        // When setting sample instance bucket entry for Pooling Transfer events, be careful
+                        // to apply the bucket entry to only the source vessel's sample instance(s), and not
+                        // to the pooled combination of sample instances from other source vessels.
+                        if (sampleInstance.isEventApplied()) {
+                            continue;
+                        }
+                        sampleInstance.setEventApplied(true);
+                    }
                     int foundBucketEntries = 0;
                     for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
                         if (bucketEntry.getLabBatch() != null && bucketEntry.getLabBatch().equals(labBatch)) {
+                            if (EVENT_DIAGNOSTICS) {
+                                System.out.println("SampleInstance " +
+                                                   sampleInstance.getStartingSample().getSampleKey() + " gets " +
+                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getPoBusinessKey() +
+                                                   " from " + bucketEntry.getBucket().getBucketDefinitionName() +
+                                                   (bucketEntry.getReworkDetail() != null ? " (rework)" : ""));
+                            }
                             sampleInstance.setBucketEntry(bucketEntry);
                             foundBucketEntries++;
                         }
                     }
                     if (foundBucketEntries != 1) {
+                        if (EVENT_DIAGNOSTICS) {
+                            System.out.println("SampleInstance " + sampleInstance.getStartingSample().getSampleKey() +
+                                               " gets computed batch " + labBatch);
+                        }
                         sampleInstance.setLabBatch(labBatch);
                     }
                 }

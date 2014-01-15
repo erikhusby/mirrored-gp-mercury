@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import org.apache.commons.collections.map.DefaultedMap;
+import org.apache.commons.collections4.map.DefaultedMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -21,12 +21,12 @@ public class CompletionStatusFetcher {
 
     @SuppressWarnings("unchecked")
     public void loadProgress(ProductOrderDao productOrderDao, Collection<Long> productOrderIds) {
-        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getProgress(productOrderIds), DEFAULT);
+        progressByBusinessKey = DefaultedMap.defaultedMap(productOrderDao.getProgress(productOrderIds), DEFAULT);
     }
 
     @SuppressWarnings("unchecked")
     public void loadProgress(ProductOrderDao productOrderDao) {
-        progressByBusinessKey = DefaultedMap.decorate(productOrderDao.getAllProgress(), DEFAULT);
+        progressByBusinessKey = DefaultedMap.defaultedMap(productOrderDao.getAllProgress(), DEFAULT);
     }
 
     @DaoFree

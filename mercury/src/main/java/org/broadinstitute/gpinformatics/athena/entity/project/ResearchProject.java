@@ -50,7 +50,9 @@ import java.util.TreeSet;
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements BusinessObject, JiraProject, Comparable<ResearchProject>, Serializable {
     public static final boolean IRB_ENGAGED = false;
+
     public static final boolean IRB_NOT_ENGAGED = true;
+
     /**
      * Compare by modified date.
      */
@@ -60,59 +62,77 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             return rhs.getModifiedDate().compareTo(lhs.getModifiedDate());
         }
     };
-    // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    @BatchSize(size = 500)
-    private final Set<ProjectPerson> associatedPeople = new HashSet<>();
-    // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<>();
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectFunding> projectFunding = new HashSet<>();
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-            orphanRemoval = true)
-    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<>();
+
     @Id
     @SequenceGenerator(name = "seq_research_project_index", schema = "athena",
             sequenceName = "seq_research_project_index")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_research_project_index")
     private Long researchProjectId;
+
+    // People related to the project
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    @BatchSize(size = 500)
+    private final Set<ProjectPerson> associatedPeople = new HashSet<>();
+
+    // Information about externally managed items
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<>();
+
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectFunding> projectFunding = new HashSet<>();
+
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private final Set<ResearchProjectIRB> irbNumbers = new HashSet<>();
+
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status = Status.Open;
+
     // creation/modification information
     @Column(name = "CREATED_DATE", nullable = false)
     private Date createdDate;
+
     @Column(name = "CREATED_BY", nullable = false)
     private Long createdBy;
+
     @Column(name = "MODIFIED_DATE", nullable = false)
     private Date modifiedDate;
+
     @Column(name = "MODIFIED_BY", nullable = false)
     private Long modifiedBy;
+
     @Column(name = "TITLE", unique = true, nullable = false)
     @Index(name = "ix_rp_title")
     private String title;
+
     @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
+
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
     @Index(name = "ix_parent_research_project")
     private ResearchProject parentResearchProject;
+
     @Column(name = "SEQUENCE_ALIGNER_KEY", nullable = true)
     private String sequenceAlignerKey;
+
     @Column(name = "REFERENCE_SEQUENCE_KEY", nullable = true)
     private String referenceSequenceKey;
+
     /**
      * Set of ResearchProjects that belong under this one.
      */
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentResearchProject")
     private Set<ResearchProject> childProjects = new HashSet<>();
     private String irbNotes;
+
     @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     private List<ProductOrder> productOrders = new ArrayList<>();
     /**
@@ -120,10 +140,12 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      */
     @Column(name = "ACCESS_CONTROL_ENABLED")
     private boolean accessControlEnabled;
+
     // Reference to the Jira Ticket associated to this Research Project.
     @Index(name = "ix_rp_jira")
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
+
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
@@ -476,7 +498,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     }
 
 
-
     public String getOriginalTitle() {
         return originalTitle;
     }
@@ -639,6 +660,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     /**
      * Test if this Project is saved in Jira. It has been persisted to Jira if it has a jiraTicketKey.
+     *
      * @return true if it has a jiraTicketKey.
      */
     public boolean isSavedInJira() {

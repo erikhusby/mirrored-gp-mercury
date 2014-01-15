@@ -8,7 +8,7 @@ import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleKitListResponse;
 import org.broadinstitute.bsp.client.response.SampleKitResponse;
 import org.broadinstitute.bsp.client.response.SampleResponse;
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.bsp.client.sample.Sample;
 import org.broadinstitute.bsp.client.sample.SampleKit;
@@ -186,9 +186,9 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
             }
 
             @Override
-            public List<MaterialInfo> getMaterialInfoObjects() {
-                List<MaterialInfo> materialInfoList = new ArrayList<>();
-                materialInfoList.add(new MaterialInfo("DNA Matrix Kit", "DNA Derived from Whole Blood"));
+            public List<MaterialInfoDto> getMaterialInfoObjects() {
+                List<MaterialInfoDto> materialInfoList = new ArrayList<>();
+                materialInfoList.add(new MaterialInfoDto("DNA Matrix Kit", "DNA Derived from Whole Blood"));
                 return materialInfoList;
             }
 
@@ -206,7 +206,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
             }
 
             @Override
-            public List<MaterialInfo> getMaterialInfoObjects(String s) {
+            public List<MaterialInfoDto> getMaterialInfoObjects(String s) {
                 return getMaterialInfoObjects();
             }
 

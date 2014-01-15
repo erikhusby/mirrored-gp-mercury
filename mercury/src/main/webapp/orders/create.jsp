@@ -10,7 +10,10 @@
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            $j(document).ready(
+
+        var duration = {'duration' : 400};
+
+        $j(document).ready(
                 function () {
                     $j('#productList').dataTable( {
                         "oTableTools": ttExportDefines,
@@ -121,6 +124,7 @@
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                     $j("#sampleInitiationKitRequestEdit").hide();
+                    $j("#numberOfLanesDiv").fadeOut(duration);
                 } else {
                     if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>')  {
                         // Product is Sample Initiation "P-ESH-0001".
@@ -199,7 +203,6 @@
                 });
                 organismSelect += '</select>';
 
-                var duration = {'duration' : 800};
                 $j("#selectedOrganism").hide();
                 $j("#selectedOrganism").html(organismSelect);
                 $j("#selectedOrganism").fadeIn(duration);
@@ -241,8 +244,6 @@
                     checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
                     checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value +' [' + val.key + ']</label>';
                 });
-
-                var duration = {'duration' : 800};
 
                 var checkboxes = $j("#addOnCheckboxes");
                 checkboxes.hide();
@@ -400,6 +401,16 @@
                     <div id="addOnCheckboxes" class="controls controls-text"> </div>
                 </div>
 
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
+                    <stripes:label for="numberOfLanes" class="control-label">
+                        Number of Lanes Per Sample
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
+                                      title="Enter Number of Lanes"/>
+                    </div>
+                </div>
+
                 <div class="control-group">
                     <stripes:label for="quote" class="control-label">
                         Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
@@ -409,16 +420,6 @@
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
-                    </div>
-                </div>
-
-                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
-                    <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes Per Sample
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="numberOfLanes" name="editOrder.laneCount" class="defaultText"
-                            title="Enter Number of Lanes"/>
                     </div>
                 </div>
 
@@ -544,8 +545,7 @@
                         <div class="controls">
                             <stripes:select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
                                 <stripes:option label="Choose..." value=""/>
-                                <stripes:options-collection value="bspName"
-                                                            collection="${actionBean.dnaMatrixMaterialTypes}" label="bspName"/>
+                                <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}"/>
                             </stripes:select>
                             <c:if test="${!actionBean.editOrder.draft}">
                                 <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>

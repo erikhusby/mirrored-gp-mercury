@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.collections.CollectionUtils;
+import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -264,12 +265,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public static void loadLabEventSampleData(List<ProductOrderSample> samples) {
 
         LabEventSampleDataFetcher labDataFetcher = ServiceAccessUtility.getBean(LabEventSampleDataFetcher.class);
-        List<String> sampleIds = new ArrayList<>();
-        for (ProductOrderSample sample : samples) {
-            sampleIds.add(sample.getSampleKey());
-        }
 
-        Map<String, List<LabVessel>> vesselMap = labDataFetcher.findMapBySampleKeys(sampleIds);
+        Multimap<String, LabVessel> vesselMap = labDataFetcher.findMapBySampleKeys(samples);
         for (ProductOrderSample sample : samples) {
             Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
             if (!CollectionUtils.isEmpty(labVessels)) {
@@ -868,6 +865,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
         }
 
+        if (!addOns.isEmpty()) {
+            List<String> addOnsList = new ArrayList<>(addOns.size());
+            for (ProductOrderAddOn addOn : addOns) {
+                addOnsList.add(addOn.getAddOn().getDisplayName());
+            }
+            Collections.sort(addOnsList);
+            listOfFields.add(new CustomField(submissionFields, JiraField.ADD_ONS, StringUtils.join(addOnsList, "\n")));
+        }
+
         listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
 
         if (product.getSupportsNumberOfLanes()) {
@@ -1047,7 +1053,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         STATUS("Status"),
         REQUISITION_ID("Requisition ID"),
         LANES_PER_SAMPLE("Lanes Per Sample"),
-        REQUISITION_NAME("Requisition Name");
+        REQUISITION_NAME("Requisition Name"),
+        ADD_ONS("Add-ons");
 
         private final String fieldName;
 

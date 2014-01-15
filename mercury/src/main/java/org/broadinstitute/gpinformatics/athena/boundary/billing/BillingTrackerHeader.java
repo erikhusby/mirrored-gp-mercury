@@ -79,12 +79,47 @@ public enum BillingTrackerHeader implements ColumnHeader {
         return requiredValue;
     }
 
-    public static String getPriceItemHeader(PriceItem priceItem, Product product) {
-        return priceItem.getName() + " [" + product.getPartNumber() + "]";
+    /**
+     * Generates a header string for the price item name, which includes the "Billed" column header. Used when creating
+     * the billing tracker download.
+     *
+     * @param priceItem    the price item to get the name from
+     * @return the header text
+     */
+    public static String getPriceItemNameHeader(PriceItem priceItem) {
+        return priceItem.getName() + "\n" + BILLED;
     }
 
-    public static String getPriceItemHeader(BillableRef billableRef) {
-        return billableRef.getPriceItemName() + " [" + billableRef.getProductPartNumber() + "]";
+    /**
+     * Generates a header string for the product part number, which includes the "Update Quantity To" column header.
+     * Used when creating the billing tracker download.
+     *
+     * @param product    the product to get the part number from
+     * @return the header text
+     */
+    public static String getPriceItemPartNumberHeader(Product product) {
+        return getPartNumberHeader(product.getPartNumber());
+    }
+
+    /**
+     * Generates a header string for the part number for the given billable product. Used when parsing an uploaded
+     * billing tracker.
+     *
+     * @param billableRef    the billable product to get the part number from
+     * @return the header text
+     */
+    public static String getPriceItemPartNumberHeader(BillableRef billableRef) {
+        return getPartNumberHeader(billableRef.getProductPartNumber());
+    }
+
+    /**
+     * Generates a header string for the given part number.
+     *
+     * @param partNumber    the part number
+     * @return the header text
+     */
+    private static String getPartNumberHeader(String partNumber) {
+        return "[" + partNumber + "]\n" + UPDATE;
     }
 
     @Override

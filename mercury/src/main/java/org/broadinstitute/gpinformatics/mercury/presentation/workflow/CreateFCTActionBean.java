@@ -163,7 +163,17 @@ public class CreateFCTActionBean extends CoreActionBean {
         labBatch = labBatchDao.findByBusinessKey(lcsetName);
         if (labBatch != null) {
             for (LabVessel vessel : labBatch.getStartingBatchLabVessels()) {
-                denatureTubeToEvent.putAll(vessel.findVesselsForLabEventType(LabEventType.DENATURE_TRANSFER));
+                // Can't use denatureTubeToEvent.putAll, because multiple denatures may be created by the same event.
+                Map<LabEvent, Set<LabVessel>> mapEventToVessels = vessel.findVesselsForLabEventType(
+                        LabEventType.DENATURE_TRANSFER);
+                for (Map.Entry<LabEvent, Set<LabVessel>> labEventSetEntry : mapEventToVessels.entrySet()) {
+                    Set<LabVessel> labVessels = denatureTubeToEvent.get(labEventSetEntry.getKey());
+                    if (labVessels == null) {
+                        labVessels = new HashSet<>();
+                        denatureTubeToEvent.put(labEventSetEntry.getKey(), labVessels);
+                    }
+                    labVessels.addAll(labEventSetEntry.getValue());
+                }
             }
         } else {
             addValidationError("lcsetText", "Could not find " + lcsetName);

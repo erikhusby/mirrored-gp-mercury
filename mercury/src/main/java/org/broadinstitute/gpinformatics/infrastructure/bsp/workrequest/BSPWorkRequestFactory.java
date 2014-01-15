@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
-import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.sample.MaterialInfo;
-import org.broadinstitute.bsp.client.site.Site;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
 import java.util.Collections;
@@ -24,7 +22,7 @@ public class BSPWorkRequestFactory {
      * @param externalCollaboratorId the domain user ID for the external collaborator
      * @param siteId                 the site that the sample kits will be shipped to
      * @param numberOfSamples        the total number of samples that the kit should contain
-     * @param materialInfo           the material type
+     * @param MaterialInfoDto           the material type
      * @param sampleCollectionId     the collection to use for the sample kit work task
      * @param notificationList       the comma separated list of users to notify on kit shipment.
      * @param organismId             the organism that the user selected
@@ -35,7 +33,7 @@ public class BSPWorkRequestFactory {
                                                               String productOrderId, Long primaryInvestigatorId,
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Long siteId, long numberOfSamples,
-                                                              MaterialInfo materialInfo, Long sampleCollectionId,
+                                                              MaterialInfoDto MaterialInfoDto, Long sampleCollectionId,
                                                               String notificationList, long organismId) {
 
         return new SampleKitWorkRequest(
@@ -56,7 +54,7 @@ public class BSPWorkRequestFactory {
                 numberOfSamples,
                 sampleCollectionId,
                 SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
-                materialInfo,
+                MaterialInfoDto,
                 organismId
         );
     }
