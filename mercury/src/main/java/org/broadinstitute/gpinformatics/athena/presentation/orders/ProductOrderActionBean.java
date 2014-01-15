@@ -1381,7 +1381,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
             filename = filename.replaceAll(":", "_");
 
-            final File tempFile = File.createTempFile(filename, ".xls");
+            final File tempFile = File.createTempFile(filename, ".xlsx");
             outputStream = new FileOutputStream(tempFile);
 
             SampleLedgerExporter sampleLedgerExporter =
@@ -1395,7 +1395,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     InputStream inputStream = new FileInputStream(tempFile);
 
                     try {
-                        actionBean.setFileDownloadHeaders("application/excel", tempFile.getName());
+                        actionBean.setFileDownloadHeaders("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", tempFile.getName());
                         IOUtils.copy(inputStream, actionBean.getContext().getResponse().getOutputStream());
                     } finally {
                         IOUtils.closeQuietly(inputStream);

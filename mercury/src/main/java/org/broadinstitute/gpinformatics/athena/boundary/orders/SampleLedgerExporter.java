@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.util.CellRangeAddress;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerHeader;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -24,7 +23,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
@@ -121,15 +119,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return allPriceItems;
     }
 
-    private void writePriceItemProductHeader(PriceItem priceItem, Product product) {
-        getWriter().writeCell(
-                BillingTrackerHeader.getPriceItemHeader(priceItem, product), 2, getPriceItemProductHeaderStyle());
-    }
-
-    private void writeBillAndNewHeaders() {
-        getWriter().writeCell(BillingTrackerHeader.BILLED, getBilledAmountsHeaderStyle());
+    private void writePriceItemProductHeaders(PriceItem priceItem, Product product, byte[] rgbColor) {
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemNameHeader(priceItem), getWrappedHeaderStyle(rgbColor));
         getWriter().setColumnWidth(VALUE_WIDTH);
-        getWriter().writeCell(BillingTrackerHeader.UPDATE, getBilledAmountsHeaderStyle());
+        getWriter().writeCell(BillingTrackerHeader.getPriceItemPartNumberHeader(product), getWrappedHeaderStyle(
+                rgbColor));
         getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
@@ -159,7 +153,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().nextRow();
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
-                    getWriter().writeCell(header.getText(), getFixedHeaderStyle());
+                    getWriter().writeCell(header.getText(), getWrappedHeaderStyle(
+                            new byte[]{(byte) 204, (byte) 204, (byte) 255}));
                     getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
                 }
             }
@@ -171,7 +166,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<Product> sortedAddOns = new ArrayList<>(currentProduct.getAddOns());
             Collections.sort(sortedAddOns);
 
+            // Increase the row height to make room for long headers that wrap to multiple lines
+            getWriter().setRowHeight((short) (getWriter().getCurrentSheet().getDefaultRowHeight() * 4));
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
+
+            // Freeze the first row to make it persistent when scrolling.
+            getWriter().createFreezePane(0, 1);
 
             // Write content.
             int sortOrder = 1;
@@ -286,16 +286,32 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
+    private static byte[][] PRICE_ITEM_COLORS = {
+            { (byte) 255, (byte) 255, (byte) 204 },
+            { (byte) 255, (byte) 204, (byte) 255 },
+            { (byte) 204, (byte) 236, (byte) 255 },
+            { (byte) 204, (byte) 255, (byte) 204 },
+            { (byte) 204, (byte) 153, (byte) 255 },
+            { (byte) 255, (byte) 102, (byte) 204 },
+            { (byte) 255, (byte) 255, (byte) 153 },
+            { (byte)   0, (byte) 255, (byte) 255 },
+            { (byte) 102, (byte) 255, (byte) 153 },
+    };
+
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
+        int colorIndex = 0;
+
         for (PriceItem priceItem : sortedPriceItems) {
-            writePriceItemProductHeader(priceItem, currentProduct);
+            writePriceItemProductHeaders(priceItem, currentProduct,
+                    PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
         }
 
         // Repeat the process for add ons
         for (Product addOn : sortedAddOns) {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn, priceItemDao, priceListCache);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
-                writePriceItemProductHeader(priceItem, addOn);
+                writePriceItemProductHeaders(priceItem, addOn,
+                        PRICE_ITEM_COLORS[colorIndex++ % PRICE_ITEM_COLORS.length]);
             }
         }
 
@@ -303,45 +319,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().setColumnWidth(COMMENTS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
         getWriter().setColumnWidth(ERRORS_WIDTH);
-
-        writeAllBillAndNewHeaders(currentProduct, priceListCache.getReplacementPriceItems(currentProduct), currentProduct.getAddOns());
-    }
-
-    private void writeAllBillAndNewHeaders(
-            Product currentProduct, Collection<QuotePriceItem> quotePriceItems, Set<Product> addOns) {
-
-        // The new row.
-        getWriter().nextRow();
-
-        // The empty fixed headers.
-        writeEmptyFixedHeaders(currentProduct);
-
-        // primary price item for main product.
-        writeBillAndNewHeaders();
-        for (QuotePriceItem quotePriceItem : quotePriceItems) {
-            writeBillAndNewHeaders();
-        }
-
-        for (Product addOn : addOns) {
-            // primary price item for this add-on.
-            writeBillAndNewHeaders();
-
-            for (QuotePriceItem quotePriceItem : priceListCache.getReplacementPriceItems(addOn)) {
-                writeBillAndNewHeaders();
-            }
-        }
-
-        // Freeze the first two rows so sort doesn't disturb them.
-        getWriter().createFreezePane(0, 2);
-    }
-
-    private void writeEmptyFixedHeaders(Product currentProduct) {
-        // Write blank secondary header line for fixed columns, with default styling.
-        for (BillingTrackerHeader ignored : BillingTrackerHeader.values()) {
-            if (ignored.shouldShow(currentProduct)) {
-                getWriter().writeCell(" ");
-            }
-        }
     }
 
     /**

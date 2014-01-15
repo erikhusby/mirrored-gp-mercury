@@ -98,15 +98,11 @@ public class BillingTrackerProcessor extends TableProcessor {
 
     @Override
     public int getNumHeaderRows() {
-        return 2;
+        return 1;
     }
 
     @Override
     public void processHeader(List<String> originalHeaders, int row) {
-        // The second row is captured in the first row, so can just skip.
-        if (row == 1) {
-            return;
-        }
 
         // Only the product headers contain square brackets, so if those exist add two items for billed and updated.
         headerValues = new ArrayList<> ();
@@ -115,12 +111,17 @@ public class BillingTrackerProcessor extends TableProcessor {
         while (headerIterator.hasNext()) {
             String originalHeader = headerIterator.next();
             if (originalHeader.contains("[")) {
-                // The bracket is for price item columns, which are double spans.
+
+                // Remove the previous header which was for the "Billed" column and did not have the part number.
+                headerValues.remove(headerValues.size() - 1);
+
+                /*
+                 * Add two headers with the product number header: one for billed and one for update.
+                 * Technically, originalHeader already has the value of UPDATE appended to it, but that doesn't matter
+                 * as long as the header names calculated here line up in parseRowForSummaryMap and doUpdate.
+                 */
                 headerValues.add(originalHeader + " " + BillingTrackerHeader.BILLED);
                 headerValues.add(originalHeader + " " + BillingTrackerHeader.UPDATE);
-
-                // Bump past the 'blank' column that the double span uses.
-                headerIterator.next();
             } else {
                 headerValues.add(originalHeader);
             }
@@ -326,7 +327,8 @@ public class BillingTrackerProcessor extends TableProcessor {
 
             double trackerBilled = 0;
 
-            String billedKey = BillingTrackerHeader.getPriceItemHeader(billableRef) + " " + BillingTrackerHeader.BILLED;
+            String billedKey =
+                    BillingTrackerHeader.getPriceItemPartNumberHeader(billableRef) + " " + BillingTrackerHeader.BILLED;
 
             String priceItemName = billableRef.getPriceItemName();
             if (!StringUtils.isBlank(dataRow.get(billedKey))) {
@@ -361,7 +363,7 @@ public class BillingTrackerProcessor extends TableProcessor {
                           PriceItem priceItem, double trackerBilled, String priceItemName) {
 
         String updateToKey =
-                BillingTrackerHeader.getPriceItemHeader(billableRef) + " " + BillingTrackerHeader.UPDATE;
+                BillingTrackerHeader.getPriceItemPartNumberHeader(billableRef) + " " + BillingTrackerHeader.UPDATE;
         String updateTo = dataRow.get(updateToKey);
 
         if (!StringUtils.isBlank(updateTo)) {
