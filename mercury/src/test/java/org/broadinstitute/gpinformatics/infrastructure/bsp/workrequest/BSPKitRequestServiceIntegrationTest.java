@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -18,7 +19,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Integration tests for {@link BSPKitRequestService}.
@@ -36,6 +39,12 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
             new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false,
                     Collections.singletonList(HUMAN_ORGANISM));
     public static final long NUMBER_OF_SAMPLES = 96;
+    public static final List<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS =
+            Arrays.asList(PostReceiveOption.FLUIDIGM_FINGERPRINTING, PostReceiveOption.DNA_EXTRACTION);
+    private static final String COMMENTS = "This is not a kit";
+    private static final boolean IS_EX_EX = true;
+    private static final SampleKitWorkRequest.TransferMethod TRANSFER_METHOD =
+            SampleKitWorkRequest.TransferMethod.PICK_UP;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -53,7 +62,9 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
                 ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(), NUMBER_OF_SAMPLES,
-                MaterialInfoDto, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org", HUMAN_ORGANISM.getLeft());
+                MaterialInfoDto, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
+                HUMAN_ORGANISM.getLeft(),
+                SELECTED_POST_RECEIVE_OPTIONS, COMMENTS, IS_EX_EX, TRANSFER_METHOD);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -68,7 +79,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 NUMBER_OF_SAMPLES, MaterialInfoDto, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
-                HUMAN_ORGANISM.getLeft());
+                HUMAN_ORGANISM.getLeft(), SELECTED_POST_RECEIVE_OPTIONS, COMMENTS, IS_EX_EX, TRANSFER_METHOD);
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
