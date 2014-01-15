@@ -1166,7 +1166,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getSupportsSkippingQuote() throws Exception {
         boolean supportsSkippingQuote = false;
         JSONObject item = new JSONObject();
-        if (product != null) {
+        if (!StringUtils.isEmpty(product)) {
             supportsSkippingQuote = productDao.findByBusinessKey(product).getSupportsSkippingQuote();
         }
         item.put(Product.SUPPORTS_SKIPPING_QUOTE, supportsSkippingQuote);
@@ -1905,5 +1905,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getWorkRequestUrl() {
         return bspConfig.getWorkRequestLink(editOrder.getProductOrderKit().getWorkRequestId());
+    }
+
+    /**
+     * Only call this from a test!
+     */
+    void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
     }
 }

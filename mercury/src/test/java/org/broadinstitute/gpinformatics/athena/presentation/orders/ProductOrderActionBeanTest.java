@@ -1,21 +1,33 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.mock.MockHttpServletRequest;
+import net.sourceforge.stripes.mock.MockHttpServletResponse;
+import org.apache.http.HttpRequest;
+import org.apache.http.message.BasicHttpRequest;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.easymock.EasyMock;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.openqa.jetty.http.HttpResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -156,5 +168,39 @@ public class ProductOrderActionBeanTest {
             put(BSPSampleSearchColumn.SAMPLE_ID,"SM-99D2A");
         }};
         return new BSPSampleDTO(dataMap);
+    }
+
+    private Product createSimpleProduct(String productPartNumber,String family) {
+        Product product = new Product();
+        product.setPartNumber(productPartNumber);
+        product.setProductFamily(new ProductFamily(family));
+        return product;
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testQuoteOptOutAjaxCall() throws Exception {
+        Product product = createSimpleProduct("P-EX-0001",ProductFamily.INITIATION_FAMILY_NAME);
+        ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
+
+        actionBean.setProduct(product.getPartNumber());
+        actionBean.setProductDao(productDao);
+
+        EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
+        EasyMock.replay(productDao);
+
+        MockHttpServletResponse response = doSkipQuoteSupportCall(actionBean);
+        Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":true}");
+
+        product.setProductFamily(new ProductFamily("Something that doesn't support optional quotes"));
+        response = doSkipQuoteSupportCall(actionBean);
+        Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":false}");
+    }
+
+    private MockHttpServletResponse doSkipQuoteSupportCall(ProductOrderActionBean actionBean) throws Exception {
+        HttpServletRequest request = new MockHttpServletRequest("foo","bar");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        Resolution stripesResolution = actionBean.getSupportsSkippingQuote();
+        stripesResolution.execute(request,response);
+        return response;
     }
 }
