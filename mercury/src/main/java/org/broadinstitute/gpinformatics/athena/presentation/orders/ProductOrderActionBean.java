@@ -1936,6 +1936,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getPostReceivedOptionsAsString() {
-        return editOrder.productOrderKit.getPostReceivedOptionsAsString("<br/>");
+        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
     }
 }
