@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
@@ -37,6 +38,21 @@ public class ProductOrderSampleDao extends GenericDao {
      * with the given sample names.
      */
     public List<ProductOrderSample> findByOrderKeyAndSampleNames(@Nonnull String pdoKey, @Nonnull Set sampleNames) {
+        // split the list to avoid oracle's 1000 in clause limit
+        List<Collection<String>> listOfSampleNameLists = BaseSplitter.split(sampleNames,1000);
+        List<ProductOrderSample> allSamples = new ArrayList<>(sampleNames.size());
+
+        for (Collection<String> listOfSampleNames : listOfSampleNameLists) {
+            allSamples.addAll(_findByOrderKeyAndSampleNames(pdoKey, listOfSampleNames));
+        }
+        return allSamples;
+    }
+
+    /**
+     * Does the heavy lifting for #findByOrderKeyAndSampleNames.  Assumes that
+     * samplesNames has <= 1000 items.
+     */
+    private List<ProductOrderSample> _findByOrderKeyAndSampleNames(@Nonnull String pdoKey, @Nonnull Collection sampleNames) {
         EntityManager entityManager = getEntityManager();
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
