@@ -842,6 +842,15 @@ function formatInput(item) {
             </div>
 
             <div class="view-control-group control-group">
+                <label class="control-label label-form">Post-Received Options</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <div class="form-value">${actionBean.postReceivedOptionsAsString()}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Notification List</label>
                 <div class="controls">
                     <div class="form-value">

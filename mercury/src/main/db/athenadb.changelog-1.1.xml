@@ -357,4 +357,58 @@
         <dropColumn tableName="product_order_kit_aud" columnName="notifications" schemaName="athena"/>
     </changeSet>
 
+
+    <changeSet id="GPLIM-2390-1" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PDO_KIT_POST_RECEIVE_OPT" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PDO_KIT_POST_RECEIVE_OPT" schemaName="athena">
+            <column name="PRODUCT_ORDER_KIT_ID" type="NUMBER(19,0)"> <constraints nullable="false"/> </column>
+            <column name="POST_RECEIVE_OPTIONS" type="VARCHAR2(255 CHAR)"> <constraints nullable="false"/> </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-2390-2" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="PDOKIT_POST_REC_OPT"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="PDOKIT_POST_REC_OPT" referencedTableName="product_order_kit"
+                                 referencedColumnNames="PRODUCT_ORDER_KIT_ID" baseTableName="PDO_KIT_POST_RECEIVE_OPT"
+                                 baseColumnNames="PRODUCT_ORDER_KIT_ID"/>
+
+    </changeSet>
+    <changeSet id="GPLIM-2390-3" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD " schemaName="athena">
+            <column name="PRODUCT_ORDER_KIT_ID" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="POST_RECEIVE_OPTIONS " type="VARCHAR2(255 CHAR)"> <constraints nullable="false"/> </column>
+            <column name="REV" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="REVTYPE" type="int"/>
+        </createTable>
+
+        <addPrimaryKey schemaName="athena" tableName="PDO_KIT_POST_RECEIVE_OPT_AUD"
+                       columnNames="rev, PRODUCT_ORDER_KIT_ID,POST_RECEIVE_OPTIONS"/>
+    </changeSet>
+    <changeSet id="GPLIM-2390-4" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_PDOKIT_PST_RCV_AUD_REV_INFO"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="PDO_KIT_POST_RECEIVE_OPT_AUD" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_PDOKIT_PST_RCV_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
 </databaseChangeLog>

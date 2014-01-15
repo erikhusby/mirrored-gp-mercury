@@ -98,9 +98,13 @@
                     $j("#publicationDeadline").datepicker();
                     $j("#sampleListEdit").hide();
 
+                    $j("#materialInfo").change( function(e) {
+                                updateUIForMaterialInfoChoice();
+                    });
                     updateUIForProductChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
+                    updateUIForMaterialInfoChoice()
                 }
             );
 
@@ -109,11 +113,18 @@
                 return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
 
+            var fadeDuration = {'duration' : 800};
+
             var addOn = [];
             <c:forEach items="${actionBean.addOnKeys}" var="addOnProduct">
                 addOn['${addOnProduct}'] = true;
             </c:forEach>
 
+            var postReceiveOption={};
+            <c:forEach items="${actionBean.postReceiveOptionKeys}" var="option" varStatus="stat" >
+                postReceiveOption["${option}"] = true;
+            </c:forEach>
+            postReceiveOption.length=${fn:length(actionBean.postReceiveOptionKeys)}
 
             function updateUIForProductChoice() {
 
@@ -135,7 +146,7 @@
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                         dataType: 'json',
-                        success: setupCheckboxes
+                        success: setupAddonCheckboxes
                     });
 
                     $j.ajax({
@@ -143,6 +154,21 @@
                         dataType: 'json',
                         success: updateNumberOfLanesVisibility
                     });
+                }
+            }
+
+            function updateUIForMaterialInfoChoice() {
+                var pdoId=${actionBean.editOrder.productOrderId};
+                var materialKey = $j("#materialInfo").val();
+                if ((materialKey == null) || (materialKey == "")) {
+                    $j("#postReceiveCheckboxGroup").hide();
+                } else {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder="+pdoId,
+                        dataType: 'json',
+                        success: setupPostReceiveCheckboxes
+                    });
+                    $j("#postReceiveCheckboxGroup").show();
                 }
             }
 
@@ -199,10 +225,9 @@
                 });
                 organismSelect += '</select>';
 
-                var duration = {'duration' : 800};
                 $j("#selectedOrganism").hide();
                 $j("#selectedOrganism").html(organismSelect);
-                $j("#selectedOrganism").fadeIn(duration);
+                $j("#selectedOrganism").fadeIn(fadeDuration);
             }
 
             // This function allows the shippingLocation input token to be able to automatically pass the selected
@@ -215,13 +240,11 @@
             function updateNumberOfLanesVisibility(data) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv");
 
-                var duration = {'duration' : 800};
-
-                data.supportsNumberOfLanes ? numberOfLanesDiv.fadeIn(duration) : numberOfLanesDiv.fadeOut(duration);
+                data.supportsNumberOfLanes ? numberOfLanesDiv.fadeIn(fadeDuration) : numberOfLanesDiv.fadeOut(fadeDuration);
             }
 
 
-            function setupCheckboxes(data) {
+            function setupAddonCheckboxes(data) {
                 var productTitle = $j("#product").val();
 
                 if (data.length == 0) {
@@ -242,12 +265,42 @@
                     checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value +' [' + val.key + ']</label>';
                 });
 
-                var duration = {'duration' : 800};
-
                 var checkboxes = $j("#addOnCheckboxes");
                 checkboxes.hide();
                 checkboxes.html(checkboxText);
-                checkboxes.fadeIn(duration);
+                checkboxes.fadeIn(fadeDuration);
+            }
+
+            function setupPostReceiveCheckboxes(data) {
+                var materialInfo = $j("#material").val();
+
+                if (data.length == 0) {
+                    $j("#postReceiveCheckboxes").text("The Material Type '" + materialInfo + "' has no Post-receive options.");
+                    return;
+                }
+
+                var checkboxText = "";
+                $j.each(data, function(index, val) {
+                    // if this value is in the add on list, then check the checkbox
+                    var optionName=val.key;
+                    var defaultChecked=val.value;
+                    checked = '';
+                    if (postReceiveOption.length==0){
+                        if (defaultChecked){
+                            checked = ' checked="checked" ';
+                        }
+                    } else if (postReceiveOption[val.key]) {
+                            checked = ' checked="checked" ';
+                    }
+
+                    var postReceiveId = "postReceiveCheckbox-" + index;
+                    checkboxText += '  <input id="' + postReceiveId + '" type="checkbox"' + checked + ' name="postReceiveOptionKeys" value="' + optionName + '"/>';
+                    checkboxText += '  <label style="font-size: x-small;" for="' + postReceiveId + '">' + optionName + '</label>';
+                });
+                var checkboxes = $j("#postReceiveCheckboxes");
+                checkboxes.hide();
+                checkboxes.html(checkboxText);
+                checkboxes.fadeIn(fadeDuration);
             }
 
             function updateFundsRemaining() {
@@ -542,14 +595,20 @@
                             Material Information
                         </stripes:label>
                         <div class="controls">
-                            <stripes:select disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
+                            <stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
                                 <stripes:option label="Choose..." value=""/>
-                                <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}"/>
+                                <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>
                             </stripes:select>
                             <c:if test="${!actionBean.editOrder.draft}">
                                 <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
                             </c:if>
                         </div>
+                    </div>
+                    <div id="postReceiveCheckboxGroup" class="control-group">
+                        <stripes:label for="selectedPostReceiveOptions" class="control-label">
+                            Post-Receive Options
+                        </stripes:label>
+                        <div id="postReceiveCheckboxes" class="controls controls-text"></div>
                     </div>
                     <div class="control-group">
                         <stripes:label for="notificationList" class="control-label">Notification List</stripes:label>

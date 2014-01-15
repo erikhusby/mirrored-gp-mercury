@@ -1,23 +1,30 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,6 +67,11 @@ public class ProductOrderKit implements Serializable {
             orphanRemoval = true)
     @BatchSize(size = 500)
     private final Set<ProductOrderKitPerson> notificationPeople = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
+    private final List<PostReceiveOption> postReceiveOptions = new ArrayList<>();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -209,5 +221,29 @@ public class ProductOrderKit implements Serializable {
 
     public String getWorkRequestId() {
         return workRequestId;
+    }
+
+    public List<PostReceiveOption> getPostReceiveOptions() {
+        return postReceiveOptions;
+    }
+
+    /**
+     * Return a string representation of this kit's PostReceive options
+     *
+     * @param delimiter characters used to join list values
+     */
+    public String getPostReceivedOptionsAsString(String delimiter) {
+        if (StringUtils.isBlank(delimiter)){
+            delimiter=", ";
+        }
+        if (getPostReceiveOptions().isEmpty()){
+            return "No Post-Received Options selected.";
+        }
+
+        List<String> options=new ArrayList<>(postReceiveOptions.size());
+        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
+            options.add(postReceiveOption.getText());
+        }
+        return StringUtils.join(options, delimiter);
     }
 }
