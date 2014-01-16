@@ -704,6 +704,17 @@ function formatInput(item) {
         </div>
     </div>
 </div>
+<c:if test="${actionBean.editOrder.skipQuoteReason != null}">
+    <div class="view-control-group control-group">
+        <label class="control-label label-form">Quote Skip Reason</label>
+
+        <div class="controls" id="quoteSkipReason">
+            <div class="form-value">${actionBean.editOrder.skipQuoteReason}</div>
+        </div>
+    </div>
+</c:if>
+
+
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Can Bill</label>

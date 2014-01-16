@@ -165,6 +165,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
+    @Transient
+    private String skipQuoteReason;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
@@ -991,6 +994,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     private boolean isSheetEmpty() {
         return samples.isEmpty();
+    }
+
+    public String getSkipQuoteReason() {
+        // todo arz fixme persistence
+        return "bleah!";
+    }
+
+    public void setSkipQuoteReason(String skipQuoteReason) {
+        this.skipQuoteReason = skipQuoteReason;
     }
 
     @Override

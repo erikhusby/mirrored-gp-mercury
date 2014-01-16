@@ -115,17 +115,21 @@ addOn['${addOnProduct}'] = true;
 </c:forEach>
 
 var skipQuote = false;
+var quoteBeforeSkipping;
 
 function toggleSkipQuote() {
     skipQuote = !skipQuote;
     if (skipQuote) {
         $j("#skipQuoteReasonDiv").show();
-        $j("#quote").val('');
         $j("#quote").hide();
+        quoteBeforeSkipping = $j("#quote").val();
+        $j("#quote").val('');
         $j("#fundsRemaining").hide();
     }
     else {
         $j("#skipQuoteReasonDiv").hide();
+        $j("#quote").val(quoteBeforeSkipping);
+        updateFundsRemaining();
         $j("#quote").show();
         $j("#fundsRemaining").show();
     }
@@ -298,10 +302,13 @@ function updateFundsRemaining() {
 }
 
 function updateFunds(data) {
-    if (data.fundsRemaining) {
-        $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
-    } else {
-        $j("#fundsRemaining").text('Error: ' + data.error);
+    var quoteIdentifier = $j("#quote").val();
+    if ($j.trim(quoteIdentifier)) {
+        if (data.fundsRemaining) {
+            $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+        } else {
+            $j("#fundsRemaining").text('Error: ' + data.error);
+        }
     }
 }
 

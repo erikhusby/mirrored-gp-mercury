@@ -223,5 +223,12 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(actionBean.getValidationErrors().size(),0);
 
+        actionBean.setQuoteIdentifier("SomeQuote");
+        actionBean.validateSkipQuoteReason();
+
+        Assert.assertEquals(actionBean.getValidationErrors().size(),1);
+
+        // todo arz fix validation of quote during validation phase, wire up persistence, check save, write UI test.
+
     }
 }
