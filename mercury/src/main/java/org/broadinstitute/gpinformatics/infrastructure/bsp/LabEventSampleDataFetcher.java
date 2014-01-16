@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.inject.Inject;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Wrapper around {@link LabVesselDao} that allows easy access to each {@link LabVessel} associated with samples.
@@ -24,7 +22,7 @@ public class LabEventSampleDataFetcher {
     /**
      * For the passed samples, return a map of the {@link LabVessel} objects associated.
      *
-     * @param sampleKeys List of mercury sample keys.
+     * @param samples The list of product order samples.
      *
      * @return A mapping of the sample keys to the found vessels
      */
