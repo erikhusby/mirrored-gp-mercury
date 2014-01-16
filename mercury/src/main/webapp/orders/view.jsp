@@ -863,9 +863,9 @@ function formatInput(item) {
                 <label class="control-label label-form">Exome Express?</label>
                 <div class="controls">
                     <div class="form-value">
-                        <div class="form-value">this kit is
+                        <div class="form-value">This is
                             <c:if test="${!actionBean.editOrder.productOrderKit.exomeExpress}"> not </c:if>
-                            destined for Exome Express.
+                            an Exome Express Kit
                                 </div>
                     </div>
                 </div>
