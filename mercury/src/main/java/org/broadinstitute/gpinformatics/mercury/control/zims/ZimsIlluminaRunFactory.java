@@ -72,13 +72,15 @@ public class ZimsIlluminaRunFactory {
     private AthenaClientService athenaClientService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private ControlDao controlDao;
+    private SequencingTemplateFactory sequencingTemplateFactory;
 
     @Inject
     public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService,
-                                  ControlDao controlDao) {
+                                  ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.athenaClientService = athenaClientService;
         this.controlDao = controlDao;
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
@@ -120,6 +122,7 @@ public class ZimsIlluminaRunFactory {
                 }
             }
         }
+        int numberOfLanes = laneNum;
 
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
@@ -147,7 +150,6 @@ public class ZimsIlluminaRunFactory {
                 false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced(),
                 illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
 
-        SequencingTemplateFactory sequencingTemplateFactory = new SequencingTemplateFactory();
         IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
         Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
         SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
@@ -163,7 +165,10 @@ public class ZimsIlluminaRunFactory {
                 String sequencedLibraryName= sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
-                BigDecimal loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
+                BigDecimal loadingConcentration = null;
+                if (sequencingTemplateLanes.size() == numberOfLanes) {
+                    loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
+                }
                 ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
                         sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue());
                 run.addLane(lane);
