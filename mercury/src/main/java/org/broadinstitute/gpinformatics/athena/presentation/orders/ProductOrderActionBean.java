@@ -955,6 +955,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
         } else {
+            // todo arz change jira configuration for nullable quote or add "skipped" to this
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
@@ -1163,8 +1164,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
-    // todo arz testme with dao mock for supports and doesn't support
-    // todo arz move the num lanes thing to the product too
     @HandlesEvent("getSupportsSkippingQuote")
     public Resolution getSupportsSkippingQuote() throws Exception {
         boolean supportsSkippingQuote = false;

@@ -101,6 +101,8 @@ $j(document).ready(
             updateUIForProductChoice();
             updateFundsRemaining();
             updateUIForCollectionChoice();
+            initializeQuoteOptions();
+            updateQuoteOptions();
         }
 );
 
@@ -120,15 +122,30 @@ var quoteBeforeSkipping;
 function toggleSkipQuote() {
     skipQuote = !skipQuote;
     if (skipQuote) {
-        $j("#skipQuoteReasonDiv").show();
-        $j("#quote").hide();
         quoteBeforeSkipping = $j("#quote").val();
         $j("#quote").val('');
+    }
+    else {
+        $j("#quote").val(quoteBeforeSkipping);
+    }
+    updateQuoteOptions();
+}
+
+function initializeQuoteOptions() {
+    <c:if test="${actionBean.skipQuote}">
+        skipQuote = true;
+    </c:if>
+    quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
+}
+function updateQuoteOptions() {
+    if (skipQuote) {
+        // todo arz check it, fail to set the reason, then things get weird
+        $j("#skipQuoteReasonDiv").show();
+        $j("#quote").hide();
         $j("#fundsRemaining").hide();
     }
     else {
         $j("#skipQuoteReasonDiv").hide();
-        $j("#quote").val(quoteBeforeSkipping);
         updateFundsRemaining();
         $j("#quote").show();
         $j("#fundsRemaining").show();

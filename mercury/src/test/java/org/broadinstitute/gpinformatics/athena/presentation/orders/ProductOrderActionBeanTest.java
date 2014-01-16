@@ -231,7 +231,7 @@ public class ProductOrderActionBeanTest {
 
         Assert.assertEquals(actionBean.getValidationErrors().size(),1);
 
-        // todo arz fix validation of quote during validation phase, wire up persistence, check save, write UI test.
+        // todo arz fix wire up persistence, check save, write UI test.
 
     }
 }
