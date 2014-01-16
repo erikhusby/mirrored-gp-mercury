@@ -47,7 +47,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
     private static final String COMMENTS = "This is not a kit";
     private static final boolean IS_EX_EX = true;
     private static final SampleKitWorkRequest.TransferMethod TRANSFER_METHOD =
-            SampleKitWorkRequest.TransferMethod.PICK_UP;
+            SampleKitWorkRequest.TransferMethod.SHIP_OUT;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
