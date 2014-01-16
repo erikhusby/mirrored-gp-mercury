@@ -88,7 +88,7 @@ public class LabVesselDao extends GenericDao {
                         }
                     });
             } catch (NoResultException ignored) {
-                resultList = new ArrayList<>();
+                return resultMap;
             }
 
             // For each LabVessel found, add it to the list of LabVessel objects for the applicable sample in the map.
