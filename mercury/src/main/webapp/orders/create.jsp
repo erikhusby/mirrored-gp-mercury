@@ -162,7 +162,7 @@
             }
 
             function updateUIForMaterialInfoChoice() {
-                var pdoId=${actionBean.editOrder.productOrderId};
+                var pdoId="${actionBean.editOrder.productOrderId}";
                 var materialKey = $j("#materialInfo").val();
                 if ((materialKey == null) || (materialKey == "")) {
                     $j("#postReceiveCheckboxGroup").hide();
@@ -631,13 +631,13 @@
 
                     <div class="control-group">
                         <stripes:label for="isExomeExpress" class="control-label">
-                            Exome Express?
+                            Exome Express
                         </stripes:label>
                         <div class="controls">
                             <c:choose>
                                 <c:when test="${actionBean.editOrder.draft}">
-                                    <stripes:checkbox name="editOrder.productOrderKit.exomeExpress"
-                                                      id="isExomeExpress"/>
+                                    <stripes:checkbox name="editOrder.productOrderKit.exomeExpress" id="isExomeExpress"/>
+                                <div class="form-value">This is an Exome Express Kit</div>
                                 </c:when>
                                 <c:otherwise>
                                     <div class="form-value">${actionBean.editOrder.productOrderKit.exomeExpress}</div>

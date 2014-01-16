@@ -26,6 +26,7 @@ import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -464,6 +465,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                         "a Research Project with a primary investigator", action);
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
+            }
+            if (editOrder.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
+                String validationMessage = String.format("a notification list, which required when \"%s\" is selected",
+                        SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+                requireField(editOrder.getProductOrderKit().getNotificationIds().length > 0, validationMessage, action);
             }
         }
         requireField(researchProject, "a research project", action);
@@ -1072,22 +1078,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getPostReceiveOptions")
     public Resolution getPostReceiveOptions() throws Exception {
         JSONArray itemList = new JSONArray();
-//        init();
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
 
         boolean savedOrder = !StringUtils.isBlank(productOrder);
-            MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
-//            if (editOrder.getProductOrderId() == null) {
-                for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
-                    JSONObject item = new JSONObject();
-                    item.put("key", postReceiveOption.getText());
-                    if (!savedOrder) {
-                        item.put("value", postReceiveOption.getDefaultToChecked());
-                    } else item.put("value",false);
-                    itemList.put(item);
-//                }
+        MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
+        for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
+            JSONObject item = new JSONObject();
+            item.put("key", postReceiveOption.getText());
+            if (!savedOrder) {
+                item.put("value", postReceiveOption.getDefaultToChecked());
+            } else {
+                item.put("value", false);
             }
-//        }
+            itemList.put(item);
+        }
 
         return createTextResolution(itemList.toString());
     }
