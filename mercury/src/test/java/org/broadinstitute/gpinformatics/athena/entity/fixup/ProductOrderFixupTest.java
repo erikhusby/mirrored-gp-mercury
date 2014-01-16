@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -417,7 +416,6 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.persistAll(sampleList);
         productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
-
 
     @Test(enabled = false)
     public void fixupSampleNames() throws Exception {

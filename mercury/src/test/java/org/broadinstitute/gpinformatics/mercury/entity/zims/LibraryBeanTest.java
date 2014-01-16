@@ -35,6 +35,7 @@ public class LibraryBeanTest {
         final String bspSpecies = "bsp species";
         final String gssrParticipant = "gssrPatient";
         final String bspParticipant = "bsp participant";
+        final String libraryCreationDate = "01/15/2014 12:34:56";
 
         Map<BSPSampleSearchColumn, String> dataMap = new HashMap<BSPSampleSearchColumn, String>(){{
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, disease);
@@ -48,10 +49,9 @@ public class LibraryBeanTest {
         BSPSampleDTO bspDto = new BSPSampleDTO(dataMap);
 
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override.
-        LibraryBean libraryBean =
-            new LibraryBean(
-                gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
-                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
+        LibraryBean libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism,
+                gssrSpecies, gssrStrain, gssrParticipant, bspDto, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
@@ -62,9 +62,9 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getParticipantId(),bspDto.getPatientId());
 
         // new up sans bsp DTO to confirm gssr fields work.
-        libraryBean =
-                new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies, gssrStrain,
-                        gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(), LibraryBean.NO_PDO_SAMPLE);
+        libraryBean = new LibraryBean(gssrLsid, gssrMaterialType, gssrCollabSampleId, gssrOrganism, gssrSpecies,
+                gssrStrain, gssrParticipant, null, Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName(),
+                LibraryBean.NO_PDO_SAMPLE, libraryCreationDate);
         assertEquals(libraryBean.getLsid(),gssrLsid);
         assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
@@ -83,9 +83,8 @@ public class LibraryBeanTest {
             new BSPSampleDataFetcher(
                 bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
 
-        LibraryBean libraryBean =
-                new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
-                        LibraryBean.NO_PDO_SAMPLE);
+        LibraryBean libraryBean = new LibraryBean(null, null, null, null, null, null, null, sampleDTO, null,
+                LibraryBean.NO_PDO_SAMPLE, null);
 
         assertEquals(libraryBean.getGender(), StringUtils.trimToNull(sampleDTO.getGender()));
         assertEquals(libraryBean.getLsid(), StringUtils.trimToNull(sampleDTO.getSampleLsid()));
