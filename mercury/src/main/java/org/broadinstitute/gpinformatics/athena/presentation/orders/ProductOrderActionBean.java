@@ -237,8 +237,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
 
-    private String skipQuoteReason;
-
     private boolean skipQuote = false;
 
     private List<Long> sampleIdsForGetBspData;
@@ -264,6 +262,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
+    // used only as part of ajax call to get funds remaining.  Quote field is bound to editOrder.
     private String quoteIdentifier;
 
     private String product;
@@ -476,7 +475,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
-            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+            validateQuoteOptions(action);
         }
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
@@ -1918,25 +1917,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productDao = productDao;
     }
 
-    @ValidationMethod(on = {EDIT_ACTION,CREATE_ACTION})
-    public void validateSkipQuoteReason() {
+    public void validateQuoteOptions(String action) {
         if (skipQuote) {
-            if (StringUtils.isEmpty(skipQuoteReason)) {
+            if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
                 addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
-            if (!StringUtils.isEmpty(quoteIdentifier)) {
+            if (!StringUtils.isEmpty(editOrder.getQuoteId())) {
                 // the JSP should make this situation impossible
                 addValidationError("skipQuote","You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
             }
         }
-    }
-
-    public String getSkipQuoteReason() {
-        return skipQuoteReason;
-    }
-
-    public void setSkipQuoteReason(String skipQuoteReason) {
-        this.skipQuoteReason = skipQuoteReason;
+        else {
+            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+        }
     }
 
     public boolean isSkipQuote() {

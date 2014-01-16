@@ -206,25 +206,28 @@ public class ProductOrderActionBeanTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testQuoteSkippingValidation() {
+        ProductOrder pdo = new ProductOrder();
+        actionBean.setEditOrder(pdo);
+
         actionBean.setSkipQuote(true);
-        actionBean.setSkipQuoteReason("");
-        actionBean.validateSkipQuoteReason();
+        pdo.setSkipQuoteReason("");
+        actionBean.validateQuoteOptions("");
         Assert.assertEquals(actionBean.getValidationErrors().size(), 1);
 
         actionBean.clearValidationErrors();
         actionBean.setSkipQuote(false);
-        actionBean.setSkipQuoteReason("");
-        actionBean.validateSkipQuoteReason();
+        pdo.setSkipQuoteReason("");
+        actionBean.validateQuoteOptions("");
         Assert.assertEquals(actionBean.getValidationErrors().size(),0);
 
         actionBean.setSkipQuote(true);
-        actionBean.setSkipQuoteReason("The dog ate my quote");
-        actionBean.validateSkipQuoteReason();
+        pdo.setSkipQuoteReason("The dog ate my quote");
+        actionBean.validateQuoteOptions("");
 
         Assert.assertEquals(actionBean.getValidationErrors().size(),0);
 
-        actionBean.setQuoteIdentifier("SomeQuote");
-        actionBean.validateSkipQuoteReason();
+        pdo.setQuoteId("SomeQuote");
+        actionBean.validateQuoteOptions("");
 
         Assert.assertEquals(actionBean.getValidationErrors().size(),1);
 

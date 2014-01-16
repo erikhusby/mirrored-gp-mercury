@@ -452,7 +452,7 @@ function formatUser(item) {
             <div id="fundsRemaining"> </div>
 
             <div id="skipQuoteDiv">
-                <stripes:checkbox id="skipQuote" name="editOrder.skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
+                <stripes:checkbox id="skipQuote" name="skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
                 <div id="skipQuoteReasonDiv">
                     Please enter a reason for skipping the quote *
                     <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
