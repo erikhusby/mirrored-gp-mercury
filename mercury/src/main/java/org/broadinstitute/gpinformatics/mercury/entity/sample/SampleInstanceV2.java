@@ -19,29 +19,29 @@ public class SampleInstanceV2 {
      * that far.
      */
     public String getMercuryRootSampleName() {
-
+        return null;
     }
 
     /**
      * Returns all batches of the given type associated with ancestor vessels.  Pass type SAMPLES_IMPORT to get the
      * Aliquot.  Pass null to get all batches.
      */
-    public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType) {
-
+    public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType labBatchType) {
+        return null;
     }
 
     /**
      * Returns the nearest batch of the given type.
      */
-    public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType) {
-
+    public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType labBatchType) {
+        return null;
     }
 
     /**
      * Returns all bucket entries associated with ancestor vessels.
      */
     public List<BucketEntry> getAllBucketEntries() {
-
+        return null;
     }
 
     /**
@@ -49,7 +49,7 @@ public class SampleInstanceV2 {
      * transfer.
      */
     public BucketEntry getSingleBucketEntry() {
-
+        return null;
     }
 
     /**
@@ -57,7 +57,7 @@ public class SampleInstanceV2 {
      * transfer.
      */
     public List<LabBatch> getAllInferredBucketedBatches() {
-
+        return null;
     }
 
     /**
@@ -65,34 +65,34 @@ public class SampleInstanceV2 {
      * calculated for each transfer.
      */
     public LabBatch getSingleInferredBucketedBatch() {
-
+        return null;
     }
 
     /**
      * Returns all Product Orders associated with samples in ancestor vessels.
      */
     public List<ProductOrderSample> getAllProductOrderSamples() {
-
+        return null;
     }
 
     /**
      * Returns the nearest Product Order associated with samples in ancestor vessels.
      */
     public ProductOrderSample getSingleProductOrderSample() {
-
+        return null;
     }
 
     /**
      * Returns baits, molecular indexes etc.
      */
     public List<Reagent> getReagents() {
-
+        return null;
     }
 
     /**
      * Returns the workflow names associated with ancestor bucketed batches.
      */
     public List<String> getAllWorkflowNames() {
-
+        return null;
     }
 }
