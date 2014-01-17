@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * A factory class for creating BSP WorkRequest objects of various types (e.g., SampleKitWorkRequest) from data
@@ -13,6 +16,7 @@ public class BSPWorkRequestFactory {
 
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
+     *
      *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
@@ -25,8 +29,11 @@ public class BSPWorkRequestFactory {
      * @param MaterialInfoDto           the material type
      * @param sampleCollectionId     the collection to use for the sample kit work task
      * @param notificationList       the comma separated list of users to notify on kit shipment.
-     * @param organismId             the organism that the user selected
-     *
+     * @param organismId             the organism that the user selected     *
+     * @param postReceiveOptions     Post-Received options for the kit
+     * @param notes                  comments to pass on to bsp
+     * @param exExKit                flag if this is an exome express kit
+     * @param transferMethod         How are they receiving the kit, pick up or delivery?
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,
@@ -34,7 +41,10 @@ public class BSPWorkRequestFactory {
                                                               Long projectManagerId, Long externalCollaboratorId,
                                                               Long siteId, long numberOfSamples,
                                                               MaterialInfoDto MaterialInfoDto, Long sampleCollectionId,
-                                                              String notificationList, long organismId) {
+                                                              String notificationList, long organismId,
+                                                              Set<PostReceiveOption> postReceiveOptions, String notes,
+                                                              boolean exExKit,
+                                                              SampleKitWorkRequest.TransferMethod transferMethod) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -53,9 +63,12 @@ public class BSPWorkRequestFactory {
                 siteId,
                 numberOfSamples,
                 sampleCollectionId,
-                SampleKitWorkRequest.TransferMethod.SHIP_OUT, // transferMethod
+                transferMethod, // transferMethod
                 MaterialInfoDto,
-                organismId
+                organismId,
+                new ArrayList<>(postReceiveOptions),
+                notes,
+                exExKit
         );
     }
 }

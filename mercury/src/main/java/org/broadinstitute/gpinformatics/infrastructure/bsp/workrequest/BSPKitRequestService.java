@@ -72,7 +72,8 @@ public class BSPKitRequestService {
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId());
+                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId(),
+                kit.getPostReceiveOptions(),kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod());
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
