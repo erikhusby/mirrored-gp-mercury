@@ -840,14 +840,44 @@ function formatInput(item) {
                     </div>
                 </div>
             </div>
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Transfer Method</label>
 
+                <div class="controls">
+                    <div class="form-value">
+                        <div class="form-value">${actionBean.editOrder.productOrderKit.transferMethod.value}</div>
+                    </div>
+                </div>
+            </div>
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Material Information</label>
+
                 <div class="controls">
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.productOrderKit.bspMaterialName != null}">
                             ${actionBean.editOrder.productOrderKit.bspMaterialName}
                         </c:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Post-Received Options</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <div class="form-value">${actionBean.postReceivedOptionsAsString}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Exome Express?</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <div class="form-value">This is
+                            <c:if test="${!actionBean.editOrder.productOrderKit.exomeExpress}"> not </c:if>
+                            an Exome Express Kit
+                                </div>
                     </div>
                 </div>
             </div>
@@ -860,6 +890,14 @@ function formatInput(item) {
                     </div>
                 </div>
             </div>
+            <div class="view-control-group control-group">
+                            <label class="control-label label-form">Comments</label>
+                            <div class="controls">
+                                <div class="form-value">
+                                    <div class="form-value">${actionBean.editOrder.productOrderKit.comments}</div>
+                                </div>
+                            </div>
+                        </div>
         </fieldset>
     </div>
 </c:if>

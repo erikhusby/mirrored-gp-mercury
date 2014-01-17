@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -265,47 +266,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * @param samples A list of ProductOrderSample objects to get the LabEvents for.
      */
     public static void loadLabEventSampleData(List<ProductOrderSample> samples) {
-        // todo arz as part of code review feedback, move all this logic down to dao and replace
-        // with splitter class and/or GenericDao's findListByList
-        if (samples.size() < 1000) {
-            loadOneThousandOrLessLabEventSampleData(samples);
-        }
-        else {
-            List<ProductOrderSample> allSamples = new ArrayList<>(samples.size());
-            allSamples.addAll(samples);
 
-            while (!allSamples.isEmpty()) {
-                List<ProductOrderSample> smallerListOfSamples = new ArrayList<>(1000);
-                while (smallerListOfSamples.size() < 1000 && !allSamples.isEmpty()) {
-                    smallerListOfSamples.add(allSamples.remove(0));
-                }
-                loadOneThousandOrLessLabEventSampleData(smallerListOfSamples);
-            }
-        }
-    }
-
-    /**
-     * Does the real work of #loadLabEventSampleData, in blocks of one thousand or less
-     * samples to accomodate oracle's in clause limit.
-     * @param oneThousandOrLessSamples Should have no more than 1,000 elements
-     *                                 or an oracle exception will be thrown
-     */
-    private static void loadOneThousandOrLessLabEventSampleData(List<ProductOrderSample> oneThousandOrLessSamples) {
         LabEventSampleDataFetcher labDataFetcher = ServiceAccessUtility.getBean(LabEventSampleDataFetcher.class);
-        List<String> sampleIds = new ArrayList<>();
 
-        for (ProductOrderSample pdoSample : oneThousandOrLessSamples) {
-            sampleIds.add(pdoSample.getSampleKey());
-        }
-        Map<String, List<LabVessel>> vesselMap = labDataFetcher.findMapBySampleKeys(sampleIds);
-        for (ProductOrderSample sample : oneThousandOrLessSamples) {
+        Multimap<String, LabVessel> vesselMap = labDataFetcher.findMapBySampleKeys(samples);
+        for (ProductOrderSample sample : samples) {
             Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
-            if (!CollectionUtils.isEmpty(labVessels)) {
+            if (labVessels != null) {
                 sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
             }
         }
     }
-
 
     public static void loadBspData(List<ProductOrderSample> samples) {
 

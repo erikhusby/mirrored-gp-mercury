@@ -11,6 +11,8 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 
 import java.text.Format;
 import java.util.Date;
@@ -26,7 +28,6 @@ public abstract class AbstractSpreadsheetExporter {
     private final Workbook workbook;
 
     private final CellStyle fixedHeaderStyle;
-    private final CellStyle priceItemProductHeaderStyle;
     private final CellStyle billedAmountsHeaderStyle;
     private final CellStyle billedAmountStyle;
     private final CellStyle preambleStyle;
@@ -42,7 +43,6 @@ public abstract class AbstractSpreadsheetExporter {
         // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
         workbook = new SXSSFWorkbook();
         fixedHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_CORNFLOWER_BLUE);
-        priceItemProductHeaderStyle = buildHeaderStyle(workbook, IndexedColors.GREY_25_PERCENT);
         billedAmountsHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_YELLOW);
         billedAmountStyle = buildHeaderStyle(workbook, IndexedColors.TAN);
         preambleStyle = buildPreambleStyle(workbook);
@@ -60,8 +60,16 @@ public abstract class AbstractSpreadsheetExporter {
         return fixedHeaderStyle;
     }
 
-    protected CellStyle getPriceItemProductHeaderStyle() {
-        return priceItemProductHeaderStyle;
+    /**
+     * Creates a cell style for a header with text wrapping and the given background color.
+     *
+     * @param rgbColor    the background color for the style
+     * @return the cell style
+     */
+    protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
+        CellStyle style = buildWrappedHeaderStyle();
+        ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
+        return style;
     }
 
     protected CellStyle getRiskStyle() {
@@ -99,6 +107,15 @@ public abstract class AbstractSpreadsheetExporter {
         Font headerFont = wb.createFont();
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
+        return style;
+    }
+
+    /**
+     * Builds a cell style for a header with text wrapping.
+     */
+    protected CellStyle buildWrappedHeaderStyle() {
+        CellStyle style = buildHeaderStyle(workbook, IndexedColors.WHITE);
+        style.setWrapText(true);
         return style;
     }
 
@@ -192,6 +209,16 @@ public abstract class AbstractSpreadsheetExporter {
             nextCell();
             currentCell.setCellValue(value);
             currentCell.setCellStyle(style);
+        }
+
+        /**
+         * Sets the height of the current spreadsheet row. Height is specified in "twips" or 1/20th of a point.
+         *
+         * @param height the height
+         * @see org.apache.poi.ss.usermodel.Row#setHeight(short)
+         */
+        public void setRowHeight(short height) {
+            currentCell.getRow().setHeight(height);
         }
 
         public void writeCell(String value, int colspan, CellStyle style) {

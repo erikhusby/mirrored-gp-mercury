@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -25,6 +26,7 @@ import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -100,6 +102,7 @@ import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -267,7 +270,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
+    private String materialInfo;
+
     private List<String> addOnKeys = new ArrayList<>();
+    private List<String> postReceiveOptionKeys = new ArrayList<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -295,7 +301,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<String> dnaMatrixMaterialTypes;
+    private static List<MaterialInfo> dnaMatrixMaterialTypes=
+            Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     /*
      * The search query.
@@ -335,16 +342,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
-    }
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void setupMaterialTypes() {
-        dnaMatrixMaterialTypes=new ArrayList<>(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo().length);
-        for (MaterialInfo materialInfo : KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo()) {
-            dnaMatrixMaterialTypes.add(materialInfo.getText());
-        }
-
-        Collections.sort(dnaMatrixMaterialTypes);
     }
 
     /**
@@ -474,6 +471,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
+            if (editOrder.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
+                String validationMessage = String.format("a notification list, which required when \"%s\" is selected",
+                        SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+                requireField(editOrder.getProductOrderKit().getNotificationIds().length > 0, validationMessage, action);
+            }
         }
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
@@ -590,7 +592,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Set up defaults before binding and validation and then let any binding override that. Note that the Core Action
-     * Bean sets up the single date range obect to be this month.
+     * Bean sets up the single date range object to be this month.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void setupSearchCriteria() throws Exception {
@@ -705,6 +707,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         addOnKeys.clear();
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+        postReceiveOptionKeys.clear();
+        for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
+            postReceiveOptionKeys.add(postReceiveOption.getText());
         }
     }
 
@@ -957,7 +963,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
         } else {
-            // todo arz change jira configuration for nullable quote or add "skipped" to this
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
@@ -982,6 +987,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
+            Collection<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
+            editOrder.getProductOrderKit().getPostReceiveOptions().clear();
+            editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1068,6 +1076,26 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 itemList.put(item);
             }
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+    @HandlesEvent("getPostReceiveOptions")
+    public Resolution getPostReceiveOptions() throws Exception {
+        JSONArray itemList = new JSONArray();
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+
+        boolean savedOrder = !StringUtils.isBlank(productOrder);
+        MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
+        for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
+            JSONObject item = new JSONObject();
+            item.put("key", postReceiveOption.getText());
+            if (!savedOrder) {
+                item.put("value", postReceiveOption.getDefaultToChecked());
+            } else {
+                item.put("value", false);
+            }
+            itemList.put(item);
         }
 
         return createTextResolution(itemList.toString());
@@ -1398,7 +1426,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
             filename = filename.replaceAll(":", "_");
 
-            final File tempFile = File.createTempFile(filename, ".xls");
+            final File tempFile = File.createTempFile(filename, ".xlsx");
             outputStream = new FileOutputStream(tempFile);
 
             SampleLedgerExporter sampleLedgerExporter =
@@ -1412,7 +1440,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     InputStream inputStream = new FileInputStream(tempFile);
 
                     try {
-                        actionBean.setFileDownloadHeaders("application/excel", tempFile.getName());
+                        actionBean.setFileDownloadHeaders("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", tempFile.getName());
                         IOUtils.copy(inputStream, actionBean.getContext().getResponse().getOutputStream());
                     } finally {
                         IOUtils.closeQuietly(inputStream);
@@ -1443,6 +1471,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    public String getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(String materialInfo) {
+        this.materialInfo = materialInfo;
     }
 
     @HandlesEvent("projectAutocomplete")
@@ -1508,6 +1544,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    public List<String> getPostReceiveOptionKeys() {
+        return postReceiveOptionKeys;
+    }
+
+    public void setPostReceiveOptionKeys(List<String> postReceiveOptionKeys) {
+        this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
     public String getSaveButtonText() {
@@ -1903,7 +1947,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public List<String> getDnaMatrixMaterialTypes() {
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
     }
 
@@ -1943,5 +1987,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSkipQuote(boolean skipQuote) {
         this.skipQuote = skipQuote;
+    }
+
+    public String getPostReceivedOptionsAsString() {
+        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
     }
 }
