@@ -139,7 +139,6 @@ function initializeQuoteOptions() {
 }
 function updateQuoteOptions() {
     if (skipQuote) {
-        // todo arz check it, fail to set the reason, then things get weird
         $j("#skipQuoteReasonDiv").show();
         $j("#quote").hide();
         $j("#fundsRemaining").hide();

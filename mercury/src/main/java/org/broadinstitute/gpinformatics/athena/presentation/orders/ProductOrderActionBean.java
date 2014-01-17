@@ -327,6 +327,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
+                skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         } else {
@@ -388,6 +389,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
+            validateSkipQuoteOptions();
         }
     }
 
@@ -1916,7 +1918,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productDao = productDao;
     }
 
-    public void validateQuoteOptions(String action) {
+    private void validateSkipQuoteOptions() {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
                 addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
@@ -1926,7 +1928,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addValidationError("skipQuote","You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
             }
         }
-        else {
+    }
+
+    public void validateQuoteOptions(String action) {
+        validateSkipQuoteOptions();
+        if (!skipQuote) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
     }

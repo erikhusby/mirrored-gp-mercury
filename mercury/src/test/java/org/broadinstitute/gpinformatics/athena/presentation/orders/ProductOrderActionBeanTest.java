@@ -2,8 +2,13 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.controller.DispatcherServlet;
+import net.sourceforge.stripes.controller.StripesFilter;
 import net.sourceforge.stripes.mock.MockHttpServletRequest;
 import net.sourceforge.stripes.mock.MockHttpServletResponse;
+import net.sourceforge.stripes.mock.MockHttpSession;
+import net.sourceforge.stripes.mock.MockRoundtrip;
+import net.sourceforge.stripes.mock.MockServletContext;
 import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHttpRequest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -31,6 +36,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -175,6 +181,39 @@ public class ProductOrderActionBeanTest {
         product.setPartNumber(productPartNumber);
         product.setProductFamily(new ProductFamily(family));
         return product;
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE, enabled = false)
+    public void testQuoteOptOutAjaxCallStripes() throws Exception {
+        Product product = createSimpleProduct("P-EX-0001",ProductFamily.INITIATION_FAMILY_NAME);
+        ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
+        EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
+        EasyMock.replay(productDao);
+
+        MockServletContext ctx = new MockServletContext("mercury");
+        Map<String,String> params = new HashMap<>();
+        // values taken from our web.xml
+        params.put("ActionResolver.Packages","org.broadinstitute.gpinformatics.mercury.presentation,org.broadinstitute.gpinformatics.athena.presentation");
+        params.put("ActionBeanContext.Class","org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext");
+        //params.put("Extension.Packages","com.samaxes.stripes.inject");
+        ctx.addFilter(StripesFilter.class,"StripesFilter",params);
+        ctx.setServlet(DispatcherServlet.class,"DispatcherServlet",null);
+        MockHttpSession session = new MockHttpSession(ctx);
+
+        MockRoundtrip roundtrip = new MockRoundtrip(ctx,ProductOrderActionBean.class,session);
+        // we seem to have to make a call once to get a non-null mock bean
+        roundtrip.execute("getSupportsSkippingQuote");
+        ProductOrderActionBean mockActionBean = roundtrip.getActionBean(ProductOrderActionBean.class);
+        // mockActionBean is not null
+
+        mockActionBean.setProductDao(productDao);
+        roundtrip.setParameter("product",product.getPartNumber());
+        roundtrip.execute("getSupportsSkippingQuote");
+        Assert.assertEquals(roundtrip.getOutputString(),"{\"supportsSkippingQuote\":true}");
+
+
+        product.setProductFamily(new ProductFamily("Something that doesn't support optional quotes"));
+        Assert.assertEquals(roundtrip.getOutputString(),"{\"supportsSkippingQuote\":false}");
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)

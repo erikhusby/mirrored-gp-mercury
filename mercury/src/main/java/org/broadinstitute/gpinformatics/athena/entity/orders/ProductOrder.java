@@ -997,6 +997,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public String getSkipQuoteReason() {
+        // todo arz fixme
+        if (skipQuoteReason == null) {
+            skipQuoteReason = "blah";
+        }
         return skipQuoteReason;
     }
 
