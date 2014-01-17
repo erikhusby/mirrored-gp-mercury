@@ -96,6 +96,7 @@ public class ProductOrderTest {
                 .ignoreProperty("requisitionName")
                 .ignoreProperty("publicationDeadline")
                 .ignoreProperty("productOrderKit")
+                .ignoreProperty("skipQuoteReason")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
