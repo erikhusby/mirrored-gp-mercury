@@ -121,7 +121,8 @@ public class ProductOrderActionBeanTest {
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testNumericRinScore() throws JSONException {
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRinScore());
-        Assert.assertEquals(Double.parseDouble((String)jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)), expectedNumericValue);
+        Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)),
+                expectedNumericValue);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
@@ -129,7 +130,7 @@ public class ProductOrderActionBeanTest {
         setRinRiskProduct(pdo);
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
         actionBean.validateRinScores(pdo);
-        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(),1);
+        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
     }
 
     @Test(groups = TestGroups.DATABASE_FREE)
@@ -218,7 +219,7 @@ public class ProductOrderActionBeanTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testQuoteOptOutAjaxCall() throws Exception {
-        Product product = createSimpleProduct("P-EX-0001",ProductFamily.INITIATION_FAMILY_NAME);
+        Product product = createSimpleProduct("P-EX-0001", ProductFamily.INITIATION_FAMILY_NAME);
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
 
         actionBean.setProduct(product.getPartNumber());
@@ -227,19 +228,30 @@ public class ProductOrderActionBeanTest {
         EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
         EasyMock.replay(productDao);
 
-        MockHttpServletResponse response = doSkipQuoteSupportCall(actionBean);
+        ResolutionCallback resolutionCallback = new ResolutionCallback() {
+            @Override
+            public Resolution getResolution() throws Exception {
+                return actionBean.getSupportsSkippingQuote();
+            }
+        };
+
+        MockHttpServletResponse response = runStripesAction(resolutionCallback);
         Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":true}");
 
         product.setProductFamily(new ProductFamily("Something that doesn't support optional quotes"));
-        response = doSkipQuoteSupportCall(actionBean);
-        Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":false}");
+        response = runStripesAction(resolutionCallback);
+        Assert.assertEquals(response.getOutputString(), "{\"supportsSkippingQuote\":false}");
     }
 
-    private MockHttpServletResponse doSkipQuoteSupportCall(ProductOrderActionBean actionBean) throws Exception {
+    // todo arz move these two methods somewhere more generally acceptable
+    private interface ResolutionCallback {
+        public Resolution getResolution() throws Exception;
+    }
+
+    public MockHttpServletResponse runStripesAction(ResolutionCallback resolutionCallback) throws Exception {
         HttpServletRequest request = new MockHttpServletRequest("foo","bar");
         MockHttpServletResponse response = new MockHttpServletResponse();
-        Resolution stripesResolution = actionBean.getSupportsSkippingQuote();
-        stripesResolution.execute(request,response);
+        resolutionCallback.getResolution().execute(request,response);
         return response;
     }
 
