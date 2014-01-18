@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -29,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -95,6 +99,7 @@ public class VesselContainer<T extends LabVessel> {
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
+    @Transient
     private LabVessel embedder;
 
     public VesselContainer() {
@@ -383,13 +388,11 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToMapPosition.get(vesselAtPosition);
     }
 
-    @Transient
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<LabVessel> sourceVessels = new HashSet<>();
         return getSampleInstances(sampleType, labBatchType, sourceVessels);
     }
 
-    @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                    Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
@@ -425,7 +428,6 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return contained vessels
      */
-    @Transient
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
@@ -437,7 +439,6 @@ public class VesselContainer<T extends LabVessel> {
         child.addToContainer(this);
     }
 
-    @Transient
     public Set<VesselPosition> getPositions() {
         if (hasAnonymousVessels()) {
             Set<VesselPosition> positions = new HashSet<>();
@@ -456,7 +457,6 @@ public class VesselContainer<T extends LabVessel> {
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
-    @Transient
     public LabVessel getEmbedder() {
         return embedder;
     }
@@ -881,6 +881,92 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         return result;
+    }
+
+    @Transient
+    private Set<VesselPosition> initializedPositions = EnumSet.noneOf(VesselPosition.class);
+
+    @Transient
+    private Map<VesselPosition, Set<SampleInstanceV2>> mapPositionToSampleInstances =
+            new EnumMap<>(VesselPosition.class);
+
+    public Set<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
+        if (initializedPositions.contains(vesselPosition)) {
+            return mapPositionToSampleInstances.get(vesselPosition);
+        } else {
+            T vesselAtPosition = getVesselAtPosition(vesselPosition);
+
+            // Get ancestor events
+            List<LabVessel.VesselEvent> ancestorEvents;
+            if (vesselAtPosition == null) {
+                ancestorEvents = getAncestors(vesselPosition);
+            } else {
+                ancestorEvents = vesselAtPosition.getAncestors();
+            }
+            Set<SampleInstanceV2> currentSampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+
+            mapPositionToSampleInstances.put(vesselPosition, currentSampleInstances);
+            initializedPositions.add(vesselPosition);
+            return currentSampleInstances;
+        }
+    }
+
+    static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
+            List<LabVessel.VesselEvent> ancestorEvents) {
+        // Get ancestor SampleInstances
+        Set<SampleInstanceV2> ancestorSampleInstances = new HashSet<>();
+        for (LabVessel.VesselEvent ancestor : ancestorEvents) {
+            LabVessel ancestorLabVessel = ancestor.getLabVessel();
+            if (ancestorLabVessel == null) {
+                ancestorSampleInstances.addAll(ancestor.getVesselContainer().getSampleInstancesAtPositionV2(
+                        ancestor.getPosition()));
+            } else {
+                ancestorSampleInstances.addAll(ancestorLabVessel.getSampleInstancesV2());
+            }
+        }
+
+        // Filter sample instances that are reagent only
+        Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
+        Set<SampleInstanceV2> reagentSampleInstances = new HashSet<>();
+        while (iterator.hasNext()) {
+            SampleInstanceV2 sampleInstance = iterator.next();
+            if (sampleInstance.isReagentOnly()) {
+                reagentSampleInstances.add(sampleInstance);
+                iterator.remove();
+            }
+        }
+
+        // Clone ancestors
+        Set<SampleInstanceV2> currentSampleInstances = new HashSet<>();
+        for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+            try {
+                currentSampleInstances.add(ancestorSampleInstance.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // Apply reagents
+        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+            for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.addReagent(reagent);
+                }
+            }
+        }
+
+        // Apply vessel changes to clones
+        if (labVessel != null) {
+            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                currentSampleInstance.applyChanges(labVessel);
+            }
+        }
+        return currentSampleInstances;
+    }
+
+    public void clearCaches() {
+        initializedPositions.clear();
+        mapPositionToSampleInstances.clear();
     }
 
 }

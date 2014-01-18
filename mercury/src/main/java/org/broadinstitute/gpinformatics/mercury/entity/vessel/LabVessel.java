@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -913,7 +914,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return ancestors and events
      */
-    private List<VesselEvent> getAncestors() {
+    List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
@@ -1740,4 +1741,25 @@ public abstract class LabVessel implements Serializable {
         }
         return returnLcSets;
     }
+
+    @Transient
+    private Set<SampleInstanceV2> sampleInstances;
+
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
+        if (sampleInstances == null) {
+            sampleInstances = new HashSet<>();
+            List<VesselEvent> ancestorEvents = getAncestors();
+            if (ancestorEvents.isEmpty()) {
+                sampleInstances.add(new SampleInstanceV2(this));
+            } else {
+                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+            }
+        }
+        return sampleInstances;
+    }
+
+    public void clearCaches() {
+        sampleInstances = null;
+    }
+
 }

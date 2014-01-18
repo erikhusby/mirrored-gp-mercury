@@ -91,6 +91,10 @@ public class SampleInstance {
      * @param newReagent reagent to add
      */
     public void addReagent(Reagent newReagent) {
+        addReagent(newReagent, reagents);
+    }
+
+    static void addReagent(Reagent newReagent, List<Reagent> reagents) {
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =

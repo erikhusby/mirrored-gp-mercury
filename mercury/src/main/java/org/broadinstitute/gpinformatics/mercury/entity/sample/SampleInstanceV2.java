@@ -3,23 +3,40 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
  * in a bottom-up traversal from that LabVessel.
  */
-public class SampleInstanceV2 {
+public class SampleInstanceV2 implements Cloneable {
+
+    private Set<MercurySample> rootMercurySamples = new HashSet<>();
+
+    /**
+     * Reagents added, e.g. molecular indexes, baits.
+     */
+    private final List<Reagent> reagents = new ArrayList<>();
+
+    public SampleInstanceV2(LabVessel labVessel) {
+        rootMercurySamples.addAll(labVessel.getMercurySamples());
+        reagents.addAll(labVessel.getReagentContents());
+    }
+
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
      * that far.
      */
     public String getMercuryRootSampleName() {
-        return null;
+        return rootMercurySamples.iterator().next().getSampleKey();
     }
 
     /**
@@ -86,7 +103,7 @@ public class SampleInstanceV2 {
      * Returns baits, molecular indexes etc.
      */
     public List<Reagent> getReagents() {
-        return null;
+        return reagents;
     }
 
     /**
@@ -94,5 +111,27 @@ public class SampleInstanceV2 {
      */
     public List<String> getAllWorkflowNames() {
         return null;
+    }
+
+    public boolean isReagentOnly() {
+        return rootMercurySamples.isEmpty() && !reagents.isEmpty();
+    }
+
+    /**
+     * Adds a reagent encountered during transfer traversal.
+     *
+     * @param newReagent reagent to add
+     */
+    public void addReagent(Reagent newReagent) {
+        SampleInstance.addReagent(newReagent, reagents);
+    }
+
+    @Override
+    public SampleInstanceV2 clone() throws CloneNotSupportedException {
+        return (SampleInstanceV2) super.clone();
+    }
+
+    public void applyChanges(LabVessel labVessel) {
+
     }
 }
