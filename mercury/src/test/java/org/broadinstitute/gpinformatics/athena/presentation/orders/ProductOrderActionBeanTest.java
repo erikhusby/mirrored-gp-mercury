@@ -19,6 +19,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
+import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -235,25 +237,16 @@ public class ProductOrderActionBeanTest {
             }
         };
 
-        MockHttpServletResponse response = runStripesAction(resolutionCallback);
+        MockHttpServletResponse response = MockStripesActionRunner.runStripesAction(resolutionCallback);
         Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":true}");
 
         product.setProductFamily(new ProductFamily("Something that doesn't support optional quotes"));
-        response = runStripesAction(resolutionCallback);
+        response = MockStripesActionRunner.runStripesAction(resolutionCallback);
         Assert.assertEquals(response.getOutputString(), "{\"supportsSkippingQuote\":false}");
     }
 
-    // todo arz move these two methods somewhere more generally acceptable
-    private interface ResolutionCallback {
-        public Resolution getResolution() throws Exception;
-    }
 
-    public MockHttpServletResponse runStripesAction(ResolutionCallback resolutionCallback) throws Exception {
-        HttpServletRequest request = new MockHttpServletRequest("foo","bar");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        resolutionCallback.getResolution().execute(request,response);
-        return response;
-    }
+
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testQuoteSkippingValidation() {
