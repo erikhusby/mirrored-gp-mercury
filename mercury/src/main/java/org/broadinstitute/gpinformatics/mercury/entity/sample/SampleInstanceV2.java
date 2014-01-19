@@ -23,7 +23,7 @@ public class SampleInstanceV2 implements Cloneable {
     /**
      * Reagents added, e.g. molecular indexes, baits.
      */
-    private final List<Reagent> reagents = new ArrayList<>();
+    private List<Reagent> reagents = new ArrayList<>();
 
     public SampleInstanceV2(LabVessel labVessel) {
         rootMercurySamples.addAll(labVessel.getMercurySamples());
@@ -128,7 +128,10 @@ public class SampleInstanceV2 implements Cloneable {
 
     @Override
     public SampleInstanceV2 clone() throws CloneNotSupportedException {
-        return (SampleInstanceV2) super.clone();
+        SampleInstanceV2 clone = (SampleInstanceV2) super.clone();
+        clone.rootMercurySamples = new HashSet<>(this.rootMercurySamples);
+        clone.reagents = new ArrayList<>(this.reagents);
+        return clone;
     }
 
     public void applyChanges(LabVessel labVessel) {

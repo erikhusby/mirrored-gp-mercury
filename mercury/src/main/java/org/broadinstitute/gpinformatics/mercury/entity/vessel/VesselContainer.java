@@ -911,6 +911,9 @@ public class VesselContainer<T extends LabVessel> {
         }
     }
 
+    /**
+     * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
+     */
     static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
             List<LabVessel.VesselEvent> ancestorEvents) {
         // Get ancestor SampleInstances
@@ -936,6 +939,14 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
+        // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
+        // away the bait.
+        boolean appliedReagents = false;
+        if (ancestorSampleInstances.isEmpty()) {
+            ancestorSampleInstances.addAll(reagentSampleInstances);
+            appliedReagents = true;
+        }
+
         // Clone ancestors
         Set<SampleInstanceV2> currentSampleInstances = new HashSet<>();
         for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
@@ -946,11 +957,13 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        // Apply reagents
-        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
-            for (Reagent reagent : reagentSampleInstance.getReagents()) {
-                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.addReagent(reagent);
+        if (!appliedReagents) {
+            // Apply reagents
+            for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+                for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                    for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                        currentSampleInstance.addReagent(reagent);
+                    }
                 }
             }
         }
