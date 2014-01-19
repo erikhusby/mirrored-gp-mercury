@@ -69,8 +69,9 @@ public class GetSampleInstancesTest {
                 "SEQ-01", extractionProduct, sampleInitProductOrder.getResearchProject());
         // todo extraction set?
 
+        long now = System.currentTimeMillis();
         // Extraction transfer
-        LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(), "HULK",
+        LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(now++), "HULK",
                 1L, 101L, "Bravo");
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new HashMap<>();
         Iterator<LabVessel> iterator = receivedVessels.iterator();
@@ -125,7 +126,7 @@ public class GetSampleInstancesTest {
 
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
-        LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "SUPERMAN", 1L, 101L,
+        LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");
         StaticPlate shearingPlate = new StaticPlate("SHEAR", StaticPlate.PlateType.Eppendorf96);
         shearingTransfer.getSectionTransfers().add(new SectionTransfer(
@@ -148,13 +149,13 @@ public class GetSampleInstancesTest {
         StaticPlate indexPlateP5 = indexPlates.get(1);
 
         // P7 index transfer
-        LabEvent p7IndexTransfer = new LabEvent(LabEventType.INDEXED_ADAPTER_LIGATION, new Date(), "SPIDERMAN", 1L,
+        LabEvent p7IndexTransfer = new LabEvent(LabEventType.INDEXED_ADAPTER_LIGATION, new Date(now++), "SPIDERMAN", 1L,
                 101L, "Bravo");
         p7IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP7.getContainerRole(), SBSSection.ALL96,
                 shearingPlate.getContainerRole(), SBSSection.ALL96, p7IndexTransfer));
 
         // P5 index transfer
-        LabEvent p5IndexTransfer = new LabEvent(LabEventType.INDEX_P5_POND_ENRICHMENT, new Date(), "TORCH", 1L,
+        LabEvent p5IndexTransfer = new LabEvent(LabEventType.INDEX_P5_POND_ENRICHMENT, new Date(now++), "TORCH", 1L,
                 101L, "Bravo");
         p5IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP5.getContainerRole(), SBSSection.ALL96,
                 shearingPlate.getContainerRole(), SBSSection.ALL96, p5IndexTransfer));
@@ -164,11 +165,11 @@ public class GetSampleInstancesTest {
         TwoDBarcodedTube baitTube = LabEventTest.buildBaitTube(baitTubeBarcode, null);
 
         StaticPlate baitPlate = new StaticPlate("BAITPLATE", StaticPlate.PlateType.Eppendorf96);
-        LabEvent baitSetupTransfer = new LabEvent(LabEventType.BAIT_SETUP, new Date(), "TICK", 1L, 101L, "Bravo");
+        LabEvent baitSetupTransfer = new LabEvent(LabEventType.BAIT_SETUP, new Date(now++), "TICK", 1L, 101L, "Bravo");
         baitSetupTransfer.getVesselToSectionTransfers().add(new VesselToSectionTransfer(baitTube, SBSSection.ALL96,
                 baitPlate.getContainerRole(), baitSetupTransfer));
 
-        LabEvent baitAdditionTransfer = new LabEvent(LabEventType.BAIT_ADDITION, new Date(), "BATMAN", 1L, 101L,
+        LabEvent baitAdditionTransfer = new LabEvent(LabEventType.BAIT_ADDITION, new Date(now++), "BATMAN", 1L, 101L,
                 "Bravo");
         baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(baitPlate.getContainerRole(),
                 SBSSection.ALL96, shearingPlate.getContainerRole(), SBSSection.ALL96, baitAdditionTransfer));

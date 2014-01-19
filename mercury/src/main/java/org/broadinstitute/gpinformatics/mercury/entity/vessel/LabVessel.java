@@ -923,6 +923,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
         }
+        Collections.sort(vesselEvents, VesselContainer.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -945,6 +946,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
+        Collections.sort(vesselEvents, VesselContainer.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
