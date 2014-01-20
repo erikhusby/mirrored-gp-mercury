@@ -512,7 +512,7 @@ public class BaseEventTest {
      *
      * @param labVessel starting point in graph.
      */
-    public void runTransferVisualizer(LabVessel labVessel) {
+    public static void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.
         if (false) {
             TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();

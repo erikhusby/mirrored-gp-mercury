@@ -24,6 +24,8 @@ public class SampleInstanceV2 implements Cloneable {
      * Reagents added, e.g. molecular indexes, baits.
      */
     private List<Reagent> reagents = new ArrayList<>();
+    private BucketEntry singleBucketEntry;
+    private List<BucketEntry> allBucketEntries = new ArrayList<>();
 
     public SampleInstanceV2(LabVessel labVessel) {
         rootMercurySamples.addAll(labVessel.getMercurySamples());
@@ -58,7 +60,7 @@ public class SampleInstanceV2 implements Cloneable {
      * Returns all bucket entries associated with ancestor vessels.
      */
     public List<BucketEntry> getAllBucketEntries() {
-        return null;
+        return allBucketEntries;
     }
 
     /**
@@ -66,7 +68,7 @@ public class SampleInstanceV2 implements Cloneable {
      * transfer.
      */
     public BucketEntry getSingleBucketEntry() {
-        return null;
+        return singleBucketEntry;
     }
 
     /**
@@ -123,18 +125,23 @@ public class SampleInstanceV2 implements Cloneable {
      * @param newReagent reagent to add
      */
     public void addReagent(Reagent newReagent) {
+        System.out.println("Adding reagent " + newReagent);
         SampleInstance.addReagent(newReagent, reagents);
     }
 
     @Override
     public SampleInstanceV2 clone() throws CloneNotSupportedException {
         SampleInstanceV2 clone = (SampleInstanceV2) super.clone();
-        clone.rootMercurySamples = new HashSet<>(this.rootMercurySamples);
-        clone.reagents = new ArrayList<>(this.reagents);
+        clone.rootMercurySamples = new HashSet<>(rootMercurySamples);
+        clone.reagents = new ArrayList<>(reagents);
+        clone.allBucketEntries = new ArrayList<>(allBucketEntries);
         return clone;
     }
 
     public void applyChanges(LabVessel labVessel) {
-
+        allBucketEntries.addAll(labVessel.getBucketEntries());
+        if (labVessel.getBucketEntries().size() == 1) {
+            singleBucketEntry = labVessel.getBucketEntries().iterator().next();
+        }
     }
 }

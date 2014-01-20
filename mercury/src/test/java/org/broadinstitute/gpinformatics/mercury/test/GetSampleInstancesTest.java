@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -34,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +49,7 @@ public class GetSampleInstancesTest {
                 Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1");
 
         // receive samples
-        Set<LabVessel> receivedVessels = new HashSet<>();
+        Set<LabVessel> receivedVessels = new LinkedHashSet<>();
         int i = 1;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             TwoDBarcodedTube tube = new TwoDBarcodedTube("R" + i);
@@ -174,14 +174,17 @@ public class GetSampleInstancesTest {
         baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(baitPlate.getContainerRole(),
                 SBSSection.ALL96, shearingPlate.getContainerRole(), SBSSection.ALL96, baitAdditionTransfer));
 
+        BaseEventTest.runTransferVisualizer(tube1);
+
         Set<SampleInstanceV2> sampleInstances =
                 shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getReagents().size(), 2);
-        DesignedReagent designedReagent = (DesignedReagent) sampleInstance.getReagents().get(0);
-        Assert.assertEquals(designedReagent.getReagentDesign().getDesignName(), "cancer_2000gene_shift170_undercovered");
-        MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().get(1);
+        MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().get(0);
         Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-M_P7-M");
+        DesignedReagent designedReagent = (DesignedReagent) sampleInstance.getReagents().get(1);
+        Assert.assertEquals(designedReagent.getReagentDesign().getDesignName(), "cancer_2000gene_shift170_undercovered");
+        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry);
     }
 }
