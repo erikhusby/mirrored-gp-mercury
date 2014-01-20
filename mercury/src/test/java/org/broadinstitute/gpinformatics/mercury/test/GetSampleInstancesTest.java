@@ -176,7 +176,7 @@ public class GetSampleInstancesTest {
 
         BaseEventTest.runTransferVisualizer(tube1);
 
-        Set<SampleInstanceV2> sampleInstances =
+        List<SampleInstanceV2> sampleInstances =
                 shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();

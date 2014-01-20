@@ -38,7 +38,7 @@ public class ServiceAccessUtility {
                 initialContext.close();
             }
         } catch (NamingException e) {
-            log.error("Error trying to look up bean " + beanType.getName(), e);
+            log.error("Error trying to look up bean " + beanType.getName() + ": " + e.getMessage());
             throw new RuntimeException(e);
         }
     }
