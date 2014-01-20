@@ -982,9 +982,18 @@ public class VesselContainer<T extends LabVessel> {
         // Apply vessel changes to clones
         if (labVessel != null) {
             for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyChanges(labVessel);
+                currentSampleInstance.applyVesselChanges(labVessel);
             }
         }
+
+        // todo jmt revisit in context of pooling
+        // Apply events to clones
+        for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
+            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+            }
+        }
+
         return currentSampleInstances;
     }
 

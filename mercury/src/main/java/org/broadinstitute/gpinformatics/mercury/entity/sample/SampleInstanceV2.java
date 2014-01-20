@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -26,6 +27,9 @@ public class SampleInstanceV2 implements Cloneable {
     private List<Reagent> reagents = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
+    private LabBatch singleInferredBucketedBatch;
+    private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
+    private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
 
     public SampleInstanceV2(LabVessel labVessel) {
         rootMercurySamples.addAll(labVessel.getMercurySamples());
@@ -46,7 +50,17 @@ public class SampleInstanceV2 implements Cloneable {
      * Aliquot.  Pass null to get all batches.
      */
     public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType labBatchType) {
-        return null;
+        if (labBatchType == null) {
+            return allLabBatchStartingVessels;
+        }
+        // todo jmt cache by LabBatchType?
+        List<LabBatchStartingVessel> labBatchStartingVessels = new ArrayList<>();
+        for (LabBatchStartingVessel labBatchStartingVessel : allLabBatchStartingVessels) {
+            if (labBatchStartingVessel.getLabBatch().getLabBatchType() == labBatchType) {
+                labBatchStartingVessels.add(labBatchStartingVessel);
+            }
+        }
+        return labBatchStartingVessels;
     }
 
     /**
@@ -84,14 +98,14 @@ public class SampleInstanceV2 implements Cloneable {
      * calculated for each transfer.
      */
     public LabBatch getSingleInferredBucketedBatch() {
-        return null;
+        return singleInferredBucketedBatch;
     }
 
     /**
      * Returns all Product Orders associated with samples in ancestor vessels.
      */
     public List<ProductOrderSample> getAllProductOrderSamples() {
-        return null;
+        return allProductOrderSamples;
     }
 
     /**
@@ -125,7 +139,9 @@ public class SampleInstanceV2 implements Cloneable {
      * @param newReagent reagent to add
      */
     public void addReagent(Reagent newReagent) {
-        System.out.println("Adding reagent " + newReagent);
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("Adding reagent " + newReagent);
+        }
         SampleInstance.addReagent(newReagent, reagents);
     }
 
@@ -135,13 +151,25 @@ public class SampleInstanceV2 implements Cloneable {
         clone.rootMercurySamples = new HashSet<>(rootMercurySamples);
         clone.reagents = new ArrayList<>(reagents);
         clone.allBucketEntries = new ArrayList<>(allBucketEntries);
+        clone.allLabBatchStartingVessels = new ArrayList<>(allLabBatchStartingVessels);
         return clone;
     }
 
-    public void applyChanges(LabVessel labVessel) {
+    public void applyVesselChanges(LabVessel labVessel) {
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
         }
+        allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVessels());
     }
+
+    public void applyEvent(LabEvent labEvent) {
+        if (singleBucketEntry == null) {
+            Set<LabBatch> computedLcsets = labEvent.computeLcSets();
+            if (computedLcsets.size() == 1) {
+                singleInferredBucketedBatch = computedLcsets.iterator().next();
+            }
+        }
+    }
+
 }

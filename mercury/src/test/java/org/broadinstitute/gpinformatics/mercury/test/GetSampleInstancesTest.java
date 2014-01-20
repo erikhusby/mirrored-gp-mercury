@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -180,11 +181,41 @@ public class GetSampleInstancesTest {
                 shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
+        Assert.assertEquals(sampleInstance.getMercuryRootSampleName(), "SM-12431");
+        verifyReagents(sampleInstance, "Illumina_P5-M_P7-M");
+        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry);
+        List<LabBatchStartingVessel> importBatchVessels = new ArrayList<>();
+        for (LabBatchStartingVessel labBatchStartingVessel : importLabBatch.getLabBatchStartingVessels()) {
+            if (labBatchStartingVessel.getLabVessel().getLabel().equals("X1")) {
+                importBatchVessels.add(labBatchStartingVessel);
+                break;
+            }
+        }
+
+        Assert.assertEquals(sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.SAMPLES_IMPORT), importBatchVessels);
+//        Assert.assertEquals(sampleInstance.getAllBucketEntries(), );
+        // todo need relationship between MercurySample and ProductOrderSample.
+//        Assert.assertEquals(sampleInstance.getAllProductOrderSamples(), new ArrayList<ProductOrderSample>() {{
+//            add(sampleInitProductOrder.getSamples().get(0));
+//            add(extractionProductOrder.getSamples().get(0));
+//            add(sequencingProductOrder.getSamples().get(0));
+//        }});
+
+        sampleInstances =
+                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A03);
+        Assert.assertEquals(sampleInstances.size(), 1);
+        sampleInstance = sampleInstances.iterator().next();
+        verifyReagents(sampleInstance, "Illumina_P5-V_P7-V");
+        Assert.assertNull(sampleInstance.getSingleBucketEntry());
+        Assert.assertEquals(sampleInstance.getSingleInferredBucketedBatch(), lcsetBatch);
+
+    }
+
+    private void verifyReagents(SampleInstanceV2 sampleInstance, String expectedMolIndScheme) {
         Assert.assertEquals(sampleInstance.getReagents().size(), 2);
         MolecularIndexReagent molecularIndexReagent = (MolecularIndexReagent) sampleInstance.getReagents().get(0);
-        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), "Illumina_P5-M_P7-M");
+        Assert.assertEquals(molecularIndexReagent.getMolecularIndexingScheme().getName(), expectedMolIndScheme);
         DesignedReagent designedReagent = (DesignedReagent) sampleInstance.getReagents().get(1);
         Assert.assertEquals(designedReagent.getReagentDesign().getDesignName(), "cancer_2000gene_shift170_undercovered");
-        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry);
     }
 }
