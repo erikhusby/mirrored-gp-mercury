@@ -89,6 +89,7 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
