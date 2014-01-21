@@ -5,7 +5,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMess
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -25,6 +27,8 @@ public class SampleLedgerExporterFactory {
     private final WorkCompleteMessageDao workCompleteMessageDao;
 
     private final BSPSampleDataFetcher sampleDataFetcher;
+    private final AppConfig appConfig;
+    private final TableauConfig tableauConfig;
 
     @Inject
     public SampleLedgerExporterFactory(
@@ -32,12 +36,16 @@ public class SampleLedgerExporterFactory {
             BSPUserList bspUserList,
             PriceListCache priceListCache,
             WorkCompleteMessageDao workCompleteMessageDao,
-            BSPSampleDataFetcher sampleDataFetcher) {
+            BSPSampleDataFetcher sampleDataFetcher,
+            AppConfig appConfig,
+            TableauConfig tableauConfig) {
         this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.sampleDataFetcher = sampleDataFetcher;
+        this.appConfig = appConfig;
+        this.tableauConfig = tableauConfig;
     }
 
     /**
@@ -48,6 +56,6 @@ public class SampleLedgerExporterFactory {
      */
     public SampleLedgerExporter makeExporter(List<ProductOrder> productOrders) {
         return new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrders,
-                workCompleteMessageDao, sampleDataFetcher);
+                workCompleteMessageDao, sampleDataFetcher, appConfig, tableauConfig);
     }
 }

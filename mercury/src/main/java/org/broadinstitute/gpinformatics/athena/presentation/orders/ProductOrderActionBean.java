@@ -68,6 +68,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -305,6 +306,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
+
+    public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
+        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
+               + PRODUCT_ORDER_PARAMETER + "=" + productOrderKey;
+    }
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.

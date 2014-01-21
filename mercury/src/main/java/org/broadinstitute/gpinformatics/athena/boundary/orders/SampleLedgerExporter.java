@@ -11,18 +11,22 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.TableauRedirectActionBean;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +57,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private final PriceListCache priceListCache;
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final BSPSampleDataFetcher sampleDataFetcher;
+    private final AppConfig appConfig;
+    private final TableauConfig tableauConfig;
 
     public SampleLedgerExporter(
             PriceItemDao priceItemDao,
@@ -60,13 +66,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             PriceListCache priceListCache,
             List<ProductOrder> productOrders,
             WorkCompleteMessageDao workCompleteMessageDao,
-            BSPSampleDataFetcher sampleDataFetcher) {
+            BSPSampleDataFetcher sampleDataFetcher,
+            AppConfig appConfig,
+            TableauConfig tableauConfig) {
 
         this.priceItemDao = priceItemDao;
         this.bspUserList = bspUserList;
         this.priceListCache = priceListCache;
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.sampleDataFetcher = sampleDataFetcher;
+        this.appConfig = appConfig;
+        this.tableauConfig = tableauConfig;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -166,8 +176,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             for (BillingTrackerHeader header : BillingTrackerHeader.values()) {
                 if (header.shouldShow(currentProduct)) {
                     getWriter().writeCell(header.getText(), getWrappedHeaderStyle(
-                            new byte[]{(byte) 204, (byte) 204, (byte) 255}));
-                    getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
+                            new byte[]{(byte) 204, (byte) 204, (byte) 255}, header == BillingTrackerHeader.TABLEAU_LINK));
+                    if (header == BillingTrackerHeader.TABLEAU_LINK) {
+                        getWriter().setColumnWidth(900);
+                    } else {
+                        getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
+                    }
                 }
             }
 
@@ -258,7 +272,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
 
         // Product Order ID.
-        getWriter().writeCell(sample.getProductOrder().getBusinessKey());
+        String pdoKey = sample.getProductOrder().getBusinessKey();
+        getWriter().writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
 
         // Product Order Name (actually this concept is called 'Title' in PDO world).
         getWriter().writeCell(sample.getProductOrder().getTitle());
@@ -277,17 +292,55 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // work complete date is the date of any ledger items that are ready to be billed.
         getWriter().writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
-        // % coverage at 20x
+        // Picard metrics
+        BigInteger pfReads = null;
+        BigInteger pfAlignedGb = null;
+        BigInteger pfReadsAlignedInPairs = null;
         Double percentCoverageAt20x = null;
         WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
         if (workCompleteMessage != null) {
+            pfReads = workCompleteMessage.getPfReads();
+            pfAlignedGb = workCompleteMessage.getAlignedGb();
+            pfReadsAlignedInPairs = workCompleteMessage.getPfReadsAlignedInPairs();
             percentCoverageAt20x = workCompleteMessage.getPercentCoverageAt20X();
         }
-        if (percentCoverageAt20x != null) {
-            getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
-        } else {
-            getWriter().writeCell("");
+
+        // PF Reads
+        // TODO: figure out writing of large integers
+//        if (pfReads != null) {
+//            getWriter().writeCell(pfReads.toString());
+//        } else {
+//            getWriter().writeCell("");
+//        }
+
+        // PF Aligned GB
+        // TODO: figure out writing of large integers
+//        if (pfAlignedGb != null) {
+//            getWriter().writeCell(pfAlignedGb.toString());
+//        } else {
+//            getWriter().writeCell("");
+//        }
+
+        // PF Reads Aligned in Pairs
+        // TODO: figure out writing of large integers
+//        if (pfReadsAlignedInPairs != null) {
+//            getWriter().writeCell(pfReadsAlignedInPairs.toString());
+//        } else {
+//            getWriter().writeCell("");
+//        }
+
+        // % coverage at 20x
+        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(sample.getProductOrder().getProduct())) {
+            if (percentCoverageAt20x != null) {
+                getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
+            } else {
+                getWriter().writeCell("");
+            }
         }
+
+        // Tableau link
+        getWriter().writeCellLink(TableauRedirectActionBean.getPdoSequencingSampleDashboardUrl(pdoKey, tableauConfig),
+                TableauRedirectActionBean.getPdoSequencingSamplesDashboardRedirectUrl(pdoKey, appConfig));
 
         // Quote ID.
         getWriter().writeCell(sample.getProductOrder().getQuoteId());

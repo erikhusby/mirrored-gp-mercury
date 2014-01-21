@@ -88,7 +88,8 @@ public class AuthorizationFilter implements Filter {
                 path.startsWith("/ArquillianServletRunner") ||
                 path.startsWith(SecurityActionBean.LOGIN_ACTION) ||
                 path.endsWith(SecurityActionBean.LOGIN_PAGE) ||
-                path.endsWith("Mercury/");
+                path.endsWith("Mercury/") ||
+                path.startsWith("/tableau/");
     }
 
     @Override
