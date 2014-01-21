@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -14,13 +15,15 @@ import static org.mockito.Mockito.verify;
 
 /**
  * Tests for {@link org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean}.
+ *
+ *
  */
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class CoreActionBeanTest {
 
     private HttpServletResponse mockResponse;
 
-    @BeforeTest(groups = TestGroups.DATABASE_FREE)
+    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         mockResponse = mock(HttpServletResponse.class);
     }
