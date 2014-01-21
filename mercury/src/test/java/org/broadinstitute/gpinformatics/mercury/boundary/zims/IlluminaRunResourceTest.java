@@ -63,7 +63,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
     private final String CHAMBER = "2";
 
-    private final String WEBSERVICE_URL = "rest/IlluminaRun/query";
+    public static final String WEBSERVICE_URL = "rest/IlluminaRun/query";
 
     public static final String HUMAN = "Human";
 

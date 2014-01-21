@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -24,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -87,16 +89,11 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -257,7 +254,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
+    private String materialInfo;
+
     private List<String> addOnKeys = new ArrayList<>();
+    private List<String> postReceiveOptionKeys = new ArrayList<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -285,7 +285,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<String> dnaMatrixMaterialTypes;
+    private static List<MaterialInfo> dnaMatrixMaterialTypes=
+            Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     /*
      * The search query.
@@ -329,16 +330,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
-    }
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void setupMaterialTypes() {
-        dnaMatrixMaterialTypes=new ArrayList<>(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo().length);
-        for (MaterialInfo materialInfo : KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo()) {
-            dnaMatrixMaterialTypes.add(materialInfo.getText());
-        }
-
-        Collections.sort(dnaMatrixMaterialTypes);
     }
 
     /**
@@ -467,6 +458,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
+            if (editOrder.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
+                String validationMessage = String.format("a notification list, which required when \"%s\" is selected",
+                        SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+                requireField(editOrder.getProductOrderKit().getNotificationIds().length > 0, validationMessage, action);
+            }
         }
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
@@ -583,7 +579,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Set up defaults before binding and validation and then let any binding override that. Note that the Core Action
-     * Bean sets up the single date range obect to be this month.
+     * Bean sets up the single date range object to be this month.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void setupSearchCriteria() throws Exception {
@@ -698,6 +694,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         addOnKeys.clear();
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+        postReceiveOptionKeys.clear();
+        for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
+            postReceiveOptionKeys.add(postReceiveOption.getText());
         }
     }
 
@@ -974,6 +974,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
+            Collection<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
+            editOrder.getProductOrderKit().getPostReceiveOptions().clear();
+            editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1061,6 +1064,26 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 itemList.put(item);
             }
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+    @HandlesEvent("getPostReceiveOptions")
+    public Resolution getPostReceiveOptions() throws Exception {
+        JSONArray itemList = new JSONArray();
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
+
+        boolean savedOrder = !StringUtils.isBlank(productOrder);
+        MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
+        for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
+            JSONObject item = new JSONObject();
+            item.put("key", postReceiveOption.getText());
+            if (!savedOrder) {
+                item.put("value", postReceiveOption.getDefaultToChecked());
+            } else {
+                item.put("value", false);
+            }
+            itemList.put(item);
         }
 
         return createTextResolution(itemList.toString());
@@ -1379,6 +1402,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.product = product;
     }
 
+    public String getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(String materialInfo) {
+        this.materialInfo = materialInfo;
+    }
+
     @HandlesEvent("projectAutocomplete")
     public Resolution projectAutocomplete() throws Exception {
         return createTextResolution(projectTokenInput.getJsonString(getQ()));
@@ -1442,6 +1473,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    public List<String> getPostReceiveOptionKeys() {
+        return postReceiveOptionKeys;
+    }
+
+    public void setPostReceiveOptionKeys(List<String> postReceiveOptionKeys) {
+        this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
     public String getSaveButtonText() {
@@ -1837,11 +1876,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public List<String> getDnaMatrixMaterialTypes() {
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
     }
 
     public String getWorkRequestUrl() {
         return bspConfig.getWorkRequestLink(editOrder.getProductOrderKit().getWorkRequestId());
+    }
+
+    public String getPostReceivedOptionsAsString() {
+        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
     }
 }

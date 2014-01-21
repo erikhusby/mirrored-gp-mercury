@@ -79,7 +79,7 @@ public class LabVesselDao extends GenericDao {
                     new CriteriaInClauseCreator<ProductOrderSample>() {
                         @Override
                         public Query createCriteriaInQuery(Collection<ProductOrderSample> parameterList) {
-                            Collection<String> sampleKeys = new ArrayList<> ();
+                            Collection<String> sampleKeys = new ArrayList<>();
                             for (ProductOrderSample sample : parameterList) {
                                 sampleKeys.add(sample.getBusinessKey());
                             }
@@ -88,7 +88,7 @@ public class LabVesselDao extends GenericDao {
                         }
                     });
             } catch (NoResultException ignored) {
-                resultList = new ArrayList<> ();
+                return resultMap;
             }
 
             // For each LabVessel found, add it to the list of LabVessel objects for the applicable sample in the map.
