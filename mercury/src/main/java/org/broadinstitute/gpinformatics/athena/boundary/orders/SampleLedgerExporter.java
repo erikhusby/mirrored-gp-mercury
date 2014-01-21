@@ -306,28 +306,25 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         // PF Reads
-        // TODO: figure out writing of large integers
-//        if (pfReads != null) {
-//            getWriter().writeCell(pfReads.toString());
-//        } else {
-//            getWriter().writeCell("");
-//        }
+        if (pfReads != null) {
+            getWriter().writeCell(pfReads.doubleValue());
+        } else {
+            getWriter().writeCell("");
+        }
 
         // PF Aligned GB
-        // TODO: figure out writing of large integers
-//        if (pfAlignedGb != null) {
-//            getWriter().writeCell(pfAlignedGb.toString());
-//        } else {
-//            getWriter().writeCell("");
-//        }
+        if (pfAlignedGb != null) {
+            getWriter().writeCell(pfAlignedGb.doubleValue());
+        } else {
+            getWriter().writeCell("");
+        }
 
         // PF Reads Aligned in Pairs
-        // TODO: figure out writing of large integers
-//        if (pfReadsAlignedInPairs != null) {
-//            getWriter().writeCell(pfReadsAlignedInPairs.toString());
-//        } else {
-//            getWriter().writeCell("");
-//        }
+        if (pfReadsAlignedInPairs != null) {
+            getWriter().writeCell(pfReadsAlignedInPairs.doubleValue());
+        } else {
+            getWriter().writeCell("");
+        }
 
         // % coverage at 20x
         if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(sample.getProductOrder().getProduct())) {

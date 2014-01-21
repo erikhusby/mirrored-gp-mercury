@@ -20,7 +20,7 @@ import java.util.Map;
 public class WorkCompleteMessage {
     public enum Properties {
         PDO_NAME, ALIQUOT_ID, COMPLETED_TIME, PF_READS, PF_ALIGNED_GB, PF_READS_ALIGNED_IN_PAIRS,
-        PERCENT_COVERAGE_AT_20X
+        PCT_TARGET_BASES_20X
     }
 
     protected WorkCompleteMessage() {
@@ -110,7 +110,7 @@ public class WorkCompleteMessage {
     }
 
     public Double getPercentCoverageAt20X() {
-        return getDoublePropertyValue(Properties.PERCENT_COVERAGE_AT_20X);
+        return getDoublePropertyValue(Properties.PCT_TARGET_BASES_20X);
     }
 
     private BigInteger getBigIntegerPropertyValue(Properties property) {

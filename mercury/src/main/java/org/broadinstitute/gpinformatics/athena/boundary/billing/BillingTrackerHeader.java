@@ -24,18 +24,17 @@ public enum BillingTrackerHeader implements ColumnHeader {
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
     WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    // TODO: figure out writing of large integers
-//    PF_READS("PF Reads", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-//    PF_ALIGNED_GB("PF Aligned GP", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-//    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
+    PF_READS("PF Reads", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_ALIGNED_GB("PF Aligned GP", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 15, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
         @Override public boolean shouldShow(Product product) {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
-    TABLEAU_LINK("Tableau", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    QUOTE_ID("Quote ID", 14, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    SORT_COLUMN("Sort Column", 15, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    TABLEAU_LINK("Tableau", 16, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    QUOTE_ID("Quote ID", 17, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    SORT_COLUMN("Sort Column", 18, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";
