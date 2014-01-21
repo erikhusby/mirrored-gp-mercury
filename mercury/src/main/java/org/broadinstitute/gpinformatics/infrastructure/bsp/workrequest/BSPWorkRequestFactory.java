@@ -17,7 +17,6 @@ public class BSPWorkRequestFactory {
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
      *
-     *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
      * @param productOrderId         the product order associated with the request
@@ -26,7 +25,7 @@ public class BSPWorkRequestFactory {
      * @param externalCollaboratorId the domain user ID for the external collaborator
      * @param siteId                 the site that the sample kits will be shipped to
      * @param numberOfSamples        the total number of samples that the kit should contain
-     * @param MaterialInfoDto           the material type
+     * @param MaterialInfoDto        the material type
      * @param sampleCollectionId     the collection to use for the sample kit work task
      * @param notificationList       the comma separated list of users to notify on kit shipment.
      * @param organismId             the organism that the user selected     *
@@ -34,6 +33,7 @@ public class BSPWorkRequestFactory {
      * @param notes                  comments to pass on to bsp
      * @param exExKit                flag if this is an exome express kit
      * @param transferMethod         How are they receiving the kit, pick up or delivery?
+     *
      * @return a new SampleKitWorkRequest
      */
     public static SampleKitWorkRequest buildBspKitWorkRequest(String workRequestName, String requestUser,

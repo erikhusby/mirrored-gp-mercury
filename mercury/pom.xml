@@ -1580,7 +1580,7 @@
              -->
 
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>1.3.43</version>
+            <version>1.3.45</version>
         </dependency>
 
         <dependency>

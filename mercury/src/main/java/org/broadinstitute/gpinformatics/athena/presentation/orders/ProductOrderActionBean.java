@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
@@ -16,7 +17,6 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
@@ -27,7 +27,6 @@ import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
-import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -459,12 +458,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
-            if (editOrder.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
-                String validationMessage = String.format("a notification list, which required when \"%s\" is selected",
-                        SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
-                requireField(editOrder.getProductOrderKit().getNotificationIds().length > 0, validationMessage, action);
-            }
+            validateTransferMethod(editOrder);
         }
+
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
@@ -484,6 +480,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder != null) {
             validateRinScores(editOrder);
         }
+    }
+
+    public void validateTransferMethod(@Nonnull ProductOrder pdo){
+        if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
+            String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
+                    SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+            requireField(pdo.getProductOrderKit().getNotificationIds().length > 0, validationMessage, SAVE_ACTION);
+        }
+
     }
 
     private void doOnRiskUpdate() {
@@ -696,6 +701,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
         }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
+    public void initPostReceiveOptions(){
         postReceiveOptionKeys.clear();
         for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
             postReceiveOptionKeys.add(postReceiveOption.getText());
@@ -1072,19 +1081,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("getPostReceiveOptions")
     public Resolution getPostReceiveOptions() throws Exception {
         JSONArray itemList = new JSONArray();
-        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
-
-        boolean savedOrder = !StringUtils.isBlank(productOrder);
+        boolean savedOrder = !StringUtils.isBlank(this.productOrder);
         MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
         for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
-            JSONObject item = new JSONObject();
-            item.put("key", postReceiveOption.getText());
-            if (!savedOrder) {
-                item.put("value", postReceiveOption.getDefaultToChecked());
-            } else {
-                item.put("value", false);
+            if (!postReceiveOption.getArchived()) {
+                JSONObject item = new JSONObject();
+                item.put("key", postReceiveOption.getText());
+                if (!savedOrder) {
+                    item.put("value", postReceiveOption.getDefaultToChecked());
+                } else {
+                    item.put("value", false);
+                }
+                itemList.put(item);
             }
-            itemList.put(item);
         }
 
         return createTextResolution(itemList.toString());
@@ -1883,9 +1892,5 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getWorkRequestUrl() {
         return bspConfig.getWorkRequestLink(editOrder.getProductOrderKit().getWorkRequestId());
-    }
-
-    public String getPostReceivedOptionsAsString() {
-        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
     }
 }
