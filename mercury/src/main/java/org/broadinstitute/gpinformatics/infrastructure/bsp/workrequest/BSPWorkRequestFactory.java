@@ -4,7 +4,6 @@ import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 
@@ -66,7 +65,7 @@ public class BSPWorkRequestFactory {
                 transferMethod, // transferMethod
                 MaterialInfoDto,
                 organismId,
-                new ArrayList<>(postReceiveOptions),
+                postReceiveOptions,
                 notes,
                 exExKit
         );
