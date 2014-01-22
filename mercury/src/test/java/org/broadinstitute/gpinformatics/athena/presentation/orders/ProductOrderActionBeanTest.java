@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.codehaus.jackson.JsonNode;
@@ -193,10 +194,14 @@ public class ProductOrderActionBeanTest {
         JsonNode jsonNode = objectMapper.readValue(jsonString, JsonNode.class);
 
         Iterator<JsonNode> resultIterator = jsonNode.getElements();
+        String nodeKey = "key";
+        String nodeValue = "value";
+
         while (resultIterator.hasNext()) {
             JsonNode node = resultIterator.next();
-            PostReceiveOption option = PostReceiveOption.getByText(node.get("key").asText());
-            Assert.assertTrue(option.getDefaultToChecked() == node.get("value").asBoolean());
+            PostReceiveOption option = TestUtils.getFirst(
+                    PostReceiveOption.getByText(Arrays.asList(node.get(nodeKey).asText())));
+            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeValue).asBoolean());
             Assert.assertFalse(option.getArchived());
         }
     }

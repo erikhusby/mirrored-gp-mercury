@@ -97,6 +97,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -984,7 +985,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
-            Collection<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
+            EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
             editOrder.getProductOrderKit().getPostReceiveOptions().clear();
             editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
             editOrder.getProductOrderKit().setSampleCollectionId(

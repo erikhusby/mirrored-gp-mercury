@@ -25,28 +25,37 @@ public class ZimsIlluminaChamber {
     @JsonProperty("sequencedLibraryCreationTime")
     private String creationTime;
 
+    @JsonProperty("loadingConcentration")
+    private Double loadingConcentration;
+
     private static SimpleDateFormat creationTimeDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     public ZimsIlluminaChamber() {}
 
-    public ZimsIlluminaChamber(short chamberName,
-                                   final List<LibraryBean> libraries,
-                                   final String primer,
-                                   final String sequencedLibraryName,
-                               String creationTime) {
+    public ZimsIlluminaChamber(
+            short chamberName,
+            final List<LibraryBean> libraries,
+            final String primer,
+            final String sequencedLibraryName,
+            String creationTime,
+            Double loadingConcentration) {
         this.chamberName = Short.toString(chamberName);
         this.libraries = libraries;
         this.primer = primer;
         this.sequencedLibraryName = sequencedLibraryName;
         this.creationTime = creationTime;
+        this.loadingConcentration = loadingConcentration;
     }
 
-    public ZimsIlluminaChamber(short chamberName,
-                               final List<LibraryBean> libraries,
-                               final String primer,
-                               final String sequencedLibraryName,
-                               final Date creationTime) {
-        this(chamberName, libraries, primer, sequencedLibraryName, creationTimeDateFormat.format(creationTime));
+    public ZimsIlluminaChamber(
+            short chamberName,
+            final List<LibraryBean> libraries,
+            final String primer,
+            final String sequencedLibraryName,
+            final Date creationTime,
+            Double loadingConcentration) {
+        this(chamberName, libraries, primer, sequencedLibraryName, creationTimeDateFormat.format(creationTime),
+                loadingConcentration);
     }
     
     public String getPrimer() {
@@ -67,5 +76,9 @@ public class ZimsIlluminaChamber {
 
     public String getCreationTime() {
         return creationTime;
+    }
+
+    public Double getLoadingConcentration() {
+        return loadingConcentration;
     }
 }

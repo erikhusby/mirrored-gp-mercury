@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -77,6 +78,15 @@ public class ProductOrderKit implements Serializable {
     @Column(name = "work_request_id")
     private String workRequestId;
 
+    @Column(name = "comments")
+    private String comments;
+
+    @Column(name = "exome_express")
+    private Boolean exomeExpress;
+
+    @Enumerated(EnumType.STRING)
+    private SampleKitWorkRequest.TransferMethod transferMethod;
+
     @Transient
     private String organismName;
 
@@ -85,11 +95,6 @@ public class ProductOrderKit implements Serializable {
 
     @Transient
     private String sampleCollectionName;
-
-    private String comments;
-    private Boolean exomeExpress;
-    @Enumerated(EnumType.STRING)
-    private SampleKitWorkRequest.TransferMethod transferMethod;
 
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
@@ -238,10 +243,7 @@ public class ProductOrderKit implements Serializable {
      *
      * @param delimiter characters used to join list values
      */
-    public String getPostReceivedOptionsAsString(String delimiter) {
-        if (StringUtils.isBlank(delimiter)){
-            delimiter=", ";
-        }
+    public String getPostReceivedOptionsAsString(@Nonnull String delimiter) {
         if (getPostReceiveOptions().isEmpty()){
             return "No Post-Received Options selected.";
         }
@@ -250,6 +252,7 @@ public class ProductOrderKit implements Serializable {
         for (PostReceiveOption postReceiveOption :postReceiveOptions) {
             options.add(postReceiveOption.getText());
         }
+
         return StringUtils.join(options, delimiter);
     }
 

@@ -35,6 +35,7 @@ public class IlluminaRunResourceLiveTest extends ContainerTest {
 
         Assert.assertEquals(run.getLanes().size(), 2, "Wrong number of lanes");
         ZimsIlluminaChamber zimsIlluminaChamber = run.getLanes().iterator().next();
+        Assert.assertEquals(zimsIlluminaChamber.getLoadingConcentration(), 20.0);
 
         Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), 5, "Wrong number of libraries");
         LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
