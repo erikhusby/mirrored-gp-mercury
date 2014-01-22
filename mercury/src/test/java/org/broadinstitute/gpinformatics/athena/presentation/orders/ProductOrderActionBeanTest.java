@@ -1,24 +1,39 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.mock.MockHttpServletRequest;
+import net.sourceforge.stripes.mock.MockHttpServletResponse;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +48,11 @@ public class ProductOrderActionBeanTest {
     private String expectedNonNumericRinScore = "I'm not a number";
 
     private ProductOrder pdo;
+
+    public static final long BSP_INFORMATICS_TEST_SITE_ID = 1l;
+    public static final long HOMO_SAPIENS = 1l;
+    public static final long TEST_COLLECTION = 1062L;
+
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     private void setUp() {
@@ -50,6 +70,7 @@ public class ProductOrderActionBeanTest {
     private ProductOrder newPdo() {
         ProductOrder pdo = new ProductOrder();
         pdo.setSamples(createPdoSamples());
+        pdo.setTitle("Test PDO");
         return pdo;
     }
 
@@ -66,6 +87,18 @@ public class ProductOrderActionBeanTest {
         pdoSamples.add(new ProductOrderSample(sampleWithBadRin.getSampleId(),sampleWithBadRin));
         pdoSamples.add(new ProductOrderSample("123.0")); // throw in a gssr sample
         return pdoSamples;
+    }
+
+    private ProductOrderKit createGoodPdoKit() {
+        MaterialInfoDto materialInfoDto =
+                new MaterialInfoDto(KitType.DNA_MATRIX.getKitName(), KitType.DNA_MATRIX.getDisplayName());
+        ProductOrderKit pdoKit = new ProductOrderKit(96l, KitType.DNA_MATRIX, TEST_COLLECTION, HOMO_SAPIENS,
+                BSP_INFORMATICS_TEST_SITE_ID, materialInfoDto);
+        pdoKit.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        pdoKit.setTransferMethod(SampleKitWorkRequest.TransferMethod.SHIP_OUT);
+        pdoKit.setNotificationIds(Arrays.asList("17255"));
+        pdoKit.setExomeExpress(true);
+        return pdoKit;
     }
 
     /**
@@ -142,6 +175,70 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
+    @Test(groups = TestGroups.DATABASE_FREE)
+        public void testPostReceiveOptions() throws Exception {
+        Product product = new Product();
+        pdo.setProduct(product);
+        pdo.setProductOrderKit(createGoodPdoKit());
+        actionBean.setEditOrder(pdo);
+        actionBean.setProduct("test product");
+        actionBean.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD.getText());
+
+        StreamingResolution postReceiveOptions = (StreamingResolution) actionBean.getPostReceiveOptions();
+        HttpServletRequest request = new MockHttpServletRequest("foo", "bar");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        postReceiveOptions.execute(request, response);
+        String jsonString = response.getOutputString();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readValue(jsonString, JsonNode.class);
+
+        Iterator<JsonNode> resultIterator = jsonNode.getElements();
+        String nodeKey = "key";
+        String nodeValue = "value";
+
+        while (resultIterator.hasNext()) {
+            JsonNode node = resultIterator.next();
+            PostReceiveOption option = TestUtils.getFirst(
+                    PostReceiveOption.getByText(Arrays.asList(node.get(nodeKey).asText())));
+            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeValue).asBoolean());
+            Assert.assertFalse(option.getArchived());
+        }
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testSampleKitWithValidationErrors() {
+        Product product = new Product();
+        pdo.setProduct(product);
+        ProductOrderKit kitWithValidationProblems = createGoodPdoKit();
+        kitWithValidationProblems.setTransferMethod(SampleKitWorkRequest.TransferMethod.PICK_UP);
+        kitWithValidationProblems.setNotificationIds(new ArrayList<String>());
+        pdo.setProductOrderKit(kitWithValidationProblems);
+        actionBean.setEditOrder(pdo);
+        actionBean.validateTransferMethod(pdo);
+        Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testSampleKitNoValidationErrors() {
+        Product product = new Product();
+        pdo.setProduct(product);
+        pdo.setProductOrderKit(createGoodPdoKit());
+        actionBean.setEditOrder(pdo);
+        actionBean.validateTransferMethod(pdo);
+        Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
+    }
+
+    @Test(groups = TestGroups.DATABASE_FREE)
+    public void testPostReceiveOptionKeys() {
+        Product product = new Product();
+        pdo.setProduct(product);
+        pdo.setProductOrderKit(createGoodPdoKit());
+        actionBean.setEditOrder(pdo);
+        Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
+        actionBean.initPostReceiveOptions();
+        Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
+    }
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, expectedNonNumericRinScore);

@@ -113,15 +113,15 @@ public class BillingTrackerProcessor extends TableProcessor {
             if (originalHeader.contains("[")) {
 
                 // Remove the previous header which was for the "Billed" column and did not have the part number.
-                headerValues.remove(headerValues.size() - 1);
+                String previousHeader = headerValues.remove(headerValues.size() - 1);
 
                 /*
                  * Add two headers with the product number header: one for billed and one for update.
                  * Technically, originalHeader already has the value of UPDATE appended to it, but that doesn't matter
                  * as long as the header names calculated here line up in parseRowForSummaryMap and doUpdate.
                  */
-                headerValues.add(originalHeader + " " + BillingTrackerHeader.BILLED);
-                headerValues.add(originalHeader + " " + BillingTrackerHeader.UPDATE);
+                headerValues.add(previousHeader + " " + originalHeader + " " + BillingTrackerHeader.BILLED);
+                headerValues.add(previousHeader + " " + originalHeader + " " + BillingTrackerHeader.UPDATE);
             } else {
                 headerValues.add(originalHeader);
             }
@@ -327,8 +327,8 @@ public class BillingTrackerProcessor extends TableProcessor {
 
             double trackerBilled = 0;
 
-            String billedKey =
-                    BillingTrackerHeader.getPriceItemPartNumberHeader(billableRef) + " " + BillingTrackerHeader.BILLED;
+            String billedKey = BillingTrackerHeader.getPriceItemPartNumberHeader(priceItem, billableRef) + " "
+                               + BillingTrackerHeader.BILLED;
 
             String priceItemName = billableRef.getPriceItemName();
             if (!StringUtils.isBlank(dataRow.get(billedKey))) {
@@ -362,8 +362,8 @@ public class BillingTrackerProcessor extends TableProcessor {
                           Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap, BillableRef billableRef,
                           PriceItem priceItem, double trackerBilled, String priceItemName) {
 
-        String updateToKey =
-                BillingTrackerHeader.getPriceItemPartNumberHeader(billableRef) + " " + BillingTrackerHeader.UPDATE;
+        String updateToKey = BillingTrackerHeader.getPriceItemPartNumberHeader(priceItem, billableRef) + " "
+                             + BillingTrackerHeader.UPDATE;
         String updateTo = dataRow.get(updateToKey);
 
         if (!StringUtils.isBlank(updateTo)) {

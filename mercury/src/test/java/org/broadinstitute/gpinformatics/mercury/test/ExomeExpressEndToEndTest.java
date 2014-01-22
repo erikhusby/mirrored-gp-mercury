@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProduce
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
@@ -528,9 +529,8 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             // ZIMS
-            ZimsIlluminaRunFactory zimsIlluminaRunFactory =
-                    new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(), new AthenaClientServiceStub(),
-                            null);
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new BSPSampleDataFetcher(),
+                    new AthenaClientServiceStub(), null, new SequencingTemplateFactory());
             ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this

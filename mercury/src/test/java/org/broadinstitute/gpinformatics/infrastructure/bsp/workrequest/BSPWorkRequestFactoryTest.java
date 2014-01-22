@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -41,10 +41,8 @@ public class BSPWorkRequestFactoryTest {
     public static final String REQUEST_USER = "breilly";
     public static final String PRODUCT_ORDER_ID = "PDO-1";
     public static final String NOTIFICATION_LIST = "hrafal@broadinstitute.org";
-    public static final Set<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS = new HashSet<PostReceiveOption>() {{
-        add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
-        add(PostReceiveOption.DNA_EXTRACTION);
-    }};
+    public static final Set<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS =
+            EnumSet.of(PostReceiveOption.FLUIDIGM_FINGERPRINTING, PostReceiveOption.DNA_EXTRACTION);
     private static final String COMMENTS = "This is not a kit";
     private static final boolean IS_EX_EX = true;
     private static final SampleKitWorkRequest.TransferMethod TRANSFER_METHOD =

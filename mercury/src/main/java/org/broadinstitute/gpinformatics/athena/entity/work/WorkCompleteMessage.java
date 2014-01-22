@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.work;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,8 @@ import java.util.Map;
 @Table(name= "WORK_COMPLETE_MESSAGE", schema = "athena")
 public class WorkCompleteMessage {
     public enum Properties {
-        PDO_NAME, ALIQUOT_ID, COMPLETED_TIME
+        PDO_NAME, ALIQUOT_ID, COMPLETED_TIME, PF_READS, PF_ALIGNED_GB, PF_READS_ALIGNED_IN_PAIRS,
+        PCT_TARGET_BASES_20X
     }
 
     protected WorkCompleteMessage() {
@@ -92,5 +95,43 @@ public class WorkCompleteMessage {
 
     public void setProcessDate(Date processDate) {
         this.processDate = processDate;
+    }
+
+    public BigInteger getPfReads() {
+        return getBigIntegerPropertyValue(Properties.PF_READS);
+    }
+
+    public BigInteger getAlignedGb() {
+        return getBigIntegerPropertyValue(Properties.PF_ALIGNED_GB);
+    }
+
+    public BigInteger getPfReadsAlignedInPairs() {
+        return getBigIntegerPropertyValue(Properties.PF_READS_ALIGNED_IN_PAIRS);
+    }
+
+    public Double getPercentCoverageAt20X() {
+        return getDoublePropertyValue(Properties.PCT_TARGET_BASES_20X);
+    }
+
+    private BigInteger getBigIntegerPropertyValue(Properties property) {
+        MessageDataValue messageDataValue = data.get(property.name());
+        if (messageDataValue != null) {
+            String value = messageDataValue.getValue();
+            if (!StringUtils.isEmpty(value)) {
+                return new BigInteger(value);
+            }
+        }
+        return null;
+    }
+
+    private Double getDoublePropertyValue(Properties property) {
+        MessageDataValue messageDataValue = data.get(property.name());
+        if (messageDataValue != null) {
+            String value = messageDataValue.getValue();
+            if (!StringUtils.isEmpty(value)) {
+                return Double.parseDouble(value);
+            }
+        }
+        return null;
     }
 }
