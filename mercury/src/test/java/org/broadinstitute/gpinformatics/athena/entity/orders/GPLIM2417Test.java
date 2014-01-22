@@ -25,7 +25,7 @@ public class GPLIM2417Test extends ContainerTest {
                 vessels += sample.getLabEventSampleDTO().getLabVessels().size();
             }
 
-            // if this doesn't explode, then the number of vessels should be >1000
+            // If this does not explode, then the number of vessels should be >1000, so check that this is the case.
             Assert.assertTrue(vessels > BaseSplitter.DEFAULT_SPLIT_SIZE);
         }
         catch(Throwable t) {
