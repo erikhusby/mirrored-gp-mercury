@@ -2058,6 +2058,16 @@
                     <groups>${tests.groups}</groups>
                     <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <forkMode>never</forkMode>
+                    <properties>
+                        <property>
+                            <name>usedefaultlisteners</name>
+                            <value>false</value> <!-- disabling default listeners is optional -->
+                        </property>
+                        <property>
+                            <name>listener</name>
+                            <value>org.broadinstitute.gpinformatics.infrastructure.test.TestListener</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
 
