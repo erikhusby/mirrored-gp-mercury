@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -15,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -44,6 +47,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
+import sun.util.logging.resources.logging;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -73,6 +77,8 @@ public class ZimsIlluminaRunFactory {
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private ControlDao controlDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
+
+    private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
     public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService,
@@ -152,9 +158,15 @@ public class ZimsIlluminaRunFactory {
 
         IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
         Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
-        SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
-                illuminaFlowcell, loadedVesselsAndPositions, true);
-        List<SequencingTemplateLaneType> sequencingTemplateLanes = sequencingTemplate.getLanes();
+        List<SequencingTemplateLaneType> sequencingTemplateLanes = null;
+        try {
+            SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
+                    illuminaFlowcell, loadedVesselsAndPositions, true);
+            sequencingTemplateLanes = sequencingTemplate.getLanes();
+        } catch (InformaticsServiceException e) {
+            log.error("Failed to get sequencingTemplate.", e);
+            // don't rethrow, failing to get loading concentration is not fatal.
+        }
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
                 ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
@@ -166,7 +178,7 @@ public class ZimsIlluminaRunFactory {
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
                 BigDecimal loadingConcentration = null;
-                if (sequencingTemplateLanes.size() == numberOfLanes) {
+                if (sequencingTemplateLanes != null && sequencingTemplateLanes.size() == numberOfLanes) {
                     loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
                 }
                 ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
