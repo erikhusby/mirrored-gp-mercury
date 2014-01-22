@@ -114,11 +114,13 @@ public enum BillingTrackerHeader implements ColumnHeader {
      * Generates a header string for the part number for the given billable product. Used when parsing an uploaded
      * billing tracker.
      *
+     *
+     * @param priceItem      th price item to get the name from
      * @param billableRef    the billable product to get the part number from
      * @return the header text
      */
-    public static String getPriceItemPartNumberHeader(BillableRef billableRef) {
-        return getPartNumberHeader(billableRef.getProductPartNumber());
+    public static String getPriceItemPartNumberHeader(PriceItem priceItem, BillableRef billableRef) {
+        return getPriceItemNameHeader(priceItem) + " " + getPartNumberHeader(billableRef.getProductPartNumber());
     }
 
     /**

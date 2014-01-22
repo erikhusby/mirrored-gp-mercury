@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -39,10 +39,8 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
             new SampleCollection(1L, "", new Group(1L, "", "", false), "", "", false,
                     Collections.singletonList(HUMAN_ORGANISM));
     public static final long NUMBER_OF_SAMPLES = 96;
-    public static final Set<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS = new HashSet<PostReceiveOption>() {{
-        add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
-        add(PostReceiveOption.DNA_EXTRACTION);
-    }};
+    public static final Set<PostReceiveOption> SELECTED_POST_RECEIVE_OPTIONS =
+            EnumSet.of(PostReceiveOption.FLUIDIGM_FINGERPRINTING, PostReceiveOption.DNA_EXTRACTION);
 
     private static final String COMMENTS = "This is not a kit";
     private static final boolean IS_EX_EX = true;
