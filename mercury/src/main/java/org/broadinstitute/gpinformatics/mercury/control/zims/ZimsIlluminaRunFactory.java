@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
@@ -27,20 +28,25 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexRea
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
 
 import javax.inject.Inject;
+import java.math.BigDecimal;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,13 +72,15 @@ public class ZimsIlluminaRunFactory {
     private AthenaClientService athenaClientService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private ControlDao controlDao;
+    private SequencingTemplateFactory sequencingTemplateFactory;
 
     @Inject
     public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService,
-                                  ControlDao controlDao) {
+                                  ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.athenaClientService = athenaClientService;
         this.controlDao = controlDao;
+        this.sequencingTemplateFactory = sequencingTemplateFactory;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
@@ -114,6 +122,7 @@ public class ZimsIlluminaRunFactory {
                 }
             }
         }
+        int numberOfLanes = laneNum;
 
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
@@ -141,16 +150,27 @@ public class ZimsIlluminaRunFactory {
                 false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced(),
                 illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
 
+        IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
+        Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
+        SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
+                illuminaFlowcell, loadedVesselsAndPositions, true);
+        List<SequencingTemplateLaneType> sequencingTemplateLanes = sequencingTemplate.getLanes();
         for (List<SampleInstanceDto> sampleInstanceDtos : perLaneSampleInstanceDtos) {
             if (sampleInstanceDtos != null && !sampleInstanceDtos.isEmpty()) {
                 ArrayList<LibraryBean> libraryBeans = new ArrayList<>();
-                short laneNumber = sampleInstanceDtos.get(0).getLaneNumber();
+                SampleInstanceDto sampleInstanceDto = sampleInstanceDtos.get(0);
+                short laneNumber = sampleInstanceDto.getLaneNumber();
                 libraryBeans.addAll(
                         makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
-               String sequencedLibraryName=sampleInstanceDtos.get(0).getSequencedLibraryName();
-                Date sequencedLibraryDate = sampleInstanceDtos.get(0).getSequencedLibraryDate();
+                String sequencedLibraryName= sampleInstanceDto.getSequencedLibraryName();
+                Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
-                ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName, sequencedLibraryDate);
+                BigDecimal loadingConcentration = null;
+                if (sequencingTemplateLanes.size() == numberOfLanes) {
+                    loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
+                }
+                ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
+                        sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue());
                 run.addLane(lane);
             }
         }
