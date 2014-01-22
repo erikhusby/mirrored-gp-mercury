@@ -14,6 +14,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -157,6 +159,23 @@ public class LabBatchFixUpTest extends Arquillian {
         for (String batchName : batchNames) {
             LabBatch labBatch = labBatchDao.findByName(batchName);
             labBatch.setBatchName(batchName + "x");
+        }
+        labBatchDao.flush();
+    }
+
+    /**
+     * Auto-bucketing failed, so samples were added as reworks, but getSampleInstances doesn't handle this.
+     */
+    @Test(enabled = false)
+    public void fixupIpi61025() {
+        LabBatch labBatch = labBatchDao.findByName("LCSET-4828");
+        for (BucketEntry bucketEntry : labBatch.getBucketEntries()) {
+            ReworkDetail reworkDetail = bucketEntry.getReworkDetail();
+            if (reworkDetail != null) {
+                if (!reworkDetail.getComment().equals("rework from shearing")) {
+                    bucketEntry.setReworkDetail(null);
+                }
+            }
         }
         labBatchDao.flush();
     }
