@@ -214,7 +214,7 @@ public class LibraryBean {
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, productOrderSample, null, null);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null);
     }
 
     /**
