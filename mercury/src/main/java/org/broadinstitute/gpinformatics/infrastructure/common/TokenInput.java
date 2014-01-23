@@ -10,7 +10,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -217,7 +216,14 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         if (query == null) {
             return Collections.emptyList();
         } else {
-            return Arrays.asList(query.split("\\s"));
+            List<String> returnValue=new ArrayList<>();
+            for (String theString : query.split("\\s")){
+                if (!theString.trim().isEmpty()){
+                    returnValue.add(theString);
+                }
+            }
+
+            return returnValue;
         }
     }
 
