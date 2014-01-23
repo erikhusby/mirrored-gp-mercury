@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -174,22 +175,49 @@ public interface TransferTraverserCriteria {
      */
     class NearestLabBatchFinder implements TransferTraverserCriteria {
 
+        public enum AssociationType {
+            GENERAL_LAB_VESSEL,
+            DILUTION_VESSEL
+        }
+
         private final Map<Integer, Collection<LabBatch>> labBatchesAtHopCount = new HashMap<>();
-        private final LabBatch.LabBatchType type;
+        private final LabBatch.LabBatchType labBatchType;
+        private AssociationType associationType;
 
         /**
          * Constructs a new NearestLabBatchFinder with a LabBatch type filter.
          *
-         * @param type This type is used to filter the lab batches. If it is null there is no filtering.
+         * @param labBatchType This type is used to filter the lab batches. If it is null there is no filtering.
          */
-        public NearestLabBatchFinder(LabBatch.LabBatchType type) {
-            this.type = type;
+        public NearestLabBatchFinder(LabBatch.LabBatchType labBatchType) {
+            this.labBatchType = labBatchType;
+            associationType = AssociationType.GENERAL_LAB_VESSEL;
+        }
+
+        public NearestLabBatchFinder(
+                LabBatch.LabBatchType labBatchType,
+                AssociationType associationType) {
+            this.labBatchType = labBatchType;
+            this.associationType = associationType;
         }
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getLabVessel() != null) {
-                Collection<LabBatch> labBatches = context.getLabVessel().getLabBatches();
+                Collection<LabBatch> labBatches;
+                switch (associationType) {
+                case GENERAL_LAB_VESSEL:
+                    labBatches = context.getLabVessel().getLabBatches();
+                    break;
+                case DILUTION_VESSEL:
+                    labBatches = new HashSet<>();
+                    for (LabBatchStartingVessel labBatchStartingVessel : context.getLabVessel().getDilutionReferences()) {
+                        labBatches.add(labBatchStartingVessel.getLabBatch());
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected enum " + associationType);
+                }
 
                 if (!labBatches.isEmpty()) {
 
@@ -197,12 +225,12 @@ public interface TransferTraverserCriteria {
                     if (batchesAtHop == null) {
                         batchesAtHop = new HashSet<>();
                     }
-                    if (type == null) {
+                    if (labBatchType == null) {
                         batchesAtHop.addAll(labBatches);
                     } else {
                         for (LabBatch labBatch : labBatches) {
                             if (labBatch.getLabBatchType() != null) {
-                                if (labBatch.getLabBatchType().equals(type)) {
+                                if (labBatch.getLabBatchType().equals(labBatchType)) {
                                     batchesAtHop.add(labBatch);
                                 }
                             }
@@ -235,11 +263,11 @@ public interface TransferTraverserCriteria {
             }
             Collection<LabBatch> batchesAtHop = labBatchesAtHopCount.get(nearest);
             if (batchesAtHop != null) {
-                if (type == null) {
+                if (labBatchType == null) {
                     nearestSet.addAll(batchesAtHop);
                 } else {
                     for (LabBatch labBatch : batchesAtHop) {
-                        if (labBatch.getLabBatchType().equals(type)) {
+                        if (labBatch.getLabBatchType().equals(labBatchType)) {
                             nearestSet.add(labBatch);
                         }
                     }
