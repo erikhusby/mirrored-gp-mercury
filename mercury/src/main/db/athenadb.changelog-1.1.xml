@@ -475,7 +475,7 @@
 
         <addForeignKeyConstraint baseColumnNames="product_order_kit" baseTableName="product_order_kit_detail"
                                  baseTableSchemaName="athena" constraintName="FK_PROD_ORD_KIT_DTL_TO_KIT"
-                                 referencedColumnNames="product_order_kit_detail_id"
+                                 referencedColumnNames="product_order_kit_id"
                                  referencedTableName="PRODUCT_ORDER_KIT_DETAIL" referencedTableSchemaName="athena" />
     </changeSet>
 
@@ -515,12 +515,16 @@
         </preConditions>
         <createTable tableName="pdo_kit_dtl_post_rec_opt">
             <column name="product_order_kit_detail_id" type="number(19,0)">
-                <constraints primaryKey="true" nullable="false" />
+                <constraints nullable="false" />
             </column>
             <column name="post_receive_options" type="varchar(255)" />
         </createTable>
         <addPrimaryKey tableName="pdo_kit_dtl_post_rec_opt" schemaName="athena"
                        columnNames="product_order_kit_detail_id, post_receive_options" />
+        <addForeignKeyConstraint constraintName="FK_PDOKIT_DTL_POST_REC_OPT" referencedTableName="product_order_kit_detail"
+                                 referencedColumnNames="PRODUCT_ORDER_KIT_DETAIL_ID" baseTableName="pdo_kit_dtl_post_rec_opt"
+                                 baseColumnNames="PRODUCT_ORDER_KIT_DETAIL_ID"/>
+
     </changeSet>
 
     <changeSet id="GPLIM-2383-4" author="scottmat">

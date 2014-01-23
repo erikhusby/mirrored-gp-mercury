@@ -58,7 +58,7 @@ public class BSPWorkRequestFactoryTest {
                 TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST,
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
-                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES, MaterialInfoDto, HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,SampleKitWorkRequest.MoleculeType.DNA)
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES, MaterialInfoDto, HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,SampleKitWorkRequest.MoleculeType.DNA))
         );
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));

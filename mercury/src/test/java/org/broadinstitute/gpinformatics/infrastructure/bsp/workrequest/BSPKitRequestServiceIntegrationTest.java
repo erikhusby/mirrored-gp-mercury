@@ -65,9 +65,9 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
-                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
                         MaterialInfoDto,HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,
-                        SampleKitWorkRequest.MoleculeType.DNA));
+                        SampleKitWorkRequest.MoleculeType.DNA)));
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -83,9 +83,9 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
-                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
-                        MaterialInfoDto,HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,
-                        SampleKitWorkRequest.MoleculeType.DNA));
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
+                        MaterialInfoDto, HUMAN_ORGANISM.getLeft(), SELECTED_POST_RECEIVE_OPTIONS,
+                        SampleKitWorkRequest.MoleculeType.DNA)));
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);

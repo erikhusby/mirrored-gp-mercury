@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -77,7 +78,7 @@ public class BSPKitRequestService {
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(),
                 kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()),
-                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), kitWorkRequestDefinitionInfo);
+                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), Collections.singletonList(kitWorkRequestDefinitionInfo));
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

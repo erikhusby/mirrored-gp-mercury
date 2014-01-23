@@ -7,6 +7,7 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequestDefinitionI
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -17,6 +18,7 @@ public class BSPWorkRequestFactory {
 
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
+     *
      *
      *
      *
@@ -45,7 +47,7 @@ public class BSPWorkRequestFactory {
                                                               String notes,
                                                               boolean exExKit,
                                                               SampleKitWorkRequest.TransferMethod transferMethod,
-                                                              SampleKitWorkRequestDefinitionInfo kitDefinitionInfo) {
+                                                              List<SampleKitWorkRequestDefinitionInfo> kitDefinitionInfo) {
 
         return new SampleKitWorkRequest(
                 primaryInvestigatorId,
@@ -65,7 +67,7 @@ public class BSPWorkRequestFactory {
                 transferMethod, // transferMethod
                 notes,
                 exExKit,
-                Collections.singletonList(kitDefinitionInfo)            //Kit Definition
+                kitDefinitionInfo            //Kit Definition
         );
     }
 
