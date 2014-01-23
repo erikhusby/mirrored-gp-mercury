@@ -10,7 +10,12 @@
      that can inherit this version setting. -->
 
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <version>1.42-SNAPSHOT</version>
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1580,7 +1585,12 @@
              -->
 
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <version>1.3.47</version>
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
         </dependency>
 
         <dependency>
