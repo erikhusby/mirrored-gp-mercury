@@ -166,7 +166,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
-    @Transient
+    @Column(name = "SKIP_QUOTE_REASON", length=255)
     private String skipQuoteReason;
 
     /**

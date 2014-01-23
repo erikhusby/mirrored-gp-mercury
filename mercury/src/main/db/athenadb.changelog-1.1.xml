@@ -448,4 +448,26 @@
             <column name="transfer_method" type="varchar2(255 char)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-2403-0" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER" columnName="skip_quote_reason"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER">
+            <column name="skip_quote_reason" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2403-1" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_AUD" columnName="skip_quote_reason"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_AUD">
+            <column name="skip_quote_reason" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
