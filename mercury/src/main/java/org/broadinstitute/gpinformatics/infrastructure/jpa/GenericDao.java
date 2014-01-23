@@ -20,7 +20,9 @@ import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
@@ -393,10 +395,10 @@ public class GenericDao {
      *
      * @return list of entities that match the value, or empty list if not found
      */
-    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcardList(
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> Collection<ENTITY_TYPE> findListWithWildcardList(
             Class<ENTITY_TYPE> entity, List<String> values, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
-        List<ENTITY_TYPE> foundValues=new ArrayList<>();
+        Set<ENTITY_TYPE> foundValues=new HashSet<>();
         for (String value:values) {
             foundValues.addAll(findListWithWildcard(entity, value, ignoreCase, singularAttributes));
         }
