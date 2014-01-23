@@ -284,7 +284,7 @@ public class SequencingTemplateFactory {
         for (LabBatch batch : batches) {
             for (LabBatchStartingVessel labBatchStartingVessel : batch.getLabBatchStartingVessels()) {
                 //All the concentrations should match. If they don't throw an exception.
-                if (concentration != null && concentration != labBatchStartingVessel.getConcentration()) {
+                if (concentration != null && concentration.compareTo(labBatchStartingVessel.getConcentration()) != 0) {
                     throw new RuntimeException("Found multiple concentrations that do no match.");
                 }
                 concentration = labBatchStartingVessel.getConcentration();
