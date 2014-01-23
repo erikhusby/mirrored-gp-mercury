@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -23,14 +22,13 @@ import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.SetJoin;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 /**
  * Queries for the research project.
@@ -193,20 +191,8 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     public Collection<ResearchProject> searchProjects(String searchText) {
-        List<ResearchProject> allProjects = findAllResearchProjects();
-        SortedSet<ResearchProject> list = new TreeSet<>();
         String[] searchWords = searchText.split("\\s");
-
-        for (ResearchProject project : allProjects) {
-            for (String searchWord : searchWords) {
-                if (StringUtils.containsIgnoreCase(project.getTitle(), searchWord)) {
-                    list.add(project);
-                    break;
-                }
-            }
-        }
-
-        return list;
+        return findListWithWildcardList(ResearchProject.class, Arrays.asList(searchWords), true, ResearchProject_.title);
     }
 
     /**

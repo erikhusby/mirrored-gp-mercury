@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -12,11 +11,13 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,6 +64,22 @@ public class ProductDao extends GenericDao implements Serializable {
     public List<Product> findProducts(@Nonnull Availability availability,
                                       @Nonnull TopLevelOnly topLevelOnly,
                                       @Nonnull IncludePDMOnly includePDMOnly) {
+        return findProducts(availability, topLevelOnly, includePDMOnly, Collections.<String>emptyList());
+    }
+
+    /**
+     * General purpose product finder method
+     *
+     * @param availability   Do we only want to get available products
+     * @param topLevelOnly   Do we only want to get top level products
+     * @param includePDMOnly Do we only want PDM products
+     * @param searchTerms    Collection of terms to search the product name and part number for.
+     *
+     * @return The chosen products
+     */
+    public List<Product> findProducts(@Nonnull Availability availability,
+                                      @Nonnull TopLevelOnly topLevelOnly,
+                                      @Nonnull IncludePDMOnly includePDMOnly, Collection<String> searchTerms) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Product> cq = cb.createQuery(Product.class);
         List<Predicate> predicateList = new ArrayList<>();
@@ -70,6 +87,16 @@ public class ProductDao extends GenericDao implements Serializable {
 
         Root<Product> product = cq.from(Product.class);
 
+        Expression<String> productNameExpression = product.get(Product_.productName).as(String.class);
+        Expression<String> partNumberExpression = product.get(Product_.partNumber).as(String.class);
+
+        for (String searchTerm : searchTerms) {
+            Predicate searchTermsLike = cb.or(
+                    cb.like(cb.lower(productNameExpression), '%' + searchTerm.toLowerCase() + '%'),
+                    cb.like(cb.lower(partNumberExpression), '%' + searchTerm.toLowerCase() + '%')
+            );
+            predicateList.add(cb.and(searchTermsLike));
+        }
 
         switch (availability) {
 
@@ -135,18 +162,6 @@ public class ProductDao extends GenericDao implements Serializable {
         return findSingle(Product.class, Product_.productName, productName);
     }
 
-    /**
-     * Find a Product by part number, eagerly fetching the Product Family.
-     *
-     * @param partNumber the part number
-     * @return the matching {@link Product}
-     */
-    public Product findByPartNumberEagerProductFamily(String partNumber) {
-        // mlc temporarily changed Product to EAGER fetch its ProductFamily until I get fetch profiles working
-        return findByPartNumber(partNumber);
-    }
-
-
     public Product findByBusinessKey(String key) {
         return findByPartNumber(key);
     }
@@ -163,11 +178,22 @@ public class ProductDao extends GenericDao implements Serializable {
      * @return The products
      */
     public List<Product> findTopLevelProductsForProductOrder() {
+        return findTopLevelProductsForProductOrder(Collections.<String>emptyList());
+    }
+
+    /**
+     * Products suitable for use as top-level products in a product order.
+     *
+     * @param searchTerms if provided, also perform case-insensitive search in product names and part numbers.
+     *
+     * @return The products
+     */
+    public List<Product> findTopLevelProductsForProductOrder(Collection<String> searchTerms) {
         boolean includePDMProducts = userBean.isPDMUser() || userBean.isDeveloperUser();
         return findProducts(
                  Availability.CURRENT,
                  TopLevelOnly.YES,
-                 includePDMProducts ? IncludePDMOnly.YES : IncludePDMOnly.NO);
+                 includePDMProducts ? IncludePDMOnly.YES : IncludePDMOnly.NO, searchTerms);
     }
 
     public List<Product> findProductsForProductList() {
@@ -176,68 +202,21 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
     /**
-     * Case insensitive search in product names and part numbers on tokenized search words split by whitespace.
-     *
-     * @param searchText The search text
-     * @param products The products to look in
-     *
-     * @return The matching products
-     */
-    private List<Product> findInProducts(String searchText, List<Product> products) {
-        List<Product> list = new ArrayList<>();
-        String[] searchWords = (searchText == null ? "" : searchText).split("\\s");
-
-        Collections.sort(products);
-
-        for (Product product : products) {
-            boolean matchAll = true;
-            for (String searchWord : searchWords) {
-                if (!StringUtils.containsIgnoreCase(product.getProductName(), searchWord) &&
-                    !StringUtils.containsIgnoreCase(product.getPartNumber(), searchWord)) {
-                    matchAll = false;
-                    break;
-                }
-            }
-
-            if (matchAll) {
-                list.add(product);
-            }
-        }
-
-        return list;
-    }
-
-    /**
-     * Support finding products for product ordering, sensitive to the user's role as PDM (or pseudo-PDM developer).
-     * Only available and top-level products will be returned.  Case insensitive search on tokenized search words
-     * split by whitespace.
-     *
-     * @param searchText The text to search
-     *
-     * @return The products in the db that matches
-     */
-    public List<Product> searchProducts(String searchText) {
-        return findInProducts(searchText, findTopLevelProductsForProductOrder());
-    }
-
-    /**
      * Support finding add-on products for product definition, disallowing the top-level product as a search result
      *
-     *
-     * @param searchText The text to search
+     * @param topLevelProduct Do we only want to get top level products?
+     * @param searchTerms     Collection of terms to search the product name and part number for.
      *
      * @return The products in the db that matches
      */
-    public List<Product> searchProductsForAddonsInProductEdit(Product topLevelProduct, String searchText) {
+    public List<Product> searchProductsForAddOnsInProductEdit(Product topLevelProduct, Collection<String> searchTerms) {
         List<Product> products = findProducts(
                 ProductDao.Availability.CURRENT_OR_FUTURE,
                 ProductDao.TopLevelOnly.NO,
-                ProductDao.IncludePDMOnly.NO);
+                ProductDao.IncludePDMOnly.NO, searchTerms);
 
         // remove top level product from the list if it's showing up there
         products.remove(topLevelProduct);
-
-        return findInProducts(searchText, products);
-
+        return products;
     }
 }

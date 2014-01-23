@@ -8,6 +8,7 @@ import org.json.JSONException;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,7 +31,8 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     public String getJsonString(String query) throws JSONException {
-        List<Product> products = productDao.searchProducts(query);
+        Collection<String> searchTerms = extractSearchTerms(query);
+        List<Product> products = productDao.findTopLevelProductsForProductOrder(searchTerms);
         return createItemListString(products);
     }
 
@@ -50,7 +52,8 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {
-        List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, query);
+        Collection<String> searchTerms = extractSearchTerms(query);
+        List<Product> addOns = productDao.searchProductsForAddOnsInProductEdit(editProduct, searchTerms);
         return createItemListString(addOns);
     }
 
