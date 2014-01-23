@@ -457,7 +457,7 @@
         </preConditions>
         <createTable tableName="product_order_kit_detail" schemaName="athena">
             <column name="product_order_kit_detail_id" type="number(19,0)">
-                <constraints primaryKey="false" nullable="false"/>
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="number_samples" type="number(19,0)">
                 <constraints nullable="true" />
@@ -473,10 +473,10 @@
         <createSequence sequenceName="SEQ_PRODUCT_ORDER_KIT_DETAIL" schemaName="athena" startValue="1"
                         incrementBy="50"/>
 
-        <addForeignKeyConstraint baseColumnNames="product_order_kit" baseTableName="product_order_kit_detail"
+        <addForeignKeyConstraint baseColumnNames="product_order_kit" baseTableName="PRODUCT_ORDER_KIT_DETAIL"
                                  baseTableSchemaName="athena" constraintName="FK_PROD_ORD_KIT_DTL_TO_KIT"
                                  referencedColumnNames="product_order_kit_id"
-                                 referencedTableName="PRODUCT_ORDER_KIT_DETAIL" referencedTableSchemaName="athena" />
+                                 referencedTableName="PRODUCT_ORDER_KIT" referencedTableSchemaName="athena" />
     </changeSet>
 
     <changeSet id="GPLIM-2383-2" author="scottmat">
