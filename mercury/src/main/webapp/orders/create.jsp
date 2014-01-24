@@ -724,7 +724,7 @@
                                     <div class="controls">
                                         <stripes:textarea style="box-sizing: border-box; width: 100%;"
                                                           readonly="${!actionBean.editOrder.draft}"
-                                                          id="comments" name="editOrder.productOrderKit.comments"/>
+                                                          id="kitComments" name="editOrder.productOrderKit.comments"/>
                                     </div>
                                 </div>
                             </div>
