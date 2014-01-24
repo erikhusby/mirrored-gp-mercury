@@ -116,7 +116,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToOne
     private ResearchProject researchProject;
 
-    @OneToOne
+    @ManyToOne
     private Product product;
 
     @Enumerated(EnumType.STRING)
