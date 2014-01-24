@@ -168,6 +168,15 @@ public class SampleInstanceV2 implements Cloneable {
             Set<LabBatch> computedLcsets = labEvent.computeLcSets();
             if (computedLcsets.size() == 1) {
                 singleInferredBucketedBatch = computedLcsets.iterator().next();
+                if (allBucketEntries.size() > 1) {
+                    for (BucketEntry bucketEntry : allBucketEntries) {
+                        if (bucketEntry.getLabBatch() != null &&
+                                bucketEntry.getLabBatch().equals(singleInferredBucketedBatch)) {
+                            singleBucketEntry = bucketEntry;
+                            break;
+                        }
+                    }
+                }
             }
         }
     }

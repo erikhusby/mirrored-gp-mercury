@@ -986,7 +986,6 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        // todo jmt revisit in context of pooling
         // Apply events to clones
         for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
             for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {

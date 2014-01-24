@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -31,7 +32,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -99,14 +100,14 @@ public class GetSampleInstancesTest {
         now = System.currentTimeMillis();
         LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(now++), "HULK",
                 1L, 101L, "Bravo");
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new HashMap<>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new EnumMap<>(VesselPosition.class);
         Iterator<LabVessel> iterator = receivedVessels.iterator();
         mapPositionToSourceTube.put(VesselPosition.A01, (TwoDBarcodedTube) iterator.next());
         mapPositionToSourceTube.put(VesselPosition.A02, (TwoDBarcodedTube) iterator.next());
         mapPositionToSourceTube.put(VesselPosition.A03, (TwoDBarcodedTube) iterator.next());
         TubeFormation sourceTubeFormation = new TubeFormation(mapPositionToSourceTube, RackOfTubes.RackType.Matrix96);
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTube = new HashMap<>();
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTube = new EnumMap<>(VesselPosition.class);
         TwoDBarcodedTube tube1 = new TwoDBarcodedTube("X1");
         tube1.addSample(new MercurySample("SM-X1"));
         mapPositionToExtractTube.put(VesselPosition.A01, tube1);
@@ -134,51 +135,126 @@ public class GetSampleInstancesTest {
         ProductOrder sequencingProductOrder = new ProductOrder(101L, "Sequencing PDO", sequencingProductOrderSamples,
                 "SEQ-01", sequencingProduct, sampleInitProductOrder.getResearchProject());
 
-        sequencing(indexPlateP7, indexPlateP5, baitTube, tube1, tube2, sequencingProductOrder, "SM-12431", false);
+        StaticPlate shearingPlate1 = sequencing(indexPlateP7, indexPlateP5, baitTube, tube1, tube2,
+                sequencingProductOrder, "SM-12431", false, 1);
 
-        sequencing(indexPlateP7, indexPlateP5, baitTube, tube2, tube3, sequencingProductOrder, "SM-23541", true);
+        tube2.clearCaches();
+        StaticPlate shearingPlate2 = sequencing(indexPlateP7, indexPlateP5, baitTube, tube2, tube3,
+                sequencingProductOrder, "SM-23541", true, 2);
 
-        BaseEventTest.runTransferVisualizer(tube1);
+        // PoolingTransfer
+        LabEvent poolingTransfer = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(now++), "ROBIN", 1L, 101L,
+                "Janus");
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToPoolTube = new EnumMap<>(VesselPosition.class);
+        TwoDBarcodedTube poolTube = new TwoDBarcodedTube("POOL" + now);
+        mapPositionToPoolTube.put(VesselPosition.A01, poolTube);
+        TubeFormation poolTubeFormation = new TubeFormation(mapPositionToPoolTube, RackOfTubes.RackType.Matrix96);
+        poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
+                shearingPlate1.getContainerRole(), VesselPosition.A01,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+        poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
+                shearingPlate1.getContainerRole(), VesselPosition.A02,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+        poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
+                shearingPlate1.getContainerRole(), VesselPosition.A03,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+        poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
+                shearingPlate2.getContainerRole(), VesselPosition.A04,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+        poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
+                shearingPlate2.getContainerRole(), VesselPosition.A05,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
 
-        // Pool the two LCSETs together?
+        List<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
+        Assert.assertEquals(poolSampleInstances.size(), 5);
+        int matchedSamples = 0;
+        for (SampleInstanceV2 poolSampleInstance : poolSampleInstances) {
+            switch (poolSampleInstance.getMercuryRootSampleName()) {
+            case "SM-12431":
+                matchedSamples++;
+                Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-1");
+                break;
+            case "SM-23541":
+                MolecularIndexingScheme molecularIndexingScheme =
+                        ((MolecularIndexReagent) poolSampleInstance.getReagents().get(0)).getMolecularIndexingScheme();
+                switch (molecularIndexingScheme.getName()) {
+                case "Illumina_P5-U_P7-U":
+                    Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), "LCSET-1");
+                    matchedSamples++;
+                    break;
+                case "Illumina_P5-C_P7-C":
+                    Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
+                    matchedSamples++;
+                    break;
+                default:
+                    Assert.fail("Unexpected scheme name " + molecularIndexingScheme.getName());
+                }
+                break;
+            case "SM-C1":
+                matchedSamples++;
+                Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), "LCSET-1");
+                break;
+            case "SM-34651":
+                matchedSamples++;
+                Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
+                break;
+            default:
+                Assert.fail("Unexpected sample ID " + poolSampleInstance.getMercuryRootSampleName());
+            }
+        }
+        Assert.assertEquals(matchedSamples, 5);
+
+        BaseEventTest.runTransferVisualizer(poolTube);
     }
 
-    private void sequencing(StaticPlate indexPlateP7, StaticPlate indexPlateP5, TwoDBarcodedTube baitTube,
+    private StaticPlate sequencing(StaticPlate indexPlateP7, StaticPlate indexPlateP5, TwoDBarcodedTube baitTube,
             TwoDBarcodedTube tube1, TwoDBarcodedTube tube2, ProductOrder sequencingProductOrder, String tube1RootSample,
-            boolean tube1Rework) {
+            boolean tube1Rework, int lcsetNum) {
         // LCSET
         Set<LabVessel> extractedVessels = new HashSet<>();
         extractedVessels.add(tube1);
         extractedVessels.add(tube2);
-        LabBatch lcsetBatch = new LabBatch("LCSET-" + now, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
-        BucketEntry bucketEntry = new BucketEntry(tube1, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+        LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
+        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
-        bucketEntry.setLabBatch(lcsetBatch);
-        tube1.addBucketEntry(bucketEntry);
+        bucketEntry1.setLabBatch(lcsetBatch);
+        tube1.addBucketEntry(bucketEntry1);
+
+        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+                BucketEntry.BucketEntryType.PDO_ENTRY);
+        bucketEntry2.setLabBatch(lcsetBatch);
+        tube2.addBucketEntry(bucketEntry2);
 
         // re-array to add control
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTubeControl = new HashMap<>();
-        if (!tube1Rework) {
-            mapPositionToExtractTubeControl.put(VesselPosition.A01, tube1);
-        }
-        mapPositionToExtractTubeControl.put(VesselPosition.A02, tube2);
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToExtractTubeControl = new EnumMap<>(VesselPosition.class);
 
-        TwoDBarcodedTube controlTube = new TwoDBarcodedTube("CONTROL");
-        controlTube.addSample(new MercurySample("SM-C"));
-        mapPositionToExtractTubeControl.put(VesselPosition.A03, controlTube);
+        // use different positions for each LCSET, to avoid molecular index collision.
+        VesselPosition position1 = VesselPosition.values()[(lcsetNum - 1) * 3];
+        VesselPosition position2 = VesselPosition.values()[((lcsetNum - 1) * 3) + 1];
+        VesselPosition position3 = VesselPosition.values()[((lcsetNum - 1) * 3) + 2];
+
+        // Avoid exporting the rework twice
+        if (!tube1Rework) {
+            mapPositionToExtractTubeControl.put(position1, tube1);
+        }
+        mapPositionToExtractTubeControl.put(position2, tube2);
+
+        TwoDBarcodedTube controlTube = new TwoDBarcodedTube("CONTROL" + lcsetNum);
+        controlTube.addSample(new MercurySample("SM-C" + lcsetNum));
+        mapPositionToExtractTubeControl.put(position3, controlTube);
 
         // Import
-        LabBatch importLabBatch = new LabBatch("EX-1", new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
+        LabBatch importLabBatch = new LabBatch("EX-" + lcsetNum, new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
-
+        // Add the rework after the import
         if (tube1Rework) {
-            mapPositionToExtractTubeControl.put(VesselPosition.A01, tube1);
+            mapPositionToExtractTubeControl.put(position1, tube1);
         }
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
         LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");
-        StaticPlate shearingPlate = new StaticPlate("SHEAR" + now, StaticPlate.PlateType.Eppendorf96);
+        StaticPlate shearingPlate = new StaticPlate("SHEAR" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         shearingTransfer.getSectionTransfers().add(new SectionTransfer(
                 extractControlTubeFormation.getContainerRole(), SBSSection.ALL96,
                 shearingPlate.getContainerRole(), SBSSection.ALL96, shearingTransfer));
@@ -196,7 +272,7 @@ public class GetSampleInstancesTest {
                 shearingPlate.getContainerRole(), SBSSection.ALL96, p5IndexTransfer));
 
         // bait transfers
-        StaticPlate baitPlate = new StaticPlate("BAITPLATE" + now, StaticPlate.PlateType.Eppendorf96);
+        StaticPlate baitPlate = new StaticPlate("BAITPLATE" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         LabEvent baitSetupTransfer = new LabEvent(LabEventType.BAIT_SETUP, new Date(now++), "TICK", 1L, 101L, "Bravo");
         baitSetupTransfer.getVesselToSectionTransfers().add(new VesselToSectionTransfer(baitTube, SBSSection.ALL96,
                 baitPlate.getContainerRole(), baitSetupTransfer));
@@ -208,12 +284,12 @@ public class GetSampleInstancesTest {
 
         // Verify 1st sample
         List<SampleInstanceV2> sampleInstances =
-                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A01);
+                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position1);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();
         Assert.assertEquals(sampleInstance.getMercuryRootSampleName(), tube1RootSample);
-        verifyReagents(sampleInstance, "Illumina_P5-M_P7-M");
-        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry);
+        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-M_P7-M" : "Illumina_P5-C_P7-C");
+        Assert.assertEquals(sampleInstance.getSingleBucketEntry(), bucketEntry1);
         List<LabBatchStartingVessel> importBatchVessels = new ArrayList<>();
         if (!tube1Rework) {
             for (LabBatchStartingVessel labBatchStartingVessel : importLabBatch.getLabBatchStartingVessels()) {
@@ -235,12 +311,14 @@ public class GetSampleInstancesTest {
 
         // Verify control
         sampleInstances =
-                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(VesselPosition.A03);
+                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position3);
         Assert.assertEquals(sampleInstances.size(), 1);
         sampleInstance = sampleInstances.iterator().next();
-        verifyReagents(sampleInstance, "Illumina_P5-V_P7-V");
+        verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-V_P7-V" : "Illumina_P5-X_P7-X");
         Assert.assertNull(sampleInstance.getSingleBucketEntry());
         Assert.assertEquals(sampleInstance.getSingleInferredBucketedBatch(), lcsetBatch);
+
+        return shearingPlate;
     }
 
     private void verifyReagents(SampleInstanceV2 sampleInstance, String expectedMolIndScheme) {

@@ -1745,11 +1745,11 @@ public abstract class LabVessel implements Serializable {
     }
 
     @Transient
-    private Set<SampleInstanceV2> sampleInstances;
+    private List<SampleInstanceV2> sampleInstances;
 
-    public Set<SampleInstanceV2> getSampleInstancesV2() {
+    public List<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new HashSet<>();
+            sampleInstances = new ArrayList<>();
             List<VesselEvent> ancestorEvents = getAncestors();
             if (ancestorEvents.isEmpty()) {
                 sampleInstances.add(new SampleInstanceV2(this));

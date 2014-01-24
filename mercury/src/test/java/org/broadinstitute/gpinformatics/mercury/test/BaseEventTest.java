@@ -520,8 +520,10 @@ public class BaseEventTest {
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
             Graph graph = new Graph();
             ArrayList<TransferVisualizer.AlternativeId> alternativeIds = new ArrayList<>();
-//            alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
-//            alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            if (false) {
+                alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
+                alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            }
             transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, alternativeIds);
 
             TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
