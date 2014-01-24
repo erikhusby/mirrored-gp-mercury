@@ -45,7 +45,7 @@ public class ProductOrderKitDetailTest {
         Assert.assertEquals(testDetail.getKitTypeDisplayName(), KitType.DNA_MATRIX.getDisplayName());
         Assert.assertEquals(testDetail.getOrganismId(), Long.valueOf(ORGANISM_ID));
         Assert.assertTrue(testDetail.getPostReceiveOptions().isEmpty());
-        Assert.assertTrue(StringUtils.isBlank(testDetail.getPostReceivedOptionsAsString(",")));
+        Assert.assertEquals(testDetail.getPostReceivedOptionsAsString(","),ProductOrderKitDetail.NO_POST_RECEIVED_OPTIONS_SELECTED);
         Assert.assertNull(testDetail.getProductOrderKit());
 
         testKit.addKitOrderDetail(testDetail);
