@@ -457,7 +457,7 @@
         </preConditions>
         <createTable tableName="product_order_kit_detail" schemaName="athena">
             <column name="product_order_kit_detail_id" type="number(19,0)">
-                <constraints primaryKey="true" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="number_samples" type="number(19,0)">
                 <constraints nullable="true" />
@@ -470,6 +470,8 @@
             </column>
         </createTable>
 
+        <addPrimaryKey tableName="product_order_kit_detail" schemaName="athena"
+                       columnNames="product_order_kit_detail_id" />
         <createSequence sequenceName="SEQ_PRODUCT_ORDER_KIT_DETAIL" schemaName="athena" startValue="1"
                         incrementBy="50"/>
 
