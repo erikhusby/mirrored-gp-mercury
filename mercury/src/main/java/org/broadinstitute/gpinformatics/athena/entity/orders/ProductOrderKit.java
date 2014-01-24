@@ -281,6 +281,11 @@ public class ProductOrderKit implements Serializable {
     }
 
     public boolean isExomeExpress() {
+
+        if(exomeExpress == null) {
+            exomeExpress = new Boolean(false);
+        }
+
         return exomeExpress;
     }
 
