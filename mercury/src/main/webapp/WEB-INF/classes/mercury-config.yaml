@@ -44,8 +44,8 @@ bsp:
     DEV:
       login:    seqsystem
       password: bspbsp
-      host:     gapdev.broadinstitute.org
-      port:     8080
+      host:     localhost
+      port:     8221
 
     RC:
       login:    seqsystem
@@ -147,7 +147,7 @@ thrift:
 deckMsgs:
 
     DEV:
-        messageStoreDirRoot: /seq/lims/mercury/dev
+        messageStoreDirRoot: /Users/scottmat/temp/seq/lims/mercury/dev
 
     QA:
         messageStoreDirRoot: /seq/lims/mercury/qa
@@ -189,7 +189,7 @@ bettaLimsServer:
 datawhEtl:
 
     DEV:
-        datawhEtlDirRoot: /seq/lims/datawh/dev
+        datawhEtlDirRoot: /Users/scottmat/temp/seq/lims/datawh/dev
 
     QA:
         datawhEtlDirRoot: /seq/lims/datawh/qa

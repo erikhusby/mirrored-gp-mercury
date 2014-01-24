@@ -46,39 +46,39 @@ public class ProductOrderKit implements Serializable {
     @Column(name="product_order_kit_id", unique=true, nullable=false)
     private Long productOrderKitId;
 
-    @Column(name = "number_samples")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
-    private Long numberOfSamples;
+//    @Column(name = "number_samples")
+//    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+//    private Long numberOfSamples;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "kit_type")
-    @Deprecated //TODO  SGM:  REMOVE: This field is moving to product order kit detail
-    private KitType kitType;
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "kit_type")
+//    @Deprecated //TODO  SGM:  REMOVE: This field is moving to product order kit detail
+//    private KitType kitType;
 
     @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
 
-    @Column(name = "organism_id")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
-    private Long organismId;
-
+//    @Column(name = "organism_id")
+//    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+//    private Long organismId;
+//
     @Column(name = "site_id")
     private Long siteId;
 
-    @Column(name = "material_bsp_name")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
-    private String bspMaterialName;
-
+//    @Column(name = "material_bsp_name")
+//    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+//    private String bspMaterialName;
+//
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     @BatchSize(size = 500)
     private final Set<ProductOrderKitPerson> notificationPeople = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
-    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
-    private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
+//    @ElementCollection(fetch = FetchType.EAGER)
+//    @Enumerated(EnumType.STRING)
+//    @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
+//    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
+//    private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
@@ -114,18 +114,18 @@ public class ProductOrderKit implements Serializable {
         this.siteId = siteId;
     }
 
-    // Only used by tests.
-    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
-    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
-                           MaterialInfoDto MaterialInfoDto) {
-        this.numberOfSamples = numberOfSamples;
-        this.kitType = kitType;
-        this.sampleCollectionId = sampleCollectionId;
-        this.organismId = organismId;
-        this.siteId = siteId;
-        setMaterialInfo(MaterialInfoDto);
-    }
-
+//    // Only used by tests.
+//    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
+//    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
+//                           MaterialInfoDto MaterialInfoDto) {
+//        this.numberOfSamples = numberOfSamples;
+//        this.kitType = kitType;
+//        this.sampleCollectionId = sampleCollectionId;
+//        this.organismId = organismId;
+//        this.siteId = siteId;
+//        setMaterialInfo(MaterialInfoDto);
+//    }
+//
 
     public Long getProductOrderKitId() {
         return productOrderKitId;
@@ -135,29 +135,29 @@ public class ProductOrderKit implements Serializable {
         this.productOrderKitId = productOrderKitId;
     }
 
-    public Long getNumberOfSamples() {
-        return numberOfSamples;
-    }
+//    public Long getNumberOfSamples() {
+//        return numberOfSamples;
+//    }
+//
+//    public void setNumberOfSamples(Long numberOfSamples) {
+//        this.numberOfSamples = numberOfSamples;
+//    }
 
-    public void setNumberOfSamples(Long numberOfSamples) {
-        this.numberOfSamples = numberOfSamples;
-    }
+//    public KitType getKitType() {
+//        return kitType;
+//    }
+//
+//    public void setKitType(KitType kitType) {
+//        this.kitType = kitType;
+//    }
 
-    public KitType getKitType() {
-        return kitType;
-    }
-
-    public void setKitType(KitType kitType) {
-        this.kitType = kitType;
-    }
-
-    public String getKitTypeDisplayName() {
-        if (getKitType() == null) {
-            return null;
-        }
-
-        return getKitType().getDisplayName();
-    }
+//    public String getKitTypeDisplayName() {
+//        if (getKitType() == null) {
+//            return null;
+//        }
+//
+//        return getKitType().getDisplayName();
+//    }
 
     public Long getSampleCollectionId() {
         return sampleCollectionId;
@@ -175,13 +175,13 @@ public class ProductOrderKit implements Serializable {
         sampleCollectionName = s;
     }
 
-    public Long getOrganismId() {
-        return organismId;
-    }
+//    public Long getOrganismId() {
+//        return organismId;
+//    }
 
-    public void setOrganismId(Long organismId) {
-        this.organismId = organismId;
-    }
+//    public void setOrganismId(Long organismId) {
+//        this.organismId = organismId;
+//    }
 
     public void setOrganismName(String s) {
         organismName = s;
@@ -208,21 +208,21 @@ public class ProductOrderKit implements Serializable {
         siteName = s;
     }
 
-    public MaterialInfoDto getMaterialInfo() {
-        return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
-    }
-
-    public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
-        bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
-    }
-
-    public String getBspMaterialName() {
-        return bspMaterialName;
-    }
-
-    public void setBspMaterialName(String bspMaterialName) {
-        this.bspMaterialName = bspMaterialName;
-    }
+//    public MaterialInfoDto getMaterialInfo() {
+//        return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
+//    }
+//
+//    public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
+//        bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
+//    }
+//
+//    public String getBspMaterialName() {
+//        return bspMaterialName;
+//    }
+//
+//    public void setBspMaterialName(String bspMaterialName) {
+//        this.bspMaterialName = bspMaterialName;
+//    }
 
     public Long[] getNotificationIds() {
         Long[] ids = new Long[notificationPeople.size()];
@@ -250,27 +250,27 @@ public class ProductOrderKit implements Serializable {
         return workRequestId;
     }
 
-    public Set<PostReceiveOption> getPostReceiveOptions() {
-        return postReceiveOptions;
-    }
+//    public Set<PostReceiveOption> getPostReceiveOptions() {
+//        return postReceiveOptions;
+//    }
 
-    /**
-     * Return a string representation of this kit's PostReceive options
-     *
-     * @param delimiter characters used to join list values
-     */
-    public String getPostReceivedOptionsAsString(@Nonnull String delimiter) {
-        if (getPostReceiveOptions().isEmpty()){
-            return "No Post-Received Options selected.";
-        }
-
-        List<String> options=new ArrayList<>(postReceiveOptions.size());
-        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
-            options.add(postReceiveOption.getText());
-        }
-
-        return StringUtils.join(options, delimiter);
-    }
+//    /**
+//     * Return a string representation of this kit's PostReceive options
+//     *
+//     * @param delimiter characters used to join list values
+//     */
+//    public String getPostReceivedOptionsAsString(@Nonnull String delimiter) {
+//        if (getPostReceiveOptions().isEmpty()){
+//            return "No Post-Received Options selected.";
+//        }
+//
+//        List<String> options=new ArrayList<>(postReceiveOptions.size());
+//        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
+//            options.add(postReceiveOption.getText());
+//        }
+//
+//        return StringUtils.join(options, delimiter);
+//    }
 
     public String getComments() {
         return comments;

@@ -45,6 +45,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
@@ -69,6 +70,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -263,6 +265,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> addOnKeys = new ArrayList<>();
     private List<String> postReceiveOptionKeys = new ArrayList<>();
 
+    private List
+
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
 
@@ -291,6 +295,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static List<MaterialInfo> dnaMatrixMaterialTypes=
             Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
+
+    private KitType chosenKitType = KitType.DNA_MATRIX;
 
     /*
      * The search query.
@@ -446,16 +452,18 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-            Long numberOfSamples = kit.getNumberOfSamples();
-            if (kit.getNumberOfSamples() == null) {
-                numberOfSamples = (long) 0;
+            for (ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
+                Long numberOfSamples = kitDetail.getNumberOfSamples();
+                if (kitDetail.getNumberOfSamples() == null) {
+                    numberOfSamples = (long) 0;
+                }
+                requireField(numberOfSamples > 0, "a specified number of samples", action);
+                requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
+                requireField(kitDetail.getBspMaterialName(), "a material information", action);
+                requireField(kitDetail.getOrganismId(), "an organism", action);
             }
-            requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
-            requireField(kit.getKitType().getKitName(), "a kit type", action);
-            requireField(kit.getBspMaterialName(), "a material information", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
-            requireField(kit.getOrganismId(), "an organism", action);
 
             // Avoid NPE if Research Project isn't set yet.
             if (researchProject != null) {
@@ -1945,7 +1953,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.skipQuote = skipQuote;
     }
 
-    public String getPostReceivedOptionsAsString() {
-        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
+    public KitType getChosenKitType() {
+        return chosenKitType;
+    }
+
+    public void setChosenKitType(KitType chosenKitType) {
+        this.chosenKitType = chosenKitType;
+    }
+
+    /**
+     * Attempt to return the list of receptacles for a given dna kit type.
+     *
+     * FixMe:  Currently, there is only one kit type and one receptacle type represented.  We will need to expand
+     * this.  There for the singletonlist is just a placeholder
+     * @return  List of receptacle types
+     */
+    public List<String> getKitReceptacleTypes() {
+        return Collections.singletonList(KitType.valueOf(chosenKitType.name()).getDisplayName());
     }
 }

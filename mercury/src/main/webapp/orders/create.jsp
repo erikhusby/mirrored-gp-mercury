@@ -12,8 +12,11 @@
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
+        var kitDefinitionCount = 0;
+        var readOnlyOrder = ${!actionBean.editOrder.draft};
 
         $j(document).ready(
+
                 function () {
                     $j('#productList').dataTable( {
                         "oTableTools": ttExportDefines,
@@ -391,6 +394,68 @@
                            item.extraCount + '</li>'
             }
 
+            function addKitDefinitionInfo(samples, organism, material, kitType, postReceiptOptions) {
+
+                kitDefinitionCount++;
+
+                var newDefinition = '<div id="kitDefinitionDetail'+kitDefinitionCount+'">';
+
+
+                newDefinition += '<div class="control-group">\n ';
+
+                // Number of Samples
+                newDefinition +='<label for="numberOfSamples'+kitDefinitionCount +'" class="control-label">Number of Samples </label>\n';
+                newDefinition += '<div class="controls">\n'
+                    + '<intput type=text readonly="'+readOnlyOrder+'" id="numberOfSamples'+kitDefinitionCount+'" name="editOrder.productOrderKit.numberOfSamples"\n'+
+                        'class="defaultText" title="Enter the number of samples"/>\n' +
+                        '</div>\n</div>';
+
+                // Kit type
+                newDefinition += '<div class="control-group">\n<label for="kitType'+kitDefinitionCount + '" class="control-label">' +
+                        'Kit Type</label>' +
+                        '<div class="controls">' +
+                        '<select disabled="' + readOnlyOrder + '" id="kitType' + kitDefinitionCount + '" name="editOrder.productOrderKit.kitType">';
+                        <%-- FIXME SGM: Bad fill.  Replace with jQuery Call to get tube to matrix kit combo, until a
+                        better solution for that relationship is found --%>
+                            '<option label="DNA Matrix Kit" value="Matrix Tube [0.75mL]" />' +
+                        '</select>' +
+                        '</div>';
+
+                // Material Info
+                newDefinition += '<div class="control-group">\n' +
+                    '<label for="materialInfo' + kitDefinitionCount + '" class="control-label">\n'+
+                    'Material Information' +
+                    '</label>\n' +
+                    '<div class="controls">\n' +
+                        '<select id="materialInfo" disabled="'+readOnlyOrder+'" name="editOrder.productOrderKit.bspMaterialName">' +
+                        '<option label="Choose..." value=""/>' +
+                        <%-- FIXME SGM: add jQuery call to get material types and loop through them.--%>
+                        <%--<stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>--%>
+                        '</select>';
+                if(readOnlyOrder) {
+                    newDefinition += '<input type=hidden name="editOrder.productOrderKit.bspMaterialName"/>';
+                }
+                newDefinition += '</div></div>';
+                // Organism
+
+                newDefinition += ' <div class="control-group">'
+                '<label for="selectedOrganism'+kitDefinitionCount+'" class="control-label">Organism' +
+                '</label>\n' +
+                '<div id="selectedOrganism'+kitDefinitionCount+'" class="controls"></div></div>';
+
+                // Post Receive Options
+                newDefinition += '<div id="postReceiveCheckboxGroup" class="control-group">' +
+                '<label for="selectedPostReceiveOptions'+kitDefinitionCount+'" class="control-label">' +
+                'Post-Receive Options' +
+                '</label>' +
+                '<div id="postReceiveCheckboxes'+kitDefinitionCount+'" class="controls controls-text"></div>' +
+                '</div>';
+                // Comments
+                newDefinition += '</div>'
+                $j('#kitDefinitions').append(newDefinition);
+
+            }
+
         </script>
     </stripes:layout-component>
 
@@ -663,7 +728,7 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <div id="kitDefinitions" class="controls" style="margin-top: 5px;">
+                        <div id="kitDefinitions" style="margin-top: 5px;">
                             <div id="kitDefinitionDetail">
                                 <div class="control-group">
                                     <stripes:label for="numberOfSamples" class="control-label">

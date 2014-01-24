@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 
+import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 
 /**
@@ -21,18 +22,22 @@ import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
  *
  */
 public enum KitType implements Displayable {
-    DNA_MATRIX("DNA Matrix Kit", "Matrix Tube [0.75mL]");
 
-    private final String kitName;
+    /*
+     FIXME:  This should not only represent other kit types but also more receptacles per kit type
+      */
+    DNA_MATRIX(KitTypeAllowanceSpecification.DNA_MATRIX_KIT, "Matrix Tube [0.75mL]");
+
+    private final KitTypeAllowanceSpecification kitName;
     private final String displayName;
 
-    KitType(String kitName, String displayName) {
+    KitType(KitTypeAllowanceSpecification kitName, String displayName) {
         this.kitName = kitName;
         this.displayName = displayName;
     }
 
     public String getKitName() {
-        return kitName;
+        return kitName.getText();
     }
 
     @Override
