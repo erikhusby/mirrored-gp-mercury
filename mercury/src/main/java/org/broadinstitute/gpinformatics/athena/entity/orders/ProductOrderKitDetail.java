@@ -20,6 +20,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -64,6 +65,9 @@ public class ProductOrderKitDetail implements Serializable {
 
     @Column(name = "material_bsp_name")
     private String bspMaterialName;
+
+    @Transient
+    private String organismName;
 
     public ProductOrderKitDetail() {
     }
@@ -129,6 +133,15 @@ public class ProductOrderKitDetail implements Serializable {
 
     public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
         bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
+    }
+
+    public void setOrganismName(String s) {
+        organismName = s;
+    }
+
+    /** This is only populated after actionBean.populateTokenListsFromObjectData() is run. */
+    public String getOrganismName() {
+        return organismName;
     }
 
     /**

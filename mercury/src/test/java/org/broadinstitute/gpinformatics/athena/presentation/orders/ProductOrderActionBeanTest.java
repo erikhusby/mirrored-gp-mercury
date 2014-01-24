@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -51,6 +52,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -112,9 +114,10 @@ public class ProductOrderActionBeanTest {
     private ProductOrderKit createGoodPdoKit() {
         MaterialInfoDto materialInfoDto =
                 new MaterialInfoDto(KitType.DNA_MATRIX.getKitName(), KitType.DNA_MATRIX.getDisplayName());
-        ProductOrderKit pdoKit = new ProductOrderKit(96l, KitType.DNA_MATRIX, TEST_COLLECTION, HOMO_SAPIENS,
-                BSP_INFORMATICS_TEST_SITE_ID, materialInfoDto);
-        pdoKit.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        ProductOrderKit pdoKit = new ProductOrderKit(TEST_COLLECTION,BSP_INFORMATICS_TEST_SITE_ID);
+        ProductOrderKitDetail kitDetail = new ProductOrderKitDetail(96l, KitType.DNA_MATRIX, HOMO_SAPIENS, materialInfoDto,
+                Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
+        pdoKit.setKitOrderDetails(Collections.singleton(kitDetail));
         pdoKit.setTransferMethod(SampleKitWorkRequest.TransferMethod.SHIP_OUT);
         pdoKit.setNotificationIds(Arrays.asList("17255"));
         pdoKit.setExomeExpress(true);

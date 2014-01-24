@@ -29,7 +29,6 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrders;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -101,6 +100,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -142,6 +142,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DATE = "date";
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
+    private final String kitDefinitionIndexIdentifier = "kitDefinitionQueryIndex";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -264,9 +265,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String materialInfo;
 
     private List<String> addOnKeys = new ArrayList<>();
-    private List<String> postReceiveOptionKeys = new ArrayList<>();
-
-    private List
+    private Map<Long, List<String>> postReceiveOptionKeys = new HashMap<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -294,7 +293,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<MaterialInfo> dnaMatrixMaterialTypes=
+    private static List<MaterialInfo> dnaMatrixMaterialTypes =
             Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     private KitType chosenKitType = KitType.DNA_MATRIX;
@@ -318,6 +317,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
+
+    /**
+     * For use with the Ajax to indicate and pass back which kit definition is being searched for
+     */
+    private String kitDefinitionQueryIndex;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
@@ -416,6 +420,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Validates the rin scores for every
      * sample in the pdo.
+     *
      * @see #validateRinScores(java.util.Collection)
      */
     void validateRinScores(@Nonnull ProductOrder pdo) {
@@ -497,7 +502,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public void validateTransferMethod(@Nonnull ProductOrder pdo){
+    public void validateTransferMethod(@Nonnull ProductOrder pdo) {
         if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
             String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
                     SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
@@ -716,10 +721,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
-    public void initPostReceiveOptions(){
+    public void initPostReceiveOptions() {
         postReceiveOptionKeys.clear();
-        for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
-            postReceiveOptionKeys.add(postReceiveOption.getText());
+        for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
+            List<String> postReceiveOptions = new ArrayList<>();
+            for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
+                postReceiveOptions.add(postReceiveOption.getText());
+            }
+            postReceiveOptionKeys.put(kitDetail.getProductOrderKitDetaild(), postReceiveOptions);
         }
     }
 
@@ -820,15 +829,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         bspGroupCollectionTokenInput.setup(
                 !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
 
-        productOrderKit.setOrganismName(null);
+        for (ProductOrderKitDetail kitDetail : productOrderKit.getKitOrderDetails()) {
+            kitDetail.setOrganismName(null);
+        }
 
         SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
         if (sampleCollection != null) {
-            if (productOrderKit.getOrganismId() != null) {
-                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                    if (productOrderKit.getOrganismId().equals(organism.getLeft())) {
-                        productOrderKit.setOrganismName(organism.getRight());
-                        break;
+            for (ProductOrderKitDetail kitDetail : productOrderKit.getKitOrderDetails()) {
+                if (kitDetail.getOrganismId() != null) {
+                    for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                        if (kitDetail.getOrganismId().equals(organism.getLeft())) {
+                            kitDetail.setOrganismName(organism.getRight());
+                            break;
+                        }
                     }
                 }
             }
@@ -872,7 +885,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         updateFromInitiationTokenInputs();
 
         if (bspShippingLocationTokenInput != null) {
-            String siteKey = editOrder.getProductOrderKit().getSiteId() != null ? String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
+            String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
+                    String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
             bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         }
 
@@ -996,9 +1010,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
-            EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
-            editOrder.getProductOrderKit().getPostReceiveOptions().clear();
-            editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
+            for (ProductOrderKitDetail kitDetail:editOrder.getProductOrderKit().getKitOrderDetails()) {
+                EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetail.getProductOrderKitDetaild()));
+
+                //FIXME.  Need to initialize product order kits
+
+                kitDetail.getPostReceiveOptions().clear();
+                kitDetail.getPostReceiveOptions().addAll(postReceiveOptions);
+            }
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1090,11 +1109,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         return createTextResolution(itemList.toString());
     }
+
     @HandlesEvent("getPostReceiveOptions")
     public Resolution getPostReceiveOptions() throws Exception {
         JSONArray itemList = new JSONArray();
         boolean savedOrder = !StringUtils.isBlank(this.productOrder);
         MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
+        String kitIndex = this.kitDefinitionQueryIndex;
+        JSONObject kitIndexObject = new JSONObject();
+        kitIndexObject.put("key", kitDefinitionIndexIdentifier);
+        kitIndexObject.put("value", kitIndexObject);
+        itemList.put(kitIndexObject);
         for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
             if (!postReceiveOption.getArchived()) {
                 JSONObject item = new JSONObject();
@@ -1166,7 +1191,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
+                bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
         item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
@@ -1236,7 +1262,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET}, priority = 0)
+    @ValidationMethod(
+            on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET},
+            priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1288,7 +1316,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
 
     @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
-    public Resolution addSamplesToBucket(){
+    public Resolution addSamplesToBucket() {
         productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
@@ -1314,7 +1342,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private List<ProductOrderSample> getSelectedProductOrderSamplesFor(ProductOrder pdo,
                                                                        Collection<Long> pdoIds) {
-        List<ProductOrderSample> selectedPdoSamples = new ArrayList<> (getSelectedProductOrderSampleIds().size());
+        List<ProductOrderSample> selectedPdoSamples = new ArrayList<>(getSelectedProductOrderSampleIds().size());
         for (ProductOrderSample pdoSample : editOrder.getSamples()) {
             if (pdoIds.contains(pdoSample.getProductOrderSampleId())) {
                 selectedPdoSamples.add(pdoSample);
@@ -1326,7 +1354,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = RECALCULATE_RISK)
     public void validateRiskRecalculation() {
         if (editOrder.isRinScoreValidationRequired()) {
-            validateRinScores(getSelectedProductOrderSamplesFor(editOrder,getSelectedProductOrderSampleIds()));
+            validateRinScores(getSelectedProductOrderSamplesFor(editOrder, getSelectedProductOrderSampleIds()));
         }
     }
 
@@ -1482,6 +1510,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (sampleCollection != null) {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
+            collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
+
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
 
             // Create the json array of items for the chunk
@@ -1508,11 +1538,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.addOnKeys = addOnKeys;
     }
 
-    public List<String> getPostReceiveOptionKeys() {
+    public Map<Long, List<String>> getPostReceiveOptionKeys() {
         return postReceiveOptionKeys;
     }
 
-    public void setPostReceiveOptionKeys(List<String> postReceiveOptionKeys) {
+    public void setPostReceiveOptionKeys(Map<Long,List<String>> postReceiveOptionKeys) {
         this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
@@ -1886,7 +1916,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * @return Show the edit title if this is not a draft (Drafts use a button per Product Owner workflow request) and
-     *         the user is appropriate for editing.
+     * the user is appropriate for editing.
      */
     @Override
     public boolean isEditAllowed() {
@@ -1927,11 +1957,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void validateSkipQuoteOptions() {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
-                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+                addValidationError("skipQuoteReason",
+                        "When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
             if (!StringUtils.isEmpty(editOrder.getQuoteId())) {
                 // the JSP should make this situation impossible
-                addValidationError("skipQuote","You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
+                addValidationError("skipQuote",
+                        "You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
             }
         }
     }
@@ -1961,12 +1993,25 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Attempt to return the list of receptacles for a given dna kit type.
-     *
+     * <p/>
      * FixMe:  Currently, there is only one kit type and one receptacle type represented.  We will need to expand
      * this.  There for the singletonlist is just a placeholder
-     * @return  List of receptacle types
+     *
+     * @return List of receptacle types
      */
     public List<String> getKitReceptacleTypes() {
         return Collections.singletonList(KitType.valueOf(chosenKitType.name()).getDisplayName());
+    }
+
+    public String getKitDefinitionQueryIndex() {
+        return kitDefinitionQueryIndex;
+    }
+
+    public void setKitDefinitionQueryIndex(String kitDefinitionQueryIndex) {
+        this.kitDefinitionQueryIndex = kitDefinitionQueryIndex;
+    }
+
+    public String getKitDefinitionIndexIdentifier() {
+        return kitDefinitionIndexIdentifier;
     }
 }

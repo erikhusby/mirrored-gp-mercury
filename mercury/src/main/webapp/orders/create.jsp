@@ -104,8 +104,12 @@
                     $j("#publicationDeadline").datepicker();
                     $j("#sampleListEdit").hide();
 
-                    $j("#materialInfo").change( function(e) {
-                                updateUIForMaterialInfoChoice();
+                    $j("[id^=materialInfo]").change( function(e) {
+
+                        var chosenId = $j(this).attr("id");
+                        var index = chosenId.substr("materialInfo".length, chosenId.length);
+
+                        updateUIForMaterialInfoChoice(index);
                     });
                     updateUIForProductChoice();
                     updateFundsRemaining();
@@ -164,9 +168,13 @@
                 }
             }
 
-            var postReceiveOption={};
-            <c:forEach items="${actionBean.postReceiveOptionKeys}" var="option" varStatus="stat" >
-                postReceiveOption["${option}"] = true;
+            var postReceiveOption=[{}];
+            <c:forEach items="${actionBean.postReceiveOptionKeys}" var="kitOption" varStatus="stat" >
+                <c:forEach items="${kitOption.value}" var="option" varStatus="optionStat">
+
+                    postReceiveOption["${kitOption.key}"]["${option}"] = true;
+                </c:forEach>
+                postReceiveOption["${kitOption.key}"].length=${fn:length(kitOption.value)};
             </c:forEach>
             postReceiveOption.length=${fn:length(actionBean.postReceiveOptionKeys)};
 
@@ -210,25 +218,27 @@
                 }
             }
 
-            function updateUIForMaterialInfoChoice() {
+            function updateUIForMaterialInfoChoice(kitCount) {
                 var pdoId="${actionBean.editOrder.productOrderId}";
-                var materialKey = $j("#materialInfo").val();
-                if ((materialKey == null) || (materialKey == "")) {
-                    $j("#postReceiveCheckboxGroup").hide();
-                } else {
-                    $j.ajax({
-                        url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder="+pdoId,
-                        dataType: 'json',
-                        success: setupPostReceiveCheckboxes
-                    });
-                    $j("#postReceiveCheckboxGroup").show();
-                }
+//                for (kitCount = 0; kitCount < kitDefinitionCount; kitCount++) {
+                    var materialKey = $j("#materialInfo"+kitCount).val();
+                    if ((materialKey == null) || (materialKey == "")) {
+                        $j("#postReceiveCheckboxGroup"+kitCount).hide();
+                    } else {
+                        $j.ajax({
+                            url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder="+pdoId+"&${actionBean.kitDefinitionIndexIdentifier}="+kitCount,
+                            dataType: 'json',
+                            success: setupPostReceiveCheckboxes
+                        });
+                        $j("#postReceiveCheckboxGroup"+kitCount).show();
+                    }
+//                }
             }
 
             function updateUIForCollectionChoice() {
                 var collectionKey = $j("#kitCollection").val();
                 if ((collectionKey == null) || (collectionKey == "") || (collectionKey == "Search for collection and group")) {
-                    $j("#selectedOrganism").html('<div class="controls-text">Choose a collection to show related organisms</div>');
+                    $j("[id^=selectedOrganism]").html('<div class="controls-text">Choose a collection to show related organisms</div>');
 
                     $j("#shippingLocationSelection").parent().append('<div class="controls" id="sitePrompt"><div class="controls-text">Choose a collection to show related shipping locations</div></div>');
                     $j("#shippingLocationSelection").hide();
@@ -238,10 +248,16 @@
                         $j("#shippingLocation").tokenInput("clear");
                     }
                 } else {
-                    $j.ajax({
-                        url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val(),
-                        dataType: 'json',
-                        success: setupOrganismMenu
+                    $j("[id^=selectedOrganism]").each(function() {
+
+                        var organismId = $j(this).attr("id");
+                        var index = chosenId.substr("selectedOrganism".length, organismId.length);
+
+                        $j.ajax({
+                            url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val()+"&${actionBean.kitDefinitionIndexIdentifier}="+index,
+                            dataType: 'json',
+                            success: setupOrganismMenu
+                        });
                     });
 
                     $j("#sitePrompt").remove();
@@ -252,9 +268,11 @@
             function setupOrganismMenu(data) {
                 var collection = data.collectionName;
 
+                var kitDefinitionIndex = data.kitDefinitionQueryIndex;
+
                 var organisms = data.organisms;
                 if ((organisms == null) || (organisms.length == 0)) {
-                    $j("#selectedOrganism").text("The collection '" + collection + "' has no organisms");
+                    $j("selectedOrganism"+kitDefinitionIndex).text("The collection '" + collection + "' has no organisms");
                     return;
                 }
 
@@ -278,9 +296,9 @@
                 });
                 organismSelect += '</select>';
 
-                $j("#selectedOrganism").hide();
-                $j("#selectedOrganism").html(organismSelect);
-                $j("#selectedOrganism").fadeIn(fadeDuration);
+                $j("selectedOrganism"+kitDefinitionIndex).hide();
+                $j("selectedOrganism"+kitDefinitionIndex).html(organismSelect);
+                $j("selectedOrganism"+kitDefinitionIndex).fadeIn(fadeDuration);
             }
 
             // This function allows the shippingLocation input token to be able to automatically pass the selected
@@ -336,10 +354,23 @@
             }
 
             function setupPostReceiveCheckboxes(data) {
-                var materialInfo = $j("#material").val();
+                var kitIndex = '';
+                $j.each(data, function(index, val) {
+                    if(val.key == "${actionBean.kitDefinitionIndexIdentifier}") {
+                        kitIndex  = val.value;
+                        return false;
+                    }
+                });
 
-                if (data.length == 0) {
-                    $j("#postReceiveCheckboxes").text("The Material Type '" + materialInfo + "' has no Post-receive options.");
+                if(kitIndex  == '') {
+                    alert("Undetermined kit definition");
+                    return;
+                }
+
+                var materialInfo = $j("#materialinfo"+kitIndex ).val();
+
+                if (data.length == 1) {
+                    $j("#postReceiveCheckboxes"+kitIndex ).text("The Material Type '" + materialInfo + "' has no Post-receive options.");
                     return;
                 }
 
@@ -361,7 +392,7 @@
                     checkboxText += '  <input id="' + postReceiveId + '" type="checkbox"' + checked + ' name="postReceiveOptionKeys" value="' + optionName + '"/>';
                     checkboxText += '  <label style="font-size: x-small;" for="' + postReceiveId + '">' + optionName + '</label>';
                 });
-                var checkboxes = $j("#postReceiveCheckboxes");
+                var checkboxes = $j("#postReceiveCheckboxes"+kitIndex);
                 checkboxes.hide();
                 checkboxes.html(checkboxText);
                 checkboxes.fadeIn(fadeDuration);
@@ -444,7 +475,7 @@
                 '<div id="selectedOrganism'+kitDefinitionCount+'" class="controls"></div></div>';
 
                 // Post Receive Options
-                newDefinition += '<div id="postReceiveCheckboxGroup" class="control-group">' +
+                newDefinition += '<div id="postReceiveCheckboxGroup'+kitDefinitionCount+'" class="control-group">' +
                 '<label for="selectedPostReceiveOptions'+kitDefinitionCount+'" class="control-label">' +
                 'Post-Receive Options' +
                 '</label>' +
@@ -729,70 +760,70 @@
                     </div>
                     <div class="control-group">
                         <div id="kitDefinitions" style="margin-top: 5px;">
-                            <div id="kitDefinitionDetail">
-                                <div class="control-group">
-                                    <stripes:label for="numberOfSamples" class="control-label">
-                                        Number of Samples
-                                    </stripes:label>
-                                    <div class="controls">
-                                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"
-                                                      class="defaultText" title="Enter the number of samples"/>
-                                    </div>
-                                </div>
+                            <%--<div id="kitDefinitionDetail">--%>
+                                <%--<div class="control-group">--%>
+                                    <%--<stripes:label for="numberOfSamples" class="control-label">--%>
+                                        <%--Number of Samples--%>
+                                    <%--</stripes:label>--%>
+                                    <%--<div class="controls">--%>
+                                        <%--<stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"--%>
+                                                      <%--class="defaultText" title="Enter the number of samples"/>--%>
+                                    <%--</div>--%>
+                                <%--</div>--%>
 
-                                <div class="control-group">
-                                    <stripes:label for="kitType" class="control-label">
-                                        Kit Type
-                                    </stripes:label>
-                                    <div class="controls">
-                                        <stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">
-                                            <stripes:options-enumeration label="displayName"
-                                                                         enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
-                                        </stripes:select>
-                                        <c:if test="${!actionBean.editOrder.draft}">
-                                            <stripes:hidden name="editOrder.productOrderKit.kitType"/>
-                                        </c:if>
-                                    </div>
-                                </div>
+                                <%--<div class="control-group">--%>
+                                    <%--<stripes:label for="kitType" class="control-label">--%>
+                                        <%--Kit Type--%>
+                                    <%--</stripes:label>--%>
+                                    <%--<div class="controls">--%>
+                                        <%--<stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">--%>
+                                            <%--<stripes:options-enumeration label="displayName"--%>
+                                                                         <%--enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>--%>
+                                        <%--</stripes:select>--%>
+                                        <%--<c:if test="${!actionBean.editOrder.draft}">--%>
+                                            <%--<stripes:hidden name="editOrder.productOrderKit.kitType"/>--%>
+                                        <%--</c:if>--%>
+                                    <%--</div>--%>
+                                <%--</div>--%>
 
-                                <div class="control-group">
-                                    <stripes:label for="materialInfo" class="control-label">
-                                        Material Information
-                                    </stripes:label>
-                                    <div class="controls">
-                                        <stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
-                                            <stripes:option label="Choose..." value=""/>
-                                            <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>
-                                        </stripes:select>
-                                        <c:if test="${!actionBean.editOrder.draft}">
-                                            <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
-                                        </c:if>
-                                    </div>
-                                </div>
+                                <%--<div class="control-group">--%>
+                                    <%--<stripes:label for="materialInfo" class="control-label">--%>
+                                        <%--Material Information--%>
+                                    <%--</stripes:label>--%>
+                                    <%--<div class="controls">--%>
+                                        <%--<stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">--%>
+                                            <%--<stripes:option label="Choose..." value=""/>--%>
+                                            <%--<stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>--%>
+                                        <%--</stripes:select>--%>
+                                        <%--<c:if test="${!actionBean.editOrder.draft}">--%>
+                                            <%--<stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>--%>
+                                        <%--</c:if>--%>
+                                    <%--</div>--%>
+                                <%--</div>--%>
 
-                                <div class="control-group">
-                                    <stripes:label for="selectedOrganism" class="control-label">
-                                        Organism
-                                    </stripes:label>
-                                    <div id="selectedOrganism" class="controls">
-                                    </div>
-                                </div>
+                                <%--<div class="control-group">--%>
+                                    <%--<stripes:label for="selectedOrganism" class="control-label">--%>
+                                        <%--Organism--%>
+                                    <%--</stripes:label>--%>
+                                    <%--<div id="selectedOrganism" class="controls">--%>
+                                    <%--</div>--%>
+                                <%--</div>--%>
 
-                                <div id="postReceiveCheckboxGroup" class="control-group">
-                                    <stripes:label for="selectedPostReceiveOptions" class="control-label">
-                                        Post-Receive Options
-                                    </stripes:label>
-                                    <div id="postReceiveCheckboxes" class="controls controls-text"></div>
-                                </div>
-                                <div class="control-group">
-                                    <stripes:label for="kitComments" class="control-label">Comments</stripes:label>
-                                    <div class="controls">
-                                        <stripes:textarea style="box-sizing: border-box; width: 100%;"
-                                                          readonly="${!actionBean.editOrder.draft}"
-                                                          id="kitComments" name="editOrder.productOrderKit.comments"/>
-                                    </div>
-                                </div>
-                            </div>
+                                <%--<div id="postReceiveCheckboxGroup" class="control-group">--%>
+                                    <%--<stripes:label for="selectedPostReceiveOptions" class="control-label">--%>
+                                        <%--Post-Receive Options--%>
+                                    <%--</stripes:label>--%>
+                                    <%--<div id="postReceiveCheckboxes" class="controls controls-text"></div>--%>
+                                <%--</div>--%>
+                                <%--<div class="control-group">--%>
+                                    <%--<stripes:label for="kitComments" class="control-label">Comments</stripes:label>--%>
+                                    <%--<div class="controls">--%>
+                                        <%--<stripes:textarea style="box-sizing: border-box; width: 100%;"--%>
+                                                          <%--readonly="${!actionBean.editOrder.draft}"--%>
+                                                          <%--id="kitComments" name="editOrder.productOrderKit.comments"/>--%>
+                                    <%--</div>--%>
+                                <%--</div>--%>
+                            <%--</div>--%>
                         </div>
                     </div>
                 </fieldset>

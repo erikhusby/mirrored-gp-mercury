@@ -96,9 +96,6 @@ public class ProductOrderKit implements Serializable {
     private SampleKitWorkRequest.TransferMethod transferMethod;
 
     @Transient
-    private String organismName;
-
-    @Transient
     private String siteName;
 
     @Transient
@@ -182,15 +179,6 @@ public class ProductOrderKit implements Serializable {
 //    public void setOrganismId(Long organismId) {
 //        this.organismId = organismId;
 //    }
-
-    public void setOrganismName(String s) {
-        organismName = s;
-    }
-
-    /** This is only populated after actionBean.populateTokenListsFromObjectData() is run. */
-    public String getOrganismName() {
-        return organismName;
-    }
 
     public Long getSiteId() {
         return siteId;
