@@ -291,7 +291,7 @@
                                     ${order.jiraTicketKey}
                             </a>
                         </td>
-                        <td>${order.title}</td>
+                        <td>${order.product.name}</td>
                         <td>${order.orderStatus}</td>
                         <td>${actionBean.getUserFullName(order.modifiedBy)}</td>
                         <td>

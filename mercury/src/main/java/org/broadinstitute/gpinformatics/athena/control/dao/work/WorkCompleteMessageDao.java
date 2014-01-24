@@ -33,6 +33,23 @@ public class WorkCompleteMessageDao extends GenericDao {
         message.setProcessDate(new Date());
     }
 
+    /**
+     * Finds all of the work complete messages for the given PDO. The list returned is sorted by ascending completed
+     * date.
+     *
+     * @param pdoName    the PDO to search for
+     * @return the work complete messages
+     */
+    public List<WorkCompleteMessage> findByPDO(final String pdoName) {
+        return findAll(WorkCompleteMessage.class, new GenericDaoCallback<WorkCompleteMessage>() {
+            @Override
+            public void callback(CriteriaQuery<WorkCompleteMessage> criteriaQuery, Root<WorkCompleteMessage> root) {
+                criteriaQuery.where(getCriteriaBuilder().equal(root.get(WorkCompleteMessage_.pdoName), pdoName));
+                criteriaQuery.orderBy(getCriteriaBuilder().asc(root.get(WorkCompleteMessage_.completedDate)));
+            }
+        });
+    }
+
     public List<WorkCompleteMessage> findByPDOAndAliquot(final String pdoId, final String aliquotId) {
         return findAll(WorkCompleteMessage.class, new GenericDaoCallback<WorkCompleteMessage>() {
             @Override

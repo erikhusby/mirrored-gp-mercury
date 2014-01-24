@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.ColumnHeader;
 
 /**
@@ -23,8 +24,17 @@ public enum BillingTrackerHeader implements ColumnHeader {
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
     WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    QUOTE_ID("Quote ID", 12, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    SORT_COLUMN("Sort Column", 13, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    PF_READS("PF Reads", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_ALIGNED_GB("PF Aligned GP", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 15, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
+        @Override public boolean shouldShow(Product product) {
+            return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
+        }
+    },
+    TABLEAU_LINK("Tableau", 16, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    QUOTE_ID("Quote ID", 17, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    SORT_COLUMN("Sort Column", 18, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";
@@ -104,11 +114,13 @@ public enum BillingTrackerHeader implements ColumnHeader {
      * Generates a header string for the part number for the given billable product. Used when parsing an uploaded
      * billing tracker.
      *
+     *
+     * @param priceItem      th price item to get the name from
      * @param billableRef    the billable product to get the part number from
      * @return the header text
      */
-    public static String getPriceItemPartNumberHeader(BillableRef billableRef) {
-        return getPartNumberHeader(billableRef.getProductPartNumber());
+    public static String getPriceItemPartNumberHeader(PriceItem priceItem, BillableRef billableRef) {
+        return getPriceItemNameHeader(priceItem) + " " + getPartNumberHeader(billableRef.getProductPartNumber());
     }
 
     /**

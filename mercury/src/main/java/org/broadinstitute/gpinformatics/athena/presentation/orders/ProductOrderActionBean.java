@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -15,29 +17,26 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
-import org.broadinstitute.bsp.client.workrequest.kit.MaterialInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -57,6 +56,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
@@ -69,9 +69,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -88,22 +88,16 @@ import org.jvnet.inflector.Noun;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringReader;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -166,9 +160,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private PriceItemDao priceItemDao;
-
-    @Inject
     private LedgerEntryDao ledgerEntryDao;
 
     @Inject
@@ -183,9 +174,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderUtil productOrderUtil;
-
-    @Inject
-    private PriceListCache priceListCache;
 
     @Inject
     private ProductOrderSampleDao sampleDao;
@@ -230,6 +218,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
+    @Inject
+    private SampleLedgerExporterFactory sampleLedgerExporterFactory;
+
     private List<ProductOrderListEntry> displayedProductOrderListEntries;
 
     private String sampleList;
@@ -264,7 +255,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
+    private String materialInfo;
+
     private List<String> addOnKeys = new ArrayList<>();
+    private List<String> postReceiveOptionKeys = new ArrayList<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -292,7 +286,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<String> dnaMatrixMaterialTypes;
+    private static List<MaterialInfo> dnaMatrixMaterialTypes=
+            Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
 
     /*
      * The search query.
@@ -314,6 +309,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Map<String, Date> productOrderSampleReceiptDates;
 
+    public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
+        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
+               + PRODUCT_ORDER_PARAMETER + "=" + productOrderKey;
+    }
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
@@ -331,16 +331,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
-    }
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void setupMaterialTypes() {
-        dnaMatrixMaterialTypes=new ArrayList<>(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo().length);
-        for (MaterialInfo materialInfo : KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo()) {
-            dnaMatrixMaterialTypes.add(materialInfo.getText());
-        }
-
-        Collections.sort(dnaMatrixMaterialTypes);
     }
 
     /**
@@ -469,7 +459,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(researchProject.getExternalCollaborators().length > 0,
                         "a Research Project with an external collaborator", action);
             }
+            validateTransferMethod(editOrder);
         }
+
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
@@ -489,6 +481,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder != null) {
             validateRinScores(editOrder);
         }
+    }
+
+    public void validateTransferMethod(@Nonnull ProductOrder pdo){
+        if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
+            String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
+                    SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+            requireField(pdo.getProductOrderKit().getNotificationIds().length > 0, validationMessage, SAVE_ACTION);
+        }
+
     }
 
     private void doOnRiskUpdate() {
@@ -585,7 +586,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * Set up defaults before binding and validation and then let any binding override that. Note that the Core Action
-     * Bean sets up the single date range obect to be this month.
+     * Bean sets up the single date range object to be this month.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void setupSearchCriteria() throws Exception {
@@ -700,6 +701,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         addOnKeys.clear();
         for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
             addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
+    public void initPostReceiveOptions(){
+        postReceiveOptionKeys.clear();
+        for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
+            postReceiveOptionKeys.add(postReceiveOption.getText());
         }
     }
 
@@ -976,6 +985,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (isSampleInitiation()) {
+            EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
+            editOrder.getProductOrderKit().getPostReceiveOptions().clear();
+            editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -988,15 +1000,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() throws Exception {
-        Resolution resolution =
-                ProductOrderActionBean.getTrackerForOrders(
-                        this, selectedProductOrders, priceItemDao, bspUserList, priceListCache);
 
-        if (hasErrors()) {
+        SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(selectedProductOrders);
+
+        try {
+            return new BillingTrackerResolution(exporter);
+        } catch (Exception e) {
+            addGlobalValidationError("Got an exception trying to download the billing tracker: " + e.getMessage());
             setupListDisplay();
+            return getSourcePageResolution();
         }
-
-        return resolution;
     }
 
     /**
@@ -1060,6 +1073,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 item.put("key", addOn.getBusinessKey());
                 item.put("value", addOn.getProductName());
 
+                itemList.put(item);
+            }
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+    @HandlesEvent("getPostReceiveOptions")
+    public Resolution getPostReceiveOptions() throws Exception {
+        JSONArray itemList = new JSONArray();
+        boolean savedOrder = !StringUtils.isBlank(this.productOrder);
+        MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
+        for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
+            if (!postReceiveOption.getArchived()) {
+                JSONObject item = new JSONObject();
+                item.put("key", postReceiveOption.getText());
+                if (!savedOrder) {
+                    item.put("value", postReceiveOption.getDefaultToChecked());
+                } else {
+                    item.put("value", false);
+                }
                 itemList.put(item);
             }
         }
@@ -1364,54 +1397,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return getQuoteUrl(editOrder.getQuoteId());
     }
 
-    public static Resolution getTrackerForOrders(
-            final CoreActionBean actionBean,
-            List<ProductOrder> productOrderList,
-            PriceItemDao priceItemDao,
-            BSPUserList bspUserList,
-            PriceListCache priceListCache) {
-
-        OutputStream outputStream = null;
-
-        try {
-            String filename =
-                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT
-                            .format(Calendar.getInstance().getTime());
-
-            // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
-            filename = filename.replaceAll(":", "_");
-
-            final File tempFile = File.createTempFile(filename, ".xlsx");
-            outputStream = new FileOutputStream(tempFile);
-
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(priceItemDao, bspUserList, priceListCache, productOrderList);
-            sampleLedgerExporter.writeToStream(outputStream);
-            IOUtils.closeQuietly(outputStream);
-
-            return new Resolution() {
-                @Override
-                public void execute(HttpServletRequest request, HttpServletResponse response) throws Exception {
-                    InputStream inputStream = new FileInputStream(tempFile);
-
-                    try {
-                        actionBean.setFileDownloadHeaders("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", tempFile.getName());
-                        IOUtils.copy(inputStream, actionBean.getContext().getResponse().getOutputStream());
-                    } finally {
-                        IOUtils.closeQuietly(inputStream);
-                        FileUtils.deleteQuietly(tempFile);
-                    }
-                }
-            };
-        } catch (Exception ex) {
-            actionBean.addGlobalValidationError(
-                    "Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return actionBean.getSourcePageResolution();
-        } finally {
-            IOUtils.closeQuietly(outputStream);
-        }
-    }
-
     public String getProductOrder() {
         return productOrder;
     }
@@ -1426,6 +1411,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setProduct(String product) {
         this.product = product;
+    }
+
+    public String getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(String materialInfo) {
+        this.materialInfo = materialInfo;
     }
 
     @HandlesEvent("projectAutocomplete")
@@ -1491,6 +1484,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    public List<String> getPostReceiveOptionKeys() {
+        return postReceiveOptionKeys;
+    }
+
+    public void setPostReceiveOptionKeys(List<String> postReceiveOptionKeys) {
+        this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
     public String getSaveButtonText() {
@@ -1886,7 +1887,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.notificationListTokenInput = notificationListTokenInput;
     }
 
-    public List<String> getDnaMatrixMaterialTypes() {
+    public List<MaterialInfo> getDnaMatrixMaterialTypes() {
         return dnaMatrixMaterialTypes;
     }
 

@@ -26,12 +26,13 @@ public class ProductOrderEjbTest {
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(null, null, null, null, null, null, null,
             new BSPSampleDataFetcher(new BSPSampleSearchService() {
                 @Override
-                public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
+                public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(final Collection<String> sampleIDs,
                                                                                 BSPSampleSearchColumn... resultColumns) {
                     // For this test case, both aliquots map to the same sample.
                     return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
                         add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                             put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
+                            put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
                         }});
                     }};
                 }

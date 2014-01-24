@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -35,6 +36,8 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle dateStyle;
     private final CellStyle riskStyle;
     private final CellStyle abandonedStyle;
+    private final CellStyle percentageStyle;
+    private final CellStyle hyperlinkStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -50,6 +53,8 @@ public abstract class AbstractSpreadsheetExporter {
         dateStyle = buildDateStyle(workbook);
         riskStyle = buildColorStyle(workbook, IndexedColors.YELLOW, IndexedColors.BLACK);
         abandonedStyle = buildColorCellStyle(workbook, IndexedColors.ROSE);
+        percentageStyle = buildPercentageCellStyle(workbook);
+        hyperlinkStyle = buildHyperlinkStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -72,9 +77,18 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
+    protected CellStyle getWrappedHeaderStyle(byte[] rgbColor, boolean vertical) {
+        CellStyle style = getWrappedHeaderStyle(rgbColor);
+        if (vertical) {
+            style.setRotation((short) 90);
+        }
+        return style;
+    }
+
     protected CellStyle getRiskStyle() {
         return riskStyle;
     }
+
     protected CellStyle getAbandonedStyle() {
         return abandonedStyle;
     }
@@ -93,6 +107,12 @@ public abstract class AbstractSpreadsheetExporter {
 
     protected CellStyle getBilledAmountStyle() {
         return billedAmountStyle;
+    }
+
+    protected CellStyle getPercentageStyle() { return percentageStyle; }
+
+    public CellStyle getHyperlinkStyle() {
+        return hyperlinkStyle;
     }
 
     protected Workbook getWorkbook() {
@@ -151,6 +171,21 @@ public abstract class AbstractSpreadsheetExporter {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(foregroundColor.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        return style;
+    }
+
+    protected CellStyle buildPercentageCellStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        style.setDataFormat(workbook.createDataFormat().getFormat("0.000%"));
+        return style;
+    }
+
+    private CellStyle buildHyperlinkStyle(Workbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setColor(IndexedColors.BLUE.getIndex());
+        font.setUnderline(Font.U_SINGLE);
+        style.setFont(font);
         return style;
     }
 
@@ -249,6 +284,15 @@ public abstract class AbstractSpreadsheetExporter {
                 currentCell.setCellValue(value);
             }
             currentCell.setCellStyle(cellStyle);
+        }
+
+        public void writeCellLink(String linkText, String url) {
+            nextCell();
+            currentCell.setCellValue(linkText);
+            Hyperlink link = workbook.getCreationHelper().createHyperlink(Hyperlink.LINK_URL);
+            link.setAddress(url);
+            currentCell.setHyperlink(link);
+            currentCell.setCellStyle(getHyperlinkStyle());
         }
 
         public void setRowStyle(CellStyle style) {

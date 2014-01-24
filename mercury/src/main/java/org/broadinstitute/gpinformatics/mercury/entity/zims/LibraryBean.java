@@ -214,7 +214,7 @@ public class LibraryBean {
                 analysisType, referenceSequence, referenceSequenceVersion, null, organism, species, strain, null,
                 aligner, rrbsSizeRange, restrictionEnzyme, bait, null, labMeasuredInsertSize, positiveControl,
                 negativeControl, devExperimentData, gssrBarcodes, gssrSampleType, doAggregation, customAmpliconSetNames,
-                productOrder, lcSet, bspSampleDTO, labWorkflow, libraryCreationDate, productOrderSample, null, null);
+                productOrder, lcSet, bspSampleDTO, labWorkflow, productOrderSample, libraryCreationDate, null, null);
     }
 
     /**
@@ -267,8 +267,8 @@ public class LibraryBean {
             double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
             TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes, String gssrSampleType,
             Boolean doAggregation, Collection<String> customAmpliconSetNames, ProductOrder productOrder,
-            String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String libraryCreationDate,
-            String productOrderSample, String workRequestType, String workRequestDomain) {
+            String lcSet, BSPSampleDTO bspSampleDTO, String labWorkflow, String productOrderSample,
+            String libraryCreationDate, String workRequestType, String workRequestDomain) {
 
         this(sampleLSID, gssrSampleType, collaboratorSampleId, organism, species, strain, individual, bspSampleDTO,
                 labWorkflow, productOrderSample, libraryCreationDate);
