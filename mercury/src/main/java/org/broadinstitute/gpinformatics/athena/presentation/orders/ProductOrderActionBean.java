@@ -143,6 +143,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
     private final String kitDefinitionIndexIdentifier = "kitDefinitionQueryIndex";
+    private final String chosenOrganism = "chosenOrganism";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -265,7 +266,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String materialInfo;
 
     private List<String> addOnKeys = new ArrayList<>();
-    private Map<Long, List<String>> postReceiveOptionKeys = new HashMap<>();
+    private Map<Integer, List<String>> postReceiveOptionKeys = new HashMap<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -318,6 +319,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Map<String, Date> productOrderSampleReceiptDates;
 
+    private List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
+
     /**
      * For use with the Ajax to indicate and pass back which kit definition is being searched for
      */
@@ -340,6 +343,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                initializeKitDetails();
             }
         } else {
             // If this was a create with research project specified, find that.
@@ -362,8 +366,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
+                initializeKitDetails();
             }
         }
+    }
+
+    private void initializeKitDetails() {
+        kitDetails.addAll(editOrder.getProductOrderKit().getKitOrderDetails());
     }
 
     @ValidationMethod(on = SAVE_ACTION)
@@ -723,12 +732,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
     public void initPostReceiveOptions() {
         postReceiveOptionKeys.clear();
+        int detailIndex = 0;
         for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
             List<String> postReceiveOptions = new ArrayList<>();
             for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
                 postReceiveOptions.add(postReceiveOption.getText());
             }
-            postReceiveOptionKeys.put(kitDetail.getProductOrderKitDetaild(), postReceiveOptions);
+            postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
+            detailIndex++;
         }
     }
 
@@ -1511,6 +1522,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
+            collectionAndOrganismsList.put(chosenOrganism,
+                                           kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
 
@@ -1538,11 +1551,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.addOnKeys = addOnKeys;
     }
 
-    public Map<Long, List<String>> getPostReceiveOptionKeys() {
+    public Map<Integer, List<String>> getPostReceiveOptionKeys() {
         return postReceiveOptionKeys;
     }
 
-    public void setPostReceiveOptionKeys(Map<Long,List<String>> postReceiveOptionKeys) {
+    public void setPostReceiveOptionKeys(Map<Integer, List<String>> postReceiveOptionKeys) {
         this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
@@ -2013,5 +2026,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getKitDefinitionIndexIdentifier() {
         return kitDefinitionIndexIdentifier;
+    }
+
+    public List<ProductOrderKitDetail> getKitDetails() {
+        return kitDetails;
+    }
+
+    public void setKitDetails(List<ProductOrderKitDetail> kitDetails) {
+        this.kitDetails = kitDetails;
     }
 }

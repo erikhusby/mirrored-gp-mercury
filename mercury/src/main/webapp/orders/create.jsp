@@ -278,15 +278,15 @@
 
                 // Even though the id is a long, if there is no value then this needs something empty, so using a string
                 // for the long or empty will work in the later comparison.
-                var selectedOrganismId = ${actionBean.ensureStringResult(actionBean.editOrder.productOrderKit.organismId)};
+                var selectedOrganismId = data.chosenOrganism;
 
                 var organismSelect =
                 <c:choose>
                     <c:when test="${actionBean.editOrder.draft}">
-                        '<select name="editOrder.productOrderKit.organismId">';
+                        '<select name="kitDetails['+kitDefinitionIndex+'].organismId">';
                     </c:when>
                     <c:otherwise>
-                        '<select disabled="true" name="editOrder.productOrderKit.organismId">';
+                        '<select disabled="true" name="kitDetails['+kitDefinitionIndex+'].organismId">';
                     </c:otherwise>
                 </c:choose>
 
@@ -389,8 +389,10 @@
                     }
 
                     var postReceiveId = "postReceiveCheckbox-" + index;
-                    checkboxText += '  <input id="' + postReceiveId + '" type="checkbox"' + checked + ' name="postReceiveOptionKeys" value="' + optionName + '"/>';
-                    checkboxText += '  <label style="font-size: x-small;" for="' + postReceiveId + '">' + optionName + '</label>';
+                    checkboxText += '  <input id="' + postReceiveId + '" type="checkbox"' + checked +
+                            ' name="postReceiveOptionKeys['+kitIndex+']" value="' + optionName + '"/>'+
+                            '  <label style="font-size: x-small;" for="' + postReceiveId + '">' +
+                            optionName + '</label>';
                 });
                 var checkboxes = $j("#postReceiveCheckboxes"+kitIndex);
                 checkboxes.hide();
@@ -425,65 +427,84 @@
                            item.extraCount + '</li>'
             }
 
-            function addKitDefinitionInfo(samples, organism, material, kitType, postReceiptOptions) {
+            function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType, postReceiptOptions) {
 
-                kitDefinitionCount++;
 
                 var newDefinition = '<div id="kitDefinitionDetail'+kitDefinitionCount+'">';
-
+                newDefinition += '<input type=hidden value="'+kitDefinitionId+' name="kitDetails['+kitDefinitionCount+'].productOrderKitDetaild" />';
 
                 newDefinition += '<div class="control-group">\n ';
 
                 // Number of Samples
                 newDefinition +='<label for="numberOfSamples'+kitDefinitionCount +'" class="control-label">Number of Samples </label>\n';
-                newDefinition += '<div class="controls">\n'
-                    + '<intput type=text readonly="'+readOnlyOrder+'" id="numberOfSamples'+kitDefinitionCount+'" name="editOrder.productOrderKit.numberOfSamples"\n'+
+                newDefinition += '<div class="controls">\n' +
+                        '<intput type=text readonly="'+readOnlyOrder+'" id="numberOfSamples' + kitDefinitionCount +
+                        '" name="kitDetails['+kitDefinitionCount+'].numberOfSamples"\n' +
                         'class="defaultText" title="Enter the number of samples"/>\n' +
                         '</div>\n</div>';
 
                 // Kit type
-                newDefinition += '<div class="control-group">\n<label for="kitType'+kitDefinitionCount + '" class="control-label">' +
+                newDefinition += '<div class="control-group">\n<label for="kitType'+kitDefinitionCount +
+                        '" class="control-label">' +
                         'Kit Type</label>' +
                         '<div class="controls">' +
-                        '<select disabled="' + readOnlyOrder + '" id="kitType' + kitDefinitionCount + '" name="editOrder.productOrderKit.kitType">';
+                        '<select disabled="' + readOnlyOrder + '" id="kitType' + kitDefinitionCount +
+                        '" name="kitDetails['+kitDefinitionCount+'].kitType">';
                         <%-- FIXME SGM: Bad fill.  Replace with jQuery Call to get tube to matrix kit combo, until a
                         better solution for that relationship is found --%>
-                            '<option label="DNA Matrix Kit" value="Matrix Tube [0.75mL]" />' +
+                newDefinition += '<option label="DNA Matrix Kit" value="Matrix Tube [0.75mL]" />' +
                         '</select>' +
                         '</div>';
 
                 // Material Info
                 newDefinition += '<div class="control-group">\n' +
-                    '<label for="materialInfo' + kitDefinitionCount + '" class="control-label">\n'+
-                    'Material Information' +
-                    '</label>\n' +
-                    '<div class="controls">\n' +
-                        '<select id="materialInfo" disabled="'+readOnlyOrder+'" name="editOrder.productOrderKit.bspMaterialName">' +
-                        '<option label="Choose..." value=""/>' +
-                        <%-- FIXME SGM: add jQuery call to get material types and loop through them.--%>
+                        '<label for="materialInfo' + kitDefinitionCount + '" class="control-label">\n' +
+                        'Material Information' +
+                        '</label>\n' +
+                        '<div class="controls">\n' +
+                        '<select id="materialInfo" disabled="' + readOnlyOrder + '" name="kitDetails[' + kitDefinitionCount + '].bspMaterialName">' +
+                        '<option label="Choose..." value=""/>';
+                <c:forEach items="${actionBean.dnaMatrixMaterialTypes}" var="materialType">
+                newDefinition += '<option label="${materialType.text}" value="${materialType.text}"/>';
+                </c:forEach>
+                <%-- FIXME SGM: add jQuery call to get material types and loop through them.--%>
                         <%--<stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>--%>
-                        '</select>';
+                newDefinition += '</select>';
+
                 if(readOnlyOrder) {
-                    newDefinition += '<input type=hidden name="editOrder.productOrderKit.bspMaterialName"/>';
+                    newDefinition += '<input type=hidden name="kitDetails['+kitDefinitionCount+'].bspMaterialName"/>';
                 }
                 newDefinition += '</div></div>';
                 // Organism
 
-                newDefinition += ' <div class="control-group">'
-                '<label for="selectedOrganism'+kitDefinitionCount+'" class="control-label">Organism' +
-                '</label>\n' +
-                '<div id="selectedOrganism'+kitDefinitionCount+'" class="controls"></div></div>';
+                newDefinition += ' <div class="control-group">' +
+                        '<label for="selectedOrganism' + kitDefinitionCount + '" class="control-label">Organism' +
+                        '</label>\n' +
+                        '<div id="selectedOrganism' + kitDefinitionCount + '" class="controls"></div>'+
+                        '</div>';
 
                 // Post Receive Options
                 newDefinition += '<div id="postReceiveCheckboxGroup'+kitDefinitionCount+'" class="control-group">' +
-                '<label for="selectedPostReceiveOptions'+kitDefinitionCount+'" class="control-label">' +
-                'Post-Receive Options' +
-                '</label>' +
-                '<div id="postReceiveCheckboxes'+kitDefinitionCount+'" class="controls controls-text"></div>' +
-                '</div>';
+                        '<label for="selectedPostReceiveOptions' + kitDefinitionCount + '" class="control-label">' +
+                        'Post-Receive Options' +
+                        '</label>' +
+                        '<div id="postReceiveCheckboxes' + kitDefinitionCount + '" class="controls controls-text"></div>' +
+                        '</div>';
+
                 // Comments
-                newDefinition += '</div>'
+                newDefinition += '<div class="control-group">' +
+                        '<label for="kitComments"' + kitDefinitionCount + ' class="control-label">Comments</label>' +
+                        '<div class="controls">' +
+                        '<textarea style="box-sizing: border-box; width: 100%;" readonly="' + readOnlyOrder +
+                        '" id="kitComments' + kitDefinitionCount + '" name="kitDetails[' + kitDefinitionCount + '].comments"/>' +
+                        '</div>' +
+                        '</div>';
+
+
+                newDefinition += '</div>';
                 $j('#kitDefinitions').append(newDefinition);
+
+                kitDefinitionCount++;
 
             }
 
