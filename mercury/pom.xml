@@ -10,7 +10,12 @@
      that can inherit this version setting. -->
 
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <version>1.42-SNAPSHOT</version>
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+    <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -885,7 +890,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.25:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.18:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -1580,7 +1585,12 @@
              -->
 
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>1.3.46</version>
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <version>1.3.47</version>
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
+            <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
         </dependency>
 
         <dependency>

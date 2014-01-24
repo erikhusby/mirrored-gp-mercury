@@ -47,22 +47,26 @@ public class ProductOrderKit implements Serializable {
     private Long productOrderKitId;
 
     @Column(name = "number_samples")
+    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
     private Long numberOfSamples;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "kit_type")
+    @Deprecated //TODO  SGM:  REMOVE: This field is moving to product order kit detail
     private KitType kitType;
 
     @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
 
     @Column(name = "organism_id")
+    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
     private Long organismId;
 
     @Column(name = "site_id")
     private Long siteId;
 
     @Column(name = "material_bsp_name")
+    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
     private String bspMaterialName;
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -73,7 +77,11 @@ public class ProductOrderKit implements Serializable {
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
+    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
     private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
+
+    @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -101,6 +109,13 @@ public class ProductOrderKit implements Serializable {
     }
 
     // Only used by tests.
+    public ProductOrderKit(Long sampleCollectionId, Long siteId) {
+        this.sampleCollectionId = sampleCollectionId;
+        this.siteId = siteId;
+    }
+
+    // Only used by tests.
+    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
     public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
                            MaterialInfoDto MaterialInfoDto) {
         this.numberOfSamples = numberOfSamples;
@@ -110,6 +125,7 @@ public class ProductOrderKit implements Serializable {
         this.siteId = siteId;
         setMaterialInfo(MaterialInfoDto);
     }
+
 
     public Long getProductOrderKitId() {
         return productOrderKitId;
@@ -265,6 +281,11 @@ public class ProductOrderKit implements Serializable {
     }
 
     public boolean isExomeExpress() {
+
+        if(exomeExpress == null) {
+            exomeExpress = new Boolean(false);
+        }
+
         return exomeExpress;
     }
 
@@ -278,5 +299,18 @@ public class ProductOrderKit implements Serializable {
 
     public SampleKitWorkRequest.TransferMethod getTransferMethod() {
         return transferMethod;
+    }
+
+    public Set<ProductOrderKitDetail> getKitOrderDetails() {
+        return kitOrderDetails;
+    }
+
+    public void setKitOrderDetails(Set<ProductOrderKitDetail> kitOrderDetails) {
+        this.kitOrderDetails = kitOrderDetails;
+    }
+
+    public void addKitOrderDetail(ProductOrderKitDetail kitDetail) {
+        kitDetail.setProductOrderKit(this);
+        this.kitOrderDetails.add(kitDetail);
     }
 }

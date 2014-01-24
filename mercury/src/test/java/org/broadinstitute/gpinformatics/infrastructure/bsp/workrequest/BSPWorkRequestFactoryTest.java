@@ -8,6 +8,7 @@ import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequestDefinitionInfo;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
@@ -54,10 +55,11 @@ public class BSPWorkRequestFactoryTest {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(WORK_REQUEST_NAME, REQUEST_USER,
                 PRODUCT_ORDER_ID, PRIMARY_INVESTIGATOR_ID,
                 PROJECT_MANAGER_ID, EXTERNAL_COLLABORATOR_ID,
-                TEST_SITE.getId(), NUMBER_OF_SAMPLES,
-                MaterialInfoDto,
-                TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST, HUMAN_ORGANISM.getLeft(),
-                SELECTED_POST_RECEIVE_OPTIONS, COMMENTS, IS_EX_EX, TRANSFER_METHOD);
+                TEST_SITE.getId(),
+                TEST_COLLECTION.getCollectionId(), NOTIFICATION_LIST,
+                COMMENTS, IS_EX_EX, TRANSFER_METHOD,
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES, MaterialInfoDto, HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,SampleKitWorkRequest.MoleculeType.DNA))
+        );
 
         assertThat(workRequest.getPrimaryInvestigatorId(), equalTo(PRIMARY_INVESTIGATOR_ID));
         assertThat(workRequest.getProjectManagerId(), equalTo(PROJECT_MANAGER_ID));
@@ -71,9 +73,9 @@ public class BSPWorkRequestFactoryTest {
         assertThat(workRequest.getErrors(), is(empty()));
         assertThat(workRequest.getWarnings(), is(empty()));
         assertThat(workRequest.getInfo(), is(empty()));
-        assertThat(workRequest.getMoleculeType(), equalTo(SampleKitWorkRequest.MoleculeType.DNA));
+        assertThat(workRequest.getKitDefinitions().iterator().next().getMoleculeType(), equalTo(SampleKitWorkRequest.MoleculeType.DNA));
         assertThat(workRequest.getSiteId(), equalTo(TEST_SITE.getId()));
-        assertThat(workRequest.getNumberOfSamples(), equalTo(NUMBER_OF_SAMPLES));
+        assertThat(workRequest.getKitDefinitions().iterator().next().getNumberOfSamples(), equalTo(NUMBER_OF_SAMPLES));
         assertThat(workRequest.getTransferMethod(), equalTo(SampleKitWorkRequest.TransferMethod.SHIP_OUT));
         assertThat(workRequest.getSampleCollectionId(), equalTo(TEST_COLLECTION.getCollectionId()));
         assertThat(workRequest.getNotes(), equalTo(COMMENTS));

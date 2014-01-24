@@ -62,10 +62,12 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
-                ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(), NUMBER_OF_SAMPLES,
-                MaterialInfoDto, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
-                HUMAN_ORGANISM.getLeft(),
-                SELECTED_POST_RECEIVE_OPTIONS, COMMENTS, IS_EX_EX, TRANSFER_METHOD);
+                ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
+                TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
+                COMMENTS, IS_EX_EX, TRANSFER_METHOD,
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
+                        MaterialInfoDto,HUMAN_ORGANISM.getLeft(),SELECTED_POST_RECEIVE_OPTIONS,
+                        SampleKitWorkRequest.MoleculeType.DNA)));
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
@@ -79,8 +81,11 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
                 "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
-                NUMBER_OF_SAMPLES, MaterialInfoDto, TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
-                HUMAN_ORGANISM.getLeft(), SELECTED_POST_RECEIVE_OPTIONS, COMMENTS, IS_EX_EX, TRANSFER_METHOD);
+                TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
+                COMMENTS, IS_EX_EX, TRANSFER_METHOD,
+                Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,
+                        MaterialInfoDto, HUMAN_ORGANISM.getLeft(), SELECTED_POST_RECEIVE_OPTIONS,
+                        SampleKitWorkRequest.MoleculeType.DNA)));
         workRequest.setExternalCollaboratorId(BREILLY_DOMAIN_USER_ID);
 
         WorkRequestResponse result = bspKitRequestService.sendKitRequest(workRequest);
