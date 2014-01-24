@@ -163,7 +163,7 @@ public class ZimsIlluminaRunFactory {
             SequencingTemplateType sequencingTemplate = sequencingTemplateFactory.getSequencingTemplate(
                     illuminaFlowcell, loadedVesselsAndPositions, true);
             sequencingTemplateLanes = sequencingTemplate.getLanes();
-        } catch (InformaticsServiceException e) {
+        } catch (Exception e) {
             log.error("Failed to get sequencingTemplate.", e);
             // don't rethrow, failing to get loading concentration is not fatal.
         }
