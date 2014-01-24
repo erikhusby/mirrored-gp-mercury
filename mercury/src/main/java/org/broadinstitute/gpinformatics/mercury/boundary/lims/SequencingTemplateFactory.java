@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -225,7 +226,11 @@ public class SequencingTemplateFactory {
         /** FIXME: Temporary Hack for Exome Express until we get lane to starting vessel tracking **/
         List<SequencingTemplateLaneType> lanes = new ArrayList<>();
 
-        Collection<LabBatch> prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.FCT,
+                        TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
+        flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria);
+        Collection<LabBatch> prodFlowcellBatches = batchCriteria.getAllLabBatches();
 
         if (prodFlowcellBatches.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one FCT Batches " +
@@ -279,7 +284,7 @@ public class SequencingTemplateFactory {
         for (LabBatch batch : batches) {
             for (LabBatchStartingVessel labBatchStartingVessel : batch.getLabBatchStartingVessels()) {
                 //All the concentrations should match. If they don't throw an exception.
-                if (concentration != null && concentration != labBatchStartingVessel.getConcentration()) {
+                if (concentration != null && concentration.compareTo(labBatchStartingVessel.getConcentration()) != 0) {
                     throw new RuntimeException("Found multiple concentrations that do no match.");
                 }
                 concentration = labBatchStartingVessel.getConcentration();

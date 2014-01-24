@@ -107,7 +107,10 @@
                     updateUIForProductChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
-                    updateUIForMaterialInfoChoice()
+                    updateUIForMaterialInfoChoice();
+                    initializeQuoteOptions();
+                    updateQuoteOptions();
+
                 }
             );
 
@@ -123,6 +126,41 @@
                 addOn['${addOnProduct}'] = true;
             </c:forEach>
 
+            var skipQuote = false;
+            var quoteBeforeSkipping;
+
+            function toggleSkipQuote() {
+                skipQuote = !skipQuote;
+                if (skipQuote) {
+                    quoteBeforeSkipping = $j("#quote").val();
+                    $j("#quote").val('');
+                }
+                else {
+                    $j("#quote").val(quoteBeforeSkipping);
+                }
+                updateQuoteOptions();
+            }
+
+            function initializeQuoteOptions() {
+                <c:if test="${actionBean.skipQuote}">
+                skipQuote = true;
+                </c:if>
+                quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
+            }
+            function updateQuoteOptions() {
+                if (skipQuote) {
+                    $j("#skipQuoteReasonDiv").show();
+                    $j("#quote").hide();
+                    $j("#fundsRemaining").hide();
+                }
+                else {
+                    $j("#skipQuoteReasonDiv").hide();
+                    updateFundsRemaining();
+                    $j("#quote").show();
+                    $j("#fundsRemaining").show();
+                }
+            }
+
             var postReceiveOption={};
             <c:forEach items="${actionBean.postReceiveOptionKeys}" var="option" varStatus="stat" >
                 postReceiveOption["${option}"] = true;
@@ -135,6 +173,8 @@
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                     $j("#sampleInitiationKitRequestEdit").hide();
+                    $j("#skipQuoteDiv").hide();
+                    $j("#skipQuoteReasonDiv").hide();
                     $j("#numberOfLanesDiv").fadeOut(duration);
                 } else {
                     if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>')  {
@@ -157,6 +197,12 @@
                         url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
                         dataType: 'json',
                         success: updateNumberOfLanesVisibility
+                    });
+
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getSupportsSkippingQuote=&product=" + productKey,
+                        dataType: 'json',
+                        success: updateSkipQuoteVisibility
                     });
                 }
             }
@@ -247,8 +293,19 @@
                 data.supportsNumberOfLanes ? numberOfLanesDiv.fadeIn(fadeDuration) : numberOfLanesDiv.fadeOut(fadeDuration);
             }
 
+            function updateSkipQuoteVisibility(data) {
+                var skipQuoteDiv = $j("#skipQuoteDiv");
+                if (data.supportsSkippingQuote) {
+                    skipQuoteDiv.show();
+                }
+                else {
+                    skipQuoteDiv.hide();
+                }
+            }
 
-            function setupAddonCheckboxes(data) {
+
+
+        function setupAddonCheckboxes(data) {
                 var productTitle = $j("#product").val();
 
                 if (data.length == 0) {
@@ -477,6 +534,13 @@
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
+                        <div id="skipQuoteDiv">
+                            <stripes:checkbox id="skipQuote" name="skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
+                            <div id="skipQuoteReasonDiv">
+                                Please enter a reason for skipping the quote *
+                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
