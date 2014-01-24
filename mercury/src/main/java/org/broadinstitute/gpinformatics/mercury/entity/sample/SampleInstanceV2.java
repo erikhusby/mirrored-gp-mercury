@@ -32,8 +32,14 @@ public class SampleInstanceV2 implements Cloneable {
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
 
     public SampleInstanceV2(LabVessel labVessel) {
+        // todo jmt factor out code shared with applyVesselChanges
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
+        allBucketEntries.addAll(labVessel.getBucketEntries());
+        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+        }
+        allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVessels());
     }
 
     /**
@@ -103,6 +109,7 @@ public class SampleInstanceV2 implements Cloneable {
 
     /**
      * Returns all Product Orders associated with samples in ancestor vessels.
+     * todo jmt how should this be sorted?
      */
     public List<ProductOrderSample> getAllProductOrderSamples() {
         return allProductOrderSamples;
@@ -152,6 +159,7 @@ public class SampleInstanceV2 implements Cloneable {
         clone.reagents = new ArrayList<>(reagents);
         clone.allBucketEntries = new ArrayList<>(allBucketEntries);
         clone.allLabBatchStartingVessels = new ArrayList<>(allLabBatchStartingVessels);
+        clone.allProductOrderSamples = new ArrayList<>(allProductOrderSamples);
         return clone;
     }
 
@@ -161,6 +169,9 @@ public class SampleInstanceV2 implements Cloneable {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
         }
         allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVessels());
+        for (MercurySample mercurySample : labVessel.getMercurySamples()) {
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+        }
     }
 
     public void applyEvent(LabEvent labEvent) {

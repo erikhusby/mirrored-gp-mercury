@@ -47,6 +47,9 @@ public class GetSampleInstancesTest {
 
     /** date for LabEVents */
     private long now;
+    private StaticPlate indexPlateP7;
+    private StaticPlate indexPlateP5;
+    private TwoDBarcodedTube baitTube;
 
     @Test
     public void testBasic() {
@@ -64,12 +67,12 @@ public class GetSampleInstancesTest {
                     add(p5IndexPlateBarcode);
                 }}
         );
-        StaticPlate indexPlateP7 = indexPlates.get(0);
-        StaticPlate indexPlateP5 = indexPlates.get(1);
+        indexPlateP7 = indexPlates.get(0);
+        indexPlateP5 = indexPlates.get(1);
 
         // Bait
         String baitTubeBarcode = "BAIT";
-        TwoDBarcodedTube baitTube = LabEventTest.buildBaitTube(baitTubeBarcode, null);
+        baitTube = LabEventTest.buildBaitTube(baitTubeBarcode, null);
 
         // sample initiation PDO
         ProductOrder sampleInitProductOrder = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-SI",
@@ -80,7 +83,9 @@ public class GetSampleInstancesTest {
         int i = 1;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             TwoDBarcodedTube tube = new TwoDBarcodedTube("R" + i);
-            tube.addSample(new MercurySample(productOrderSample.getSampleKey()));
+            MercurySample mercurySample = new MercurySample(productOrderSample.getSampleKey());
+            mercurySample.addProductOrderSample(productOrderSample);
+            tube.addSample(mercurySample);
             receivedVessels.add(tube);
             i++;
         }
@@ -89,8 +94,10 @@ public class GetSampleInstancesTest {
         // extraction PDO
         Product extractionProduct = ProductTestFactory.createDummyProduct(Workflow.ICE, "EXTR-01");
         List<ProductOrderSample> extractionProductOrderSamples = new ArrayList<>();
-        for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
-            extractionProductOrderSamples.add(new ProductOrderSample(productOrderSample.getSampleKey()));
+        for (ProductOrderSample initProductOrderSample : sampleInitProductOrder.getSamples()) {
+            ProductOrderSample extractProductOrderSample = new ProductOrderSample(initProductOrderSample.getSampleKey());
+            initProductOrderSample.getMercurySample().addProductOrderSample(extractProductOrderSample);
+            extractionProductOrderSamples.add(extractProductOrderSample);
         }
         ProductOrder extractionProductOrder = new ProductOrder(101L, "Extraction PDO", extractionProductOrderSamples,
                 "SEQ-01", extractionProduct, sampleInitProductOrder.getResearchProject());
@@ -129,17 +136,19 @@ public class GetSampleInstancesTest {
         Product sequencingProduct = ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "HYBSEL-01");
         List<ProductOrderSample> sequencingProductOrderSamples = new ArrayList<>();
         for (TwoDBarcodedTube twoDBarcodedTube : mapPositionToExtractTube.values()) {
-            sequencingProductOrderSamples.add(
-                    new ProductOrderSample(twoDBarcodedTube.getMercurySamples().iterator().next().getSampleKey()));
+            MercurySample mercurySample = twoDBarcodedTube.getMercurySamples().iterator().next();
+            ProductOrderSample sequencingProductOrderSample = new ProductOrderSample(mercurySample.getSampleKey());
+            mercurySample.addProductOrderSample(sequencingProductOrderSample);
+            sequencingProductOrderSamples.add(sequencingProductOrderSample);
         }
         ProductOrder sequencingProductOrder = new ProductOrder(101L, "Sequencing PDO", sequencingProductOrderSamples,
                 "SEQ-01", sequencingProduct, sampleInitProductOrder.getResearchProject());
 
-        StaticPlate shearingPlate1 = sequencing(indexPlateP7, indexPlateP5, baitTube, tube1, tube2,
+        StaticPlate shearingPlate1 = sequencing(tube1, tube2, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, "SM-12431", false, 1);
 
         tube2.clearCaches();
-        StaticPlate shearingPlate2 = sequencing(indexPlateP7, indexPlateP5, baitTube, tube2, tube3,
+        StaticPlate shearingPlate2 = sequencing(tube2, tube3, sampleInitProductOrder, extractionProductOrder,
                 sequencingProductOrder, "SM-23541", true, 2);
 
         // PoolingTransfer
@@ -207,9 +216,9 @@ public class GetSampleInstancesTest {
         BaseEventTest.runTransferVisualizer(poolTube);
     }
 
-    private StaticPlate sequencing(StaticPlate indexPlateP7, StaticPlate indexPlateP5, TwoDBarcodedTube baitTube,
-            TwoDBarcodedTube tube1, TwoDBarcodedTube tube2, ProductOrder sequencingProductOrder, String tube1RootSample,
-            boolean tube1Rework, int lcsetNum) {
+    private StaticPlate sequencing(TwoDBarcodedTube tube1, TwoDBarcodedTube tube2,
+            final ProductOrder sampleInitProductOrder, final ProductOrder extractionProductOrder,
+            final ProductOrder sequencingProductOrder, String tube1RootSample, boolean tube1Rework, int lcsetNum) {
         // LCSET
         Set<LabVessel> extractedVessels = new HashSet<>();
         extractedVessels.add(tube1);
@@ -301,13 +310,14 @@ public class GetSampleInstancesTest {
             Assert.assertEquals(sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.SAMPLES_IMPORT), importBatchVessels);
         }
 
-//        Assert.assertEquals(sampleInstance.getAllBucketEntries(), );
-        // todo need relationship between MercurySample and ProductOrderSample.
-//        Assert.assertEquals(sampleInstance.getAllProductOrderSamples(), new ArrayList<ProductOrderSample>() {{
-//            add(sampleInitProductOrder.getSamples().get(0));
-//            add(extractionProductOrder.getSamples().get(0));
-//            add(sequencingProductOrder.getSamples().get(0));
-//        }});
+        Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
+        final int sampleIndex = lcsetNum - 1;
+        Assert.assertEquals(new HashSet<>(sampleInstance.getAllProductOrderSamples()),
+                new HashSet<ProductOrderSample>() {{
+                    add(sampleInitProductOrder.getSamples().get(sampleIndex));
+                    add(extractionProductOrder.getSamples().get(sampleIndex));
+                    add(sequencingProductOrder.getSamples().get(sampleIndex));
+                }});
 
         // Verify control
         sampleInstances =

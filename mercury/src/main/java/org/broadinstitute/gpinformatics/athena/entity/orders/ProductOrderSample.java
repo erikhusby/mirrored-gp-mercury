@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -56,6 +57,7 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample extends AbstractSample implements BusinessObject, Serializable {
     private static final long serialVersionUID = 8645451167948826402L;
+    private static final Log log = LogFactory.getLog(ProductOrderSample.class);
 
     /**
      * Count shown when no billing has occurred.
@@ -104,6 +106,10 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @OneToMany(mappedBy = "productOrderSample",cascade = {CascadeType.PERSIST}, orphanRemoval = true)
     Set<SampleReceiptValidation> sampleReceiptValidations = new HashSet<>();
+
+    @ManyToOne
+    private MercurySample mercurySample;
+
     /**
      * Convert a list of ProductOrderSamples into a list of sample names.
      *
@@ -201,9 +207,6 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
 
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
-
-    @Transient
-    private final Log log = LogFactory.getLog(ProductOrderSample.class);
 
     public ProductOrder getProductOrder() {
         return productOrder;
@@ -612,5 +615,13 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
             throw new RuntimeException("Sample name is not ASCII printable");
         }
         sampleName = newName;
+    }
+
+    public MercurySample getMercurySample() {
+        return mercurySample;
+    }
+
+    public void setMercurySample(MercurySample mercurySample) {
+        this.mercurySample = mercurySample;
     }
 }
