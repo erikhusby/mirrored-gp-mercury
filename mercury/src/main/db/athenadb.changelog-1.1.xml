@@ -552,5 +552,4 @@
                                  referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
                                  referencedColumnNames="REV_INFO_ID"/>
     </changeSet>
-
 </databaseChangeLog>
