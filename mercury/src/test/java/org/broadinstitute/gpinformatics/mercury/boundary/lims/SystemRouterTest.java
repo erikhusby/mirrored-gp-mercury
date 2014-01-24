@@ -579,7 +579,7 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Determines how to configure ExportResult's exportDestinations property returned by mockBspExportService.
      */
-    private enum ExportFromBSP { NONE, GAP, MERCURY, SEQUENCING }
+    private enum ExportFromBSP { NONE, GAP, MERCURY, SEQUENCING, PARALLEL_VALIDATION }
 
     /**
      * Determines whether or not to use a tube barcode that mockLabVesselDao will return a LabVessel for.
@@ -606,19 +606,20 @@ public class SystemRouterTest extends BaseEventTest {
     @DataProvider(name = "systemOfRecordScenarios")
     public Object[][] getSystemOfRecordScenarios() {
         return new Object[][] {
-                new Object[] { "squidIntermediateLCTube",   KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.NO,    ExportFromBSP.NONE,       SQUID },
-                new Object[] { "bspIntermediateTube",       KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.YES,   ExportFromBSP.NONE,       SQUID },
-                new Object[] { "inSamplesLab",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
-                new Object[] { "exportedToMercury",         KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.MERCURY,    MERCURY },
-                new Object[] { "exportedToSequencing",      KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING, SQUID },
-                new Object[] { "exportedToGap",             KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.GAP,        null },
-                new Object[] { "errorFromBSP",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.ERROR, ExportFromBSP.NONE,       null },
-                new Object[] { "parallelTubeInSamplesLab",  KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
-                new Object[] { "parallelTubeExported",      KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING, SQUID },
-                new Object[] { "parallelTubeInSeqLab",      KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,       SQUID },
-                new Object[] { "exExTubeInSamplesLab",      KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.NONE,       MERCURY },
-                new Object[] { "exExTubeExported",          KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.MERCURY,    MERCURY },
-                new Object[] { "exExTubeInSeqLab",          KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,       MERCURY },
+                new Object[] { "squidIntermediateLCTube",    KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
+                new Object[] { "bspIntermediateTube",        KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.YES,   ExportFromBSP.NONE,                SQUID },
+                new Object[] { "inSamplesLab",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "exportedToMercury",          KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
+                new Object[] { "exportedParallelValidation", KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.PARALLEL_VALIDATION, SQUID },
+                new Object[] { "exportedToSequencing",       KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
+                new Object[] { "exportedToGap",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.GAP,                 null },
+                new Object[] { "errorFromBSP",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.ERROR, ExportFromBSP.NONE,                null },
+                new Object[] { "parallelTubeInSamplesLab",   KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "parallelTubeExported",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
+                new Object[] { "parallelTubeInSeqLab",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
+                new Object[] { "exExTubeInSamplesLab",       KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
+                new Object[] { "exExTubeExported",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
+                new Object[] { "exExTubeInSeqLab",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                MERCURY },
         };
     }
 
@@ -740,22 +741,27 @@ public class SystemRouterTest extends BaseEventTest {
             exportResults = makeExportResultsNotFound(tube.getLabel(), "Unknown tube");
             break;
         case YES:
-            IsExported.ExternalSystem externalSystem = null;
+            Set<IsExported.ExternalSystem> externalSystems = new HashSet<>();
             switch (exportFromBSP) {
             case GAP:
-                externalSystem = IsExported.ExternalSystem.GAP;
+                externalSystems.add(IsExported.ExternalSystem.GAP);
                 break;
             case MERCURY:
-                externalSystem = IsExported.ExternalSystem.Mercury;
+                externalSystems.add(IsExported.ExternalSystem.Mercury);
                 break;
             case SEQUENCING:
-                externalSystem = IsExported.ExternalSystem.Sequencing;
+                externalSystems.add(IsExported.ExternalSystem.Sequencing);
+                break;
+            case PARALLEL_VALIDATION:
+                externalSystems.add(IsExported.ExternalSystem.Mercury);
+                externalSystems.add(IsExported.ExternalSystem.Sequencing);
                 break;
             case NONE:
-                // Keep initialized null value.
+                // Add nothing.
                 break;
             }
-            exportResults = makeExportResults(tube.getLabel(), externalSystem);
+            exportResults = makeExportResults(tube.getLabel(),
+                    externalSystems.toArray(new IsExported.ExternalSystem[externalSystems.size()]));
             break;
         }
         when(mockFindExportDestinations(tube)).thenReturn(exportResults);
@@ -1162,13 +1168,13 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Make an ExportResults object with a result for a single vessel.
      *
-     * @param tubeBarcode
-     * @param system      the system (can be null) to use in the result
+     * @param tubeBarcode  Tube barcode
+     * @param systems      the systems (can be null) to use in the result
      * @return a new ExportResults
      */
-    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem system) {
+    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem... systems) {
         // If the system is null create an empty Set, otherwise a singleton Set.
-        Set<IsExported.ExternalSystem> exportsSet = system == null ? Collections.<IsExported.ExternalSystem>emptySet() : Collections.singleton(system);
+        Set<IsExported.ExternalSystem> exportsSet = new HashSet<>(Arrays.asList(systems));
         return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, exportsSet)));
     }
 
