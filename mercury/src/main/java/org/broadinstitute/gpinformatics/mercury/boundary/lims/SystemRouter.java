@@ -152,8 +152,9 @@ public class SystemRouter implements Serializable {
 
     /**
      * Query BSP for the export status of all labVessels given as parameters.  If none of these has been exported,
-     * route to Mercury.  If all have been exported to Sequencing, route to Squid.  If there is any other condition,
-     * throw an InformaticsServiceException as the situation is ambiguous.
+     * route to Mercury.  If all have been exported to Sequencing (possibly including parallel validation exports to
+     * Mercury), route to Squid.  If there is any other condition, throw an InformaticsServiceException as the
+     * situation is ambiguous.
      */
     private System determineSystemOfRecordPerBspExports(@Nonnull Collection<LabVessel> labVessels) {
         IsExported.ExportResults exportResults = bspExportsService.findExportDestinations(labVessels);
@@ -174,8 +175,8 @@ public class SystemRouter implements Serializable {
                     throw new InformaticsServiceException(error);
                 }
             } else {
-                // Non-ExEx racks will be exported to both Squid and Mercury, but for the purposes of system of
-                // record determination this should give priority to Squid.
+                // Parallel validation sets will be exported to both Squid and Mercury, but Squid gets priority as the
+                // system of record until the process of transitioning Squid to Mercury is complete.
                 if (externalSystems.contains(IsExported.ExternalSystem.Sequencing)) {
                     systemToVessels.put(SQUID, vesselBarcode);
                 } else if (externalSystems.contains(IsExported.ExternalSystem.Mercury)) {
