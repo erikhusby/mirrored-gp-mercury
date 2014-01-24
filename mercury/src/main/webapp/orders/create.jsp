@@ -720,7 +720,7 @@
                                     <div id="postReceiveCheckboxes" class="controls controls-text"></div>
                                 </div>
                                 <div class="control-group">
-                                    <stripes:label for="comments" class="control-label">Comments</stripes:label>
+                                    <stripes:label for="kitComments" class="control-label">Comments</stripes:label>
                                     <div class="controls">
                                         <stripes:textarea style="box-sizing: border-box; width: 100%;"
                                                           readonly="${!actionBean.editOrder.draft}"
