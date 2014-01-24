@@ -33,22 +33,22 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void testMercury(@ArquillianResource URL baseUrl) throws Exception {
-        ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "140108_SL-HDJ_0272_BFCH7A84ADXX");
+    public void testMercury(@ArquillianResource URL baseUrl) {
+        ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "130903_SL-HDG_0177_BFCH16FBADXX");
 
         Assert.assertEquals(run.getLanes().size(), 2, "Wrong number of lanes");
         ZimsIlluminaChamber zimsIlluminaChamber = run.getLanes().iterator().next();
         Assert.assertEquals(zimsIlluminaChamber.getLoadingConcentration(), 20.0);
 
-        Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), 5, "Wrong number of libraries");
+        Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), 91, "Wrong number of libraries");
         LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
-        Assert.assertEquals(libraryBean.getLibrary(), "0154850236_Illumina_P5-Yahih_P7-Zepon");
-        Assert.assertEquals(libraryBean.getLibraryCreationDate(), "12/17/2013 12:50");
+        Assert.assertEquals(libraryBean.getLibrary(), "0148909054_Illumina_P5-Kizez_P7-Cakax");
+        Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/29/2013 11:51");
     }
 
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
     @RunAsClient
-    public void testThrift(@ArquillianResource URL baseUrl) throws Exception {
+    public void testThrift(@ArquillianResource URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120910_SL-HBL_0218_BFCD15B6ACXX");
 
         Assert.assertEquals(run.getLanes().size(), 8, "Wrong number of lanes");
@@ -59,6 +59,22 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
         Assert.assertEquals(libraryBean.getLibrary(), "Pond-176198");
         Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/22/2012 12:40");
+    }
+
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
+    @RunAsClient
+    public void testThriftNullConc(@ArquillianResource URL baseUrl) {
+        ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120830_SL-MAK_0035_AFC000000000-A1ETN");
+
+        Assert.assertEquals(run.getLanes().size(), 1, "Wrong number of lanes");
+        ZimsIlluminaChamber zimsIlluminaChamber = run.getLanes().iterator().next();
+        // todo jmt the following should be null
+        Assert.assertEquals(zimsIlluminaChamber.getLoadingConcentration(), 0.0);
+
+        Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), 1, "Wrong number of libraries");
+        LibraryBean libraryBean = zimsIlluminaChamber.getLibraries().iterator().next();
+        Assert.assertEquals(libraryBean.getLibrary(), "Solexa-119567");
+        Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/30/2012 10:06");
     }
 
     private ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) {
