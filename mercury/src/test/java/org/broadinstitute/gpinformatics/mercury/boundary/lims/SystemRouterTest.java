@@ -732,7 +732,7 @@ public class SystemRouterTest extends BaseEventTest {
      * @param exportFromBSP    whether or not the tube has been exported from BSP and where it was exported to
      */
     private void configureBSP(@Nonnull LabVessel tube, KnownToBSP knownToBSP, ExportFromBSP exportFromBSP) {
-        IsExported.ExportResults exportResults = null;
+        IsExported.ExportResults exportResults;
         switch (knownToBSP) {
         case ERROR:
             exportResults = makeExportResultsError(tube.getLabel(), "BSP error");
@@ -759,10 +759,13 @@ public class SystemRouterTest extends BaseEventTest {
             case NONE:
                 // Add nothing.
                 break;
+            default:
+                throw new InformaticsServiceException("Should not get here!");
             }
-            exportResults = makeExportResults(tube.getLabel(),
-                    externalSystems.toArray(new IsExported.ExternalSystem[externalSystems.size()]));
+            exportResults = makeExportResults(tube.getLabel(), externalSystems);
             break;
+        default:
+            throw new InformaticsServiceException("Should not get here!");
         }
         when(mockFindExportDestinations(tube)).thenReturn(exportResults);
     }
@@ -1168,13 +1171,12 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Make an ExportResults object with a result for a single vessel.
      *
-     * @param tubeBarcode  Tube barcode
-     * @param systems      the systems (can be null) to use in the result
+     * @param tubeBarcode  tube barcode
+     * @param exportsSet   the systems to use in the result
      * @return a new ExportResults
      */
-    private static IsExported.ExportResults makeExportResults(String tubeBarcode, IsExported.ExternalSystem... systems) {
+    private static IsExported.ExportResults makeExportResults(String tubeBarcode, @Nonnull Set<IsExported.ExternalSystem> exportsSet) {
         // If the system is null create an empty Set, otherwise a singleton Set.
-        Set<IsExported.ExternalSystem> exportsSet = new HashSet<>(Arrays.asList(systems));
         return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, exportsSet)));
     }
 
