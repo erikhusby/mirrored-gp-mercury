@@ -122,6 +122,10 @@ squid:
       url: http://squid-ui.broadinstitute.org:8000/squid
 
 
+tableau:
+
+    PROD:
+      url: https://tableau.broadinstitute.org
 
 
 thrift:
@@ -217,6 +221,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    DEV
+      tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
@@ -231,6 +236,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    DEV
+      tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
@@ -245,6 +251,7 @@ mercury:
       jira:     TEST
       quote:    DEV
       squid:    TEST
+      tableau:  PROD
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
@@ -259,6 +266,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    QA
+      tableau:  PROD
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
@@ -273,6 +281,7 @@ mercury:
       jira:     TEST
       quote:    QA
       squid:    QA
+      tableau:  PROD
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
@@ -287,6 +296,7 @@ mercury:
       jira:     PROD
       quote:    PROD
       squid:    PROD
+      tableau:  PROD
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD

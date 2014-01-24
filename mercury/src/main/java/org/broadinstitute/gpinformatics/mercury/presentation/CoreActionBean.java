@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -460,6 +461,19 @@ public class CoreActionBean implements ActionBean, MessageReporter {
 
     /**
      * Set HTTP response headers appropriately for a file download
+     * for this action bean.
+     *
+     * @param contentType The MIME type of the response or null.
+     * @param fileName    The name of the downloaded file or null.
+     *
+     * @see #setFileDownloadHeaders(String, String, javax.servlet.http.HttpServletResponse)
+     */
+    public void setFileDownloadHeaders(String contentType, String fileName) {
+        setFileDownloadHeaders(contentType, fileName, getContext().getResponse());
+    }
+
+    /**
+     * Set HTTP response headers appropriately for a file download
      * (as opposed to a normal HTTP response).
      * <p/>
      * The content type may be null, in which case we default it
@@ -475,8 +489,9 @@ public class CoreActionBean implements ActionBean, MessageReporter {
      *
      * @param contentType The MIME type of the response or null.
      * @param fileName    The name of the downloaded file or null.
+     * @param response    The HTTP response to set headers for.
      */
-    public void setFileDownloadHeaders(String contentType, String fileName) {
+    public static void setFileDownloadHeaders(String contentType, String fileName, HttpServletResponse response) {
         // Some applications also muck with the character encoding
         // and cache control headers on file download, but it
         // doesn't seem that we need this.
@@ -485,11 +500,11 @@ public class CoreActionBean implements ActionBean, MessageReporter {
         }
 
         if (fileName == null) {
-            getContext().getResponse().setContentType(contentType);
+            response.setContentType(contentType);
         } else {
             String doubleQuotedFileName = '"' + fileName + '"';
-            getContext().getResponse().setContentType(contentType + "; file=" + doubleQuotedFileName);
-            getContext().getResponse().setHeader("Content-Disposition", "attachment; filename=" + doubleQuotedFileName);
+            response.setContentType(contentType + "; file=" + doubleQuotedFileName);
+            response.setHeader("Content-Disposition", "attachment; filename=" + doubleQuotedFileName);
         }
     }
 

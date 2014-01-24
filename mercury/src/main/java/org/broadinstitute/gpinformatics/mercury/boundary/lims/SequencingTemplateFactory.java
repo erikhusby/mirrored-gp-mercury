@@ -233,16 +233,16 @@ public class SequencingTemplateFactory {
         }
         /** END Temp Hack **/
 
-        for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
-            LabVessel sourceVessel = vesselAndPosition.getVessel();
-            VesselPosition vesselPosition = vesselAndPosition.getPosition();
-            BigDecimal concentration = getLoadingConcentrationForVessel(sourceVessel);
-            SequencingTemplateLaneType lane =
-                    LimsQueryObjectFactory.createSequencingTemplateLaneType(vesselPosition.name(), concentration,
-                            sourceVessel.getLabel(),
-                            prodFlowcellBatches.iterator().next().getStartingVesselByPosition(vesselPosition)
-                                    .getLabel());
-            lanes.add(lane);
+        if (!prodFlowcellBatches.isEmpty()) {
+            for (VesselAndPosition vesselAndPosition : loadedVesselsAndPositions) {
+                LabVessel sourceVessel = vesselAndPosition.getVessel();
+                VesselPosition vesselPosition = vesselAndPosition.getPosition();
+                BigDecimal concentration = getLoadingConcentrationForVessel(sourceVessel);
+                SequencingTemplateLaneType lane = LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                        vesselPosition.name(), concentration, sourceVessel.getLabel(),
+                        prodFlowcellBatches.iterator().next().getStartingVesselByPosition(vesselPosition).getLabel());
+                lanes.add(lane);
+            }
         }
 
         if (lanes.isEmpty()) {

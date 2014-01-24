@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequestDefinitionInfo;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -13,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,11 +71,14 @@ public class BSPKitRequestService {
         String requesterId = creator.getUsername();
 
         ProductOrderKit kit = productOrder.getProductOrderKit();
+        SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
+                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kit.getNumberOfSamples(), kit.getMaterialInfo(),
+                        kit.getOrganismId(), kit.getPostReceiveOptions(), SampleKitWorkRequest.MoleculeType.DNA);
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
-                externalCollaboratorId, kit.getSiteId(), kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()), kit.getOrganismId(),
-                kit.getPostReceiveOptions(),kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod());
+                externalCollaboratorId, kit.getSiteId(),
+                kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()),
+                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), Collections.singletonList(kitWorkRequestDefinitionInfo));
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

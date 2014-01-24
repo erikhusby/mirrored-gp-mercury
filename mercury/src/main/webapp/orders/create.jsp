@@ -165,7 +165,7 @@
             <c:forEach items="${actionBean.postReceiveOptionKeys}" var="option" varStatus="stat" >
                 postReceiveOption["${option}"] = true;
             </c:forEach>
-            postReceiveOption.length=${fn:length(actionBean.postReceiveOptionKeys)}
+            postReceiveOption.length=${fn:length(actionBean.postReceiveOptionKeys)};
 
             function updateUIForProductChoice() {
 
@@ -390,6 +390,7 @@
                        "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div>" +
                            item.extraCount + '</li>'
             }
+
         </script>
     </stripes:layout-component>
 
@@ -603,31 +604,6 @@
                     </legend>
 
                     <div class="control-group">
-                        <stripes:label for="numberOfSamples" class="control-label">
-                            Number of Samples
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"
-                                          class="defaultText" title="Enter the number of samples"/>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <stripes:label for="kitType" class="control-label">
-                            Kit Type
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">
-                                <stripes:options-enumeration label="displayName"
-                                                             enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
-                            </stripes:select>
-                            <c:if test="${!actionBean.editOrder.draft}">
-                                <stripes:hidden name="editOrder.productOrderKit.kitType"/>
-                            </c:if>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
                         <stripes:label for="kitCollection" class="control-label">
                             Group and Collection
                         </stripes:label>
@@ -636,14 +612,6 @@
                                     id="kitCollection" name="bspGroupCollectionTokenInput.listOfKeys"
                                     class="defaultText"
                                     title="Search for collection and group"/>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <stripes:label for="selectedOrganism" class="control-label">
-                            Organism
-                        </stripes:label>
-                        <div id="selectedOrganism" class="controls">
                         </div>
                     </div>
 
@@ -672,28 +640,6 @@
                     </div>
 
                     <div class="control-group">
-                        <stripes:label for="materialInfo" class="control-label">
-                            Material Information
-                        </stripes:label>
-                        <div class="controls">
-                            <stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
-                                <stripes:option label="Choose..." value=""/>
-                                <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>
-                            </stripes:select>
-                            <c:if test="${!actionBean.editOrder.draft}">
-                                <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
-                            </c:if>
-                        </div>
-                    </div>
-
-                    <div id="postReceiveCheckboxGroup" class="control-group">
-                        <stripes:label for="selectedPostReceiveOptions" class="control-label">
-                            Post-Receive Options
-                        </stripes:label>
-                        <div id="postReceiveCheckboxes" class="controls controls-text"></div>
-                    </div>
-
-                    <div class="control-group">
                         <stripes:label for="isExomeExpress" class="control-label">
                             Exome Express
                         </stripes:label>
@@ -701,7 +647,7 @@
                             <c:choose>
                                 <c:when test="${actionBean.editOrder.draft}">
                                     <stripes:checkbox name="editOrder.productOrderKit.exomeExpress" id="isExomeExpress"/>
-                                <div class="form-value">This is an Exome Express Kit</div>
+                                    <div class="form-value">This is an Exome Express Kit</div>
                                 </c:when>
                                 <c:otherwise>
                                     <div class="form-value">${actionBean.editOrder.productOrderKit.exomeExpress}</div>
@@ -717,11 +663,71 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <stripes:label for="comments" class="control-label">Comments</stripes:label>
-                        <div class="controls">
-                            <stripes:textarea style="box-sizing: border-box; width: 100%;"
-                                              readonly="${!actionBean.editOrder.draft}"
-                                              id="comments" name="editOrder.productOrderKit.comments"/>
+                        <div id="kitDefinitions" class="controls" style="margin-top: 5px;">
+                            <div id="kitDefinitionDetail">
+                                <div class="control-group">
+                                    <stripes:label for="numberOfSamples" class="control-label">
+                                        Number of Samples
+                                    </stripes:label>
+                                    <div class="controls">
+                                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"
+                                                      class="defaultText" title="Enter the number of samples"/>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <stripes:label for="kitType" class="control-label">
+                                        Kit Type
+                                    </stripes:label>
+                                    <div class="controls">
+                                        <stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">
+                                            <stripes:options-enumeration label="displayName"
+                                                                         enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>
+                                        </stripes:select>
+                                        <c:if test="${!actionBean.editOrder.draft}">
+                                            <stripes:hidden name="editOrder.productOrderKit.kitType"/>
+                                        </c:if>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <stripes:label for="materialInfo" class="control-label">
+                                        Material Information
+                                    </stripes:label>
+                                    <div class="controls">
+                                        <stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">
+                                            <stripes:option label="Choose..." value=""/>
+                                            <stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>
+                                        </stripes:select>
+                                        <c:if test="${!actionBean.editOrder.draft}">
+                                            <stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>
+                                        </c:if>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <stripes:label for="selectedOrganism" class="control-label">
+                                        Organism
+                                    </stripes:label>
+                                    <div id="selectedOrganism" class="controls">
+                                    </div>
+                                </div>
+
+                                <div id="postReceiveCheckboxGroup" class="control-group">
+                                    <stripes:label for="selectedPostReceiveOptions" class="control-label">
+                                        Post-Receive Options
+                                    </stripes:label>
+                                    <div id="postReceiveCheckboxes" class="controls controls-text"></div>
+                                </div>
+                                <div class="control-group">
+                                    <stripes:label for="comments" class="control-label">Comments</stripes:label>
+                                    <div class="controls">
+                                        <stripes:textarea style="box-sizing: border-box; width: 100%;"
+                                                          readonly="${!actionBean.editOrder.draft}"
+                                                          id="comments" name="editOrder.productOrderKit.comments"/>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </fieldset>
