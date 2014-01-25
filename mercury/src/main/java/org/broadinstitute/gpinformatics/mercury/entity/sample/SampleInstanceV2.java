@@ -15,7 +15,7 @@ import java.util.Set;
 
 /**
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
- * in a bottom-up traversal from that LabVessel.
+ * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
 public class SampleInstanceV2 implements Cloneable {
 
@@ -37,7 +37,10 @@ public class SampleInstanceV2 implements Cloneable {
         reagents.addAll(labVessel.getReagentContents());
         allBucketEntries.addAll(labVessel.getBucketEntries());
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+            // If there is more than one transfer, we can't determine which transfer pertains to which ProductOrderSample.
+            if (labVessel.getTransfersFrom().size() < 2) {
+                allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
+            }
         }
         allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVessels());
     }
