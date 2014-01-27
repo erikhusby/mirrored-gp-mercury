@@ -110,9 +110,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent("downloadTracker")
     public Resolution downloadTracker() {
 
-        List<ProductOrder> productOrders =
-                productOrderDao.findListByBusinessKeys(editSession.getProductOrderBusinessKeys(), PRODUCT,
-                        RESEARCH_PROJECT, SAMPLES);
+        List<ProductOrder> productOrders = productOrderDao.findListForBilling(editSession.getProductOrderBusinessKeys());
 
         SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(productOrders);
 
