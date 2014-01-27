@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -35,9 +36,9 @@ public class ProductOrderKitTest extends ContainerTest {
     private UserTransaction utx;
 
     private ProductOrder order;
-    private final KitType kitType = KitType.DNA_MATRIX;
-    private final String bspName = "adsfasdf";
-    private final MaterialInfoDto MaterialInfoDto = new MaterialInfoDto(kitType.getKitName(), bspName);
+    public static final KitType kitType = KitType.DNA_MATRIX;
+    public static final String bspName = "adsfasdf";
+    public static final MaterialInfoDto materialInfoDto = new MaterialInfoDto(kitType.getKitName(), bspName);
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -49,7 +50,11 @@ public class ProductOrderKitTest extends ContainerTest {
         utx.begin();
 
         order = ProductOrderDBTestFactory.createTestProductOrder(researchProjectDao, productDao);
-        order.setProductOrderKit(new ProductOrderKit(1L, kitType, 2L, 3L, 4L, MaterialInfoDto));
+        ProductOrderKit productOrderKit = new ProductOrderKit(2L, 4L);
+        productOrderKit.addKitOrderDetail(new ProductOrderKitDetail(1L, kitType, 3L,
+                materialInfoDto));
+        order.setProductOrderKit(productOrderKit);
+
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -70,8 +75,10 @@ public class ProductOrderKitTest extends ContainerTest {
         ProductOrderKit kit = pdo.getProductOrderKit();
         Assert.assertNotNull(kit);
         Assert.assertNotNull(kit.getProductOrderKitId());
-        Assert.assertEquals(kit.getMaterialInfo().getBspName(), bspName);
-        Assert.assertEquals(kit.getMaterialInfo().getKitType(), kitType.getKitName());
+        for(ProductOrderKitDetail kitDetail:kit.getKitOrderDetails()) {
+            Assert.assertEquals(kitDetail.getMaterialInfo().getBspName(), bspName);
+            Assert.assertEquals(kitDetail.getMaterialInfo().getKitType(), kitType.getKitName());
+        }
     }
 
 }

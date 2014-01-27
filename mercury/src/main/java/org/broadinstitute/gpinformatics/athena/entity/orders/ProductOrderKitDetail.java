@@ -1,0 +1,162 @@
+package org.broadinstitute.gpinformatics.athena.entity.orders;
+
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.hibernate.envers.Audited;
+
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * TODO scottmat fill in javadoc!!!
+ */
+@Entity
+@Audited
+@Table(name = "PRODUCT_ORDER_KIT_DETAIL", schema = "athena")
+public class ProductOrderKitDetail implements Serializable {
+
+    private static final long serialVersionUID = 154655454790873331L;
+    public static final String NO_POST_RECEIVED_OPTIONS_SELECTED = "No Post-Received Options selected.";
+
+    @Id
+    @SequenceGenerator(name = "SEQ_PRODUCT_ORDER_KIT_DETAIL", schema = "athena",
+            sequenceName = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
+    @Column(name = "product_order_kit_detail_id", unique = true, nullable = false)
+    private Long productOrderKitDetaild;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private ProductOrderKit productOrderKit;
+
+    @Column(name = "number_samples")
+    private Long numberOfSamples;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kit_type")
+    private KitType kitType;
+
+    @Column(name = "organism_id")
+    private Long organismId;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(schema = "athena", name="PDO_KIT_DTL_POST_REC_OPT", joinColumns = {@JoinColumn(name="product_order_kit_detail_id")})
+    private Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
+
+    @Column(name = "material_bsp_name")
+    private String bspMaterialName;
+
+    public ProductOrderKitDetail() {
+    }
+
+    public ProductOrderKitDetail(Long numberOfSamples,
+                                 KitType kitType, Long organismId, MaterialInfoDto materialInfo) {
+        this.numberOfSamples = numberOfSamples;
+        this.kitType = kitType;
+        this.organismId = organismId;
+        this.setMaterialInfo(materialInfo);
+    }
+
+    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
+                                 MaterialInfoDto materialInfo, Set<PostReceiveOption> postReceiveOptions) {
+        this(numberOfSamples, kitType, organismId, materialInfo);
+        this.postReceiveOptions = postReceiveOptions;
+    }
+
+    public Long getProductOrderKitDetaild() {
+        return productOrderKitDetaild;
+    }
+
+    public void setProductOrderKitDetaild(Long productOrderKitDetaild) {
+        this.productOrderKitDetaild = productOrderKitDetaild;
+    }
+
+    public ProductOrderKit getProductOrderKit() {
+        return productOrderKit;
+    }
+
+    public Long getNumberOfSamples() {
+        return numberOfSamples;
+    }
+
+    public KitType getKitType() {
+        return kitType;
+    }
+
+    public Long getOrganismId() {
+        return organismId;
+    }
+
+    public Set<PostReceiveOption> getPostReceiveOptions() {
+        return postReceiveOptions;
+    }
+
+    public void setPostReceiveOptions(Set<PostReceiveOption> postReceiveOptions) {
+        this.postReceiveOptions = postReceiveOptions;
+    }
+
+    public String getBspMaterialName() {
+        return bspMaterialName;
+    }
+
+    public void setProductOrderKit(ProductOrderKit productOrderKit) {
+        this.productOrderKit = productOrderKit;
+    }
+
+
+    public MaterialInfoDto getMaterialInfo() {
+        return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
+    }
+
+    public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
+        bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
+    }
+
+    /**
+     * Return a string representation of this kit's PostReceive options
+     *
+     * @param delimiter characters used to join list values
+     */
+    public String getPostReceivedOptionsAsString(String delimiter) {
+        if (StringUtils.isBlank(delimiter)){
+            delimiter=", ";
+        }
+        if (getPostReceiveOptions().isEmpty()){
+            return NO_POST_RECEIVED_OPTIONS_SELECTED;
+        }
+
+        List<String> options=new ArrayList<>(postReceiveOptions.size());
+        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
+            options.add(postReceiveOption.getText());
+        }
+        return StringUtils.join(options, delimiter);
+    }
+
+    public String getKitTypeDisplayName() {
+        if (getKitType() == null) {
+            return null;
+        }
+
+        return getKitType().getDisplayName();
+    }
+
+}

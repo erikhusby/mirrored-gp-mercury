@@ -448,4 +448,130 @@
             <column name="transfer_method" type="varchar2(255 char)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-2383-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_kit_detail" />
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_kit_detail" schemaName="athena">
+            <column name="product_order_kit_detail_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="number_samples" type="number(19,0)">
+                <constraints nullable="true" />
+            </column>
+            <column name="material_bsp_name" type="varchar(255)" />
+            <column name="kit_type" type="varchar(255)"/>
+            <column name="organism_id" type="number(19,0)"/>
+            <column name="product_order_kit" type="number(19, 0)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_kit_detail" schemaName="athena"
+                       columnNames="product_order_kit_detail_id" />
+        <createSequence sequenceName="SEQ_PRODUCT_ORDER_KIT_DETAIL" schemaName="athena" startValue="1"
+                        incrementBy="50"/>
+
+        <addForeignKeyConstraint baseColumnNames="product_order_kit" baseTableName="PRODUCT_ORDER_KIT_DETAIL"
+                                 baseTableSchemaName="athena" constraintName="FK_PROD_ORD_KIT_DTL_TO_KIT"
+                                 referencedColumnNames="product_order_kit_id"
+                                 referencedTableName="PRODUCT_ORDER_KIT" referencedTableSchemaName="athena" />
+    </changeSet>
+
+    <changeSet id="GPLIM-2383-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_kit_detail_aud" />
+            </not>
+        </preConditions>
+        <createTable tableName="product_order_kit_detail_aud" schemaName="athena">
+            <column name="product_order_kit_detail_id" type="number(19,0)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="number_samples" type="number(19,0)"/>
+            <column name="material_bsp_name" type="varchar(255)" />
+            <column name="kit_type" type="varchar(255)"/>
+            <column name="organism_id" type="number(19,0)"/>
+            <column name="product_order_kit" type="number(19, 0)" />
+        </createTable>
+
+        <addPrimaryKey tableName="product_order_kit_detail_aud" schemaName="athena"
+                       columnNames="product_order_kit_detail_id, rev" />
+        <addForeignKeyConstraint baseTableName="product_order_kit_detail_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_PDOKIT_DTL_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+    <changeSet id="GPLIM-2383-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="pdo_kit_dtl_post_rec_opt" schemaName="athena" />
+            </not>
+        </preConditions>
+        <createTable tableName="pdo_kit_dtl_post_rec_opt">
+            <column name="product_order_kit_detail_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="post_receive_options" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey tableName="pdo_kit_dtl_post_rec_opt" schemaName="athena"
+                       columnNames="product_order_kit_detail_id, post_receive_options" />
+        <addForeignKeyConstraint constraintName="FK_PDOKIT_DTL_POST_REC_OPT" referencedTableName="product_order_kit_detail"
+                                 referencedColumnNames="PRODUCT_ORDER_KIT_DETAIL_ID" baseTableName="pdo_kit_dtl_post_rec_opt"
+                                 baseColumnNames="PRODUCT_ORDER_KIT_DETAIL_ID"/>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-2383-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="pdo_kit_dtl_post_rec_opt_aud" schemaName="athena" />
+            </not>
+        </preConditions>
+        <createTable tableName="pdo_kit_dtl_post_rec_opt_aud">
+            <column name="product_order_kit_detail_id" type="number(19,0)" />
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="post_receive_options" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey tableName="pdo_kit_dtl_post_rec_opt_aud" schemaName="athena"
+                       columnNames="product_order_kit_detail_id, post_receive_options, rev" />
+        <addForeignKeyConstraint baseTableName="pdo_kit_dtl_post_rec_opt_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_PDOKIT_DTL_OPT_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2403-0" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER" columnName="skip_quote_reason"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER">
+            <column name="skip_quote_reason" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2403-1" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="PRODUCT_ORDER_AUD" columnName="skip_quote_reason"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="PRODUCT_ORDER_AUD">
+            <column name="skip_quote_reason" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

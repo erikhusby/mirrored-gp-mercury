@@ -297,6 +297,20 @@ public class CoreActionBean implements ActionBean, MessageReporter {
     }
 
     /**
+     * Convenience method used only for testing.
+     */
+    public ValidationErrors getValidationErrors() {
+        return getContext().getValidationErrors();
+    }
+
+    /**
+     * Convenience method used only for testing.
+     */
+    public void clearValidationErrors() {
+        getContext().getValidationErrors().clear();
+    }
+
+    /**
      * Support for converting a message collection to ValidationErrors/SimpleErrors.
      */
     protected void addMessages(MessageCollection messages) {

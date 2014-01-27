@@ -33,6 +33,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
     public static final String RNA_FAMILY_NAME = "RNA";
+    public static final String INITIATION_FAMILY_NAME = "Sample Initiation, Qualification & Cell Culture";
 
     public enum ProductFamilyName {
         RNA("RNA"),
@@ -114,5 +115,9 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     public boolean isSupportsRin() {
         return name.equals(RNA_FAMILY_NAME);
+    }
+
+    public boolean isSupportsSkippingQuote() {
+        return INITIATION_FAMILY_NAME.equalsIgnoreCase(name);
     }
 }

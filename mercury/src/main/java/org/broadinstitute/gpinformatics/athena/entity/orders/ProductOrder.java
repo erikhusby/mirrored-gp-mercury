@@ -116,7 +116,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToOne
     private ResearchProject researchProject;
 
-    @OneToOne
+    @ManyToOne
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -165,6 +165,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
+
+    @Column(name = "SKIP_QUOTE_REASON", length=255)
+    private String skipQuoteReason;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -962,6 +965,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     private boolean isSheetEmpty() {
         return samples.isEmpty();
+    }
+
+    public String getSkipQuoteReason() {
+        return skipQuoteReason;
+    }
+
+    public void setSkipQuoteReason(String skipQuoteReason) {
+        this.skipQuoteReason = skipQuoteReason;
     }
 
     @Override
