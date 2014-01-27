@@ -37,6 +37,11 @@ public class BSPSampleDataFetcherTest extends ContainerTest {
         Assert.assertEquals(fetcher.getStockIdForAliquotId("SM-1T7HE"), "SM-1KXW2");
     }
 
+    public void testGetStockIdForAliquotIdNoPrefix() {
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
+        Assert.assertEquals(fetcher.getStockIdForAliquotId("1T7HE"), "SM-1KXW2");
+    }
+
     public void testPooledSampleWithMultipleRoots() {
         BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(sampleSearchService);
         BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-41YNK");

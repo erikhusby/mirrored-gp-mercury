@@ -5,9 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Some utilities for parsing lsids
+ * Some utilities for working with BSP LSIDs.
  */
 public class BSPLSIDUtil {
+
+    public static final String BSP_LSID_FRAGMENT = ":bsp.";
+
+    public static boolean isBspLsid(String id) {
+        return id.contains(BSP_LSID_FRAGMENT);
+    }
 
     public static String lsidToBareId(String lsid) {
         return lsid.substring(lsid.lastIndexOf(':') + 1);

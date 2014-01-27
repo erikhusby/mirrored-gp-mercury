@@ -221,24 +221,24 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         List<String> aliquotIds = new ArrayList<>();
         for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
             String aliquotId = workCompleteMessage.getAliquotId();
-            if (!BSPUtil.isInBspFormat(aliquotId)) {
+            if (BSPLSIDUtil.isBspLsid(aliquotId)) {
                 aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+                aliquotIds.add(aliquotId);
             }
-            aliquotIds.add(aliquotId);
         }
         Map<String, String> stockIdByAliquotId = sampleDataFetcher.getStockIdByAliquotId(aliquotIds);
 
         Map<String, WorkCompleteMessage> workCompleteMessageBySample = new HashMap<>();
         for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
             String aliquotId = workCompleteMessage.getAliquotId();
-            if (!BSPUtil.isInBspFormat(aliquotId)) {
+            if (BSPLSIDUtil.isBspLsid(aliquotId)) {
                 aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
+                String stockId = stockIdByAliquotId.get("SM-" + aliquotId);
+                if (stockId == null) {
+                    throw new RuntimeException("Couldn't find a stock sample for aliquot: " + aliquotId);
+                }
+                workCompleteMessageBySample.put(stockId, workCompleteMessage);
             }
-            String stockId = stockIdByAliquotId.get("SM-" + aliquotId);
-            if (stockId == null) {
-                throw new RuntimeException("Couldn't find a stock sample for aliquot: " + aliquotId);
-            }
-            workCompleteMessageBySample.put(stockId, workCompleteMessage);
         }
         return workCompleteMessageBySample;
     }
