@@ -193,7 +193,7 @@ public class ProductOrderDaoTest extends ContainerTest {
      * Verify that things are pre-fetched properly for billing performance.  See GPLIM-832.
      */
     @Test
-    public void testThaPDOFetchedForBillingHasHadRelatedEntitiesPrefetched() throws Exception {
+    public void testThatPDOFetchedForBillingHasHadRelatedEntitiesPrefetched() throws Exception {
         List<ProductOrder> pdos = productOrderDao.findListForBilling(Collections.singletonList("PDO-127"));
         Assert.assertEquals(pdos.size(),1);
 
