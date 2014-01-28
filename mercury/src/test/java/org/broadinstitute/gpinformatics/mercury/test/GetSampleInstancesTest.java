@@ -51,8 +51,12 @@ public class GetSampleInstancesTest {
     private StaticPlate indexPlateP5;
     private TwoDBarcodedTube baitTube;
 
+    /**
+     * Moves 3 samples through initiation and extraction; makes an LCSET with tubes 1 and 2; reworks tube 2 in
+     * another LCSET with tube3; adds a control to each LC rack.
+     */
     @Test
-    public void testBasic() {
+    public void testRework() {
         // Reagents
         // Molecular indexes
         final String p7IndexPlateBarcode = "P7";
@@ -220,6 +224,9 @@ public class GetSampleInstancesTest {
         BaseEventTest.runTransferVisualizer(poolTube);
     }
 
+    /**
+     * Moves tubes through (simplified) library construction transfers.
+     */
     private StaticPlate sequencing(TwoDBarcodedTube tube1, TwoDBarcodedTube tube2,
             final ProductOrder sampleInitProductOrder, final ProductOrder extractionProductOrder,
             final ProductOrder sequencingProductOrder, String tube1RootSample, boolean tube1Rework, int lcsetNum) {
