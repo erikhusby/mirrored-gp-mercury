@@ -53,7 +53,7 @@ public class GetSampleInstancesTest {
 
     /**
      * Moves 3 samples through initiation and extraction; makes an LCSET with tubes 1 and 2; reworks tube 2 in
-     * another LCSET with tube3; adds a control to each LC rack.
+     * another LCSET with tube3; adds a control to each LC rack; pools the 2 LCSETs into one tube.
      */
     @Test
     public void testRework() {
