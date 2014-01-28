@@ -108,7 +108,6 @@ public class VesselContainer<T extends LabVessel> {
 
     @SuppressWarnings("InstanceVariableMayNotBeInitialized")
     @Parent
-    @Transient
     private LabVessel embedder;
 
     public VesselContainer() {
@@ -466,6 +465,7 @@ public class VesselContainer<T extends LabVessel> {
         return (Map<VesselPosition, T>) mapPositionToVessel;
     }
 
+    @Transient
     public LabVessel getEmbedder() {
         return embedder;
     }

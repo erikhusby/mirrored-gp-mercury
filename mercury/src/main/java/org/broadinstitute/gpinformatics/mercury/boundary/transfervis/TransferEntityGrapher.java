@@ -284,7 +284,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             }
             label.append("<br/>");
         }
-        if (!labEvent.getComputedLcSets().isEmpty()) {
+        if (!labEvent.computeLcSets().isEmpty()) {
             for (LabBatch labBatch : labEvent.getComputedLcSets()) {
                 label.append(labBatch.getBatchName());
                 label.append(", ");
