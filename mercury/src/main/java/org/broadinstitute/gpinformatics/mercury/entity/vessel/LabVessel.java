@@ -51,6 +51,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1028,6 +1029,17 @@ public abstract class LabVessel implements Serializable {
     @SuppressWarnings("unused")
     public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
         return labBatches;
+    }
+
+    public List<LabBatchStartingVessel> getLabBatchStartingVesselsByDate() {
+        List<LabBatchStartingVessel> batchVesselsByDate = new ArrayList<>(labBatches);
+        Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
+            @Override
+            public int compare(LabBatchStartingVessel o1, LabBatchStartingVessel o2) {
+                return o1.getLabBatch().getCreatedOn().compareTo(o2.getLabBatch().getCreatedOn());
+            }
+        });
+        return batchVesselsByDate;
     }
 
     public Set<LabBatchStartingVessel> getDilutionReferences() {
