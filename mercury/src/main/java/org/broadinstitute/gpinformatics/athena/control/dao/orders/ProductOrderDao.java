@@ -152,7 +152,7 @@ public class ProductOrderDao extends GenericDao {
      * @return Corresponding Product Order.
      */
     public ProductOrder findByTitle(String title) {
-        return findSingle(ProductOrder.class, ProductOrder_.title, title);
+        return findSingle(ProductOrder.class, ProductOrder_.tjspitle, title);
     }
 
     /**

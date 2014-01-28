@@ -26,9 +26,9 @@ public class BucketDBFreeTest {
 
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        final String poBusinessKey1 = "PDO-1";
-        final String poBusinessKey2 = "PDO-2";
-        final String poBusinessKey3 = "PDO-3";
+        final String poBusinessKey1 = "PDO-8";
+        final String poBusinessKey2 = "PDO-9";
+        final String poBusinessKey3 = "PDO-10";
 
         final String twoDBarcode1 = "SM-321";
         final String twoDBarcode2 = "SM-322";
