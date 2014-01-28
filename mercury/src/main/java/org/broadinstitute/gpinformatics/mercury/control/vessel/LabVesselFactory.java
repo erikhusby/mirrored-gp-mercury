@@ -177,7 +177,7 @@ public class LabVesselFactory implements Serializable {
                     }
                     staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator, "BSP"));
                     disambiguator++;
-                } else if (vesselType.contains("rack")) {
+                } else if (vesselType.contains("rack") || vesselType.contains("box")) {
                     RackOfTubes rackOfTubes =
                             (RackOfTubes) mapBarcodeToVessel.get(parentVesselBean.getManufacturerBarcode());
                     if (rackOfTubes == null) {
