@@ -19,8 +19,8 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
 
-    public static final String ALIQUOT_ID_1 = "SM-ALIQUOT1";
-    public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
+    public static final String ALIQUOT_ID_1 = "SM-ALQT1";
+    public static final String ALIQUOT_ID_2 = "SM-ALQT2";
     public static final String STOCK_ID = "SM-STOCK";
 
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(null, null, null, null, null, null, null,
@@ -31,6 +31,7 @@ public class ProductOrderEjbTest {
                     // For this test case, both aliquots map to the same sample.
                     return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
                         add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                            put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
                             put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
                             put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
                         }});

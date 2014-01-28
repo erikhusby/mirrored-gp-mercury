@@ -20,7 +20,9 @@ import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
@@ -378,6 +380,30 @@ public class GenericDao {
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }
+    }
+
+    /**
+     * Returns a list of entities that matches wildcarded string ('% string %') for a specified property.
+     *
+     * @param entity             the class of entity to return
+     * @param values             list of values to query
+     * @param singularAttributes one or more metadata fields for the property to query
+     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                           there is inheritance
+     * @param <ENTITY_TYPE>      the type of the entity to return
+     *
+     * @return list of entities that match the value, or empty list if not found
+     */
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> Collection<ENTITY_TYPE> findListWithWildcardList(
+            Class<ENTITY_TYPE> entity, List<String> values, boolean ignoreCase,
+            SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
+        Set<ENTITY_TYPE> foundValues=new HashSet<>();
+        for (String value:values) {
+            foundValues.addAll(findListWithWildcard(entity, value, ignoreCase, singularAttributes));
+        }
+
+        return foundValues;
     }
 
     protected Predicate createOrTerms(CriteriaBuilder builder, Path<?> fieldExpression, List<?> values) {

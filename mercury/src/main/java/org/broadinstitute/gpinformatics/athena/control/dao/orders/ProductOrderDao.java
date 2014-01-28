@@ -67,7 +67,8 @@ public class ProductOrderDao extends GenericDao {
         PRODUCT_FAMILY,
         RESEARCH_PROJECT,
         SAMPLES,
-        RISK_ITEMS
+        RISK_ITEMS,
+        LEDGER_ITEMS
     }
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
@@ -93,6 +94,9 @@ public class ProductOrderDao extends GenericDao {
 
                 if (fetchSpecs.contains(FetchSpec.RISK_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
+                }
+                if (fetchSpecs.contains(FetchSpec.PRODUCT.LEDGER_ITEMS)) {
+                    pdoSampleFetch.fetch(ProductOrderSample_.ledgerItems, JoinType.LEFT);
                 }
             }
 
@@ -163,6 +167,15 @@ public class ProductOrderDao extends GenericDao {
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys,
                 new ProductOrderDaoCallback(fetchSpecs));
     }
+
+    /**
+     * Calls {@link #findListByBusinessKeys(Collection, ProductOrderDao.FetchSpec...)}
+     * with a hardcoded set of fetch specs that are tuned for the billing tracker downloads.  See GPLIM-832 for details.
+     */
+    public List<ProductOrder> findListForBilling(Collection<String> businessKeys) {
+        return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT,FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES, FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
+    }
+
 
     // Used by tests only.
     public List<ProductOrder> findByWorkflow(@Nonnull Workflow workflow) {

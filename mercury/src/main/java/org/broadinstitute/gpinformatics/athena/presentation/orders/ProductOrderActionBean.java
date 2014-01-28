@@ -29,6 +29,7 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrders;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -555,10 +556,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("You must select at least one product order to start a {2}", validatingFor);
         } else {
             Set<Product> products = new HashSet<>();
-            selectedProductOrders =
-                    productOrderDao.findListByBusinessKeys(selectedProductOrderBusinessKeys,
-                            ProductOrderDao.FetchSpec.PRODUCT, ProductOrderDao.FetchSpec.RESEARCH_PROJECT,
-                            ProductOrderDao.FetchSpec.SAMPLES);
+            selectedProductOrders = productOrderDao.findListForBilling(selectedProductOrderBusinessKeys);
 
             for (ProductOrder order : selectedProductOrders) {
                 products.add(order.getProduct());

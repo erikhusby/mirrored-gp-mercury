@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -16,6 +18,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.PersistenceUnitUtil;
 import javax.transaction.UserTransaction;
 import java.text.MessageFormat;
 import java.util.*;
@@ -23,6 +26,10 @@ import java.util.*;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
+
+    @Inject
+    private ThreadEntityManager entityManager;
+
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -180,6 +187,26 @@ public class ProductOrderDaoTest extends ContainerTest {
         assertContains(productOrderMap, "PDO-359", "NTC");
         assertContains(productOrderMap, "PDO-532", "NTC");
         assertContains(productOrderMap, "PDO-373", "SC_9001");
+    }
+
+    /**
+     * Verify that things are pre-fetched properly for billing performance.  See GPLIM-832.
+     */
+    @Test
+    public void testThatPDOFetchedForBillingHasHadRelatedEntitiesPrefetched() throws Exception {
+        List<ProductOrder> pdos = productOrderDao.findListForBilling(Collections.singletonList("PDO-127"));
+        Assert.assertEquals(pdos.size(),1);
+
+        PersistenceUnitUtil persistenceUtil = entityManager.getEntityManager().getEntityManagerFactory().getPersistenceUnitUtil();
+
+        ProductOrder pdo = pdos.iterator().next();
+
+        Assert.assertTrue(persistenceUtil.isLoaded(pdo,"samples"),"Samples should be pre-fetched so that the billing tracker download doesn't take forever to download.");
+
+        for (ProductOrderSample productOrderSample : pdo.getSamples()) {
+            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"ledgerItems"),"Ledger items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
+            Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"riskItems"),"Risk items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
+        }
     }
 
 }

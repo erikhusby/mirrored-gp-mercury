@@ -171,7 +171,11 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
      * Given an aliquot ID, return its stock sample ID.
      */
     public String getStockIdForAliquotId(@Nonnull String aliquotId) {
-        return getStockIdByAliquotId(Collections.singletonList(aliquotId)).get(aliquotId);
+        Map<String, String> stockIdByAliquotId = getStockIdByAliquotId(Collections.singletonList(aliquotId));
+        if (!BSPUtil.isInBspFormat(aliquotId)) {
+            aliquotId = "SM-" + aliquotId;
+        }
+        return stockIdByAliquotId.get(aliquotId);
     }
 
     /**
@@ -179,11 +183,13 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
      */
     public Map<String, String> getStockIdByAliquotId(Collection<String> aliquotIds) {
         Map<String, String> stockIdByAliquotId = new HashMap<>();
-        List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(aliquotIds,
-                BSPSampleSearchColumn.SAMPLE_ID, BSPSampleSearchColumn.STOCK_SAMPLE);
-        for (Map<BSPSampleSearchColumn, String> result : results) {
-            stockIdByAliquotId.put(result.get(BSPSampleSearchColumn.SAMPLE_ID),
-                    result.get(BSPSampleSearchColumn.STOCK_SAMPLE));
+        if (!aliquotIds.isEmpty()) {
+            List<Map<BSPSampleSearchColumn, String>> results = service.runSampleSearch(aliquotIds,
+                    BSPSampleSearchColumn.SAMPLE_ID, BSPSampleSearchColumn.STOCK_SAMPLE);
+            for (Map<BSPSampleSearchColumn, String> result : results) {
+                stockIdByAliquotId.put(result.get(BSPSampleSearchColumn.SAMPLE_ID),
+                        result.get(BSPSampleSearchColumn.STOCK_SAMPLE));
+            }
         }
         return stockIdByAliquotId;
     }
