@@ -90,6 +90,7 @@ public class GetSampleInstancesTest {
             i++;
         }
         LabBatch receiptBatch = new LabBatch("SK-1", receivedVessels, LabBatch.LabBatchType.SAMPLES_RECEIPT);
+        receiptBatch.setCreatedOn(new Date(now++));
 
         // extraction PDO
         Product extractionProduct = ProductTestFactory.createDummyProduct(Workflow.ICE, "EXTR-01");
@@ -181,6 +182,7 @@ public class GetSampleInstancesTest {
             switch (poolSampleInstance.getMercuryRootSampleName()) {
             case "SM-12431":
                 matchedSamples++;
+                //noinspection ConstantConditions
                 Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-1");
                 break;
             case "SM-23541":
@@ -192,6 +194,7 @@ public class GetSampleInstancesTest {
                     matchedSamples++;
                     break;
                 case "Illumina_P5-C_P7-C":
+                    //noinspection ConstantConditions
                     Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
                     matchedSamples++;
                     break;
@@ -205,6 +208,7 @@ public class GetSampleInstancesTest {
                 break;
             case "SM-34651":
                 matchedSamples++;
+                //noinspection ConstantConditions
                 Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
                 break;
             default:
@@ -224,6 +228,8 @@ public class GetSampleInstancesTest {
         extractedVessels.add(tube1);
         extractedVessels.add(tube2);
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
+        lcsetBatch.setCreatedOn(new Date(now++));
+        lcsetBatch.setWorkflowName("Exome Express");
         BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry1.setLabBatch(lcsetBatch);
@@ -255,6 +261,7 @@ public class GetSampleInstancesTest {
         // Import
         LabBatch importLabBatch = new LabBatch("EX-" + lcsetNum, new HashSet<LabVessel>(mapPositionToExtractTubeControl.values()),
                 LabBatch.LabBatchType.SAMPLES_IMPORT);
+        importLabBatch.setCreatedOn(new Date(now++));
         // Add the rework after the import
         if (tube1Rework) {
             mapPositionToExtractTubeControl.put(position1, tube1);
@@ -307,21 +314,33 @@ public class GetSampleInstancesTest {
                     break;
                 }
             }
-            Assert.assertEquals(sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.SAMPLES_IMPORT), importBatchVessels);
+            Assert.assertEquals(sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.SAMPLES_IMPORT),
+                    importBatchVessels);
         }
+        Assert.assertEquals(sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.WORKFLOW).getLabBatch().getBatchName(),
+                "LCSET-" + lcsetNum);
+        List<LabBatchStartingVessel> allBatchVessels = sampleInstance.getAllBatchVessels(null);
+        int index = 0;
+        if (tube1Rework) {
+            Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "LCSET-2");
+        }
+        Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "EX-1");
+        Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "LCSET-1");
+        Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), "SK-1");
+        Assert.assertEquals(sampleInstance.getWorkflowName(), "Exome Express");
 
         Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
         final int sampleIndex = lcsetNum - 1;
-        Assert.assertEquals(new HashSet<>(sampleInstance.getAllProductOrderSamples()),
-                new HashSet<ProductOrderSample>() {{
-                    add(sampleInitProductOrder.getSamples().get(sampleIndex));
-                    add(extractionProductOrder.getSamples().get(sampleIndex));
-                    add(sequencingProductOrder.getSamples().get(sampleIndex));
-                }});
+        HashSet<ProductOrderSample> expected = new HashSet<ProductOrderSample>() {{
+            add(sampleInitProductOrder.getSamples().get(sampleIndex));
+            add(extractionProductOrder.getSamples().get(sampleIndex));
+            add(sequencingProductOrder.getSamples().get(sampleIndex));
+        }};
+        Assert.assertEquals(new HashSet<>(sampleInstance.getAllProductOrderSamples()), expected);
+        sampleInstance.getSingleProductOrderSample();
 
         // Verify control
-        sampleInstances =
-                shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position3);
+        sampleInstances = shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position3);
         Assert.assertEquals(sampleInstances.size(), 1);
         sampleInstance = sampleInstances.iterator().next();
         verifyReagents(sampleInstance, lcsetNum == 1 ? "Illumina_P5-V_P7-V" : "Illumina_P5-X_P7-X");
