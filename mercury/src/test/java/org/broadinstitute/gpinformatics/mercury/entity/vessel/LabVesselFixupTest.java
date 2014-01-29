@@ -406,4 +406,10 @@ public class LabVesselFixupTest extends Arquillian {
         twoDBarcodedTubeDao.flush();
     }
 
+    @Test(enabled = false)
+    public void fixupGplim2449() {
+        // SM-4VFD1 is in the Pico bucket twice: 0150466237, 0156371090
+        TwoDBarcodedTube oldTube = twoDBarcodedTubeDao.findByBarcode("0156371090");
+        twoDBarcodedTubeDao.remove(oldTube);
+    }
 }

@@ -507,7 +507,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             for (Object o : vesselContainer.getVesselToSectionTransfersTo()) {
                 VesselToSectionTransfer vesselToSectionTransfer = (VesselToSectionTransfer) o;
                 ReceptacleVesselVertex receptacleVessel = new ReceptacleVesselVertex(
-                        (TwoDBarcodedTube) vesselToSectionTransfer.getSourceVessel());
+                        OrmUtil.proxySafeCast(vesselToSectionTransfer.getSourceVessel(), TwoDBarcodedTube.class));
                 if (receptacleVessel.render(graph, alternativeIds)) {
                     vesselVertexQueue.add(receptacleVessel);
                     numVesselsAdded++;
