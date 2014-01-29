@@ -231,6 +231,9 @@ public class SequencingTemplateFactory {
                         TransferTraverserCriteria.NearestLabBatchFinder.AssociationType.DILUTION_VESSEL);
         flowcell.getContainerRole().applyCriteriaToAllPositions(batchCriteria);
         Collection<LabBatch> prodFlowcellBatches = batchCriteria.getAllLabBatches();
+        if (prodFlowcellBatches.isEmpty()) {
+            prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
+        }
 
         if (prodFlowcellBatches.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one FCT Batches " +
