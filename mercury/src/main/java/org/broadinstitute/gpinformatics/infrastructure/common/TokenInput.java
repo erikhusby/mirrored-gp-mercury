@@ -10,6 +10,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -202,6 +203,28 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject), readonly);
         item.put("dropdownItem", formatMessage(formatString, tokenObject));
         return item;
+    }
+
+    /**
+     * Split input string on whitespace and return as Collection.
+     *
+     * @param query tokenized string
+     *
+     * @return Collection of strings split on whitespace.
+     */
+    protected Collection<String> extractSearchTerms(@Nullable String query) {
+        if (query == null) {
+            return Collections.emptyList();
+        } else {
+            List<String> returnValue=new ArrayList<>();
+            for (String theString : query.split("\\s")){
+                if (!theString.trim().isEmpty()){
+                    returnValue.add(theString);
+                }
+            }
+
+            return returnValue;
+        }
     }
 
     /** Used to build the generic JSON object for token input */

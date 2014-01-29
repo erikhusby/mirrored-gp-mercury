@@ -91,25 +91,6 @@ public class IsExported {
         public boolean isExportedToSequencing() {
             return exportDestinations.contains(ExternalSystem.Sequencing);
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            ExportResult that = (ExportResult) o;
-
-            return barcode.equals(that.barcode);
-        }
-
-        @Override
-        public int hashCode() {
-            return barcode.hashCode();
-        }
     }
 
     /**

@@ -35,6 +35,7 @@ import java.util.Set;
 public class ProductOrderKitDetail implements Serializable {
 
     private static final long serialVersionUID = 154655454790873331L;
+    public static final String NO_POST_RECEIVED_OPTIONS_SELECTED = "No Post-Received Options selected.";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER_KIT_DETAIL", schema = "athena",
@@ -140,7 +141,7 @@ public class ProductOrderKitDetail implements Serializable {
             delimiter=", ";
         }
         if (getPostReceiveOptions().isEmpty()){
-            return "No Post-Received Options selected.";
+            return NO_POST_RECEIVED_OPTIONS_SELECTED;
         }
 
         List<String> options=new ArrayList<>(postReceiveOptions.size());

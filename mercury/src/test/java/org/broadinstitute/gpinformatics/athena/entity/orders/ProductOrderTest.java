@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.not;
 public class ProductOrderTest {
 
     private static final Long TEST_CREATOR = 1111L;
-    private static final String PDO_JIRA_KEY = "PDO-1";
+    public static final String PDO_JIRA_KEY = "PDO-8";
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");
@@ -96,6 +96,7 @@ public class ProductOrderTest {
                 .ignoreProperty("requisitionName")
                 .ignoreProperty("publicationDeadline")
                 .ignoreProperty("productOrderKit")
+                .ignoreProperty("skipQuoteReason")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
@@ -197,5 +198,13 @@ public class ProductOrderTest {
     public void testUpdateOrderStatus(ProductOrder order, boolean result, OrderStatus status) {
         Assert.assertEquals(order.updateOrderStatus(), result);
         Assert.assertEquals(order.getOrderStatus(), status);
+    }
+
+    @Test
+    public void testQuoteStringForJira() {
+        ProductOrder pdo = new ProductOrder();
+        Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
+        pdo.setQuoteId("BLAH");
+        Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),"BLAH");
     }
 }

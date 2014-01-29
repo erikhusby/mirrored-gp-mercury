@@ -5,6 +5,15 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.testng.Assert;
@@ -12,6 +21,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +29,8 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
 
-    public static final String ALIQUOT_ID_1 = "SM-ALIQUOT1";
-    public static final String ALIQUOT_ID_2 = "SM-ALIQUOT2";
+    public static final String ALIQUOT_ID_1 = "SM-ALQT1";
+    public static final String ALIQUOT_ID_2 = "SM-ALQT2";
     public static final String STOCK_ID = "SM-STOCK";
 
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(null, null, null, null, null, null, null,
@@ -31,6 +41,7 @@ public class ProductOrderEjbTest {
                     // For this test case, both aliquots map to the same sample.
                     return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
                         add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                            put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
                             put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
                             put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
                         }});
@@ -73,5 +84,26 @@ public class ProductOrderEjbTest {
         ProductOrderSample sample2 = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_2);
         Assert.assertEquals(sample.getAliquotId(), ALIQUOT_ID_1);
         Assert.assertEquals(sample2.getAliquotId(), ALIQUOT_ID_2);
+    }
+
+    public void testCreatePDOUpdateFieldForQuote() {
+        ProductOrder pdo = new ProductOrder();
+        pdo.setQuoteId("DOUGH");
+        ProductOrderEjb pdoEjb = new ProductOrderEjb();
+        PDOUpdateField updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
+
+        Assert.assertEquals(updateField.getNewValue(),pdo.getQuoteId());
+
+        pdo.setQuoteId(null);
+
+        updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
+        Assert.assertEquals(updateField.getNewValue(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
+    }
+
+    public void testValidateQuote() throws Exception {
+        ProductOrder pdo = new ProductOrder();
+        pdo.setQuoteId("CASH");
+        ProductOrderEjb pdoEjb = new ProductOrderEjb();
+        pdoEjb.validateQuote(pdo, new QuoteServiceStub());
     }
 }

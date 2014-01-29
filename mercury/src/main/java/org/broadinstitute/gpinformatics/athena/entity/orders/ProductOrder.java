@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -69,6 +70,9 @@ import java.util.Set;
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
+    // for clarity in jira, we use this string in the quote field when there is no quote
+    public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
+
     private static final String DRAFT_PREFIX = "Draft-";
 
     private static final String REQUISITION_PREFIX = "REQ-";
@@ -116,7 +120,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @ManyToOne
     private ResearchProject researchProject;
 
-    @OneToOne
+    @ManyToOne
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -165,6 +169,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
+
+    @Column(name = "SKIP_QUOTE_REASON", length=255)
+    private String skipQuoteReason;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -683,6 +690,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Returns the text used for the quote in
+     * jira.  If there is no quote, the text
+     * {@link #QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY} is used.
+     */
+    public String getQuoteStringForJiraTicket() {
+        String quoteForJira = QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY;
+        if (!StringUtils.isEmpty(quoteId)) {
+            quoteForJira = quoteId;
+        }
+        return quoteForJira;
+    }
+
+    /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
@@ -837,85 +857,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
-     * This mainly deals with jira ticket creation.  This method will:
-     * <ul>
-     * <li>Create a new jira ticket and persist the reference to the ticket key</li>
-     * <li>assign the submitter as a watcher to the ticket</li>
-     * <li>Add a new comment listing all Samples contained within the order</li>
-     * <li>Add any validation comments regarding the Samples contained within the order</li>
-     * </ul>
-     *
-     * @throws IOException
-     */
-    public void placeOrder() throws IOException {
-        placedDate = new Date();
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
-        List<CustomField> listOfFields = new ArrayList<>();
-
-        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT_FAMILY,
-                product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
-
-        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT,
-                product.getProductName() == null ? "" : product.getProductName()));
-
-        if (quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
-        }
-
-        if (!addOns.isEmpty()) {
-            List<String> addOnsList = new ArrayList<>(addOns.size());
-            for (ProductOrderAddOn addOn : addOns) {
-                addOnsList.add(addOn.getAddOn().getDisplayName());
-            }
-            Collections.sort(addOnsList);
-            listOfFields.add(new CustomField(submissionFields, JiraField.ADD_ONS, StringUtils.join(addOnsList, "\n")));
-        }
-
-        listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
-
-        if (product.getSupportsNumberOfLanes()) {
-            listOfFields.add(
-                    new CustomField(submissionFields, ProductOrder.JiraField.LANES_PER_SAMPLE, laneCount));
-        }
-
-        if (publicationDeadline != null) {
-            listOfFields.add(new CustomField(submissionFields, JiraField.PUBLICATION_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(publicationDeadline)));
-        }
-
-        if (fundingDeadline != null) {
-            listOfFields.add(new CustomField(submissionFields, JiraField.FUNDING_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(getFundingDeadline())));
-        }
-
-        if (comments != null) {
-            listOfFields.add(new CustomField(submissionFields, JiraField.DESCRIPTION, comments));
-        }
-
-        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
-        CreateFields.IssueType issueType;
-        if (product.isSampleInitiationProduct()) {
-            issueType = CreateFields.IssueType.SAMPLE_INITIATION;
-        } else {
-            issueType = CreateFields.IssueType.PRODUCT_ORDER;
-        }
-
-        JiraIssue issue = jiraService.createIssue(
-                CreateFields.ProjectType.PRODUCT_ORDERING, bspUserList.getById(createdBy).getUsername(), issueType,
-                title, listOfFields);
-
-        jiraTicketKey = issue.getKey();
-        issue.addLink(researchProject.getJiraTicketKey());
-
-        issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
-        issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
-    }
-
-    /**
      * This is a helper method encapsulating the validations run against the samples contained
      * within this product order.  The results of these validation checks are then added to the existing Jira Ticket.
      */
@@ -962,6 +903,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     private boolean isSheetEmpty() {
         return samples.isEmpty();
+    }
+
+    public String getSkipQuoteReason() {
+        return skipQuoteReason;
+    }
+
+    public void setSkipQuoteReason(String skipQuoteReason) {
+        this.skipQuoteReason = skipQuoteReason;
     }
 
     @Override

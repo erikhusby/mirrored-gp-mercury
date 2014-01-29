@@ -111,17 +111,11 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
             previewData = new ArrayList<>();
 
-            // Separate out the complex structure into charges and credits and make sure to get list of auto billed entries.
+            /* Separate out the complex structure into charges and credits and make sure to get list of auto billed
+             * entries. Has side effect of adding to previewData, initialized above.
+             */
             Set<String> automatedPDOs = new HashSet<>();
             separateChargesAndCredits(sheetNames, processors, automatedPDOs);
-            if (!automatedPDOs.isEmpty()) {
-                addGlobalValidationError("Cannot upload data for these product orders because they use " +
-                        "automated billing: " + StringUtils.join(automatedPDOs, ", "));
-                return;
-            }
-
-            // Close the file that was just read in so we can get ready to copy to our temp directory.
-            IOUtils.closeQuietly(inputStream);
 
             // Even if there is no preview data, we may want to clear out previously billed items, so do all this
             // work either way.

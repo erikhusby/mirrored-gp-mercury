@@ -29,6 +29,7 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrders;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -39,6 +40,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -228,6 +230,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
 
+    private boolean skipQuote = false;
+
     private List<Long> sampleIdsForGetBspData;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
@@ -251,6 +255,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
+    // used only as part of ajax call to get funds remaining.  Quote field is bound to editOrder.
     private String quoteIdentifier;
 
     private String product;
@@ -324,6 +329,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
+                skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         } else {
@@ -375,6 +381,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
+            validateSkipQuoteOptions();
         }
     }
 
@@ -464,7 +471,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         requireField(researchProject, "a research project", action);
         if (!ApplicationInstance.CRSP.isCurrent()) {
-            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+            validateQuoteOptions(action);
         }
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
@@ -542,10 +549,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addGlobalValidationError("You must select at least one product order to start a {2}", validatingFor);
         } else {
             Set<Product> products = new HashSet<>();
-            selectedProductOrders =
-                    productOrderDao.findListByBusinessKeys(selectedProductOrderBusinessKeys,
-                            ProductOrderDao.FetchSpec.PRODUCT, ProductOrderDao.FetchSpec.RESEARCH_PROJECT,
-                            ProductOrderDao.FetchSpec.SAMPLES);
+            selectedProductOrders = productOrderDao.findListForBilling(selectedProductOrderBusinessKeys);
 
             for (ProductOrder order : selectedProductOrders) {
                 products.add(order.getProduct());
@@ -874,7 +878,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            editOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
@@ -1191,6 +1195,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
         item.put(BSPSampleDTO.PACKAGE_DATE, "");
         item.put(BSPSampleDTO.RECEIPT_DATE, "");
+    }
+
+    @HandlesEvent("getSupportsSkippingQuote")
+    public Resolution getSupportsSkippingQuote() throws Exception {
+        boolean supportsSkippingQuote = false;
+        JSONObject item = new JSONObject();
+        if (!StringUtils.isEmpty(product)) {
+            supportsSkippingQuote = productDao.findByBusinessKey(product).getSupportsSkippingQuote();
+        }
+        item.put(Product.SUPPORTS_SKIPPING_QUOTE, supportsSkippingQuote);
+        return createTextResolution(item.toString());
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -1893,5 +1908,39 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getWorkRequestUrl() {
         return bspConfig.getWorkRequestLink(editOrder.getProductOrderKit().getWorkRequestId());
+    }
+
+    /**
+     * Only call this from a test!
+     */
+    void setProductDao(ProductDao productDao) {
+        this.productDao = productDao;
+    }
+
+    private void validateSkipQuoteOptions() {
+        if (skipQuote) {
+            if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
+                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+            }
+        }
+    }
+
+    public void validateQuoteOptions(String action) {
+        validateSkipQuoteOptions();
+        if (!skipQuote) {
+            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
+        }
+    }
+
+    public boolean isSkipQuote() {
+        return skipQuote;
+    }
+
+    public void setSkipQuote(boolean skipQuote) {
+        this.skipQuote = skipQuote;
+    }
+
+    public String getPostReceivedOptionsAsString() {
+        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
     }
 }
