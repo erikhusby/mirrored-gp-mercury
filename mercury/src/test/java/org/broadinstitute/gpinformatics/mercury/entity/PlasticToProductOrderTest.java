@@ -53,8 +53,6 @@ public class PlasticToProductOrderTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-
-    private static final String PRODUCT_ORDER_KEY = "PDO-1";
     public static final String BUCKET_REFERENCE_NAME = "Start";
     private Bucket bucket;
     private String tubeBarcode;

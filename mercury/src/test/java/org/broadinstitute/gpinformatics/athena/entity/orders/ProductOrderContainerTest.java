@@ -3,7 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -28,12 +30,15 @@ public class ProductOrderContainerTest extends Arquillian {
     @Inject
     ResearchProjectEjb researchProjectEjb;
 
+    @Inject
+    JiraService jiraService;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    public ProductOrder createSimpleProductOrder() throws Exception {
+    public static ProductOrder createSimpleProductOrder(ResearchProjectEjb researchProjectEjb,BSPUserList userList) throws Exception {
         return new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderSampleTestFactory.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
                 "newQuote", ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber"),
@@ -41,7 +46,7 @@ public class ProductOrderContainerTest extends Arquillian {
     }
 
     public void testSimpleProductOrder() throws Exception {
-        ProductOrder testOrder = createSimpleProductOrder();
+        ProductOrder testOrder = createSimpleProductOrder(researchProjectEjb,userList);
 
         Assert.assertEquals(testOrder.getUniqueParticipantCount(), 3);
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
@@ -71,7 +76,7 @@ public class ProductOrderContainerTest extends Arquillian {
         BspUser bspUser = new BspUser();
         bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
-        testOrder.placeOrder();
+        ProductOrderJiraUtil.placeOrder(testOrder,jiraService);
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
     }

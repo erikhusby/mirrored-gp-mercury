@@ -370,9 +370,8 @@ public class ProductOrderActionBeanTest {
         pdo.setQuoteId("SomeQuote");
         actionBean.validateQuoteOptions("");
 
-        Assert.assertEquals(actionBean.getValidationErrors().size(),1);
+        Assert.assertEquals(actionBean.getValidationErrors().size(),0,"It's okay to have a quote set and keep the skip quote reason.");
 
-        // todo arz fix wire up persistence, check save, write UI test.
 
     }
 }
