@@ -381,7 +381,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
-            validateSkipQuoteOptions();
+            validateQuoteOptions(SAVE_ACTION);
         }
     }
 
@@ -1917,17 +1917,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productDao = productDao;
     }
 
-    private void validateSkipQuoteOptions() {
+    public void validateQuoteOptions(String action) {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
                 addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
         }
-    }
-
-    public void validateQuoteOptions(String action) {
-        validateSkipQuoteOptions();
-        if (!skipQuote) {
+        else {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
     }
