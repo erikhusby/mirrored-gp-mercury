@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -28,6 +29,9 @@ public class ProductOrderContainerTest extends Arquillian {
 
     @Inject
     ResearchProjectEjb researchProjectEjb;
+
+    @Inject
+    JiraService jiraService;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -72,7 +76,7 @@ public class ProductOrderContainerTest extends Arquillian {
         BspUser bspUser = new BspUser();
         bspUser.setUserId(ResearchProjectTestFactory.TEST_CREATOR);
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
-        ProductOrderJiraUtil.placeOrder(testOrder);
+        ProductOrderJiraUtil.placeOrder(testOrder,jiraService);
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
     }

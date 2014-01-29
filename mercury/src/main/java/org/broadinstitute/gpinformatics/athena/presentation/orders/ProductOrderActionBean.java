@@ -878,7 +878,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            ProductOrderJiraUtil.placeOrder(editOrder);
+            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {

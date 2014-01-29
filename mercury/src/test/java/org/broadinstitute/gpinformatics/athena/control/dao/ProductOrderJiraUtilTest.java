@@ -47,7 +47,9 @@ public class ProductOrderJiraUtilTest extends Arquillian {
 
         Assert.assertTrue(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "PDO already has a jira id, but we want it blank for our test.");
-        ProductOrderJiraUtil.placeOrder(pdo);
+
+        ProductOrderJiraUtil.placeOrder(pdo,jiraService);
+
         Assert.assertFalse(StringUtils.isEmpty(pdo.getJiraTicketKey()),
                 "When the PDO is created in jira, we expected the PDO's business key to be assigned.");
         Assert.assertEquals(pdo.getBusinessKey(), pdo.getJiraTicketKey(),
@@ -62,10 +64,5 @@ public class ProductOrderJiraUtilTest extends Arquillian {
                 "Details field is not displayed correctly in jira");
         Assert.assertEquals(jiraIssue.getField(ProductOrder.JiraField.SAMPLE_IDS.getName()),pdo.getSampleString(),"Samples are not properly displayed in jira");
         Assert.assertEquals(jiraIssue.getField(ProductOrder.JiraField.PRODUCT_FAMILY.getName()),pdo.getProduct().getProductFamily().getName(),"Product family is not properly displayed in jira");
-
-
-
     }
-
-
 }

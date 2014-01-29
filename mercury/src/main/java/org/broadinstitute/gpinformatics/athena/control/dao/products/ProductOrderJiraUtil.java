@@ -19,8 +19,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 /**
  * Utility class that manages interactions between
  * PDOs and jira.
@@ -39,11 +37,10 @@ public class ProductOrderJiraUtil {
      *
      * @throws java.io.IOException
      */
-    public static void placeOrder(@Nonnull ProductOrder pdo) throws IOException {
+    public static void placeOrder(@Nonnull ProductOrder pdo,@Nonnull JiraService jiraService) throws IOException {
         pdo.setPlacedDate(new Date());
         Product product = pdo.getProduct();
         List<ProductOrderAddOn> addOns = pdo.getAddOns();
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
 
