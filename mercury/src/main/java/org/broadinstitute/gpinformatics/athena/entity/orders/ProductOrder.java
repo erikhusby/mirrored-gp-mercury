@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -68,6 +69,9 @@ import java.util.Set;
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
+
+    // for clarity in jira, we use this string in the quote field when there is no quote
+    public static final String QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY = "no quote";
 
     private static final String DRAFT_PREFIX = "Draft-";
 
@@ -686,6 +690,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Returns the text used for the quote in
+     * jira.  If there is no quote, the text
+     * {@link #QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY} is used.
+     */
+    public String getQuoteStringForJiraTicket() {
+        String quoteForJira = QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY;
+        if (!StringUtils.isEmpty(quoteId)) {
+            quoteForJira = quoteId;
+        }
+        return quoteForJira;
+    }
+
+    /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
     public void loadBspData() {
@@ -864,9 +881,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT,
                 product.getProductName() == null ? "" : product.getProductName()));
 
-        if (quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
-        }
+        // todo arz test: move this whole method out somewhere, test in isolation
+        listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, getQuoteStringForJiraTicket()));
 
         if (!addOns.isEmpty()) {
             List<String> addOnsList = new ArrayList<>(addOns.size());
