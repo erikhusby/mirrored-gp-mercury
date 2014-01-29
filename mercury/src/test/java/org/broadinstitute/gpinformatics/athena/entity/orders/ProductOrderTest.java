@@ -37,7 +37,7 @@ import static org.hamcrest.Matchers.not;
 public class ProductOrderTest {
 
     private static final Long TEST_CREATOR = 1111L;
-    private static final String PDO_JIRA_KEY = "PDO-1";
+    public static final String PDO_JIRA_KEY = "PDO-8";
     private final List<ProductOrderSample> sixBspSamplesNoDupes =
             ProductOrderSampleTestFactory
                     .createDBFreeSampleList("SM-2ACGC", "SM-2ABDD", "SM-2ACKV", "SM-2AB1B", "SM-2ACJC", "SM-2AD5D");

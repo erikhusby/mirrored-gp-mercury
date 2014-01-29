@@ -96,9 +96,9 @@ public class BucketEjbTest extends ContainerTest {
         utx.begin();
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
-        poBusinessKey1 = "PDO-1";
-        poBusinessKey2 = "PDO-2";
-        poBusinessKey3 = "PDO-3";
+        poBusinessKey1 = "PDO-8";
+        poBusinessKey2 = "PDO-9";
+        poBusinessKey3 = "PDO-10";
 
         productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
