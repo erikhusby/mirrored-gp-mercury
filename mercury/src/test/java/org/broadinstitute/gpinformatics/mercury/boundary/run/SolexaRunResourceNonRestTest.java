@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -209,7 +210,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         productOrderDao.persist(exexOrder);
         try {
-            exexOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(exexOrder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationVali
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -123,7 +124,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            productOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(productOrder);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure

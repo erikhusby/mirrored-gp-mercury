@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -469,7 +470,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrderDao.persist(productOrder);
         try {
-            productOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(productOrder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
