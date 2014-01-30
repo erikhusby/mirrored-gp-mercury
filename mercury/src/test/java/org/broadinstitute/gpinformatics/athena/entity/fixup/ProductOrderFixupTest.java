@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -9,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -37,9 +39,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -460,5 +464,21 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.remove(sample);
 
         productOrderSampleDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void convertSampleInitiationPDOsToTemplateFormat() throws Exception {
+        List<ProductOrder> sampleInitiationPDOs = productOrderDao.findSampleInitiationPDOsNotConverted();
+
+        for(ProductOrder order:sampleInitiationPDOs) {
+
+            Set<PostReceiveOption> postReceiveOptions = new HashSet<>(order.getProductOrderKit().getPostReceiveOptions());
+
+            order.getProductOrderKit().addKitOrderDetail(
+                    new ProductOrderKitDetail(order.getProductOrderKit().getNumberOfSamples(),
+                            order.getProductOrderKit().getKitType(),order.getProductOrderKit().getOrganismId(),
+                            order.getProductOrderKit().getMaterialInfo(),postReceiveOptions ));
+        }
+        productOrderDao.persistAll(sampleInitiationPDOs);
     }
 }
