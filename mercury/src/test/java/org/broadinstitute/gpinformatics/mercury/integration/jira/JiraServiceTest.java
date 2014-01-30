@@ -147,16 +147,16 @@ public class JiraServiceTest {
     }
 
     @Test(expectedExceptions = JiraIssue.NoTransitionException.class)
-        public void testTransitionNotFound() throws JiraIssue.NoTransitionException {
-            Transition availableTransitionByName =
-                    service.findAvailableTransitionByName(TEST_PDO_ISSUE, "Going Nowhere Fast!");
-            Assert.fail("You should not see this because I would have thrown a JiraIssue.NoTransitionException first.");
-        }
+    public void testTransitionNotFound() throws JiraIssue.NoTransitionException {
+        Transition availableTransitionByName =
+                service.findAvailableTransitionByName(TEST_PDO_ISSUE, "Going Nowhere Fast!");
+        Assert.fail("You should not see this because I would have thrown a JiraIssue.NoTransitionException first.");
+    }
 
-        public void testTransitionWasFound() throws JiraIssue.NoTransitionException {
-            String developerEditTransition = ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName();
-            Transition availableTransitionByName =
-                    service.findAvailableTransitionByName(TEST_PDO_ISSUE, developerEditTransition);
-            Assert.assertEquals(availableTransitionByName.getName(), developerEditTransition);
-        }
+    public void testTransitionWasFound() throws JiraIssue.NoTransitionException {
+        String developerEditTransition = ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName();
+        Transition availableTransitionByName =
+                service.findAvailableTransitionByName(TEST_PDO_ISSUE, developerEditTransition);
+        Assert.assertEquals(availableTransitionByName.getName(), developerEditTransition);
+    }
 }
