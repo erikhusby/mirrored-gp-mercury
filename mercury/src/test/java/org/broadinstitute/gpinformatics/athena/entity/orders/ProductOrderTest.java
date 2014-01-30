@@ -204,7 +204,8 @@ public class ProductOrderTest {
     public void testQuoteStringForJira() {
         ProductOrder pdo = new ProductOrder();
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
-        pdo.setQuoteId("BLAH");
-        Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),"BLAH");
+        String quoteId = "BLAH";
+        pdo.setQuoteId(quoteId);
+        Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),quoteId);
     }
 }

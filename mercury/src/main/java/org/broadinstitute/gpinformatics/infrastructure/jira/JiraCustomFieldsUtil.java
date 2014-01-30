@@ -23,6 +23,7 @@ public class JiraCustomFieldsUtil {
     public static final String[] REQUIRED_FIELD_NAMES =
             new String[]{PROTOCOL, WORK_REQUEST_IDS, GSSR_IDS, DESCRIPTION,
                     ProductOrder.JiraField.PRODUCT_FAMILY.getName(),
+                    ProductOrder.JiraField.QUOTE_ID.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.FUNDING_SOURCE.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.IRB_IACUC_NUMBER.getName(),
