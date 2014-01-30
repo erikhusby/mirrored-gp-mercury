@@ -119,11 +119,17 @@ public class ProductOrderEjb {
         }
     }
 
-    private void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
-        try {
-            quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
-        } catch (QuoteServerException e) {
-            throw new RuntimeException(e);
+    /**
+     * Looks up the quote for the pdo (if the pdo has one) in the
+     * quote server.
+     */
+    void validateQuote(ProductOrder productOrder,QuoteService quoteService) throws QuoteNotFoundException {
+        if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
+            try {
+                quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+            } catch (QuoteServerException e) {
+                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(),e);
+            }
         }
     }
 
@@ -167,7 +173,7 @@ public class ProductOrderEjb {
             ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
             throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
         validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder);
+        validateQuote(productOrder,quoteService);
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
@@ -363,24 +369,6 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Utility class to help with mapping from display names of custom fields to their {@link CustomFieldDefinition}s,
-     * as well as tracking changes that have been made to the values of those fields relative to the existing state
-     * of the PDO JIRA ticket.
-     * <p/>
-     * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
-     */
-    private static class PDOUpdateField extends UpdateField<ProductOrder> {
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
-                              boolean isBulkField) {
-            super(field, newValue, isBulkField);
-        }
-
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
-            super(field, newValue);
-        }
-    }
-
-    /**
      * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
      * on the UI.  Add a comment to the issue to indicate what was changed and by whom.
      *
@@ -390,7 +378,7 @@ public class ProductOrderEjb {
      */
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
 
-        validateQuote(productOrder);
+        validateQuote(productOrder,quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -399,7 +387,6 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
                         productOrder.getProduct().getProductFamily().getName()),
-                new PDOUpdateField(ProductOrder.JiraField.QUOTE_ID, productOrder.getQuoteId()),
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
@@ -409,6 +396,7 @@ public class ProductOrderEjb {
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
 
+        pdoUpdateFields.add(PDOUpdateField.createPDOUpdateFieldForQuote(productOrder));
 
         List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
         for (ProductOrderAddOn addOn : productOrder.getAddOns()) {

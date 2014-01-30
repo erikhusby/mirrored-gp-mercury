@@ -683,9 +683,16 @@ public class VesselContainer<T extends LabVessel> {
                 }
             }
         }
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.println("numVesselsWithBucketEntries " + numVesselsWithBucketEntries);
+        }
         for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
             if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
                 computedLcSets.add(labBatchIntegerEntry.getKey());
+            }
+            if (LabVessel.DIAGNOSTICS) {
+                System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getBatchName() + " count " +
+                        labBatchIntegerEntry.getValue());
             }
         }
         return computedLcSets;

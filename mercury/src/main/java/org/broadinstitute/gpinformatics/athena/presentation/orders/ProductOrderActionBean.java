@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -380,7 +381,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
-            validateSkipQuoteOptions();
+            validateQuoteOptions(SAVE_ACTION);
         }
     }
 
@@ -877,7 +878,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            editOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (isSampleInitiation()) {
@@ -1916,21 +1917,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productDao = productDao;
     }
 
-    private void validateSkipQuoteOptions() {
+    public void validateQuoteOptions(String action) {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
                 addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
-            if (!StringUtils.isEmpty(editOrder.getQuoteId())) {
-                // the JSP should make this situation impossible
-                addValidationError("skipQuote","You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
-            }
         }
-    }
-
-    public void validateQuoteOptions(String action) {
-        validateSkipQuoteOptions();
-        if (!skipQuote) {
+        else {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
     }

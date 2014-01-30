@@ -9,12 +9,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationVali
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
@@ -83,6 +85,9 @@ public class ProductOrderResource {
     @Inject
     private ProductOrderSampleDao pdoSampleDao;
 
+    @Inject
+    JiraService jiraService;
+
     /**
      * Should be used only by test code
      */
@@ -123,7 +128,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            productOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(productOrder,jiraService);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure

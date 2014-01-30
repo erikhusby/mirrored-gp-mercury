@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+
 import javax.annotation.Nonnull;
 import java.util.Map;
 
@@ -82,7 +84,7 @@ public class CustomField {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
         if (value == null) {
-            throw new NullPointerException("value cannot be null");
+            throw new NullPointerException("value for " + definition.getName() + " cannot be null");
         }
 
         this.definition = definition;

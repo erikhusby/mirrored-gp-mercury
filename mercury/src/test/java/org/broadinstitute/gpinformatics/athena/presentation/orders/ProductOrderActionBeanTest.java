@@ -285,7 +285,7 @@ public class ProductOrderActionBeanTest {
 
     @Test(groups = TestGroups.DATABASE_FREE, enabled = false)
     public void testQuoteOptOutAjaxCallStripes() throws Exception {
-        Product product = createSimpleProduct("P-EX-0001",ProductFamily.INITIATION_FAMILY_NAME);
+        Product product = createSimpleProduct("P-EX-0001",ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
         EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
         EasyMock.replay(productDao);
@@ -318,7 +318,7 @@ public class ProductOrderActionBeanTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testQuoteOptOutAjaxCall() throws Exception {
-        Product product = createSimpleProduct("P-EX-0001", ProductFamily.INITIATION_FAMILY_NAME);
+        Product product = createSimpleProduct("P-EX-0001", ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
 
         actionBean.setProduct(product.getPartNumber());
@@ -370,9 +370,8 @@ public class ProductOrderActionBeanTest {
         pdo.setQuoteId("SomeQuote");
         actionBean.validateQuoteOptions("");
 
-        Assert.assertEquals(actionBean.getValidationErrors().size(),1);
+        Assert.assertEquals(actionBean.getValidationErrors().size(),0,"It's okay to have a quote set and keep the skip quote reason.");
 
-        // todo arz fix wire up persistence, check save, write UI test.
 
     }
 }

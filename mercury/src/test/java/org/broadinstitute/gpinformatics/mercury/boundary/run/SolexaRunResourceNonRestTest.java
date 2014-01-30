@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
@@ -137,6 +139,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     @Inject
     private ReagentDesignDao reagentDesignDao;
 
+    @Inject
+    JiraService jiraService;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -209,7 +213,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         productOrderDao.persist(exexOrder);
         try {
-            exexOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(exexOrder,jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

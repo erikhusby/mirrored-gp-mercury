@@ -379,4 +379,19 @@
                 referencedTableName="lab_vessel" referencedTableSchemaName="mercury" referencedColumnNames="lab_vessel_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2450-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_event">
+            <column name="manual_override_lc_set" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2450-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="lab_event_aud">
+            <column name="manual_override_lc_set" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2450-3" author="thompson">
+        <addForeignKeyConstraint constraintName="FK_LV_MANUAL_LCSET"
+                baseTableSchemaName="mercury" baseTableName="lab_event" baseColumnNames="manual_override_lc_set"
+                referencedTableSchemaName="mercury" referencedTableName="lab_batch" referencedColumnNames="lab_batch_id"/>
+    </changeSet>
 </databaseChangeLog>

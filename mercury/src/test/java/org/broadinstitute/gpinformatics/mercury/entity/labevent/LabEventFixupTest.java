@@ -188,4 +188,12 @@ public class LabEventFixupTest extends Arquillian {
         labEvent.getCherryPickTransfers().clear();
         labEventDao.remove(labEvent);
     }
+
+    @Test(enabled = true)
+    public void fixupManualLcset() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 324061L);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-4771");
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.flush();
+    }
 }

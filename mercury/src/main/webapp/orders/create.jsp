@@ -663,7 +663,7 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <div id="kitDefinitions" class="controls" style="margin-top: 5px;">
+                        <div id="kitDefinitions" style="margin-top: 5px;">
                             <div id="kitDefinitionDetail">
                                 <div class="control-group">
                                     <stripes:label for="numberOfSamples" class="control-label">
