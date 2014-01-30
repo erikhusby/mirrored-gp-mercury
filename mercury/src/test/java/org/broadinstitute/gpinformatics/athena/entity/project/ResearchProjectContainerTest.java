@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
@@ -32,7 +33,7 @@ public class ResearchProjectContainerTest extends Arquillian {
     }
 
 
-    public void testJiraSubmission() throws IOException {
+    public void testJiraSubmission() throws IOException, JiraIssue.NoTransitionException {
 
         ResearchProject dummy = ResearchProjectTestFactory
                 .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);

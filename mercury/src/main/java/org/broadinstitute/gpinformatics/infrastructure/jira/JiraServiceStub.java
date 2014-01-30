@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -145,16 +146,19 @@ public class JiraServiceStub implements JiraService {
 
 
     @Override
-    public Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName) {
+    public Transition findAvailableTransitionByName(@Nonnull String jiraIssueKey, @Nonnull String transitionName)
+            throws JiraIssue.NoTransitionException {
         IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
-
-        for (Transition transition : availableTransitions.getTransitions()) {
+        List<Transition> transitions = availableTransitions.getTransitions();
+        if (transitions == null || transitions.isEmpty()) {
+            throw new JiraIssue.NoTransitionException("No transitions found for issue key " + jiraIssueKey);
+        }
+        for (Transition transition : transitions) {
             if (transition.getName().equals(transitionName)) {
                 return transition;
             }
         }
-
-        return null;
+        throw new JiraIssue.NoTransitionException(transitionName, jiraIssueKey);
     }
 
     @Override

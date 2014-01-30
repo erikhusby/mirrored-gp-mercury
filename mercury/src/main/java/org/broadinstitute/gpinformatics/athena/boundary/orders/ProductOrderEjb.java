@@ -376,8 +376,8 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
-    public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-
+    public void updateJiraIssue(ProductOrder productOrder)
+            throws IOException, QuoteNotFoundException, JiraIssue.NoTransitionException {
         validateQuote(productOrder,quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
@@ -466,7 +466,8 @@ public class ProductOrderEjb {
      * @param productOrder     product order
      * @param addOnPartNumbers add-on part numbers
      */
-    public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
+    public void update(ProductOrder productOrder, List<String> addOnPartNumbers)
+            throws QuoteNotFoundException, JiraIssue.NoTransitionException {
         // update JIRA ticket with new quote
         // GPLIM-488
         try {

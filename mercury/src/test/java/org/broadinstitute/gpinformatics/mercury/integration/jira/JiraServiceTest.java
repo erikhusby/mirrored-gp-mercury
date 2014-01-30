@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -25,6 +27,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 
 @Test(groups = EXTERNAL_INTEGRATION, singleThreaded = true)
 public class JiraServiceTest {
+    final String TEST_PDO_ISSUE = "PDO-8";
+    final String TEST_LCSET_ISSUE = "LCSET-1678";
 
     private JiraService service;
 
@@ -109,23 +113,23 @@ public class JiraServiceTest {
     }
 
     public void testAddWatcher() throws IOException {
-        service.addWatcher("PDO-8", "squid");
+        service.addWatcher(TEST_PDO_ISSUE, "squid");
     }
 
     @Test(enabled = false)
     public void testLinkTicket() throws IOException {
-        service.addLink(AddIssueLinkRequest.LinkType.Related, "PDO-8", "RP-1");
+        service.addLink(AddIssueLinkRequest.LinkType.Related, TEST_PDO_ISSUE, "RP-1");
     }
 
     public void testAddPublicComment() throws IOException {
-        service.addComment("LCSET-1678", "Publicly visible comment added from Mercury");
+        service.addComment(TEST_LCSET_ISSUE, "Publicly visible comment added from Mercury");
     }
 
 
     @Test(enabled = false)
     // disabled until we can get test jira to keep squid user as an admin
     public void testAddRestrictedComment() throws IOException {
-        service.addComment("LCSET-1678", "jira-users only comment added from Mercury", Visibility.Type.role,
+        service.addComment(TEST_LCSET_ISSUE, "jira-users only comment added from Mercury", Visibility.Type.role,
                 Visibility.Value.Administrators);
     }
 
@@ -141,4 +145,18 @@ public class JiraServiceTest {
         }
         Assert.assertTrue(foundLanesRequestedField);
     }
+
+    @Test(expectedExceptions = JiraIssue.NoTransitionException.class)
+        public void testTransitionNotFound() throws JiraIssue.NoTransitionException {
+            Transition availableTransitionByName =
+                    service.findAvailableTransitionByName(TEST_PDO_ISSUE, "Going Nowhere Fast!");
+            Assert.fail("You should not see this because I would have thrown a JiraIssue.NoTransitionException first.");
+        }
+
+        public void testTransitionWasFound() throws JiraIssue.NoTransitionException {
+            String developerEditTransition = ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName();
+            Transition availableTransitionByName =
+                    service.findAvailableTransitionByName(TEST_PDO_ISSUE, developerEditTransition);
+            Assert.assertEquals(availableTransitionByName.getName(), developerEditTransition);
+        }
 }

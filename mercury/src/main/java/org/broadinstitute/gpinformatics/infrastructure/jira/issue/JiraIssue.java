@@ -185,6 +185,10 @@ public class JiraIssue implements Serializable {
         public NoTransitionException(String s) {
             super(s);
         }
+
+        public NoTransitionException(String transitionName, String key) {
+            this("Cannot " + transitionName + " " + key + ": no " + transitionName + " transition found");
+        }
     }
 
     /**
@@ -195,8 +199,7 @@ public class JiraIssue implements Serializable {
     public void postTransition(@Nonnull String transitionName, @Nullable String comment) throws NoTransitionException, IOException {
         Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
         if (transition == null) {
-            throw new NoTransitionException(
-                    "Cannot " + transitionName + " " + key + ": no " + transitionName + " transition found");
+            throw new NoTransitionException(transitionName, key);
         }
         jiraService.postNewTransition(key, transition, comment);
     }
@@ -206,7 +209,7 @@ public class JiraIssue implements Serializable {
     }
 
     public void setCustomFieldUsingTransition(CustomField.SubmissionField field,
-                                              Object value, String transitionName) throws IOException {
+                                              Object value, String transitionName) throws NoTransitionException, IOException {
         Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
         Map<String, CustomFieldDefinition> definitionMap = getCustomFields(field.getName());
         List<CustomField> customFields = Collections.singletonList(new CustomField(definitionMap, field, value));

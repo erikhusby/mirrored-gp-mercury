@@ -162,7 +162,8 @@ public interface JiraService extends Serializable {
 
     IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey);
 
-    Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
+    Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName)
+            throws JiraIssue.NoTransitionException;
 
     void postNewTransition(String jiraIssueKey, Transition transition, @Nullable String comment) throws IOException;
 

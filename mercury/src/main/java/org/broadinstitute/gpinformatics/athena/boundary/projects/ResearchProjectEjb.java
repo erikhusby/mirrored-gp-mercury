@@ -69,7 +69,8 @@ public class ResearchProjectEjb {
         this.appConfig = appConfig;
     }
 
-    public void submitToJira(@Nonnull ResearchProject researchProject) throws IOException {
+    public void submitToJira(@Nonnull ResearchProject researchProject)
+            throws IOException, JiraIssue.NoTransitionException {
         if (researchProject.isSavedInJira()) {
             updateJiraIssue(researchProject);
         } else {
@@ -126,7 +127,8 @@ public class ResearchProjectEjb {
         }
     }
 
-    public void updateJiraIssue(@Nonnull ResearchProject researchProject) throws IOException {
+    public void updateJiraIssue(@Nonnull ResearchProject researchProject)
+            throws IOException, JiraIssue.NoTransitionException {
         Transition transition = jiraService.findAvailableTransitionByName(researchProject.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
 
@@ -240,7 +242,10 @@ public class ResearchProjectEjb {
      * JIRA Transition states used by PDOs.
      */
     public enum JiraTransition {
-        DEVELOPER_EDIT("Developer Edit");
+        DEVELOPER_EDIT("Developer Edit"),
+        PUT_ON_HOLD("Put On Hold"),
+        CANCEL("Cancel"),
+        COMPLETE("Complete");
 
         /**
          * The text that represents this transition state in JIRA.

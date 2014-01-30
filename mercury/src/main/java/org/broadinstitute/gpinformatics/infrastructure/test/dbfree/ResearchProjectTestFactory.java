@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 
 import java.io.IOException;
@@ -57,7 +58,8 @@ public class ResearchProjectTestFactory {
      * callers currently does.
      */
     public static ResearchProject createDummyResearchProject(
-            ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle) throws IOException {
+            ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle)
+            throws IOException, JiraIssue.NoTransitionException {
         ResearchProject dummyProject =
                 new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
 
