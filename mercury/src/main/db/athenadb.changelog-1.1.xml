@@ -574,4 +574,15 @@
             <column name="skip_quote_reason" type="varchar2(255 char)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="PORTAL-10-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT" columnName="INVITATION_EMAIL"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT">
+            <column name="INVITATION_EMAIL" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

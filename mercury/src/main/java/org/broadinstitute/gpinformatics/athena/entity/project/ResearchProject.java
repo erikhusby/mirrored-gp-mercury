@@ -115,6 +115,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
 
+    @Column(name = "INVITATION_EMAIL")
+    private String invitationEmail;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
     @Index(name = "ix_parent_research_project")
@@ -286,6 +289,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public String getInvitationEmail() {
+        return invitationEmail;
+    }
+
+    public void setInvitationEmail(String invitationEmail) {
+        this.invitationEmail = invitationEmail;
     }
 
     /**
@@ -665,6 +676,34 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      */
     public boolean isSavedInJira() {
         return !StringUtils.isBlank(getJiraTicketKey());
+    }
+
+    /***
+     * Get the primary collaborator. This is defined as the person who is attached to the collaboration portal once
+     * the PM decides to initiate a space to share information about the project. There will be only one primary
+     * external in the initial phase, so we will only grab that one here.
+     *
+     * @return The id of the person
+     */
+    public Long getCollaboratingWith() {
+        Long[] allPrimaries = getPeople(RoleType.PRIMARY_EXTERNAL);
+
+        if ((allPrimaries == null) || (allPrimaries.length == 0)) {
+            return null;
+        }
+
+        // Eventually we may collaborate in the portal with multiple, but for now it will be just one
+        return allPrimaries[0];
+    }
+
+    /**
+     * If we successfully created the collaboration, there will be a user selected (collaboratingWith will have a
+     * value) or an email address for the invitation was sent.
+     *
+     * @return Whether a collaboration was sent or not
+     */
+    public boolean isCollaborationStarted() {
+        return (getCollaboratingWith() != null) || (invitationEmail != null);
     }
 
     public enum Status implements StatusType {

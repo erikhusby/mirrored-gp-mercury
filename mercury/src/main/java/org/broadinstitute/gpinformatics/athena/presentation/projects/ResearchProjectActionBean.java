@@ -174,6 +174,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 editResearchProject = new ResearchProject();
             }
         }
+
+        populateTokenListsFromObjectData();
+
         if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
             editResearchProject.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
         }
@@ -240,7 +243,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution create() {
         validateUser("create");
         setSubmitString(CREATE_PROJECT);
-        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -248,7 +250,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution edit() {
         validateUser("edit");
         setSubmitString(EDIT_PROJECT);
-        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 

@@ -1,4 +1,5 @@
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -13,8 +14,48 @@
             $j(document).ready(function () {
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
-                })
+                });
+
+                setupDialogs();
             });
+
+            function showBeginCollaboration() {
+                $j("#dialogAction").attr("name", "beginCollaboration");
+                $j("#confirmDialog").dialog("open");
+            }
+
+            function updateEmailField() {
+                if ($j("#collaboratorId :selected").text() == $j("#emailId").text()) {
+                    $j("#emailTextId").show();
+                } else {
+                    $j("#emailTextId").hide();
+                }
+            }
+
+            function setupDialogs() {
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    width: 600,
+                    buttons: [
+                        {
+                            id: "confirmOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#projectForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click: function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+            }
         </script>
 
         <style type="text/css">
@@ -25,6 +66,60 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+        <stripes:form beanclass="${actionBean.class.name}" id="projectForm" class="form-horizontal">
+
+            <div id="confirmDialog" style="width:600px;display:none;">
+                <p>
+                    Publish this Research Project on the Collaboration Portal. If the collaborator is not set up on the
+                    Portal an invitation will be sent.
+                </p>
+
+                <label style="float:left;margin-right:10px;width:auto;" for="collaboratorId">Collaborator *</label>
+                <stripes:select id="collaboratorId" name="collaborator" onchange="updateEmailField()">
+                    <stripes:option  label="Choose a Collaborator" value=""/>
+                    <optgroup label="Project Collaborators">
+                        <stripes:options-collection collection="${actionBean.externalCollaboratorList.tokenObjects}"
+                                                    value="userId" label="fullName"/>
+                    </optgroup>
+
+                    <optgroup label="Other">
+                        <stripes:option id="emailId" label="Email Address" value=""/>
+                    </optgroup>
+                </stripes:select>
+                <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
+                              name="collaboratorEmail" maxlength="250"/>
+
+                <p style="clear:both">
+                    <label for="collaborationMessage">Message to send to collaborator:</label>
+                </p>
+
+                <textarea id="collaborationMessage" name="message" class="controlledText" cols="80" rows="4"> </textarea>
+            </div>
+
+        <!-- The action buttons and form wrap any special buttons that are needed for the UI -->
+            <div class="actionButtons">
+
+                <!-- Hidden fields that are needed for operating on the current research project -->
+                <stripes:hidden name="project" value="${actionBean.editResearchProject.businessKey}"/>
+                <stripes:hidden id="dialogAction" name=""/>
+
+                <c:choose>
+                    <c:when test="${actionBean.editResearchProject.collaborationStarted}">
+                        Collaborating with ${actionBean.editResearchProject.collaboratingWith}
+                    </c:when>
+                    <c:otherwise>
+                        <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
+                        <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                        <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                            <stripes:button name="collaborate" value="Begin Collaboration" class="btn"
+                                            onclick="showBeginCollaboration()"/>
+                        </security:authorizeBlock>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </stripes:form>
+
+        <div style="clear: both"/>
 
         <div class="form-horizontal span7">
             <div class="control-group view-control-group">

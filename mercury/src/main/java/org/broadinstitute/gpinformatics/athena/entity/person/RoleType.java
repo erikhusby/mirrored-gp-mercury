@@ -6,6 +6,7 @@ package org.broadinstitute.gpinformatics.athena.entity.person;
  */
 public enum RoleType {
     BROAD_SCIENTIST,
+    PRIMARY_EXTERNAL,
     EXTERNAL,
     PM_IN_CHARGE,
     PM,
