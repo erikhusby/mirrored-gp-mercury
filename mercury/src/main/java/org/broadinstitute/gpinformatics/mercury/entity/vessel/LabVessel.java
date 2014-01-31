@@ -96,6 +96,8 @@ public abstract class LabVessel implements Serializable {
 
     private BigDecimal concentration;
 
+    private BigDecimal receptacleWeight;
+
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     @BatchSize(size = 100)
@@ -975,6 +977,14 @@ public abstract class LabVessel implements Serializable {
 
     public void setConcentration(BigDecimal concentration) {
         this.concentration = concentration;
+    }
+
+    public BigDecimal getReceptacleWeight() {
+        return receptacleWeight;
+    }
+
+    public void setReceptacleWeight(BigDecimal receptacleWeight) {
+        this.receptacleWeight = receptacleWeight;
     }
 
     public Set<BucketEntry> getBucketEntries() {

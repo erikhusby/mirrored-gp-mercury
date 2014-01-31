@@ -124,6 +124,7 @@ public class SampleReceiptResource {
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
         List<ParentVesselBean> parentVesselBeans = sampleReceiptBean.getParentVesselBeans();
 
+        // todo jmt the SAMPLE_RECEIPT event seems to be used by this web service and by a BettaLIMS message.
         List<LabVessel> labVessels =
                 labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
                         sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);

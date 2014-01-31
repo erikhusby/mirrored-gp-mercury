@@ -1026,10 +1026,10 @@ public class LabEventFactory implements Serializable {
                 concentration = receptacleType.getConcentration();
             }
 
-            // volume or concentration can be null but not both.
-            if (volume != null || concentration != null) {
-                String result = bspSetVolumeConcentration
-                        .setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
+            // At least one of the values must be set in order to incur the cost of calling BSP.
+            if (volume != null || concentration != null || receptacleType.getReceptacleWeight() != null) {
+                String result = bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(),
+                        volume, concentration, receptacleType.getReceptacleWeight());
                 if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
                     logger.error(result);
                 }
