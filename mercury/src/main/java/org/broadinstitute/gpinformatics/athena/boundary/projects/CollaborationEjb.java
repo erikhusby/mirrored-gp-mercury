@@ -1,0 +1,108 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2013 by the 
+ * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support 
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its 
+ * use, misuse, or functionality.
+ */
+
+package org.broadinstitute.gpinformatics.athena.boundary.projects;
+
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalService;
+
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
+
+/**
+ * This class is responsible for managing a Portal collaboration for the project manager.
+ */
+@Stateful
+@RequestScoped
+public class CollaborationEjb {
+    private final ResearchProjectDao researchProjectDao;
+    private final BSPUserList userList;
+    private final CollaborationPortalService collaborationPortalService;
+
+    // EJBs require a no arg constructor.
+    @SuppressWarnings("unused")
+    public CollaborationEjb() {
+        this(null, null, null);
+    }
+
+    @Inject
+    public CollaborationEjb(ResearchProjectDao researchProjectDao, CollaborationPortalService collaborationPortalService,
+                            BSPUserList userList) {
+        this.researchProjectDao = researchProjectDao;
+        this.collaborationPortalService = collaborationPortalService;
+        this.userList = userList;
+    }
+
+    /**
+     * Do everything to start a new portal collaboration. This includes:
+     *
+     * <dl>
+     *     <dt>In Mercury</dt>
+     *       <dd>Add the PRIMARY_EXTERNAL collaborator to the research project</dd>
+     *       <dd>If the email was used and the collaborator exists in BSP add as external collaborator and
+     *           use as if selected</dd>
+     *       <dd>If the email was used and the collaborator does not exist in BSP, it will be sent to the portal for
+     *           invitation.
+     *       </dd>
+     *       <dd>The research project will be updated with appropriate information</dd>
+     *     <dt><In Portal/dt>
+     *         <dd>A call will be made to create the collaboration. The portal will then invite the user if there
+     *         is no account or associate the user and notify them of the new collaboration</dd>
+     *         <dd>Will request user account information</dd>
+     *     <dt>In BSP</dt>
+     *         <dd>Will request user account information</dd>
+     * </dl>
+     *
+     * @param researchProjectKey The research project business key so it can be fetched as part of the transaction here.
+     * @param specifiedCollaborator The bsp user id for an external collaborator that was specified
+     * @param collaboratorEmail The email of a collaborator that was specifically specified
+     * @param collaborationMessage The optional extra message from the project manager
+     */
+    public void beginCollaboration(String researchProjectKey, Long selectedCollaborator, String specifiedCollaborator,
+                                   String collaborationMessage) {
+
+        BspUser bspUser = null;
+
+        // Look up the selected id.
+        if (selectedCollaborator != null) {
+            bspUser = userList.getById(selectedCollaborator);
+        }
+
+        // If there is no bsp user, look up by email.
+        if (bspUser == null) {
+            bspUser = userList.getByEmail(specifiedCollaborator);
+        }
+
+        // Add the user as the primary collaborator.
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (bspUser != null) {
+            researchProject.addPrimaryCollaborator(bspUser);
+
+            // add the user as an external collaborator in case they are not there already.
+            researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
+        }
+
+        if (specifiedCollaborator != null) {
+            researchProject.setInvitationEmail(specifiedCollaborator);
+        }
+
+        // Now tell the portal to create this collaborator.
+         String collaborationId = collaborationPortalService.beginCollaboration(researchProjectKey,
+                 specifiedCollaborator, collaborationMessage);
+
+        researchProject.setCollaborationId(collaborationId);
+    }
+}

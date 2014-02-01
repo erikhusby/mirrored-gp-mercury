@@ -17,6 +17,9 @@ import java.io.Serializable;
 public class PortalConfig extends AbstractConfig  implements LoginAndPassword, Serializable  {
 
     public static final String CRSP_PORTAL_NAME = "CRSP";
+    public static final String COLLABORATOR_PORTAL_NAME = "COLLABORATE";
+    private static final long serialVersionUID = 8765086841966130449L;
+
     private String login;
 
     private String password;

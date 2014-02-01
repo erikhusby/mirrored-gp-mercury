@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
+import com.ctc.wstx.util.StringUtil;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -18,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -43,14 +45,18 @@ import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
  */
+@SuppressWarnings("unused")
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
@@ -65,6 +71,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
+
+    private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
@@ -84,8 +92,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
-    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     private String researchProject;
+
+    private Long selectedCollaborator;
+    private String specifiedCollaborator;
+    private String collaborationMessage;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -138,7 +150,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    ResearchProjectEjb researchProjectEjb;
+    private ResearchProjectEjb researchProjectEjb;
+
+    @Inject
+    private CollaborationEjb collaborationEjb;
 
     private String irbList = "";
 
@@ -162,7 +177,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
      * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -207,6 +223,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
             if (existingProject != null) {
                 errors.add("title", new SimpleError("A research project already exists with this name."));
             }
+        }
+    }
+
+    /**
+     * Validation for beginning a collaboration.
+     *
+     * @param errors The errors object
+     */
+    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
+    public void validateCollaboration(ValidationErrors errors) {
+        if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
+            errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
         }
     }
 
@@ -324,9 +352,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.setParentResearchProject(tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
     }
 
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
+    }
+
+    @HandlesEvent(BEGIN_COLLABORATION_ACTION)
+    public Resolution beginCollaboration() {
+        collaborationEjb.beginCollaboration(
+                researchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+
+        // recall init so that the updated project is retrieved
+        init();
+
+        return view();
     }
 
     public List<ResearchProject> getAllResearchProjects() {
@@ -342,6 +381,30 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setResearchProject(String researchProject) {
         this.researchProject = researchProject;
+    }
+
+    public String getCollaborationMessage() {
+        return collaborationMessage;
+    }
+
+    public void setCollaborationMessage(String collaborationMessage) {
+        this.collaborationMessage = collaborationMessage;
+    }
+
+    public String getSpecifiedCollaborator() {
+        return specifiedCollaborator;
+    }
+
+    public void setSpecifiedCollaborator(String specifiedCollaborator) {
+        this.specifiedCollaborator = specifiedCollaborator;
+    }
+
+    public Long getSelectedCollaborator() {
+        return selectedCollaborator;
+    }
+
+    public void setSelectedCollaborator(Long selectedCollaborator) {
+        this.selectedCollaborator = selectedCollaborator;
     }
 
     public ResearchProject getEditResearchProject() {
@@ -557,5 +620,33 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
+    public String getCollaboratingWith() {
+        Long collaboratorPersonId = editResearchProject.getCollaboratingWith();
+        if (collaboratorPersonId == null) {
+            // After the portal is up and running, need to get the status of the invitation with a web service call,
+            // but for now, just return the email as if the invitation is waiting.
+            return editResearchProject.getInvitationEmail();
+        }
+
+        return bspUserList.getById(collaboratorPersonId).getFullName();
+    }
+
+    /**
+     * This checks with the portal whether there is an invitation pending.
+     *
+     * @return If the invitation is exists and is pending, this will be true.
+     */
+    public boolean isInvitationPending() {
+        // For now, just return whether there is no user id but there is an email.
+        return !StringUtils.isBlank(editResearchProject.getInvitationEmail()) &&
+               (editResearchProject.getCollaboratingWith() == null);
+    }
+
+    public Date getInvitationExpirationDate() {
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.add(Calendar.WEEK_OF_YEAR, 2);
+        return calendar.getTime();
     }
 }

@@ -35,6 +35,7 @@ import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -52,6 +53,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
+
+    private static final long serialVersionUID = 937268527371239980L;
 
     /**
      * Compare by modified date.
@@ -117,6 +120,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     @Column(name = "INVITATION_EMAIL")
     private String invitationEmail;
+
+    @Column(name = "COLLABORATION_ID")
+    private String collaborationId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
@@ -383,12 +389,17 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public void addPeople(RoleType role, List<BspUser> people) {
+    public boolean addPeople(RoleType role, List<BspUser> people) {
+        boolean added = false;
+
         if (people != null) {
             for (BspUser user : people) {
                 associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+                added = true;
             }
         }
+
+        return added;
     }
 
     /**
@@ -703,8 +714,17 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      * @return Whether a collaboration was sent or not
      */
     public boolean isCollaborationStarted() {
-        return (getCollaboratingWith() != null) || (invitationEmail != null);
+        return (collaborationId != null);
     }
+
+    public void setCollaborationId(String collaborationId) {
+        this.collaborationId = collaborationId;
+    }
+
+    public String getCollaborationId() {
+        return collaborationId;
+    }
+
 
     public enum Status implements StatusType {
         Open, Archived;
@@ -724,4 +744,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         }
     }
 
+    public boolean addPrimaryCollaborator(BspUser user) {
+        Long[] projectPersonIds = getPeople(RoleType.PRIMARY_EXTERNAL);
+        if (projectPersonIds.length > 0) {
+            return false;
+        }
+
+        List<BspUser> usersToAdd = (user == null) ? null : Collections.singletonList(user);
+        return addPeople(RoleType.PRIMARY_EXTERNAL, usersToAdd);
+    }
 }
+

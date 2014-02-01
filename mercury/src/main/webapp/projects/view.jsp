@@ -44,6 +44,9 @@
                             click: function () {
                                 $j(this).dialog("close");
                                 $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
+                                $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
+                                $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -90,26 +93,41 @@
                               name="collaboratorEmail" maxlength="250"/>
 
                 <p style="clear:both">
-                    <label for="collaborationMessage">Message to send to collaborator:</label>
+                    <label for="collaborationMessage">Optional message to send to collaborator</label>
                 </p>
 
-                <textarea id="collaborationMessage" name="message" class="controlledText" cols="80" rows="4"> </textarea>
+                <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
             </div>
 
         <!-- The action buttons and form wrap any special buttons that are needed for the UI -->
             <div class="actionButtons">
 
                 <!-- Hidden fields that are needed for operating on the current research project -->
-                <stripes:hidden name="project" value="${actionBean.editResearchProject.businessKey}"/>
-                <stripes:hidden id="dialogAction" name=""/>
+                <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
 
                 <c:choose>
+                    <c:when test="${actionBean.invitationPending}">
+                        <div class="notificationText">
+                            Invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
+                            <fmt:formatDate value="${actionBean.invitationExpirationDate}" pattern="${actionBean.datePattern}"/>
+                        </div>
+                        <div style="margin-left: 5px; float:left;">
+                            <stripes:link beanclass="${actionBean.class.name}" style="font-size: small; font-weight: normal;">
+                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                <stripes:param name="resendInvitation" value=""/>
+                                Resend Invitation
+                            </stripes:link>
+                        </div>
+                    </c:when>
                     <c:when test="${actionBean.editResearchProject.collaborationStarted}">
-                        Collaborating with ${actionBean.editResearchProject.collaboratingWith}
+                        <div class="notificationText">Collaborating with ${actionBean.collaboratingWith}</div>
                     </c:when>
                     <c:otherwise>
+                        <stripes:hidden id="dialogAction" name="" value=""/>
                         <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
                         <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                        <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+
                         <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
                             <stripes:button name="collaborate" value="Begin Collaboration" class="btn"
                                             onclick="showBeginCollaboration()"/>

@@ -202,6 +202,23 @@ public class BSPUserList extends AbstractCache implements Serializable {
         return bspUser.getFullName();
     }
 
+    /**
+     * Find the user by an email address.
+     *
+     * @param email The string to match
+     *
+     * @return The matching user, null if not found
+     */
+    public BspUser getByEmail(String email) {
+        for (BspUser user : getUsers().values()) {
+            if (user.getEmail().equalsIgnoreCase(email)) {
+                return user;
+            }
+        }
+
+        return null;
+    }
+
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
             setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org",
