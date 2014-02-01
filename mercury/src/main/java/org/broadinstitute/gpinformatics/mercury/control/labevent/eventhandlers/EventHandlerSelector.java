@@ -17,14 +17,17 @@ public class EventHandlerSelector {
 
     DenatureToDilutionTubeHandler denatureToDilutionTubeHandler;
 
-    FlowcellMessageHandler flowcellMessageHandler;
+    private FlowcellMessageHandler flowcellMessageHandler;
+    private SamplesDaughterPlateHandler samplesDaughterPlateHandler;
+
 
     @Inject
     public EventHandlerSelector(
             DenatureToDilutionTubeHandler denatureToDilutionTubeHandler,
-            FlowcellMessageHandler flowcellMessageHandler) {
+            FlowcellMessageHandler flowcellMessageHandler, SamplesDaughterPlateHandler samplesDaughterPlateHandler) {
         this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
         this.flowcellMessageHandler = flowcellMessageHandler;
+        this.samplesDaughterPlateHandler = samplesDaughterPlateHandler;
     }
 
     /**
@@ -53,7 +56,9 @@ public class EventHandlerSelector {
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
             validator =  flowcellMessageHandler;
             break;
-
+        case AUTO_DAUGHTER_PLATE_CREATION:
+            validator = samplesDaughterPlateHandler;
+            break;
         }
 
         if (validator != null) {

@@ -463,6 +463,8 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAMPLES_DAUGHTER_PLATE_CREATION("SamplesDaughterPlateCreation", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE,
             SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.BOTH, PipelineTransformation.NONE),
+    AUTO_DAUGHTER_PLATE_CREATION("AutomatedDaughterPlateCreation", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.FALSE,
+            SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.BOTH, PipelineTransformation.NONE),
     SAMPLE_IMPORT("SampleImport", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
