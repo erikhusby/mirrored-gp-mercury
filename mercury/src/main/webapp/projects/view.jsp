@@ -108,7 +108,7 @@
                 <c:choose>
                     <c:when test="${actionBean.invitationPending}">
                         <div class="notificationText">
-                            Invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
+                            Collaboration Portal invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
                             <fmt:formatDate value="${actionBean.invitationExpirationDate}" pattern="${actionBean.datePattern}"/>
                         </div>
                         <div style="margin-left: 5px; float:left;">
@@ -120,7 +120,7 @@
                         </div>
                     </c:when>
                     <c:when test="${actionBean.editResearchProject.collaborationStarted}">
-                        <div class="notificationText">Collaborating with ${actionBean.collaboratingWith}</div>
+                        <div class="notificationText">Collaborating on Portal with ${actionBean.collaboratingWith}</div>
                     </c:when>
                     <c:otherwise>
                         <stripes:hidden id="dialogAction" name="" value=""/>
