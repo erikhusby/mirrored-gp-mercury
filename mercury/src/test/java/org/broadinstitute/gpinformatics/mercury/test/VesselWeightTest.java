@@ -3,12 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -23,6 +27,7 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -38,6 +43,12 @@ public class VesselWeightTest extends Arquillian {
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
+    @Inject
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -45,16 +56,8 @@ public class VesselWeightTest extends Arquillian {
 
     @Test
     public void testEndToEnd() {
-        // The following is a plan for GPLIM-2079
-        // todox add receptacleWeight (as opposed to sampleWeight) to bettalims.xsd receptacleType
-        // todox add weight attribute to LabVessel
-        // todo update LabVessel weight somewhere in LabEventFactory (location TBD)
-        // todox add INITIAL_TARE to LabEventType
-        // todo add weight to data warehouse?
-
-        // todox add weight handling to LabEventFactory.updateVolumeConcentration
-        // todox BSP add receptacleWeight to SetVolumeAndConcentration, use it to set "Tare Weight" annotation
-        // todo service to provide machine name for previous message, so can check that initial tare and receipt weight are done on same machine?
+        // todo jmt add weight to data warehouse?
+        // todo jmt service to provide machine name for previous message, so can check that initial tare and receipt weight are done on same machine?
 
         // Send an InitialTare message with receptacleWeight
         BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(false);
@@ -72,6 +75,9 @@ public class VesselWeightTest extends Arquillian {
         BettaLIMSMessage initialTareMessage = new BettaLIMSMessage();
         initialTareMessage.getPlateEvent().add(initialTareEvent);
         bettaLimsMessageResource.processMessage(initialTareMessage);
+
+        TwoDBarcodedTube tube1 = twoDBarcodedTubeDao.findByBarcode(tubeBarcodes.get(0));
+        Assert.assertEquals(tube1.getReceptacleWeight(), tube1Tare);
 
         // Verify that BSP Tare Weight annotation is set
         // http://bsp/ws/bsp/sample/gettareweight?manufacturer_barcodes=1082117278
@@ -96,6 +102,20 @@ public class VesselWeightTest extends Arquillian {
         }
 
         // Send a SampleReceipt message with volume (and weight?)
+        bettaLimsMessageTestFactory.advanceTime();
+        PlateEventType sampleReceiptEvent = bettaLimsMessageTestFactory
+                .buildRackEvent(LabEventType.SAMPLE_RECEIPT.getName(), "SRECEIPTTEST", tubeBarcodes);
+        BigDecimal tube1Volume = new BigDecimal(Math.abs(random.nextInt(10000)));
+        BigDecimal tube2Volume = new BigDecimal(Math.abs(random.nextInt(10000)));
+        sampleReceiptEvent.getPositionMap().getReceptacle().get(0).setVolume(tube1Volume);
+        sampleReceiptEvent.getPositionMap().getReceptacle().get(1).setVolume(tube2Volume);
+        BettaLIMSMessage sampleReceiptMessage = new BettaLIMSMessage();
+        sampleReceiptMessage.getPlateEvent().add(sampleReceiptEvent);
+        bettaLimsMessageResource.processMessage(sampleReceiptMessage);
+
         // Verify that BSP volume is set
+        Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
+                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(tubeBarcodes);
+        Assert.assertEquals(mapBarcodeToSampleInfo.get(tubeBarcodes.get(0)).getVolume(), tube1Volume.floatValue());
     }
 }
