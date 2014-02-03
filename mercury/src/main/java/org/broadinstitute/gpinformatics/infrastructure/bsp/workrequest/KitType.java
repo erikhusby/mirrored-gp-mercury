@@ -31,14 +31,22 @@ public enum KitType implements Displayable {
     private final KitTypeAllowanceSpecification kitName;
     private final String displayName;
 
+//    private String name;
+
     KitType(KitTypeAllowanceSpecification kitName, String displayName) {
         this.kitName = kitName;
         this.displayName = displayName;
+//        name=name();
     }
 
     public String getKitName() {
         return kitName.getText();
     }
+
+    public String getName() {
+        return name();
+    }
+
 
     @Override
     public String getDisplayName() {

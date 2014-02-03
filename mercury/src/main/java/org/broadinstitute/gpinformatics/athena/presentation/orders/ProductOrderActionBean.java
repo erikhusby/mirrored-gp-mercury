@@ -343,7 +343,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-                initializeKitDetails();
             }
         } else {
             // If this was a create with research project specified, find that.
@@ -366,11 +365,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder, ProductOrderDao.FetchSpec.RISK_ITEMS);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
-                initializeKitDetails();
             }
         }
     }
 
+    /**
+     * TODO SGM:  Add Javadoc
+     */
     private void initializeKitDetails() {
         kitDetails.addAll(editOrder.getProductOrderKit().getKitOrderDetails());
     }
@@ -741,6 +742,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
             detailIndex++;
         }
+        initializeKitDetails();
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -1126,11 +1128,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
         boolean savedOrder = !StringUtils.isBlank(this.productOrder);
         MaterialInfo materialInfo = MaterialInfo.fromText(this.materialInfo);
-        String kitIndex = this.kitDefinitionQueryIndex;
-        JSONObject kitIndexObject = new JSONObject();
-        kitIndexObject.put("key", kitDefinitionIndexIdentifier);
-        kitIndexObject.put("value", kitIndexObject);
-        itemList.put(kitIndexObject);
         for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
             if (!postReceiveOption.getArchived()) {
                 JSONObject item = new JSONObject();
@@ -1144,7 +1141,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        return createTextResolution(itemList.toString());
+        JSONObject kitIndexObject = new JSONObject();
+        String kitIndex = this.kitDefinitionQueryIndex;
+        kitIndexObject.put(kitDefinitionIndexIdentifier, kitIndex);
+        kitIndexObject.put("dataList",itemList);
+//        itemList.put(kitIndexObject);
+
+        return createTextResolution(kitIndexObject.toString());
     }
 
     @HandlesEvent("getSummary")
@@ -1522,8 +1525,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
-            collectionAndOrganismsList.put(chosenOrganism,
-                                           kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
+            if(CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size()>Integer.valueOf(kitDefinitionQueryIndex)) {
+                collectionAndOrganismsList.put(chosenOrganism,
+                                               kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
+            }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
 
