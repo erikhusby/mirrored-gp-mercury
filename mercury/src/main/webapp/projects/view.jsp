@@ -115,22 +115,22 @@
                             <c:choose>
                                 <c:when test="${actionBean.invitationPending}">
                                     <div class="notificationText">
-                                        <stripes:link href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                        <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaboration Portal
                                         </stripes:link>
                                         invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
                                         <fmt:formatDate value="${actionBean.invitationExpirationDate}" pattern="${actionBean.datePattern}"/>
-                                        <stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
+                                        (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
                                             <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
                                             <stripes:param name="resendInvitation" value=""/>
                                             Resend Invitation
-                                        </stripes:link>
+                                        </stripes:link>)
                                     </div>
                                 </c:when>
                                 <c:when test="${actionBean.editResearchProject.collaborationStarted}">
                                     <div class="notificationText">
-                                        <stripes:link href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                        <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaborating on Portal
                                         </stripes:link>
