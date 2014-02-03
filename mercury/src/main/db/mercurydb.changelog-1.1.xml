@@ -394,4 +394,16 @@
                 baseTableSchemaName="mercury" baseTableName="lab_event" baseColumnNames="manual_override_lc_set"
                 referencedTableSchemaName="mercury" referencedTableName="lab_batch" referencedColumnNames="lab_batch_id"/>
     </changeSet>
+    
+    <changeSet id="GPLIM-2079-1" author="thompson">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL">
+            <column name="receptacle_weight" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2079-2" author="thompson">
+        <addColumn schemaName="mercury" tableName="LAB_VESSEL_AUD">
+            <column name="receptacle_weight" type="number(19,2)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
