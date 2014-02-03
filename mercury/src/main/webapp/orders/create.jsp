@@ -299,7 +299,9 @@
             // for the long or empty will work in the later comparison.
             var selectedOrganismId = data.chosenOrganism;
 
-            var organismSelect = '<select id="organismOption"' + kitDefinitionIndex + disabledText;
+            var organismSelect = '<select id="organismOption' + kitDefinitionIndex +
+                    '" '+
+                    disabledText;
 
             organismSelect += 'name="kitDetails[' + kitDefinitionIndex + '].organismId">';
 
@@ -552,8 +554,8 @@
             if(organism) {
                 $j('#organismOption' + kitDefinitionCount).val(organism);
             }
-            kitDefinitionCount++;
             updateUIForMaterialInfoChoice(kitDefinitionCount)
+            kitDefinitionCount++;
 
             //Update the new Post receipt options with the previously selected ones.
         }
