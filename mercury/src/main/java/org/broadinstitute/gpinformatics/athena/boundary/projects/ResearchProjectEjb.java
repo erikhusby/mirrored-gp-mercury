@@ -69,8 +69,7 @@ public class ResearchProjectEjb {
         this.appConfig = appConfig;
     }
 
-    public void submitToJira(@Nonnull ResearchProject researchProject)
-            throws IOException, JiraIssue.NoTransitionException {
+    public void submitToJira(@Nonnull ResearchProject researchProject) throws IOException {
         if (researchProject.isSavedInJira()) {
             updateJiraIssue(researchProject);
         } else {
@@ -127,8 +126,7 @@ public class ResearchProjectEjb {
         }
     }
 
-    public void updateJiraIssue(@Nonnull ResearchProject researchProject)
-            throws IOException, JiraIssue.NoTransitionException {
+    public void updateJiraIssue(@Nonnull ResearchProject researchProject) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(researchProject.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
 

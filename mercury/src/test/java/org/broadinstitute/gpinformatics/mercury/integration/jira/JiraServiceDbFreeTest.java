@@ -14,7 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -30,15 +30,14 @@ public class JiraServiceDbFreeTest {
         jiraService = JiraServiceProducer.stubInstance();
     }
 
-    @Test(expectedExceptions = JiraIssue.NoTransitionException.class)
-    public void testTransitionNotFound() throws JiraIssue.NoTransitionException {
-        Transition availableTransitionByName =
-                jiraService.findAvailableTransitionByName("YOMAMA-1234", "Wear Combat Boots");
-        Assert.fail("You should not see this because I would have thrown a JiraIssue.NoTransitionException first.");
+    @Test(expectedExceptions = NoJiraTransitionException.class)
+    public void testTransitionNotFound() {
+        jiraService.findAvailableTransitionByName("YOMAMA-1234", "Wear Combat Boots");
+        Assert.fail("You should not see this because I would have thrown a NoJiraTransitionException first.");
     }
 
-    public void testTransitionWasFound() throws JiraIssue.NoTransitionException {
-        String developerEditTransition = ResearchProjectEjb.JiraTransition.DEVELOPER_EDIT.getStateName();
+    public void testTransitionWasFound() {
+        String developerEditTransition = ResearchProjectEjb.JiraTransition.COMPLETE.getStateName();
         Transition availableTransitionByName =
                 jiraService.findAvailableTransitionByName("YOMAMA-1234", developerEditTransition);
         Assert.assertEquals(availableTransitionByName.getName(), developerEditTransition);

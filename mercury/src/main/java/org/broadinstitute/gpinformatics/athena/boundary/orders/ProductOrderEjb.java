@@ -376,8 +376,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      */
-    public void updateJiraIssue(ProductOrder productOrder)
-            throws IOException, QuoteNotFoundException, JiraIssue.NoTransitionException {
+    public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
         validateQuote(productOrder,quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
@@ -466,8 +465,7 @@ public class ProductOrderEjb {
      * @param productOrder     product order
      * @param addOnPartNumbers add-on part numbers
      */
-    public void update(ProductOrder productOrder, List<String> addOnPartNumbers)
-            throws QuoteNotFoundException, JiraIssue.NoTransitionException {
+    public void update(ProductOrder productOrder, List<String> addOnPartNumbers) throws QuoteNotFoundException {
         // update JIRA ticket with new quote
         // GPLIM-488
         try {
@@ -727,9 +725,7 @@ public class ProductOrderEjb {
      * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
      * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
      */
-    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-
+    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey) throws NoSuchPDOException, IOException {
         try {
             updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         } catch (RuntimeException e) {
@@ -747,11 +743,10 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException
      *
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+            throws NoSuchPDOException, IOException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
@@ -786,14 +781,9 @@ public class ProductOrderEjb {
      * @param transitionComments Comments to include as part of the transition, will be appended to the JIRA ticket.
      *
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException
-     *                     Thrown if the specified transition is not available on the specified issue.
      */
-    private void transitionJiraTicket(String jiraTicketKey,
-                                      JiraResolution currentResolution,
-                                      JiraTransition state,
-                                      @Nullable String transitionComments)
-            throws IOException, JiraIssue.NoTransitionException {
+    private void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
+                                      @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
         if (currentResolution == resolution) {
@@ -811,15 +801,12 @@ public class ProductOrderEjb {
      * @param jiraTicketKey   JIRA ticket key.
      * @param abandonComments Transition comments.
      *
-     * @throws JiraIssue.NoTransitionException
-     *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      *
      */
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
-            throws JiraIssue.NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException,
-            IOException {
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
@@ -863,8 +850,7 @@ public class ProductOrderEjb {
      */
     public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
                            @Nonnull Collection<ProductOrderSample> samples,
-                           @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+                           @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
         order.prepareToSave(bspUser);

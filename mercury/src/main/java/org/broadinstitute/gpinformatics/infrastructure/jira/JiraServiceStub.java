@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
@@ -146,19 +147,18 @@ public class JiraServiceStub implements JiraService {
 
 
     @Override
-    public Transition findAvailableTransitionByName(@Nonnull String jiraIssueKey, @Nonnull String transitionName)
-            throws JiraIssue.NoTransitionException {
+    public Transition findAvailableTransitionByName(@Nonnull String jiraIssueKey, @Nonnull String transitionName) {
         IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
         List<Transition> transitions = availableTransitions.getTransitions();
         if (transitions == null || transitions.isEmpty()) {
-            throw new JiraIssue.NoTransitionException("No transitions found for issue key " + jiraIssueKey);
+            throw new NoJiraTransitionException("No transitions found for issue key " + jiraIssueKey);
         }
         for (Transition transition : transitions) {
             if (transition.getName().equals(transitionName)) {
                 return transition;
             }
         }
-        throw new JiraIssue.NoTransitionException(transitionName, jiraIssueKey);
+        throw new NoJiraTransitionException(transitionName, jiraIssueKey);
     }
 
     @Override

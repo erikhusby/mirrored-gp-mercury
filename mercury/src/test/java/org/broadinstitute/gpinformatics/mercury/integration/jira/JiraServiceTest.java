@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -146,14 +147,13 @@ public class JiraServiceTest {
         Assert.assertTrue(foundLanesRequestedField);
     }
 
-    @Test(expectedExceptions = JiraIssue.NoTransitionException.class)
-    public void testTransitionNotFound() throws JiraIssue.NoTransitionException {
-        Transition availableTransitionByName =
-                service.findAvailableTransitionByName(TEST_PDO_ISSUE, "Going Nowhere Fast!");
-        Assert.fail("You should not see this because I would have thrown a JiraIssue.NoTransitionException first.");
+    @Test(expectedExceptions = NoJiraTransitionException.class)
+    public void testTransitionNotFound() {
+        service.findAvailableTransitionByName(TEST_PDO_ISSUE, "Going Nowhere Fast!");
+        Assert.fail("You should not see this because I would have thrown a NoJiraTransitionException first.");
     }
 
-    public void testTransitionWasFound() throws JiraIssue.NoTransitionException {
+    public void testTransitionWasFound() {
         String developerEditTransition = ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName();
         Transition availableTransitionByName =
                 service.findAvailableTransitionByName(TEST_PDO_ISSUE, developerEditTransition);

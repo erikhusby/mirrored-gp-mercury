@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -211,29 +211,31 @@ public class ResearchProjectTest {
     /**
      * Attempts to update a Jira ResearchProject which should throw an exception when the expected transition is not
      * available.
-     *
-     * @throws JiraIssue.NoTransitionException
      */
-    @Test(expectedExceptions = JiraIssue.NoTransitionException.class)
-    public void testUpdateResearchProjectAndThrowAnException() throws IOException, JiraIssue.NoTransitionException {
+    @Test(expectedExceptions = NoJiraTransitionException.class)
+    public void testUpdateResearchProjectAndThrowAnException() throws IOException {
+        ResearchProjectEjb researchProjectEjb = setupMocksSoThatThereAreNotJiraTransitions();
+        researchProjectEjb.submitToJira(researchProject);
+        Assert.fail("I was expecting an exception to be thrown before I got here!");
+    }
+
+    private ResearchProjectEjb setupMocksSoThatThereAreNotJiraTransitions() {
         JiraService jiraService = JiraServiceProducer.stubInstance();
         UserBean userBean = EasyMock.createMock(UserBean.class);
         BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);
-        ResearchProject rp = EasyMock.createMock(ResearchProject.class);
 
-        EasyMock.expect(rp.getJiraTicketKey()).andReturn(RESEARCH_PROJ_JIRA_KEY);
-        EasyMock.expect(rp.isSavedInJira()).andReturn(true);
-        EasyMock.expect(rp.getProjectFunding()).andReturn(Collections.<ResearchProjectFunding>emptySet());
+        researchProject = EasyMock.createMock(ResearchProject.class);
+
+        EasyMock.expect(researchProject.getJiraTicketKey()).andReturn(RESEARCH_PROJ_JIRA_KEY);
+        EasyMock.expect(researchProject.isSavedInJira()).andReturn(true);
+        EasyMock.expect(researchProject.getProjectFunding()).andReturn(Collections.<ResearchProjectFunding>emptySet());
         EasyMock.expect(bspCohortList.getCohortListString((String[]) EasyMock.anyObject())).andReturn("");
 
-        EasyMock.replay(userBean, bspCohortList, bspUserList, rp);
-        ResearchProjectEjb researchProjectEjb = new ResearchProjectEjb(jiraService, userBean, bspUserList,
+        EasyMock.replay(userBean, bspCohortList, bspUserList, researchProject);
+        return new ResearchProjectEjb(jiraService, userBean, bspUserList,
                 bspCohortList, AppConfig.produce(Deployment.STUBBY));
 
-        researchProjectEjb.submitToJira(rp);
-        Assert.fail("I was expecting an exception to be thrown before I got here!");
     }
-
 }
 

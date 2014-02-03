@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
@@ -211,7 +211,7 @@ public class ResearchProjectResource {
 
         try {
             researchProjectEjb.submitToJira(project);
-        } catch (IOException | JiraIssue.NoTransitionException e) {
+        } catch (IOException | NoJiraTransitionException e) {
             throw new InformaticsServiceException(
                     String.format("Could not submit new research project to JIRA (%s)", e.getMessage()));
         }
