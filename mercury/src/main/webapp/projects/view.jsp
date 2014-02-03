@@ -99,177 +99,183 @@
                 <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
             </div>
 
-        <!-- The action buttons and form wrap any special buttons that are needed for the UI -->
-            <div class="actionButtons">
+            <!-- Hidden fields that are needed for operating on the current research project -->
+            <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
 
-                <!-- Hidden fields that are needed for operating on the current research project -->
-                <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
+            <div class="form-horizontal span6">
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Project</label>
 
-                <c:choose>
-                    <c:when test="${actionBean.invitationPending}">
-                        <div class="notificationText">
-                            Collaboration Portal invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
-                            <fmt:formatDate value="${actionBean.invitationExpirationDate}" pattern="${actionBean.datePattern}"/>
+                    <div class="controls">
+                        <div class="form-value">
+                            <div style="float: left">
+                                ${actionBean.editResearchProject.title}
+                            </div>
+
+                            <c:choose>
+                                <c:when test="${actionBean.invitationPending}">
+                                    <div class="notificationText">
+                                        <stripes:link href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                            <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
+                                            Collaboration Portal
+                                        </stripes:link>
+                                        invitation sent to ${actionBean.editResearchProject.invitationEmail}, expires on
+                                        <fmt:formatDate value="${actionBean.invitationExpirationDate}" pattern="${actionBean.datePattern}"/>
+                                        <stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
+                                            <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                            <stripes:param name="resendInvitation" value=""/>
+                                            Resend Invitation
+                                        </stripes:link>
+                                    </div>
+                                </c:when>
+                                <c:when test="${actionBean.editResearchProject.collaborationStarted}">
+                                    <div class="notificationText">
+                                        <stripes:link href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                            <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
+                                            Collaborating on Portal
+                                        </stripes:link>
+                                         with ${actionBean.collaboratingWith}
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div style="float:left">
+                                        <stripes:hidden id="dialogAction" name="" value=""/>
+                                        <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
+                                        <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                                        <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+
+                                        <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                                            <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
+                                                            style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
+                                        </security:authorizeBlock>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
-                        <div style="margin-left: 5px; float:left;">
-                            <stripes:link beanclass="${actionBean.class.name}" style="font-size: small; font-weight: normal;">
-                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                <stripes:param name="resendInvitation" value=""/>
-                                Resend Invitation
-                            </stripes:link>
-                        </div>
-                    </c:when>
-                    <c:when test="${actionBean.editResearchProject.collaborationStarted}">
-                        <div class="notificationText">Collaborating on Portal with ${actionBean.collaboratingWith}</div>
-                    </c:when>
-                    <c:otherwise>
-                        <stripes:hidden id="dialogAction" name="" value=""/>
-                        <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
-                        <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
-                        <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                    </div>
+                </div>
 
-                        <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
-                            <stripes:button name="collaborate" value="Begin Collaboration" class="btn"
-                                            onclick="showBeginCollaboration()"/>
-                        </security:authorizeBlock>
-                    </c:otherwise>
-                </c:choose>
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">ID</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
+                                <stripes:link target="JIRA"
+                                              href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
+                                              class="external">
+                                    ${actionBean.editResearchProject.jiraTicketKey}
+                                </stripes:link>
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Synopsis -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Synopsis</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editResearchProject.synopsis}</div>
+                    </div>
+                </div>
+
+                <!-- Parent Project -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Parent Project</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editResearchProject.parentResearchProject != null}">
+                                <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                    <stripes:param name="researchProject" value="${actionBean.editResearchProject.parentResearchProject.businessKey}"/>
+                                    ${actionBean.editResearchProject.parentResearchProject.title}
+                                </stripes:link>
+
+                            </c:if>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subproject -->
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Subprojects</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <div style="margin-left: -24px;">
+                            <stripes:layout-render name="/projects/treeview_component.jsp"
+                                                   childProjects="${actionBean.editResearchProject.childProjects}"
+                                                   bean="${actionBean}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Created by</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
+                                on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}" pattern="${actionBean.datePattern}"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Funding Sources</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.fundingSourcesListString}</div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Sample Cohorts</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.cohortsListString}</div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">Irb Numbers</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:forEach items="${actionBean.editResearchProject.irbNumbers}" var="irb">
+                                    ${irb}
+                            </c:forEach>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">IRB Not Engaged</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <c:choose>
+                                <c:when test="${actionBean.editResearchProject.irbNotEngaged}">
+                                    <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                                </c:when>
+                                <c:otherwise>
+                                    No
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group view-control-group">
+                    <label class="control-label label-form">IRB Notes</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editResearchProject.irbNotes}</div>
+                    </div>
+                </div>
             </div>
         </stripes:form>
-
-        <div style="clear: both"/>
-
-        <div class="form-horizontal span7">
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Project</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        ${actionBean.editResearchProject.title}
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">ID</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
-                            <stripes:link target="JIRA"
-                                          href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
-                                          class="external">
-                                ${actionBean.editResearchProject.jiraTicketKey}
-                            </stripes:link>
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Synopsis -->
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Synopsis</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.editResearchProject.synopsis}</div>
-                </div>
-            </div>
-
-            <!-- Parent Project -->
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Parent Project</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editResearchProject.parentResearchProject != null}">
-                            <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                <stripes:param name="researchProject" value="${actionBean.editResearchProject.parentResearchProject.businessKey}"/>
-                                ${actionBean.editResearchProject.parentResearchProject.title}
-                            </stripes:link>
-
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Subproject -->
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Subprojects</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <div style="margin-left: -24px;">
-                        <stripes:layout-render name="/projects/treeview_component.jsp"
-                                               childProjects="${actionBean.editResearchProject.childProjects}"
-                                               bean="${actionBean}" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Created by</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
-                            on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}" pattern="${actionBean.datePattern}"/>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Funding Sources</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.fundingSourcesListString}</div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Sample Cohorts</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.cohortsListString}</div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">Irb Numbers</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <c:forEach items="${actionBean.editResearchProject.irbNumbers}" var="irb">
-                                ${irb}
-                        </c:forEach>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">IRB Not Engaged</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editResearchProject.irbNotEngaged}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:when>
-                            <c:otherwise>
-                                No
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-group view-control-group">
-                <label class="control-label label-form">IRB Notes</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.editResearchProject.irbNotes}</div>
-                </div>
-            </div>
-        </div>
 
         <div class="form-horizontal span5">
             <fieldset>
