@@ -321,6 +321,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
 
+    private String[] deletedKits = new String[0];
+
     /**
      * For use with the Ajax to indicate and pass back which kit definition is being searched for
      */
@@ -468,7 +470,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-            for (ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
+
+            for (ProductOrderKitDetail kitDetail : kitDetails) {
                 Long numberOfSamples = kitDetail.getNumberOfSamples();
                 if (kitDetail.getNumberOfSamples() == null) {
                     numberOfSamples = (long) 0;
@@ -993,17 +996,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (isCreating()) {
             saveType = ProductOrder.SaveType.CREATING;
         }
-        editOrder.prepareToSave(userBean.getBspUser(), saveType);
 
-        if (editOrder.isDraft()) {
-            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
-            editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
-        } else {
-            productOrderEjb.updateJiraIssue(editOrder);
-        }
+        // update or add to list of kit details
+        Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
 
-        // Save it!
-        productOrderDao.persist(editOrder);
+        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution(editOrder.getBusinessKey());

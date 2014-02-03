@@ -15,8 +15,10 @@
         var kitDefinitionCount = 0;
         var readOnlyOrder = ${!actionBean.editOrder.draft};
         var disabledText = '';
+        var readonlyText = '';
         if(readOnlyOrder) {
             disabledText = ' disabled="disabled" ' ;
+            readonlyText = ' readonly="readonly" ';
         }
 
         $j(document).ready(
@@ -166,7 +168,7 @@
 
         function initializeQuoteOptions() {
             <c:if test="${actionBean.skipQuote}">
-            skipQuote = true;
+                skipQuote = true;
             </c:if>
             quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
         }
@@ -368,12 +370,6 @@
 
         function setupPostReceiveCheckboxes(data) {
             var kitIndex = data.kitDefinitionQueryIndex;
-            <%--$j.each(data, function (index, val) {--%>
-                <%--if (val.key == "${actionBean.kitDefinitionIndexIdentifier}") {--%>
-                    <%--kitIndex = val.value;--%>
-                    <%--return false;--%>
-                <%--}--%>
-            <%--});--%>
 
             if (kitIndex == '') {
                 alert("Undetermined kit definition");
@@ -441,6 +437,14 @@
         }
 
         function removeKitDefinition(id) {
+
+            var kitRefID = $j("kitIdReference" + id).attr("value");
+
+            if(kitRefID) {
+                var deleteString = '<input type="hidden" name="deletedKits" value="' + kitRefID +'" />';
+                $j("#kitDefinitions").append(deleteString);
+            }
+
             $j("#kitDefinitionDetail" + id).remove();
         }
 
@@ -457,22 +461,26 @@
 
         function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType) {
 
-
             var newDefinition = '<div id="kitDefinitionDetail' + kitDefinitionCount + '">';
-
-
 
             newDefinition += '<input type="hidden" id="kitIdReference' + kitDefinitionCount +
                     '" value="' + kitDefinitionId +
-                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetail" />';
-            newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')">Remove kit Definition</a>\n ';
-            newDefinition += '<h5>Kit Definition Info</h3>';
+                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetail.productOrderKitDetaild" />';
+            newDefinition += '<div class="control-group">\n ';
+            newDefinition += '<div class="controls">\n';
+            if(!readOnlyOrder && kitDefinitionCount>0) {
+
+                newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" >Remove kit Definition</a>\n ';
+            }
+            newDefinition += '<h5 >Kit Definition Info</h3>';
+            newDefinition += '</div>\n</div>';
+
             newDefinition += '<div class="control-group">\n ';
 
             // Number of Samples
             newDefinition += '<label for="numberOfSamples' + kitDefinitionCount + '" class="control-label">Number of Samples </label>\n';
             newDefinition += '<div class="controls">\n' +
-                    '<input type=text readonly="' + readOnlyOrder + '" id="numberOfSamples' + kitDefinitionCount +
+                    '<input type=text ' + readonlyText + ' id="numberOfSamples' + kitDefinitionCount +
                     '" name="kitDetails[' + kitDefinitionCount + '].numberOfSamples"\n' +
                     'class="defaultText" title="Enter the number of samples"/>\n' +
                     '</div>\n</div>';
@@ -533,7 +541,13 @@
                     '<div id="postReceiveCheckboxes' + kitDefinitionCount + '" class="controls controls-text"></div>' +
                     '</div>';
 
-            newDefinition += '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')">Clone kit Definition</a>\n ';
+            if(!readOnlyOrder) {
+
+                newDefinition += ' <div class="control-group">' +
+                        '<div class="controls">\n' +
+                        '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')" >Duplicate kit Definition</a>\n ' +
+                        '</div></div>';
+            }
 
             newDefinition += '</div>';
             $j('#kitDefinitions').append(newDefinition);

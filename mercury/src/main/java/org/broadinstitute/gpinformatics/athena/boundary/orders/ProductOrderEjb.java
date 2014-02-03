@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -112,6 +113,33 @@ public class ProductOrderEjb {
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
+
+    /**
+     * TODO SGM Add JavaDoc
+     * @param saveType
+     * @param editedProductOrder
+     * @param deletedIds
+     * @param kitDetailCollection
+     * @throws IOException
+     * @throws QuoteNotFoundException
+     */
+    public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    Collection<String> deletedIds,
+                                    Collection<ProductOrderKitDetail> kitDetailCollection) throws IOException, QuoteNotFoundException {
+        editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
+
+//        Add logic to update kit details
+
+        if (editedProductOrder.isDraft()) {
+            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
+            editedProductOrder.setOrderStatus(OrderStatus.Draft);
+        } else {
+            updateJiraIssue(editedProductOrder);
+        }
+
+        // Save it!
+        productOrderDao.persist(editedProductOrder);
+    }
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
