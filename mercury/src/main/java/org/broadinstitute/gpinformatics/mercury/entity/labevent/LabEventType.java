@@ -446,9 +446,10 @@ public enum LabEventType {
      */
     SAMPLE_PACKAGE("SamplePackage", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    INITIAL_TARE("InitialTare", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAMPLE_RECEIPT("SampleReceipt", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
-            CreateSources.FALSE,
-            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SAMPLES_EXTRACTION_START("SamplesExtractionStart", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),

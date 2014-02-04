@@ -239,6 +239,7 @@
         <xs:attribute name="volume" type="xs:decimal" use="optional"/>
         <xs:attribute name="concentration" type="xs:decimal" use="optional"/>
         <xs:attribute name="fragmentSize" type="xs:decimal" use="optional"/>
+        <xs:attribute name="receptacleWeight" type="xs:decimal" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="lcSampleType">
