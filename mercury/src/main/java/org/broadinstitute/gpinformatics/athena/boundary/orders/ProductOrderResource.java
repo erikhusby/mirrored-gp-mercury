@@ -437,13 +437,18 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public PDOSamples getPdoSampleRisk(PDOSamples pdoSamples) {
         PDOSamples atRiskPdoSamples = new PDOSamples();
-        Map<String, Set<String>> pdoSamplesMap = pdoSamples.convertPdoSamplePairsListToMap();
-        for (String pdoKey : pdoSamplesMap.keySet()) {
-            List<ProductOrderSample> productOrderSamples =
-                    pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, pdoSamplesMap.get(pdoKey));
-            PDOSamples foundPDOSamples = PDOSamples.findAtRiskPDOSamples(productOrderSamples);
-            atRiskPdoSamples.getPdoSamples().addAll(foundPDOSamples.getPdoSamples());
-            atRiskPdoSamples.getErrors().addAll(foundPDOSamples.getErrors());
+        try {
+            Map<String, Set<String>> pdoSamplesMap = pdoSamples.convertPdoSamplePairsListToMap();
+            for (String pdoKey : pdoSamplesMap.keySet()) {
+                List<ProductOrderSample> productOrderSamples =
+                        pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, pdoSamplesMap.get(pdoKey));
+                PDOSamples foundPDOSamples = PDOSamples.findAtRiskPDOSamples(productOrderSamples);
+                atRiskPdoSamples.getPdoSamples().addAll(foundPDOSamples.getPdoSamples());
+                atRiskPdoSamples.getErrors().addAll(foundPDOSamples.getErrors());
+            }
+        } catch (Exception e) {
+            log.error("Failed to return PDO/Sample information.", e);
+            atRiskPdoSamples.addError(e.getMessage());
         }
         return atRiskPdoSamples;
     }
