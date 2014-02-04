@@ -80,10 +80,13 @@
                 <label style="float:left;margin-right:10px;width:auto;" for="collaboratorId">Collaborator *</label>
                 <stripes:select id="collaboratorId" name="collaborator" onchange="updateEmailField()">
                     <stripes:option  label="Choose a Collaborator" value=""/>
-                    <optgroup label="Project Collaborators">
-                        <stripes:options-collection collection="${actionBean.externalCollaboratorList.tokenObjects}"
-                                                    value="userId" label="fullName"/>
-                    </optgroup>
+
+                    <c:if test="${not empty actionBean.externalCollaboratorList.tokenObjects}">
+                        <optgroup label="Project Collaborators">
+                            <stripes:options-collection collection="${actionBean.externalCollaboratorList.tokenObjects}"
+                                                        value="userId" label="fullName"/>
+                        </optgroup>
+                    </c:if>
 
                     <optgroup label="Other">
                         <stripes:option id="emailId" label="Email Address" value=""/>
