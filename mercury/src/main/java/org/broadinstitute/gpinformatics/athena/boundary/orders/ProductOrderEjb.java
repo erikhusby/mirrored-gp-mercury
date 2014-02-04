@@ -52,6 +52,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -131,6 +132,8 @@ public class ProductOrderEjb {
                                     Collection<ProductOrderKitDetail> kitDetailCollection)
             throws IOException, QuoteNotFoundException {
 
+        kitDetailCollection.removeAll(Collections.singleton(null));
+        deletedIds.removeAll(Collections.singleton(null));
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
@@ -143,16 +146,20 @@ public class ProductOrderEjb {
 
             if (editedProductOrder.isSampleInitiation()) {
                 Map<Long, ProductOrderKitDetail> mapKitDetailsToIDs = new HashMap<>();
-                for (ProductOrderKitDetail kitDetail : editedProductOrder.getProductOrderKit().getKitOrderDetails()) {
+//                for (ProductOrderKitDetail kitDetail : editedProductOrder.getProductOrderKit().getKitOrderDetails()) {
+                for (Iterator<ProductOrderKitDetail> kitDetailIterator = editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();kitDetailIterator.hasNext(); ) {
+                    ProductOrderKitDetail kitDetail = kitDetailIterator.next();
                     if(!deletedIds.contains(kitDetail.getProductOrderKitDetaild().toString())) {
-                        editedProductOrder.getProductOrderKit().removeKitOrderDetail(kitDetail);
+                        kitDetailIterator.remove();
+//                        editedProductOrder.getProductOrderKit().removeKitOrderDetail(kitDetail);
                     } else {
                         mapKitDetailsToIDs.put(kitDetail.getProductOrderKitDetaild(), kitDetail);
                     }
                 }
 
                 for(ProductOrderKitDetail kitDetailUpdate : kitDetailCollection) {
-                    if(mapKitDetailsToIDs.containsKey(kitDetailUpdate.getProductOrderKitDetaild())) {
+                    if(kitDetailUpdate.getProductOrderKitDetaild() != null &&
+                       mapKitDetailsToIDs.containsKey(kitDetailUpdate.getProductOrderKitDetaild())) {
 
                         mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setKitType(kitDetailUpdate.getKitType());
                         mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setBspMaterialName(kitDetailUpdate.getBspMaterialName());
@@ -170,6 +177,7 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        productOrderDao.persist(editedProductOrder);
     }
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
@@ -212,25 +220,25 @@ public class ProductOrderEjb {
         productOrder.setOrderStatus(OrderStatus.Submitted);
     }
 
-    /**
-     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
-     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
-     *
-     * @param productOrder          product order
-     * @param productOrderSampleIds sample IDs
-     * @param addOnPartNumbers      add-on part numbers
-     *
-     * @throws QuoteNotFoundException
-     */
-    public void save(
-            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
-            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-        validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder);
-        setSamples(productOrder, productOrderSampleIds);
-        setAddOnProducts(productOrder, addOnPartNumbers);
-        setStatus(productOrder);
-    }
+//    /**
+//     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
+//     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
+//     *
+//     * @param productOrder          product order
+//     * @param productOrderSampleIds sample IDs
+//     * @param addOnPartNumbers      add-on part numbers
+//     *
+//     * @throws QuoteNotFoundException
+//     */
+//    public void save(
+//            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
+//            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
+//        validateUniqueProjectTitle(productOrder);
+//        validateQuote(productOrder);
+//        setSamples(productOrder, productOrderSampleIds);
+//        setAddOnProducts(productOrder, addOnPartNumbers);
+//        setStatus(productOrder);
+//    }
 
     /**
      * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a billing

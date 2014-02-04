@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -40,7 +41,8 @@ public class ProductOrderEjbTest {
     public static final String STOCK_ID = "SM-STOCK";
 
     private UserBean mockUserBean = Mockito.mock(UserBean.class);
-    ProductOrderEjb productOrderEjb = new ProductOrderEjb(null, null, null, null, mockUserBean, null, null,
+    private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
+    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null, null, mockUserBean, null, null,
             new BSPSampleDataFetcher(new BSPSampleSearchService() {
                 @Override
                 public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(final Collection<String> sampleIDs,
@@ -134,6 +136,7 @@ public class ProductOrderEjbTest {
         kitDetailChange2.setProductOrderKitDetaild(4243L);
 
         kitDetailSet.add(kitDetailChange1);
+        kitDetailSet.add(null);
         kitDetailSet.add(kitDetailChange2);
 
         productOrderEjb.persistProductOrder(ProductOrder.SaveType.UPDATING, productOrder,Collections.singleton("2243"),

@@ -20,6 +20,8 @@
             disabledText = ' disabled="disabled" ' ;
             readonlyText = ' readonly="readonly" ';
         }
+        var postReceivePrePopulateArray = [];
+
 
         $j(document).ready(
 
@@ -398,7 +400,7 @@
                 }
 
                 var postReceiveId = "postReceiveCheckbox-" + index;
-                checkboxText += '  <input id="' + postReceiveId + '" type="checkbox"' + checked + disabledText +
+                checkboxText += '  <input type="checkbox"' + checked + disabledText +
                         ' name="postReceiveOptionKeys[' + kitIndex + ']" value="' + optionName + '"/>' +
                         '  <label style="font-size: x-small;" for="' + postReceiveId + '">' +
                         optionName + '</label>';
@@ -406,6 +408,21 @@
             var checkboxes = $j("#postReceiveCheckboxes" + kitIndex);
             checkboxes.hide();
             checkboxes.html(checkboxText);
+
+            if(postReceivePrePopulateArray) {
+
+                $j("input[name='postReceiveOptionKeys["+kitIndex+"]']").each(function() {
+                    var checkedValue = '';
+                    if($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) {
+                        checkedValue = 'checked';
+                    }
+                    $j(this).prop("checked", checkedValue );
+//                    $j(this).prop("checked", ($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) );
+                });
+            }
+
+            postReceivePrePopulateArray = [];
+
             checkboxes.fadeIn(fadeDuration);
         }
 
@@ -456,6 +473,11 @@
             var kitType = $j("#kitType" + id).val();
             var organism = $j("#organismOption" + id).val();
 
+
+            $j("input[name='postReceiveOptionKeys["+id+"]']:checked").each(function() {
+                postReceivePrePopulateArray.push($j(this).val());
+            });
+
             addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType)
         }
 
@@ -470,7 +492,7 @@
             newDefinition += '<div class="controls">\n';
             if(!readOnlyOrder && kitDefinitionCount>0) {
 
-                newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" >Remove kit Definition</a>\n ';
+                newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" id="remove'+kitDefinitionCount+'">Remove kit Definition</a>\n ';
             }
             newDefinition += '<h5 >Kit Definition Info</h3>';
             newDefinition += '</div>\n</div>';
@@ -545,7 +567,7 @@
 
                 newDefinition += ' <div class="control-group">' +
                         '<div class="controls">\n' +
-                        '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')" >Duplicate kit Definition</a>\n ' +
+                        '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')" id="clone'+kitDefinitionCount+'" >Duplicate kit Definition</a>\n ' +
                         '</div></div>';
             }
 
@@ -568,8 +590,11 @@
             if(organism) {
                 $j('#organismOption' + kitDefinitionCount).val(organism);
             }
-            updateUIForMaterialInfoChoice(kitDefinitionCount)
+            updateUIForMaterialInfoChoice(kitDefinitionCount);
+
+
             kitDefinitionCount++;
+
 
             //Update the new Post receipt options with the previously selected ones.
         }

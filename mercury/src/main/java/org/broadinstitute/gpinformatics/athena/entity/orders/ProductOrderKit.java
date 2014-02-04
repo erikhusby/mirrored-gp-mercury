@@ -316,7 +316,6 @@ public class ProductOrderKit implements Serializable {
         kitOrderDetails.add(kitDetail);
     }
     public void removeKitOrderDetail(ProductOrderKitDetail kitDetail) {
-        kitDetail.setProductOrderKit(null);
         kitOrderDetails.remove(kitDetail);
     }
 }

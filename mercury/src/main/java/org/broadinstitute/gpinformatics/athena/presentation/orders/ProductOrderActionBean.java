@@ -999,6 +999,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // update or add to list of kit details
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        for(int kitDetailIndex = 0;kitDetailIndex<kitDetails.size();kitDetailIndex++) {
+
+            if(kitDetails.get(kitDetailIndex) != null &&
+               postReceiveOptionKeys.get(kitDetailIndex) != null) {
+
+                kitDetails.get(kitDetailIndex).setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
+            }
+        }
 
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
