@@ -17,6 +17,6 @@ public class NoJiraTransitionException extends RuntimeException {
     }
 
     public NoJiraTransitionException(String transitionName, String key) {
-        this("Cannot " + transitionName + " " + key + ": no " + transitionName + " transition found");
+        this(String.format("Cannot transition to '%s' for issue '%s'. Transition was not found.", transitionName, key));
     }
 }
