@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-
 import javax.annotation.Nonnull;
 import java.util.Map;
 

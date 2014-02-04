@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -289,7 +289,7 @@ public class ProductOrderResource {
         try {
             // Add the samples.
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
-        } catch (ProductOrderEjb.NoSuchPDOException | IOException | JiraIssue.NoTransitionException e) {
+        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
         }
 
@@ -418,9 +418,4 @@ public class ProductOrderResource {
         }
         return pdoSamplesResult;
     }
-
-
-
-
-
 }
