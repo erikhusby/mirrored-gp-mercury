@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
 import java.util.Date;
@@ -14,8 +16,19 @@ public class ProductTestFactory {
     }
 
     public static Product createDummyProduct(Workflow workflow, String partNumber) {
-        return new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
-                                  new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements",
-                                  "deliverables", true, workflow, false, "an aggregation data type");
+        return createDummyProduct(workflow, partNumber, false);
     }
+
+    public static Product createDummyProduct(Workflow workflow, String partNumber, boolean addRisk) {
+        Product product =
+                new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
+                        new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
+                        workflow, false, "an aggregation data type");
+        if (addRisk) {
+            product.addRiskCriteria(new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true"));
+        }
+        return product;
+    }
+
+
 }

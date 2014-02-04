@@ -16,8 +16,7 @@ import java.util.Set;
 
 
 /**
- * Simple bean class used for looking up pdo/sample
- * billing information via WS.
+ * Simple bean class used for looking up pdo/sample information via WS.
  */
 @XmlRootElement
 public class PDOSamples {
@@ -99,5 +98,23 @@ public class PDOSamples {
             }
         }
         return pdoSamplesResults;
+    }
+
+    /**
+     * Given a list of productOrderSamples calculate the sample risk and return all at-risk samples.
+     */
+    @DaoFree
+    public static PDOSamples findAtRiskPDOSamples(List<ProductOrderSample> productOrderSamples){
+        PDOSamples samplesAtRisk = new PDOSamples();
+        for (ProductOrderSample productOrderSample : productOrderSamples){
+            if (productOrderSample.calculateRisk()){
+                PDOSample pdoSample = new PDOSample(productOrderSample.getBusinessKey(), productOrderSample.getName(),
+                                                        productOrderSample.isCompletelyBilled());
+
+                samplesAtRisk.addError(productOrderSample.getRiskString());
+                samplesAtRisk.getPdoSamples().add(pdoSample);
+            }
+        }
+        return samplesAtRisk;
     }
 }

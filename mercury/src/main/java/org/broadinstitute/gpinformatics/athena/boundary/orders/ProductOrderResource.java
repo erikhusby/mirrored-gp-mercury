@@ -128,7 +128,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.placeOrder(productOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
@@ -244,10 +244,10 @@ public class ProductOrderResource {
     }
 
     /**
-     * <p>
+     * <p/>
      * Method to add a set of samples to a PDO.
      * <p/>
-     * <p>
+     * <p/>
      * This will add all the sample ids to the specified PDO in the same order sent in.
      *
      * @param addSamplesToPdoBean the PDO and list of samples to add
@@ -281,7 +281,7 @@ public class ProductOrderResource {
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids
-        List<ProductOrderSample> samplesToAdd = new ArrayList<> (addSamplesToPdoBean.getParentVesselBeans().size());
+        List<ProductOrderSample> samplesToAdd = new ArrayList<>(addSamplesToPdoBean.getParentVesselBeans().size());
         for (ParentVesselBean parentVesselBean : addSamplesToPdoBean.getParentVesselBeans()) {
             samplesToAdd.add(new ProductOrderSample(parentVesselBean.getSampleId()));
         }
@@ -392,7 +392,9 @@ public class ProductOrderResource {
      * a given PDO sample.  Put another way, Manhattan polls this
      * service to see which PDO samples it should start assembling
      * and analyzing.
+     *
      * @param pdoSamplePairs
+     *
      * @return
      */
     @POST
@@ -403,24 +405,47 @@ public class ProductOrderResource {
         PDOSamples pdoSamplesResult = new PDOSamples();
         try {
             List<ProductOrderSample> allPdoSamples = new ArrayList<>();
-            Map<String,Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
+            Map<String, Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
             for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
                 String pdoKey = pdoKeyToSamplesList.getKey();
                 Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
+                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
                 allPdoSamples.addAll(pdoSamples);
             }
             pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
-        }
-        catch(Throwable t) {
-            log.error("Failed to return PDO/Sample billing information.",t);
+        } catch (Throwable t) {
+            log.error("Failed to return PDO/Sample billing information.", t);
             pdoSamplesResult.addError(t.getMessage());
         }
         return pdoSamplesResult;
     }
 
 
-
-
+    /**
+     * Web service takes a PDOSamples object containing a list of PDOSample and returns list of samples at risk.
+     *
+     * @param pdoSamples a PDOSamples object which contains a list of PDOSample which are to be queried.
+     *
+     * @return a PDOSamples object which contains a list of PDOSample which are at risk.
+     *
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
+     */
+    @POST
+    @Path("pdoSampleRisk")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public PDOSamples getPdoSampleRisk(PDOSamples pdoSamples) {
+        PDOSamples atRiskPdoSamples = new PDOSamples();
+        Map<String, Set<String>> pdoSamplesMap = pdoSamples.convertPdoSamplePairsListToMap();
+        for (String pdoKey : pdoSamplesMap.keySet()) {
+            List<ProductOrderSample> productOrderSamples =
+                    pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, pdoSamplesMap.get(pdoKey));
+            PDOSamples foundPDOSamples = PDOSamples.findAtRiskPDOSamples(productOrderSamples);
+            atRiskPdoSamples.getPdoSamples().addAll(foundPDOSamples.getPdoSamples());
+            atRiskPdoSamples.getErrors().addAll(foundPDOSamples.getErrors());
+        }
+        return atRiskPdoSamples;
+    }
 
 }

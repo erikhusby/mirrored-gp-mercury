@@ -2,12 +2,18 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +22,7 @@ import java.util.Set;
 public class PDOSamplesTest {
 
     String sample1 = "123.0";
-    String sample2 = "SM-123";
+    String sample2 = "SM-1234";
     String pdoKey = "PDO-123";
     String pdoKey2 = "PDO-555";
 
@@ -32,12 +38,20 @@ public class PDOSamplesTest {
         pdoSamples.addPdoSamplePair(pdoKey, sample2, null);
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
-        ProductOrder pdo1 = new ProductOrder();
+        Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
+        Product riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true);
+        ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
+                Arrays.asList(pdoSample1),
+                        "newQuote", dummyProduct,
+                new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
         pdo1.setJiraTicketKey(pdoKey);
         pdo1.addSample(pdoSample1);
 
         ProductOrderSample pdoSample2 = new ProductOrderSample(sample2);
-        ProductOrder pdo2 = new ProductOrder();
+        ProductOrder pdo2 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test2",
+                        Arrays.asList(pdoSample2),
+                                "newQuote", riskyProduct,
+                        new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
         pdo2.setJiraTicketKey(pdoKey);
         pdo2.addSample(pdoSample2);
 
@@ -52,6 +66,12 @@ public class PDOSamplesTest {
         for (ProductOrderSample pdoSample : pdoSamplesList) {
             Assert.assertTrue(doesPdoSamplePairContainSample(pdoSamplesResult, pdoSample.getName()));
         }
+    }
+
+    public void testFindAtRiskPDOSamplesDaoFree() {
+        PDOSamples atRiskPDOSamples = pdoSamples.findAtRiskPDOSamples(pdoSamplesList);
+        Assert.assertTrue(!atRiskPDOSamples.getPdoSamples().isEmpty());
+        Assert.assertEquals(atRiskPDOSamples.getErrors().size(), 1);
     }
 
     private boolean doesPdoSamplePairContainSample(PDOSamples pdoSamples,String sampleName) {
