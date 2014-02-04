@@ -25,7 +25,7 @@ $j(document).ready(function () {
         success: showSummary
     });
 
-    <c:if test="${actionBean.sampleInitiation}">
+    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
 
     <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
 
@@ -869,7 +869,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.sampleInitiation}">
+<c:if test="${actionBean.editOrder.isSampleInitiation()}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>
@@ -954,7 +954,7 @@ function formatInput(item) {
 </c:if>
 </div>
 
-<c:if test="${!actionBean.editOrder.draft || !actionBean.sampleInitiation}">
+<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.isSampleInitiation()}">
 
     <div class="borderHeader">
         <h4 style="display:inline">Samples</h4>

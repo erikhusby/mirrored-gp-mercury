@@ -144,6 +144,25 @@ public class ProductOrderKitDetail implements Serializable {
         return organismName;
     }
 
+
+    public void setKitType(KitType kitType) {
+        this.kitType = kitType;
+    }
+
+    public void setNumberOfSamples(Long numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public void setOrganismId(Long organismId) {
+        this.organismId = organismId;
+    }
+
+    public void setBspMaterialName(String bspMaterialName) {
+        this.bspMaterialName = bspMaterialName;
+    }
+
+
+
     /**
      * Return a string representation of this kit's PostReceive options
      *

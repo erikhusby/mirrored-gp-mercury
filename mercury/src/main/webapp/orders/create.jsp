@@ -814,11 +814,19 @@
                             Transfer Method
                         </stripes:label>
                         <div class="controls">
-                        <stripes:select name="editOrder.productOrderKit.transferMethod" id="transferMethod">
-                            <stripes:options-enumeration
-                                    enum="org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest.TransferMethod"
-                                    label="value"/>
-                        </stripes:select>
+                            <c:choose>
+                                <c:when test="${actionBean.editOrder.draft}">
+
+                                    <stripes:select name="editOrder.productOrderKit.transferMethod" id="transferMethod">
+                                        <stripes:options-enumeration
+                                                enum="org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest.TransferMethod"
+                                                label="value"/>
+                                    </stripes:select>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="form-value">${actionBean.editOrder.productOrderKit.transferMethod.value}</div>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
 
@@ -855,64 +863,7 @@
                     </div>
 
                     <div class="control-group">
-                        <div id="kitDefinitions" style="margin-top: 5px;">
-                            <%--<div id="kitDefinitionDetail">--%>
-                                <%--<div class="control-group">--%>
-                                    <%--<stripes:label for="numberOfSamples" class="control-label">--%>
-                                        <%--Number of Samples--%>
-                                    <%--</stripes:label>--%>
-                                    <%--<div class="controls">--%>
-                                        <%--<stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfSamples" name="editOrder.productOrderKit.numberOfSamples"--%>
-                                                      <%--class="defaultText" title="Enter the number of samples"/>--%>
-                                    <%--</div>--%>
-                                <%--</div>--%>
-
-                                <%--<div class="control-group">--%>
-                                    <%--<stripes:label for="kitType" class="control-label">--%>
-                                        <%--Kit Type--%>
-                                    <%--</stripes:label>--%>
-                                    <%--<div class="controls">--%>
-                                        <%--<stripes:select disabled="${!actionBean.editOrder.draft}" id="kitType" name="editOrder.productOrderKit.kitType">--%>
-                                            <%--<stripes:options-enumeration label="displayName"--%>
-                                                                         <%--enum="org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType"/>--%>
-                                        <%--</stripes:select>--%>
-                                        <%--<c:if test="${!actionBean.editOrder.draft}">--%>
-                                            <%--<stripes:hidden name="editOrder.productOrderKit.kitType"/>--%>
-                                        <%--</c:if>--%>
-                                    <%--</div>--%>
-                                <%--</div>--%>
-
-                                <%--<div class="control-group">--%>
-                                    <%--<stripes:label for="materialInfo" class="control-label">--%>
-                                        <%--Material Information--%>
-                                    <%--</stripes:label>--%>
-                                    <%--<div class="controls">--%>
-                                        <%--<stripes:select id="materialInfo" disabled="${!actionBean.editOrder.draft}" name="editOrder.productOrderKit.bspMaterialName">--%>
-                                            <%--<stripes:option label="Choose..." value=""/>--%>
-                                            <%--<stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>--%>
-                                        <%--</stripes:select>--%>
-                                        <%--<c:if test="${!actionBean.editOrder.draft}">--%>
-                                            <%--<stripes:hidden name="editOrder.productOrderKit.bspMaterialName"/>--%>
-                                        <%--</c:if>--%>
-                                    <%--</div>--%>
-                                <%--</div>--%>
-
-                                <%--<div class="control-group">--%>
-                                    <%--<stripes:label for="selectedOrganism" class="control-label">--%>
-                                        <%--Organism--%>
-                                    <%--</stripes:label>--%>
-                                    <%--<div id="selectedOrganism" class="controls">--%>
-                                    <%--</div>--%>
-                                <%--</div>--%>
-
-                                <%--<div id="postReceiveCheckboxGroup" class="control-group">--%>
-                                    <%--<stripes:label for="selectedPostReceiveOptions" class="control-label">--%>
-                                        <%--Post-Receive Options--%>
-                                    <%--</stripes:label>--%>
-                                    <%--<div id="postReceiveCheckboxes" class="controls controls-text"></div>--%>
-                                <%--</div>--%>
-                            <%--</div>--%>
-                        </div>
+                        <div id="kitDefinitions" style="margin-top: 5px;"></div>
                     </div>
                 </fieldset>
             </div>

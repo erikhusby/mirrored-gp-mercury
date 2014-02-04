@@ -307,11 +307,16 @@ public class ProductOrderKit implements Serializable {
     }
 
     public void setKitOrderDetails(Set<ProductOrderKitDetail> kitOrderDetails) {
-        this.kitOrderDetails = kitOrderDetails;
+        this.kitOrderDetails.clear();
+        this.kitOrderDetails.addAll(kitOrderDetails);
     }
 
     public void addKitOrderDetail(ProductOrderKitDetail kitDetail) {
         kitDetail.setProductOrderKit(this);
-        this.kitOrderDetails.add(kitDetail);
+        kitOrderDetails.add(kitDetail);
+    }
+    public void removeKitOrderDetail(ProductOrderKitDetail kitDetail) {
+        kitDetail.setProductOrderKit(null);
+        kitOrderDetails.remove(kitDetail);
     }
 }

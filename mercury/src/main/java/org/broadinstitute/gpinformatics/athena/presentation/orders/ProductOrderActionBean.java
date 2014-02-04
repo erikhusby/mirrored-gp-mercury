@@ -466,7 +466,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         ResearchProject researchProject = editOrder.getResearchProject();
-        if (!isSampleInitiation()) {
+        if (!editOrder.isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
@@ -918,7 +918,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            if (isSampleInitiation()) {
+            if (editOrder.isSampleInitiation()) {
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
                 editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
@@ -1019,15 +1019,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
         // For sample initiation fields we will set token input fields.
-        if (isSampleInitiation()) {
-            for (ProductOrderKitDetail kitDetail:editOrder.getProductOrderKit().getKitOrderDetails()) {
-                EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetail.getProductOrderKitDetaild()));
-
-                //FIXME.  Need to initialize product order kits
-
-                kitDetail.getPostReceiveOptions().clear();
-                kitDetail.getPostReceiveOptions().addAll(postReceiveOptions);
-            }
+        if (editOrder.isSampleInitiation()) {
+//            for (ProductOrderKitDetail kitDetail:editOrder.getProductOrderKit().getKitOrderDetails()) {
+//                EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetail.getProductOrderKitDetaild()));
+//
+//                //FIXME.  Need to initialize product order kits
+//
+//                kitDetail.getPostReceiveOptions().clear();
+//                kitDetail.getPostReceiveOptions().addAll(postReceiveOptions);
+//            }
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1722,15 +1722,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return getProductOrderListEntry().getBillingSessionBusinessKey();
-    }
-
-    /**
-     * Convenience method to determine whether or not the current PDO is for sample initiation.
-     *
-     * @return true if this is a sample initiation PDO; false otherwise
-     */
-    public boolean isSampleInitiation() {
-        return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
     }
 
     /**
