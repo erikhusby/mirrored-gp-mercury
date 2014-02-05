@@ -99,7 +99,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -372,7 +371,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * TODO SGM:  Add Javadoc
+     * place the kit details into an array list to allow stripes to update the kit details
      */
     private void initializeKitDetails() {
         kitDetails.addAll(editOrder.getProductOrderKit().getKitOrderDetails());
@@ -734,7 +733,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
-    public void initPostReceiveOptions() {
+    public void initSampleKitInfo() {
         postReceiveOptionKeys.clear();
         int detailIndex = 0;
         for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
@@ -999,12 +998,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // update or add to list of kit details
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        for(int kitDetailIndex = 0;kitDetailIndex<kitDetails.size();kitDetailIndex++) {
+        for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
 
-            if(kitDetails.get(kitDetailIndex) != null &&
-               postReceiveOptionKeys.get(kitDetailIndex) != null) {
+            if (kitDetails.get(kitDetailIndex) != null &&
+                postReceiveOptionKeys.get(kitDetailIndex) != null) {
 
-                kitDetails.get(kitDetailIndex).setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
+                kitDetails.get(kitDetailIndex)
+                        .setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
             }
         }
 
@@ -1028,14 +1028,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // For sample initiation fields we will set token input fields.
         if (editOrder.isSampleInitiation()) {
-//            for (ProductOrderKitDetail kitDetail:editOrder.getProductOrderKit().getKitOrderDetails()) {
-//                EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetail.getProductOrderKitDetaild()));
-//
-//                //FIXME.  Need to initialize product order kits
-//
-//                kitDetail.getPostReceiveOptions().clear();
-//                kitDetail.getPostReceiveOptions().addAll(postReceiveOptions);
-//            }
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1149,8 +1141,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject kitIndexObject = new JSONObject();
         String kitIndex = this.kitDefinitionQueryIndex;
         kitIndexObject.put(kitDefinitionIndexIdentifier, kitIndex);
-        kitIndexObject.put("dataList",itemList);
-//        itemList.put(kitIndexObject);
+        kitIndexObject.put("dataList", itemList);
 
         return createTextResolution(kitIndexObject.toString());
     }
@@ -1189,11 +1180,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 } else {
                     setupEmptyItems(sample, item);
                 }
-
                 itemList.put(item);
             }
         }
-
         return createTextResolution(itemList.toString());
     }
 
@@ -1530,9 +1519,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
-            if(CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size()>Integer.valueOf(kitDefinitionQueryIndex)) {
+            if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
+                    .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
-                                               kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
+                        kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
             }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
@@ -2008,7 +1998,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Attempt to return the list of receptacles for a given dna kit type.
      * <p/>
-     * FixMe:  Currently, there is only one kit type and one receptacle type represented.  We will need to expand
+     * FIXME (GPLIM-2463):  Currently, there is only one kit type and one receptacle type represented.  We will need to expand
      * this.  There for the singletonlist is just a placeholder
      *
      * @return List of receptacle types

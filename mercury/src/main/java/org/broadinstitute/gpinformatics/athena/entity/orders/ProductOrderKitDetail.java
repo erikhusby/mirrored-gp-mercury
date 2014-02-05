@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Defines the specific details for a sample kit contained in a sample initiation order.  This information is isolated
+ * to its own entity since a sample initiation order can have multiple kits defined for it.
  */
 @Entity
 @Audited
@@ -60,7 +61,8 @@ public class ProductOrderKitDetail implements Serializable {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @CollectionTable(schema = "athena", name="PDO_KIT_DTL_POST_REC_OPT", joinColumns = {@JoinColumn(name="product_order_kit_detail_id")})
+    @CollectionTable(schema = "athena", name = "PDO_KIT_DTL_POST_REC_OPT",
+            joinColumns = {@JoinColumn(name = "product_order_kit_detail_id")})
     private Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @Column(name = "material_bsp_name")
@@ -72,8 +74,8 @@ public class ProductOrderKitDetail implements Serializable {
     public ProductOrderKitDetail() {
     }
 
-    public ProductOrderKitDetail(Long numberOfSamples,
-                                 KitType kitType, Long organismId, MaterialInfoDto materialInfo) {
+    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
+                                 MaterialInfoDto materialInfo) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.organismId = organismId;
@@ -139,7 +141,9 @@ public class ProductOrderKitDetail implements Serializable {
         organismName = s;
     }
 
-    /** This is only populated after actionBean.populateTokenListsFromObjectData() is run. */
+    /**
+     * This is only populated after actionBean.populateTokenListsFromObjectData() is run.
+     */
     public String getOrganismName() {
         return organismName;
     }
@@ -161,23 +165,21 @@ public class ProductOrderKitDetail implements Serializable {
         this.bspMaterialName = bspMaterialName;
     }
 
-
-
     /**
      * Return a string representation of this kit's PostReceive options
      *
      * @param delimiter characters used to join list values
      */
     public String getPostReceivedOptionsAsString(String delimiter) {
-        if (StringUtils.isBlank(delimiter)){
-            delimiter=", ";
+        if (StringUtils.isBlank(delimiter)) {
+            delimiter = ", ";
         }
-        if (getPostReceiveOptions().isEmpty()){
+        if (getPostReceiveOptions().isEmpty()) {
             return NO_POST_RECEIVED_OPTIONS_SELECTED;
         }
 
-        List<String> options=new ArrayList<>(postReceiveOptions.size());
-        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
+        List<String> options = new ArrayList<>(postReceiveOptions.size());
+        for (PostReceiveOption postReceiveOption : postReceiveOptions) {
             options.add(postReceiveOption.getText());
         }
         return StringUtils.join(options, delimiter);

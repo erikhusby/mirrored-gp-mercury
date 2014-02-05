@@ -46,27 +46,39 @@ public class ProductOrderKit implements Serializable {
     @Column(name="product_order_kit_id", unique=true, nullable=false)
     private Long productOrderKitId;
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Column(name = "number_samples")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+    @Deprecated
     private Long numberOfSamples;
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Enumerated(EnumType.STRING)
     @Column(name = "kit_type")
-    @Deprecated //TODO  SGM:  REMOVE: This field is moving to product order kit detail
+    @Deprecated
     private KitType kitType;
 
     @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Column(name = "organism_id")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+    @Deprecated
     private Long organismId;
 
     @Column(name = "site_id")
     private Long siteId;
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Column(name = "material_bsp_name")
-    @Deprecated //TODO SGM:  REMOVE:  THis field is moving to product order kit detail
+    @Deprecated
     private String bspMaterialName;
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -74,10 +86,13 @@ public class ProductOrderKit implements Serializable {
     @BatchSize(size = 500)
     private final Set<ProductOrderKitPerson> notificationPeople = new HashSet<>();
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
-    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
+    @Deprecated
     private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -132,26 +147,41 @@ public class ProductOrderKit implements Serializable {
         this.productOrderKitId = productOrderKitId;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public Long getNumberOfSamples() {
         return numberOfSamples;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public void setNumberOfSamples(Long numberOfSamples) {
         this.numberOfSamples = numberOfSamples;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public KitType getKitType() {
         return kitType;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public void setKitType(KitType kitType) {
         this.kitType = kitType;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public String getKitTypeDisplayName() {
         if (getKitType() == null) {
@@ -203,21 +233,33 @@ public class ProductOrderKit implements Serializable {
         siteName = s;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public MaterialInfoDto getMaterialInfo() {
         return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
         bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public String getBspMaterialName() {
         return bspMaterialName;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public void setBspMaterialName(String bspMaterialName) {
         this.bspMaterialName = bspMaterialName;
@@ -249,6 +291,9 @@ public class ProductOrderKit implements Serializable {
         return workRequestId;
     }
 
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public Set<PostReceiveOption> getPostReceiveOptions() {
         return postReceiveOptions;
@@ -259,6 +304,9 @@ public class ProductOrderKit implements Serializable {
      *
      * @param delimiter characters used to join list values
      */
+    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
+    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
+    // entities
     @Deprecated
     public String getPostReceivedOptionsAsString(@Nonnull String delimiter) {
         if (getPostReceiveOptions().isEmpty()){
@@ -284,7 +332,7 @@ public class ProductOrderKit implements Serializable {
     public boolean isExomeExpress() {
 
         if(exomeExpress == null) {
-            exomeExpress = new Boolean(false);
+            exomeExpress = false;
         }
 
         return exomeExpress;
@@ -314,8 +362,5 @@ public class ProductOrderKit implements Serializable {
     public void addKitOrderDetail(ProductOrderKitDetail kitDetail) {
         kitDetail.setProductOrderKit(this);
         kitOrderDetails.add(kitDetail);
-    }
-    public void removeKitOrderDetail(ProductOrderKitDetail kitDetail) {
-        kitOrderDetails.remove(kitDetail);
     }
 }

@@ -25,17 +25,16 @@ $j(document).ready(function () {
         success: showSummary
     });
 
+    // Initializes the previously chosen sample kit detail info in the sample kit display section
     <c:if test="${actionBean.editOrder.isSampleInitiation()}">
-
     <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
-
     showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
             '${kitDetail.organismName}','${kitDetail.bspMaterialName}',
             '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
-
     </c:forEach>
     </c:if>
 
+    // if there are no sample kit details, just show one empty detail section
     if(kitDefinitionIndex == 0) {
         showKitDetail();
     }
@@ -420,9 +419,26 @@ function showAbandonConfirm(action, actionPrompt, level) {
     $j("#abandonConfirmation").dialog("open");
 }
 
-function showKitDetail(samples, kitType, organismName, materialinfo, postReceivedOptions) {
+/**
+ * showKitDetail will generate the display fields for the specific kit definition details if the PDO being displayed
+ * is a sample initiation PDO.
+ *
+ *
+ * @param samples               Number of samples for the sample kit definition details.  Will be used to initialize
+ *                              the sample display section.
+ * @param kitType               Kit type (Receptacle type) for the sample kit definition details.  Will be used to
+ *                              initialize the kit type display area.
+ * @param organismName          Name of the organism for the sample kit definition details.  Will be used to initialize
+ *                              the organism display area.
+ * @param materialInfo          Type of biological material associated with the sample kit definition details.  Will
+ *                              be used to initialize the sample display sections
+ * @param postReceivedOptions   The chosen processing options for the sample kit definition details which will be
+ *                              applied when the sample kit is received.  Will be used to initialize the sample display
+ *                              sections
+ */
+function showKitDetail(samples, kitType, organismName, materialInfo, postReceivedOptions) {
     var detailInfo = '<div id="kitDetailInfo' + kitDefinitionIndex +'">';
-
+    detailInfo += '<h5 >Kit Definition Info</h3>';
     // Number of Samples
     detailInfo += '<div class="view-control-group control-group">\n' +
             '<label for="kitNumberOfSamples'+kitDefinitionIndex+'" class="control-label label-form" >Samples Requested</label>\n' +
@@ -466,9 +482,9 @@ function showKitDetail(samples, kitType, organismName, materialinfo, postReceive
 
             '<div class="controls">\n' +
             '<div class="form-value" id="kitMaterialInfo'+kitDefinitionIndex+'">';
-    if (materialinfo) {
+    if (materialInfo) {
 
-        detailInfo += materialinfo;
+        detailInfo += materialInfo;
     }
 
     detailInfo += '</div>\n' +

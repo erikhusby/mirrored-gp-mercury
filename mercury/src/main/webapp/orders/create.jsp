@@ -112,6 +112,7 @@
                     $j("#publicationDeadline").datepicker();
                     $j("#sampleListEdit").hide();
 
+                    // Initializes the previously chosen sample kit detail info in the sample kit display section
                     <c:forEach items="${actionBean.kitDetails}" var="initKitDetail" varStatus="kitDetailStatus">
                     addKitDefinitionInfo('${initKitDetail.productOrderKitDetaild}', '${initKitDetail.numberOfSamples}',
                             '${initKitDetail.organismId}', '${initKitDetail.bspMaterialName}',
@@ -119,10 +120,14 @@
                     </c:forEach>
                     var kitDetailLength = ${fn:length(actionBean.kitDetails)};
 
+                    // if there are no sample kit details, just show one empty detail section
                     if(kitDetailLength<1) {
                         addKitDefinitionInfo('');
                     }
 
+                    // add an on change event for each material info drop down on the screen.  There may be more than
+                    // one so we need to have a change method for each and have that change only affect the post
+                    // processing options in that block.
                     $j("[id^=materialInfo]").change( function(e) {
 
                         var chosenId = $j(this).attr("id");
@@ -133,9 +138,9 @@
                     updateUIForProductChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
-                    for (kitCount = 0; kitCount < kitDefinitionCount; kitCount++) {
-                        updateUIForMaterialInfoChoice(kitCount);
-                    }
+//                    for (kitCount = 0; kitCount < kitDefinitionCount; kitCount++) {
+//                        updateUIForMaterialInfoChoice(kitCount);
+//                    }
                     initializeQuoteOptions();
                     updateQuoteOptions();
                 }
@@ -453,6 +458,10 @@
                     item.extraCount + '</li>'
         }
 
+        /**
+         *
+         * @param id    kit index ID fo the block of sample kit detail info that is being removed
+         */
         function removeKitDefinition(id) {
 
             var kitRefID = $j("kitIdReference" + id).attr("value");
@@ -465,9 +474,17 @@
             $j("#kitDefinitionDetail" + id).remove();
         }
 
+        /**
+         *
+         * When called, cloneKitDefinition will create a new sample kit detail block of form fields.  The function will
+         * also, grab sample kit detail info defined in a previous form block (referenced by the id parameter) and
+         * prepopulate the new fields with the values from the previous block
+         *
+         * @param id    kit index ID of the block of sample kit detail info that is being cloned
+         */
         function cloneKitDefinition(id) {
 
-            var kitDefinitionId = $j("#kitIdReference" + id).attr('value');
+            var kitDefinitionId = '';
             var numberOfSamples = $j("#numberOfSamples" + id).val();
             var materialInfo = $j("#materialInfo" + id).val();
             var kitType = $j("#kitType" + id).val();
@@ -481,6 +498,27 @@
             addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType)
         }
 
+        /**
+         * addKitDefinitionInfo builds the template form fields for displaying the details for sample kits.  A sample
+         * initiation request can have multiple sample kit details so this function can be called multiple times
+         * to set up each one.
+         *
+         * @param kitDefinitionId   The Database ID associated with the sample kit detail entity, if there is one.
+         *                          Will be stored in a hidden field to associate the kit details with the previously
+         *                          saved entity
+         * @param samples           The number of samples for the kit defined for the sample kit detail info being
+         *                          rendered.  If set, this will be used to pre-populate the number of samples input
+         *                          field
+         * @param organism          The reference ID for the organism chosen for the sample kit detail info being
+         *                          rendered.  If set, this will be used to pre-select the correct organism in the
+         *                          organism dropdown
+         * @param material          The name of the source material chosen for the sample kit detail info being
+         *                          rendered.  If set, this will be used to pre-select the correct source material in
+         *                          the material dropdown
+         * @param kitType           The reference name for the kit type (receptacle type) fo the sample kit detail info
+         *                          being rendered.  If set, this will be used to pre-select the correct kit type in
+         *                          the kit type drop down
+         */
         function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType) {
 
             var newDefinition = '<div id="kitDefinitionDetail' + kitDefinitionCount + '">';
@@ -489,12 +527,12 @@
                     '" value="' + kitDefinitionId +
                     '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetail.productOrderKitDetaild" />';
             newDefinition += '<div class="control-group">\n ';
-            newDefinition += '<div class="controls">\n';
             if(!readOnlyOrder && kitDefinitionCount>0) {
 
                 newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" id="remove'+kitDefinitionCount+'">Remove kit Definition</a>\n ';
             }
             newDefinition += '<h5 >Kit Definition Info</h3>';
+            newDefinition += '<div class="controls">\n';
             newDefinition += '</div>\n</div>';
 
             newDefinition += '<div class="control-group">\n ';

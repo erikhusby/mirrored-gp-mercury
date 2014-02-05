@@ -11,14 +11,9 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.controller.StripesFilter;
-import net.sourceforge.stripes.mock.MockHttpServletRequest;
-import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
-import org.apache.http.HttpRequest;
-import org.apache.http.message.BasicHttpRequest;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -41,14 +36,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openqa.jetty.http.HttpResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -260,7 +252,7 @@ public class ProductOrderActionBeanTest {
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
-        actionBean.initPostReceiveOptions();
+        actionBean.initSampleKitInfo();
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
