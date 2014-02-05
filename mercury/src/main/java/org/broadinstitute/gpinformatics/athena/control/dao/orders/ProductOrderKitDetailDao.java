@@ -6,7 +6,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Placeholder DAO to find ProductOrderKitDetails
  */
 @Stateful
 @RequestScoped
