@@ -35,16 +35,17 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);
 
-        String TEST_SAMPLE_ID = "SM-1234";
-        BigDecimal[] newVolume = new BigDecimal[] {getRandomBigDecimal(), new BigDecimal("43.068215")};
-        BigDecimal[] newConcentration = new BigDecimal[] {getRandomBigDecimal(),  new BigDecimal("43.068225")};
+        String testSampleId = "SM-1234";
+        BigDecimal[] newVolume = {getRandomBigDecimal(), new BigDecimal("43.068215")};
+        BigDecimal[] newConcentration = {getRandomBigDecimal(),  new BigDecimal("43.068225")};
+        BigDecimal[] newReceptacleWeight = {getRandomBigDecimal(),  new BigDecimal("43.068235")};
 
         for (int i = 0; i < newVolume.length; ++i) {
             String result = bspSetVolumeConcentration.setVolumeAndConcentration(
-                    TEST_SAMPLE_ID, newVolume[i], newConcentration[i]);
+                    testSampleId, newVolume[i], newConcentration[i], newReceptacleWeight[i]);
             Assert.assertEquals(result, BSPSetVolumeConcentration.RESULT_OK);
 
-            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(TEST_SAMPLE_ID);
+            BSPSampleDTO bspSampleDTO = dataFetcher.fetchSingleSampleFromBSP(testSampleId);
             Double currentVolume = bspSampleDTO.getVolume();
             Double currentConcentration = bspSampleDTO.getConcentration();
 
@@ -65,10 +66,9 @@ public class BSPSetVolumeConcentrationTest extends Arquillian {
     /**
      * get a random number  for use in test.
      *
-     * @return
      */
     private BigDecimal getRandomBigDecimal() {
-        return BigDecimal.valueOf((Math.random() * 50) + 1);
+        return BigDecimal.valueOf((Math.random() * 50.0) + 1.0);
     }
 
     private Double scaleResult(BigDecimal bigDecimal) {

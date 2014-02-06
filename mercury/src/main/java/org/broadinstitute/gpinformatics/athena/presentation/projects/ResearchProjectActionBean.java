@@ -15,6 +15,8 @@ import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -51,6 +53,8 @@ import java.util.Map;
  */
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
+    private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
+
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
@@ -275,7 +279,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         try {
             researchProjectEjb.submitToJira(editResearchProject);
         } catch (Exception ex) {
-            addGlobalValidationError("Error " + createOrUpdate + " JIRA ticket for research project");
+            String errorMessage = "Error " + createOrUpdate + " JIRA ticket for research project: " + ex.getMessage();
+            logger.error(errorMessage, ex);
+            addGlobalValidationError(errorMessage);
             return new ForwardResolution(getContext().getSourcePage());
         }
 

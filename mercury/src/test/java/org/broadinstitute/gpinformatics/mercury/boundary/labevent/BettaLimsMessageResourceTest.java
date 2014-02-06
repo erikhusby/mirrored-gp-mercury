@@ -6,6 +6,7 @@ import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
@@ -144,6 +146,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
+
+    @Inject
+    JiraService jiraService;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
@@ -469,7 +474,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         productOrder.prepareToSave(bspUserList.getByUsername("jowalsh"));
         productOrderDao.persist(productOrder);
         try {
-            productOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(productOrder,jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

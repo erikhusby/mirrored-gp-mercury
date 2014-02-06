@@ -305,8 +305,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void fixupPDOCompleteStatus()
-            throws JiraIssue.NoTransitionException, ProductOrderEjb.NoSuchPDOException, IOException {
+    public void fixupPDOCompleteStatus() throws ProductOrderEjb.NoSuchPDOException, IOException {
         // Loop through all PDOs and update their status to complete where necessary.  The API can in theory
         // un-complete PDOs but no PDOs in the database should be completed yet.
         List<ProductOrder> orders = productOrderDao.findAll();
@@ -406,7 +405,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     private void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
-            throws ProductOrderEjb.NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+            throws ProductOrderEjb.NoSuchPDOException, IOException {
         List<String> samples = Arrays.asList(samplesToUnAbandon);
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
         List<ProductOrderSample> sampleList = productOrder.getSamples();

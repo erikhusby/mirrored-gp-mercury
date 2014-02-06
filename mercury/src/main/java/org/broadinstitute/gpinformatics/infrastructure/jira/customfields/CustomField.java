@@ -82,7 +82,7 @@ public class CustomField {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
         if (value == null) {
-            throw new NullPointerException("value cannot be null");
+            throw new NullPointerException("value for " + definition.getName() + " cannot be null");
         }
 
         this.definition = definition;

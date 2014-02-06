@@ -31,8 +31,6 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
 
     private static final String VOLUME_CONCENTRATION_URL = "sample/setVolumeConcentration";
 
-    private String result;
-
     /**
      * Required for @Impl class.
      */
@@ -55,7 +53,7 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      * @return queryString to pass to the web service.
      */
     private static String getQueryString(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                         @Nullable BigDecimal concentration)
+                                         @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight)
             throws ValidationException {
         List<NameValuePair> parameters = new ArrayList<>();
 
@@ -67,8 +65,12 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             parameters.add(new BasicNameValuePair("concentration", String.valueOf(concentration)));
         }
 
+        if (receptacleWeight != null) {
+            parameters.add(new BasicNameValuePair("receptacle_weight", String.valueOf(receptacleWeight)));
+        }
+
         if (parameters.isEmpty()) {
-            throw new ValidationException("A value for volume or concentration is required.");
+            throw new ValidationException("A value for volume, concentration or receptacleWeight is required.");
         }
 
         parameters.add(new BasicNameValuePair("barcode", barcode));
@@ -87,10 +89,11 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
      */
     @Override
     public String setVolumeAndConcentration(@Nonnull String barcode, @Nullable BigDecimal volume,
-                                            @Nullable BigDecimal concentration) {
+                                            @Nullable BigDecimal concentration, @Nullable BigDecimal receptacleWeight) {
         BufferedReader rdr = null;
+        String result;
         try {
-            String queryString = getQueryString(barcode, volume, concentration);
+            String queryString = getQueryString(barcode, volume, concentration, receptacleWeight);
             String urlString = getUrl(queryString);
 
             WebResource webResource = getJerseyClient().resource(urlString);

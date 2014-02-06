@@ -365,7 +365,7 @@
                     </div>
                 </div>
 
-                <security:authorizeBlock roles="<%= roles(Developer)%>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM)%>">
 
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">

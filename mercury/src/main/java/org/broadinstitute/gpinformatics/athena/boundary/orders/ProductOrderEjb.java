@@ -184,11 +184,17 @@ public class ProductOrderEjb {
         }
     }
 
-    private void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
-        try {
-            quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
-        } catch (QuoteServerException e) {
-            throw new RuntimeException(e);
+    /**
+     * Looks up the quote for the pdo (if the pdo has one) in the
+     * quote server.
+     */
+    void validateQuote(ProductOrder productOrder,QuoteService quoteService) throws QuoteNotFoundException {
+        if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
+            try {
+                quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+            } catch (QuoteServerException e) {
+                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(),e);
+            }
         }
     }
 
@@ -218,25 +224,25 @@ public class ProductOrderEjb {
         productOrder.setOrderStatus(OrderStatus.Submitted);
     }
 
-//    /**
-//     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
-//     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
-//     *
-//     * @param productOrder          product order
-//     * @param productOrderSampleIds sample IDs
-//     * @param addOnPartNumbers      add-on part numbers
-//     *
-//     * @throws QuoteNotFoundException
-//     */
-//    public void save(
-//            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
-//            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
-//        validateUniqueProjectTitle(productOrder);
-//        validateQuote(productOrder);
-//        setSamples(productOrder, productOrderSampleIds);
-//        setAddOnProducts(productOrder, addOnPartNumbers);
-//        setStatus(productOrder);
-//    }
+    /**
+     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application
+     * validation.  This automatically sets the status of the {@link ProductOrder} to submitted.
+     *
+     * @param productOrder          product order
+     * @param productOrderSampleIds sample IDs
+     * @param addOnPartNumbers      add-on part numbers
+     *
+     * @throws QuoteNotFoundException
+     */
+    public void save(
+            ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
+            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
+        validateUniqueProjectTitle(productOrder);
+        validateQuote(productOrder,quoteService);
+        setSamples(productOrder, productOrderSampleIds);
+        setAddOnProducts(productOrder, addOnPartNumbers);
+        setStatus(productOrder);
+    }
 
     /**
      * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a billing
@@ -428,24 +434,6 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Utility class to help with mapping from display names of custom fields to their {@link CustomFieldDefinition}s,
-     * as well as tracking changes that have been made to the values of those fields relative to the existing state
-     * of the PDO JIRA ticket.
-     * <p/>
-     * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
-     */
-    private static class PDOUpdateField extends UpdateField<ProductOrder> {
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
-                              boolean isBulkField) {
-            super(field, newValue, isBulkField);
-        }
-
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
-            super(field, newValue);
-        }
-    }
-
-    /**
      * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
      * on the UI.  Add a comment to the issue to indicate what was changed and by whom.
      *
@@ -454,8 +442,7 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-
-        validateQuote(productOrder);
+        validateQuote(productOrder,quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -464,7 +451,6 @@ public class ProductOrderEjb {
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
                         productOrder.getProduct().getProductFamily().getName()),
-                new PDOUpdateField(ProductOrder.JiraField.QUOTE_ID, productOrder.getQuoteId()),
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
                         new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
@@ -474,6 +460,7 @@ public class ProductOrderEjb {
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
 
+        pdoUpdateFields.add(PDOUpdateField.createPDOUpdateFieldForQuote(productOrder));
 
         List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
         for (ProductOrderAddOn addOn : productOrder.getAddOns()) {
@@ -806,9 +793,7 @@ public class ProductOrderEjb {
      * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
      * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
      */
-    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-
+    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey) throws NoSuchPDOException, IOException {
         try {
             updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         } catch (RuntimeException e) {
@@ -826,10 +811,10 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException
+     *
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+            throws NoSuchPDOException, IOException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
@@ -864,13 +849,9 @@ public class ProductOrderEjb {
      * @param transitionComments Comments to include as part of the transition, will be appended to the JIRA ticket.
      *
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException Thrown if the specified transition is not available on the specified issue.
      */
-    private void transitionJiraTicket(String jiraTicketKey,
-                                      JiraResolution currentResolution,
-                                      JiraTransition state,
-                                      @Nullable String transitionComments)
-            throws IOException, JiraIssue.NoTransitionException {
+    private void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
+                                      @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
         if (currentResolution == resolution) {
@@ -888,13 +869,12 @@ public class ProductOrderEjb {
      * @param jiraTicketKey   JIRA ticket key.
      * @param abandonComments Transition comments.
      *
-     * @throws JiraIssue.NoTransitionException
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
+     *
      */
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
-            throws JiraIssue.NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException,
-            IOException {
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
@@ -917,6 +897,7 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
+     *
      * @throws NoSuchPDOException
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
@@ -937,8 +918,7 @@ public class ProductOrderEjb {
      */
     public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
                            @Nonnull Collection<ProductOrderSample> samples,
-                           @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+                           @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
         order.prepareToSave(bspUser);

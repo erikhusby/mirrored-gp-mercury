@@ -240,7 +240,10 @@ public class ResearchProjectEjb {
      * JIRA Transition states used by PDOs.
      */
     public enum JiraTransition {
-        DEVELOPER_EDIT("Developer Edit");
+        DEVELOPER_EDIT("Developer Edit"),
+        PUT_ON_HOLD("Put On Hold"),
+        CANCEL("Cancel"),
+        COMPLETE("Complete");
 
         /**
          * The text that represents this transition state in JIRA.

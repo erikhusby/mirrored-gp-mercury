@@ -29,6 +29,7 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrders;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -39,6 +40,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -74,6 +76,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -238,8 +241,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
-    private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
-
     @ValidateNestedProperties({
             @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION}),
             @Validate(field = "title", required = true, maxlength = 255, on = {SAVE_ACTION}, label = "Name"),
@@ -401,7 +402,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
-            validateSkipQuoteOptions();
+            validateQuoteOptions(SAVE_ACTION);
         }
     }
 
@@ -914,7 +915,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            editOrder.placeOrder();
+            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (editOrder.isSampleInitiation()) {
@@ -1093,7 +1094,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (String businessKey : selectedProductOrderBusinessKeys) {
             try {
                 productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
-            } catch (JiraIssue.NoTransitionException | ProductOrderEjb.NoSuchPDOException |
+            } catch (NoJiraTransitionException | ProductOrderEjb.NoSuchPDOException |
                     ProductOrderEjb.SampleDeliveryStatusChangeException | IOException e) {
                 throw new RuntimeException(e);
             }
@@ -1188,7 +1189,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
+        Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
+        Date picoRunDate = bspSampleDTO.getPicoRunDate();
+        String picoRunDateString = "No Pico";
+
+        if (picoRunDate != null) {
+            picoRunDateString = dateFormatter.format(picoRunDate);
+        }
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
         item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
         item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
@@ -1196,7 +1204,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
+        item.put(BSPSampleDTO.PICO_DATE, picoRunDateString);
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
@@ -1212,14 +1220,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             item.put(BSPSampleDTO.PACKAGE_DATE, "");
             item.put(BSPSampleDTO.RECEIPT_DATE, "");
         }
-    }
-
-    private static String formatPicoRunDate(Date picoRunDate) {
-        if (picoRunDate == null) {
-            return "No Pico";
-        }
-
-        return dateFormatter.format(picoRunDate);
     }
 
     private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
@@ -1723,6 +1723,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
+     * Convenience method to determine whether or not the current PDO is for sample initiation.
+     *
+     * @return true if this is a sample initiation PDO; false otherwise
+     */
+    public boolean isSampleInitiation() {
+        return editOrder.getProduct() != null && editOrder.getProduct().isSampleInitiationProduct();
+    }
+
+    /**
      * Convenience method for verifying whether a PDO is able to be abandoned.
      *
      * @return Boolean eligible for abandoning
@@ -1958,23 +1967,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.productDao = productDao;
     }
 
-    private void validateSkipQuoteOptions() {
+    public void validateQuoteOptions(String action) {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
-                addValidationError("skipQuoteReason",
-                        "When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
-            }
-            if (!StringUtils.isEmpty(editOrder.getQuoteId())) {
-                // the JSP should make this situation impossible
-                addValidationError("skipQuote",
-                        "You have opted out of providing a quote, but you have also selected a quote.  Please un-check the quote opt out checkbox or clear the quote field.");
+                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
         }
-    }
-
-    public void validateQuoteOptions(String action) {
-        validateSkipQuoteOptions();
-        if (!skipQuote) {
+        else {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
     }

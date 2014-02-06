@@ -267,9 +267,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
     public void testMultiplePdos() {
         expectedRouting = SystemRouter.System.MERCURY;
 
-        ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-1",
+        ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-8",
                 Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A");
-        ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-2",
+        ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-9",
                 Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B");
         AthenaClientServiceStub.addProductOrder(productOrder1);
         AthenaClientServiceStub.addProductOrder(productOrder2);

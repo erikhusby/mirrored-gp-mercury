@@ -11,6 +11,7 @@ import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -61,7 +62,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 new MaterialInfoDto("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
+                ProductOrderTest.PDO_JIRA_KEY, ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID,
                 ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
@@ -80,7 +81,7 @@ public class BSPKitRequestServiceIntegrationTest extends Arquillian {
                 new MaterialInfoDto("DNA Matrix Kit", "DNA Derived from Bucal Cell Tissue and/or Saliva");
         SampleKitWorkRequest workRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(
                 "BSPKitRequestServiceIntegrationTest.testSendKitRequest " + System.currentTimeMillis(), "breilly",
-                "PDO-1", ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
+                ProductOrderTest.PDO_JIRA_KEY, ELANDER_DOMAIN_USER_ID, BREILLY_DOMAIN_USER_ID, ELANDER_DOMAIN_USER_ID, TEST_SITE.getId(),
                 TEST_COLLECTION.getCollectionId(), "hrafal@broadinstitute.org",
                 COMMENTS, IS_EX_EX, TRANSFER_METHOD,
                 Collections.singletonList(BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(NUMBER_OF_SAMPLES,

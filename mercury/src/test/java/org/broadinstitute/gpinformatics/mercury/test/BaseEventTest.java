@@ -40,6 +40,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefData
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.DenatureToDilutionTubeHandler;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.EventHandlerSelector;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.FlowcellMessageHandler;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers.SamplesDaughterPlateHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -156,7 +157,7 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector =
                 new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                        flowcellMessageHandler);
+                        flowcellMessageHandler, new SamplesDaughterPlateHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, AthenaClientProducer.stubInstance());

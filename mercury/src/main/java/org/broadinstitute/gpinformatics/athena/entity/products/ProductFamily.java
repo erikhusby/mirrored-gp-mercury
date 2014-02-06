@@ -33,12 +33,12 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
     public static final String RNA_FAMILY_NAME = "RNA";
-    public static final String INITIATION_FAMILY_NAME = "Sample Initiation, Qualification & Cell Culture";
+    public static final String SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME = "Sample Initiation, Qualification & Cell Culture";
 
     public enum ProductFamilyName {
         RNA("RNA"),
         SMALL_DESIGN_VALIDATION_EXTENSION("Small Design, Validation & Extension"),
-        SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE("Sample Initiation, Qualification & Cell Culture"),
+        SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE(SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME),
         EXOME("Exome"),
         WHOLE_GENOME("Whole Genome"),
         DE_NOVO_ASSEMBLY("de novo Assembly"),
@@ -118,6 +118,6 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     }
 
     public boolean isSupportsSkippingQuote() {
-        return INITIATION_FAMILY_NAME.equalsIgnoreCase(name);
+        return SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME.equalsIgnoreCase(name);
     }
 }

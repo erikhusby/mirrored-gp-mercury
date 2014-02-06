@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -98,12 +97,14 @@ public abstract class LabVessel implements Serializable {
 
     private BigDecimal concentration;
 
+    private BigDecimal receptacleWeight;
+
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     @BatchSize(size = 100)
     private final Set<JiraTicket> ticketsCreated = new HashSet<>();
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labVessel")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "labVessel")
     @BatchSize(size = 100)
     private Set<LabBatchStartingVessel> labBatches = new HashSet<>();
 
@@ -147,14 +148,14 @@ public abstract class LabVessel implements Serializable {
     /**
      * Reagent additions and machine loaded events, i.e. not transfers
      */
-    @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "inPlaceLabVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<>();
 
-    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "labVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @BatchSize(size = 100)
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
@@ -1008,6 +1009,14 @@ public abstract class LabVessel implements Serializable {
         this.concentration = concentration;
     }
 
+    public BigDecimal getReceptacleWeight() {
+        return receptacleWeight;
+    }
+
+    public void setReceptacleWeight(BigDecimal receptacleWeight) {
+        this.receptacleWeight = receptacleWeight;
+    }
+
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
     }
@@ -1099,32 +1108,10 @@ public abstract class LabVessel implements Serializable {
         }
     }
 
-    /**
-     * What {@link SampleMetadata samples} are contained in
-     * this container?  Implementations are expected to
-     * walk the transfer graph back to a point where
-     * they can lookup {@link SampleMetadata} from
-     * an external source like BSP or a spreadsheet
-     * uploaded for "walk up" sequencing.
-     *
-     * @return The mercury samples
-     */
     public Set<MercurySample> getMercurySamples() {
-        Set<MercurySample> foundSamples = new HashSet<>();
-        if (!mercurySamples.isEmpty()) {
-            foundSamples.addAll(mercurySamples);
-        }
-
-        return foundSamples;
+        return mercurySamples;
     }
 
-    /**
-     * For vessels that have been pushed over from BSP, we set
-     * the list of samples.  Otherwise, the list of samples
-     * is empty and is derived from a walk through event history.
-     *
-     * @param mercurySample The sample to add
-     */
     public void addSample(MercurySample mercurySample) {
         mercurySamples.add(mercurySample);
     }

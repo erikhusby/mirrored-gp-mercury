@@ -12,6 +12,15 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -26,6 +35,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -161,5 +171,26 @@ public class ProductOrderEjbTest {
 
         }
 
+    }
+
+    public void testCreatePDOUpdateFieldForQuote() {
+        ProductOrder pdo = new ProductOrder();
+        pdo.setQuoteId("DOUGH");
+        ProductOrderEjb pdoEjb = new ProductOrderEjb();
+        PDOUpdateField updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
+
+        Assert.assertEquals(updateField.getNewValue(),pdo.getQuoteId());
+
+        pdo.setQuoteId(null);
+
+        updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
+        Assert.assertEquals(updateField.getNewValue(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
+    }
+
+    public void testValidateQuote() throws Exception {
+        ProductOrder pdo = new ProductOrder();
+        pdo.setQuoteId("CASH");
+        ProductOrderEjb pdoEjb = new ProductOrderEjb();
+        pdoEjb.validateQuote(pdo, new QuoteServiceStub());
     }
 }

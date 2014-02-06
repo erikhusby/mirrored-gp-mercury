@@ -26,6 +26,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -169,13 +170,12 @@ public class LabEvent {
     @Transient
     private Set<LabBatch> computedLcSets = new HashSet<>();
 
-    // todo jmt persist this
     /**
      * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
      * processed in multiple technologies.
      */
-    @Transient
-    private Set<LabBatch> manualOverrideLcSet;
+    @ManyToOne
+    private LabBatch manualOverrideLcSet;
 
     /**
      * For JPA
@@ -401,11 +401,11 @@ todo jmt adder methods
         return labBatch;
     }
 
-    public Set<LabBatch> getManualOverrideLcSet() {
+    public LabBatch getManualOverrideLcSet() {
         return manualOverrideLcSet;
     }
 
-    public void setManualOverrideLcSet(Set<LabBatch> manualOverrideLcSet) {
+    public void setManualOverrideLcSet(LabBatch manualOverrideLcSet) {
         this.manualOverrideLcSet = manualOverrideLcSet;
     }
 
@@ -415,6 +415,9 @@ todo jmt adder methods
      * @return LCSETs, empty if the source vessels are not associated with an LCSET.
      */
     public Set<LabBatch> getComputedLcSets() {
+        if (manualOverrideLcSet != null) {
+            return Collections.singleton(manualOverrideLcSet);
+        }
         return computedLcSets;
     }
 
@@ -430,7 +433,8 @@ todo jmt adder methods
         }
         computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
+            System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets + " -> " +
+                               getTargetLabVessels().iterator().next().getLabel());
         }
         return computedLcSets;
     }

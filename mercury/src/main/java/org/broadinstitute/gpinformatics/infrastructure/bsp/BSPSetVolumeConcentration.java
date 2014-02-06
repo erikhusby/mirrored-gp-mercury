@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  * that we can test with STUBs and have the real implementation for the container.
  */
 public interface BSPSetVolumeConcentration extends Serializable {
-    // value for a successfult call to the web service
+    // value for a successful call to the web service
     String RESULT_OK = "OK";
     // The success message from BSP starts with this.
     String VALID_COMMUNICATION_PREFIX = "updated volume and concentration for";
@@ -22,5 +22,6 @@ public interface BSPSetVolumeConcentration extends Serializable {
      *
      * @return OK or error message
      */
-    String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration);
+    String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration,
+            BigDecimal receptacleWeight);
 }

@@ -14,10 +14,9 @@ public class BSPSetVolumeConcentrationStub implements BSPSetVolumeConcentration 
 
     private static final long serialVersionUID = -4537906882178920633L;
 
-    private String[] result;
-
     @Override
-    public String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration) {
+    public String setVolumeAndConcentration(String barcode, BigDecimal volume, BigDecimal concentration,
+            BigDecimal receptacleWeight) {
         return RESULT_OK;
     }
 }
