@@ -199,6 +199,8 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(pdo);
         actionBean.setProduct("test product");
         actionBean.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD.getText());
+        String testKitQueryIndex = "5";
+        actionBean.setKitDefinitionQueryIndex(testKitQueryIndex);
 
         StreamingResolution postReceiveOptions = (StreamingResolution) actionBean.getPostReceiveOptions();
         HttpServletRequest request = new MockHttpServletRequest("foo", "bar");
@@ -208,8 +210,11 @@ public class ProductOrderActionBeanTest {
         String jsonString = response.getOutputString();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readValue(jsonString, JsonNode.class);
+        String returnedKitIndex = jsonNode.get(actionBean.getKitDefinitionIndexIdentifier()).asText();
+        Assert.assertEquals(returnedKitIndex, testKitQueryIndex,
+                "The kit index passed in should match the kit index returned");
 
-        Iterator<JsonNode> resultIterator = jsonNode.getElements();
+        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
         String nodeKey = "key";
         String nodeValue = "value";
 

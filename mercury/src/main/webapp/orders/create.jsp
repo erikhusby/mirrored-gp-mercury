@@ -624,6 +624,8 @@
                 $j('#kitTypeHidden' + kitDefinitionCount).val(kitType);
             }
 
+            // TODO SGM.  This seems to need a little work.  Probably can pass the Organism into the updateOrganism
+            // method as an optional value.
             updateOrganism(kitDefinitionCount);
             if(organism) {
                 $j('#organismOption' + kitDefinitionCount).val(organism);
