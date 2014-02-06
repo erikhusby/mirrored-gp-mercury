@@ -327,6 +327,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * For use with the Ajax to indicate and pass back which kit definition is being searched for
      */
     private String kitDefinitionQueryIndex;
+    private String prePopulatedOrganismId;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
@@ -1519,7 +1520,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
-            if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
+
+            if(StringUtils.isNotBlank(prePopulatedOrganismId)) {
+                collectionAndOrganismsList.put(chosenOrganism,prePopulatedOrganismId);
+            } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
                         kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());

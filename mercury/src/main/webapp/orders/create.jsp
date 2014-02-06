@@ -261,9 +261,9 @@
             }
         }
 
-        function updateOrganism(index) {
+        function updateOrganism(index, presetOrganism) {
             $j.ajax({
-                url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val() + "&${actionBean.kitDefinitionIndexIdentifier}=" + index,
+                url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val() + "&${actionBean.kitDefinitionIndexIdentifier}=" + index + "&prePopulatedOrganismId=" + presetOrganism,
                 dataType: 'json',
                 success: setupOrganismMenu
             });
@@ -285,7 +285,7 @@
 
                     var organismId = $j(this).attr("id");
                     var index = organismId.substr("selectedOrganism".length, organismId.length);
-                    updateOrganism(index);
+                    updateOrganism(index, organismId);
                 });
 
                 $j("#sitePrompt").remove();
@@ -552,7 +552,7 @@
                     '<div class="controls">' +
                     '<select '+disabledText+' id="kitType' + kitDefinitionCount +
                     '" name="kitDetails[' + kitDefinitionCount + '].kitType">';
-            <%-- FIXME SGM: Bad fill.  Replace with jQuery Call to get tube to matrix kit combo, until a
+            <%-- FIXME SGM (GPLIM-2463): Bad fill.  Replace with jQuery Call to get tube to matrix kit combo, until a
             better solution for that relationship is found --%>
             newDefinition += '<option value="DNA_MATRIX" >Matrix Tube [0.75mL]</option>' +
                     '</select>' +
@@ -577,8 +577,6 @@
             newDefinition += '<option value="${materialType.text}" >${materialType.text}</option>';
             checked = '';
             </c:forEach>
-            <%-- FIXME SGM: add jQuery call to get material types and loop through them.--%>
-            <%--<stripes:options-collection collection="${actionBean.dnaMatrixMaterialTypes}" value="text" label="text"/>--%>
             newDefinition += '</select>';
 
             if (readOnlyOrder) {
@@ -624,19 +622,14 @@
                 $j('#kitTypeHidden' + kitDefinitionCount).val(kitType);
             }
 
-            // TODO SGM.  This seems to need a little work.  Probably can pass the Organism into the updateOrganism
-            // method as an optional value.
-            updateOrganism(kitDefinitionCount);
-            if(organism) {
-                $j('#organismOption' + kitDefinitionCount).val(organism);
-            }
+            updateOrganism(kitDefinitionCount, organism);
+//            if(organism) {
+//                $j('#organismOption' + kitDefinitionCount).val(organism);
+//            }
+
             updateUIForMaterialInfoChoice(kitDefinitionCount);
 
-
             kitDefinitionCount++;
-
-
-            //Update the new Post receipt options with the previously selected ones.
         }
 
         </script>
