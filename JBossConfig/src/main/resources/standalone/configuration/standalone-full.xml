@@ -113,6 +113,9 @@
                     <driver name="com.oracle" module="com.oracle">
                         <xa-datasource-class>oracle.jdbc.pool.OracleDataSource</xa-datasource-class>
                     </driver>
+                    <driver name="com.oracle.xa" module="com.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
                 </drivers>
             </datasources>
         </subsystem>

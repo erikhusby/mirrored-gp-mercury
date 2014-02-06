@@ -1403,7 +1403,7 @@
         <dependency>
             <groupId>com.samaxes.stripes</groupId>
             <artifactId>stripes-injection-enricher</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.3</version>
         </dependency>
 
         <dependency>
