@@ -126,19 +126,6 @@ public class ProductOrderKit implements Serializable {
         this.siteId = siteId;
     }
 
-//    // Only used by tests.
-//    @Deprecated //TODO SGM:  REMOVE:  moving to product order kit detail
-//    public ProductOrderKit(Long numberOfSamples, KitType kitType, Long sampleCollectionId, Long organismId, Long siteId,
-//                           MaterialInfoDto MaterialInfoDto) {
-//        this.numberOfSamples = numberOfSamples;
-//        this.kitType = kitType;
-//        this.sampleCollectionId = sampleCollectionId;
-//        this.organismId = organismId;
-//        this.siteId = siteId;
-//        setMaterialInfo(MaterialInfoDto);
-//    }
-//
-
     public Long getProductOrderKitId() {
         return productOrderKitId;
     }

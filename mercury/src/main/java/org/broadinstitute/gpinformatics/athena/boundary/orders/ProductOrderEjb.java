@@ -117,12 +117,15 @@ public class ProductOrderEjb {
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
-     * TODO SGM Add JavaDoc
+     * Persisting a Product order.  This methods primary job is to Support a call from the Product Order Action bean
+     * to wrap the persistence of an order in a transaction.
      *
-     * @param saveType
-     * @param editedProductOrder
-     * @param deletedIds
-     * @param kitDetailCollection
+     * @param saveType              Indicates what type of persistence this is:  Save, Update, etc
+     * @param editedProductOrder    The product order entity to be persisted
+     * @param deletedIds            a collection that represents the ID's of productOrderKitDetails to be deleted form
+     *                              the kit collection
+     * @param kitDetailCollection   a collection of product order details that have been created or updated from
+     *                              the UI
      *
      * @throws IOException
      * @throws QuoteNotFoundException
@@ -137,21 +140,16 @@ public class ProductOrderEjb {
 
         editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
 
-//        Add logic to update kit details
-
-
         if (editedProductOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editedProductOrder.setOrderStatus(OrderStatus.Draft);
 
             if (editedProductOrder.isSampleInitiation()) {
                 Map<Long, ProductOrderKitDetail> mapKitDetailsToIDs = new HashMap<>();
-//                for (ProductOrderKitDetail kitDetail : editedProductOrder.getProductOrderKit().getKitOrderDetails()) {
                 for (Iterator<ProductOrderKitDetail> kitDetailIterator = editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();kitDetailIterator.hasNext(); ) {
                     ProductOrderKitDetail kitDetail = kitDetailIterator.next();
                     if(!deletedIds.contains(kitDetail.getProductOrderKitDetaild().toString())) {
                         kitDetailIterator.remove();
-//                        editedProductOrder.getProductOrderKit().removeKitOrderDetail(kitDetail);
                     } else {
                         mapKitDetailsToIDs.put(kitDetail.getProductOrderKitDetaild(), kitDetail);
                     }
