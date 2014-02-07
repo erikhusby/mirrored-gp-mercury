@@ -68,8 +68,8 @@ public class VesselWeightTest extends Arquillian {
         PlateEventType initialTareEvent = bettaLimsMessageTestFactory.buildRackEvent(
                 LabEventType.INITIAL_TARE.getName(), "TARETEST", tubeBarcodes);
         Random random = new SecureRandom();
-        BigDecimal tube1Tare = new BigDecimal(Math.abs(random.nextInt(10000)));
-        BigDecimal tube2Tare = new BigDecimal(Math.abs(random.nextInt(10000)));
+        BigDecimal tube1Tare = new BigDecimal(random.nextInt(10000));
+        BigDecimal tube2Tare = new BigDecimal(random.nextInt(10000));
         initialTareEvent.getPositionMap().getReceptacle().get(0).setReceptacleWeight(tube1Tare);
         initialTareEvent.getPositionMap().getReceptacle().get(1).setReceptacleWeight(tube2Tare);
         BettaLIMSMessage initialTareMessage = new BettaLIMSMessage();
