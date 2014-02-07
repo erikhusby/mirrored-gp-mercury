@@ -60,6 +60,7 @@ public class ProductOrderResource {
     private static final Log log = LogFactory.getLog(ProductOrderResource.class);
 
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
+    public static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -128,7 +129,7 @@ public class ProductOrderResource {
         try {
             productOrder.setCreatedBy(user.getUserId());
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
-            ProductOrderJiraUtil.placeOrder(productOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
@@ -244,10 +245,10 @@ public class ProductOrderResource {
     }
 
     /**
-     * <p>
+     * <p/>
      * Method to add a set of samples to a PDO.
      * <p/>
-     * <p>
+     * <p/>
      * This will add all the sample ids to the specified PDO in the same order sent in.
      *
      * @param addSamplesToPdoBean the PDO and list of samples to add
@@ -281,7 +282,7 @@ public class ProductOrderResource {
         labVesselDao.persistAll(vessels);
 
         // Get all the sample ids
-        List<ProductOrderSample> samplesToAdd = new ArrayList<> (addSamplesToPdoBean.getParentVesselBeans().size());
+        List<ProductOrderSample> samplesToAdd = new ArrayList<>(addSamplesToPdoBean.getParentVesselBeans().size());
         for (ParentVesselBean parentVesselBean : addSamplesToPdoBean.getParentVesselBeans()) {
             samplesToAdd.add(new ProductOrderSample(parentVesselBean.getSampleId()));
         }
@@ -384,36 +385,33 @@ public class ProductOrderResource {
     }
 
     /**
-     * Web service that takes in a list of PDOSamples and marks
-     * which ones have had their primary price item billed.  The
-     * initial client is Manhattan (see BSP-811).  Whether or not
-     * the primary price item is billed is used by Manhattan to
-     * determine whether data generation is complete for
-     * a given PDO sample.  Put another way, Manhattan polls this
-     * service to see which PDO samples it should start assembling
-     * and analyzing.
-     * @param pdoSamplePairs
-     * @return
+     * Web service that takes in a list of PDOSamples and updates key information about them. Primarily it marks which
+     * ones have had their primary price item billed, and whether or not the sample is at risk.
+     * The initial client is Manhattan (see BSP-811). Whether or not the primary price item is billed is used by
+     * Manhattan to determine whether data generation is complete for a given PDO sample.  Put another way, Manhattan
+     * polls this service to see which PDO samples it should start assembling and analyzing.
+     *
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
      */
     @POST
-    @Path("pdoSampleBillingStatus")
+    @Path(PDO_SAMPLE_STATUS)
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public PDOSamples getPdoSampleBillingStatus(PDOSamples pdoSamplePairs) {
+    public PDOSamples getPdoSampleStatus(PDOSamples pdoSamplePairs) {
         PDOSamples pdoSamplesResult = new PDOSamples();
         try {
             List<ProductOrderSample> allPdoSamples = new ArrayList<>();
-            Map<String,Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
+            Map<String, Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
             for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
                 String pdoKey = pdoKeyToSamplesList.getKey();
                 Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,sampleNames);
+                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
                 allPdoSamples.addAll(pdoSamples);
             }
             pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
-        }
-        catch(Throwable t) {
-            log.error("Failed to return PDO/Sample billing information.",t);
+        } catch (Throwable t) {
+            log.error("Failed to return PDO/Sample billing information.", t);
             pdoSamplesResult.addError(t.getMessage());
         }
         return pdoSamplesResult;
