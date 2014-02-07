@@ -60,6 +60,7 @@ public class ProductOrderResource {
     private static final Log log = LogFactory.getLog(ProductOrderResource.class);
 
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
+    public static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -384,24 +385,20 @@ public class ProductOrderResource {
     }
 
     /**
-     * Web service that takes in a list of PDOSamples and marks
-     * which ones have had their primary price item billed.  The
-     * initial client is Manhattan (see BSP-811).  Whether or not
-     * the primary price item is billed is used by Manhattan to
-     * determine whether data generation is complete for
-     * a given PDO sample.  Put another way, Manhattan polls this
-     * service to see which PDO samples it should start assembling
-     * and analyzing.
+     * Web service that takes in a list of PDOSamples and updates key information about them. Primarily it marks which
+     * ones have had their primary price item billed, and whether or not the sample is at risk.
+     * The initial client is Manhattan (see BSP-811). Whether or not the primary price item is billed is used by
+     * Manhattan to determine whether data generation is complete for a given PDO sample.  Put another way, Manhattan
+     * polls this service to see which PDO samples it should start assembling and analyzing.
      *
-     * @param pdoSamplePairs
-     *
-     * @return
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
+     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
      */
     @POST
-    @Path("pdoSampleBillingStatus")
+    @Path(PDO_SAMPLE_STATUS)
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public PDOSamples getPdoSampleBillingStatus(PDOSamples pdoSamplePairs) {
+    public PDOSamples getPdoSampleStatus(PDOSamples pdoSamplePairs) {
         PDOSamples pdoSamplesResult = new PDOSamples();
         try {
             List<ProductOrderSample> allPdoSamples = new ArrayList<>();
@@ -419,38 +416,4 @@ public class ProductOrderResource {
         }
         return pdoSamplesResult;
     }
-
-
-    /**
-     * Web service takes a PDOSamples object containing a list of PDOSample and returns list of samples at risk.
-     *
-     * @param pdoSamples a PDOSamples object which contains a list of PDOSample which are to be queried.
-     *
-     * @return a PDOSamples object which contains a list of PDOSample which are at risk.
-     *
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
-     */
-    @POST
-    @Path("pdoSampleRisk")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public PDOSamples getPdoSampleRisk(PDOSamples pdoSamples) {
-        PDOSamples atRiskPdoSamples = new PDOSamples();
-        try {
-            Map<String, Set<String>> pdoSamplesMap = pdoSamples.convertPdoSamplePairsListToMap();
-            for (String pdoKey : pdoSamplesMap.keySet()) {
-                List<ProductOrderSample> productOrderSamples =
-                        pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, pdoSamplesMap.get(pdoKey));
-                PDOSamples foundPDOSamples = PDOSamples.findAtRiskPDOSamples(productOrderSamples);
-                atRiskPdoSamples.getPdoSamples().addAll(foundPDOSamples.getPdoSamples());
-                atRiskPdoSamples.getErrors().addAll(foundPDOSamples.getErrors());
-            }
-        } catch (Exception e) {
-            log.error("Failed to return PDO/Sample information.", e);
-            atRiskPdoSamples.addError(e.getMessage());
-        }
-        return atRiskPdoSamples;
-    }
-
 }

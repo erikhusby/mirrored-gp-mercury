@@ -20,9 +20,6 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 public class ProductOrderResourceTest extends RestServiceContainerTest {
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -59,27 +56,28 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getAtRiskSamples();
 
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, "pdoSampleRisk")
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)
                 .post(PDOSamples.class);
 
         Assert.assertFalse(returnedPdoSamples.getPdoSamples().isEmpty());
-        Assert.assertEquals(returnedPdoSamples.getErrors().size(), pdoSamples.getPdoSamples().size());
+        Assert.assertEquals(pdoSamples.getPdoSamples().size(), returnedPdoSamples.getPdoSamples().size());
+        Assert.assertEquals(returnedPdoSamples.getErrors().size(), pdoSamples.getAtRiskPdoSamples().size());
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, "pdoSampleRisk")
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)
                 .post(PDOSamples.class);
 
-        Assert.assertTrue(returnedPdoSamples.getPdoSamples().isEmpty());
+        Assert.assertTrue(returnedPdoSamples.getAtRiskPdoSamples().isEmpty());
         Assert.assertTrue(returnedPdoSamples.getErrors().isEmpty());
     }
 
@@ -97,7 +95,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         PDOSamples pdoSamples = new PDOSamples();
 
         for (String sampleId : sampleIds) {
-            pdoSamples.addPdoSamplePair(pdoKey, sampleId, null);
+            pdoSamples.addPdoSamplePair(pdoKey, sampleId, false, false);
         }
         return pdoSamples;
     }

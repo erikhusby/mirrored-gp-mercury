@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,13 +24,13 @@ import java.util.Set;
 public class PDOSamples {
 
     private List<PDOSample> pdoSamples = new ArrayList<>();
-
     private List<String> errors = new ArrayList<>();
 
     public PDOSamples() {}
 
-    public void addPdoSamplePair(@Nonnull String pdoKey,@Nonnull String sampleName,Boolean hasPrimaryPriceItemBeenBilled) {
-        pdoSamples.add(new PDOSample(pdoKey,sampleName,hasPrimaryPriceItemBeenBilled));
+    public void addPdoSamplePair(@Nonnull String pdoKey, @Nonnull String sampleName,
+                                 Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk) {
+        pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk));
     }
 
     public void addError(String errorMessage) {
@@ -51,15 +53,14 @@ public class PDOSamples {
      * Converts the list of pdo/sample tuples to a map
      * where the key is the PDO key and the value is
      * a list of sample names for that PDO.
-     * @return
      */
     @DaoFree
-    public Map<String,Set<String>> convertPdoSamplePairsListToMap() {
-        Map<String,Set<String>> pdoToSamples = new HashMap<>();
+    public Map<String, Set<String>> convertPdoSamplePairsListToMap() {
+        Map<String, Set<String>> pdoToSamples = new HashMap<>();
         for (PDOSample pdoSample : getPdoSamples()) {
             String pdoKey = pdoSample.getPdoKey();
             if (!pdoToSamples.containsKey(pdoKey)) {
-                pdoToSamples.put(pdoSample.getPdoKey(),new HashSet<String>());
+                pdoToSamples.put(pdoSample.getPdoKey(), new HashSet<String>());
             }
             pdoToSamples.get(pdoKey).add(pdoSample.getSampleName());
         }
@@ -70,12 +71,15 @@ public class PDOSamples {
      * Lines up the PDOSamples passed in
      * from the client with the query results
      * that came from the database.
+     *
      * @param pdoSamples the pdo samples that were returned
      *                   from the database.
-     *                   @see ProductOrderSampleDao#findByOrderKeyAndSampleNames(String, java.util.Set)
+     *
      * @return a new PDOSamples object that has the right billing
      * status and has error fields set for pdo/sample pairs
      * that were not found.
+     *
+     * @see ProductOrderSampleDao#findByOrderKeyAndSampleNames(String, java.util.Set)
      */
     @DaoFree
     public PDOSamples buildOutputPDOSamplePairsFromInputAndQueryResults(List<ProductOrderSample> pdoSamples) {
@@ -85,13 +89,16 @@ public class PDOSamples {
             String requestedPdoKey = requestedPdoSample.getPdoKey();
             String requestedSampleName = requestedPdoSample.getSampleName();
             for (ProductOrderSample pdoSample : pdoSamples) {
-                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
-                    pdoSamplesResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,pdoSample.isCompletelyBilled());
+                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName
+                        .equals(pdoSample.getName())) {
+                    pdoSamplesResults
+                            .addPdoSamplePair(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),
+                                    pdoSample.isOnRisk());
                     foundIt = true;
                 }
             }
             if (!foundIt) {
-                pdoSamplesResults.addPdoSamplePair(requestedPdoKey,requestedSampleName,null);
+                pdoSamplesResults.addPdoSamplePair(requestedPdoKey, requestedSampleName, null, null);
                 String errorMessage = MessageFormat
                         .format("Could not find sample {0} in PDO {1}.", requestedSampleName, requestedPdoKey);
                 pdoSamplesResults.addError(errorMessage);
@@ -100,21 +107,14 @@ public class PDOSamples {
         return pdoSamplesResults;
     }
 
-    /**
-     * Given a list of productOrderSamples calculate the sample risk and return all at-risk samples.
-     */
-    @DaoFree
-    public static PDOSamples findAtRiskPDOSamples(List<ProductOrderSample> productOrderSamples){
-        PDOSamples samplesAtRisk = new PDOSamples();
-        for (ProductOrderSample productOrderSample : productOrderSamples){
-            if (productOrderSample.calculateRisk()){
-                PDOSample pdoSample = new PDOSample(productOrderSample.getBusinessKey(), productOrderSample.getName(),
-                                                        productOrderSample.isCompletelyBilled());
-
-                samplesAtRisk.addError(productOrderSample.getRiskString());
-                samplesAtRisk.getPdoSamples().add(pdoSample);
+    @JsonIgnore
+    public Collection<PDOSample> getAtRiskPdoSamples() {
+        List<PDOSample> onRiskSamples=new ArrayList<>();
+        for (PDOSample pdoSample : getPdoSamples()) {
+            if (pdoSample!=null && pdoSample.isOnRisk()){
+                onRiskSamples.add(pdoSample);
             }
         }
-        return samplesAtRisk;
+        return onRiskSamples;
     }
 }

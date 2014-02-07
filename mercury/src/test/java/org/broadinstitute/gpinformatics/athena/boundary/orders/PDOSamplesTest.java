@@ -34,8 +34,8 @@ public class PDOSamplesTest {
     public void setUp() {
         pdoSamplesList = new ArrayList<>();
         pdoSamples = new PDOSamples();
-        pdoSamples.addPdoSamplePair(pdoKey, sample1, null);
-        pdoSamples.addPdoSamplePair(pdoKey, sample2, null);
+        pdoSamples.addPdoSamplePair(pdoKey, sample1, null, null);
+        pdoSamples.addPdoSamplePair(pdoKey, sample2, null, null);
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
@@ -45,6 +45,8 @@ public class PDOSamplesTest {
                         "newQuote", dummyProduct,
                 new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
         pdo1.setJiraTicketKey(pdoKey);
+        pdoSample1.calculateRisk();
+
         pdo1.addSample(pdoSample1);
 
         ProductOrderSample pdoSample2 = new ProductOrderSample(sample2);
@@ -53,6 +55,7 @@ public class PDOSamplesTest {
                                 "newQuote", riskyProduct,
                         new ResearchProject(ResearchProjectTestFactory.TEST_CREATOR, null, "test research project", true));
         pdo2.setJiraTicketKey(pdoKey);
+        pdoSample2.calculateRisk();
         pdo2.addSample(pdoSample2);
 
         pdoSamplesList.add(pdoSample1);
@@ -69,9 +72,9 @@ public class PDOSamplesTest {
     }
 
     public void testFindAtRiskPDOSamplesDaoFree() {
-        PDOSamples atRiskPDOSamples = pdoSamples.findAtRiskPDOSamples(pdoSamplesList);
+        PDOSamples atRiskPDOSamples = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertTrue(!atRiskPDOSamples.getPdoSamples().isEmpty());
-        Assert.assertEquals(atRiskPDOSamples.getErrors().size(), 1);
+        Assert.assertEquals(atRiskPDOSamples.getAtRiskPdoSamples().size(), 1);
     }
 
     private boolean doesPdoSamplePairContainSample(PDOSamples pdoSamples,String sampleName) {
@@ -85,7 +88,7 @@ public class PDOSamplesTest {
     }
 
     public void testSomeSamplesAreNotFound() {
-        pdoSamples.addPdoSamplePair("PDO-NOTFOUND", "SM-NOTTHERE", null);
+        pdoSamples.addPdoSamplePair("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
 
         PDOSamples pdoSamplesResult = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertEquals(pdoSamplesResult.getPdoSamples().size(),3);
@@ -117,7 +120,7 @@ public class PDOSamplesTest {
     }
 
     public void testListToMapConversion() {
-        pdoSamples.addPdoSamplePair(pdoKey2, sample1, null);
+        pdoSamples.addPdoSamplePair(pdoKey2, sample1, null, null);
         Map<String,Set<String>> pdoToSamples = pdoSamples.convertPdoSamplePairsListToMap();
         Assert.assertEquals(pdoToSamples.keySet().size(),2);
         Assert.assertTrue(pdoToSamples.containsKey(pdoKey));
