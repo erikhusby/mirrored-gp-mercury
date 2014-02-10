@@ -29,7 +29,6 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrders;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporterFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -1307,19 +1306,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        // If removeAll returns false, no samples were removed -- should never happen.
-        if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
-            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
-            editOrder.prepareToSave(getUserBean().getBspUser());
-            productOrderDao.persist(editOrder);
-            addMessage("Deleted samples: {0}.", nameList);
-            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
-            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                    editOrder.getSampleString(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
-        }
+        productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
+                selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
