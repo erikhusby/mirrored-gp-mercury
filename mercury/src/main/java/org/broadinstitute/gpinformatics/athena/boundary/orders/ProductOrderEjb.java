@@ -931,9 +931,37 @@ public class ProductOrderEjb {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 order.getSampleString(),
                 ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
+                order.getSamples().size(),
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
         updateOrderStatus(jiraTicketKey, reporter);
+    }
+
+    public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
+                               @Nonnull Collection<ProductOrderSample> samples,
+                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        // If removeAll returns false, no samples were removed -- should never happen.
+        if (productOrder.getSamples().removeAll(samples)) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+            productOrder.prepareToSave(bspUser);
+            productOrderDao.persist(productOrder);
+            reporter.addMessage("Deleted samples: {0}.", nameList);
+
+            JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
+            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                    productOrder.getSampleString(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
+                    productOrder.getSamples().size(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+
+            updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
+        }
     }
 }

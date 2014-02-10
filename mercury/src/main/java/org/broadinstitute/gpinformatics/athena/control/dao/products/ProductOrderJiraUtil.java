@@ -64,6 +64,9 @@ public class ProductOrderJiraUtil {
 
         listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.SAMPLE_IDS, pdo.getSampleString()));
 
+        listOfFields.add(new CustomField(submissionFields, ProductOrder.JiraField.NUMBER_OF_SAMPLES,
+                pdo.getSamples().size()));
+
         if (product.getSupportsNumberOfLanes()) {
             listOfFields.add(
                     new CustomField(submissionFields, ProductOrder.JiraField.LANES_PER_SAMPLE, pdo.getLaneCount()));
