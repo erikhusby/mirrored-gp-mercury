@@ -326,7 +326,7 @@ public class GetSampleInstancesTest {
         }
         Assert.assertEquals(sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.WORKFLOW).getLabBatch().getBatchName(),
                 "LCSET-" + lcsetNum);
-        List<LabBatchStartingVessel> allBatchVessels = sampleInstance.getAllBatchVessels(null);
+        List<LabBatchStartingVessel> allBatchVessels = sampleInstance.getAllBatchVessels();
         int index = 0;
         if (tube1Rework) {
             Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "LCSET-2");

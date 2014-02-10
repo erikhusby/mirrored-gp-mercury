@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,15 +40,27 @@ public class SampleInstanceV2 implements Cloneable {
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
-     * that far.
+     * that far.  May be null for a vessel that holds only reagents.
      */
     public String getMercuryRootSampleName() {
+        if (rootMercurySamples.isEmpty()) {
+            return null;
+        }
         return rootMercurySamples.iterator().next().getSampleKey();
     }
 
     /**
-     * Returns all batches of the given type associated with ancestor vessels.  Pass type SAMPLES_IMPORT to get the
-     * Aliquot.  Pass null to get all batches.
+     * Returns all batches of the given type associated with ancestor vessels, sorted by increasing distance in the
+     * transfer history.
+     */
+    public List<LabBatchStartingVessel> getAllBatchVessels() {
+        return getAllBatchVessels(null);
+    }
+
+    /**
+     * Returns all batches of the given type associated with ancestor vessels, sorted by increasing distance in the
+     * transfer history.
+     * @param labBatchType Pass type SAMPLES_IMPORT to get the Aliquot.  Pass null to get all batches.
      */
     public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType labBatchType) {
         // todo jmt use a Deque?
@@ -92,19 +105,11 @@ public class SampleInstanceV2 implements Cloneable {
 
     /**
      * Returns the most applicable BucketEntry associated with ancestor vessels, based on LCSET calculated for each
-     * transfer.
+     * transfer.  May be null if a single BucketEntry can't be unambiguously determined.
      */
+    @Nullable
     public BucketEntry getSingleBucketEntry() {
         return singleBucketEntry;
-    }
-
-    /**
-     * Primarily for controls, which don't have BucketEntries.  The inference is based on LCSET calculated for each
-     * transfer.
-     * todo jmt not sure how useful this is.
-     */
-    public List<LabBatch> getAllInferredBucketedBatches() {
-        return null;
     }
 
     /**
@@ -199,7 +204,7 @@ todo jmt not sure if this applies.
     /**
      * Applies to a clone any new information in a LabVessel.
      */
-    public void applyVesselChanges(LabVessel labVessel) {
+    public final void applyVesselChanges(LabVessel labVessel) {
         reagents.addAll(labVessel.getReagentContents());
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
@@ -207,11 +212,7 @@ todo jmt not sure if this applies.
         }
         allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVesselsByDate());
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
-            // todo jmt is this if statement correct?
-            // If there is more than one transfer, we can't determine which transfer pertains to which ProductOrderSample.
-//            if (labVessel.getTransfersFrom().size() < 2) {
-                allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
-//            }
+            allProductOrderSamples.addAll(mercurySample.getProductOrderSamples());
         }
     }
 
@@ -219,12 +220,16 @@ todo jmt not sure if this applies.
      * Applies a LabEvent, specifically computed LCSets.
      */
     public void applyEvent(LabEvent labEvent) {
-        if (singleBucketEntry == null) {
-            Set<LabBatch> computedLcsets = labEvent.computeLcSets();
-            if (computedLcsets.size() == 1) {
-                singleInferredBucketedBatch = computedLcsets.iterator().next();
+        Set<LabBatch> computedLcsets = labEvent.computeLcSets();
+        // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
+        if (computedLcsets.size() == 1) {
+            singleInferredBucketedBatch = computedLcsets.iterator().next();
+            // Avoid overwriting a singleBucketEntry set by applyVesselChanges.
+            if (singleBucketEntry == null) {
+                // Multiple bucket entries need help.
                 if (allBucketEntries.size() > 1) {
                     for (BucketEntry bucketEntry : allBucketEntries) {
+                        // If there's a bucket entry that matches the computed LCSET, use it.
                         if (bucketEntry.getLabBatch() != null &&
                                 bucketEntry.getLabBatch().equals(singleInferredBucketedBatch)) {
                             singleBucketEntry = bucketEntry;
