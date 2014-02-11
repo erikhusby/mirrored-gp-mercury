@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -31,6 +32,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -43,7 +45,12 @@ import java.util.Set;
 /**
  * Test LabVessel.getSampleInstances
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class GetSampleInstancesTest {
+
+    public static final String SAMPLE_KIT_1 = "SK-1";
+    public static final String LCSET_1 = "LCSET-1";
+    public static final String LCSET_2 = "LCSET-2";
 
     /** date for LabEVents */
     private long now = System.currentTimeMillis();
@@ -59,18 +66,12 @@ public class GetSampleInstancesTest {
     public void testRework() {
         // Reagents
         // Molecular indexes
-        final String p7IndexPlateBarcode = "P7";
-        final String p5IndexPlateBarcode = "P5";
+        String p7IndexPlateBarcode = "P7";
+        String p5IndexPlateBarcode = "P5";
         List<StaticPlate> indexPlates = LabEventTest.buildIndexPlate(null, null,
-                new ArrayList<MolecularIndexingScheme.IndexPosition>() {{
-                    add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7);
-                    add(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5);
-                }},
-                new ArrayList<String>() {{
-                    add(p7IndexPlateBarcode);
-                    add(p5IndexPlateBarcode);
-                }}
-        );
+                Arrays.asList(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7,
+                        MolecularIndexingScheme.IndexPosition.ILLUMINA_P5),
+                Arrays.asList(p7IndexPlateBarcode, p5IndexPlateBarcode));
         indexPlateP7 = indexPlates.get(0);
         indexPlateP5 = indexPlates.get(1);
 
@@ -81,6 +82,9 @@ public class GetSampleInstancesTest {
         // sample initiation PDO
         ProductOrder sampleInitProductOrder = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-SI",
                 Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1");
+        String rootSample1 = sampleInitProductOrder.getSamples().get(0).getSampleKey();
+        String rootSample2 = sampleInitProductOrder.getSamples().get(1).getSampleKey();
+        String rootSample3 = sampleInitProductOrder.getSamples().get(2).getSampleKey();
 
         // receive samples
         Set<LabVessel> receivedVessels = new LinkedHashSet<>();
@@ -93,7 +97,7 @@ public class GetSampleInstancesTest {
             receivedVessels.add(tube);
             i++;
         }
-        LabBatch receiptBatch = new LabBatch("SK-1", receivedVessels, LabBatch.LabBatchType.SAMPLES_RECEIPT);
+        LabBatch receiptBatch = new LabBatch(SAMPLE_KIT_1, receivedVessels, LabBatch.LabBatchType.SAMPLES_RECEIPT);
         receiptBatch.setCreatedOn(new Date(now++));
 
         // extraction PDO
@@ -149,11 +153,12 @@ public class GetSampleInstancesTest {
                 "SEQ-01", sequencingProduct, sampleInitProductOrder.getResearchProject());
 
         StaticPlate shearingPlate1 = sequencing(tube1, tube2, sampleInitProductOrder, extractionProductOrder,
-                sequencingProductOrder, "SM-12431", false, 1);
+                sequencingProductOrder, rootSample1, false, 1);
 
+        // Clear cached bucket entry.
         tube2.clearCaches();
         StaticPlate shearingPlate2 = sequencing(tube2, tube3, sampleInitProductOrder, extractionProductOrder,
-                sequencingProductOrder, "SM-23541", true, 2);
+                sequencingProductOrder, rootSample2, true, 2);
 
         // PoolingTransfer
         LabEvent poolingTransfer = new LabEvent(LabEventType.POOLING_TRANSFER, new Date(now++), "ROBIN", 1L, 101L,
@@ -182,40 +187,39 @@ public class GetSampleInstancesTest {
         Assert.assertEquals(poolSampleInstances.size(), 5);
         int matchedSamples = 0;
         for (SampleInstanceV2 poolSampleInstance : poolSampleInstances) {
-            switch (poolSampleInstance.getMercuryRootSampleName()) {
-            case "SM-12431":
+            String s = poolSampleInstance.getMercuryRootSampleName();
+            if (s.equals(rootSample1)) {
                 matchedSamples++;
                 //noinspection ConstantConditions
-                Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-1");
-                break;
-            case "SM-23541":
+                Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), LCSET_1);
+            } else if (s.equals(rootSample2)) {
                 MolecularIndexingScheme molecularIndexingScheme =
                         ((MolecularIndexReagent) poolSampleInstance.getReagents().get(0)).getMolecularIndexingScheme();
                 switch (molecularIndexingScheme.getName()) {
                 case "Illumina_P5-U_P7-U":
-                    Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), "LCSET-1");
+                    Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), LCSET_1);
                     matchedSamples++;
                     break;
                 case "Illumina_P5-C_P7-C":
                     //noinspection ConstantConditions
-                    Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
+                    Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(),
+                            LCSET_2);
                     matchedSamples++;
                     break;
                 default:
                     Assert.fail("Unexpected scheme name " + molecularIndexingScheme.getName());
                 }
-                break;
-            case "SM-C1":
+            } else if (s.equals("SM-C1")) {
                 matchedSamples++;
-                Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), "LCSET-1");
-                break;
-            case "SM-34651":
-                matchedSamples++;
-                //noinspection ConstantConditions
-                Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), "LCSET-2");
-                break;
-            default:
-                Assert.fail("Unexpected sample ID " + poolSampleInstance.getMercuryRootSampleName());
+                Assert.assertEquals(poolSampleInstance.getSingleInferredBucketedBatch().getBatchName(), LCSET_1);
+            } else {
+                if (s.equals(rootSample3)) {
+                    matchedSamples++;
+                    //noinspection ConstantConditions
+                    Assert.assertEquals(poolSampleInstance.getSingleBucketEntry().getLabBatch().getBatchName(), LCSET_2);
+                } else {
+                    Assert.fail("Unexpected sample ID " + poolSampleInstance.getMercuryRootSampleName());
+                }
             }
         }
         Assert.assertEquals(matchedSamples, 5);
@@ -328,11 +332,11 @@ public class GetSampleInstancesTest {
         List<LabBatchStartingVessel> allBatchVessels = sampleInstance.getAllBatchVessels();
         int index = 0;
         if (tube1Rework) {
-            Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "LCSET-2");
+            Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), LCSET_2);
         }
         Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "EX-1");
-        Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), "LCSET-1");
-        Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), "SK-1");
+        Assert.assertEquals(allBatchVessels.get(index++).getLabBatch().getBatchName(), LCSET_1);
+        Assert.assertEquals(allBatchVessels.get(index).getLabBatch().getBatchName(), SAMPLE_KIT_1);
         Assert.assertEquals(sampleInstance.getWorkflowName(), "Exome Express");
 
         Assert.assertEquals(sampleInstance.getAllBucketEntries().size(), lcsetNum);
