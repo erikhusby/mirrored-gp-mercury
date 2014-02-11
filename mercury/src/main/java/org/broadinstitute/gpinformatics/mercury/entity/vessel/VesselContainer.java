@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -886,16 +885,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    private Set<VesselPosition> initializedPositions = EnumSet.noneOf(VesselPosition.class);
-
-    @Transient
     private Map<VesselPosition, List<SampleInstanceV2>> mapPositionToSampleInstances =
             new EnumMap<>(VesselPosition.class);
 
     public List<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
-        if (initializedPositions.contains(vesselPosition)) {
-            return mapPositionToSampleInstances.get(vesselPosition);
-        } else {
+        List<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
+        if (sampleInstances == null) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
 
             // Get ancestor events
@@ -905,12 +900,11 @@ public class VesselContainer<T extends LabVessel> {
             } else {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
-            List<SampleInstanceV2> currentSampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
 
-            mapPositionToSampleInstances.put(vesselPosition, currentSampleInstances);
-            initializedPositions.add(vesselPosition);
-            return currentSampleInstances;
+            mapPositionToSampleInstances.put(vesselPosition, sampleInstances);
         }
+        return sampleInstances;
     }
 
     /**
@@ -991,7 +985,6 @@ public class VesselContainer<T extends LabVessel> {
      * This is for database-free testing only, when a new transfer makes the caches stale.
      */
     public void clearCaches() {
-        initializedPositions.clear();
         mapPositionToSampleInstances.clear();
     }
 
