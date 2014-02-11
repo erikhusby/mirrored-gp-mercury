@@ -574,6 +574,14 @@ public abstract class LabVessel implements Serializable {
      */
     public static class VesselEvent {
 
+        public static final Comparator<VesselEvent> COMPARE_VESSEL_EVENTS_BY_DATE =
+                new Comparator<VesselEvent>() {
+                    @Override
+                    public int compare(VesselEvent o1, VesselEvent o2) {
+                        return o1.getLabEvent().getEventDate().compareTo(o2.getLabEvent().getEventDate());
+                    }
+                };
+
         private final LabVessel labVessel;
         private final VesselContainer<?> vesselContainer;
         private final VesselPosition position;
@@ -924,7 +932,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
         }
-        Collections.sort(vesselEvents, VesselContainer.COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -947,7 +955,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
-        Collections.sort(vesselEvents, VesselContainer.COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -1772,6 +1780,9 @@ public abstract class LabVessel implements Serializable {
         return sampleInstances;
     }
 
+    /**
+     * This is for database-free testing only, when a new transfer makes the caches stale.
+     */
     public void clearCaches() {
         sampleInstances = null;
     }

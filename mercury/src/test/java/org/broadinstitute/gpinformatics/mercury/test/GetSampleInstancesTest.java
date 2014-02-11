@@ -46,7 +46,7 @@ import java.util.Set;
 public class GetSampleInstancesTest {
 
     /** date for LabEVents */
-    private long now;
+    private long now = System.currentTimeMillis();
     private StaticPlate indexPlateP7;
     private StaticPlate indexPlateP5;
     private TwoDBarcodedTube baitTube;
@@ -109,7 +109,6 @@ public class GetSampleInstancesTest {
         // todo extraction set?
 
         // Extraction transfer
-        now = System.currentTimeMillis();
         LabEvent extractionTransfer = new LabEvent(LabEventType.SAMPLES_EXTRACTION_END_TRANSFER, new Date(now++), "HULK",
                 1L, 101L, "Bravo");
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToSourceTube = new EnumMap<>(VesselPosition.class);

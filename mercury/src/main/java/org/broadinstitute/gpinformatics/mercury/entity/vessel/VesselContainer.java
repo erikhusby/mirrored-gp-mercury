@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -62,14 +61,6 @@ public class VesselContainer<T extends LabVessel> {
         @Override
         public boolean apply(@Nullable LabVessel labVessel) {
             return labVessel != null && labVessel.getType() == LabVessel.ContainerType.TUBE_FORMATION;
-        }
-    };
-
-    public static final Comparator<LabVessel.VesselEvent> COMPARE_VESSEL_EVENTS_BY_DATE =
-            new Comparator<LabVessel.VesselEvent>() {
-        @Override
-        public int compare(LabVessel.VesselEvent o1, LabVessel.VesselEvent o2) {
-            return o1.getLabEvent().getEventDate().compareTo(o2.getLabEvent().getEventDate());
         }
     };
 
@@ -529,7 +520,7 @@ public class VesselContainer<T extends LabVessel> {
             vesselEvents.add(new LabVessel.VesselEvent(vesselToSectionTransfer.getSourceVessel(), null, null,
                     vesselToSectionTransfer.getLabEvent()));
         }
-        Collections.sort(vesselEvents, COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -562,7 +553,7 @@ public class VesselContainer<T extends LabVessel> {
             }
 
         }
-        Collections.sort(vesselEvents, COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -996,6 +987,9 @@ public class VesselContainer<T extends LabVessel> {
         return currentSampleInstances;
     }
 
+    /**
+     * This is for database-free testing only, when a new transfer makes the caches stale.
+     */
     public void clearCaches() {
         initializedPositions.clear();
         mapPositionToSampleInstances.clear();
