@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
@@ -70,6 +71,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -99,7 +101,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -141,6 +143,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DATE = "date";
     private static final String OWNER = "owner";
     private static final String ADD_SAMPLES_TO_BUCKET = "addSamplesToBucket";
+    private final String kitDefinitionIndexIdentifier = "kitDefinitionQueryIndex";
+    private final String chosenOrganism = "chosenOrganism";
 
     public ProductOrderActionBean() {
         super(CREATE_ORDER, EDIT_ORDER, PRODUCT_ORDER_PARAMETER);
@@ -261,7 +265,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String materialInfo;
 
     private List<String> addOnKeys = new ArrayList<>();
-    private List<String> postReceiveOptionKeys = new ArrayList<>();
+    private Map<Integer, List<String>> postReceiveOptionKeys = new HashMap<>();
 
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
@@ -289,8 +293,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrder.LedgerStatus> selectedLedgerStatuses;
 
-    private static List<MaterialInfo> dnaMatrixMaterialTypes=
+    private static List<MaterialInfo> dnaMatrixMaterialTypes =
             Arrays.asList(KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getMaterialInfo());
+
+    private KitType chosenKitType = KitType.DNA_MATRIX;
 
     /*
      * The search query.
@@ -311,6 +317,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     private LabVesselDao labVesselDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
+
+    private List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
+
+    private String[] deletedKits = new String[0];
+
+    /**
+     * For use with the Ajax to indicate and pass back which kit definition is being searched for
+     */
+    private String kitDefinitionQueryIndex;
+    private String prePopulatedOrganismId;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
@@ -353,6 +369,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         }
+    }
+
+    /**
+     * place the kit details into an array list to allow stripes to update the kit details
+     */
+    private void initializeKitDetails() {
+        kitDetails.addAll(editOrder.getProductOrderKit().getKitOrderDetails());
     }
 
     @ValidationMethod(on = SAVE_ACTION)
@@ -409,6 +432,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Validates the rin scores for every
      * sample in the pdo.
+     *
      * @see #validateRinScores(java.util.Collection)
      */
     void validateRinScores(@Nonnull ProductOrder pdo) {
@@ -442,20 +466,23 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         ResearchProject researchProject = editOrder.getResearchProject();
-        if (!isSampleInitiation()) {
+        if (!editOrder.isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-            Long numberOfSamples = kit.getNumberOfSamples();
-            if (kit.getNumberOfSamples() == null) {
-                numberOfSamples = (long) 0;
+
+            for (ProductOrderKitDetail kitDetail : kitDetails) {
+                Long numberOfSamples = kitDetail.getNumberOfSamples();
+                if (kitDetail.getNumberOfSamples() == null) {
+                    numberOfSamples = (long) 0;
+                }
+                requireField(numberOfSamples > 0, "a specified number of samples", action);
+                requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
+                requireField(kitDetail.getBspMaterialName(), "a material information", action);
+                requireField(kitDetail.getOrganismId(), "an organism", action);
             }
-            requireField(numberOfSamples > 0, "a specified number of samples", action);
             requireField(kit.getSiteId(), "a site", action);
-            requireField(kit.getKitType().getKitName(), "a kit type", action);
-            requireField(kit.getBspMaterialName(), "a material information", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
-            requireField(kit.getOrganismId(), "an organism", action);
 
             // Avoid NPE if Research Project isn't set yet.
             if (researchProject != null) {
@@ -488,7 +515,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public void validateTransferMethod(@Nonnull ProductOrder pdo){
+    public void validateTransferMethod(@Nonnull ProductOrder pdo) {
         if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
             String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
                     SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
@@ -707,11 +734,18 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
-    public void initPostReceiveOptions(){
+    public void initSampleKitInfo() {
         postReceiveOptionKeys.clear();
-        for (PostReceiveOption postReceiveOption : editOrder.getProductOrderKit().getPostReceiveOptions()) {
-            postReceiveOptionKeys.add(postReceiveOption.getText());
+        int detailIndex = 0;
+        for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
+            List<String> postReceiveOptions = new ArrayList<>();
+            for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
+                postReceiveOptions.add(postReceiveOption.getText());
+            }
+            postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
+            detailIndex++;
         }
+        initializeKitDetails();
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -811,15 +845,19 @@ public class ProductOrderActionBean extends CoreActionBean {
         bspGroupCollectionTokenInput.setup(
                 !StringUtils.isBlank(sampleCollectionKey) ? new String[]{sampleCollectionKey} : new String[0]);
 
-        productOrderKit.setOrganismName(null);
+        for (ProductOrderKitDetail kitDetail : productOrderKit.getKitOrderDetails()) {
+            kitDetail.setOrganismName(null);
+        }
 
         SampleCollection sampleCollection = bspGroupCollectionTokenInput.getTokenObject();
         if (sampleCollection != null) {
-            if (productOrderKit.getOrganismId() != null) {
-                for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
-                    if (productOrderKit.getOrganismId().equals(organism.getLeft())) {
-                        productOrderKit.setOrganismName(organism.getRight());
-                        break;
+            for (ProductOrderKitDetail kitDetail : productOrderKit.getKitOrderDetails()) {
+                if (kitDetail.getOrganismId() != null) {
+                    for (Pair<Long, String> organism : sampleCollection.getOrganisms()) {
+                        if (kitDetail.getOrganismId().equals(organism.getLeft())) {
+                            kitDetail.setOrganismName(organism.getRight());
+                            break;
+                        }
                     }
                 }
             }
@@ -863,7 +901,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         updateFromInitiationTokenInputs();
 
         if (bspShippingLocationTokenInput != null) {
-            String siteKey = editOrder.getProductOrderKit().getSiteId() != null ? String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
+            String siteKey = editOrder.getProductOrderKit().getSiteId() != null ?
+                    String.valueOf(editOrder.getProductOrderKit().getSiteId()) : null;
             bspShippingLocationTokenInput.setup(!StringUtils.isBlank(siteKey) ? new String[]{siteKey} : new String[0]);
         }
 
@@ -879,7 +918,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            if (isSampleInitiation()) {
+            if (editOrder.isSampleInitiation()) {
                 String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
                 editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
                 addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
@@ -957,17 +996,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (isCreating()) {
             saveType = ProductOrder.SaveType.CREATING;
         }
-        editOrder.prepareToSave(userBean.getBspUser(), saveType);
 
-        if (editOrder.isDraft()) {
-            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
-            editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
-        } else {
-            productOrderEjb.updateJiraIssue(editOrder);
+        // update or add to list of kit details
+        Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
+        for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
+
+            if (kitDetails.get(kitDetailIndex) != null &&
+                postReceiveOptionKeys.get(kitDetailIndex) != null) {
+
+                kitDetails.get(kitDetailIndex)
+                        .setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
+            }
         }
 
-        // Save it!
-        productOrderDao.persist(editOrder);
+        productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution(editOrder.getBusinessKey());
@@ -986,10 +1028,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         editOrder.setCreatedBy(tokenOwner != null ? tokenOwner.getUserId() : null);
 
         // For sample initiation fields we will set token input fields.
-        if (isSampleInitiation()) {
-            EnumSet<PostReceiveOption> postReceiveOptions = PostReceiveOption.getByText(postReceiveOptionKeys);
-            editOrder.getProductOrderKit().getPostReceiveOptions().clear();
-            editOrder.getProductOrderKit().getPostReceiveOptions().addAll(postReceiveOptions);
+        if (editOrder.isSampleInitiation()) {
             editOrder.getProductOrderKit().setSampleCollectionId(
                     bspGroupCollectionTokenInput.getTokenObject() != null ?
                             bspGroupCollectionTokenInput.getTokenObject().getCollectionId() : null);
@@ -1081,6 +1120,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         return createTextResolution(itemList.toString());
     }
+
     @HandlesEvent("getPostReceiveOptions")
     public Resolution getPostReceiveOptions() throws Exception {
         JSONArray itemList = new JSONArray();
@@ -1099,7 +1139,12 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        return createTextResolution(itemList.toString());
+        JSONObject kitIndexObject = new JSONObject();
+        String kitIndex = this.kitDefinitionQueryIndex;
+        kitIndexObject.put(kitDefinitionIndexIdentifier, kitIndex);
+        kitIndexObject.put("dataList", itemList);
+
+        return createTextResolution(kitIndexObject.toString());
     }
 
     @HandlesEvent("getSummary")
@@ -1136,11 +1181,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 } else {
                     setupEmptyItems(sample, item);
                 }
-
                 itemList.put(item);
             }
         }
-
         return createTextResolution(itemList.toString());
     }
 
@@ -1164,7 +1207,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.PICO_DATE, picoRunDateString);
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
+                bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
         item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
@@ -1226,7 +1270,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET}, priority = 0)
+    @ValidationMethod(
+            on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET},
+            priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
             selectedProductOrderSamples = new ArrayList<>(selectedProductOrderSampleIds.size());
@@ -1260,25 +1306,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        // If removeAll returns false, no samples were removed -- should never happen.
-        if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
-            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
-            editOrder.prepareToSave(getUserBean().getBspUser());
-            productOrderDao.persist(editOrder);
-            addMessage("Deleted samples: {0}.", nameList);
-            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
-            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                    editOrder.getSampleString(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
-            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
-        }
+        productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
+                selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
 
     @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
-    public Resolution addSamplesToBucket(){
+    public Resolution addSamplesToBucket() {
         productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
@@ -1304,7 +1339,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private List<ProductOrderSample> getSelectedProductOrderSamplesFor(ProductOrder pdo,
                                                                        Collection<Long> pdoIds) {
-        List<ProductOrderSample> selectedPdoSamples = new ArrayList<> (getSelectedProductOrderSampleIds().size());
+        List<ProductOrderSample> selectedPdoSamples = new ArrayList<>(getSelectedProductOrderSampleIds().size());
         for (ProductOrderSample pdoSample : editOrder.getSamples()) {
             if (pdoIds.contains(pdoSample.getProductOrderSampleId())) {
                 selectedPdoSamples.add(pdoSample);
@@ -1316,7 +1351,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = RECALCULATE_RISK)
     public void validateRiskRecalculation() {
         if (editOrder.isRinScoreValidationRequired()) {
-            validateRinScores(getSelectedProductOrderSamplesFor(editOrder,getSelectedProductOrderSampleIds()));
+            validateRinScores(getSelectedProductOrderSamplesFor(editOrder, getSelectedProductOrderSampleIds()));
         }
     }
 
@@ -1472,6 +1507,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (sampleCollection != null) {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
+            collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
+
+            if(StringUtils.isNotBlank(prePopulatedOrganismId)) {
+                collectionAndOrganismsList.put(chosenOrganism,prePopulatedOrganismId);
+            } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
+                    .valueOf(kitDefinitionQueryIndex)) {
+                collectionAndOrganismsList.put(chosenOrganism,
+                        kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
+            }
+
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
 
             // Create the json array of items for the chunk
@@ -1498,11 +1543,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.addOnKeys = addOnKeys;
     }
 
-    public List<String> getPostReceiveOptionKeys() {
+    public Map<Integer, List<String>> getPostReceiveOptionKeys() {
         return postReceiveOptionKeys;
     }
 
-    public void setPostReceiveOptionKeys(List<String> postReceiveOptionKeys) {
+    public void setPostReceiveOptionKeys(Map<Integer, List<String>> postReceiveOptionKeys) {
         this.postReceiveOptionKeys = postReceiveOptionKeys;
     }
 
@@ -1876,7 +1921,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     /**
      * @return Show the edit title if this is not a draft (Drafts use a button per Product Owner workflow request) and
-     *         the user is appropriate for editing.
+     * the user is appropriate for editing.
      */
     @Override
     public boolean isEditAllowed() {
@@ -1933,7 +1978,43 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.skipQuote = skipQuote;
     }
 
-    public String getPostReceivedOptionsAsString() {
-        return editOrder.getProductOrderKit().getPostReceivedOptionsAsString("<br/>");
+    public KitType getChosenKitType() {
+        return chosenKitType;
+    }
+
+    public void setChosenKitType(KitType chosenKitType) {
+        this.chosenKitType = chosenKitType;
+    }
+
+    /**
+     * Attempt to return the list of receptacles for a given dna kit type.
+     * <p/>
+     * FIXME (GPLIM-2463):  Currently, there is only one kit type and one receptacle type represented.  We will need to expand
+     * this.  There for the singletonlist is just a placeholder
+     *
+     * @return List of receptacle types
+     */
+    public List<String> getKitReceptacleTypes() {
+        return Collections.singletonList(KitType.valueOf(chosenKitType.name()).getDisplayName());
+    }
+
+    public String getKitDefinitionQueryIndex() {
+        return kitDefinitionQueryIndex;
+    }
+
+    public void setKitDefinitionQueryIndex(String kitDefinitionQueryIndex) {
+        this.kitDefinitionQueryIndex = kitDefinitionQueryIndex;
+    }
+
+    public String getKitDefinitionIndexIdentifier() {
+        return kitDefinitionIndexIdentifier;
+    }
+
+    public List<ProductOrderKitDetail> getKitDetails() {
+        return kitDetails;
+    }
+
+    public void setKitDetails(List<ProductOrderKitDetail> kitDetails) {
+        this.kitDetails = kitDetails;
     }
 }

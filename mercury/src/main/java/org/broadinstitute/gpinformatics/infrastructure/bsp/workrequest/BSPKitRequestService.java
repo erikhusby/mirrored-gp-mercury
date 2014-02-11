@@ -8,14 +8,16 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * High-level APIs for using the BSP work request service to create sample kit requests.
@@ -71,14 +73,19 @@ public class BSPKitRequestService {
         String requesterId = creator.getUsername();
 
         ProductOrderKit kit = productOrder.getProductOrderKit();
-        SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
-                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                        kit.getOrganismId(), kit.getPostReceiveOptions(), SampleKitWorkRequest.MoleculeType.DNA);
+        List<SampleKitWorkRequestDefinitionInfo> kitDefinitions = new ArrayList<>();
+        for(ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
+            SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
+                    BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kitDetail.getNumberOfSamples(),
+                            kitDetail.getMaterialInfo(), kitDetail.getOrganismId(), kitDetail.getPostReceiveOptions(),
+                            SampleKitWorkRequest.MoleculeType.DNA);
+            kitDefinitions.add(kitWorkRequestDefinitionInfo);
+        }
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(),
                 kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()),
-                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), Collections.singletonList(kitWorkRequestDefinitionInfo));
+                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), kitDefinitions);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();

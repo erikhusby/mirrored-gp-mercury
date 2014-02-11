@@ -14,9 +14,6 @@ import org.testng.annotations.Test;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderKitDetailTest {
 

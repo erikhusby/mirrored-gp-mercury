@@ -38,7 +38,7 @@ public class SamplesDaughterPlateHandler extends AbstractEventHandler {
     private ObjectFactory factory = new ObjectFactory();
 
     @Inject
-    BSPRestClient bspRestClient;
+    private BSPRestClient bspRestClient;
 
     // Since this is called in context of bettalims message handling which must continue regardless,
     // any error encountered can only be logged and not passed up from here.

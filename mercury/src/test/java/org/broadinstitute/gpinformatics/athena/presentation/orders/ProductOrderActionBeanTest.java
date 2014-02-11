@@ -11,17 +11,13 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.controller.StripesFilter;
-import net.sourceforge.stripes.mock.MockHttpServletRequest;
-import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
-import org.apache.http.HttpRequest;
-import org.apache.http.message.BasicHttpRequest;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -40,17 +36,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openqa.jetty.http.HttpResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -112,9 +106,10 @@ public class ProductOrderActionBeanTest {
     private ProductOrderKit createGoodPdoKit() {
         MaterialInfoDto materialInfoDto =
                 new MaterialInfoDto(KitType.DNA_MATRIX.getKitName(), KitType.DNA_MATRIX.getDisplayName());
-        ProductOrderKit pdoKit = new ProductOrderKit(96l, KitType.DNA_MATRIX, TEST_COLLECTION, HOMO_SAPIENS,
-                BSP_INFORMATICS_TEST_SITE_ID, materialInfoDto);
-        pdoKit.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        ProductOrderKit pdoKit = new ProductOrderKit(TEST_COLLECTION,BSP_INFORMATICS_TEST_SITE_ID);
+        ProductOrderKitDetail kitDetail = new ProductOrderKitDetail(96l, KitType.DNA_MATRIX, HOMO_SAPIENS, materialInfoDto,
+                Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
+        pdoKit.setKitOrderDetails(Collections.singleton(kitDetail));
         pdoKit.setTransferMethod(SampleKitWorkRequest.TransferMethod.SHIP_OUT);
         pdoKit.setNotificationIds(Arrays.asList("17255"));
         pdoKit.setExomeExpress(true);
@@ -204,6 +199,8 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(pdo);
         actionBean.setProduct("test product");
         actionBean.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD.getText());
+        String testKitQueryIndex = "5";
+        actionBean.setKitDefinitionQueryIndex(testKitQueryIndex);
 
         StreamingResolution postReceiveOptions = (StreamingResolution) actionBean.getPostReceiveOptions();
         HttpServletRequest request = new MockHttpServletRequest("foo", "bar");
@@ -213,8 +210,11 @@ public class ProductOrderActionBeanTest {
         String jsonString = response.getOutputString();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readValue(jsonString, JsonNode.class);
+        String returnedKitIndex = jsonNode.get(actionBean.getKitDefinitionIndexIdentifier()).asText();
+        Assert.assertEquals(returnedKitIndex, testKitQueryIndex,
+                "The kit index passed in should match the kit index returned");
 
-        Iterator<JsonNode> resultIterator = jsonNode.getElements();
+        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
         String nodeKey = "key";
         String nodeValue = "value";
 
@@ -257,7 +257,7 @@ public class ProductOrderActionBeanTest {
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
-        actionBean.initPostReceiveOptions();
+        actionBean.initSampleKitInfo();
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
