@@ -262,6 +262,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
+    /*
+     * Used for Ajax call to retrieve post receive Options for a particular material info
+     */
     private String materialInfo;
 
     private List<String> addOnKeys = new ArrayList<>();
@@ -737,7 +740,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void initSampleKitInfo() {
         postReceiveOptionKeys.clear();
         int detailIndex = 0;
-        for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
+        initializeKitDetails();
+        for (ProductOrderKitDetail kitDetail : kitDetails) {
             List<String> postReceiveOptions = new ArrayList<>();
             for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
                 postReceiveOptions.add(postReceiveOption.getText());
@@ -745,7 +749,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
             detailIndex++;
         }
-        initializeKitDetails();
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -915,7 +918,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (editOrder.isSampleInitiation()) {
@@ -1140,8 +1143,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         JSONObject kitIndexObject = new JSONObject();
-        String kitIndex = this.kitDefinitionQueryIndex;
-        kitIndexObject.put(kitDefinitionIndexIdentifier, kitIndex);
+
+        kitIndexObject.put(kitDefinitionIndexIdentifier, this.kitDefinitionQueryIndex);
         kitIndexObject.put("dataList", itemList);
 
         return createTextResolution(kitIndexObject.toString());
@@ -1509,8 +1512,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
 
-            if(StringUtils.isNotBlank(prePopulatedOrganismId)) {
-                collectionAndOrganismsList.put(chosenOrganism,prePopulatedOrganismId);
+            if (StringUtils.isNotBlank(prePopulatedOrganismId)) {
+                collectionAndOrganismsList.put(chosenOrganism, prePopulatedOrganismId);
             } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
@@ -1962,10 +1965,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validateQuoteOptions(String action) {
         if (skipQuote) {
             if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
-                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+                addValidationError("skipQuoteReason",
+                        "When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
             }
-        }
-        else {
+        } else {
             requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
     }

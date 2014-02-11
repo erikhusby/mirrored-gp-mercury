@@ -163,7 +163,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
-    @Column(name = "SKIP_QUOTE_REASON", length=255)
+    @Column(name = "SKIP_QUOTE_REASON", length = 255)
     private String skipQuoteReason;
 
     /**
@@ -323,7 +323,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
-     *         internal database id.
+     * internal database id.
      */
     @Override
     @Nonnull
@@ -713,7 +713,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * registered to this product order.
      *
      * @return a count of every participant that is represented by at least one sample in the list of product order
-     *         samples
+     * samples
      */
     public int getUniqueParticipantCount() {
         return updateSampleCounts().uniqueParticipantCount;
@@ -728,7 +728,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return the list of sample names for this order, including duplicates. in the same sequence that
-     *         they were entered.
+     * they were entered.
      */
     public String getSampleString() {
         return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
@@ -794,7 +794,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * this product order.
      *
      * @return a Map, indexed by the unique stock type found, which gives a count of how many samples in the list of
-     *         product order samples, are related to that stock type
+     * product order samples, are related to that stock type
      */
     public Map<String, Integer> getCountsByStockType() {
         return updateSampleCounts().stockTypeCounter.countMap;
@@ -863,7 +863,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return true if all samples are of BSP Format. Note:
-     *         will return false if there are no samples on the sheet.
+     * will return false if there are no samples on the sheet.
      */
     public boolean areAllSampleBSPFormat() {
         updateSampleCounts();
@@ -987,7 +987,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     public boolean isSampleInitiation() {
         return getProduct() != null && getProduct().isSampleInitiationProduct();
     }
-
 
     /**
      * This is used to help create or update a PDO's Jira ticket.

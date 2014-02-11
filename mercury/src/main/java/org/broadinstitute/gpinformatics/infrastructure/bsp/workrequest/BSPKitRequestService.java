@@ -15,9 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * High-level APIs for using the BSP work request service to create sample kit requests.
@@ -46,8 +44,9 @@ public class BSPKitRequestService {
      * BSP lab's current workflow. The additional details required by BSP are extracted from the given PDO and site or
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
-     * @param productOrder       the product order to create the kit request from
-     *  @return the BSP work request ID
+     * @param productOrder the product order to create the kit request from
+     *
+     * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
@@ -73,14 +72,14 @@ public class BSPKitRequestService {
         String requesterId = creator.getUsername();
 
         ProductOrderKit kit = productOrder.getProductOrderKit();
-        List<SampleKitWorkRequestDefinitionInfo> kitDefinitions = new ArrayList<>();
-        for(ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
+        List<SampleKitWorkRequestDefinitionInfo> kitDefinitions = new ArrayList<>(kit.getKitOrderDetails().size());
+
+        for (ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
             SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
-                    BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kitDetail.getNumberOfSamples(),
-                            kitDetail.getMaterialInfo(), kitDetail.getOrganismId(), kitDetail.getPostReceiveOptions(),
-                            SampleKitWorkRequest.MoleculeType.DNA);
+                    BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kitDetail, SampleKitWorkRequest.MoleculeType.DNA);
             kitDefinitions.add(kitWorkRequestDefinitionInfo);
         }
+
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(),
@@ -106,7 +105,8 @@ public class BSPKitRequestService {
     /**
      * Sends the given kit request to BSP to create a work request.
      *
-     * @param sampleKitWorkRequest    the kit request
+     * @param sampleKitWorkRequest the kit request
+     *
      * @return the BSP work request service response
      */
     public WorkRequestResponse sendKitRequest(SampleKitWorkRequest sampleKitWorkRequest) {
@@ -117,7 +117,8 @@ public class BSPKitRequestService {
     /**
      * Requests that an existing work request be "submitted" in BSP.
      *
-     * @param workRequestBarcode    the ID of the work request in BSP
+     * @param workRequestBarcode the ID of the work request in BSP
+     *
      * @return the BSP work request service response
      */
     public WorkRequestResponse submitKitRequest(String workRequestBarcode) {

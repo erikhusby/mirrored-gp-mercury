@@ -126,10 +126,9 @@ public class ProductOrderEjbTest {
         originalKitDetailSet.add(kitDetail);
         originalKitDetailSet.add(kitDetailToDelete);
 
-
-
         ProductOrderKit orderKit = new ProductOrderKit(33L, 44L);
         orderKit.setKitOrderDetails(originalKitDetailSet);
+        productOrder.setProductOrderKit(orderKit);
 
         Set<ProductOrderKitDetail> kitDetailSet = new HashSet<>();
 
@@ -164,13 +163,10 @@ public class ProductOrderEjbTest {
             } else {
                 Assert.assertEquals((Long)kitDetailToTest.getOrganismId(), (Long)88L);
                 Assert.assertEquals((Long)kitDetailToTest.getNumberOfSamples(), (Long)6L);
-
             }
 
             Assert.assertEquals(kitDetailToTest.getPostReceiveOptions().size(), 2);
-
         }
-
     }
 
     public void testCreatePDOUpdateFieldForQuote() {

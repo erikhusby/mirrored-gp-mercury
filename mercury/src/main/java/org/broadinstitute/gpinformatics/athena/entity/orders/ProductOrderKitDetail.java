@@ -148,7 +148,6 @@ public class ProductOrderKitDetail implements Serializable {
         return organismName;
     }
 
-
     public void setKitType(KitType kitType) {
         this.kitType = kitType;
     }
@@ -191,6 +190,20 @@ public class ProductOrderKitDetail implements Serializable {
         }
 
         return getKitType().getDisplayName();
+    }
+
+    /**
+     * Helper method to update the values of a product order kit detail based on another kit detail definition
+     *
+     * @param kitDetailUpdate a ProductOrderKitDetail entity from which values are to be updated.
+     */
+    public void updateDetailValues(ProductOrderKitDetail kitDetailUpdate) {
+        setKitType(kitDetailUpdate.getKitType());
+        setBspMaterialName(kitDetailUpdate.getBspMaterialName());
+        setOrganismId(kitDetailUpdate.getOrganismId());
+        setNumberOfSamples(kitDetailUpdate.getNumberOfSamples());
+        getPostReceiveOptions().clear();
+        postReceiveOptions.addAll(kitDetailUpdate.getPostReceiveOptions());
     }
 
 }

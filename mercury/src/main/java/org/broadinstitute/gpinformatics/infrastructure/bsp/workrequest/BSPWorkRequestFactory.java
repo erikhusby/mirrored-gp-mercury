@@ -4,6 +4,7 @@ import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequestDefinitionInfo;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,10 +19,6 @@ public class BSPWorkRequestFactory {
 
     /**
      * Creates a {@link SampleKitWorkRequest} suitable for posting to the BSP work request creation service.
-     *
-     *
-     *
-     *
      *
      * @param workRequestName        the name of the work request; must be unique in BSP
      * @param requestUser            the user making the request
@@ -71,7 +68,18 @@ public class BSPWorkRequestFactory {
         );
     }
 
-
+    /**
+     * Helper method for building a bspClient sample kit work request definition info for the purpose of sending
+     * across a web service to bsp for building a sample initiation work request.
+     *
+     * @param numberOfSamples       Number of samples to be associated with the kit detail information
+     * @param materialInfoDto       Type of source material to be associated with the kit detail information
+     * @param organismId            Reference ID of the organism to be associated with the kit detail information
+     * @param postReceiveOptions    instructions for processing the source material after it is received by the kit
+     *                              team
+     * @param molecularType         Molecular make up information to be associated with the kit detail information
+     * @return
+     */
     public static SampleKitWorkRequestDefinitionInfo buildBspKitWRDefinitionInfo(long numberOfSamples,
                                                                                  MaterialInfoDto materialInfoDto,
                                                                                  long organismId,
@@ -80,7 +88,21 @@ public class BSPWorkRequestFactory {
 
         return new SampleKitWorkRequestDefinitionInfo(numberOfSamples, molecularType, materialInfoDto, organismId,
                 new ArrayList<>(postReceiveOptions));
+    }
 
+    /**
+     * Helper method for building a bspClient sample kit work request definition info for the purpose of sending
+     * across a web service to bsp for building a sample initiation work request.
+     *
+     * @param kitDetail         an instance of a ProductOrderKitDetail entity that contains the sample kit request
+     *                          data
+     * @param molecularType     Molecular make up information to be associated with the kit detail information
+     * @return
+     */
+    public static SampleKitWorkRequestDefinitionInfo buildBspKitWRDefinitionInfo(ProductOrderKitDetail kitDetail,
+                                                                                 SampleKitWorkRequest.MoleculeType molecularType) {
 
+        return buildBspKitWRDefinitionInfo(kitDetail.getNumberOfSamples(), kitDetail.getMaterialInfo(),
+                kitDetail.getOrganismId(), kitDetail.getPostReceiveOptions(), molecularType);
     }
 }

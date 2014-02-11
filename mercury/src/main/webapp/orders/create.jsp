@@ -16,8 +16,8 @@
         var readOnlyOrder = ${!actionBean.editOrder.draft};
         var disabledText = '';
         var readonlyText = '';
-        if(readOnlyOrder) {
-            disabledText = ' disabled="disabled" ' ;
+        if (readOnlyOrder) {
+            disabledText = ' disabled="disabled" ';
             readonlyText = ' readonly="readonly" ';
         }
         var postReceivePrePopulateArray = [];
@@ -26,9 +26,11 @@
         $j(document).ready(
 
                 function () {
-                    $j('#productList').dataTable( {
+                    $j('#productList').dataTable({
                         "oTableTools": ttExportDefines,
-                        "aaSorting": [[1,'asc']],
+                        "aaSorting": [
+                            [1, 'asc']
+                        ],
                         "aoColumns": [
                             {"bSortable": true},
                             {"bSortable": true},
@@ -41,39 +43,40 @@
                             {"bSortable": true},
                             {"bSortable": true},
                             {"bSortable": true},
-                            {"bSortable": false}]
+                            {"bSortable": false}
+                        ]
                     });
 
                     $j("#owner").tokenInput(
-                        "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                            hintText: "Type a name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
-                            tokenLimit: 1,
-                            tokenDelimiter: "${actionBean.owner.separator}",
-                            resultsFormatter: formatInput
-                        }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                tokenLimit: 1,
+                                tokenDelimiter: "${actionBean.owner.separator}",
+                                resultsFormatter: formatInput
+                            }
                     );
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
-                            hintText: "Type a project name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
-                            resultsFormatter: formatInput,
-                            tokenDelimiter: "${actionBean.projectTokenInput.separator}",
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                                hintText: "Type a project name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                resultsFormatter: formatInput,
+                                tokenDelimiter: "${actionBean.projectTokenInput.separator}",
+                                tokenLimit: 1
+                            }
                     );
 
                     $j("#product").tokenInput(
-                        "${ctxpath}/orders/order.action?productAutocomplete=", {
-                            hintText: "Type a Product name or Part Number   ",
-                            onAdd: updateUIForProductChoice,
-                            onDelete: updateUIForProductChoice,
-                            resultsFormatter: formatInput,
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenDelimiter: "${actionBean.productTokenInput.separator}",
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/orders/order.action?productAutocomplete=", {
+                                hintText: "Type a Product name or Part Number   ",
+                                onAdd: updateUIForProductChoice,
+                                onDelete: updateUIForProductChoice,
+                                resultsFormatter: formatInput,
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                                tokenDelimiter: "${actionBean.productTokenInput.separator}",
+                                tokenLimit: 1
+                            }
                     );
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
@@ -121,14 +124,14 @@
                     var kitDetailLength = ${fn:length(actionBean.kitDetails)};
 
                     // if there are no sample kit details, just show one empty detail section
-                    if(kitDetailLength<1) {
+                    if (kitDetailLength < 1) {
                         addKitDefinitionInfo('');
                     }
 
                     // add an on change event for each material info drop down on the screen.  There may be more than
                     // one so we need to have a change method for each and have that change only affect the post
                     // processing options in that block.
-                    $j("[id^=materialInfo]").change( function(e) {
+                    $j("[id^=materialInfo]").change(function (e) {
 
                         var chosenId = $j(this).attr("id");
                         var index = chosenId.substr("materialInfo".length, chosenId.length);
@@ -138,9 +141,6 @@
                     updateUIForProductChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
-//                    for (kitCount = 0; kitCount < kitDefinitionCount; kitCount++) {
-//                        updateUIForMaterialInfoChoice(kitCount);
-//                    }
                     initializeQuoteOptions();
                     updateQuoteOptions();
                 }
@@ -378,11 +378,6 @@
         function setupPostReceiveCheckboxes(data) {
             var kitIndex = data.kitDefinitionQueryIndex;
 
-            if (kitIndex == '') {
-                alert("Undetermined kit definition");
-                return;
-            }
-
             var materialInfo = $j("#materialinfo" + kitIndex).val();
 
             if (data.dataList.length == 1) {
@@ -414,15 +409,14 @@
             checkboxes.hide();
             checkboxes.html(checkboxText);
 
-            if(postReceivePrePopulateArray) {
+            if (postReceivePrePopulateArray) {
 
-                $j("input[name='postReceiveOptionKeys["+kitIndex+"]']").each(function() {
+                $j("input[name='postReceiveOptionKeys[" + kitIndex + "]']").each(function () {
                     var checkedValue = '';
-                    if($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) {
+                    if ($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) {
                         checkedValue = 'checked';
                     }
-                    $j(this).prop("checked", checkedValue );
-//                    $j(this).prop("checked", ($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) );
+                    $j(this).prop("checked", checkedValue);
                 });
             }
 
@@ -531,7 +525,7 @@
 
                 newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" id="remove'+kitDefinitionCount+'">Remove kit Definition</a>\n ';
             }
-            newDefinition += '<h5 >Kit Definition Info</h3>';
+            newDefinition += '<h5 >Kit Definition Info</h5>';
             newDefinition += '<div class="controls">\n';
             newDefinition += '</div>\n</div>';
 
@@ -573,7 +567,6 @@
             var checked = '';
             <c:forEach items="${actionBean.dnaMatrixMaterialTypes}" var="materialType">
 
-
             newDefinition += '<option value="${materialType.text}" >${materialType.text}</option>';
             checked = '';
             </c:forEach>
@@ -610,7 +603,6 @@
             newDefinition += '</div>';
             $j('#kitDefinitions').append(newDefinition);
 
-
             if(samples) {
                 $j('#numberOfSamples' + kitDefinitionCount).val(samples);
             }
@@ -623,9 +615,6 @@
             }
 
             updateOrganism(kitDefinitionCount, organism);
-//            if(organism) {
-//                $j('#organismOption' + kitDefinitionCount).val(organism);
-//            }
 
             updateUIForMaterialInfoChoice(kitDefinitionCount);
 

@@ -99,6 +99,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
     /**
      * Clear the External Plating Addon from PDO-10
+     *
      * @throws Exception
      */
     @Test(enabled = false)
@@ -118,8 +119,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     /**
      * Helper method to change the owner of a product order.
+     *
      * @param newOwnerUsername new owner's username
-     * @param orderKeys list of PDO keys
+     * @param orderKeys        list of PDO keys
      */
     private void changePDOOwner(String newOwnerUsername, String... orderKeys) {
         for (BspUser user : bspUserList.find(newOwnerUsername)) {
@@ -170,7 +172,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 "SM-3SFP3",
                 "SM-3SFOX");
 
-        String pdo="PDO-300";
+        String pdo = "PDO-300";
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
@@ -199,7 +201,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 "SM-3DV2E",
                 "SM-3DV2F");
 
-        String pdo="PDO-49";
+        String pdo = "PDO-49";
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
@@ -225,7 +227,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 "SM-1WJPC",
                 "SM-1WJPD");
 
-        String pdo="PDO-388";
+        String pdo = "PDO-388";
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
@@ -246,10 +248,11 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void setupOnRiskTestData() {
 
-        String pdo="PDO-49";
+        String pdo = "PDO-49";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
-        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskCriterion riskCriterion =
+                new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
         productOrder.getProduct().getRiskCriteria().add(riskCriterion);
         productDao.persist(productOrder.getProduct());
 
@@ -428,7 +431,7 @@ public class ProductOrderFixupTest extends Arquillian {
                 104913, 104915, 104916, 104917, 104918, 104919, 104923, 104924, 104926, 104927, 104930, 104931, 133750,
                 133752, 133753, 133756, 133873, 210099, 210893, 234027, 262655, 48110};
         for (long id : ids) {
-            ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)id);
+            ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long) id);
             String s1 = sample.getName();
             while (!StringUtils.isAsciiPrintable(s1)) {
                 s1 = StringUtils.chop(s1);
@@ -439,13 +442,13 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         // Renames samples that were mistyped.
-        Map<Long, String> map = new HashMap<Long, String>(){{
-            put((Long)9181L, "SM-3O76Q");
-            put((Long)9262L, "SM-3NOLL");
-            put((Long)9294L, "SM-3NOYJ");
-            put((Long)9312L, "SM-3NP1A");
-            put((Long)69363L, "SM-3O57J");
-            put((Long)69362L, "SM-3O57I");
+        Map<Long, String> map = new HashMap<Long, String>() {{
+            put((Long) 9181L, "SM-3O76Q");
+            put((Long) 9262L, "SM-3NOLL");
+            put((Long) 9294L, "SM-3NOYJ");
+            put((Long) 9312L, "SM-3NP1A");
+            put((Long) 69363L, "SM-3O57J");
+            put((Long) 69362L, "SM-3O57I");
         }};
         for (Map.Entry<Long, String> entry : map.entrySet()) {
             ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, entry.getKey());
@@ -455,11 +458,11 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         // Un-splits two sample names.
-        ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)268485L);
+        ProductOrderSample sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long) 268485L);
         sample.setName("SM-4M8YQ");
         productOrderSampleDao.persist(sample);
 
-        sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long)268484L);
+        sample = productOrderSampleDao.findById(ProductOrderSample.class, (Long) 268484L);
         productOrderSampleDao.remove(sample);
 
         productOrderSampleDao.flush();
@@ -468,20 +471,22 @@ public class ProductOrderFixupTest extends Arquillian {
     /**
      * finds all sample initiation PDOs in the system that have not been converted to use productOrderKitDetail and
      * converts the detailed kit data to productOrderKitDetail entities
+     *
      * @throws Exception
      */
     @Test(enabled = false)
     public void convertSampleInitiationPDOsToTemplateFormat() throws Exception {
         List<ProductOrder> sampleInitiationPDOs = productOrderDao.findSampleInitiationPDOsNotConverted();
 
-        for(ProductOrder order:sampleInitiationPDOs) {
+        for (ProductOrder order : sampleInitiationPDOs) {
 
-            Set<PostReceiveOption> postReceiveOptions = new HashSet<>(order.getProductOrderKit().getPostReceiveOptions());
+            Set<PostReceiveOption> postReceiveOptions =
+                    new HashSet<>(order.getProductOrderKit().getPostReceiveOptions());
 
             order.getProductOrderKit().addKitOrderDetail(
                     new ProductOrderKitDetail(order.getProductOrderKit().getNumberOfSamples(),
-                            order.getProductOrderKit().getKitType(),order.getProductOrderKit().getOrganismId(),
-                            order.getProductOrderKit().getMaterialInfo(),postReceiveOptions ));
+                            order.getProductOrderKit().getKitType(), order.getProductOrderKit().getOrganismId(),
+                            order.getProductOrderKit().getMaterialInfo(), postReceiveOptions));
         }
         productOrderDao.persistAll(sampleInitiationPDOs);
     }
