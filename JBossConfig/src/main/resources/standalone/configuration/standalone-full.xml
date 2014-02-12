@@ -299,10 +299,6 @@
                 </jms-connection-factories>
 
                 <jms-destinations>
-                    <jms-queue name="testQueue">
-                        <entry name="queue/test"/>
-                        <entry name="java:jboss/exported/jms/queue/test"/>
-                    </jms-queue>
                     <jms-queue name="broad.queue.mercury.bettalims.dev">
                         <entry name="queue/broad.queue.mercury.bettalims.dev"/>
                         <durable>true</durable>
@@ -321,10 +317,6 @@
                         <durable>true</durable>
                     </jms-queue>
 
-                    <jms-topic name="testTopic">
-                        <entry name="topic/test"/>
-                        <entry name="java:jboss/exported/jms/topic/test"/>
-                    </jms-topic>
                 </jms-destinations>
             </hornetq-server>
         </subsystem>
