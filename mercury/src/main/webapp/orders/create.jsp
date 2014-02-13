@@ -421,9 +421,11 @@
             var checked;
             $j.each(data.dataList, function (index, val) {
                 // if this value is in the add on list, then check the checkbox
-                var optionName = val.key;
-                var defaultChecked = val.value;
+                var optionValue = val.key;
+                var defaultChecked = val.checked;
+                var optionLabel = val.label;
                 checked = '';
+
                 if (postReceiveOption.length == 0) {
                     if (defaultChecked) {
                         checked = ' checked="checked" ';
@@ -434,9 +436,9 @@
 
                 var postReceiveId = "postReceiveCheckbox-" + index;
                 checkboxText += '  <input type="checkbox"' + checked + disabledText +
-                        ' name="postReceiveOptionKeys[' + kitIndex + ']" value="' + optionName + '"/>' +
+                        ' name="postReceiveOptionKeys[' + kitIndex + ']" value="' + optionValue + '"/>' +
                         '  <label style="font-size: x-small;" for="' + postReceiveId + '">' +
-                        optionName + '</label>';
+                        optionLabel  + '</label>';
             });
             var checkboxes = $j("#postReceiveCheckboxes" + kitIndex);
             checkboxes.hide();
@@ -457,8 +459,6 @@
                     });
                 }
             }
-
-//            postReceivePrePopulateArray = [];
 
             checkboxes.fadeIn(fadeDuration);
         }

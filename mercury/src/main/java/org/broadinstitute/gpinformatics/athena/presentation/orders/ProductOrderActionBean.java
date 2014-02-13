@@ -745,7 +745,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderKitDetail kitDetail : kitDetails) {
             List<String> postReceiveOptions = new ArrayList<>();
             for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
-                postReceiveOptions.add(postReceiveOption.getText());
+                postReceiveOptions.add(postReceiveOption.name());
             }
             postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
             detailIndex++;
@@ -1008,8 +1008,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (kitDetails.get(kitDetailIndex) != null &&
                 postReceiveOptionKeys.get(kitDetailIndex) != null) {
 
+                Set<PostReceiveOption> selectedOptions = new HashSet<>();
+
+                for(String selectedPostReceiveOption: postReceiveOptionKeys.get(kitDetailIndex)) {
+                    selectedOptions.add(PostReceiveOption.valueOf(selectedPostReceiveOption));
+                }
+
                 kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
+                        .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -1133,11 +1139,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
             if (!postReceiveOption.getArchived()) {
                 JSONObject item = new JSONObject();
-                item.put("key", postReceiveOption.getText());
+                item.put("key", postReceiveOption.name());
+                item.put("label", postReceiveOption.getText());
                 if (!savedOrder) {
-                    item.put("value", postReceiveOption.getDefaultToChecked());
+                    item.put("checked", postReceiveOption.getDefaultToChecked());
                 } else {
-                    item.put("value", false);
+                    item.put("checked", false);
                 }
                 itemList.put(item);
             }
