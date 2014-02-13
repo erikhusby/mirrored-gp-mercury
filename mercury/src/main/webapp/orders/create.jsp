@@ -20,8 +20,6 @@
             disabledText = ' disabled="disabled" ';
             readonlyText = ' readonly="readonly" ';
         }
-//        var postReceivePrePopulateArray = [];
-
 
         $j(document).ready(
 
@@ -144,7 +142,7 @@
 
                     // Initializes the previously chosen sample kit detail info in the sample kit display section
                     <c:forEach items="${actionBean.kitDetails}" var="initKitDetail" varStatus="kitDetailStatus">
-                    addKitDefinitionInfo('${initKitDetail.productOrderKitDetaild}', '${initKitDetail.numberOfSamples}',
+                    addKitDefinitionInfo('${initKitDetail.productOrderKitDetailId}', '${initKitDetail.numberOfSamples}',
                             '${initKitDetail.organismId}', '${initKitDetail.bspMaterialName}',
                             '${initKitDetail.kitType.name}');
                     </c:forEach>
@@ -224,14 +222,15 @@
             {}
         ];
         <c:forEach items="${actionBean.postReceiveOptionKeys}" var="kitOption" varStatus="stat" >
+            postReceiveOption[${kitOption.key}] = {};
             <c:forEach items="${kitOption.value}" var="option" varStatus="optionStat">
 
-                postReceiveOption["${kitOption.key}"]["${option}"] = true;
+                postReceiveOption[${kitOption.key}]["${option}"] = true;
             </c:forEach>
-            postReceiveOption["${kitOption.key}"].length =${fn:length(kitOption.value)};
+            <%--postReceiveOption[${kitOption.key}].length =${fn:length(kitOption.value)};--%>
         </c:forEach>
 
-        postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};
+        <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
         function updateUIForProductChoice() {
 
@@ -426,11 +425,11 @@
                 var optionLabel = val.label;
                 checked = '';
 
-                if (postReceiveOption.length == 0) {
+                if (!postReceiveOption[kitIndex] || postReceiveOption[kitIndex].length == 0) {
                     if (defaultChecked) {
                         checked = ' checked="checked" ';
                     }
-                } else if (postReceiveOption[val.key]) {
+                } else if (postReceiveOption[kitIndex][val.key]) {
                     checked = ' checked="checked" ';
                 }
 
@@ -496,7 +495,7 @@
          */
         function removeKitDefinition(id) {
 
-            var kitRefID = $j("kitIdReference" + id).attr("value");
+            var kitRefID = $j("#kitIdReference" + id).attr("value");
 
             if(kitRefID) {
                 var deleteString = '<input type="hidden" name="deletedKits" value="' + kitRefID +'" />';
@@ -522,10 +521,6 @@
             var kitType = $j("#kitType" + id).val();
             var organism = $j("#organismOption" + id).val();
 
-//            $j("input[name='postReceiveOptionKeys["+id+"]']:checked").each(function() {
-//                postReceivePrePopulateArray.push($j(this).val());
-//            });
-//
             addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType, id)
         }
 
@@ -561,7 +556,7 @@
 
             newDefinition += '<input type="hidden" id="kitIdReference' + kitDefinitionCount +
                     '" value="' + kitDefinitionId +
-                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetail.productOrderKitDetaild" />';
+                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetailId" />';
             newDefinition += '<div class="control-group">\n ';
             if(!readOnlyOrder && kitDefinitionCount>0) {
 

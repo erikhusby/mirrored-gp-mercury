@@ -2046,4 +2046,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setPrepopulatePostReceiveOptions(String prepopulatePostReceiveOptions) {
         this.prepopulatePostReceiveOptions = prepopulatePostReceiveOptions;
     }
+
+    public void setDeletedKits(String[] deletedKits) {
+        this.deletedKits = deletedKits;
+    }
+
+    public String[] getDeletedKits() {
+        return deletedKits;
+    }
 }

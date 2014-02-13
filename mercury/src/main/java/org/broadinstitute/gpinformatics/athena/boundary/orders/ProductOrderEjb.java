@@ -150,18 +150,18 @@ public class ProductOrderEjb {
                         editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();
                 while (kitDetailIterator.hasNext()) {
                     ProductOrderKitDetail kitDetail = kitDetailIterator.next();
-                    if (deletedIds.contains(kitDetail.getProductOrderKitDetaild().toString())) {
+                    if (deletedIds.contains(kitDetail.getProductOrderKitDetailId().toString())) {
                         kitDetailIterator.remove();
                     } else {
-                        mapKitDetailsByIDs.put(kitDetail.getProductOrderKitDetaild(), kitDetail);
+                        mapKitDetailsByIDs.put(kitDetail.getProductOrderKitDetailId(), kitDetail);
                     }
                 }
 
                 for (ProductOrderKitDetail kitDetailUpdate : kitDetailCollection) {
-                    if (kitDetailUpdate.getProductOrderKitDetaild() != null &&
-                        mapKitDetailsByIDs.containsKey(kitDetailUpdate.getProductOrderKitDetaild())) {
+                    if (kitDetailUpdate.getProductOrderKitDetailId() != null &&
+                        mapKitDetailsByIDs.containsKey(kitDetailUpdate.getProductOrderKitDetailId())) {
 
-                        mapKitDetailsByIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).updateDetailValues(
+                        mapKitDetailsByIDs.get(kitDetailUpdate.getProductOrderKitDetailId()).updateDetailValues(
                                 kitDetailUpdate);
 
                     } else {

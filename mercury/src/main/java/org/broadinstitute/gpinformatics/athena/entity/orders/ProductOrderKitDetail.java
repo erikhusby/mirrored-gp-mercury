@@ -44,7 +44,7 @@ public class ProductOrderKitDetail implements Serializable {
             sequenceName = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
     @Column(name = "product_order_kit_detail_id", unique = true, nullable = false)
-    private Long productOrderKitDetaild;
+    private Long productOrderKitDetailId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     private ProductOrderKit productOrderKit;
@@ -88,12 +88,12 @@ public class ProductOrderKitDetail implements Serializable {
         this.postReceiveOptions = postReceiveOptions;
     }
 
-    public Long getProductOrderKitDetaild() {
-        return productOrderKitDetaild;
+    public Long getProductOrderKitDetailId() {
+        return productOrderKitDetailId;
     }
 
-    public void setProductOrderKitDetaild(Long productOrderKitDetaild) {
-        this.productOrderKitDetaild = productOrderKitDetaild;
+    public void setProductOrderKitDetailId(Long productOrderKitDetaild) {
+        this.productOrderKitDetailId = productOrderKitDetaild;
     }
 
     public ProductOrderKit getProductOrderKit() {
