@@ -330,6 +330,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private String kitDefinitionQueryIndex;
     private String prePopulatedOrganismId;
+    private String prepopulatePostReceiveOptions;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
@@ -1146,6 +1147,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         kitIndexObject.put(kitDefinitionIndexIdentifier, this.kitDefinitionQueryIndex);
         kitIndexObject.put("dataList", itemList);
+        if(StringUtils.isNotBlank(prepopulatePostReceiveOptions)) {
+            kitIndexObject.put("prepopulatePostReceiveOptions", prepopulatePostReceiveOptions);
+        }
 
         return createTextResolution(kitIndexObject.toString());
     }
@@ -1511,7 +1515,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
-
             if (StringUtils.isNotBlank(prePopulatedOrganismId)) {
                 collectionAndOrganismsList.put(chosenOrganism, prePopulatedOrganismId);
             } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
@@ -2019,5 +2022,21 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setKitDetails(List<ProductOrderKitDetail> kitDetails) {
         this.kitDetails = kitDetails;
+    }
+
+    public String getPrePopulatedOrganismId() {
+        return prePopulatedOrganismId;
+    }
+
+    public void setPrePopulatedOrganismId(String prePopulatedOrganismId) {
+        this.prePopulatedOrganismId = prePopulatedOrganismId;
+    }
+
+    public String getPrepopulatePostReceiveOptions() {
+        return prepopulatePostReceiveOptions;
+    }
+
+    public void setPrepopulatePostReceiveOptions(String prepopulatePostReceiveOptions) {
+        this.prepopulatePostReceiveOptions = prepopulatePostReceiveOptions;
     }
 }

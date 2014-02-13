@@ -20,7 +20,7 @@
             disabledText = ' disabled="disabled" ';
             readonlyText = ' readonly="readonly" ';
         }
-        var postReceivePrePopulateArray = [];
+//        var postReceivePrePopulateArray = [];
 
 
         $j(document).ready(
@@ -115,6 +115,33 @@
                     $j("#publicationDeadline").datepicker();
                     $j("#sampleListEdit").hide();
 
+                    $j("#duplicateKitInfoDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: [
+                            {
+                                id: "createDuplates",
+                                text: "create",
+                                click: function() {
+                                    $j(this).dialog("close");
+                                    var chosenId = $j("#idToDuplicate").val();
+                                    var idsToDuplicate = $j("#numDuplicatesId").val();
+                                    $j("#idToDuplicate").val('');
+                                    $j("#numDuplicatesId").val('')
+                                    for(var i=0;i<idsToDuplicate ;i++) {
+                                        cloneKitDefinition(chosenId );
+                                    }
+                                }
+                            },
+                            {
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
+
                     // Initializes the previously chosen sample kit detail info in the sample kit display section
                     <c:forEach items="${actionBean.kitDetails}" var="initKitDetail" varStatus="kitDetailStatus">
                     addKitDefinitionInfo('${initKitDetail.productOrderKitDetaild}', '${initKitDetail.numberOfSamples}',
@@ -136,7 +163,7 @@
                         var chosenId = $j(this).attr("id");
                         var index = chosenId.substr("materialInfo".length, chosenId.length);
 
-                        updateUIForMaterialInfoChoice(index);
+                        updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     updateUIForProductChoice();
                     updateFundsRemaining();
@@ -246,14 +273,15 @@
             }
         }
 
-        function updateUIForMaterialInfoChoice(kitCount) {
+        function updateUIForMaterialInfoChoice(kitCount, postReceivePrePopulates) {
             var pdoId = "${actionBean.editOrder.productOrderId}";
             var materialKey = $j("#materialInfo" + kitCount).val();
+
             if ((materialKey == null) || (materialKey == "")) {
                 $j("#postReceiveCheckboxGroup" + kitCount).hide();
             } else {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder=" + pdoId + "&${actionBean.kitDefinitionIndexIdentifier}=" + kitCount,
+                    url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder=" + pdoId + "&${actionBean.kitDefinitionIndexIdentifier}=" + kitCount +"&prepopulatePostReceiveOptions="+postReceivePrePopulates,
                     dataType: 'json',
                     success: setupPostReceiveCheckboxes
                 });
@@ -262,6 +290,7 @@
         }
 
         function updateOrganism(index, presetOrganism) {
+
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val() + "&${actionBean.kitDefinitionIndexIdentifier}=" + index + "&prePopulatedOrganismId=" + presetOrganism,
                 dataType: 'json',
@@ -285,7 +314,8 @@
 
                     var organismId = $j(this).attr("id");
                     var index = organismId.substr("selectedOrganism".length, organismId.length);
-                    updateOrganism(index, organismId);
+                    var selectedOrganismId = $j(this).val();
+                    updateOrganism(index, selectedOrganismId);
                 });
 
                 $j("#sitePrompt").remove();
@@ -357,6 +387,8 @@
             }
 
             var checkboxText = "";
+            var checked;
+
             $j.each(data, function (index, val) {
                 // if this value is in the add on list, then check the checkbox
                 checked = '';
@@ -386,6 +418,7 @@
             }
 
             var checkboxText = "";
+            var checked;
             $j.each(data.dataList, function (index, val) {
                 // if this value is in the add on list, then check the checkbox
                 var optionName = val.key;
@@ -409,18 +442,23 @@
             checkboxes.hide();
             checkboxes.html(checkboxText);
 
-            if (postReceivePrePopulateArray) {
+            if(data.prepopulatePostReceiveOptions) {
 
-                $j("input[name='postReceiveOptionKeys[" + kitIndex + "]']").each(function () {
-                    var checkedValue = '';
-                    if ($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) {
-                        checkedValue = 'checked';
-                    }
-                    $j(this).prop("checked", checkedValue);
-                });
+                var prePopPostReceives = data.prepopulatePostReceiveOptions.split("/,/");
+
+                if (prePopPostReceives) {
+
+                    $j("input[name='postReceiveOptionKeys[" + kitIndex + "]']").each(function () {
+                        var checkedValue = '';
+                        if ($j.inArray($j(this).val(), prePopPostReceives) != -1) {
+                            checkedValue = 'checked';
+                        }
+                        $j(this).prop("checked", checkedValue);
+                    });
+                }
             }
 
-            postReceivePrePopulateArray = [];
+//            postReceivePrePopulateArray = [];
 
             checkboxes.fadeIn(fadeDuration);
         }
@@ -484,12 +522,16 @@
             var kitType = $j("#kitType" + id).val();
             var organism = $j("#organismOption" + id).val();
 
+//            $j("input[name='postReceiveOptionKeys["+id+"]']:checked").each(function() {
+//                postReceivePrePopulateArray.push($j(this).val());
+//            });
+//
+            addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType, id)
+        }
 
-            $j("input[name='postReceiveOptionKeys["+id+"]']:checked").each(function() {
-                postReceivePrePopulateArray.push($j(this).val());
-            });
-
-            addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType)
+        function showDuplicateKitInfoDialog(id) {
+            $j("#duplicateKitInfoDialog").dialog("open").dialog("option", "width", 300);
+            $j("#idToDuplicate").val(id);
         }
 
         /**
@@ -513,7 +555,7 @@
          *                          being rendered.  If set, this will be used to pre-select the correct kit type in
          *                          the kit type drop down
          */
-        function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType) {
+        function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType, cloneId) {
 
             var newDefinition = '<div id="kitDefinitionDetail' + kitDefinitionCount + '">';
 
@@ -596,7 +638,7 @@
 
                 newDefinition += ' <div class="control-group">' +
                         '<div class="controls">\n' +
-                        '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')" id="clone'+kitDefinitionCount+'" >Duplicate kit Definition</a>\n ' +
+                        '<a onclick="showDuplicateKitInfoDialog(' + kitDefinitionCount + ')" id="clone'+kitDefinitionCount+'" >Duplicate kit Definition</a>\n ' +
                         '</div></div>';
             }
 
@@ -616,15 +658,44 @@
 
             updateOrganism(kitDefinitionCount, organism);
 
-            updateUIForMaterialInfoChoice(kitDefinitionCount);
+            var postReceivePrePopulates = getSelectedPostReceiveOptions(cloneId);
+
+            updateUIForMaterialInfoChoice(kitDefinitionCount, postReceivePrePopulates);
 
             kitDefinitionCount++;
+        }
+
+        function getSelectedPostReceiveOptions(kitIndex) {
+
+            var postReceivePrePopulates = '';
+
+            var first = true;
+
+            if(kitIndex) {
+
+                $j("input[name='postReceiveOptionKeys["+kitIndex+"]']:checked").each(function() {
+                    if(!first) {
+                        postReceivePrePopulates += "/,/";
+                    }
+                    postReceivePrePopulates += $j(this).val();
+
+                    first = false;
+                });
+            }
+            return postReceivePrePopulates;
         }
 
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+    <div id="duplicateKitInfoDialog" style="width:300px;display:none;">
+        <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
+            <input type="hidden" id="idToDuplicate" />
+            <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
+        </p>
+    </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
             <div class="form-horizontal span6">
