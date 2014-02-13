@@ -46,10 +46,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ProductOrderActionBeanTest {
 
@@ -216,13 +218,19 @@ public class ProductOrderActionBeanTest {
 
         Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
         String nodeKey = "key";
-        String nodeValue = "value";
+        String nodeChecked = "checked";
 
         while (resultIterator.hasNext()) {
             JsonNode node = resultIterator.next();
-            PostReceiveOption option = TestUtils.getFirst(
-                    PostReceiveOption.getByText(Arrays.asList(node.get(nodeKey).asText())));
-            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeValue).asBoolean());
+
+            Set<PostReceiveOption> postReceiveOptionSet = new HashSet<>(node.get(nodeKey).size());
+            for(String returnedOption : Arrays.asList(node.get(nodeKey).asText())) {
+                postReceiveOptionSet.add(PostReceiveOption.valueOf(returnedOption));
+            }
+
+            Assert.assertTrue(postReceiveOptionSet.size()>0);
+            PostReceiveOption option = TestUtils.getFirst(postReceiveOptionSet);
+            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeChecked).asBoolean());
             Assert.assertFalse(option.getArchived());
         }
     }
