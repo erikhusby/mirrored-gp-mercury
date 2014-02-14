@@ -118,7 +118,7 @@
                         autoOpen: false,
                         buttons: [
                             {
-                                id: "createDuplates",
+                                id: "createDuplicates",
                                 text: "create",
                                 click: function() {
                                     $j(this).dialog("close");
@@ -132,6 +132,7 @@
                                 }
                             },
                             {
+                                id: "cancelCreateDuplicates",
                                 text: "Cancel",
                                 click: function () {
                                     $j(this).dialog("close");
@@ -685,7 +686,7 @@
 
     <stripes:layout-component name="content">
 
-    <div id="duplicateKitInfoDialog" style="width:300px;display:none;">
+    <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
         <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
             <input type="hidden" id="idToDuplicate" />
             <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
