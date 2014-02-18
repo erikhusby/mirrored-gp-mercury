@@ -1443,4 +1443,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             countsValid = false;
         }
     }
+
+
+    /**
+     * If a reason is specified for why you can skip a quote it is OK to do.
+     */
+    @Transient
+    public boolean canSkipQuote() {
+        return !StringUtils.isBlank(getSkipQuoteReason());
+    }
+
 }
