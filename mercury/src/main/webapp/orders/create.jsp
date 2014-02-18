@@ -168,8 +168,9 @@
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
                     initializeQuoteOptions();
-                    updateQuoteOptions();
+                    $j("#skipQuote").on("change", toggleSkipQuote);
                 }
+
         );
 
         function formatInput(item) {
@@ -184,34 +185,37 @@
         addOn['${addOnProduct}'] = true;
         </c:forEach>
 
-        var skipQuote = false;
         var quoteBeforeSkipping;
 
         function toggleSkipQuote() {
-            skipQuote = !skipQuote;
+            skipQuote = $j("#skipQuote").prop('checked');
+
             if (skipQuote) {
                 quoteBeforeSkipping = $j("#quote").val();
                 $j("#quote").val('');
-            }
-            else {
+            } else {
+                $j("#skipQuoteReason").val('');
                 $j("#quote").val(quoteBeforeSkipping);
             }
             updateQuoteOptions();
         }
 
         function initializeQuoteOptions() {
-            <c:if test="${actionBean.skipQuote}">
-                skipQuote = true;
+            <c:if test="${actionBean.editOrder.canSkipQuote()}">
+                skipQuote = $j("#skipQuoteReason").is(":empty");
+                $j("#skipQuote").prop('checked', skipQuote);
             </c:if>
+            updateQuoteOptions();
             quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
         }
         function updateQuoteOptions() {
+            skipQuote = $j("#skipQuote").prop('checked');
+            $j("#skipQuote").prop('checked', skipQuote);
             if (skipQuote) {
                 $j("#skipQuoteReasonDiv").show();
                 $j("#quote").hide();
                 $j("#fundsRemaining").hide();
-            }
-            else {
+            } else {
                 $j("#skipQuoteReasonDiv").hide();
                 updateFundsRemaining();
                 $j("#quote").show();
@@ -832,7 +836,7 @@
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                         <div id="skipQuoteDiv">
-                            <stripes:checkbox id="skipQuote" name="skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
+                            <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
                             <div id="skipQuoteReasonDiv">
                                 Please enter a reason for skipping the quote *
                                 <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
