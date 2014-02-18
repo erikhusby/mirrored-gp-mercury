@@ -133,8 +133,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
-    private static final String PLACE_ORDER = "placeOrder";
-    private static final String VALIDATE_ORDER = "validate";
+    protected static final String PLACE_ORDER = "placeOrder";
+    protected static final String VALIDATE_ORDER = "validate";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -233,8 +233,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
-
-    private boolean skipQuote = false;
 
     private List<Long> sampleIdsForGetBspData;
 
@@ -347,7 +345,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
-                skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         } else {
@@ -551,7 +548,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
-        validatePlacedOrder("place order");
+        validatePlacedOrder(PLACE_ORDER);
     }
 
     public void validatePlacedOrder(String action) {
@@ -1973,22 +1970,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (skipQuote) {
-            if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
-                addValidationError("skipQuoteReason",
-                        "When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+            boolean hasQuote=!StringUtils.isBlank(editOrder.getQuoteId());
+            if (!hasQuote) {
+                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered.", action);
+                requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             }
-        } else {
-            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         }
-    }
-
-    public boolean isSkipQuote() {
-        return skipQuote;
-    }
-
-    public void setSkipQuote(boolean skipQuote) {
-        this.skipQuote = skipQuote;
     }
 
     public KitType getChosenKitType() {

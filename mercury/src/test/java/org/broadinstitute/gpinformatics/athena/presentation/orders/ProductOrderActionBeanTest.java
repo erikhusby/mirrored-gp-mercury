@@ -38,6 +38,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
@@ -350,36 +351,37 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(response.getOutputString(), "{\"supportsSkippingQuote\":false}");
     }
 
+    @DataProvider(name = "quoteOptionsDataProvider")
+    public Object[][] quoteOptionsDataProvider(){
+        String testReason = "The dog ate my quote.";
+        String testQuote = "SomeQuote";
+        return new Object[][]{
+                {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, null, "", false, "No Quote and No reason should fail."},
+                {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, null, testReason, true, "No Quote but with reason should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, "", true, "A good quote but blank reason should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, null, true, "A good quote but null reason should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, testQuote, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, null, false, "No quote or reason should fail."}
+        };
+    }
 
-
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testQuoteSkippingValidation() {
+    @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "quoteOptionsDataProvider")
+    public void testQuoteSkippingValidation(String action, String quoteId, String reason,
+                                            boolean expectedToPassValidation, String testErrorMessage) {
         ProductOrder pdo = new ProductOrder();
-        actionBean.setEditOrder(pdo);
-
-        actionBean.setSkipQuote(true);
-        pdo.setSkipQuoteReason("");
-        actionBean.validateQuoteOptions("");
-        Assert.assertEquals(actionBean.getValidationErrors().size(), 1);
-
+        pdo.setSkipQuoteReason(reason);
+        pdo.setQuoteId(quoteId);
         actionBean.clearValidationErrors();
-        actionBean.setSkipQuote(false);
-        pdo.setSkipQuoteReason("");
-        actionBean.validateQuoteOptions("");
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
+        actionBean.setEditOrder(pdo);
+        actionBean.validateQuoteOptions(action);
 
-        actionBean.setSkipQuote(true);
-        pdo.setSkipQuoteReason("The dog ate my quote");
-        actionBean.validateQuoteOptions("");
-
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
-
-        pdo.setQuoteId("SomeQuote");
-        actionBean.validateQuoteOptions("");
-
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0,"It's okay to have a quote set and keep the skip quote reason.");
-
-
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPassValidation, testErrorMessage);
     }
 }
