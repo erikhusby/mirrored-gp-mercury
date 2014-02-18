@@ -202,7 +202,7 @@
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
 
-        <mercury.rc.ip>must be specified.</mercury.rc.ip>
+        <mercury.rc.ip>@192.168.195.28</mercury.rc.ip>
 
         <umlgraph.path>must be specified</umlgraph.path>
 
