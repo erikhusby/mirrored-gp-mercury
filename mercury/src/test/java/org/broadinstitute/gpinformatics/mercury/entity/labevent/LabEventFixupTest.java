@@ -189,11 +189,32 @@ public class LabEventFixupTest extends Arquillian {
         labEventDao.remove(labEvent);
     }
 
-    @Test(enabled = true)
-    public void fixupManualLcset() {
+    @Test(enabled = false)
+    public void fixupGplim2393() {
+        // After undoing UPDATE statement in the ticket...
+        // Override routing for shearing transfer
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 324061L);
         LabBatch labBatch = labBatchDao.findByName("LCSET-4771");
         labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2336() {
+        // After undoing the UPDATE statement in the ticket...
+
+        // Fix 2 lab batches exception for 130912_SL-HCB_0354_BFCH72CAADXX
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 217038L);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-4069");
+        labEvent.setManualOverrideLcSet(labBatch);
+
+        // Fix 3 lab batches exception for 131119_SL-MAG_0203_FC000000000-A6DL6
+        // Override routing for shearing transfer
+        labEvent = labEventDao.findById(LabEvent.class, 284615L);
+        labBatch = labBatchDao.findByName("LCSET-4486");
+        labEvent.setManualOverrideLcSet(labBatch);
+
         labEventDao.flush();
     }
 }

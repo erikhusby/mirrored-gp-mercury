@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -12,15 +11,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -35,7 +26,6 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -117,19 +107,18 @@ public class ProductOrderEjbTest {
         ProductOrderKitDetail kitDetail = new ProductOrderKitDetail(5L, KitType.DNA_MATRIX, 87L,
                 ProductOrderKitTest.materialInfoDto);
         kitDetail.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.PICO_RECEIVED));
-        kitDetail.setProductOrderKitDetaild(4243L);
+        kitDetail.setProductOrderKitDetailId(4243L);
 
         ProductOrderKitDetail kitDetailToDelete = new ProductOrderKitDetail(4L, KitType.DNA_MATRIX, 187L,
                 ProductOrderKitTest.materialInfoDto);
         kitDetailToDelete.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.PICO_RECEIVED));
-        kitDetailToDelete.setProductOrderKitDetaild(2243L);
+        kitDetailToDelete.setProductOrderKitDetailId(2243L);
         originalKitDetailSet.add(kitDetail);
         originalKitDetailSet.add(kitDetailToDelete);
 
-
-
         ProductOrderKit orderKit = new ProductOrderKit(33L, 44L);
         orderKit.setKitOrderDetails(originalKitDetailSet);
+        productOrder.setProductOrderKit(orderKit);
 
         Set<ProductOrderKitDetail> kitDetailSet = new HashSet<>();
 
@@ -143,7 +132,7 @@ public class ProductOrderEjbTest {
                 ProductOrderKitTest.materialInfoDto);
         kitDetailChange2.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
         kitDetailChange2.getPostReceiveOptions().addAll(Collections.singleton(PostReceiveOption.BIOANALYZER));
-        kitDetailChange2.setProductOrderKitDetaild(4243L);
+        kitDetailChange2.setProductOrderKitDetailId(4243L);
 
         kitDetailSet.add(kitDetailChange1);
         kitDetailSet.add(null);
@@ -155,22 +144,19 @@ public class ProductOrderEjbTest {
         Assert.assertEquals(productOrder.getProductOrderKit().getKitOrderDetails().size(), 2);
         for(ProductOrderKitDetail kitDetailToTest:productOrder.getProductOrderKit().getKitOrderDetails()) {
 
-            Assert.assertNotEquals(kitDetailToTest.getProductOrderKitDetaild(), 2243L);
+            Assert.assertNotEquals(kitDetailToTest.getProductOrderKitDetailId(), 2243L);
 
-            if(kitDetailToTest.getProductOrderKitDetaild() != null &&
-               kitDetailToTest.getProductOrderKitDetaild().equals(4243L)) {
+            if(kitDetailToTest.getProductOrderKitDetailId() != null &&
+               kitDetailToTest.getProductOrderKitDetailId().equals(4243L)) {
                 Assert.assertEquals((Long)kitDetailToTest.getOrganismId(), (Long)89L);
                 Assert.assertEquals((Long)kitDetailToTest.getNumberOfSamples(), (Long)7L);
             } else {
                 Assert.assertEquals((Long)kitDetailToTest.getOrganismId(), (Long)88L);
                 Assert.assertEquals((Long)kitDetailToTest.getNumberOfSamples(), (Long)6L);
-
             }
 
             Assert.assertEquals(kitDetailToTest.getPostReceiveOptions().size(), 2);
-
         }
-
     }
 
     public void testCreatePDOUpdateFieldForQuote() {

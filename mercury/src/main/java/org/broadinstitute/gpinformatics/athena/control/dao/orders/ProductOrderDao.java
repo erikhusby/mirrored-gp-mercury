@@ -368,7 +368,7 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Helper method for a sample initiation fixup.  Will find all sample initiation PDO's that do not
+     * Helper method for a sample initiation fixup.  Will find all sample initiation PDOs that do not
      *
      * @return
      */
@@ -382,16 +382,13 @@ public class ProductOrderDao extends GenericDao {
 
         Root<ProductOrder> productOrderRoot = productOrderCriteriaQuery.from(ProductOrder.class);
         Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
-//        Join<Product, ProductFamily> productProductFamilyJoin = productJoin.join(Product_.productFamily);
 
 
         Join<ProductOrder, ProductOrderKit> productOrderKitJoin = productOrderRoot.join(ProductOrder_.productOrderKit);
         Join<ProductOrderKit, ProductOrderKitDetail> kitDetailJoin = productOrderKitJoin.join(
                 ProductOrderKit_.kitOrderDetails, JoinType.LEFT);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.partNumber), "P-ESH-0001"));
-//        predicates.add(criteriaBuilder.equal(productProductFamilyJoin.get(ProductFamily_.name),
-//                ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName()));
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
         predicates.add(criteriaBuilder.isNull(kitDetailJoin.get(ProductOrderKitDetail_.numberOfSamples)));
 
         productOrderCriteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));

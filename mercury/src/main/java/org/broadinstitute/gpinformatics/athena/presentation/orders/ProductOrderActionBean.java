@@ -133,8 +133,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
-    private static final String PLACE_ORDER = "placeOrder";
-    private static final String VALIDATE_ORDER = "validate";
+    protected static final String PLACE_ORDER = "placeOrder";
+    protected static final String VALIDATE_ORDER = "validate";
     // Search field constants
     private static final String FAMILY = "productFamily";
     private static final String PRODUCT = "product";
@@ -234,8 +234,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {EDIT_ACTION})
     private String productOrder;
 
-    private boolean skipQuote = false;
-
     private List<Long> sampleIdsForGetBspData;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
@@ -262,6 +260,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
+    /*
+     * Used for Ajax call to retrieve post receive Options for a particular material info
+     */
     private String materialInfo;
 
     private List<String> addOnKeys = new ArrayList<>();
@@ -327,6 +328,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private String kitDefinitionQueryIndex;
     private String prePopulatedOrganismId;
+    private String prepopulatePostReceiveOptions;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
@@ -343,7 +345,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
             if (editOrder != null) {
-                skipQuote = !StringUtils.isEmpty(editOrder.getSkipQuoteReason());
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
         } else {
@@ -424,7 +425,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
-            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", action, editOrder.getName(),
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
+                    .splitCamelCase(action),
+                    editOrder.getName(),
                     name);
         }
     }
@@ -470,13 +473,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-
+            initializeKitDetails();
+            requireField(!kitDetails.isEmpty(), "kit details", action);
             for (ProductOrderKitDetail kitDetail : kitDetails) {
                 Long numberOfSamples = kitDetail.getNumberOfSamples();
-                if (kitDetail.getNumberOfSamples() == null) {
-                    numberOfSamples = (long) 0;
-                }
-                requireField(numberOfSamples > 0, "a specified number of samples", action);
+                requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples", action);
                 requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
                 requireField(kitDetail.getBspMaterialName(), "a material information", action);
                 requireField(kitDetail.getOrganismId(), "an organism", action);
@@ -547,7 +548,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
-        validatePlacedOrder("place order");
+        validatePlacedOrder(PLACE_ORDER);
     }
 
     public void validatePlacedOrder(String action) {
@@ -737,15 +738,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void initSampleKitInfo() {
         postReceiveOptionKeys.clear();
         int detailIndex = 0;
-        for (ProductOrderKitDetail kitDetail : editOrder.getProductOrderKit().getKitOrderDetails()) {
+        initializeKitDetails();
+        for (ProductOrderKitDetail kitDetail : kitDetails) {
             List<String> postReceiveOptions = new ArrayList<>();
             for (PostReceiveOption postReceiveOption : kitDetail.getPostReceiveOptions()) {
-                postReceiveOptions.add(postReceiveOption.getText());
+                postReceiveOptions.add(postReceiveOption.name());
             }
             postReceiveOptionKeys.put(detailIndex, postReceiveOptions);
             detailIndex++;
         }
-        initializeKitDetails();
     }
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
@@ -915,7 +916,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         try {
             editOrder.prepareToSave(userBean.getBspUser());
-            ProductOrderJiraUtil.placeOrder(editOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             if (editOrder.isSampleInitiation()) {
@@ -1004,8 +1005,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (kitDetails.get(kitDetailIndex) != null &&
                 postReceiveOptionKeys.get(kitDetailIndex) != null) {
 
+                Set<PostReceiveOption> selectedOptions = new HashSet<>();
+
+                for(String selectedPostReceiveOption: postReceiveOptionKeys.get(kitDetailIndex)) {
+                    selectedOptions.add(PostReceiveOption.valueOf(selectedPostReceiveOption));
+                }
+
                 kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(PostReceiveOption.getByText(postReceiveOptionKeys.get(kitDetailIndex)));
+                        .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -1129,20 +1136,24 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (PostReceiveOption postReceiveOption : materialInfo.getPostReceiveOptions()) {
             if (!postReceiveOption.getArchived()) {
                 JSONObject item = new JSONObject();
-                item.put("key", postReceiveOption.getText());
+                item.put("key", postReceiveOption.name());
+                item.put("label", postReceiveOption.getText());
                 if (!savedOrder) {
-                    item.put("value", postReceiveOption.getDefaultToChecked());
+                    item.put("checked", postReceiveOption.getDefaultToChecked());
                 } else {
-                    item.put("value", false);
+                    item.put("checked", false);
                 }
                 itemList.put(item);
             }
         }
 
         JSONObject kitIndexObject = new JSONObject();
-        String kitIndex = this.kitDefinitionQueryIndex;
-        kitIndexObject.put(kitDefinitionIndexIdentifier, kitIndex);
+
+        kitIndexObject.put(kitDefinitionIndexIdentifier, this.kitDefinitionQueryIndex);
         kitIndexObject.put("dataList", itemList);
+        if(StringUtils.isNotBlank(prepopulatePostReceiveOptions)) {
+            kitIndexObject.put("prepopulatePostReceiveOptions", prepopulatePostReceiveOptions);
+        }
 
         return createTextResolution(kitIndexObject.toString());
     }
@@ -1508,9 +1519,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             Collection<Pair<Long, String>> organisms = sampleCollection.getOrganisms();
 
             collectionAndOrganismsList.put(kitDefinitionIndexIdentifier, kitDefinitionQueryIndex);
-
-            if(StringUtils.isNotBlank(prePopulatedOrganismId)) {
-                collectionAndOrganismsList.put(chosenOrganism,prePopulatedOrganismId);
+            if (StringUtils.isNotBlank(prePopulatedOrganismId)) {
+                collectionAndOrganismsList.put(chosenOrganism, prePopulatedOrganismId);
             } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
@@ -1960,22 +1970,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateQuoteOptions(String action) {
-        if (skipQuote) {
-            if (StringUtils.isEmpty(editOrder.getSkipQuoteReason())) {
-                addValidationError("skipQuoteReason","When skipping a quote, please provide a quick explanation for why a quote cannot be entered.");
+        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+            boolean hasQuote=!StringUtils.isBlank(editOrder.getQuoteId());
+            if (!hasQuote) {
+                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
+                requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             }
         }
-        else {
-            requireField(editOrder.getQuoteId() != null, "a quote specified", action);
-        }
-    }
-
-    public boolean isSkipQuote() {
-        return skipQuote;
-    }
-
-    public void setSkipQuote(boolean skipQuote) {
-        this.skipQuote = skipQuote;
     }
 
     public KitType getChosenKitType() {
@@ -2016,5 +2017,29 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setKitDetails(List<ProductOrderKitDetail> kitDetails) {
         this.kitDetails = kitDetails;
+    }
+
+    public String getPrePopulatedOrganismId() {
+        return prePopulatedOrganismId;
+    }
+
+    public void setPrePopulatedOrganismId(String prePopulatedOrganismId) {
+        this.prePopulatedOrganismId = prePopulatedOrganismId;
+    }
+
+    public String getPrepopulatePostReceiveOptions() {
+        return prepopulatePostReceiveOptions;
+    }
+
+    public void setPrepopulatePostReceiveOptions(String prepopulatePostReceiveOptions) {
+        this.prepopulatePostReceiveOptions = prepopulatePostReceiveOptions;
+    }
+
+    public void setDeletedKits(String[] deletedKits) {
+        this.deletedKits = deletedKits;
+    }
+
+    public String[] getDeletedKits() {
+        return deletedKits;
     }
 }

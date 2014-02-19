@@ -120,12 +120,12 @@ public class ProductOrderEjb {
      * Persisting a Product order.  This methods primary job is to Support a call from the Product Order Action bean
      * to wrap the persistence of an order in a transaction.
      *
-     * @param saveType              Indicates what type of persistence this is:  Save, Update, etc
-     * @param editedProductOrder    The product order entity to be persisted
-     * @param deletedIds            a collection that represents the ID's of productOrderKitDetails to be deleted form
-     *                              the kit collection
-     * @param kitDetailCollection   a collection of product order details that have been created or updated from
-     *                              the UI
+     * @param saveType            Indicates what type of persistence this is:  Save, Update, etc
+     * @param editedProductOrder  The product order entity to be persisted
+     * @param deletedIds          a collection that represents the ID's of productOrderKitDetails to be deleted form
+     *                            the kit collection
+     * @param kitDetailCollection a collection of product order details that have been created or updated from
+     *                            the UI
      *
      * @throws IOException
      * @throws QuoteNotFoundException
@@ -145,27 +145,24 @@ public class ProductOrderEjb {
             editedProductOrder.setOrderStatus(OrderStatus.Draft);
 
             if (editedProductOrder.isSampleInitiation()) {
-                Map<Long, ProductOrderKitDetail> mapKitDetailsToIDs = new HashMap<>();
-                for (Iterator<ProductOrderKitDetail> kitDetailIterator = editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();kitDetailIterator.hasNext(); ) {
+                Map<Long, ProductOrderKitDetail> mapKitDetailsByIDs = new HashMap<>();
+                Iterator<ProductOrderKitDetail> kitDetailIterator =
+                        editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();
+                while (kitDetailIterator.hasNext()) {
                     ProductOrderKitDetail kitDetail = kitDetailIterator.next();
-                    if(!deletedIds.contains(kitDetail.getProductOrderKitDetaild().toString())) {
+                    if (deletedIds.contains(kitDetail.getProductOrderKitDetailId().toString())) {
                         kitDetailIterator.remove();
                     } else {
-                        mapKitDetailsToIDs.put(kitDetail.getProductOrderKitDetaild(), kitDetail);
+                        mapKitDetailsByIDs.put(kitDetail.getProductOrderKitDetailId(), kitDetail);
                     }
                 }
 
-                for(ProductOrderKitDetail kitDetailUpdate : kitDetailCollection) {
-                    if(kitDetailUpdate.getProductOrderKitDetaild() != null &&
-                       mapKitDetailsToIDs.containsKey(kitDetailUpdate.getProductOrderKitDetaild())) {
+                for (ProductOrderKitDetail kitDetailUpdate : kitDetailCollection) {
+                    if (kitDetailUpdate.getProductOrderKitDetailId() != null &&
+                        mapKitDetailsByIDs.containsKey(kitDetailUpdate.getProductOrderKitDetailId())) {
 
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setKitType(kitDetailUpdate.getKitType());
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setBspMaterialName(kitDetailUpdate.getBspMaterialName());
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setOrganismId(kitDetailUpdate.getOrganismId());
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).setNumberOfSamples(kitDetailUpdate.getNumberOfSamples());
-
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).getPostReceiveOptions().clear();
-                        mapKitDetailsToIDs.get(kitDetailUpdate.getProductOrderKitDetaild()).getPostReceiveOptions().addAll(kitDetailUpdate.getPostReceiveOptions());
+                        mapKitDetailsByIDs.get(kitDetailUpdate.getProductOrderKitDetailId()).updateDetailValues(
+                                kitDetailUpdate);
 
                     } else {
                         editedProductOrder.getProductOrderKit().addKitOrderDetail(kitDetailUpdate);
@@ -188,12 +185,12 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
-    void validateQuote(ProductOrder productOrder,QuoteService quoteService) throws QuoteNotFoundException {
+    void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
                 quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
             } catch (QuoteServerException e) {
-                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(),e);
+                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
         }
     }
@@ -238,7 +235,7 @@ public class ProductOrderEjb {
             ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
             throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
         validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder,quoteService);
+        validateQuote(productOrder, quoteService);
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
@@ -442,7 +439,7 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-        validateQuote(productOrder,quoteService);
+        validateQuote(productOrder, quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -811,7 +808,6 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws IOException
-     *
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException {
@@ -871,7 +867,6 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
-     *
      */
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
             throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
@@ -897,7 +892,6 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
-     *
      * @throws NoSuchPDOException
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,

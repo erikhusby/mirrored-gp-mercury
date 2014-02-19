@@ -16,19 +16,19 @@
         var readOnlyOrder = ${!actionBean.editOrder.draft};
         var disabledText = '';
         var readonlyText = '';
-        if(readOnlyOrder) {
-            disabledText = ' disabled="disabled" ' ;
+        if (readOnlyOrder) {
+            disabledText = ' disabled="disabled" ';
             readonlyText = ' readonly="readonly" ';
         }
-        var postReceivePrePopulateArray = [];
-
 
         $j(document).ready(
 
                 function () {
-                    $j('#productList').dataTable( {
+                    $j('#productList').dataTable({
                         "oTableTools": ttExportDefines,
-                        "aaSorting": [[1,'asc']],
+                        "aaSorting": [
+                            [1, 'asc']
+                        ],
                         "aoColumns": [
                             {"bSortable": true},
                             {"bSortable": true},
@@ -41,39 +41,40 @@
                             {"bSortable": true},
                             {"bSortable": true},
                             {"bSortable": true},
-                            {"bSortable": false}]
+                            {"bSortable": false}
+                        ]
                     });
 
                     $j("#owner").tokenInput(
-                        "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                            hintText: "Type a name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
-                            tokenLimit: 1,
-                            tokenDelimiter: "${actionBean.owner.separator}",
-                            resultsFormatter: formatInput
-                        }
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                tokenLimit: 1,
+                                tokenDelimiter: "${actionBean.owner.separator}",
+                                resultsFormatter: formatInput
+                            }
                     );
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
-                            hintText: "Type a project name",
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
-                            resultsFormatter: formatInput,
-                            tokenDelimiter: "${actionBean.projectTokenInput.separator}",
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                                hintText: "Type a project name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                                resultsFormatter: formatInput,
+                                tokenDelimiter: "${actionBean.projectTokenInput.separator}",
+                                tokenLimit: 1
+                            }
                     );
 
                     $j("#product").tokenInput(
-                        "${ctxpath}/orders/order.action?productAutocomplete=", {
-                            hintText: "Type a Product name or Part Number   ",
-                            onAdd: updateUIForProductChoice,
-                            onDelete: updateUIForProductChoice,
-                            resultsFormatter: formatInput,
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
-                            tokenDelimiter: "${actionBean.productTokenInput.separator}",
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/orders/order.action?productAutocomplete=", {
+                                hintText: "Type a Product name or Part Number   ",
+                                onAdd: updateUIForProductChoice,
+                                onDelete: updateUIForProductChoice,
+                                resultsFormatter: formatInput,
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                                tokenDelimiter: "${actionBean.productTokenInput.separator}",
+                                tokenLimit: 1
+                            }
                     );
                     $j("#kitCollection").tokenInput(
                             "${ctxpath}/orders/order.action?groupCollectionAutocomplete=", {
@@ -112,38 +113,64 @@
                     $j("#publicationDeadline").datepicker();
                     $j("#sampleListEdit").hide();
 
+                    $j("#duplicateKitInfoDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: [
+                            {
+                                id: "createDuplicates",
+                                text: "create",
+                                click: function() {
+                                    $j(this).dialog("close");
+                                    var chosenId = $j("#idToDuplicate").val();
+                                    var idsToDuplicate = $j("#numDuplicatesId").val();
+                                    $j("#idToDuplicate").val('');
+                                    $j("#numDuplicatesId").val('')
+                                    for(var i=0;i<idsToDuplicate ;i++) {
+                                        cloneKitDefinition(chosenId );
+                                    }
+                                }
+                            },
+                            {
+                                id: "cancelCreateDuplicates",
+                                text: "Cancel",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
+
                     // Initializes the previously chosen sample kit detail info in the sample kit display section
                     <c:forEach items="${actionBean.kitDetails}" var="initKitDetail" varStatus="kitDetailStatus">
-                    addKitDefinitionInfo('${initKitDetail.productOrderKitDetaild}', '${initKitDetail.numberOfSamples}',
+                    addKitDefinitionInfo('${initKitDetail.productOrderKitDetailId}', '${initKitDetail.numberOfSamples}',
                             '${initKitDetail.organismId}', '${initKitDetail.bspMaterialName}',
                             '${initKitDetail.kitType.name}');
                     </c:forEach>
                     var kitDetailLength = ${fn:length(actionBean.kitDetails)};
 
                     // if there are no sample kit details, just show one empty detail section
-                    if(kitDetailLength<1) {
+                    if (kitDetailLength < 1) {
                         addKitDefinitionInfo('');
                     }
 
                     // add an on change event for each material info drop down on the screen.  There may be more than
                     // one so we need to have a change method for each and have that change only affect the post
                     // processing options in that block.
-                    $j("[id^=materialInfo]").change( function(e) {
+                    $j("[id^=materialInfo]").change(function (e) {
 
                         var chosenId = $j(this).attr("id");
                         var index = chosenId.substr("materialInfo".length, chosenId.length);
 
-                        updateUIForMaterialInfoChoice(index);
+                        updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     updateUIForProductChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
-//                    for (kitCount = 0; kitCount < kitDefinitionCount; kitCount++) {
-//                        updateUIForMaterialInfoChoice(kitCount);
-//                    }
                     initializeQuoteOptions();
-                    updateQuoteOptions();
+                    $j("#skipQuote").on("change", toggleSkipQuote);
                 }
+
         );
 
         function formatInput(item) {
@@ -158,34 +185,37 @@
         addOn['${addOnProduct}'] = true;
         </c:forEach>
 
-        var skipQuote = false;
         var quoteBeforeSkipping;
 
         function toggleSkipQuote() {
-            skipQuote = !skipQuote;
+            skipQuote = $j("#skipQuote").prop('checked');
+
             if (skipQuote) {
                 quoteBeforeSkipping = $j("#quote").val();
                 $j("#quote").val('');
-            }
-            else {
+            } else {
+                $j("#skipQuoteReason").val('');
                 $j("#quote").val(quoteBeforeSkipping);
             }
             updateQuoteOptions();
         }
 
         function initializeQuoteOptions() {
-            <c:if test="${actionBean.skipQuote}">
-                skipQuote = true;
+            <c:if test="${actionBean.editOrder.canSkipQuote()}">
+                skipQuote = $j("#skipQuoteReason").is(":empty");
+                $j("#skipQuote").prop('checked', skipQuote);
             </c:if>
+            updateQuoteOptions();
             quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
         }
         function updateQuoteOptions() {
+            skipQuote = $j("#skipQuote").prop('checked');
+            $j("#skipQuote").prop('checked', skipQuote);
             if (skipQuote) {
                 $j("#skipQuoteReasonDiv").show();
                 $j("#quote").hide();
                 $j("#fundsRemaining").hide();
-            }
-            else {
+            } else {
                 $j("#skipQuoteReasonDiv").hide();
                 updateFundsRemaining();
                 $j("#quote").show();
@@ -197,14 +227,15 @@
             {}
         ];
         <c:forEach items="${actionBean.postReceiveOptionKeys}" var="kitOption" varStatus="stat" >
+            postReceiveOption[${kitOption.key}] = {};
             <c:forEach items="${kitOption.value}" var="option" varStatus="optionStat">
 
-                postReceiveOption["${kitOption.key}"]["${option}"] = true;
+                postReceiveOption[${kitOption.key}]["${option}"] = true;
             </c:forEach>
-            postReceiveOption["${kitOption.key}"].length =${fn:length(kitOption.value)};
+            <%--postReceiveOption[${kitOption.key}].length =${fn:length(kitOption.value)};--%>
         </c:forEach>
 
-        postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};
+        <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
         function updateUIForProductChoice() {
 
@@ -246,14 +277,15 @@
             }
         }
 
-        function updateUIForMaterialInfoChoice(kitCount) {
+        function updateUIForMaterialInfoChoice(kitCount, postReceivePrePopulates) {
             var pdoId = "${actionBean.editOrder.productOrderId}";
             var materialKey = $j("#materialInfo" + kitCount).val();
+
             if ((materialKey == null) || (materialKey == "")) {
                 $j("#postReceiveCheckboxGroup" + kitCount).hide();
             } else {
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder=" + pdoId + "&${actionBean.kitDefinitionIndexIdentifier}=" + kitCount,
+                    url: "${ctxpath}/orders/order.action?getPostReceiveOptions=&materialInfo=" + materialKey + "&productOrder=" + pdoId + "&${actionBean.kitDefinitionIndexIdentifier}=" + kitCount +"&prepopulatePostReceiveOptions="+postReceivePrePopulates,
                     dataType: 'json',
                     success: setupPostReceiveCheckboxes
                 });
@@ -262,6 +294,7 @@
         }
 
         function updateOrganism(index, presetOrganism) {
+
             $j.ajax({
                 url: "${ctxpath}/orders/order.action?collectionOrganisms=&bspGroupCollectionTokenInput.listOfKeys=" + $j("#kitCollection").val() + "&${actionBean.kitDefinitionIndexIdentifier}=" + index + "&prePopulatedOrganismId=" + presetOrganism,
                 dataType: 'json',
@@ -285,7 +318,8 @@
 
                     var organismId = $j(this).attr("id");
                     var index = organismId.substr("selectedOrganism".length, organismId.length);
-                    updateOrganism(index, organismId);
+                    var selectedOrganismId = $j(this).val();
+                    updateOrganism(index, selectedOrganismId);
                 });
 
                 $j("#sitePrompt").remove();
@@ -357,6 +391,8 @@
             }
 
             var checkboxText = "";
+            var checked;
+
             $j.each(data, function (index, val) {
                 // if this value is in the add on list, then check the checkbox
                 checked = '';
@@ -378,11 +414,6 @@
         function setupPostReceiveCheckboxes(data) {
             var kitIndex = data.kitDefinitionQueryIndex;
 
-            if (kitIndex == '') {
-                alert("Undetermined kit definition");
-                return;
-            }
-
             var materialInfo = $j("#materialinfo" + kitIndex).val();
 
             if (data.dataList.length == 1) {
@@ -391,42 +422,47 @@
             }
 
             var checkboxText = "";
+            var checked;
             $j.each(data.dataList, function (index, val) {
                 // if this value is in the add on list, then check the checkbox
-                var optionName = val.key;
-                var defaultChecked = val.value;
+                var optionValue = val.key;
+                var defaultChecked = val.checked;
+                var optionLabel = val.label;
                 checked = '';
-                if (postReceiveOption.length == 0) {
+
+                if (!postReceiveOption[kitIndex] || postReceiveOption[kitIndex].length == 0) {
                     if (defaultChecked) {
                         checked = ' checked="checked" ';
                     }
-                } else if (postReceiveOption[val.key]) {
+                } else if (postReceiveOption[kitIndex][val.key]) {
                     checked = ' checked="checked" ';
                 }
 
                 var postReceiveId = "postReceiveCheckbox-" + index;
                 checkboxText += '  <input type="checkbox"' + checked + disabledText +
-                        ' name="postReceiveOptionKeys[' + kitIndex + ']" value="' + optionName + '"/>' +
+                        ' name="postReceiveOptionKeys[' + kitIndex + ']" value="' + optionValue + '"/>' +
                         '  <label style="font-size: x-small;" for="' + postReceiveId + '">' +
-                        optionName + '</label>';
+                        optionLabel  + '</label>';
             });
             var checkboxes = $j("#postReceiveCheckboxes" + kitIndex);
             checkboxes.hide();
             checkboxes.html(checkboxText);
 
-            if(postReceivePrePopulateArray) {
+            if(data.prepopulatePostReceiveOptions) {
 
-                $j("input[name='postReceiveOptionKeys["+kitIndex+"]']").each(function() {
-                    var checkedValue = '';
-                    if($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) {
-                        checkedValue = 'checked';
-                    }
-                    $j(this).prop("checked", checkedValue );
-//                    $j(this).prop("checked", ($j.inArray($j(this).val(), postReceivePrePopulateArray) != -1) );
-                });
+                var prePopPostReceives = data.prepopulatePostReceiveOptions.split("/,/");
+
+                if (prePopPostReceives) {
+
+                    $j("input[name='postReceiveOptionKeys[" + kitIndex + "]']").each(function () {
+                        var checkedValue = '';
+                        if ($j.inArray($j(this).val(), prePopPostReceives) != -1) {
+                            checkedValue = 'checked';
+                        }
+                        $j(this).prop("checked", checkedValue);
+                    });
+                }
             }
-
-            postReceivePrePopulateArray = [];
 
             checkboxes.fadeIn(fadeDuration);
         }
@@ -464,7 +500,7 @@
          */
         function removeKitDefinition(id) {
 
-            var kitRefID = $j("kitIdReference" + id).attr("value");
+            var kitRefID = $j("#kitIdReference" + id).attr("value");
 
             if(kitRefID) {
                 var deleteString = '<input type="hidden" name="deletedKits" value="' + kitRefID +'" />';
@@ -490,12 +526,12 @@
             var kitType = $j("#kitType" + id).val();
             var organism = $j("#organismOption" + id).val();
 
+            addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType, id)
+        }
 
-            $j("input[name='postReceiveOptionKeys["+id+"]']:checked").each(function() {
-                postReceivePrePopulateArray.push($j(this).val());
-            });
-
-            addKitDefinitionInfo(kitDefinitionId, numberOfSamples, organism, materialInfo, kitType)
+        function showDuplicateKitInfoDialog(id) {
+            $j("#duplicateKitInfoDialog").dialog("open").dialog("option", "width", 300);
+            $j("#idToDuplicate").val(id);
         }
 
         /**
@@ -519,19 +555,19 @@
          *                          being rendered.  If set, this will be used to pre-select the correct kit type in
          *                          the kit type drop down
          */
-        function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType) {
+        function addKitDefinitionInfo(kitDefinitionId, samples, organism, material, kitType, cloneId) {
 
             var newDefinition = '<div id="kitDefinitionDetail' + kitDefinitionCount + '">';
 
             newDefinition += '<input type="hidden" id="kitIdReference' + kitDefinitionCount +
                     '" value="' + kitDefinitionId +
-                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetail.productOrderKitDetaild" />';
+                    '" name="kitDetails[' + kitDefinitionCount + '].productOrderKitDetailId" />';
             newDefinition += '<div class="control-group">\n ';
             if(!readOnlyOrder && kitDefinitionCount>0) {
 
                 newDefinition += '<a onclick="removeKitDefinition(' + kitDefinitionCount + ')" id="remove'+kitDefinitionCount+'">Remove kit Definition</a>\n ';
             }
-            newDefinition += '<h5 >Kit Definition Info</h3>';
+            newDefinition += '<h5 >Kit Definition Info</h5>';
             newDefinition += '<div class="controls">\n';
             newDefinition += '</div>\n</div>';
 
@@ -573,7 +609,6 @@
             var checked = '';
             <c:forEach items="${actionBean.dnaMatrixMaterialTypes}" var="materialType">
 
-
             newDefinition += '<option value="${materialType.text}" >${materialType.text}</option>';
             checked = '';
             </c:forEach>
@@ -603,13 +638,12 @@
 
                 newDefinition += ' <div class="control-group">' +
                         '<div class="controls">\n' +
-                        '<a onclick="cloneKitDefinition(' + kitDefinitionCount + ')" id="clone'+kitDefinitionCount+'" >Duplicate kit Definition</a>\n ' +
+                        '<a onclick="showDuplicateKitInfoDialog(' + kitDefinitionCount + ')" id="clone'+kitDefinitionCount+'" >Duplicate kit Definition</a>\n ' +
                         '</div></div>';
             }
 
             newDefinition += '</div>';
             $j('#kitDefinitions').append(newDefinition);
-
 
             if(samples) {
                 $j('#numberOfSamples' + kitDefinitionCount).val(samples);
@@ -623,19 +657,45 @@
             }
 
             updateOrganism(kitDefinitionCount, organism);
-//            if(organism) {
-//                $j('#organismOption' + kitDefinitionCount).val(organism);
-//            }
 
-            updateUIForMaterialInfoChoice(kitDefinitionCount);
+            var postReceivePrePopulates = getSelectedPostReceiveOptions(cloneId);
+
+            updateUIForMaterialInfoChoice(kitDefinitionCount, postReceivePrePopulates);
 
             kitDefinitionCount++;
+        }
+
+        function getSelectedPostReceiveOptions(kitIndex) {
+
+            var postReceivePrePopulates = '';
+
+            var first = true;
+
+            if(kitIndex) {
+
+                $j("input[name='postReceiveOptionKeys["+kitIndex+"]']:checked").each(function() {
+                    if(!first) {
+                        postReceivePrePopulates += "/,/";
+                    }
+                    postReceivePrePopulates += $j(this).val();
+
+                    first = false;
+                });
+            }
+            return postReceivePrePopulates;
         }
 
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+    <div id="duplicateKitInfoDialog" style="width:500px;display:none;">
+        <p><label style="float:left;width:60px;" for="numDuplicatesId"># of kit duplicates to create?</label>
+            <input type="hidden" id="idToDuplicate" />
+            <input type="text" id="numDuplicatesId" name="numDuplicates" style="float:left;margin-right: 5px;"/>
+        </p>
+    </div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm">
             <div class="form-horizontal span6">
@@ -776,7 +836,7 @@
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                         <div id="skipQuoteDiv">
-                            <stripes:checkbox id="skipQuote" name="skipQuote" title="Click to start a PDO without a quote" onchange="toggleSkipQuote()"/>No quote required
+                            <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
                             <div id="skipQuoteReasonDiv">
                                 Please enter a reason for skipping the quote *
                                 <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
