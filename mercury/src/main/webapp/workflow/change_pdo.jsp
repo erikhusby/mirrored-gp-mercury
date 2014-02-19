@@ -1,20 +1,21 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2014 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  --%>
+
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
+<stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Change PDO for Vessels">
 <stripes:layout-component name="extraHead">
     <script type="text/javascript">
-        function submitBucket() {
-            $j('#bucketForm').submit();
-            showJiraInfo();
-        }
-
-        function submitWorkflow() {
-            $j('#bucketWorkflowForm').submit();
-            showJiraInfo();
-        }
-
         $j(document).ready(function () {
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
@@ -51,97 +52,18 @@
 </stripes:layout-component>
 
 <stripes:layout-component name="content">
-    <stripes:form id="bucketForm" class="form-horizontal" action="/view/bucketView.action?setBucket">
-        <div class="form-horizontal">
-            <div class="control-group">
-                <stripes:label for="bucketselect" name="Select Bucket" class="control-label"/>
-                <div class="controls">
-                    <stripes:select id="bucketSelect" name="selectedBucket" onchange="submitBucket()">
-                        <stripes:option value="">Select a Bucket</stripes:option>
-                        <stripes:options-collection collection="${actionBean.buckets}"/>
-                    </stripes:select>
-                </div>
-            </div>
-        </div>
-    </stripes:form>
-    <stripes:form id="bucketWorkflowForm" class="form-horizontal" action="/view/bucketView.action?viewBucket">
-        <div class="form-horizontal">
-        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
-        <div class="control-group">
-            <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
-            <div class="controls">
-                <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
-                                value="${actionBean.selectedWorkflowDef}">
-                    <stripes:option value="">Select a Workflow</stripes:option>
-                    <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
-                </stripes:select>
-            </div>
-        </div>
-    </stripes:form>
     <stripes:form beanclass="${actionBean.class.name}"
                   id="bucketEntryForm" class="form-horizontal">
         <div class="form-horizontal">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <stripes:hidden name="selectedWorkflowDef" value="${actionBean.selectedWorkflowDef}"/>
-        <c:if test="${actionBean.jiraEnabled}">
-            <div id="newTicketDiv">
-                <div class="control-group">
-                    <stripes:label for="lcsetText" name="LCSet Name" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text id="lcsetText" class="defaultText" name="selectedLcset"
-                                      title="Enter if you are adding to a batch"/>
-                    </div>
-                </div>
-                <div class="control-group">
-                    <stripes:label for="summary" name="Summary" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text name="summary" class="defaultText"
-                                      title="Enter a summary for a new batch ticket" id="summary"
-                                      value="${actionBean.summary}"/>
-                    </div>
-                </div>
+</div>
 
-                <div class="control-group">
-                    <stripes:label for="description" name="Description" class="control-label"/>
-                    <div class="controls">
-                        <stripes:textarea name="description" class="defaultText"
-                                          title="Enter a description for a new batch ticket"
-                                          id="description" value="${actionBean.description}"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="important" name="Important Information"
-                                   class="control-label"/>
-                    <div class="controls">
-                        <stripes:textarea name="important" class="defaultText"
-                                          title="Enter important info for a new batch ticket"
-                                          id="important"
-                                          value="${actionBean.important}"/>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="dueDate" name="Due Date" class="control-label"/>
-                    <div class="controls">
-                        <stripes:text id="dueDate" name="dueDate" class="defaultText"
-                                      title="enter date (MM/dd/yyyy)"
-                                      value="${actionBean.dueDate}"
-                                      formatPattern="MM/dd/yyyy"><fmt:formatDate
-                                value="${actionBean.dueDate}"
-                                dateStyle="short"/></stripes:text>
-                    </div>
-                </div>
-            </div>
-            </div>
-        </c:if>
         <div class="borderHeader"><h4>Samples</h4></div>
         <br/>
 
         <div class="actionButtons">
-            <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
-            <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>
-            <stripes:submit name="findPdo" value="Change PDO" class="btn"/>
+            <stripes:submit name="changePdo" value="Change PDO" class="btn"/>
         </div>
         <table id="bucketEntryView" class="table simple">
             <thead>
@@ -188,6 +110,9 @@
                         </c:forEach>
                     </td>
                     <td>
+                        <stripes:select name="selectedPdo" >
+                            <stripes:options-collection collection="${actionBean.findPdoForVessel(entry.labVessel.label)}"></stripes:options-collection>
+                        </stripes:select>
                             ${entry.poBusinessKey}
                     </td>
                     <td>
