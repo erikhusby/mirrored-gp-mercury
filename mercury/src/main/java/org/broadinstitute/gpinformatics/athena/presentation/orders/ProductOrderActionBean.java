@@ -477,10 +477,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!kitDetails.isEmpty(), "kit details", action);
             for (ProductOrderKitDetail kitDetail : kitDetails) {
                 Long numberOfSamples = kitDetail.getNumberOfSamples();
-                if (kitDetail.getNumberOfSamples() == null) {
-                    numberOfSamples = (long) 0;
-                }
-                requireField(numberOfSamples > 0, "a specified number of samples", action);
+                requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples", action);
                 requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
                 requireField(kitDetail.getBspMaterialName(), "a material information", action);
                 requireField(kitDetail.getOrganismId(), "an organism", action);
