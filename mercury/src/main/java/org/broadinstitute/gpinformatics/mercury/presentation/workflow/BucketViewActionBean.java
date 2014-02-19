@@ -264,7 +264,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public void createBatchValidation() {
 
         if (!getUserBean().isValidJiraUser()) {
-            addValidationError("jiraTicketId", "You must be A valid Jira user to create an LCSet.");
+            addValidationError("jiraTicketId", "You must be a valid Jira user to create an LCSet.");
             viewBucket();
         }
 
