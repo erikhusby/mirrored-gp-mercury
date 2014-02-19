@@ -425,7 +425,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
-            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", action, editOrder.getName(),
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
+                    .splitCamelCase(action),
+                    editOrder.getName(),
                     name);
         }
     }
@@ -471,7 +473,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
             ProductOrderKit kit = editOrder.getProductOrderKit();
-
+            initializeKitDetails();
+            requireField(!kitDetails.isEmpty(), "kit details", action);
             for (ProductOrderKitDetail kitDetail : kitDetails) {
                 Long numberOfSamples = kitDetail.getNumberOfSamples();
                 if (kitDetail.getNumberOfSamples() == null) {
