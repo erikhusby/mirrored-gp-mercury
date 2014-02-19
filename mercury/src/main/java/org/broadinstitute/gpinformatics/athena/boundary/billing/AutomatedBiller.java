@@ -5,15 +5,22 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.JPASplitter;
 
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This is a scheduled class that can generate ledger entries for product orders based on messages in the message
@@ -32,22 +39,25 @@ public class AutomatedBiller {
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderEjb productOrderEjb;
     private final SessionContextUtility sessionContextUtility;
+    private final BSPSampleDataFetcher bspSampleDataFetcher;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
                     ProductOrderEjb productOrderEjb,
-                    SessionContextUtility sessionContextUtility) {
+                    SessionContextUtility sessionContextUtility,
+                    BSPSampleDataFetcher bspSampleDataFetcher) {
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.productOrderEjb = productOrderEjb;
         this.sessionContextUtility = sessionContextUtility;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public AutomatedBiller() {
-        this(null, null, null);
+        this(null, null, null, null);
     }
 
     /**
@@ -67,14 +77,29 @@ public class AutomatedBiller {
                 // doing two queries every time within the following loop.
                 Map<String, Boolean> orderLockoutCache = new HashMap<> ();
 
+                // Do this in two passes, one where we get the aliquotIds so we can call BSP sample search once, for all
+                // ids and once where we just pass a cache of the mapping.
+                Set<String> aliquotIds = new HashSet<> ();
+                for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
+                    aliquotIds.add(message.getAliquotId());
+                }
+
+                // Chunks of 500 seems to work well with run sample search and the way annotations are pulled in.
+                Map<String, String> stockIdByAliquotId = new HashMap<> ();
+                for (Collection<String> aliquotIdChunk : JPASplitter.split(aliquotIds, 500)) {
+                    stockIdByAliquotId.putAll(bspSampleDataFetcher.getStockIdByAliquotId(aliquotIdChunk));
+                }
+
                 for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
                     // Default to true. Even if an exception is thrown, the message is considered to be processed
                     // to avoid re-throwing every time.
                     boolean processed = true;
                     try {
                         // For each message, request auto billing of the sample in the order.
-                        processed = productOrderEjb.autoBillSample(message.getPdoName(), message.getAliquotId(),
-                                message.getCompletedDate(), message.getData(), orderLockoutCache);
+                        processed =
+                                productOrderEjb.autoBillSample(
+                                        message.getPdoName(), message.getAliquotId(), message.getCompletedDate(),
+                                        message.getData(), orderLockoutCache, stockIdByAliquotId);
                     } catch (Exception e) {
                         log.error(MessageFormat.format(
                                 "Error while processing work complete message. PDO: {0}, Sample: {1}",

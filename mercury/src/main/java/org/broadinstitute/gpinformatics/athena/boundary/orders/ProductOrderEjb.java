@@ -266,7 +266,8 @@ public class ProductOrderEjb {
      */
     @Nonnull
     @DaoFree
-    protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+    protected ProductOrderSample mapAliquotIdToSample(
+            @Nonnull ProductOrder order, @Nonnull String aliquotId, @Nonnull Map<String, String> stockIdByAliquotId)
             throws Exception {
 
         // Convert aliquotId to BSP ID, if it's an LSID.
@@ -280,7 +281,11 @@ public class ProductOrderEjb {
             }
         }
 
-        String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
+        if (!BSPUtil.isInBspFormat(aliquotId)) {
+            aliquotId = "SM-" + aliquotId;
+        }
+        String sampleName = stockIdByAliquotId.get(aliquotId);
+
         if (sampleName == null) {
             throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
         }
@@ -298,21 +303,29 @@ public class ProductOrderEjb {
                         order.getBusinessKey(), sampleName, aliquotId));
     }
 
+    public ProductOrderSample mapAliquotIdToSample(ProductOrder order, String aliquotId) throws Exception {
+        return mapAliquotIdToSample(
+                order, aliquotId, sampleDataFetcher.getStockIdByAliquotId(Collections.singletonList(aliquotId)));
+    }
+
     /**
      * If the order's product supports automated billing, and it's not currently locked out,
      * generate a list of billing ledger items for the sample and add them to the billing ledger.
+     *
      *
      * @param orderKey          business key of order to bill for
      * @param aliquotId         the sample aliquot ID
      * @param completedDate     the date completed to use when billing
      * @param data              used to check and see if billing can occur
      * @param orderLockoutCache The cache by keys whether the order is locked out or not
+     * @param stockIdByAliquotId The cache of stock ids mapped by aliquot id
      *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
      * is currently locked out of billing.
      */
     public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
-                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
+                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache,
+                                  Map<String, String> stockIdByAliquotId)
             throws Exception {
         ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
         if (order == null) {
@@ -343,7 +356,7 @@ public class ProductOrderEjb {
             return false;
         }
 
-        ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
+        ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId, stockIdByAliquotId);
 
         // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
         if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
