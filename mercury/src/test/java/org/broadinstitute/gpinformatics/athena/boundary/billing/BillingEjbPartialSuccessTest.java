@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.NotImplementedException;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -10,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -23,12 +23,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderD
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
@@ -49,9 +52,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private BillingEjb billingEjb;
 
-    private static String FAILING_PRICE_ITEM_NAME;
+    @Inject
+    private PriceListCache priceListCache;
+
+    private static String FAILING_PRICE_ITEM_NAME = "";
+    private static String FAILING_PRICE_ITEM_SAMPLE = "";
     public static final String SM_1234 = "SM-1234";
     public static final String SM_5678 = "SM-5678";
+
+    public static boolean cycleFails = true;
+    public static Result lastResult = Result.FAIL;
+
+    public enum Result {FAIL, SUCCESS}
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -81,8 +93,22 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
+            String workId = "workItemId\t1000";
 
-            return "workItemId\t1000";
+            if (cycleFails) {
+                switch (lastResult) {
+                case FAIL:
+                    lastResult = Result.SUCCESS;
+                    workId = "workItemID" + (new Date()).getTime();
+                    break;
+
+                case SUCCESS:
+                    lastResult = Result.FAIL;
+                    throw new RuntimeException("Intentional Work Registration Failure");
+                }
+            }
+
+            return workId;
         }
 
         @Override
@@ -90,7 +116,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             throw new NotImplementedException();
         }
     }
-
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -109,27 +134,36 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * <li>Create a BillingSession containing these two LedgerEntries.</li>
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
+     *
+     * @param orderSamples
      */
-    private BillingSession writeFixtureData() {
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, SM_1234, SM_5678);
+    private BillingSession writeFixtureData(String... orderSamples) {
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, orderSamples);
 
-        UUID uuid = UUID.randomUUID();
-        PriceItem replacementPriceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
-                "Replacement PriceItem Name " + uuid);
-        FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
-        billingSessionDao.persist(replacementPriceItem);
+        Set<LedgerEntry> billingSessionEntries = new HashSet<>(productOrder.getSamples().size());
 
         Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
-        ProductOrderSample sm1234 = samplesByName.get(SM_1234).iterator().next();
-        ProductOrderSample sm5678 = samplesByName.get(SM_5678).iterator().next();
+        for (String sampleName : orderSamples) {
+            for (ProductOrderSample ledgerSample : samplesByName.get(sampleName)) {
 
-        LedgerEntry ledgerEntry1234 =
-                new LedgerEntry(sm1234, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3);
+                if (FAILING_PRICE_ITEM_SAMPLE.equals(sampleName)) {
+                    UUID uuid = UUID.randomUUID();
+                    PriceItem replacementPriceItem =
+                            new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
+                                    "Replacement PriceItem Name " + uuid);
+                    FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
+                    billingSessionDao.persist(replacementPriceItem);
 
-        LedgerEntry ledgerEntry5678 = new LedgerEntry(sm5678, replacementPriceItem, new Date(), 5);
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
+                } else {
+                    billingSessionEntries.add(new LedgerEntry(ledgerSample,
+                            productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                }
+            }
+        }
 
-        BillingSession billingSession = new BillingSession(-1L, Sets.newHashSet(ledgerEntry1234, ledgerEntry5678));
+        BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);
         billingSessionDao.persist(billingSession);
 
         billingSessionDao.flush();
@@ -137,7 +171,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         return billingSession;
     }
-
 
     /**
      * <ul>
@@ -150,7 +183,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * </ul>
      */
     public void testPositive() {
-        BillingSession billingSession = writeFixtureData();
+
+        cycleFails = false;
+
+        FAILING_PRICE_ITEM_SAMPLE = SM_5678;
+        BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
@@ -174,5 +211,25 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
             }
         }
+    }
+
+    public void testMultipleFailure() {
+
+        cycleFails = true;
+        lastResult = Result.FAIL;
+
+        BillingSession billingSession = writeFixtureData("SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444",
+                "SM-4441", "SM-1112", "SM-4488");
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+
+        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+
+        billingSessionDao.clear();
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+
+        List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+
+        Assert.assertEquals(quoteImportItems.size(), 4,
+                "the size of the unBilled items should not equal the size of the total items to be billed");
     }
 }

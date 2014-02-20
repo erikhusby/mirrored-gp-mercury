@@ -6,6 +6,8 @@ import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
@@ -38,6 +40,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private static final String SESSION_LIST_PAGE = "/billing/sessions.jsp";
     private static final String SESSION_VIEW_PAGE = "/billing/view.jsp";
+    private static final Log log = LogFactory.getLog(BillingSessionActionBean.class);
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -80,6 +83,7 @@ public class BillingSessionActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
     public void init() {
+        log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
         if (sessionKey != null) {
             editSession = billingSessionDao.findByBusinessKey(sessionKey);
@@ -177,6 +181,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
+        log.warn("Billing request for " + pageUrl);
         List<BillingEjb.BillingResult> billingResults = billingEjb.bill(pageUrl, sessionKey);
 
         boolean errorsInBilling = false;
