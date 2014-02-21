@@ -141,6 +141,7 @@
         <div class="actionButtons">
             <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>
+            <stripes:submit name="removeFromBucket" value="Remove vessel From Bucket" class="btn"/>
         </div>
         <table id="bucketEntryView" class="table simple">
             <thead>

@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -43,6 +44,9 @@ public class BucketEjb {
     private BucketDao bucketDao;
 
     private AthenaClientService athenaClientService;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     public BucketEjb() {
     }
@@ -219,6 +223,11 @@ public class BucketEjb {
     /** Removes entry from a bucket and gives the reason why. */
     public void removeEntry(@Nonnull BucketEntry bucketEntry, String reason) {
         removeEntries(Collections.singletonList(bucketEntry), reason);
+    }
+
+    public void removeEntriesByIds(@Nonnull Collection<Long> bucketEntryIds, String reason) {
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(new ArrayList<Long>(bucketEntryIds));
+        removeEntries(bucketEntries, reason);
     }
 
     /** Removes entries from a bucket and gives the reason why. */
