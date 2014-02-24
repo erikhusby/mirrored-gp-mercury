@@ -60,6 +60,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String CREATE_BATCH_ACTION = "createBatch";
     private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
     private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
+    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
+    private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
 
     @Inject
     private WorkflowLoader workflowLoader;
@@ -299,7 +301,16 @@ public class BucketViewActionBean extends CoreActionBean {
             viewBucket();
         }
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("selectedReworks", "At least one rework must be selected to add to the batch.");
+            addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
+    public void removeSampleFromBucketValidation() {
+
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
         }
     }
@@ -396,10 +407,8 @@ public class BucketViewActionBean extends CoreActionBean {
             selectedLcset = "LCSET-" + selectedLcset;
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
-        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         separateEntriesByType();
     }
-
 
     // Returns the workflow name for entries in the batch.
     private Set<String> getWorkflowNames() {
@@ -459,8 +468,21 @@ public class BucketViewActionBean extends CoreActionBean {
     @HandlesEvent(REMOVE_FROM_BUCKET_ACTION )
     public Resolution removeFromBucket() {
 
+        separateEntriesByType();
+
+        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
+    public Resolution confirmRemoveFromBucket() {
+        separateEntriesByType();
+
         bucketEjb.removeEntriesByIds(selectedEntryIds, vesselRemovalReason);
-        return new RedirectResolution(BucketViewActionBean.class, VIEW_PAGE);
+
+        addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
+
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
     }
 
     private void separateEntriesByType() {
