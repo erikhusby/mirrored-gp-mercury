@@ -43,17 +43,21 @@
                             };
                         },
                         'loaddata': function (value, settings) {
+
                             return {
                                 "selectedEntryIds": this.parentNode.getAttribute('id')
                             };
                         },
                         tooltip: 'Click the value in this field to edit',
-                        "type": "select",
-                        "submit": "Save"
+                        type: "select",
+                        indicator : '<img src="${ctxpath}/images/spinner.gif">',
+
+                        submit: "Save"
                     });
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
-                    $j("th.editable").append('<div class="icon-pencil"></div>');
-
+                    if ($j("th.editable div").length == 0) {
+                        $j("th.editable").append('<div class="icon-pencil"></div>');
+                    }
                 } else {
                     $j(".editable").removeClass("editable")
                 }
@@ -181,7 +185,7 @@
         </c:if>
         <div class="borderHeader"><h4>Samples</h4></div>
         <br/>
-        <ul><li>If you need to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li></ul>
+        <ul><li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li></ul>
         <div class="actionButtons">
             <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>

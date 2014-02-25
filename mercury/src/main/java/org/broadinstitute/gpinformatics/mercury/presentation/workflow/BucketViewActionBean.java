@@ -59,12 +59,18 @@ import java.util.TreeSet;
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
-      private static final String ADD_TO_BATCH_ACTION = "addToBatch";
-      private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
-      private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
-      private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
-      private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
-      private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
+    private static final String ADD_TO_BATCH_ACTION = "addToBatch";
+    private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
+    private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
+    private static final String EXISTING_TICKET = "existingTicket";
+    private static final String NEW_TICKET = "newTicket";
+    private static final String CREATE_BATCH_ACTION = "createBatch";
+    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
+    private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
+    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
+    private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
+    private static final String CHANGE_PDO = "changePdo";
+    private static final String FIND_PDO = "findPdo";
 
     @Inject
     private WorkflowLoader workflowLoader;
@@ -86,13 +92,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatchDao labBatchDao;
     @Inject
     private BucketEntryDao bucketEntryDao;
-
-    public static final String EXISTING_TICKET = "existingTicket";
-    public static final String NEW_TICKET = "newTicket";
-    public static final String CREATE_BATCH_ACTION = "createBatch";
-    public static final String CHANGE_PDO = "changePdo";
-    public static final String FIND_PDO = "findPdo";
-    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
