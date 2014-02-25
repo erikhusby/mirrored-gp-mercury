@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.cenqua.clover.reporters.json.JSONArray;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
@@ -16,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -34,9 +37,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 @UrlBinding(value = "/view/bucketView.action?{$event}")
 public class BucketViewActionBean extends CoreActionBean {
@@ -76,6 +82,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatchDao labBatchDao;
     @Inject
     private BucketEntryDao bucketEntryDao;
+    @Inject
+    private BucketEjb bucketEjb;
 
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
@@ -101,7 +109,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private final Map<String, Workflow> mapPdoKeyToWorkflow = new HashMap<>();
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
 
-    private Map<String, Set<String>> pdoCandidatesByVessel = new HashMap<>();
     private List<BucketEntry> selectedEntries = new ArrayList<>();
     private String selectedPdo;
     private List<ProductOrder> availablePdos;
@@ -301,8 +308,8 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {ADD_TO_BATCH_ACTION, FIND_PDO})
-    public void batchValidation(){
+    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
+    public void batchValidation() {
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
             addValidationError("selectedEntryIds", "At least one item must be selected.");
             viewBucket();
@@ -461,22 +468,14 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
+    public Set<String> findPotentialPdos() {
+        // Use a TreeSet so it can returned sorted;
+        Set<String> productOrderKeys = new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
 
-    @HandlesEvent(FIND_PDO)
-    public Resolution findPotentialPdos() {
-        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
-        collectiveEntries.addAll(selectedEntries);
-        for (BucketEntry selectedEntry : selectedEntries) {
-            String label=selectedEntry.getLabVessel().getLabel();
-            Collection<ReworkEjb.BucketCandidate> bucketCandidates = reworkEjb.findBucketCandidates(label);
-            Set<String> productOrderKeys=new HashSet<>();
-            for (ReworkEjb.BucketCandidate bucketCandidate : bucketCandidates) {
-                productOrderKeys.add(bucketCandidate.getProductOrderKey());
-            }
-            pdoCandidatesByVessel.put(label, productOrderKeys);
+        if (productOrderKeys.isEmpty()) {
+            return Collections.emptySet();
         }
-
-        return new ForwardResolution(PDO_REASSIGN_PAGE);
+        return productOrderKeys;
     }
 
     private void separateEntriesByType() {
@@ -494,17 +493,18 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
-    public Map<String, Set<String>> getPdoCandidatesByVessel() {
-        return pdoCandidatesByVessel;
+    @HandlesEvent(FIND_PDO)
+    public Resolution findPdoForVessel() throws JSONException {
+        JSONArray pdoArray = new JSONArray(findPotentialPdos());
+        return new StreamingResolution("text", new StringReader(pdoArray.toString()));
     }
 
-    public void setPdoCandidatesByVessel(Map<String, Set<String>> pdoCandidatesByVessel) {
-        this.pdoCandidatesByVessel = pdoCandidatesByVessel;
-    }
+    @HandlesEvent(CHANGE_PDO)
+    public Resolution changePdo() throws JSONException {
+        String newPdoValue=getContext().getRequest().getParameter("newPdoValue");
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
 
-    public List<String> findPdoForVessel(String vesselLabel){
-        List<String> availablePdos = new ArrayList<>(pdoCandidatesByVessel.get(vesselLabel));
-        Collections.sort(availablePdos);
-        return availablePdos;
+        return new StreamingResolution("text", newPdoValue);
     }
 }
