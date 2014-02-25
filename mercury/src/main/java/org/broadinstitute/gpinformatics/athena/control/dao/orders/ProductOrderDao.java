@@ -4,10 +4,16 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.AutomatedBiller;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -56,7 +62,8 @@ public class ProductOrderDao extends GenericDao {
         // Even though this is a constant expression, we want to leave it in for the time when these values change.
         //noinspection ConstantConditions
         if (AutomatedBiller.PROCESSING_START_HOUR < AutomatedBiller.PROCESSING_END_HOUR) {
-            return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR && hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
+            return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR
+                   && hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
         }
 
         return hourOfDay >= AutomatedBiller.PROCESSING_START_HOUR || hourOfDay < AutomatedBiller.PROCESSING_END_HOUR;
@@ -159,7 +166,7 @@ public class ProductOrderDao extends GenericDao {
      * Return the {@link ProductOrder}s specified by a list of business keys, applying optional fetches.
      *
      * @param businessKeys the business keys.
-     * @param fetchSpecs the Fetch Specs.
+     * @param fetchSpecs   the Fetch Specs.
      *
      * @return List of ProductOrders.
      */
@@ -173,7 +180,8 @@ public class ProductOrderDao extends GenericDao {
      * with a hardcoded set of fetch specs that are tuned for the billing tracker downloads.  See GPLIM-832 for details.
      */
     public List<ProductOrder> findListForBilling(Collection<String> businessKeys) {
-        return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT,FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES, FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
+        return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT, FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES,
+                FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
     }
 
 
@@ -239,6 +247,7 @@ public class ProductOrderDao extends GenericDao {
      * <dt>abandoned</dt><dd>The number of samples that ARE abandoned</dd>
      * <dt>total</dt><dd>The total number of samples</dd>
      * </dl>
+     *
      * @param productOrderIds null if returning info for all orders, the list of keys for specific ones
      *
      * @return The mapping of business keys to the completion status object for each order
@@ -266,12 +275,15 @@ public class ProductOrderDao extends GenericDao {
                            "           ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
                            "      WHERE pos.product_order = ord.product_order_id " +
                            "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
-                           "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name() + "'" +
+                           "      AND (ledger.price_item_type = '" + LedgerEntry.PriceItemType.PRIMARY_PRICE_ITEM.name()
+                           + "'" +
                            "             OR " +
-                           "           ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM.name() + "')" +
+                           "           ledger.price_item_type = '" + LedgerEntry.PriceItemType.REPLACEMENT_PRICE_ITEM
+                .name() + "')" +
                            "    ) AS completed, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
-                           "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
+                           "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' "
+                           +
                            "    ) AS abandoned, " +
                            "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                            "        WHERE pos.product_order = ord.product_order_id" +
@@ -285,9 +297,9 @@ public class ProductOrderDao extends GenericDao {
 
         Query query = getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class).addScalar("name", StandardBasicTypes.STRING)
-             .addScalar("id", StandardBasicTypes.LONG)
-             .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
-             .addScalar("total", StandardBasicTypes.INTEGER);
+                .addScalar("id", StandardBasicTypes.LONG)
+                .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
+                .addScalar("total", StandardBasicTypes.INTEGER);
 
         List<Object> results;
         if (productOrderIds != null) {
@@ -311,14 +323,17 @@ public class ProductOrderDao extends GenericDao {
 
     /**
      * Find all PDOs modified after a specified date.
+     *
      * @param modifiedAfter date to compare.
+     *
      * @return list of PDOs.
      */
     public List<ProductOrder> findModifiedAfter(final Date modifiedAfter) {
         return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {
             @Override
             public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
-                criteriaQuery.where(getCriteriaBuilder().greaterThan(root.get(ProductOrder_.modifiedDate), modifiedAfter));
+                criteriaQuery
+                        .where(getCriteriaBuilder().greaterThan(root.get(ProductOrder_.modifiedDate), modifiedAfter));
             }
         });
     }
@@ -338,7 +353,7 @@ public class ProductOrderDao extends GenericDao {
         query.distinct(true);
 
         Root<ProductOrder> root = query.from(ProductOrder.class);
-        final ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
+        final ListJoin<ProductOrder, ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
 
         return JPASplitter.runCriteriaQuery(
                 Arrays.asList(barcodes),
@@ -350,5 +365,38 @@ public class ProductOrderDao extends GenericDao {
                     }
                 }
         );
+    }
+
+    /**
+     * Helper method for a sample initiation fixup.  Will find all sample initiation PDOs that do not
+     *
+     * @return
+     */
+    public List<ProductOrder> findSampleInitiationPDOsNotConverted() {
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrder> productOrderCriteriaQuery = criteriaBuilder.createQuery(ProductOrder.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        Root<ProductOrder> productOrderRoot = productOrderCriteriaQuery.from(ProductOrder.class);
+        Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
+
+
+        Join<ProductOrder, ProductOrderKit> productOrderKitJoin = productOrderRoot.join(ProductOrder_.productOrderKit);
+        Join<ProductOrderKit, ProductOrderKitDetail> kitDetailJoin = productOrderKitJoin.join(
+                ProductOrderKit_.kitOrderDetails, JoinType.LEFT);
+
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
+        predicates.add(criteriaBuilder.isNull(kitDetailJoin.get(ProductOrderKitDetail_.numberOfSamples)));
+
+        productOrderCriteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
+
+        try {
+            return getEntityManager().createQuery(productOrderCriteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
     }
 }

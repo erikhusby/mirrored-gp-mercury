@@ -42,7 +42,7 @@ public class BucketEntryFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -79,6 +79,31 @@ public class BucketEntryFixupTest extends Arquillian {
     public void remove0150385070FromShearingBucketForGPLIM1932() {
         Bucket bucket = bucketDao.findByName("Shearing Bucket");
         LabVessel vessel = labVesselDao.findByIdentifier("0150385070");
+
+        BucketEntry bucketEntry = bucket.findEntry(vessel);
+        bucket.removeEntry(bucketEntry);
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void remove0155694973FromPoolingBucketGPLIM2503() {
+        Bucket bucket = bucketDao.findByName("Pooling Bucket");
+        LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
+
+        BucketEntry bucketEntry = bucket.findEntry(vessel);
+        bucket.removeEntry(bucketEntry);
+    }
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void remove0155694973FromPicoPlatingBucketGPLIM2503() {
+        Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
+        LabVessel vessel = labVesselDao.findByIdentifier("0155694973");
+
+        BucketEntry bucketEntry = bucket.findEntry(vessel);
+        bucket.removeEntry(bucketEntry);
+    }
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void remove0159876899FromPicoPlatingBucketGPLIM2503() {
+        Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
+        LabVessel vessel = labVesselDao.findByIdentifier("0159876899");
 
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);

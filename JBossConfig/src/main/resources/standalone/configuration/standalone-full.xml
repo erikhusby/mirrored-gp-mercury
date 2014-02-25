@@ -113,6 +113,9 @@
                     <driver name="com.oracle" module="com.oracle">
                         <xa-datasource-class>oracle.jdbc.pool.OracleDataSource</xa-datasource-class>
                     </driver>
+                    <driver name="com.oracle.xa" module="com.oracle">
+                        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+                    </driver>
                 </drivers>
             </datasources>
         </subsystem>
@@ -296,10 +299,6 @@
                 </jms-connection-factories>
 
                 <jms-destinations>
-                    <jms-queue name="testQueue">
-                        <entry name="queue/test"/>
-                        <entry name="java:jboss/exported/jms/queue/test"/>
-                    </jms-queue>
                     <jms-queue name="broad.queue.mercury.bettalims.dev">
                         <entry name="queue/broad.queue.mercury.bettalims.dev"/>
                         <durable>true</durable>
@@ -318,10 +317,6 @@
                         <durable>true</durable>
                     </jms-queue>
 
-                    <jms-topic name="testTopic">
-                        <entry name="topic/test"/>
-                        <entry name="java:jboss/exported/jms/topic/test"/>
-                    </jms-topic>
                 </jms-destinations>
             </hornetq-server>
         </subsystem>

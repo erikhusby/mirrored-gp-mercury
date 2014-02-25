@@ -75,7 +75,7 @@ public class ProductOrderKitTest extends ContainerTest {
         ProductOrderKit kit = pdo.getProductOrderKit();
         Assert.assertNotNull(kit);
         Assert.assertNotNull(kit.getProductOrderKitId());
-        for(ProductOrderKitDetail kitDetail:kit.getKitOrderDetails()) {
+        for (ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
             Assert.assertEquals(kitDetail.getMaterialInfo().getBspName(), bspName);
             Assert.assertEquals(kitDetail.getMaterialInfo().getKitType(), kitType.getKitName());
         }

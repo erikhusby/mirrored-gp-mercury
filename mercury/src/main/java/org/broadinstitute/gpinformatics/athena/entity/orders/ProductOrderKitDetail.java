@@ -20,6 +20,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,7 +28,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Defines the specific details for a sample kit contained in a sample initiation order.  This information is isolated
+ * to its own entity since a sample initiation order can have multiple kits defined for it.
  */
 @Entity
 @Audited
@@ -42,7 +44,7 @@ public class ProductOrderKitDetail implements Serializable {
             sequenceName = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER_KIT_DETAIL")
     @Column(name = "product_order_kit_detail_id", unique = true, nullable = false)
-    private Long productOrderKitDetaild;
+    private Long productOrderKitDetailId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     private ProductOrderKit productOrderKit;
@@ -59,17 +61,21 @@ public class ProductOrderKitDetail implements Serializable {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @CollectionTable(schema = "athena", name="PDO_KIT_DTL_POST_REC_OPT", joinColumns = {@JoinColumn(name="product_order_kit_detail_id")})
+    @CollectionTable(schema = "athena", name = "PDO_KIT_DTL_POST_REC_OPT",
+            joinColumns = {@JoinColumn(name = "product_order_kit_detail_id")})
     private Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @Column(name = "material_bsp_name")
     private String bspMaterialName;
 
+    @Transient
+    private String organismName;
+
     public ProductOrderKitDetail() {
     }
 
-    public ProductOrderKitDetail(Long numberOfSamples,
-                                 KitType kitType, Long organismId, MaterialInfoDto materialInfo) {
+    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
+                                 MaterialInfoDto materialInfo) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.organismId = organismId;
@@ -82,12 +88,12 @@ public class ProductOrderKitDetail implements Serializable {
         this.postReceiveOptions = postReceiveOptions;
     }
 
-    public Long getProductOrderKitDetaild() {
-        return productOrderKitDetaild;
+    public Long getProductOrderKitDetailId() {
+        return productOrderKitDetailId;
     }
 
-    public void setProductOrderKitDetaild(Long productOrderKitDetaild) {
-        this.productOrderKitDetaild = productOrderKitDetaild;
+    public void setProductOrderKitDetailId(Long productOrderKitDetaild) {
+        this.productOrderKitDetailId = productOrderKitDetaild;
     }
 
     public ProductOrderKit getProductOrderKit() {
@@ -131,21 +137,48 @@ public class ProductOrderKitDetail implements Serializable {
         bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
     }
 
+    public void setOrganismName(String s) {
+        organismName = s;
+    }
+
+    /**
+     * This is only populated after actionBean.populateTokenListsFromObjectData() is run.
+     */
+    public String getOrganismName() {
+        return organismName;
+    }
+
+    public void setKitType(KitType kitType) {
+        this.kitType = kitType;
+    }
+
+    public void setNumberOfSamples(Long numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public void setOrganismId(Long organismId) {
+        this.organismId = organismId;
+    }
+
+    public void setBspMaterialName(String bspMaterialName) {
+        this.bspMaterialName = bspMaterialName;
+    }
+
     /**
      * Return a string representation of this kit's PostReceive options
      *
      * @param delimiter characters used to join list values
      */
     public String getPostReceivedOptionsAsString(String delimiter) {
-        if (StringUtils.isBlank(delimiter)){
-            delimiter=", ";
+        if (StringUtils.isBlank(delimiter)) {
+            delimiter = ", ";
         }
-        if (getPostReceiveOptions().isEmpty()){
+        if (getPostReceiveOptions().isEmpty()) {
             return NO_POST_RECEIVED_OPTIONS_SELECTED;
         }
 
-        List<String> options=new ArrayList<>(postReceiveOptions.size());
-        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
+        List<String> options = new ArrayList<>(postReceiveOptions.size());
+        for (PostReceiveOption postReceiveOption : postReceiveOptions) {
             options.add(postReceiveOption.getText());
         }
         return StringUtils.join(options, delimiter);
@@ -157,6 +190,20 @@ public class ProductOrderKitDetail implements Serializable {
         }
 
         return getKitType().getDisplayName();
+    }
+
+    /**
+     * Helper method to update the values of a product order kit detail based on another kit detail definition
+     *
+     * @param kitDetailUpdate a ProductOrderKitDetail entity from which values are to be updated.
+     */
+    public void updateDetailValues(ProductOrderKitDetail kitDetailUpdate) {
+        setKitType(kitDetailUpdate.getKitType());
+        setBspMaterialName(kitDetailUpdate.getBspMaterialName());
+        setOrganismId(kitDetailUpdate.getOrganismId());
+        setNumberOfSamples(kitDetailUpdate.getNumberOfSamples());
+        getPostReceiveOptions().clear();
+        postReceiveOptions.addAll(kitDetailUpdate.getPostReceiveOptions());
     }
 
 }

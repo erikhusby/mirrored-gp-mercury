@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -51,9 +52,16 @@ import java.util.Set;
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
-    public static final String ADD_TO_BATCH_ACTION = "addToBatch";
+    private static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
+    private static final String EXISTING_TICKET = "existingTicket";
+    private static final String NEW_TICKET = "newTicket";
+    private static final String CREATE_BATCH_ACTION = "createBatch";
+    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
+    private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
+    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
+    private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
 
     @Inject
     private WorkflowLoader workflowLoader;
@@ -64,16 +72,13 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
+    private BucketEjb bucketEjb;
+    @Inject
     private UserBean userBean;
     @Inject
     private LabBatchDao labBatchDao;
     @Inject
     private BucketEntryDao bucketEntryDao;
-
-    public static final String EXISTING_TICKET = "existingTicket";
-    public static final String NEW_TICKET = "newTicket";
-    public static final String CREATE_BATCH_ACTION = "createBatch";
-    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -103,6 +108,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
+    private String vesselRemovalReason;
 
     public LabBatch getBatch() {
         return batch;
@@ -234,6 +240,14 @@ public class BucketViewActionBean extends CoreActionBean {
         return reworkEntryIds;
     }
 
+    public String getVesselRemovalReason() {
+        return vesselRemovalReason;
+    }
+
+    public void setVesselRemovalReason(String vesselRemovalReason) {
+        this.vesselRemovalReason = vesselRemovalReason;
+    }
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         WorkflowConfig workflowConfig = workflowLoader.load();
@@ -287,7 +301,16 @@ public class BucketViewActionBean extends CoreActionBean {
             viewBucket();
         }
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("selectedReworks", "At least one rework must be selected to add to the batch.");
+            addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
+    public void removeSampleFromBucketValidation() {
+
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
         }
     }
@@ -384,10 +407,8 @@ public class BucketViewActionBean extends CoreActionBean {
             selectedLcset = "LCSET-" + selectedLcset;
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
-        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         separateEntriesByType();
     }
-
 
     // Returns the workflow name for entries in the batch.
     private Set<String> getWorkflowNames() {
@@ -442,6 +463,26 @@ public class BucketViewActionBean extends CoreActionBean {
                 .format("Lab batch ''{0}'' has been created.", batch.getJiraTicket().getTicketName()));
 
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION )
+    public Resolution removeFromBucket() {
+
+        separateEntriesByType();
+
+        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
+    public Resolution confirmRemoveFromBucket() {
+        separateEntriesByType();
+
+        bucketEjb.removeEntriesByIds(selectedEntryIds, vesselRemovalReason);
+
+        addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
+
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
     }
 
     private void separateEntriesByType() {

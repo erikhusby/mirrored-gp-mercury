@@ -46,7 +46,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         PDOSamples pdoSamples = new PDOSamples();
         pdoSamples.setPdoSamples(pdoSamplesList);
 
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl,"pdoSampleBillingStatus")
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)

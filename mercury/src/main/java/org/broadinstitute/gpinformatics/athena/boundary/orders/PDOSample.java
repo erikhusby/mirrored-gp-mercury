@@ -10,9 +10,14 @@ public class PDOSample {
     public PDOSample() {}
 
     public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null);
+    }
+
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
+        this.onRisk = onRisk;
     }
 
     private String pdoKey;
@@ -20,6 +25,8 @@ public class PDOSample {
     private String sampleName;
 
     private Boolean hasPrimaryPriceItemBeenBilled;
+
+    private Boolean onRisk;
 
     public String getPdoKey() {
         return pdoKey;
@@ -45,4 +52,11 @@ public class PDOSample {
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
     }
 
+    public Boolean isOnRisk() {
+        return onRisk;
+    }
+
+    public void setOnRisk(Boolean onRisk) {
+        this.onRisk = onRisk;
+    }
 }

@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -207,6 +206,13 @@ public class ProductOrderDaoTest extends ContainerTest {
             Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"ledgerItems"),"Ledger items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
             Assert.assertTrue(persistenceUtil.isLoaded(productOrderSample,"riskItems"),"Risk items should be pre-fetched so that the billing tracker download doesn't take forever to download.");
         }
+    }
+
+    @Test(enabled = false)
+    public void testFindUnconvertedSampleInitiationPdos() throws Exception {
+        List<ProductOrder> unconvertedProductOrders = productOrderDao.findSampleInitiationPDOsNotConverted();
+
+        Assert.assertEquals( unconvertedProductOrders.size(),4);
     }
 
 }

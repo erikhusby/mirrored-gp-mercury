@@ -575,28 +575,6 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="PORTAL-10-1" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT" columnName="INVITATION_EMAIL"/>
-            </not>
-        </preConditions>
-        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT">
-            <column name="INVITATION_EMAIL" type="varchar2(255 char)"/>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="PORTAL-10-2" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT" columnName="COLLABORATION_ID"/>
-            </not>
-        </preConditions>
-        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT">
-            <column name="COLLABORATION_ID" type="varchar2(255 char)"/>
-        </addColumn>
-    </changeSet>
-
     <changeSet id="PORTAL-10-3" author="hrafal">
         <sql>
             ALTER TABLE ATHENA.PROJECT_PERSON drop CONSTRAINT CHECK_ROLE
@@ -608,25 +586,4 @@
         </sql>
     </changeSet>
 
-    <changeSet id="PORTAL-10-4" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT_AUD" columnName="INVITATION_EMAIL"/>
-            </not>
-        </preConditions>
-        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT_AUD">
-            <column name="INVITATION_EMAIL" type="varchar2(255 char)"/>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="PORTAL-10-5" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT_AUD" columnName="COLLABORATION_ID"/>
-            </not>
-        </preConditions>
-        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT_AUD">
-            <column name="COLLABORATION_ID" type="varchar2(255 char)"/>
-        </addColumn>
-    </changeSet>
 </databaseChangeLog>

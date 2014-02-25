@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCom
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -353,16 +354,18 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName) {
+    public Transition findAvailableTransitionByName(@Nonnull String jiraIssueKey, @Nonnull String transitionName) {
         IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
-
-        for (Transition transition : availableTransitions.getTransitions()) {
+        List<Transition> transitions = availableTransitions.getTransitions();
+        if (transitions == null || transitions.isEmpty()) {
+            throw new NoJiraTransitionException("No transitions found for issue key " + jiraIssueKey);
+        }
+        for (Transition transition : transitions) {
             if (transition.getName().equals(transitionName)) {
                 return transition;
             }
         }
-
-        return null;
+        throw new NoJiraTransitionException(transitionName, jiraIssueKey);
     }
 
     @Override

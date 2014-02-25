@@ -11,17 +11,13 @@ import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.controller.StripesFilter;
-import net.sourceforge.stripes.mock.MockHttpServletRequest;
-import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
-import org.apache.http.HttpRequest;
-import org.apache.http.message.BasicHttpRequest;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -40,22 +36,23 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.easymock.EasyMock;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.openqa.jetty.http.HttpResponse;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ProductOrderActionBeanTest {
 
@@ -112,9 +109,10 @@ public class ProductOrderActionBeanTest {
     private ProductOrderKit createGoodPdoKit() {
         MaterialInfoDto materialInfoDto =
                 new MaterialInfoDto(KitType.DNA_MATRIX.getKitName(), KitType.DNA_MATRIX.getDisplayName());
-        ProductOrderKit pdoKit = new ProductOrderKit(96l, KitType.DNA_MATRIX, TEST_COLLECTION, HOMO_SAPIENS,
-                BSP_INFORMATICS_TEST_SITE_ID, materialInfoDto);
-        pdoKit.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        ProductOrderKit pdoKit = new ProductOrderKit(TEST_COLLECTION,BSP_INFORMATICS_TEST_SITE_ID);
+        ProductOrderKitDetail kitDetail = new ProductOrderKitDetail(96l, KitType.DNA_MATRIX, HOMO_SAPIENS, materialInfoDto,
+                Collections.singleton(PostReceiveOption.FLUIDIGM_FINGERPRINTING));
+        pdoKit.setKitOrderDetails(Collections.singleton(kitDetail));
         pdoKit.setTransferMethod(SampleKitWorkRequest.TransferMethod.SHIP_OUT);
         pdoKit.setNotificationIds(Arrays.asList("17255"));
         pdoKit.setExomeExpress(true);
@@ -204,6 +202,8 @@ public class ProductOrderActionBeanTest {
         actionBean.setEditOrder(pdo);
         actionBean.setProduct("test product");
         actionBean.setMaterialInfo(MaterialInfo.DNA_DERIVED_FROM_BLOOD.getText());
+        String testKitQueryIndex = "5";
+        actionBean.setKitDefinitionQueryIndex(testKitQueryIndex);
 
         StreamingResolution postReceiveOptions = (StreamingResolution) actionBean.getPostReceiveOptions();
         HttpServletRequest request = new MockHttpServletRequest("foo", "bar");
@@ -213,16 +213,25 @@ public class ProductOrderActionBeanTest {
         String jsonString = response.getOutputString();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readValue(jsonString, JsonNode.class);
+        String returnedKitIndex = jsonNode.get(actionBean.getKitDefinitionIndexIdentifier()).asText();
+        Assert.assertEquals(returnedKitIndex, testKitQueryIndex,
+                "The kit index passed in should match the kit index returned");
 
-        Iterator<JsonNode> resultIterator = jsonNode.getElements();
+        Iterator<JsonNode> resultIterator = jsonNode.get("dataList").getElements();
         String nodeKey = "key";
-        String nodeValue = "value";
+        String nodeChecked = "checked";
 
         while (resultIterator.hasNext()) {
             JsonNode node = resultIterator.next();
-            PostReceiveOption option = TestUtils.getFirst(
-                    PostReceiveOption.getByText(Arrays.asList(node.get(nodeKey).asText())));
-            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeValue).asBoolean());
+
+            Set<PostReceiveOption> postReceiveOptionSet = new HashSet<>(node.get(nodeKey).size());
+            for(String returnedOption : Arrays.asList(node.get(nodeKey).asText())) {
+                postReceiveOptionSet.add(PostReceiveOption.valueOf(returnedOption));
+            }
+
+            Assert.assertTrue(postReceiveOptionSet.size()>0);
+            PostReceiveOption option = TestUtils.getFirst(postReceiveOptionSet);
+            Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeChecked).asBoolean());
             Assert.assertFalse(option.getArchived());
         }
     }
@@ -257,7 +266,7 @@ public class ProductOrderActionBeanTest {
         pdo.setProductOrderKit(createGoodPdoKit());
         actionBean.setEditOrder(pdo);
         Assert.assertTrue(actionBean.getPostReceiveOptionKeys().isEmpty());
-        actionBean.initPostReceiveOptions();
+        actionBean.initSampleKitInfo();
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
@@ -342,36 +351,37 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(response.getOutputString(), "{\"supportsSkippingQuote\":false}");
     }
 
+    @DataProvider(name = "quoteOptionsDataProvider")
+    public Object[][] quoteOptionsDataProvider(){
+        String testReason = "The dog ate my quote.";
+        String testQuote = "SomeQuote";
+        return new Object[][]{
+                {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, null, "", false, "No Quote and No reason should fail."},
+                {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, null, testReason, true, "No Quote but with reason should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, "", true, "Saving any order should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, null, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, "", true, "A good quote but blank reason should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, null, true, "A good quote but null reason should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, testQuote, testReason, true, "Saving any order should succeed."},
+                {ProductOrderActionBean.PLACE_ORDER, testQuote, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, testQuote, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, testReason, true, "A good quote and a reason should succeed."},
+                {ProductOrderActionBean.VALIDATE_ORDER, null, null, false, "No quote or reason should fail."}
+        };
+    }
 
-
-
-    @Test(groups = TestGroups.DATABASE_FREE)
-    public void testQuoteSkippingValidation() {
+    @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "quoteOptionsDataProvider")
+    public void testQuoteSkippingValidation(String action, String quoteId, String reason,
+                                            boolean expectedToPassValidation, String testErrorMessage) {
         ProductOrder pdo = new ProductOrder();
-        actionBean.setEditOrder(pdo);
-
-        actionBean.setSkipQuote(true);
-        pdo.setSkipQuoteReason("");
-        actionBean.validateQuoteOptions("");
-        Assert.assertEquals(actionBean.getValidationErrors().size(), 1);
-
+        pdo.setSkipQuoteReason(reason);
+        pdo.setQuoteId(quoteId);
         actionBean.clearValidationErrors();
-        actionBean.setSkipQuote(false);
-        pdo.setSkipQuoteReason("");
-        actionBean.validateQuoteOptions("");
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
+        actionBean.setEditOrder(pdo);
+        actionBean.validateQuoteOptions(action);
 
-        actionBean.setSkipQuote(true);
-        pdo.setSkipQuoteReason("The dog ate my quote");
-        actionBean.validateQuoteOptions("");
-
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0);
-
-        pdo.setQuoteId("SomeQuote");
-        actionBean.validateQuoteOptions("");
-
-        Assert.assertEquals(actionBean.getValidationErrors().size(),0,"It's okay to have a quote set and keep the skip quote reason.");
-
-
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPassValidation, testErrorMessage);
     }
 }

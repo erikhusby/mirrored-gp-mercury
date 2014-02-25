@@ -13,7 +13,9 @@
                        businessKeyValue="${actionBean.editOrder.businessKey}">
 <stripes:layout-component name="extraHead">
 <script type="text/javascript">
+var kitDefinitionIndex = 0;
 $j(document).ready(function () {
+
     updateFundsRemaining();
     setupDialogs();
 
@@ -22,6 +24,20 @@ $j(document).ready(function () {
         dataType: 'json',
         success: showSummary
     });
+
+    // Initializes the previously chosen sample kit detail info in the sample kit display section
+    <c:if test="${actionBean.editOrder.isSampleInitiation()}">
+    <c:forEach items="${actionBean.editOrder.productOrderKit.kitOrderDetails}" var="kitDetail">
+    showKitDetail('${kitDetail.numberOfSamples}', '${kitDetail.kitType.displayName}',
+            '${kitDetail.organismName}', '${kitDetail.bspMaterialName}',
+            '${kitDetail.getPostReceivedOptionsAsString("<br/>")}');
+    </c:forEach>
+    </c:if>
+
+    // if there are no sample kit details, just show one empty detail section
+    if (kitDefinitionIndex == 0) {
+        showKitDetail();
+    }
 
     bspDataCount = $j(".sampleName").length;
 
@@ -403,6 +419,91 @@ function showAbandonConfirm(action, actionPrompt, level) {
     $j("#abandonConfirmation").dialog("open");
 }
 
+/**
+ * showKitDetail will generate the display fields for the specific kit definition details if the PDO being displayed
+ * is a sample initiation PDO.
+ *
+ *
+ * @param samples               Number of samples for the sample kit definition details.  Will be used to initialize
+ *                              the sample display section.
+ * @param kitType               Kit type (Receptacle type) for the sample kit definition details.  Will be used to
+ *                              initialize the kit type display area.
+ * @param organismName          Name of the organism for the sample kit definition details.  Will be used to initialize
+ *                              the organism display area.
+ * @param materialInfo          Type of biological material associated with the sample kit definition details.  Will
+ *                              be used to initialize the sample display sections
+ * @param postReceivedOptions   The chosen processing options for the sample kit definition details which will be
+ *                              applied when the sample kit is received.  Will be used to initialize the sample display
+ *                              sections
+ */
+function showKitDetail(samples, kitType, organismName, materialInfo, postReceivedOptions) {
+    var detailInfo = '<div id="kitDetailInfo' + kitDefinitionIndex + '">';
+    detailInfo += '<h5 >Kit Definition Info</h5>';
+    // Number of Samples
+    detailInfo += '<div class="view-control-group control-group">\n' +
+            '<label for="kitNumberOfSamples' + kitDefinitionIndex + '" class="control-label label-form" >Samples Requested</label>\n' +
+            '<div class="controls">\n' +
+            '<div class="form-value" id="kitNumberOfSamples' + kitDefinitionIndex + '">\n';
+    if (samples) {
+        detailInfo += samples;
+    }
+    detailInfo += '</div>\n</div>\n</div>';
+
+    // Kit Type
+
+    detailInfo += '<div class="view-control-group control-group">\n' +
+            '<label class="control-label label-form" for="kitKitType' + kitDefinitionIndex + '">Kit Type</label>\n' +
+            '<div class="controls">\n' +
+            '<div class="form-value" id="kitKitType' + kitDefinitionIndex + '">\n';
+    if (kitType) {
+        detailInfo += kitType;
+
+    }
+    detailInfo += '</div>\n</div>\n</div>\n';
+
+    // Organism
+
+    detailInfo += '<div class="view-control-group control-group">' +
+            '<label for="kitOrganism' + kitDefinitionIndex + '" class="control-label label-form">Organism</label>' +
+            '<div id="kitOrganism' + kitDefinitionIndex + '" class="controls">' +
+            '<div class="form-value">';
+    if (organismName) {
+        detailInfo += organismName;
+    }
+    detailInfo += '</div></div></div>';
+
+    // Material Info
+    detailInfo += '<div class="view-control-group control-group">\n' +
+            '<label class="control-label label-form" for="kitMaterialInfo' + kitDefinitionIndex + '">Material Information</label>\n' +
+
+            '<div class="controls">\n' +
+            '<div class="form-value" id="kitMaterialInfo' + kitDefinitionIndex + '">';
+    if (materialInfo) {
+
+        detailInfo += materialInfo;
+    }
+
+    detailInfo += '</div>\n</div>\n</div>\n';
+
+
+    // Post Receipt Options
+    detailInfo += '<div class="view-control-group control-group">' +
+            '<label class="control-label label-form">Post-Received Options</label>' +
+            '<div class="controls">' +
+            '<div class="form-value">' +
+            '<div class="form-value">';
+
+    if (postReceivedOptions) {
+
+        detailInfo += postReceivedOptions;
+    }
+
+    detailInfo += '</div></div></div></div></div>';
+
+    $j("#sampleInitiationInfo").append(detailInfo);
+    kitDefinitionIndex++;
+}
+
 function formatInput(item) {
     var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
     return "<li>" + item.dropdownItem + extraCount + '</li>';
@@ -715,7 +816,6 @@ function formatInput(item) {
 </c:if>
 
 
-
 <div class="view-control-group control-group">
     <label class="control-label label-form">Can Bill</label>
 
@@ -773,7 +873,7 @@ function formatInput(item) {
 </div>
 </div>
 
-<c:if test="${actionBean.sampleInitiation}">
+<c:if test="${actionBean.editOrder.isSampleInitiation()}">
     <div class="form-horizontal span5">
         <fieldset>
             <legend>
@@ -783,127 +883,82 @@ function formatInput(item) {
                     <c:if test="${!actionBean.editOrder.draft}">
                         - <a href="${actionBean.workRequestUrl}" target="BSP">
                             ${actionBean.editOrder.productOrderKit.workRequestId}
-                        </a>
+                    </a>
                     </c:if>
                 </h4>
             </legend>
+            <div id="sampleInitiationInfo">
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Samples Requested</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.numberOfSamples != null}">
-                            ${actionBean.editOrder.productOrderKit.numberOfSamples}
-                        </c:if>
+                <div class="view-control-group control-group">
+                    <stripes:label for="kitCollection"
+                                   class="control-label label-form">Group and Collection</stripes:label>
+                    <div id="kitCollection" class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
+                                ${actionBean.editOrder.productOrderKit.sampleCollectionName}
+                            </c:if>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Kit Type</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.kitType != null}">
-                            ${actionBean.editOrder.productOrderKit.kitType.displayName}
-                        </c:if>
+                <div class="view-control-group control-group">
+                    <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
+                    <div id="kitSite" class="controls">
+                        <div class="form-value">
+                            <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
+                                ${actionBean.editOrder.productOrderKit.siteName}
+                            </c:if>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Transfer Method</label>
 
-            <div class="view-control-group control-group">
-                <stripes:label for="kitCollection" class="control-label label-form">Group and Collection</stripes:label>
-                <div id="kitCollection" class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.sampleCollectionId != null}">
-                            ${actionBean.editOrder.productOrderKit.sampleCollectionName}
-                        </c:if>
+                    <div class="controls">
+                        <div class="form-value">
+                            <div class="form-value">${actionBean.editOrder.productOrderKit.transferMethod.value}</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="view-control-group control-group">
-                <stripes:label for="kitOrganism" class="control-label label-form">Organism</stripes:label>
-                <div id="kitOrganism" class="controls">
-                    <div class="form-value">
-                            ${actionBean.editOrder.productOrderKit.organismName}
-                    </div>
-                </div>
-            </div>
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Exome Express?</label>
 
-            <div class="view-control-group control-group">
-                <stripes:label for="kitSite" class="control-label label-form">Shipping Location</stripes:label>
-                <div id="kitSite" class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.siteId != null}">
-                            ${actionBean.editOrder.productOrderKit.siteName}
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Transfer Method</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <div class="form-value">${actionBean.editOrder.productOrderKit.transferMethod.value}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Material Information</label>
-
-                <div class="controls">
-                    <div class="form-value">
-                        <c:if test="${actionBean.editOrder.productOrderKit.bspMaterialName != null}">
-                            ${actionBean.editOrder.productOrderKit.bspMaterialName}
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Post-Received Options</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <div class="form-value">${actionBean.editOrder.productOrderKit.getPostReceivedOptionsAsString("<br/>")}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Exome Express?</label>
-                <div class="controls">
-                    <div class="form-value">
-                        <div class="form-value">This is
-                            <c:if test="${!actionBean.editOrder.productOrderKit.exomeExpress}"> not </c:if>
-                            an Exome Express Kit
-                                </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Notification List</label>
-                <div class="controls">
-                    <div class="form-value">
-                            ${actionBean.getUserListString(actionBean.editOrder.productOrderKit.notificationIds)}
-                    </div>
-                </div>
-            </div>
-            <div class="view-control-group control-group">
-                            <label class="control-label label-form">Comments</label>
-                            <div class="controls">
-                                <div class="form-value">
-                                    <div class="form-value">${actionBean.editOrder.productOrderKit.comments}</div>
-                                </div>
+                    <div class="controls">
+                        <div class="form-value">
+                            <div class="form-value">This is
+                                <c:if test="${!actionBean.editOrder.productOrderKit.exomeExpress}"> not </c:if>
+                                an Exome Express Kit
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Notification List</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.getUserListString(actionBean.editOrder.productOrderKit.notificationIds)}
+                        </div>
+                    </div>
+                </div>
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Comments</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <div class="form-value">${actionBean.editOrder.productOrderKit.comments}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </fieldset>
     </div>
 </c:if>
 </div>
 
-<c:if test="${!actionBean.editOrder.draft || !actionBean.sampleInitiation}">
+<c:if test="${!actionBean.editOrder.draft || !actionBean.editOrder.isSampleInitiation()}">
 
     <div class="borderHeader">
         <h4 style="display:inline">Samples</h4>
@@ -912,7 +967,8 @@ function formatInput(item) {
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                             <span class="actionButtons">
                                 <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                                style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
+                                                style="margin-left:30px;"
+                                                onclick="showConfirm('deleteSamples', 'delete')"/>
 
                                 <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                                 style="margin-left:15px;"
@@ -924,9 +980,11 @@ function formatInput(item) {
                                 <stripes:button name="setRisk" value="Set Risk" class="btn"
                                                 style="margin-left:5px;" onclick="showRiskDialog()"/>
 
-                                <security:authorizeBlock roles="<%= roles(All) %>" context="<%= ApplicationInstance.CRSP %>">
+                                <security:authorizeBlock roles="<%= roles(All) %>"
+                                                         context="<%= ApplicationInstance.CRSP %>">
                                     <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                                    style="margin-left:5px;" id="addToBucketButton" onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
+                                                    style="margin-left:5px;" id="addToBucketButton"
+                                                    onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
                                 </security:authorizeBlock>
 
                             </span>
@@ -949,7 +1007,8 @@ function formatInput(item) {
             <tr>
                 <th width="20">
                     <c:if test="${!actionBean.editOrder.draft}">
-                        <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                        <input id="checkAllSamples" for="count" type="checkbox" class="checkAll"/><span id="count"
+                                                                                                        class="checkedCount"></span>
                     </c:if>
                 </th>
                 <th width="10">#</th>
@@ -984,7 +1043,8 @@ function formatInput(item) {
                     <td>
                         <c:if test="${!actionBean.editOrder.draft}">
                             <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox"
-                                              name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                                              name="selectedProductOrderSampleIds"
+                                              value="${sample.productOrderSampleId}"/>
                         </c:if>
                     </td>
                     <td>
@@ -1005,38 +1065,38 @@ function formatInput(item) {
                             </c:otherwise>
                         </c:choose>
                     </td>
-                    <td id="collab-sample-${sample.productOrderSampleId}"> </td>
-                    <td id="patient-${sample.productOrderSampleId}">  </td>
-                    <td id="collab-patient-${sample.productOrderSampleId}"> </td>
+                    <td id="collab-sample-${sample.productOrderSampleId}"></td>
+                    <td id="patient-${sample.productOrderSampleId}"></td>
+                    <td id="collab-patient-${sample.productOrderSampleId}"></td>
 
                     <td id="package-date-${sample.productOrderSampleId}">
-                        ${sample.labEventSampleDTO.samplePackagedDate}
+                            ${sample.labEventSampleDTO.samplePackagedDate}
                     </td>
                     <td id="receipt-date-${sample.productOrderSampleId}">
-                        ${sample.labEventSampleDTO.sampleReceiptDate}
+                            ${sample.labEventSampleDTO.sampleReceiptDate}
                     </td>
 
-                    <td id="volume-${sample.productOrderSampleId}"> </td>
-                    <td id="concentration-${sample.productOrderSampleId}"> </td>
+                    <td id="volume-${sample.productOrderSampleId}"></td>
+                    <td id="concentration-${sample.productOrderSampleId}"></td>
 
                     <c:if test="${actionBean.supportsRin}">
-                        <td id="rin-${sample.productOrderSampleId}"> </td>
+                        <td id="rin-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">
                         <td>
                             <div class="picoRunDate" id="picoDate-${sample.productOrderSampleId}" style="width:auto">
-                                </div>
+                            </div>
                         </td>
                     </c:if>
 
-                    <td id="total-${sample.productOrderSampleId}"> </td>
-                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"> </td>
+                    <td id="total-${sample.productOrderSampleId}"></td>
+                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
-                         </td>
+                    </td>
                     <td>${sample.riskString}</td>
                     <td>${sample.deliveryStatus.displayName}</td>
-                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center">  </td>
+                    <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>
                 </tr>
             </c:forEach>

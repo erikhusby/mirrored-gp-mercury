@@ -97,6 +97,8 @@ public abstract class LabVessel implements Serializable {
 
     private BigDecimal concentration;
 
+    private BigDecimal receptacleWeight;
+
     @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     @JoinTable(schema = "mercury")
     @BatchSize(size = 100)
@@ -147,6 +149,7 @@ public abstract class LabVessel implements Serializable {
      * Reagent additions and machine loaded events, i.e. not transfers
      */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @BatchSize(size = 100)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<>();
 
     @OneToMany // todo jmt should this have mappedBy?
@@ -1007,6 +1010,14 @@ public abstract class LabVessel implements Serializable {
         this.concentration = concentration;
     }
 
+    public BigDecimal getReceptacleWeight() {
+        return receptacleWeight;
+    }
+
+    public void setReceptacleWeight(BigDecimal receptacleWeight) {
+        this.receptacleWeight = receptacleWeight;
+    }
+
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
     }
@@ -1584,20 +1595,18 @@ public abstract class LabVessel implements Serializable {
 
     /**
      * Goes through all the {@link #getSampleInstances()} and creates
-     * a collection of the unique String sample names from {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample#getSampleKey()}
+     * a collection of the unique String sample names from {@link MercurySample#getSampleKey()}
      *
      * @return The names
      */
     public Collection<String> getSampleNames() {
         List<String> sampleNames = new ArrayList<>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
-            if (sampleInstance.getStartingSample() != null) {
-                String sampleKey = sampleInstance.getStartingSample().getSampleKey();
+            MercurySample sample = sampleInstance.getStartingSample();
+            if (sample != null) {
+                String sampleKey = StringUtils.trimToNull(sample.getSampleKey());
                 if (sampleKey != null) {
-                    sampleKey = sampleKey.trim();
-                    if (!sampleKey.isEmpty()) {
-                        sampleNames.add(sampleKey);
-                    }
+                    sampleNames.add(sampleKey);
                 }
             }
         }

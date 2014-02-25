@@ -8,23 +8,17 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.PDOUpdateField;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.AuditJoinTable;
@@ -50,7 +44,6 @@ import javax.persistence.PostLoad;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -170,7 +163,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
-    @Column(name = "SKIP_QUOTE_REASON", length=255)
+    @Column(name = "SKIP_QUOTE_REASON", length = 255)
     private String skipQuoteReason;
 
     /**
@@ -330,7 +323,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
-     *         internal database id.
+     * internal database id.
      */
     @Override
     @Nonnull
@@ -720,7 +713,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * registered to this product order.
      *
      * @return a count of every participant that is represented by at least one sample in the list of product order
-     *         samples
+     * samples
      */
     public int getUniqueParticipantCount() {
         return updateSampleCounts().uniqueParticipantCount;
@@ -735,7 +728,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return the list of sample names for this order, including duplicates. in the same sequence that
-     *         they were entered.
+     * they were entered.
      */
     public String getSampleString() {
         return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
@@ -801,7 +794,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      * this product order.
      *
      * @return a Map, indexed by the unique stock type found, which gives a count of how many samples in the list of
-     *         product order samples, are related to that stock type
+     * product order samples, are related to that stock type
      */
     public Map<String, Integer> getCountsByStockType() {
         return updateSampleCounts().stockTypeCounter.countMap;
@@ -870,7 +863,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     /**
      * @return true if all samples are of BSP Format. Note:
-     *         will return false if there are no samples on the sheet.
+     * will return false if there are no samples on the sheet.
      */
     public boolean areAllSampleBSPFormat() {
         updateSampleCounts();
@@ -987,6 +980,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
+     * Convenience method to determine whether or not the current PDO is for sample initiation.
+     *
+     * @return true if this is a sample initiation PDO; false otherwise
+     */
+    public boolean isSampleInitiation() {
+        return getProduct() != null && getProduct().isSampleInitiationProduct();
+    }
+
+    /**
      * This is used to help create or update a PDO's Jira ticket.
      */
     public enum JiraField implements CustomField.SubmissionField {
@@ -1003,6 +1005,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         REQUISITION_ID("Requisition ID"),
         LANES_PER_SAMPLE("Lanes Per Sample"),
         REQUISITION_NAME("Requisition Name"),
+        NUMBER_OF_SAMPLES("Number of Samples"),
         ADD_ONS("Add-ons");
 
         private final String fieldName;
@@ -1440,4 +1443,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             countsValid = false;
         }
     }
+
+
+    /**
+     * If a reason is specified for why you can skip a quote it is OK to do.
+     */
+    @Transient
+    public boolean canSkipQuote() {
+        return !StringUtils.isBlank(getSkipQuoteReason());
+    }
+
 }

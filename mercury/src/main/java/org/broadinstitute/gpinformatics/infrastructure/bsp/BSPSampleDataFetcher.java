@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
 
@@ -9,6 +11,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -198,13 +201,15 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
      * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
      */
     public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
-        String queryString = makeQueryString("barcodes", matrixBarcodes);
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
         Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
-        WebResource resource = getJerseyClient().resource(urlString + "&" + queryString);
-        GetSampleDetails.Details
-                details = resource.accept(MediaType.TEXT_XML).get(new GenericType<GetSampleDetails.Details>() {});
+        WebResource resource = getJerseyClient().resource(urlString);
+        // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
+        MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
+        formData.add("barcodes", StringUtils.join(matrixBarcodes, ","));
+        GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
+                new GenericType<GetSampleDetails.Details>() {}, formData);
 
         // Overwrite the map values that were found in BSP with the SampleDetails objects.
         if (details.getSampleDetails().getSampleInfo() != null) {

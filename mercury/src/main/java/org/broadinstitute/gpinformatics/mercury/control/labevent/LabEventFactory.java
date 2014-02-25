@@ -60,7 +60,6 @@ import javax.inject.Inject;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -941,6 +940,7 @@ public class LabEventFactory implements Serializable {
      *
      * @return entity
      */
+    @DaoFree
     private TubeFormation buildRackDaoFree(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
                                            PlateType plate, PositionMapType positionMap, boolean source,
                                            boolean createSources) {
@@ -954,11 +954,9 @@ public class LabEventFactory implements Serializable {
                 twoDBarcodedTube = new TwoDBarcodedTube(receptacleType.getBarcode());
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), twoDBarcodedTube);
             }
-            twoDBarcodedTube.setVolume(receptacleType.getVolume());
-            twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
-
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
+        setTubeQuantities(mapBarcodeToTubes, positionMap);
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         if (rackOfTubes == null) {
             rackOfTubes = new RackOfTubes(plate.getBarcode(), RackOfTubes.RackType.Matrix96);
@@ -967,6 +965,22 @@ public class LabEventFactory implements Serializable {
         return tubeFormation;
     }
 
+    /**
+     * Set volume, concentration, receptacleWeight etc.
+     * @param mapBarcodeToTubes map from tube barcode to tube
+     * @param positionMap JAXB quantities from deck
+     */
+    @DaoFree
+    public void setTubeQuantities(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, PositionMapType positionMap) {
+        for (ReceptacleType receptacleType : positionMap.getReceptacle()) {
+            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(receptacleType.getBarcode());
+            if (twoDBarcodedTube != null) {
+                twoDBarcodedTube.setVolume(receptacleType.getVolume());
+                twoDBarcodedTube.setConcentration(receptacleType.getConcentration());
+                twoDBarcodedTube.setReceptacleWeight(receptacleType.getReceptacleWeight());
+            }
+        }
+    }
 
     @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, StaticPlate plate) {
@@ -1005,6 +1019,8 @@ public class LabEventFactory implements Serializable {
             tubeFormation =
                     buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
                             true, LabEventType.getByName(plateEvent.getEventType()).isCreateSources());
+        } else {
+            setTubeQuantities(mapBarcodeToTubes, plateEvent.getPositionMap());
         }
         tubeFormation.addInPlaceEvent(labEvent);
         return labEvent;
@@ -1017,19 +1033,12 @@ public class LabEventFactory implements Serializable {
      */
     private void updateVolumeConcentration(ReceptacleType... receptacleTypes) {
         for (ReceptacleType receptacleType : receptacleTypes) {
-            BigDecimal volume = null;
-            BigDecimal concentration = null;
-            if (receptacleType.getVolume() != null) {
-                volume = receptacleType.getVolume();
-            }
-            if (receptacleType.getConcentration() != null) {
-                concentration = receptacleType.getConcentration();
-            }
-
-            // volume or concentration can be null but not both.
-            if (volume != null || concentration != null) {
-                String result = bspSetVolumeConcentration
-                        .setVolumeAndConcentration(receptacleType.getBarcode(), volume, concentration);
+            // At least one of the values must be set in order to incur the cost of calling BSP.
+            if (receptacleType.getVolume() != null || receptacleType.getConcentration() != null ||
+                    receptacleType.getReceptacleWeight() != null) {
+                String result = bspSetVolumeConcentration.setVolumeAndConcentration(receptacleType.getBarcode(),
+                        receptacleType.getVolume(), receptacleType.getConcentration(),
+                        receptacleType.getReceptacleWeight());
                 if (!result.equals(BSPSetVolumeConcentration.RESULT_OK)) {
                     logger.error(result);
                 }

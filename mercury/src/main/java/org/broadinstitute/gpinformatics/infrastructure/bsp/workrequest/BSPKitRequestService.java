@@ -8,13 +8,13 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestResponse;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,8 +44,9 @@ public class BSPKitRequestService {
      * BSP lab's current workflow. The additional details required by BSP are extracted from the given PDO and site or
      * are defaulted based on the current requirements (e.g., DNA kits shipped to the site's shipping contact).
      *
-     * @param productOrder       the product order to create the kit request from
-     *  @return the BSP work request ID
+     * @param productOrder the product order to create the kit request from
+     *
+     * @return the BSP work request ID
      */
     public String createAndSubmitKitRequestForPDO(ProductOrder productOrder) {
         BspUser creator = bspUserList.getById(productOrder.getCreatedBy());
@@ -71,14 +72,19 @@ public class BSPKitRequestService {
         String requesterId = creator.getUsername();
 
         ProductOrderKit kit = productOrder.getProductOrderKit();
-        SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
-                BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kit.getNumberOfSamples(), kit.getMaterialInfo(),
-                        kit.getOrganismId(), kit.getPostReceiveOptions(), SampleKitWorkRequest.MoleculeType.DNA);
+        List<SampleKitWorkRequestDefinitionInfo> kitDefinitions = new ArrayList<>(kit.getKitOrderDetails().size());
+
+        for (ProductOrderKitDetail kitDetail : kit.getKitOrderDetails()) {
+            SampleKitWorkRequestDefinitionInfo kitWorkRequestDefinitionInfo =
+                    BSPWorkRequestFactory.buildBspKitWRDefinitionInfo(kitDetail, SampleKitWorkRequest.MoleculeType.DNA);
+            kitDefinitions.add(kitWorkRequestDefinitionInfo);
+        }
+
         SampleKitWorkRequest sampleKitWorkRequest = BSPWorkRequestFactory.buildBspKitWorkRequest(workRequestName,
                 requesterId, productOrder.getBusinessKey(), primaryInvestigatorId, projectManagerId,
                 externalCollaboratorId, kit.getSiteId(),
                 kit.getSampleCollectionId(), getEmailList(kit.getNotificationIds()),
-                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), Collections.singletonList(kitWorkRequestDefinitionInfo));
+                kit.getComments(), kit.isExomeExpress(), kit.getTransferMethod(), kitDefinitions);
         WorkRequestResponse createResponse = sendKitRequest(sampleKitWorkRequest);
         WorkRequestResponse submitResponse = submitKitRequest(createResponse.getWorkRequestBarcode());
         return submitResponse.getWorkRequestBarcode();
@@ -99,7 +105,8 @@ public class BSPKitRequestService {
     /**
      * Sends the given kit request to BSP to create a work request.
      *
-     * @param sampleKitWorkRequest    the kit request
+     * @param sampleKitWorkRequest the kit request
+     *
      * @return the BSP work request service response
      */
     public WorkRequestResponse sendKitRequest(SampleKitWorkRequest sampleKitWorkRequest) {
@@ -110,7 +117,8 @@ public class BSPKitRequestService {
     /**
      * Requests that an existing work request be "submitted" in BSP.
      *
-     * @param workRequestBarcode    the ID of the work request in BSP
+     * @param workRequestBarcode the ID of the work request in BSP
+     *
      * @return the BSP work request service response
      */
     public WorkRequestResponse submitKitRequest(String workRequestBarcode) {

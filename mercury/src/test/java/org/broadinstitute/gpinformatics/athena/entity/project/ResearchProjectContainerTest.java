@@ -16,11 +16,6 @@ import java.io.IOException;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-/**
- * @author Scott Matthews
- *         Date: 10/12/12
- *         Time: 7:50 AM
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ResearchProjectContainerTest extends Arquillian {
     @Inject

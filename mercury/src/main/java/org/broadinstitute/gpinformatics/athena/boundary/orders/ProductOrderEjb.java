@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
@@ -49,7 +50,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -113,6 +116,65 @@ public class ProductOrderEjb {
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
+    /**
+     * Persisting a Product order.  This methods primary job is to Support a call from the Product Order Action bean
+     * to wrap the persistence of an order in a transaction.
+     *
+     * @param saveType            Indicates what type of persistence this is:  Save, Update, etc
+     * @param editedProductOrder  The product order entity to be persisted
+     * @param deletedIds          a collection that represents the ID's of productOrderKitDetails to be deleted form
+     *                            the kit collection
+     * @param kitDetailCollection a collection of product order details that have been created or updated from
+     *                            the UI
+     *
+     * @throws IOException
+     * @throws QuoteNotFoundException
+     */
+    public void persistProductOrder(ProductOrder.SaveType saveType, ProductOrder editedProductOrder,
+                                    Collection<String> deletedIds,
+                                    Collection<ProductOrderKitDetail> kitDetailCollection)
+            throws IOException, QuoteNotFoundException {
+
+        kitDetailCollection.removeAll(Collections.singleton(null));
+        deletedIds.removeAll(Collections.singleton(null));
+
+        editedProductOrder.prepareToSave(userBean.getBspUser(), saveType);
+
+        if (editedProductOrder.isDraft()) {
+            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
+            editedProductOrder.setOrderStatus(OrderStatus.Draft);
+
+            if (editedProductOrder.isSampleInitiation()) {
+                Map<Long, ProductOrderKitDetail> mapKitDetailsByIDs = new HashMap<>();
+                Iterator<ProductOrderKitDetail> kitDetailIterator =
+                        editedProductOrder.getProductOrderKit().getKitOrderDetails().iterator();
+                while (kitDetailIterator.hasNext()) {
+                    ProductOrderKitDetail kitDetail = kitDetailIterator.next();
+                    if (deletedIds.contains(kitDetail.getProductOrderKitDetailId().toString())) {
+                        kitDetailIterator.remove();
+                    } else {
+                        mapKitDetailsByIDs.put(kitDetail.getProductOrderKitDetailId(), kitDetail);
+                    }
+                }
+
+                for (ProductOrderKitDetail kitDetailUpdate : kitDetailCollection) {
+                    if (kitDetailUpdate.getProductOrderKitDetailId() != null &&
+                        mapKitDetailsByIDs.containsKey(kitDetailUpdate.getProductOrderKitDetailId())) {
+
+                        mapKitDetailsByIDs.get(kitDetailUpdate.getProductOrderKitDetailId()).updateDetailValues(
+                                kitDetailUpdate);
+
+                    } else {
+                        editedProductOrder.getProductOrderKit().addKitOrderDetail(kitDetailUpdate);
+                    }
+                }
+            }
+        } else {
+            updateJiraIssue(editedProductOrder);
+        }
+        productOrderDao.persist(editedProductOrder);
+    }
+
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
             throw new DuplicateTitleException();
@@ -123,12 +185,12 @@ public class ProductOrderEjb {
      * Looks up the quote for the pdo (if the pdo has one) in the
      * quote server.
      */
-    void validateQuote(ProductOrder productOrder,QuoteService quoteService) throws QuoteNotFoundException {
+    void validateQuote(ProductOrder productOrder, QuoteService quoteService) throws QuoteNotFoundException {
         if (!StringUtils.isEmpty(productOrder.getQuoteId())) {
             try {
                 quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
             } catch (QuoteServerException e) {
-                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(),e);
+                throw new RuntimeException("Failed to find quote for " + productOrder.getQuoteId(), e);
             }
         }
     }
@@ -173,7 +235,7 @@ public class ProductOrderEjb {
             ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
             throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
         validateUniqueProjectTitle(productOrder);
-        validateQuote(productOrder,quoteService);
+        validateQuote(productOrder, quoteService);
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
@@ -247,7 +309,7 @@ public class ProductOrderEjb {
      * @param orderLockoutCache The cache by keys whether the order is locked out or not
      *
      * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
-     *         is currently locked out of billing.
+     * is currently locked out of billing.
      */
     public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
                                   Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
@@ -377,8 +439,7 @@ public class ProductOrderEjb {
      * @throws IOException
      */
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
-
-        validateQuote(productOrder,quoteService);
+        validateQuote(productOrder, quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
                 JiraTransition.DEVELOPER_EDIT.getStateName());
@@ -423,7 +484,8 @@ public class ProductOrderEjb {
 
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME, productOrder.getRequisitionName()));
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
+                    productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
@@ -500,12 +562,16 @@ public class ProductOrderEjb {
     }
 
     public static class NoSuchPDOException extends Exception {
+        private static final long serialVersionUID = -5418019063691592665L;
+
         public NoSuchPDOException(String s) {
             super(s);
         }
     }
 
     public static class SampleDeliveryStatusChangeException extends Exception {
+        private static final long serialVersionUID = 8651172992194864707L;
+
         protected SampleDeliveryStatusChangeException(DeliveryStatus targetStatus,
                                                       @Nonnull List<ProductOrderSample> samples) {
             super(createErrorMessage(targetStatus, samples));
@@ -554,8 +620,7 @@ public class ProductOrderEjb {
      * @param targetStatus               The status into which the samples will be transitioned.
      * @param samples                    The samples in question.
      *
-     * @throws SampleDeliveryStatusChangeException
-     *          Thrown if any samples are found to not be in an acceptable starting status.
+     * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
     private void transitionSamples(ProductOrder order,
                                    Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
@@ -599,7 +664,6 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
-     *
      * @throws IOException
      */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
@@ -726,9 +790,7 @@ public class ProductOrderEjb {
      * Rollback on failures to update JIRA tickets with status changes is undesirable in billing as the status change is
      * fairly inconsequential in comparison to persisting database records of whether work was billed to the quote server.
      */
-    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
-
+    public void updateOrderStatusNoRollback(@Nonnull String jiraTicketKey) throws NoSuchPDOException, IOException {
         try {
             updateOrderStatus(jiraTicketKey, MessageReporter.UNUSED);
         } catch (RuntimeException e) {
@@ -746,11 +808,9 @@ public class ProductOrderEjb {
      *
      * @throws NoSuchPDOException
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException
-     *
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+            throws NoSuchPDOException, IOException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
         ProductOrder order = findProductOrder(jiraTicketKey);
@@ -785,14 +845,9 @@ public class ProductOrderEjb {
      * @param transitionComments Comments to include as part of the transition, will be appended to the JIRA ticket.
      *
      * @throws IOException
-     * @throws JiraIssue.NoTransitionException
-     *                     Thrown if the specified transition is not available on the specified issue.
      */
-    private void transitionJiraTicket(String jiraTicketKey,
-                                      JiraResolution currentResolution,
-                                      JiraTransition state,
-                                      @Nullable String transitionComments)
-            throws IOException, JiraIssue.NoTransitionException {
+    private void transitionJiraTicket(String jiraTicketKey, JiraResolution currentResolution, JiraTransition state,
+                                      @Nullable String transitionComments) throws IOException {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         JiraResolution resolution = JiraResolution.fromString(issue.getResolution());
         if (currentResolution == resolution) {
@@ -810,15 +865,11 @@ public class ProductOrderEjb {
      * @param jiraTicketKey   JIRA ticket key.
      * @param abandonComments Transition comments.
      *
-     * @throws JiraIssue.NoTransitionException
-     *
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
-     *
      */
     public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
-            throws JiraIssue.NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException,
-            IOException {
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
@@ -841,7 +892,6 @@ public class ProductOrderEjb {
      *
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
-     *
      * @throws NoSuchPDOException
      */
     public void abandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<ProductOrderSample> samples,
@@ -858,12 +908,11 @@ public class ProductOrderEjb {
      * if necessary.
      *
      * @param jiraTicketKey the PDO key
-     * @param samples the samples to add
+     * @param samples       the samples to add
      */
     public void addSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
                            @Nonnull Collection<ProductOrderSample> samples,
-                           @Nonnull MessageReporter reporter)
-            throws NoSuchPDOException, IOException, JiraIssue.NoTransitionException {
+                           @Nonnull MessageReporter reporter) throws NoSuchPDOException, IOException {
         ProductOrder order = findProductOrder(jiraTicketKey);
         order.addSamples(samples);
         order.prepareToSave(bspUser);
@@ -876,9 +925,37 @@ public class ProductOrderEjb {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 order.getSampleString(),
                 ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
+                order.getSamples().size(),
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
         updateOrderStatus(jiraTicketKey, reporter);
+    }
+
+    public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
+                               @Nonnull Collection<ProductOrderSample> samples,
+                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        // If removeAll returns false, no samples were removed -- should never happen.
+        if (productOrder.getSamples().removeAll(samples)) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
+            productOrder.prepareToSave(bspUser);
+            productOrderDao.persist(productOrder);
+            reporter.addMessage("Deleted samples: {0}.", nameList);
+
+            JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
+            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                    productOrder.getSampleString(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
+                    productOrder.getSamples().size(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+
+            updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
+        }
     }
 }

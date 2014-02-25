@@ -4,10 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.collection.BspGroupCollectionManager;
-import org.broadinstitute.bsp.client.collection.Group;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
-import org.broadinstitute.bsp.client.response.AllGroupsResponse;
-import org.broadinstitute.bsp.client.response.CollectionsInGroupResponse;
+import org.broadinstitute.bsp.client.response.AllCollectionsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
@@ -109,7 +107,7 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
     @Override
     public synchronized void refreshCache() {
         BspGroupCollectionManager groupCollectionManager = bspManagerFactory.createGroupCollectionManager();
-        AllGroupsResponse response = groupCollectionManager.getAllGroups();
+        AllCollectionsResponse response = groupCollectionManager.getAllCollections();
         if (!response.isSuccess()) {
             if (collections == null) {
                 collections = new HashMap<>();
@@ -117,16 +115,7 @@ public class BSPGroupCollectionList extends AbstractCache implements Serializabl
             return;
         }
 
-        List<Group> allGroups = response.getResult();
-        List<SampleCollection> allCollections = new ArrayList<>(allGroups.size());
-        for (Group group : allGroups) {
-            CollectionsInGroupResponse collectionsInGroup =
-                    groupCollectionManager.getCollectionsInGroup(group.getGroupId());
-
-            for (SampleCollection collection : collectionsInGroup.getResult()) {
-                allCollections.add(collection);
-            }
-        }
+        List<SampleCollection> allCollections = response.getResult();
 
         Collections.sort(allCollections, new Comparator<SampleCollection>() {
             @Override

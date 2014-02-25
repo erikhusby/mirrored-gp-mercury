@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
@@ -181,22 +182,15 @@ public class JiraIssue implements Serializable {
         return jiraService.findAvailableTransitions(key);
     }
 
-    public static class NoTransitionException extends Exception {
-        public NoTransitionException(String s) {
-            super(s);
-        }
-    }
-
     /**
      * Post a transition for this issue.
      *
      * @param transitionName the name of the transition to post
      */
-    public void postTransition(@Nonnull String transitionName, @Nullable String comment) throws NoTransitionException, IOException {
+    public void postTransition(@Nonnull String transitionName, @Nullable String comment) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
         if (transition == null) {
-            throw new NoTransitionException(
-                    "Cannot " + transitionName + " " + key + ": no " + transitionName + " transition found");
+            throw new NoJiraTransitionException(transitionName, key);
         }
         jiraService.postNewTransition(key, transition, comment);
     }
@@ -205,8 +199,8 @@ public class JiraIssue implements Serializable {
         return jiraService.getCustomFields(fieldNames);
     }
 
-    public void setCustomFieldUsingTransition(CustomField.SubmissionField field,
-                                              Object value, String transitionName) throws IOException {
+    public void setCustomFieldUsingTransition(CustomField.SubmissionField field, Object value, String transitionName)
+            throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
         Map<String, CustomFieldDefinition> definitionMap = getCustomFields(field.getName());
         List<CustomField> customFields = Collections.singletonList(new CustomField(definitionMap, field, value));
