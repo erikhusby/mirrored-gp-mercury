@@ -341,6 +341,11 @@ public class BucketViewActionBean extends CoreActionBean {
         if (selectedBucket != null) {
             // Sets the workflow selection list for this bucket.
             possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+            if (possibleWorkflows.size() == 1) {
+                setSelectedWorkflowDef(possibleWorkflows.get(0));
+                return viewBucket();
+            }
+
         }
         return view();
     }
