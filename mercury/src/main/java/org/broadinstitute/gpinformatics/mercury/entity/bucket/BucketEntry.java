@@ -155,6 +155,10 @@ public class BucketEntry {
         return poBusinessKey;
     }
 
+    public void setPoBusinessKey(String poBusinessKey) {
+        this.poBusinessKey = poBusinessKey;
+    }
+
     /**
      * accessor for the bucket to which this entry is associated with
      *

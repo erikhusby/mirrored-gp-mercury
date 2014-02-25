@@ -53,8 +53,8 @@ public class BucketDBFreeTest {
 
         BucketEntry testEntry4 = bucket.addEntry(poBusinessKey3, new TwoDBarcodedTube(twoDBarcode4),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
-        Assert.assertNotNull(testEntry3.getBucket());
-        Assert.assertEquals(bucket, testEntry3.getBucket());
+        Assert.assertNotNull(testEntry4.getBucket());
+        Assert.assertEquals(bucket, testEntry4.getBucket());
 
         Assert.assertFalse(bucket.getBucketEntries().isEmpty());
 
