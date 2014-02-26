@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -76,7 +77,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private WorkflowBucketDef bucket;
 
-    private ReworkEntry.ReworkReason reworkReason;
+    private ReworkEntry.ReworkReasonEnum reworkReason;
 
     private String commentText;
 
@@ -118,7 +119,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         try {
-            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, reworkReason,
+            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, new ReworkReason(reworkReason.getValue()),
                     commentText, getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
@@ -243,11 +244,11 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucket = bucket;
     }
 
-    public ReworkEntry.ReworkReason getReworkReason() {
+    public ReworkEntry.ReworkReasonEnum getReworkReason() {
         return reworkReason;
     }
 
-    public void setReworkReason(ReworkEntry.ReworkReason reworkReason) {
+    public void setReworkReason(ReworkEntry.ReworkReasonEnum reworkReason) {
         this.reworkReason = reworkReason;
     }
 

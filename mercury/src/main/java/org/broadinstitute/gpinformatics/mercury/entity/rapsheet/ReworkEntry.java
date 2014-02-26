@@ -12,6 +12,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rapsheet;
 
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
@@ -23,14 +24,14 @@ import javax.persistence.Enumerated;
 /**
  * A ReworkEntry is marks that a sample needs to be reworked (activeRework = true) or that it has been reworked
  * (activeRework = false). Other information on the event are why the rework is being requested, and to what level
- * it is being reworked; see (@link(ReworkReason))
+ * it is being reworked; see (@link(ReworkReasonEnum))
  */
 @Entity
 @Audited
 public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReworkReason reworkReason;
+    private ReworkReasonEnum reworkReason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -56,7 +57,7 @@ public class ReworkEntry extends RapSheetEntry {
     }
 
     public ReworkEntry(LabVesselPosition labVesselPosition, LabVesselComment<ReworkEntry> labVesselComment,
-                       ReworkReason reason, ReworkLevel reworkLevel, LabEventType reworkStep) {
+                       ReworkReasonEnum reason, ReworkLevel reworkLevel, LabEventType reworkStep) {
         super(labVesselPosition, labVesselComment);
         this.reworkReason = reason;
         this.reworkLevel = reworkLevel;
@@ -67,11 +68,11 @@ public class ReworkEntry extends RapSheetEntry {
         super(labVesselPosition, rapSheetComment);
     }
 
-    public ReworkReason getReworkReason() {
+    public ReworkReasonEnum getReworkReason() {
         return reworkReason;
     }
 
-    public void setReworkReason(ReworkReason reason) {
+    public void setReworkReason(ReworkReasonEnum reason) {
         this.reworkReason = reason;
     }
 
@@ -100,41 +101,15 @@ public class ReworkEntry extends RapSheetEntry {
     }
 
     /**
-     * The lab recognizes these types of rework. They refer to them as Type 1, 2 or 3. This will tell the lab
-     * what they need to rework and how it effects the rest of the batch.
-     */
-    public static enum ReworkLevel {
-        ONE_SAMPLE_HOLD_REST_BATCH("Type 1", "Rework one sample and hold up the rest of the batch."),
-        ONE_SAMPLE_RELEASE_REST_BATCH("Type 2", "Rework one sample let the rest of the batch proceed. "),
-        ENTIRE_BATCH("Type 3", "Rework all samples in the batch.");
-
-        private final String value;
-        private final String description;
-
-        private ReworkLevel(String value, String description) {
-            this.value = value;
-            this.description = description;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-    }
-
-    /**
      * Why the rework is happening. This list needs to be added to.
      */
-    public static enum ReworkReason {
+    public static enum ReworkReasonEnum {
         MACHINE_ERROR("Machine Error"),
         UNKNOWN_ERROR("Unknown Error");
 
         private final String value;
 
-        ReworkReason(String value) {
+        ReworkReasonEnum(String value) {
             this.value = value;
         }
 

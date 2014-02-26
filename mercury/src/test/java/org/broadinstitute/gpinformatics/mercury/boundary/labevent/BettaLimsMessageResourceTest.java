@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -210,15 +211,17 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Set<LabVessel> reworks = new HashSet<>();
         Iterator<Map.Entry<String, TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
-        reworkEjb.addAndValidateRework(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel()),
-                ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
+        reworkEjb.addAndValidateCandidates(
+                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
+                new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "Pico/Plating Bucket", "Test",
                 Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
         barcodeTubeEntry = iterator.next();
-        reworkEjb.addAndValidateRework(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel()),
-                ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "Test",
+        reworkEjb.addAndValidateCandidates(
+                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
+                new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "Pico/Plating Bucket", "Test",
                 Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
