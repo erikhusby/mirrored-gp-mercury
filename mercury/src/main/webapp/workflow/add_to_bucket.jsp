@@ -7,8 +7,12 @@
         <script type="text/javascript">
             $j(document).ready(function () {
 
-                toggleReworkComponents();
+                $j("#rework-reason-label").hide();
+                $j("#rework-reason-value").hide();
+                $j("#rework-comment-label").hide();
+                $j("#commentText").hide();
                 $j("#rework-reason-user-value").hide();
+//                $j("#rework_reason-user-label").hide();
 
                 $j('#vesselBarcode').change(function () {
                     var barcode = $j("#vesselBarcode").val();
@@ -31,18 +35,27 @@
                 $j("#rework-reason-value").change(function () {
                     if(this.value == -1) {
                         $j("#rework-reason-user-value").show();
+//                        $j("#rework_reason-user-label").show();
                     } else {
-                        $j("#rework-reason-user-value").show();
+                        $j("#rework-reason-user-value").hide();
+//                        $j("#rework_reason-user-label").hide();
                     }
                 });
             });
 
             function toggleReworkComponents() {
-                if($('.rework-checkbox:checked').length){
+                if($j('.rework-checkbox:checked').length){
                     $j("#rework-reason-label").show();
                     $j("#rework-reason-value").show();
                     $j("#rework-comment-label").show();
                     $j("#commentText").show();
+                    if( $j("#rework-reason-value").val() == -1) {
+                        $j("#rework-reason-user-value").show();
+//                        $j("#rework_reason-user-label").show();
+                    } else {
+                        $j("#rework-reason-user-value").hide();
+//                        $j("#rework_reason-user-label").hide();
+                    }
                 } else {
                     $j("#rework-reason-label").hide();
                     $j("#rework-reason-value").hide();
@@ -75,13 +88,10 @@
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="reworkReason" id="rework-reason-value">
-                        <stripes:options-enumeration
-                                enum="org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason"
-                                label="value"/>
-
                         <stripes:options-collection collection="${actionBean.getAllReworkReasons()}" value="reworkReasonId" label="reason" />
                         <stripes:option label="Other..." value="-1" />
                     </stripes:select>
+                    <%--<stripes:label for="rework-reason-user-value" id="rework_reason-user-label">User Defined Reason</stripes:label>--%>
                     <stripes:text name="userReworkReason" id="rework-reason-user-value" />
                 </div>
             </div>

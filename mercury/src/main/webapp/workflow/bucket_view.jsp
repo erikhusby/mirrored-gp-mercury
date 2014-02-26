@@ -211,7 +211,7 @@
                             ${entry.entryType.name}
                     </td>
                     <td>
-                            ${entry.reworkDetail.reworkReason.value}
+                            ${entry.reworkDetail.reason.reason}
                     </td>
                     <td>
                             ${entry.reworkDetail.comment}

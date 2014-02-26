@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -143,7 +142,9 @@ public class BucketEntryFixupTest extends Arquillian {
                         reworkReasonDao.flush();
                     }
                 }
-                entry.getReworkDetail().setReason(reason);
+                if (null == entry.getReworkDetail().getReason()) {
+                    entry.getReworkDetail().setReason(reason);
+                }
             }
         }
     }
@@ -152,13 +153,13 @@ public class BucketEntryFixupTest extends Arquillian {
     public void populateNewDefaultReworkReasons() throws Exception {
         final List<ReworkReason> reworkReasons = reworkReasonDao.findAll();
 
-        Set<String> newReasons = ImmutableSet.of("Low Quant", "User Error" ,"Product Upgrade");
+        Set<String> newReasons = ImmutableSet.of("Low Quant", "User Error", "Product Upgrade");
         Function<String, Boolean> reasonExistenceFunction = new Function<String, Boolean>() {
             @Override
             public Boolean apply(@Nullable String s) {
 
-                for(ReworkReason oldReason:reworkReasons) {
-                    if(oldReason.getReason().equals(s)) {
+                for (ReworkReason oldReason : reworkReasons) {
+                    if (oldReason.getReason().equals(s)) {
                         return Boolean.TRUE;
                     }
                 }
@@ -167,8 +168,8 @@ public class BucketEntryFixupTest extends Arquillian {
             }
         };
 
-        for(String newReason:newReasons) {
-            if(!reasonExistenceFunction.apply(newReason)) {
+        for (String newReason : newReasons) {
+            if (!reasonExistenceFunction.apply(newReason)) {
                 ReworkReason newReasonEntity = new ReworkReason(newReason);
                 reworkReasonDao.persist(newReasonEntity);
                 reworkReasonDao.flush();

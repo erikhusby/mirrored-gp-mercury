@@ -22,7 +22,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -97,19 +96,20 @@ public class AddReworkActionBean extends CoreActionBean {
      */
     @ValidationMethod(on = ADD_SAMPLE_ACTION)
     public void validateAddSampleInput() {
-        if(StringUtils.isEmpty(bucketName)) {
+        if (StringUtils.isEmpty(bucketName)) {
             addValidationError("bucketName", "Please select a bucket to add samples to");
         }
         if (CollectionUtils.isNotEmpty(selectedReworkVessels)) {
             if (reworkReason == null) {
                 addValidationError("reworkReason", "A reason is required for rework vessels");
             } else {
-                if(reworkReason == -1L && StringUtils.isBlank(userReworkReason)) {
-                    addValidationError("reworkReason", "When choosing other for a reason, you must enter an alternate reason");
+                if (reworkReason == -1L && StringUtils.isBlank(userReworkReason)) {
+                    addValidationError("reworkReason",
+                            "When choosing 'Other...' for a reason, you must enter an alternate reason");
                 }
             }
 
-            if(StringUtils.isEmpty(commentText)) {
+            if (StringUtils.isEmpty(commentText)) {
                 addValidationError("commentText", "A Comment is required for rework vessels");
             }
         }
@@ -119,8 +119,11 @@ public class AddReworkActionBean extends CoreActionBean {
     public Resolution addSample() {
 
         ReworkReason submittedReason;
-        if(reworkReason == -1L) {
-            submittedReason = new ReworkReason(userReworkReason);
+        if (reworkReason == -1L) {
+            submittedReason = reworkReasonDao.findByReason(userReworkReason.trim());
+            if (submittedReason == null) {
+                submittedReason = new ReworkReason(userReworkReason.trim());
+            }
         } else {
             submittedReason = reworkReasonDao.findById(reworkReason);
         }
