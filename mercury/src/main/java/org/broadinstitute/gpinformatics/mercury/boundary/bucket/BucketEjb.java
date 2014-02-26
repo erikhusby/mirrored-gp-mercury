@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -7,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -43,6 +45,9 @@ public class BucketEjb {
     private BucketDao bucketDao;
 
     private AthenaClientService athenaClientService;
+
+    @Inject
+    private BucketEntryDao bucketEntryDao;
 
     public BucketEjb() {
     }
@@ -221,6 +226,11 @@ public class BucketEjb {
         removeEntries(Collections.singletonList(bucketEntry), reason);
     }
 
+    public void removeEntriesByIds(@Nonnull Collection<Long> bucketEntryIds, String reason) {
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(new ArrayList<Long>(bucketEntryIds));
+        removeEntries(bucketEntries, reason);
+    }
+
     /** Removes entries from a bucket and gives the reason why. */
     private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries, String reason) {
         for (BucketEntry currEntry : bucketEntries) {
@@ -269,6 +279,7 @@ public class BucketEjb {
                 logger.error("Error attempting to create jira removal comment for " +
                              mapEntry.getKey() + " " +
                              mapEntry.getValue().size() + " samples.", ioe);
+                throw new RuntimeException(ioe.getMessage());
             }
         }
     }
@@ -284,4 +295,39 @@ public class BucketEjb {
         return bucket;
     }
 
+    /**
+     * Update the PDO for the provided {@link BucketEntry}(s)
+     * @param bucketEntries Collection of bucket entries to update
+     * @param newPdoValue new value for PDO
+     */
+    public void updateEntryPdo(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String newPdoValue) {
+        if (bucketEntries.isEmpty()) {
+            throw new RuntimeException("Empty list of bucket entries.");
+        }
+        boolean bucketsChanged = false;
+        // bin up the bucket entries by old pdoKey, in case they are different.
+        Map<String, List<BucketEntry>> pdoBucketMapNew = new HashMap<>();
+        List<BucketEntry> changedBuckets = new ArrayList<>(bucketEntries.size());
+        List<String> updatingList = new ArrayList<>(bucketEntries.size());
+        for (BucketEntry bucketEntry : bucketEntries) {
+            String originalPdo = bucketEntry.getPoBusinessKey();
+            // Do nothing unless we are actually changing something!
+            if (!newPdoValue.equals(originalPdo)) {
+                bucketsChanged = true;
+                if (pdoBucketMapNew.get(originalPdo) == null) {
+                    pdoBucketMapNew.put(originalPdo, new ArrayList<BucketEntry>());
+                }
+                bucketEntry.setPoBusinessKey(newPdoValue);
+                changedBuckets.add(bucketEntry);
+                updatingList.add(bucketEntry.getLabVessel().getLabel());
+                pdoBucketMapNew.get(originalPdo).add(bucketEntry);
+            }
+        }
+        logger.info(String.format("Changing PDO to %s for %d bucket entries (%s)", newPdoValue, updatingList.size(),
+                StringUtils.join(updatingList, ", ")));
+
+        if (bucketsChanged) {
+            bucketDao.persistAll(changedBuckets);
+        }
+    }
 }

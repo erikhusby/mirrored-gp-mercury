@@ -116,6 +116,28 @@ public class ReworkEjb {
     }
 
     /**
+     * Find candidate ProductOrderKeys for BucketEntryId
+     *
+     * @return SortedSet of ProductOrderKeys
+     */
+    public Set<String> findBucketCandidatePdos(List<Long> bucketEntryId) {
+        List<BucketEntry> foundEntries = bucketEntryDao.findByIds(bucketEntryId);
+        Set<String> productOrderKeys = new HashSet<>();
+        for (BucketEntry entry : foundEntries) {
+            String label = entry.getLabVessel().getLabel();
+            Collection<BucketCandidate> bucketCandidates = findBucketCandidates(label);
+            for (BucketCandidate bucketCandidate : bucketCandidates) {
+                productOrderKeys.add(bucketCandidate.getProductOrderKey());
+            }
+        }
+
+        if (productOrderKeys.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return productOrderKeys;
+    }
+
+    /**
      * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at
      * least have a single sample, a tube barcode, and a PDO. Multiple results for the same sample may be returned if
      * the sample is included in multiple PDOs.

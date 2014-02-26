@@ -1,15 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import org.testng.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.easymock.EasyMock;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
 import org.meanbean.test.ConfigurationBuilder;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Scott Matthews
@@ -61,4 +69,40 @@ public class BucketEntryDBFreeTest {
         tester.testBean(BucketEntry.class, configuration);
     }
 
+    public void testUpdatePdo(){
+        String bucketName = "Pico/Plating Bucket";
+        String productOrder1 = "PDO-1";
+        String productOrder2 = "PDO-2";
+        String twoDBarcode1 = "A1234567890";
+        String twoDBarcode2 = "A2345678901";
+
+        Bucket bucket = new Bucket(bucketName);
+        List<BucketEntry> bucketEntries = new ArrayList<>(2);
+        bucketEntries.add(new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), productOrder1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY));
+        Assert.assertEquals(bucketEntries.size(), 1);
+        Assert.assertNotNull(bucketEntries.iterator().next());
+
+        bucketEntries.add(new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), productOrder1, bucket,
+                BucketEntry.BucketEntryType.PDO_ENTRY));
+        Assert.assertEquals(bucketEntries.size(), 2);
+        Assert.assertNotNull(bucketEntries.iterator().next());
+
+        BucketEjb bucketEjb = new BucketEjb(
+                EasyMock.createNiceMock(LabEventFactory.class),
+                EasyMock.createNiceMock(JiraService.class),
+                EasyMock.createNiceMock(BucketDao.class),
+                EasyMock.createNiceMock(AthenaClientService.class));
+
+        for (BucketEntry bucketEntry : bucketEntries) {
+            Assert.assertEquals(bucketEntry.getPoBusinessKey(), productOrder1);
+        }
+
+        bucketEjb.updateEntryPdo(bucketEntries, productOrder2);
+
+        for (BucketEntry bucketEntry : bucketEntries) {
+            Assert.assertEquals(bucketEntry.getPoBusinessKey(), productOrder2);
+        }
+
+    }
 }

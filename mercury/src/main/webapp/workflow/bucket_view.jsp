@@ -1,9 +1,14 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
+
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
+    <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
         function submitBucket() {
             $j('#bucketForm').submit();
@@ -16,6 +21,48 @@
         }
 
         $j(document).ready(function () {
+            var columnsEditable=false;
+            <security:authorizeBlock roles="<%= roles(LabManager, PDM, PM, Developer) %>">
+                columnsEditable=true;
+            </security:authorizeBlock>
+
+            var editablePdo = function()  {
+                if (columnsEditable) {
+                    var oTable = $j('#bucketEntryView').dataTable();
+                    $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
+                        'loadurl': '${ctxpath}/view/bucketView.action?findPdo',
+                        'callback': function (sValue, y) {
+                            var aPos = oTable.fnGetPosition(this);
+                            oTable.fnUpdate(sValue, aPos[0], aPos[1]);
+                        },
+                        'submitdata': function (value, settings) {
+                            return {
+                                "selectedEntryIds": this.parentNode.getAttribute('id'),
+                                "column": oTable.fnGetPosition(this)[2],
+                                "newPdoValue": $j(this).find(':selected').text()
+                            };
+                        },
+                        'loaddata': function (value, settings) {
+
+                            return {
+                                "selectedEntryIds": this.parentNode.getAttribute('id')
+                            };
+                        },
+                        tooltip: 'Click the value in this field to edit',
+                        type: "select",
+                        indicator : '<img src="${ctxpath}/images/spinner.gif">',
+
+                        submit: "Save"
+                    });
+                    $j("th.editable").attr("title","Click the values in this column to edit their values.");
+                    if ($j("th.editable div").length == 0) {
+                        $j("th.editable").append('<div class="icon-pencil"></div>');
+                    }
+                } else {
+                    $j(".editable").removeClass("editable")
+                }
+            }
+
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
                 "aaSorting": [[1,'asc'], [7,'asc']],
@@ -33,7 +80,8 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true}
-                ]
+                ],
+                "fnDrawCallback": editablePdo
             });
 
             $j('.bucket-checkbox').enableCheckboxRangeSelection({
@@ -137,10 +185,11 @@
         </c:if>
         <div class="borderHeader"><h4>Samples</h4></div>
         <br/>
-
+        <ul><li>If you would like to change the value of a PDO for an item in the bucket, click on the value of the PDO in the table and select the new value.</li></ul>
         <div class="actionButtons">
             <stripes:submit name="createBatch" value="Create Batch" class="btn"/>
             <stripes:submit name="addToBatch" value="Add to Batch" class="btn"/>
+            <stripes:submit name="removeFromBucket" value="Remove From Bucket" class="btn"/>
         </div>
         <table id="bucketEntryView" class="table simple">
             <thead>
@@ -151,7 +200,7 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
-                <th width="50">PDO</th>
+                <th class="editable" style="width: 50; white-space: nowrap">PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
@@ -165,7 +214,7 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.collectiveEntries}" var="entry">
-                <tr>
+                <tr id="${entry.bucketEntryId}">
                     <td>
                         <stripes:checkbox class="bucket-checkbox" name="selectedEntryIds"
                                           value="${entry.bucketEntryId}"/>
@@ -186,9 +235,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td>
-                            ${entry.poBusinessKey}
-                    </td>
+                    <td class="editable" style="white-space: nowrap">${entry.poBusinessKey}</td>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
