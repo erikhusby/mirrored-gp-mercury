@@ -15,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -51,6 +52,8 @@ public class AddReworkActionBean extends CoreActionBean {
     private LabEventHandler labEventHandler;
     @Inject
     private WorkflowLoader workflowLoader;
+    @Inject
+    private ReworkReasonDao reworkReasonDao;
 
     private static final String FIND_VESSEL_ACTION = "viewVessel";
     private static final String VESSEL_INFO_ACTION = "vesselInfo";
@@ -77,7 +80,9 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private WorkflowBucketDef bucket;
 
-    private ReworkEntry.ReworkReasonEnum reworkReason;
+    private Long reworkReason;
+
+    private String userReworkReason;
 
     private String commentText;
 
@@ -98,6 +103,10 @@ public class AddReworkActionBean extends CoreActionBean {
         if (CollectionUtils.isNotEmpty(selectedReworkVessels)) {
             if (reworkReason == null) {
                 addValidationError("reworkReason", "A reason is required for rework vessels");
+            } else {
+                if(reworkReason == -1L && StringUtils.isBlank(userReworkReason)) {
+                    addValidationError("reworkReason", "When choosing other for a reason, you must enter an alternate reason");
+                }
             }
 
             if(StringUtils.isEmpty(commentText)) {
@@ -108,6 +117,13 @@ public class AddReworkActionBean extends CoreActionBean {
 
     @HandlesEvent(ADD_SAMPLE_ACTION)
     public Resolution addSample() {
+
+        ReworkReason submittedReason;
+        if(reworkReason == -1L) {
+            submittedReason = new ReworkReason(userReworkReason);
+        } else {
+            submittedReason = reworkReasonDao.findById(reworkReason);
+        }
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
         }
@@ -119,8 +135,9 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         try {
-            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, new ReworkReason(reworkReason.getValue()),
-                    commentText, getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
+            Collection<String> validationMessages =
+                    reworkEjb.addAndValidateCandidates(bucketCandidates, submittedReason, commentText,
+                            getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
@@ -192,6 +209,10 @@ public class AddReworkActionBean extends CoreActionBean {
         return new ForwardResolution(VESSEL_INFO_PAGE);
     }
 
+    public List<ReworkReason> getAllReworkReasons() {
+        return reworkReasonDao.findAll();
+    }
+
     public String getVesselLabel() {
         return vesselLabel;
     }
@@ -244,11 +265,11 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucket = bucket;
     }
 
-    public ReworkEntry.ReworkReasonEnum getReworkReason() {
+    public Long getReworkReason() {
         return reworkReason;
     }
 
-    public void setReworkReason(ReworkEntry.ReworkReasonEnum reworkReason) {
+    public void setReworkReason(Long reworkReason) {
         this.reworkReason = reworkReason;
     }
 
@@ -278,5 +299,13 @@ public class AddReworkActionBean extends CoreActionBean {
 
     public void setSelectedReworkVessels(Set<String> selectedReworkVessels) {
         this.selectedReworkVessels = selectedReworkVessels;
+    }
+
+    public String getUserReworkReason() {
+        return userReworkReason;
+    }
+
+    public void setUserReworkReason(String userReworkReason) {
+        this.userReworkReason = userReworkReason;
     }
 }

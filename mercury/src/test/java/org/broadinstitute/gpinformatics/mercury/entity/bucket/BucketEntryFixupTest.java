@@ -1,8 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -12,8 +16,13 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -23,6 +32,12 @@ public class BucketEntryFixupTest extends Arquillian {
 
     @Inject
     BucketDao bucketDao;
+
+    @Inject
+    BucketEntryDao bucketEntryDao;
+
+    @Inject
+    ReworkReasonDao reworkReasonDao;
 
     @Inject
     LabVesselDao labVesselDao;
@@ -70,7 +85,7 @@ public class BucketEntryFixupTest extends Arquillian {
         Bucket fixupBucket = bucketDao.findByName("Pico/Plating Bucket");
 
 
-        for(BucketEntry reworkEntry : fixupBucket.getReworkEntries()) {
+        for (BucketEntry reworkEntry : fixupBucket.getReworkEntries()) {
             reworkEntry.setStatus(BucketEntry.Status.Archived);
         }
     }
@@ -92,6 +107,7 @@ public class BucketEntryFixupTest extends Arquillian {
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
     }
+
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void remove0155694973FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
@@ -100,6 +116,7 @@ public class BucketEntryFixupTest extends Arquillian {
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
     }
+
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void remove0159876899FromPicoPlatingBucketGPLIM2503() {
         Bucket bucket = bucketDao.findByName("Pico/Plating Bucket");
@@ -108,4 +125,55 @@ public class BucketEntryFixupTest extends Arquillian {
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
     }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void populateNewReworkReasonFields() throws Exception {
+        List<BucketEntry> bucketEntries = bucketEntryDao.findListByList(BucketEntry.class, BucketEntry_.entryType,
+                Collections.singleton(BucketEntry.BucketEntryType.REWORK_ENTRY));
+
+        ReworkReason reason = null;
+        for (BucketEntry entry : bucketEntries) {
+            if (null != entry.getReworkDetail()) {
+                String oldReason = entry.getReworkDetail().getReworkReason().getValue();
+                if (null == reason || !(oldReason.equals(reason.getReason()))) {
+                    reason = reworkReasonDao.findByReason(oldReason);
+                    if (null == reason) {
+                        reason = new ReworkReason(oldReason);
+                        reworkReasonDao.persist(reason);
+                        reworkReasonDao.flush();
+                    }
+                }
+                entry.getReworkDetail().setReason(reason);
+            }
+        }
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    public void populateNewDefaultReworkReasons() throws Exception {
+        final List<ReworkReason> reworkReasons = reworkReasonDao.findAll();
+
+        Set<String> newReasons = ImmutableSet.of("Low Quant", "User Error" ,"Product Upgrade");
+        Function<String, Boolean> reasonExistenceFunction = new Function<String, Boolean>() {
+            @Override
+            public Boolean apply(@Nullable String s) {
+
+                for(ReworkReason oldReason:reworkReasons) {
+                    if(oldReason.getReason().equals(s)) {
+                        return Boolean.TRUE;
+                    }
+                }
+
+                return Boolean.FALSE;
+            }
+        };
+
+        for(String newReason:newReasons) {
+            if(!reasonExistenceFunction.apply(newReason)) {
+                ReworkReason newReasonEntity = new ReworkReason(newReason);
+                reworkReasonDao.persist(newReasonEntity);
+                reworkReasonDao.flush();
+            }
+        }
+    }
+
 }

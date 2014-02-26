@@ -39,6 +39,10 @@ public class ReworkReason {
         return reason;
     }
 
+    public Long getReworkReasonId() {
+        return reworkReasonId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

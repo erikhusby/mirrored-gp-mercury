@@ -8,6 +8,7 @@
             $j(document).ready(function () {
 
                 toggleReworkComponents();
+                $j("#rework-reason-user-value").hide();
 
                 $j('#vesselBarcode').change(function () {
                     var barcode = $j("#vesselBarcode").val();
@@ -25,6 +26,15 @@
 
                 // Invoke ajax request in the case that this is a redisplay of the page because of an error
                 $j('#vesselBarcode').change();
+
+
+                $j("#rework-reason-value").change(function () {
+                    if(this.value == -1) {
+                        $j("#rework-reason-user-value").show();
+                    } else {
+                        $j("#rework-reason-user-value").show();
+                    }
+                });
             });
 
             function toggleReworkComponents() {
@@ -68,7 +78,11 @@
                         <stripes:options-enumeration
                                 enum="org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason"
                                 label="value"/>
+
+                        <stripes:options-collection collection="${actionBean.getAllReworkReasons()}" value="reworkReasonId" label="reason" />
+                        <stripes:option label="Other..." value="-1" />
                     </stripes:select>
+                    <stripes:text name="userReworkReason" id="rework-reason-user-value" />
                 </div>
             </div>
             <div class="control-group">
