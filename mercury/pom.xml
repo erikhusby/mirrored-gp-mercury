@@ -1103,7 +1103,7 @@
                         <executions>
                             <execution>
                                 <id>Mercury</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1119,7 +1119,7 @@
                             </execution>
                             <execution>
                                 <id>Athena</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1159,7 +1159,7 @@
                         <executions>
                             <execution>
                                 <id>Apply Athena Grants</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <goals>
                                     <goal>execute</goal>
                                 </goals>
