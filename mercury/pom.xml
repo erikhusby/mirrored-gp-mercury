@@ -2210,12 +2210,6 @@
                         </goals>
                         <configuration>
                             <target>
-                                <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
-                                </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}"
                                            operation="="/>
