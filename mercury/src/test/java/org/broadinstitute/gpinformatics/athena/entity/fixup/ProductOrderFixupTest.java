@@ -467,27 +467,4 @@ public class ProductOrderFixupTest extends Arquillian {
 
         productOrderSampleDao.flush();
     }
-
-    /**
-     * finds all sample initiation PDOs in the system that have not been converted to use productOrderKitDetail and
-     * converts the detailed kit data to productOrderKitDetail entities
-     *
-     * @throws Exception
-     */
-    @Test(enabled = false)
-    public void convertSampleInitiationPDOsToTemplateFormat() throws Exception {
-        List<ProductOrder> sampleInitiationPDOs = productOrderDao.findSampleInitiationPDOsNotConverted();
-
-        for (ProductOrder order : sampleInitiationPDOs) {
-
-            Set<PostReceiveOption> postReceiveOptions =
-                    new HashSet<>(order.getProductOrderKit().getPostReceiveOptions());
-
-            order.getProductOrderKit().addKitOrderDetail(
-                    new ProductOrderKitDetail(order.getProductOrderKit().getNumberOfSamples(),
-                            order.getProductOrderKit().getKitType(), order.getProductOrderKit().getOrganismId(),
-                            order.getProductOrderKit().getMaterialInfo(), postReceiveOptions));
-        }
-        productOrderDao.persistAll(sampleInitiationPDOs);
-    }
 }

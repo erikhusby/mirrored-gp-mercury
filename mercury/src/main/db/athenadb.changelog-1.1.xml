@@ -642,18 +642,25 @@
         <dropColumn tableName="product_order_kit_aud" schemaName="athena" columnName="material_bsp_name" />
     </changeSet>
 
-    <changeSet author="scottmat" id="GPLIM-2502-9">
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="pdo_kit_post_receive_opt" schemaName="athena" />
+    <changeSet id="GPLIM-2502-9" author="scottmat">
+        <preConditions>
+            <foreignKeyConstraintExists foreignKeyName="PDOKIT_POST_REC_OPT" schemaName="athena" foreignKeyTableName="PDO_KIT_POST_RECEIVE_OPT" />
         </preConditions>
-        <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT" schemaName="athena" cascadeConstraints="true" />
+        <dropForeignKeyConstraint baseTableName="PDO_KIT_POST_RECEIVE_OPT" baseTableSchemaName="athena" constraintName="PDOKIT_POST_REC_OPT" />
     </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-2502-10">
         <preConditions onFail="MARK_RAN">
+            <tableExists tableName="pdo_kit_post_receive_opt" schemaName="athena" />
+        </preConditions>
+        <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT" schemaName="athena" />
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2502-11">
+        <preConditions onFail="MARK_RAN">
             <tableExists tableName="pdo_kit_post_receive_opt_aud" schemaName="athena" />
         </preConditions>
-        <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena" cascadeConstraints="true" />
+        <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena" />
     </changeSet>
 
 </databaseChangeLog>
