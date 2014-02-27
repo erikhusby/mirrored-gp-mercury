@@ -12,7 +12,6 @@
                 $j("#rework-comment-label").hide();
                 $j("#commentText").hide();
                 $j("#rework-reason-user-value").hide();
-//                $j("#rework_reason-user-label").hide();
 
                 $j('#vesselBarcode').change(function () {
                     var barcode = $j("#vesselBarcode").val();
@@ -35,10 +34,8 @@
                 $j("#rework-reason-value").change(function () {
                     if(this.value == -1) {
                         $j("#rework-reason-user-value").show();
-//                        $j("#rework_reason-user-label").show();
                     } else {
                         $j("#rework-reason-user-value").hide();
-//                        $j("#rework_reason-user-label").hide();
                     }
                 });
             });
@@ -51,10 +48,8 @@
                     $j("#commentText").show();
                     if( $j("#rework-reason-value").val() == -1) {
                         $j("#rework-reason-user-value").show();
-//                        $j("#rework_reason-user-label").show();
                     } else {
                         $j("#rework-reason-user-value").hide();
-//                        $j("#rework_reason-user-label").hide();
                     }
                 } else {
                     $j("#rework-reason-label").hide();
@@ -91,7 +86,6 @@
                         <stripes:options-collection collection="${actionBean.getAllReworkReasons()}" value="reworkReasonId" label="reason" />
                         <stripes:option label="Other..." value="-1" />
                     </stripes:select>
-                    <%--<stripes:label for="rework-reason-user-value" id="rework_reason-user-label">User Defined Reason</stripes:label>--%>
                     <stripes:text name="userReworkReason" id="rework-reason-user-value" />
                 </div>
             </div>
@@ -103,7 +97,6 @@
                     <stripes:textarea name="commentText" id="commentText"/>
                 </div>
             </div>
-            <%--<stripes:hidden name="bucketName"  />--%>
             <div class="control-group">
                 <div class="controls">
                     <stripes:submit name="addSample" value="Add Sample To Bucket" class="btn btn-primary"/>
