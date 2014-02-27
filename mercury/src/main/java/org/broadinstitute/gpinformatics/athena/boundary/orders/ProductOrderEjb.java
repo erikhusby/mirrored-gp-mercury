@@ -264,7 +264,6 @@ public class ProductOrderEjb {
      * <li>set aliquot to passed in aliquot, persist data, and return the sample found</li>
      * </ol>
      */
-    @Nonnull
     @DaoFree
     protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
             throws Exception {
@@ -285,16 +284,28 @@ public class ProductOrderEjb {
             throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
         }
 
+        boolean foundStock = false;
         for (ProductOrderSample sample : order.getSamples()) {
-            if (sample.getName().equals(sampleName) && sample.getAliquotId() == null) {
-                sample.setAliquotId(aliquotId);
-                return sample;
+            if (sample.getName().equals(sampleName)) {
+                foundStock = true;
+                if (sample.getAliquotId() == null) {
+                    sample.setAliquotId(aliquotId);
+                    return sample;
+                }
             }
         }
 
+        /*
+         * As long as a stock sample was found, then this is likely just rework or adding coverage. In this case, we can
+         * actually ignore this aliquot because Picard will send Mercury identical metrics for each aliquot for the
+         * aggregated sample, including one that matches the aliquot already saved on the PDO sample.
+         */
+        if (foundStock) {
+            return null;
+        }
+
         throw new Exception(
-                MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, all" +
-                                     " samples have been assigned aliquots already.",
+                MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, no matching sample in PDO.",
                         order.getBusinessKey(), sampleName, aliquotId));
     }
 
@@ -344,10 +355,15 @@ public class ProductOrderEjb {
         }
 
         ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
-
-        // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
-        if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
-            sample.autoBillSample(completedDate, 1);
+        if (sample == null) {
+            log.info(MessageFormat.format(
+                    "Could not bill PDO {0}, Aliquot {1}, all samples have been assigned aliquots already. This is likely rework or added coverage",
+                    order.getBusinessKey(), aliquotId));
+        } else {
+            // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
+            if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
+                sample.autoBillSample(completedDate, 1);
+            }
         }
 
         return true;

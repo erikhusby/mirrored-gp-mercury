@@ -48,15 +48,35 @@ public class ProductOrderEjbTest {
                 public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(final Collection<String> sampleIDs,
                                                                                 BSPSampleSearchColumn... resultColumns) {
                     // For this test case, both aliquots map to the same sample.
-                    return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
-                        add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
-                            put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
-                            put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
-                            put(BSPSampleSearchColumn.SAMPLE_ID, sampleIDs.iterator().next());
-                        }});
-                    }};
+                    final String sampleId = sampleIDs.iterator().next();
+                    if (sampleId.equals(ALIQUOT_ID_1) || sampleId.equals(ALIQUOT_ID_2)) {
+                        return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
+                            add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                                put(BSPSampleSearchColumn.STOCK_SAMPLE, STOCK_ID);
+                                put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
+                            }});
+                        }};
+                    } else {
+                        return new ArrayList<Map<BSPSampleSearchColumn, String>>() {{
+                            add(new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
+                                put(BSPSampleSearchColumn.STOCK_SAMPLE, sampleId);
+                                put(BSPSampleSearchColumn.SAMPLE_ID, sampleId);
+                            }});
+                        }};
+                    }
                 }
             }), null);
+
+    public void testMapAliquotIdToSampleInvalid() {
+        ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);
+        try {
+            productOrderEjb.mapAliquotIdToSample(order, "SM-BLAH");
+            Assert.fail("Exception should be thrown");
+        } catch (Exception e) {
+            // Error is expected.
+            Assert.assertTrue(e.getMessage().contains(order.getBusinessKey()));
+        }
+    }
 
     public void testMapAliquotIdToSampleOne() throws Exception {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);
@@ -76,13 +96,8 @@ public class ProductOrderEjbTest {
         Assert.assertNotNull(sample);
         Assert.assertEquals(sample.getAliquotId(), ALIQUOT_ID_1);
 
-        // Try to map another aliquot, should get an exception.
-        try {
-            sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_2);
-            Assert.fail("Exception should be thrown");
-        } catch (Exception e) {
-            // Error is expected.
-        }
+        sample = productOrderEjb.mapAliquotIdToSample(order, ALIQUOT_ID_2);
+        Assert.assertNull(sample);
     }
 
     public void testMapAliquotToSampleTwo() throws Exception {
