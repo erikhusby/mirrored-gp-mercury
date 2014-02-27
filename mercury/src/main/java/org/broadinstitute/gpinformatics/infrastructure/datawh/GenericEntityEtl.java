@@ -181,13 +181,12 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                          Collection<Long> addedEntityIds,
                          Collection<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs,
                          String etlDateStr) {
-
-        processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
-
-        int count = writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
-
-        postEtlLogging();
-        return count;
+        try {
+            processFixups(deletedEntityIds, modifiedEntityIds, etlDateStr);
+            return writeRecords(deletedEntityIds, modifiedEntityIds, addedEntityIds, revInfoPairs, etlDateStr);
+        } finally {
+            postEtlLogging();
+        }
     }
 
     /**
@@ -233,13 +232,13 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                 dataSourceDeletedIds.clear();
             }
 
-            int count = writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
+            return writeRecords(dataSourceEntities, dataSourceDeletedIds, etlDateStr);
 
-            postEtlLogging();
-            return count;
         } catch (RuntimeException e) {
             logger.error(getClass().getSimpleName() + " ETL failed", e);
             return 0;
+        } finally {
+            postEtlLogging();
         }
     }
 
@@ -383,16 +382,22 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                     for (String record : records) {
                         dataFile.write(record);
                     }
-                } catch (RuntimeException e) {
-                    if (errorException == null) {
-                        errorException = e;
+                } catch (Exception e) {
+                    // Continues ETL and logs data-specific Mercury exceptions.  Re-throws systemic exceptions
+                    // such as when BSP is down in order to stop this run of ETL.
+                    if (e.getCause() == null || e.getCause().getClass().getName().contains("broadinstitute")) {
+                        if (errorException == null) {
+                            errorException = e;
+                        }
+                        errorIds.add(entityId);
+                    } else {
+                        throw new RuntimeException(e);
                     }
-                    errorIds.add(entityId);
                 }
             }
 
         } catch (IOException e) {
-            logger.error("Error while writing " + dataFile.getFilename(), e);
+            throw new RuntimeException("Error while writing " + dataFile.getFilename(), e);
 
         } finally {
             dataFile.close();
@@ -424,17 +429,23 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
                         for (String record : dataRecords(etlDateStr, false, entity)) {
                             dataFile.write(record);
                         }
-                    } catch (RuntimeException e) {
-                        if (errorException == null) {
-                            errorException = e;
+                    } catch (Exception e) {
+                        // Continues ETL and logs data-specific Mercury exceptions.  Re-throws systemic exceptions
+                        // such as when BSP is down in order to stop this run of ETL.
+                        if (e.getCause() == null || e.getCause().getClass().getName().contains("broadinstitute")) {
+                            if (errorException == null) {
+                                errorException = e;
+                            }
+                            errorIds.add(dataSourceEntityId(entity));
+                        } else {
+                            throw new RuntimeException(e);
                         }
-                        errorIds.add(dataSourceEntityId(entity));
                     }
                 }
             }
 
         } catch (IOException e) {
-            logger.error("Error while writing file " + dataFile.getFilename(), e);
+            throw new RuntimeException("Error while writing " + dataFile.getFilename(), e);
 
         } finally {
             dataFile.close();
@@ -611,9 +622,11 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      * Tells ETL class to do per-run logging, at the end of the run.
      */
     protected void postEtlLogging() {
-        if (errorIds.size() > 0) {
-            logger.info("ETL failed on " + getClass().getSimpleName() + " for ids " +
-                        StringUtils.join(errorIds, ", "), errorException);
+        if (errorException != null) {
+            logger.info("ETL failed on " + getClass().getSimpleName() +
+                        (errorIds.size() > 0 ? " for ids " + StringUtils.join(errorIds, ", ") : ""), errorException);
+            errorException = null;
+            errorIds.clear();
         }
     }
 }

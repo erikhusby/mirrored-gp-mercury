@@ -1,17 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.cenqua.clover.reporters.json.JSONArray;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -19,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -33,9 +37,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 @UrlBinding(value = "/view/bucketView.action?{$event}")
 public class BucketViewActionBean extends CoreActionBean {
@@ -62,6 +69,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
     private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
     private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
+    private static final String CHANGE_PDO = "changePdo";
+    private static final String FIND_PDO = "findPdo";
 
     @Inject
     private WorkflowLoader workflowLoader;
@@ -73,6 +82,10 @@ public class BucketViewActionBean extends CoreActionBean {
     private LabBatchEjb labBatchEjb;
     @Inject
     private BucketEjb bucketEjb;
+    @Inject
+    private ReworkEjb reworkEjb;
+    @Inject
+    private ProductOrderEjb productOrderEjb;
     @Inject
     private UserBean userBean;
     @Inject
@@ -98,6 +111,9 @@ public class BucketViewActionBean extends CoreActionBean {
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
+    private String selectedPdo;
+    private List<ProductOrder> availablePdos;
+
     private List<Long> selectedEntryIds = new ArrayList<>();
     private List<ProductWorkflowDef> possibleWorkflows;
 
@@ -300,7 +316,12 @@ public class BucketViewActionBean extends CoreActionBean {
             addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
             viewBucket();
         }
+    }
+
+    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
+    public void batchValidation() {
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("selectedEntryIds", "At least one item must be selected.");
             addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
             viewBucket();
         }
@@ -320,6 +341,11 @@ public class BucketViewActionBean extends CoreActionBean {
         if (selectedBucket != null) {
             // Sets the workflow selection list for this bucket.
             possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+            if (possibleWorkflows.size() == 1) {
+                setSelectedWorkflowDef(possibleWorkflows.get(0));
+                return viewBucket();
+            }
+
         }
         return view();
     }
@@ -485,6 +511,16 @@ public class BucketViewActionBean extends CoreActionBean {
         return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
     }
 
+    public Set<String> findPotentialPdos() {
+        // Use a TreeSet so it can returned sorted;
+        Set<String> productOrderKeys = new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
+
+        if (productOrderKeys.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return productOrderKeys;
+    }
+
     private void separateEntriesByType() {
         // Iterate through the selected entries and separate the pdo entries from rework entries.
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
@@ -500,4 +536,18 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(FIND_PDO)
+    public Resolution findPdoForVessel() throws JSONException {
+        JSONArray pdoArray = new JSONArray(findPotentialPdos());
+        return new StreamingResolution("text", new StringReader(pdoArray.toString()));
+    }
+
+    @HandlesEvent(CHANGE_PDO)
+    public Resolution changePdo() throws JSONException {
+        String newPdoValue=getContext().getRequest().getParameter("newPdoValue");
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
+
+        return new StreamingResolution("text", newPdoValue);
+    }
 }
