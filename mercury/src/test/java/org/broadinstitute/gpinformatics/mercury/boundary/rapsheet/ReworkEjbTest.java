@@ -1290,4 +1290,32 @@ public class ReworkEjbTest extends Arquillian {
                     + " Not found in the list of rework entry barcodes");
         }
     }
+
+    public void testFindPotentialPdos() throws Exception {
+        createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst13");
+
+        List<Long> bucketEntryIds = new ArrayList<>();
+
+        for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
+            List<BucketEntry> bucketEntries = new ArrayList<>();
+            bucketEntries.add(pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
+                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucketEntries.add(pBucket.addEntry(exExProductOrder2.getBusinessKey(),
+                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
+                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucketDao.persist(pBucket);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                bucketEntryIds.add(bucketEntry.getBucketEntryId());
+            }
+
+        }
+
+
+        Set<String> bucketCandidatePdos =
+                reworkEjb.findBucketCandidatePdos(bucketEntryIds);
+        Assert.assertFalse(bucketCandidatePdos.isEmpty());
+        Assert.assertEquals(bucketCandidatePdos.size(), 2);
+    }
+
 }
