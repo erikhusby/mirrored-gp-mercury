@@ -40,6 +40,7 @@ public class ReworkDetail {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Deprecated
     private ReworkEntry.ReworkReasonEnum reworkReason = ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
@@ -85,6 +86,7 @@ public class ReworkDetail {
         bucketEntries.remove(bucketEntry);
     }
 
+    @Deprecated
     public ReworkEntry.ReworkReasonEnum getReworkReason() {
         return reworkReason;
     }
