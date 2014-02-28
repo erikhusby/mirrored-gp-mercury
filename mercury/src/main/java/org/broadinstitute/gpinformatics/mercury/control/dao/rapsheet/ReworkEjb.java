@@ -417,6 +417,7 @@ public class ReworkEjb {
     }
 
     // TODO: Only called from BatchToJiraTest. Can that be modified to use a method that is used by application code?
+    @Deprecated
     public void addReworkToBatch(@Nonnull LabBatch batch, @Nonnull String labVesselBarcode, String userName)
             throws ValidationException {
         BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode);

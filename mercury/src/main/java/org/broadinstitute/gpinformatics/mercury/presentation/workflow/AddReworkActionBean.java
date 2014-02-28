@@ -41,16 +41,22 @@ import java.util.Set;
 @UrlBinding(value = "/workflow/AddToBucket.action")
 public class AddReworkActionBean extends CoreActionBean {
 
+    public static final long OTHER_REASON_REFERENCE = -1L;
     @Inject
     private LabVesselDao labVesselDao;
+
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
     @Inject
     private ReworkEjb reworkEjb;
+
     @Inject
     private LabEventHandler labEventHandler;
+
     @Inject
     private WorkflowLoader workflowLoader;
+
     @Inject
     private ReworkReasonDao reworkReasonDao;
 
@@ -103,7 +109,7 @@ public class AddReworkActionBean extends CoreActionBean {
             if (reworkReason == null) {
                 addValidationError("reworkReason", "A reason is required for rework vessels");
             } else {
-                if (reworkReason == -1L && StringUtils.isBlank(userReworkReason)) {
+                if (reworkReason == OTHER_REASON_REFERENCE && StringUtils.isBlank(userReworkReason)) {
                     addValidationError("reworkReason",
                             "When choosing 'Other...' for a reason, you must enter an alternate reason");
                 }
@@ -119,7 +125,7 @@ public class AddReworkActionBean extends CoreActionBean {
     public Resolution addSample() {
 
         ReworkReason submittedReason;
-        if (reworkReason == -1L) {
+        if (reworkReason == OTHER_REASON_REFERENCE) {
             submittedReason = reworkReasonDao.findByReason(userReworkReason.trim());
             if (submittedReason == null) {
                 submittedReason = new ReworkReason(userReworkReason.trim());
