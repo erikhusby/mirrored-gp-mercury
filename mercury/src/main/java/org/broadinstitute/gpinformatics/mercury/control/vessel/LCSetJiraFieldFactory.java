@@ -102,6 +102,22 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     }
 
     /**
+     * Returns the unique list of sample names referenced by the given collection of vessels.
+     */
+    private static Set<String> getUniqueSampleNames(Collection<LabVessel> labVessels) {
+        Set<String> sampleNames = new HashSet<>();
+        for (LabVessel labVessel : labVessels) {
+            Collection<String> sampleNamesForVessel = labVessel.getSampleNames();
+            if (sampleNamesForVessel.size() > 1) {
+                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
+                                           + " because we're expecting only a single sample within the vessel.");
+            }
+            sampleNames.addAll(labVessel.getSampleNames());
+        }
+        return sampleNames;
+    }
+
+    /**
      * Takes the initial samples and the rework samples
      * from the batch and builds a string to display
      * on the batch ticket
@@ -114,29 +130,12 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         StringBuilder samplesText = new StringBuilder();
         Set<String> newSamples = new HashSet<>();
         Set<String> reworkSamples = new HashSet<>();
-        for (LabVessel labVessel : labBatch.getNonReworkStartingLabVessels()) {
-            Collection<String> samplesNamesForVessel = labVessel.getSampleNames();
-            if (samplesNamesForVessel.size() > 1) {
-                throw new RuntimeException("Cannot build samples list for " + labVessel.getLabel()
-                                           + " because we're expecting only a single sample within the vessel.");
-            }
-            newSamples.addAll(labVessel.getSampleNames());
-        }
+        newSamples.addAll(getUniqueSampleNames(labBatch.getNonReworkStartingLabVessels()));
+        reworkSamples.addAll(getUniqueSampleNames(labBatch.getReworks()));
 
-        if (!labBatch.getReworks().isEmpty()) {
-            for (LabVessel reworkVessel : labBatch.getReworks()) {
-                Collection<String> samplesNamesForVessel = reworkVessel.getSampleNames();
-                if (samplesNamesForVessel.size() > 1) {
-                    throw new RuntimeException("Cannot build samples list for " + reworkVessel.getLabel()
-                                               + " because we're expecting only a single sample within the vessel.");
-                }
-                reworkSamples.addAll(samplesNamesForVessel);
-            }
-        }
+        samplesText.append(StringUtils.join(newSamples, "\n"));
+        samplesText.append("\n");
 
-        for (String newSample : newSamples) {
-            samplesText.append(newSample).append("\n");
-        }
         if (!reworkSamples.isEmpty()) {
             samplesText.append("\n");
             for (String reworkSample : reworkSamples) {

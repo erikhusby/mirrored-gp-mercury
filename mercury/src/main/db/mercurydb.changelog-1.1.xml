@@ -406,4 +406,63 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-2485-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_reason" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <createTable tableName="rework_reason">
+            <column name="rework_reason_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey tableName="rework_reason" schemaName="mercury" columnNames="rework_reason_id"/>
+        <createIndex tableName="rework_reason" indexName="IDX_rework_reason_value" schemaName="mercury" unique="true">
+            <column name="reason" />
+        </createIndex>
+        <createSequence sequenceName="SEQ_REWORK_REASON" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="scottmat" id="GPLIM-2485-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rework_reason_aud" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <createTable tableName="rework_reason_aud">
+            <column name="rework_reason_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="varchar(255)" />
+            <column name="rev" type="number(19,0)" />
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey tableName="rework_reason_aud" schemaName="mercury" columnNames="rework_reason_id, rev"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2485-3" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="rework_detail" columnName="user_defined_reason" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="rework_detail" schemaName="mercury">
+            <column name="user_defined_reason" type="number(19,0)" />
+        </addColumn>
+        <createIndex tableName="rework_detail" indexName="IDX_REWORK_DETAIL_REASON" schemaName="mercury">
+            <column name="user_defined_reason" />
+        </createIndex>
+    </changeSet>
+    <changeSet id="GPLIM-2485-4" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="rework_detail_aud" columnName="user_defined_reason" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="rework_detail_aud" schemaName="mercury">
+            <column name="user_defined_reason" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

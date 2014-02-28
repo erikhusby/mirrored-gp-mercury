@@ -891,7 +891,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.8:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.4:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -1103,7 +1103,7 @@
                         <executions>
                             <execution>
                                 <id>Mercury</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1119,7 +1119,7 @@
                             </execution>
                             <execution>
                                 <id>Athena</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1159,7 +1159,7 @@
                         <executions>
                             <execution>
                                 <id>Apply Athena Grants</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <goals>
                                     <goal>execute</goal>
                                 </goals>
@@ -2210,12 +2210,6 @@
                         </goals>
                         <configuration>
                             <target>
-                                <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
-                                </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}"
                                            operation="="/>

@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
@@ -24,18 +23,19 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessa
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -157,6 +157,9 @@ public class ReworkEjbTest extends Arquillian {
 
     @Inject
     private LabBatchEjb labBatchEJB;
+
+    @Inject
+    private ReworkReasonDao reworkReasonDao;
 
 
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
@@ -504,7 +507,7 @@ public class ReworkEjbTest extends Arquillian {
         mapBarcodeToTube.clear();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPath() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
@@ -514,10 +517,12 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            reworkEjb.addAndValidateRework(
-                    bucketCandidate,
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework", Workflow.AGILENT_EXOME_EXPRESS,
-                    "scottmat");
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            reworkEjb.addAndValidateCandidates(Collections.singleton(
+                    bucketCandidate),
+                    unknownReason, "test Rework", "scottmat",
+                    Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
         }
 
         bucketDao.clear();
@@ -807,7 +812,8 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -818,10 +824,14 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "test Rework",
-                            Workflow.AGILENT_EXOME_EXPRESS, "jowalsh"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason,
+                            "test Rework", "jowalsh",
+                            Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -836,19 +846,24 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testAddAndValidateReworksHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
 
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
         for (String barcode : mapBarcodeToTube.keySet()) {
-            ReworkEjb.BucketCandidate candidate = new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
+            ReworkEjb.BucketCandidate candidate =
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
         }
+        ReworkReason unknownReason =
+                reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
         Collection<String> validationMessages = reworkEjb
-                .addAndValidateCandidates(bucketCandidates, ReworkEntry.ReworkReason.UNKNOWN_ERROR, "test Rework",
+                .addAndValidateCandidates(bucketCandidates,
+                        unknownReason, "test Rework",
                         "jowalsh", Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
@@ -858,7 +873,8 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithValidationPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -876,10 +892,12 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            validationMessages.addAll(reworkEjb.addAndValidateRework(
-                    bucketCandidate,
-                    ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                    Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(
+                    bucketCandidate),
+                    unknownReason, "", "scottmat",
+                    Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -916,10 +934,12 @@ public class ReworkEjbTest extends Arquillian {
                 ReworkEjb.BucketCandidate bucketCandidate =
                         new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
                 bucketCandidate.setReworkItem(true);
-                reworkEjb.addAndValidateRework(
-                        bucketCandidate,
-                        ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                        Workflow.AGILENT_EXOME_EXPRESS, "scottmat");
+                ReworkReason unknownReason =
+                        reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+                reworkEjb.addAndValidateCandidates(Collections.singleton(
+                        bucketCandidate),
+                        unknownReason, "", "scottmat",
+                        Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
         } catch (ValidationException e) {
@@ -931,7 +951,8 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithAncestorValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst9");
@@ -951,10 +972,13 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason, "", "scottmat",
+                            Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -978,7 +1002,8 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidation() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -989,10 +1014,13 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason, "", "scottmat",
+                            Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1006,7 +1034,8 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestors() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1026,10 +1055,12 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason, "", "scottmat", Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1053,7 +1084,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1082,10 +1113,12 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason, "", "scottmat",
+                            Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1109,7 +1142,8 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1139,10 +1173,13 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            ReworkReason unknownReason =
+                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
             validationMessages.addAll(reworkEjb
-                    .addAndValidateRework(bucketCandidate,
-                            ReworkEntry.ReworkReason.UNKNOWN_ERROR, "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                            unknownReason, "", "scottmat",
+                            Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1286,4 +1323,32 @@ public class ReworkEjbTest extends Arquillian {
                     + " Not found in the list of rework entry barcodes");
         }
     }
+
+    public void testFindPotentialPdos() throws Exception {
+        createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst13");
+
+        List<Long> bucketEntryIds = new ArrayList<>();
+
+        for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
+            List<BucketEntry> bucketEntries = new ArrayList<>();
+            bucketEntries.add(pBucket.addEntry(exExProductOrder1.getBusinessKey(),
+                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
+                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucketEntries.add(pBucket.addEntry(exExProductOrder2.getBusinessKey(),
+                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
+                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucketDao.persist(pBucket);
+            for (BucketEntry bucketEntry : bucketEntries) {
+                bucketEntryIds.add(bucketEntry.getBucketEntryId());
+            }
+
+        }
+
+
+        Set<String> bucketCandidatePdos =
+                reworkEjb.findBucketCandidatePdos(bucketEntryIds);
+        Assert.assertFalse(bucketCandidatePdos.isEmpty());
+        Assert.assertEquals(bucketCandidatePdos.size(), 2);
+    }
+
 }
