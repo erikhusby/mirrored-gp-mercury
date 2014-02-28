@@ -517,8 +517,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             reworkEjb.addAndValidateCandidates(Collections.singleton(
                     bucketCandidate),
                     unknownReason, "test Rework", "scottmat",
@@ -824,8 +824,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason,
@@ -859,8 +859,8 @@ public class ReworkEjbTest extends Arquillian {
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
         }
-        ReworkReason unknownReason =
-                reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+        String unknownReason =
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
         Collection<String> validationMessages = reworkEjb
                 .addAndValidateCandidates(bucketCandidates,
                         unknownReason, "test Rework",
@@ -892,8 +892,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(
                     bucketCandidate),
                     unknownReason, "", "scottmat",
@@ -934,8 +934,8 @@ public class ReworkEjbTest extends Arquillian {
                 ReworkEjb.BucketCandidate bucketCandidate =
                         new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
                 bucketCandidate.setReworkItem(true);
-                ReworkReason unknownReason =
-                        reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+                String unknownReason =
+                        ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
                 reworkEjb.addAndValidateCandidates(Collections.singleton(
                         bucketCandidate),
                         unknownReason, "", "scottmat",
@@ -972,8 +972,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason, "", "scottmat",
@@ -1014,8 +1014,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason, "", "scottmat",
@@ -1055,8 +1055,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason, "", "scottmat", Workflow.AGILENT_EXOME_EXPRESS,
@@ -1113,8 +1113,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason, "", "scottmat",
@@ -1173,8 +1173,8 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
-            ReworkReason unknownReason =
-                    reworkReasonDao.findByReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
                             unknownReason, "", "scottmat",

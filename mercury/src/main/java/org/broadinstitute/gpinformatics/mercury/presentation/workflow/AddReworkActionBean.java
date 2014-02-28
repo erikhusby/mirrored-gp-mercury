@@ -41,7 +41,7 @@ import java.util.Set;
 @UrlBinding(value = "/workflow/AddToBucket.action")
 public class AddReworkActionBean extends CoreActionBean {
 
-    public static final long OTHER_REASON_REFERENCE = -1L;
+    public static final String OTHER_REASON_REFERENCE = "Other...";
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -85,7 +85,7 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private WorkflowBucketDef bucket;
 
-    private Long reworkReason;
+    private String reworkReason;
 
     private String userReworkReason;
 
@@ -109,7 +109,7 @@ public class AddReworkActionBean extends CoreActionBean {
             if (reworkReason == null) {
                 addValidationError("reworkReason", "A reason is required for rework vessels");
             } else {
-                if (reworkReason == OTHER_REASON_REFERENCE && StringUtils.isBlank(userReworkReason)) {
+                if (reworkReason.equals(OTHER_REASON_REFERENCE) && StringUtils.isBlank(userReworkReason)) {
                     addValidationError("reworkReason",
                             "When choosing 'Other...' for a reason, you must enter an alternate reason");
                 }
@@ -124,14 +124,11 @@ public class AddReworkActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLE_ACTION)
     public Resolution addSample() {
 
-        ReworkReason submittedReason;
-        if (reworkReason == OTHER_REASON_REFERENCE) {
-            submittedReason = reworkReasonDao.findByReason(userReworkReason.trim());
-            if (submittedReason == null) {
-                submittedReason = new ReworkReason(userReworkReason.trim());
-            }
+        String submittedReason;
+        if (reworkReason.equals(OTHER_REASON_REFERENCE)) {
+            submittedReason = userReworkReason.trim();
         } else {
-            submittedReason = reworkReasonDao.findById(reworkReason);
+            submittedReason = reworkReason;
         }
         if (getBuckets().isEmpty()) {
             addValidationError("vesselLabel", "{2} is not in a bucket.", vesselLabel);
@@ -274,11 +271,11 @@ public class AddReworkActionBean extends CoreActionBean {
         this.bucket = bucket;
     }
 
-    public Long getReworkReason() {
+    public String getReworkReason() {
         return reworkReason;
     }
 
-    public void setReworkReason(Long reworkReason) {
+    public void setReworkReason(String reworkReason) {
         this.reworkReason = reworkReason;
     }
 

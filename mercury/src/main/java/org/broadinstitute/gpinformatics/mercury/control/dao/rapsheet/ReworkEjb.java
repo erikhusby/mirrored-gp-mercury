@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -103,6 +104,9 @@ public class ReworkEjb {
 
     @Inject
     private WorkflowLoader workflowLoader;
+
+    @Inject
+    private ReworkReasonDao reworkReasonDao;
 
     /**
      * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at
@@ -253,7 +257,7 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    public LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
+    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
                                   ReworkReason reworkReason, LabEventType reworkFromStep,
                                   @Nonnull Bucket bucket, String comment, @Nonnull String userName,
                                   boolean reworkCandidate)
@@ -292,6 +296,7 @@ public class ReworkEjb {
      * Validate and add a group of reworks to the specified bucket. This is the primary entry point for clients, e.g.
      * action beans.
      *
+     *
      * @param bucketCandidates tubes/samples/PDOs that are to be reworked
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
@@ -305,16 +310,20 @@ public class ReworkEjb {
      *                             method to continue
      */
     public Collection<String> addAndValidateCandidates(@Nonnull Collection<BucketCandidate> bucketCandidates,
-                                                       @Nonnull ReworkReason reworkReason,
+                                                       @Nonnull String reworkReason,
                                                        @Nonnull String comment, @Nonnull String userName,
                                                        @Nonnull Workflow workflow, @Nonnull String bucketName)
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
+        ReworkReason reason = reworkReasonDao.findByReason(reworkReason);
+        if(reason ==null) {
+            reason = new ReworkReason(reworkReason);
+        }
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
                 validationMessages.addAll(
-                        addAndValidateBucketCandidate(bucketCandidate, reworkReason, bucket, comment, workflow,
+                        addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment, workflow,
                                 userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);

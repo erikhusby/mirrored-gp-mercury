@@ -84,8 +84,8 @@
                 <div class="controls">
                     <stripes:select name="reworkReason" id="rework-reason-value">
                         <stripes:options-collection collection="${actionBean.getAllReworkReasons()}"
-                                                    value="reworkReasonId" label="reason"/>
-                        <stripes:option label="Other..." value="-1"/>
+                                                    value="reason" label="reason"/>
+                        <stripes:option label="Other..." value="Other..."/>
                     </stripes:select>
                     <stripes:text name="userReworkReason" id="rework-reason-user-value"/>
                 </div>
