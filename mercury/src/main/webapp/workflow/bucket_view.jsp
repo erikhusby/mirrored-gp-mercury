@@ -8,6 +8,14 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
+    <style type="text/css">
+        td.editable span:not(.editable-icon) {
+            outline:grey dotted 1px;
+            margin-right: 5px;
+            line-height: 78px;
+            padding: 3px;
+        }
+    </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
         function submitBucket() {
@@ -55,12 +63,22 @@
                     });
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
                     if ($j("th.editable div").length == 0) {
-                        $j("th.editable").append('<div class="icon-pencil"></div>');
+                        $j("th.editable").append('<span class="icon-pencil"></span>');
+                        $j("td.editable span").after('<span style="display: none;" class="editable-icon icon-pencil"></span>');
                     }
                 } else {
                     $j(".editable").removeClass("editable")
+                    $j(".editable").removeClass("editable-icon")
                 }
-            }
+            };
+
+            $j("td.editable").mouseover( function () {
+                $j(this).find(".editable-icon").show();
+            });
+
+            $j("td.editable").mouseout( function () {
+                $j(this).find(".editable-icon").hide();
+            });
 
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
@@ -199,7 +217,7 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
-                <th class="editable" style="width: 50; white-space: nowrap">PDO</th>
+                <th class="editable">PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
@@ -234,11 +252,11 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable" style="white-space: nowrap">${entry.poBusinessKey}</td>
+                    <td class="editable"><span>${entry.poBusinessKey}</span>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
-                    <td>
+                    <td class="ellipsis">
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
                     </td>
                     <td>
@@ -249,7 +267,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
                     </td>
-                    <td>
+                    <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                     <td>
