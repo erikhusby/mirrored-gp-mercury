@@ -51,8 +51,7 @@
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-
-                        submit: "Save"
+                        submit: '<button class="updatePdoSave">Save</button>'
                     });
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
                     if ($j("th.editable div").length == 0) {
