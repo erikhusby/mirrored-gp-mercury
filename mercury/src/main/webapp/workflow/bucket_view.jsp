@@ -9,9 +9,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
-        td.editable span:not(.editable-icon) {
-            outline:grey dotted 1px;
-            margin-right: 5px;
+        td.editable span {
             line-height: 78px;
             padding: 3px;
         }
@@ -34,7 +32,7 @@
                 columnsEditable=true;
             </security:authorizeBlock>
 
-            var editablePdo = function()  {
+                var editablePdo = function()  {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').dataTable();
                     $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
@@ -59,26 +57,16 @@
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-                        submit: '<button class="updatePdoSave">Save</button>'
+                        submit: '<input type="submit" value="Save" class="updatePdoSave"/>'
                     });
+                    $j(".icon-pencil").show();
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
-                    if ($j("th.editable div").length == 0) {
-                        $j("th.editable").append('<span class="icon-pencil"></span>');
-                        $j("td.editable span").after('<span style="display: none;" class="editable-icon icon-pencil"></span>');
-                    }
                 } else {
+                    $j(".icon-pencil").hide();
                     $j(".editable").removeClass("editable")
-                    $j(".editable").removeClass("editable-icon")
                 }
+
             };
-
-            $j("td.editable").mouseover( function () {
-                $j(this).find(".editable-icon").show();
-            });
-
-            $j("td.editable").mouseout( function () {
-                $j(this).find(".editable-icon").hide();
-            });
 
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
@@ -252,7 +240,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable"><span>${entry.poBusinessKey}</span>
+                    <td class="editable"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
