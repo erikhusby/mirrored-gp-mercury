@@ -23,12 +23,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -63,10 +66,10 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private PriceListCache priceListCache;
 
-    private static String FAILING_PRICE_ITEM_NAME = "";
-    private static String FAILING_PRICE_ITEM_SAMPLE = "";
     public static final String SM_1234 = "SM-1234";
     public static final String SM_5678 = "SM-5678";
+    private static String FAILING_PRICE_ITEM_NAME = "";
+    private static String FAILING_PRICE_ITEM_SAMPLE = "";
 
     private static int quoteCount;
     private static int totalItems;
@@ -84,7 +87,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * expect.
      */
     @Alternative
-    private static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
+    protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
+
+        private static final long serialVersionUID = 6093273925949722169L;
 
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
@@ -349,54 +354,5 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-    }
-
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-    public void testMultipleThreadFailure() throws Exception {
-
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
-
-        cycleFails = false;
-
-        quoteCount = 0;
-        totalItems = sampleNameList.length;
-
-        /*log.debug*/System.out.println("Building Billing session from samples");
-        final BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
-        final int threadExecutionCount = 2;
-
-        Callable<List<BillingEjb.BillingResult>> billingTask = new Callable<List<BillingEjb.BillingResult>>() {
-            @Override
-            public List<BillingEjb.BillingResult> call() throws Exception {
-                Thread.sleep(1000);
-                return billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
-            }
-        };
-
-        /*log.debug*/System.out.println("Creating copies of tasks");
-        List<Callable<List<BillingEjb.BillingResult>>> tasks = Collections.nCopies(threadExecutionCount, billingTask);
-
-        /*log.debug*/System.out.println("creating Executors for pool of threads");
-        ExecutorService executorService = Executors.newFixedThreadPool(threadExecutionCount);
-
-        /*log.debug*/System.out.println("Invoking all thread processes");
-        List<Future<List<BillingEjb.BillingResult>>> futures = executorService.invokeAll(tasks);
-        /*log.debug*/System.out.println("Threads should be complete");
-//        List<BillingEjb.BillingResult> failingResults = new ArrayList<>(sampleNameList.length);
-//        List<BillingEjb.BillingResult> passingResults = new ArrayList<>(sampleNameList.length);
-        for (Future<List<BillingEjb.BillingResult>> futureItem : futures) {
-            futureItem.get();
-//            for (BillingEjb.BillingResult billingResult : futureItem.get()) {
-//                if (billingResult.isError()) {
-//                    failingResults.add(billingResult);
-//                } else {
-//                    passingResults.add(billingResult);
-//                }
-//            }
-        }
-//
-//        assertThat(failingResults.size(), is(equalTo(sampleNameList.length)));
-//        assertThat(passingResults.size(), is(equalTo(sampleNameList.length)));
     }
 }
