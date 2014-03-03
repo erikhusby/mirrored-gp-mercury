@@ -202,7 +202,8 @@
         <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
         @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
 
-        <mercury.rc.ip>must be specified.</mercury.rc.ip>
+        <!-- Switching MercuryRC to use the MercuryQA datbase. -->
+        <!--<mercury.rc.ip>@192.168.195.28</mercury.rc.ip>-->
 
         <umlgraph.path>must be specified</umlgraph.path>
 
@@ -1025,16 +1026,20 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@gpinfqa:1521:gpinfqa</database.url>
+                <mercury.password>mercury_qa</mercury.password>
+                <athena.password>athena_qa</athena.password>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
-                <database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
+                <!--<database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>-->
+                <!--<mercury.password>guest</mercury.password>-->
+                <!--<athena.password>guest</athena.password>-->
             </properties>
             <build>
                 <testResources>
                     <testResource>
                         <directory>src/test/resources-rc</directory>
-                        <filtering>true</filtering>
+                        <!--<filtering>true</filtering>-->
                     </testResource>
                 </testResources>
             </build>
@@ -1098,7 +1103,7 @@
                         <executions>
                             <execution>
                                 <id>Mercury</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/mercurydb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1114,7 +1119,7 @@
                             </execution>
                             <execution>
                                 <id>Athena</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <configuration>
                                     <changeLogFile>src/main/db/athenadb.changelog-master.xml</changeLogFile>
                                     <driver>${database.driver}</driver>
@@ -1154,7 +1159,7 @@
                         <executions>
                             <execution>
                                 <id>Apply Athena Grants</id>
-                                <phase>process-resources</phase>
+                                <phase>initialize</phase>
                                 <goals>
                                     <goal>execute</goal>
                                 </goals>
@@ -1587,7 +1592,7 @@
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-            <version>1.3.47</version>
+            <version>1.3.49</version>
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
             <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -2205,12 +2210,6 @@
                         </goals>
                         <configuration>
                             <target>
-                                <propertyfile file="${pom.basedir}/target/version.properties">
-                                    <entry key="project.version" type="string" value="${project.version}"
-                                           operation="="/>
-                                    <entry key="build.buildTimeStamp" type="string" value="${build.buildTimeStamp}"
-                                           operation="="/>
-                                </propertyfile>
                                 <propertyfile file="${pom.basedir}/target/classes/build.properties">
                                     <entry key="build.resultKey" type="string" value="${build.resultKey}"
                                            operation="="/>

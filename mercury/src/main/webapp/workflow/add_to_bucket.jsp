@@ -7,7 +7,11 @@
         <script type="text/javascript">
             $j(document).ready(function () {
 
-                toggleReworkComponents();
+                $j("#rework-reason-label").hide();
+                $j("#rework-reason-value").hide();
+                $j("#rework-comment-label").hide();
+                $j("#commentText").hide();
+                $j("#rework-reason-user-value").hide();
 
                 $j('#vesselBarcode').change(function () {
                     var barcode = $j("#vesselBarcode").val();
@@ -15,24 +19,38 @@
                         $j('#vesselInfo').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                         $j.ajax({
                             type: "POST",
-                            url:"${ctxpath}/workflow/AddToBucket.action?vesselInfo=",
+                            url: "${ctxpath}/workflow/AddToBucket.action?vesselInfo=",
                             data: { vesselLabel: barcode },
-                            dataType:'html',
-                            success:updateDetails
+                            dataType: 'html',
+                            success: updateDetails
                         });
                     }
                 });
 
                 // Invoke ajax request in the case that this is a redisplay of the page because of an error
                 $j('#vesselBarcode').change();
+
+
+                $j("#rework-reason-value").change(function () {
+                    if (this.value == -1) {
+                        $j("#rework-reason-user-value").show();
+                    } else {
+                        $j("#rework-reason-user-value").hide();
+                    }
+                });
             });
 
             function toggleReworkComponents() {
-                if($('.rework-checkbox:checked').length){
+                if ($j('.rework-checkbox:checked').length) {
                     $j("#rework-reason-label").show();
                     $j("#rework-reason-value").show();
                     $j("#rework-comment-label").show();
                     $j("#commentText").show();
+                    if ($j("#rework-reason-value").val() == -1) {
+                        $j("#rework-reason-user-value").show();
+                    } else {
+                        $j("#rework-reason-user-value").hide();
+                    }
                 } else {
                     $j("#rework-reason-label").hide();
                     $j("#rework-reason-value").hide();
@@ -57,7 +75,7 @@
                     <stripes:textarea id="vesselBarcode" name="vesselLabel" rows="3" cols="16"/>
                 </div>
             </div>
-            <!-- FIXME SGM:  Move the definition of the vessel_info JSP to here instead of making it an Ajax insert -->
+            <!-- FIXME SGM: Move the definition of the vessel_info JSP to here instead of making it an Ajax insert -->
             <div id="vesselInfo"></div>
             <div class="control-group">
                 <stripes:label for="reworkReason" class="control-label" id="rework-reason-label">
@@ -65,10 +83,11 @@
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="reworkReason" id="rework-reason-value">
-                        <stripes:options-enumeration
-                                enum="org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry.ReworkReason"
-                                label="value"/>
+                        <stripes:options-collection collection="${actionBean.getAllReworkReasons()}"
+                                                    value="reason" label="reason"/>
+                        <stripes:option label="Other..." value="Other..."/>
                     </stripes:select>
+                    <stripes:text name="userReworkReason" id="rework-reason-user-value"/>
                 </div>
             </div>
             <div class="control-group">
@@ -79,7 +98,6 @@
                     <stripes:textarea name="commentText" id="commentText"/>
                 </div>
             </div>
-            <%--<stripes:hidden name="bucketName"  />--%>
             <div class="control-group">
                 <div class="controls">
                     <stripes:submit name="addSample" value="Add Sample To Bucket" class="btn btn-primary"/>

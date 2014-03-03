@@ -357,6 +357,7 @@ public class ProductOrderActionBeanTest {
         String testQuote = "SomeQuote";
         return new Object[][]{
                 {ProductOrderActionBean.SAVE_ACTION, null, "", true, "Saving any order should succeed."},
+                {ProductOrderActionBean.SAVE_ACTION, "", "", true, "Saving any order should succeed."},
                 {ProductOrderActionBean.PLACE_ORDER, null, "", false, "No Quote and No reason should fail."},
                 {ProductOrderActionBean.SAVE_ACTION, null, testReason, true, "Saving any order should succeed."},
                 {ProductOrderActionBean.PLACE_ORDER, null, testReason, true, "No Quote but with reason should succeed."},

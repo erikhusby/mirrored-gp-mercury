@@ -45,6 +45,8 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidat
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -851,7 +853,7 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.addLabVessel(reworkTube);
             drainBucket(shearingBucket);
             reworkTube.getBucketEntries().iterator().next().setReworkDetail(new ReworkDetail(
-                    ReworkEntry.ReworkReason.MACHINE_ERROR, ReworkEntry.ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
+                    new ReworkReason(ReworkEntry.ReworkReasonEnum.MACHINE_ERROR.getValue()), ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
                     LabEventType.SHEARING_TRANSFER, "test", null));
 
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =

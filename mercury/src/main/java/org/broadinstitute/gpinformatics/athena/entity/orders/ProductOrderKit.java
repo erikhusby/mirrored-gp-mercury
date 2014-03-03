@@ -46,54 +46,18 @@ public class ProductOrderKit implements Serializable {
     @Column(name="product_order_kit_id", unique=true, nullable=false)
     private Long productOrderKitId;
 
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Column(name = "number_samples")
-    @Deprecated
-    private Long numberOfSamples;
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Enumerated(EnumType.STRING)
-    @Column(name = "kit_type")
-    @Deprecated
-    private KitType kitType;
-
     @Column(name = "sample_collection_id")
     private Long sampleCollectionId;
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Column(name = "organism_id")
-    @Deprecated
-    private Long organismId;
 
     @Column(name = "site_id")
     private Long siteId;
 
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Column(name = "material_bsp_name")
-    @Deprecated
-    private String bspMaterialName;
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
             orphanRemoval = true)
     @BatchSize(size = 500)
     private final Set<ProductOrderKitPerson> notificationPeople = new HashSet<>();
 
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @ElementCollection(fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    @CollectionTable(schema = "athena", name="PDO_KIT_POST_RECEIVE_OPT", joinColumns = {@JoinColumn(name="PRODUCT_ORDER_KIT_ID")})
-    @Deprecated
-    private final Set<PostReceiveOption> postReceiveOptions = new HashSet<>();
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
@@ -134,50 +98,6 @@ public class ProductOrderKit implements Serializable {
         this.productOrderKitId = productOrderKitId;
     }
 
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public Long getNumberOfSamples() {
-        return numberOfSamples;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public void setNumberOfSamples(Long numberOfSamples) {
-        this.numberOfSamples = numberOfSamples;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public KitType getKitType() {
-        return kitType;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public void setKitType(KitType kitType) {
-        this.kitType = kitType;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public String getKitTypeDisplayName() {
-        if (getKitType() == null) {
-            return null;
-        }
-
-        return getKitType().getDisplayName();
-    }
-
     public Long getSampleCollectionId() {
         return sampleCollectionId;
     }
@@ -194,16 +114,6 @@ public class ProductOrderKit implements Serializable {
         sampleCollectionName = s;
     }
 
-    @Deprecated
-    public Long getOrganismId() {
-        return organismId;
-    }
-
-    @Deprecated
-    public void setOrganismId(Long organismId) {
-        this.organismId = organismId;
-    }
-
     public Long getSiteId() {
         return siteId;
     }
@@ -218,38 +128,6 @@ public class ProductOrderKit implements Serializable {
 
     public void setSiteName(String s) {
         siteName = s;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public MaterialInfoDto getMaterialInfo() {
-        return new MaterialInfoDto(kitType.getKitName(), bspMaterialName);
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public void setMaterialInfo(MaterialInfoDto MaterialInfoDto) {
-        bspMaterialName = MaterialInfoDto != null ? MaterialInfoDto.getBspName() : null;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public String getBspMaterialName() {
-        return bspMaterialName;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public void setBspMaterialName(String bspMaterialName) {
-        this.bspMaterialName = bspMaterialName;
     }
 
     public Long[] getNotificationIds() {
@@ -276,36 +154,6 @@ public class ProductOrderKit implements Serializable {
 
     public String getWorkRequestId() {
         return workRequestId;
-    }
-
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public Set<PostReceiveOption> getPostReceiveOptions() {
-        return postReceiveOptions;
-    }
-
-    /**
-     * Return a string representation of this kit's PostReceive options
-     *
-     * @param delimiter characters used to join list values
-     */
-    // TODO SGM:  REMOVE:  This field is moving to product order kit detail.  Will be removed after the next release
-    // since a fixup test is required to convert existing product order kit information to use productOrderKitDetail
-    // entities
-    @Deprecated
-    public String getPostReceivedOptionsAsString(@Nonnull String delimiter) {
-        if (getPostReceiveOptions().isEmpty()){
-            return "No Post-Received Options selected.";
-        }
-
-        List<String> options=new ArrayList<>(postReceiveOptions.size());
-        for (PostReceiveOption postReceiveOption :postReceiveOptions) {
-            options.add(postReceiveOption.getText());
-        }
-
-        return StringUtils.join(options, delimiter);
     }
 
     public String getComments() {

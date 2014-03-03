@@ -1,23 +1,28 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
+import com.cenqua.clover.reporters.json.JSONArray;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -32,9 +37,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,14 +53,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 @UrlBinding(value = "/view/bucketView.action?{$event}")
 public class BucketViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/bucket_view.jsp";
-    public static final String ADD_TO_BATCH_ACTION = "addToBatch";
+    private static final String ADD_TO_BATCH_ACTION = "addToBatch";
     private static final String CONFIRMATION_PAGE = "/workflow/rework_confirmation.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/batch/batch_confirm.jsp";
+    private static final String EXISTING_TICKET = "existingTicket";
+    private static final String NEW_TICKET = "newTicket";
+    private static final String CREATE_BATCH_ACTION = "createBatch";
+    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
+    private static final String REMOVE_FROM_BUCKET_ACTION = "removeFromBucket";
+    private static final String REMOVE_FROM_BUCKET_CONFIRM_PAGE = "/workflow/remove_from_bucket_confirm.jsp";
+    private static final String CONFIRM_REMOVE_FROM_BUCKET_ACTION = "confirmRemoveFromBucket";
+    private static final String CHANGE_PDO = "changePdo";
+    private static final String FIND_PDO = "findPdo";
 
     @Inject
     private WorkflowLoader workflowLoader;
@@ -64,16 +81,17 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
+    private BucketEjb bucketEjb;
+    @Inject
+    private ReworkEjb reworkEjb;
+    @Inject
+    private ProductOrderEjb productOrderEjb;
+    @Inject
     private UserBean userBean;
     @Inject
     private LabBatchDao labBatchDao;
     @Inject
     private BucketEntryDao bucketEntryDao;
-
-    public static final String EXISTING_TICKET = "existingTicket";
-    public static final String NEW_TICKET = "newTicket";
-    public static final String CREATE_BATCH_ACTION = "createBatch";
-    private static final String REWORK_CONFIRMED_ACTION = "reworkConfirmed";
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION, "viewBucket"})
     private String selectedBucket;
@@ -93,6 +111,9 @@ public class BucketViewActionBean extends CoreActionBean {
     private final Map<String, List<ProductWorkflowDef>> mapBucketToWorkflowDefs = new HashMap<>();
 
     private List<BucketEntry> selectedEntries = new ArrayList<>();
+    private String selectedPdo;
+    private List<ProductOrder> availablePdos;
+
     private List<Long> selectedEntryIds = new ArrayList<>();
     private List<ProductWorkflowDef> possibleWorkflows;
 
@@ -103,6 +124,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
+    private String vesselRemovalReason;
 
     public LabBatch getBatch() {
         return batch;
@@ -234,6 +256,14 @@ public class BucketViewActionBean extends CoreActionBean {
         return reworkEntryIds;
     }
 
+    public String getVesselRemovalReason() {
+        return vesselRemovalReason;
+    }
+
+    public void setVesselRemovalReason(String vesselRemovalReason) {
+        this.vesselRemovalReason = vesselRemovalReason;
+    }
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         WorkflowConfig workflowConfig = workflowLoader.load();
@@ -286,8 +316,22 @@ public class BucketViewActionBean extends CoreActionBean {
             addValidationError("selectedLcset", "You must provide an LCSET to add to a batch.");
             viewBucket();
         }
+    }
+
+    @ValidationMethod(on = {ADD_TO_BATCH_ACTION})
+    public void batchValidation() {
         if (CollectionUtils.isEmpty(selectedEntryIds)) {
-            addValidationError("selectedReworks", "At least one rework must be selected to add to the batch.");
+            addValidationError("selectedEntryIds", "At least one item must be selected.");
+            addValidationError("bucketEntryView", "At least one sample must be selected to add to the batch.");
+            viewBucket();
+        }
+    }
+
+    @ValidationMethod(on = REMOVE_FROM_BUCKET_ACTION)
+    public void removeSampleFromBucketValidation() {
+
+        if (CollectionUtils.isEmpty(selectedEntryIds)) {
+            addValidationError("bucketEntryView", "At least one sample must be selected to remove from the bucket.");
             viewBucket();
         }
     }
@@ -297,6 +341,11 @@ public class BucketViewActionBean extends CoreActionBean {
         if (selectedBucket != null) {
             // Sets the workflow selection list for this bucket.
             possibleWorkflows = mapBucketToWorkflowDefs.get(selectedBucket);
+            if (possibleWorkflows.size() == 1) {
+                setSelectedWorkflowDef(possibleWorkflows.get(0));
+                return viewBucket();
+            }
+
         }
         return view();
     }
@@ -384,10 +433,8 @@ public class BucketViewActionBean extends CoreActionBean {
             selectedLcset = "LCSET-" + selectedLcset;
         }
         batch = labBatchDao.findByBusinessKey(selectedLcset);
-        selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
         separateEntriesByType();
     }
-
 
     // Returns the workflow name for entries in the batch.
     private Set<String> getWorkflowNames() {
@@ -444,6 +491,36 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
+    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION )
+    public Resolution removeFromBucket() {
+
+        separateEntriesByType();
+
+        return new ForwardResolution(REMOVE_FROM_BUCKET_CONFIRM_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_REMOVE_FROM_BUCKET_ACTION)
+    public Resolution confirmRemoveFromBucket() {
+        separateEntriesByType();
+
+        bucketEjb.removeEntriesByIds(selectedEntryIds, vesselRemovalReason);
+
+        addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
+                bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
+
+        return new RedirectResolution(BucketViewActionBean.class, VIEW_ACTION);
+    }
+
+    public Set<String> findPotentialPdos() {
+        // Use a TreeSet so it can returned sorted;
+        Set<String> productOrderKeys = new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
+
+        if (productOrderKeys.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return productOrderKeys;
+    }
+
     private void separateEntriesByType() {
         // Iterate through the selected entries and separate the pdo entries from rework entries.
         selectedEntries = bucketEntryDao.findByIds(selectedEntryIds);
@@ -459,4 +536,18 @@ public class BucketViewActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent(FIND_PDO)
+    public Resolution findPdoForVessel() throws JSONException {
+        JSONArray pdoArray = new JSONArray(findPotentialPdos());
+        return new StreamingResolution("text", new StringReader(pdoArray.toString()));
+    }
+
+    @HandlesEvent(CHANGE_PDO)
+    public Resolution changePdo() throws JSONException {
+        String newPdoValue=getContext().getRequest().getParameter("newPdoValue");
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
+        bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
+
+        return new StreamingResolution("text", newPdoValue);
+    }
 }

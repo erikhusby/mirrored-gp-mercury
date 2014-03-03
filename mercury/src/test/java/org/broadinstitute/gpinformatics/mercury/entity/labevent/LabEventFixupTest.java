@@ -217,4 +217,15 @@ public class LabEventFixupTest extends Arquillian {
 
         labEventDao.flush();
     }
+
+    // Undoes a BSP export to mercury
+    @Test(enabled = false)
+    public void fixupGplim2535() {
+        for (long labEventId = 384504; labEventId <= 384598; ++labEventId) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, labEventId);
+            if (labEvent != null) {
+                labEventDao.remove(labEvent);
+            }
+        }
+    }
 }
