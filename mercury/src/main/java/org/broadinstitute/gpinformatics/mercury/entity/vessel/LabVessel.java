@@ -1600,7 +1600,7 @@ public abstract class LabVessel implements Serializable {
      * @return The names
      */
     public Collection<String> getSampleNames() {
-        List<String> sampleNames = new ArrayList<>();
+        Set<String> sampleNames = new HashSet<>();
         for (SampleInstance sampleInstance : getSampleInstances()) {
             MercurySample sample = sampleInstance.getStartingSample();
             if (sample != null) {

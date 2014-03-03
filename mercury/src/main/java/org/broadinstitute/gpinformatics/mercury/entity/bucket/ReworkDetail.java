@@ -40,11 +40,16 @@ public class ReworkDetail {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReworkEntry.ReworkReason reworkReason;
+    @Deprecated
+    private ReworkEntry.ReworkReasonEnum reworkReason = ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name="user_defined_reason")
+    private ReworkReason reason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ReworkEntry.ReworkLevel reworkLevel;
+    private ReworkLevel reworkLevel;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -60,9 +65,9 @@ public class ReworkDetail {
     /** For JPA. */
     protected ReworkDetail() {}
 
-    public ReworkDetail(ReworkEntry.ReworkReason reworkReason, ReworkEntry.ReworkLevel reworkLevel,
+    public ReworkDetail(ReworkReason reason, ReworkLevel reworkLevel,
                         LabEventType reworkStep, String comment, LabEvent addToReworkBucketEvent) {
-        this.reworkReason = reworkReason;
+        this.reason = reason;
         this.reworkLevel = reworkLevel;
         this.reworkStep = reworkStep;
         this.comment = comment;
@@ -81,11 +86,12 @@ public class ReworkDetail {
         bucketEntries.remove(bucketEntry);
     }
 
-    public ReworkEntry.ReworkReason getReworkReason() {
+    @Deprecated
+    public ReworkEntry.ReworkReasonEnum getReworkReason() {
         return reworkReason;
     }
 
-    public ReworkEntry.ReworkLevel getReworkLevel() {
+    public ReworkLevel getReworkLevel() {
         return reworkLevel;
     }
 
@@ -99,5 +105,13 @@ public class ReworkDetail {
 
     public LabEvent getAddToReworkBucketEvent() {
         return addToReworkBucketEvent;
+    }
+
+    public ReworkReason getReason() {
+        return reason;
+    }
+
+    public void setReason(ReworkReason reason) {
+        this.reason = reason;
     }
 }

@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -58,7 +58,7 @@ import java.util.concurrent.Semaphore;
  * and that is why it's handled manually.
  */
 
-@ApplicationScoped
+@RequestScoped
 public class ExtractTransform implements Serializable {
     private static final long serialVersionUID = 20130517L;
     /**
@@ -334,7 +334,7 @@ public class ExtractTransform implements Serializable {
 
                     if (revsAndDate.left.size() < revs.size()) {
                         log.debug("ETL run will only process " + revsAndDate.left.size() + " of the "
-                                + revs.size() + " changes");
+                                  + revs.size() + " changes");
                     } else {
                         log.debug("Incremental ETL found " + revs.size() + " changes");
                     }
@@ -350,10 +350,11 @@ public class ExtractTransform implements Serializable {
                     }
                     count.add(0, recordCount);
                     date.add(0, actualEtlDateStr);
-
                 }
             });
 
+        } catch (Exception e) {
+            log.error("Error during ETL: ", e);
         } finally {
             mutex.release();
         }
@@ -443,15 +444,19 @@ public class ExtractTransform implements Serializable {
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
             @Override
             public void apply() {
-                int recordCount = 0;
-                // The one of these that matches the entityClass will make ETL records, others are no-ops.
-                String etlDateStr = formatTimestamp(new Date());
+                try {
+                    int recordCount = 0;
+                    // The one of these that matches the entityClass will make ETL records, others are no-ops.
+                    String etlDateStr = formatTimestamp(new Date());
 
-                for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
-                    recordCount += etlInstance.doEtl(finalEntityClass, startId, finalEndId, etlDateStr);
+                    for (GenericEntityEtl<?, ?> etlInstance : etlInstances) {
+                        recordCount += etlInstance.doEtl(finalEntityClass, startId, finalEndId, etlDateStr);
+                    }
+                    count.add(recordCount);
+                    date.add(etlDateStr);
+                } catch (Exception e) {
+                    log.error("Error during ETL: ", e);
                 }
-                count.add(recordCount);
-                date.add(etlDateStr);
             }
         });
         String msg = null;
