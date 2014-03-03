@@ -18,9 +18,26 @@ import java.util.Map;
 @Audited
 @Table(name= "WORK_COMPLETE_MESSAGE", schema = "athena")
 public class WorkCompleteMessage {
+
+    /**
+     * Base properties that all messages are expected to have.
+     */
     public enum Properties {
-        PDO_NAME, ALIQUOT_ID, COMPLETED_TIME, PF_READS, PF_ALIGNED_GB, PF_READS_ALIGNED_IN_PAIRS,
-        PCT_TARGET_BASES_20X
+        PDO_NAME, ALIQUOT_ID, COMPLETED_TIME
+    }
+
+    /**
+     * Aggregation metrics sent in messages from Picard.
+     */
+    public enum PicardAggregationMetrics {
+        PF_ALIGNED_GB, PF_READS_ALIGNED_IN_PAIRS, PCT_TARGET_BASES_20X, PF_READS
+    }
+
+    /**
+     * Sample receipt and related properties sent in messages from BSP.
+     */
+    public enum BSPReceiptProperties {
+        RECEIPT_DATE, METADATA_UPLOAD_DATE
     }
 
     protected WorkCompleteMessage() {
@@ -97,24 +114,35 @@ public class WorkCompleteMessage {
         this.processDate = processDate;
     }
 
+    // Picard Aggregation Metrics
+
     public BigInteger getPfReads() {
-        return getBigIntegerPropertyValue(Properties.PF_READS);
+        return getBigIntegerPropertyValue(data.get(PicardAggregationMetrics.PF_READS));
     }
 
     public BigInteger getAlignedGb() {
-        return getBigIntegerPropertyValue(Properties.PF_ALIGNED_GB);
+        return getBigIntegerPropertyValue(data.get(PicardAggregationMetrics.PF_ALIGNED_GB));
     }
 
     public BigInteger getPfReadsAlignedInPairs() {
-        return getBigIntegerPropertyValue(Properties.PF_READS_ALIGNED_IN_PAIRS);
+        return getBigIntegerPropertyValue(data.get(PicardAggregationMetrics.PF_READS_ALIGNED_IN_PAIRS));
     }
 
     public Double getPercentCoverageAt20X() {
-        return getDoublePropertyValue(Properties.PCT_TARGET_BASES_20X);
+        return getDoublePropertyValue(data.get(PicardAggregationMetrics.PCT_TARGET_BASES_20X));
     }
 
-    private BigInteger getBigIntegerPropertyValue(Properties property) {
-        MessageDataValue messageDataValue = data.get(property.name());
+    // BSP Receipt Properties
+
+    public Date getReceiptDate() {
+        return getDatePropertyValue(data.get(BSPReceiptProperties.RECEIPT_DATE));
+    }
+
+    public Date getMetadataUploadDate() {
+        return getDatePropertyValue(data.get(BSPReceiptProperties.METADATA_UPLOAD_DATE));
+    }
+
+    private BigInteger getBigIntegerPropertyValue(MessageDataValue messageDataValue) {
         if (messageDataValue != null) {
             String value = messageDataValue.getValue();
             if (!StringUtils.isEmpty(value)) {
@@ -124,12 +152,21 @@ public class WorkCompleteMessage {
         return null;
     }
 
-    private Double getDoublePropertyValue(Properties property) {
-        MessageDataValue messageDataValue = data.get(property.name());
+    private Double getDoublePropertyValue(MessageDataValue messageDataValue) {
         if (messageDataValue != null) {
             String value = messageDataValue.getValue();
             if (!StringUtils.isEmpty(value)) {
                 return Double.parseDouble(value);
+            }
+        }
+        return null;
+    }
+
+    private Date getDatePropertyValue(MessageDataValue messageDataValue) {
+        if (messageDataValue != null) {
+            String value = messageDataValue.getValue();
+            if (!StringUtils.isEmpty(value)) {
+                return new Date(Long.parseLong(value));
             }
         }
         return null;
