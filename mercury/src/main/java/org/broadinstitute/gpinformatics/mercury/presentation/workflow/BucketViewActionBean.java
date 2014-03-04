@@ -513,12 +513,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public Set<String> findPotentialPdos() {
         // Use a TreeSet so it can returned sorted;
-        Set<String> productOrderKeys = new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
-
-        if (productOrderKeys.isEmpty()) {
-            return Collections.emptySet();
-        }
-        return productOrderKeys;
+        return new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
     }
 
     private void separateEntriesByType() {
