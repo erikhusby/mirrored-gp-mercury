@@ -241,7 +241,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
+                    <td class="editable ellipsis"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
