@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import com.cenqua.clover.reporters.json.JSONArray;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -37,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
@@ -513,12 +513,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public Set<String> findPotentialPdos() {
         // Use a TreeSet so it can returned sorted;
-        Set<String> productOrderKeys = new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
-
-        if (productOrderKeys.isEmpty()) {
-            return Collections.emptySet();
-        }
-        return productOrderKeys;
+        return new TreeSet<>(reworkEjb.findBucketCandidatePdos(selectedEntryIds));
     }
 
     private void separateEntriesByType() {
