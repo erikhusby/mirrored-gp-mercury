@@ -65,7 +65,6 @@ public class QtpEntityBuilder {
         PlateCherryPickEvent denatureJaxb = qtpJaxbBuilder.getDenatureJaxb();
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
         PlateCherryPickEvent normalizationJaxb = qtpJaxbBuilder.getNormalizationJaxb();
-        final String denatureRackBarcode = qtpJaxbBuilder.getDenatureRackBarcode();
 
         List<TwoDBarcodedTube> poolTubes = new ArrayList<>();
         List<TubeFormation> poolingRacks = new ArrayList<>();
@@ -147,7 +146,6 @@ public class QtpEntityBuilder {
 
         // DenatureTransfer
         LabEventTest.validateWorkflow("DenatureTransfer", rearrayedPoolingRack);
-        Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<>();
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(normalizationRack.getLabel(), normalizationRack);
         for (TwoDBarcodedTube twoDBarcodedTube : normalizationRack.getContainerRole().getContainedVessels()) {

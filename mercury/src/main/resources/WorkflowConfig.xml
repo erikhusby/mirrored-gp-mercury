@@ -448,6 +448,116 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>ICE</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>ICE Bucket</name>
+                <labEventTypes>ICE_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IcePoolingTransfer</name>
+                <labEventTypes>ICE_POOLING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IcePoolTest</name>
+                <labEventTypes>ICE_POOL_TEST</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceSPRIConcentration</name>
+                <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice1stHybridization</name>
+                <labEventTypes>ICE_1ST_HYBRIDIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice1stBaitAddition</name>
+                <labEventTypes>ICE_1S_TBAIT_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice1stCapture</name>
+                <labEventTypes>ICE_1ST_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice2ndHybridization</name>
+                <labEventTypes>ICE_2ND_HYBRIDIZATION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice2ndBaitAddition</name>
+                <labEventTypes>ICE_2ND_BAIT_ADDITION</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Ice2ndCapture</name>
+                <labEventTypes>ICE_2ND_CAPTURE</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceCatchCleanup</name>
+                <labEventTypes>ICE_CATCH_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceCatchEnrichmentSetup</name>
+                <labEventTypes>ICE_CATCH_ENRICHMENT_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceCatchEnrichmentCleanup</name>
+                <labEventTypes>ICE_CATCH_ENRICHMENT_CLEANUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In QTP</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>IceCatchPico</name>
+                <labEventTypes>ICE_CATCH_PICO</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>SAGE</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -759,6 +869,27 @@
             <effectiveDate>2013-09-12T15:28:00.001-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <routingRule>SQUID</routingRule>
+            <inValidation>false</inValidation>
+        </productWorkflowDefVersions>
+    </productWorkflowDefs>
+    <productWorkflowDefs>
+      <name>ICE Exome Express</name>
+        <productWorkflowDefVersions>
+            <version>4.0</version>
+            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
+            <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
+            <workflowProcessDefs>Library Construction</workflowProcessDefs>
+            <workflowProcessDefs>ICE</workflowProcessDefs>
+            <workflowProcessDefs>QTP</workflowProcessDefs>
+            <workflowProcessDefs>MiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Default</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Amplicon-Pool-Amplicon</sequencingConfigDefs>
+            <sequencingConfigDefs>Resequencing-Production</sequencingConfigDefs>
+            <routingRule>MERCURY</routingRule>
             <inValidation>false</inValidation>
         </productWorkflowDefVersions>
     </productWorkflowDefs>

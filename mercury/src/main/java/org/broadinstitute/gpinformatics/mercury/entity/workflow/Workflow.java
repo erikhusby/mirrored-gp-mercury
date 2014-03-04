@@ -12,6 +12,7 @@ import java.util.Collection;
  */
 public enum Workflow {
     AGILENT_EXOME_EXPRESS("Agilent Exome Express"),
+    ICE_EXOME_EXPRESS("ICE Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),

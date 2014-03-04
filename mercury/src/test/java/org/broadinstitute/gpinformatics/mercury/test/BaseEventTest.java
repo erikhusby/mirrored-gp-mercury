@@ -60,6 +60,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.Transfe
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -356,7 +357,7 @@ public class BaseEventTest {
      * @param pondRegRack         The pond registration rack coming out of the library construction process.
      * @param pondRegRackBarcode  The pond registration rack barcode.
      * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
-     * @param barcodeSuffix       Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     * @param barcodeSuffix       Uniquifies the generated vessel barcodes. NOT date if test quickly invoked twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
@@ -367,6 +368,21 @@ public class BaseEventTest {
         return new HybridSelectionEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 pondRegRack, pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
+    }
+
+    /**
+     * Creates an entity graph for Illumina Content Exome.
+     * @param pondRegRack         The pond registration rack coming out of the library construction process.
+     * @param pondRegRackBarcode  The pond registration rack barcode.
+     * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
+     * @param barcodeSuffix       Makes unique the generated vessel barcodes. Don't use date if test quickly invoked twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
+            List<String> pondRegTubeBarcodes, String barcodeSuffix) {
+        return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
+                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
     }
 
     /**

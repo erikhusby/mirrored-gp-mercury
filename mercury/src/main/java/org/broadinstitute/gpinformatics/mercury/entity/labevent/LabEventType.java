@@ -502,7 +502,11 @@ public enum LabEventType {
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // Illumina Content Exome (ICE)
+    ICE_BUCKET("IceBucket", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_POOLING_TRANSFER("IcePoolingTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_POOL_TEST("IcePoolTest", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_SPRI_CONCENTRATION("IceSPRIConcentration", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
@@ -525,8 +529,6 @@ public enum LabEventType {
     ICE_CATCH_ENRICHMENT_CLEANUP("IceCatchEnrichmentCleanup", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_CATCH_PICO("IceCatchPico", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
-            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
-    ICE_POOL_TEST("IcePoolTest", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // PCRFree

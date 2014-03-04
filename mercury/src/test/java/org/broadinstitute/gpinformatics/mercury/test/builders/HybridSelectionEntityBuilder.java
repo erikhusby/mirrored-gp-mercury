@@ -29,17 +29,19 @@ import java.util.Set;
  */
 public class HybridSelectionEntityBuilder {
     public static final String BAIT_DESIGN_NAME = "cancer_2000gene_shift170_undercovered";
+
     private final BettaLimsMessageTestFactory   bettaLimsMessageTestFactory;
     private final LabEventFactory               labEventFactory;
     private final LabEventHandler               labEventHandler;
     private final TubeFormation                 pondRegRack;
     private final String pondRegRackBarcode;
     private final List<String>                  pondRegTubeBarcodes;
+    private String testPrefix;
+
     private String normCatchRackBarcode;
     private List<String> normCatchBarcodes;
     private Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes = new HashMap<>();
     private TubeFormation normCatchRack;
-    private String testPrefix;
 
     public HybridSelectionEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
