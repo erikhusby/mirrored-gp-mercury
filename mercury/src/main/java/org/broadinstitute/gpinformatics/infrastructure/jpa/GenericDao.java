@@ -7,6 +7,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
@@ -196,6 +197,7 @@ public class GenericDao {
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
+     * @param lockModeType
      * @param <VALUE_TYPE> the type of the value in the query, e.g. String
      * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
      *                       there is inheritance
@@ -204,7 +206,8 @@ public class GenericDao {
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
     ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
-                           SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+                           SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value,
+                           LockModeType lockModeType) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -218,10 +221,32 @@ public class GenericDao {
         criteriaQuery.where(predicate);
 
         try {
-            return getEntityManager().createQuery(criteriaQuery).getSingleResult();
+            return getQuery(criteriaQuery, lockModeType).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
         }
+    }
+    /**
+     * Returns a single entity that matches a specified value for a specified property.
+     *
+     * @param entity the class of entity to return
+     * @param singularAttribute the metadata field for the property to query
+     * @param value the value to query
+     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                       there is inheritance
+     * @param <ENTITY_TYPE> the type of the entity to return
+     * @return entity that matches the value, or null if not found
+     */
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
+    ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
+                           SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+        return findSingle(entity, singularAttribute, value, LockModeType.NONE);
+    }
+
+    public <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(
+            CriteriaQuery<ENTITY_TYPE> criteriaQuery, LockModeType lockModeType) {
+        return getEntityManager().createQuery(criteriaQuery).setLockMode(lockModeType);
     }
 
     /**
