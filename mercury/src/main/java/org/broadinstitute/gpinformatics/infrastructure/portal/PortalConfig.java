@@ -47,6 +47,10 @@ public class PortalConfig extends AbstractConfig  implements LoginAndPassword, S
         return produce(PortalConfig.class, deployment);
     }
 
+    public String getWSUrl(String suffix) {
+        return String.format("%s%s:%d/ws/bsp/%s", getHttpScheme(), getHost(), getPort(), suffix);
+    }
+
     public String getLogin() {
         return login;
     }

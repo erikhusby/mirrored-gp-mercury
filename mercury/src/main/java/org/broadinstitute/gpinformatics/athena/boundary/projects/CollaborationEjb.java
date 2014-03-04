@@ -14,10 +14,15 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalService;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -71,12 +76,18 @@ public class CollaborationEjb {
      * @param collaboratorEmail The email of a collaborator that was specifically specified
      * @param collaborationMessage The optional extra message from the project manager
      */
-    public void beginCollaboration(String researchProjectKey, Long selectedCollaborator, String specifiedCollaborator,
-                                   String collaborationMessage) {
+    public void beginCollaboration(@Nonnull String researchProjectKey, @Nullable Long selectedCollaborator,
+                                   @Nullable String specifiedCollaborator, @Nullable String collaborationMessage)
+            throws CollaborationNotFoundException, CollaborationPortalException {
 
-        BspUser bspUser = null;
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
 
+        // If both the selected collaborator and the specified collaborators are null, then throw an exception.
+        if ((selectedCollaborator == null) && (specifiedCollaborator == null)) {
+            throw new IllegalArgumentException("must specify a collaborator domain user id or an email address");
+        }
         // Look up the selected id.
+        BspUser bspUser = null;
         if (selectedCollaborator != null) {
             bspUser = userList.getById(selectedCollaborator);
         }
@@ -87,7 +98,6 @@ public class CollaborationEjb {
         }
 
         // Add the user as the primary collaborator.
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         if (bspUser != null) {
             researchProject.addPrimaryCollaborator(bspUser);
 
@@ -100,9 +110,14 @@ public class CollaborationEjb {
         }
 
         // Now tell the portal to create this collaborator.
-         String collaborationId = collaborationPortalService.beginCollaboration(researchProjectKey,
-                 specifiedCollaborator, collaborationMessage);
+         String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
+                 selectedCollaborator, specifiedCollaborator, collaborationMessage);
 
         researchProject.setCollaborationId(collaborationId);
+    }
+
+    public CollaborationData getCollaboration(@Nonnull String collaborationId)
+            throws CollaborationNotFoundException, CollaborationPortalException {
+        return collaborationPortalService.getCollaboration(collaborationId);
     }
 }

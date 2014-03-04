@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
-import com.ctc.wstx.util.StringUtil;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -25,6 +24,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
@@ -36,6 +36,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -158,6 +160,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String irbList = "";
 
     private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
+    private CollaborationData collaborationData;
 
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
@@ -358,13 +362,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
-    public Resolution beginCollaboration() {
+    public Resolution beginCollaboration() throws Exception {
         collaborationEjb.beginCollaboration(
                 researchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
 
         // recall init so that the updated project is retrieved
         init();
-
         return view();
     }
 
@@ -622,31 +625,26 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
     }
 
-    public String getCollaboratingWith() {
-        Long collaboratorPersonId = editResearchProject.getCollaboratingWith();
-        if (collaboratorPersonId == null) {
-            // After the portal is up and running, need to get the status of the invitation with a web service call,
-            // but for now, just return the email as if the invitation is waiting.
-            return editResearchProject.getInvitationEmail();
+    @After(stages = LifecycleStage.EventHandling)
+    public void setCollaborationInfo() throws CollaborationNotFoundException, CollaborationPortalException {
+        // If there is no invitation email, then there was never a collaboration set up, so just return empty.
+        if (!StringUtils.isBlank(editResearchProject.getCollaborationId())) {
+            collaborationData = collaborationEjb.getCollaboration(editResearchProject.getCollaborationId());
         }
+    }
 
-        return bspUserList.getById(collaboratorPersonId).getFullName();
+    public CollaborationData getCollaborationData() {
+        return collaborationData;
     }
 
     /**
-     * This checks with the portal whether there is an invitation pending.
+     * This checks whether there is an invitation pending.
      *
      * @return If the invitation is exists and is pending, this will be true.
      */
     public boolean isInvitationPending() {
-        // For now, just return whether there is no user id but there is an email.
+        // Invitation pending means that an email is attached to this and there is no collaborating user.
         return !StringUtils.isBlank(editResearchProject.getInvitationEmail()) &&
                (editResearchProject.getCollaboratingWith() == null);
-    }
-
-    public Date getInvitationExpirationDate() {
-        GregorianCalendar calendar = new GregorianCalendar();
-        calendar.add(Calendar.WEEK_OF_YEAR, 2);
-        return calendar.getTime();
     }
 }
