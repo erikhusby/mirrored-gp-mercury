@@ -978,14 +978,11 @@ public class LabEventTest extends BaseEventTest {
         IceEntityBuilder iceEntityBuilder = runIceProcess(libraryConstructionEntityBuilder.getPondRegRack(),
                         libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
-//        HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
-//                runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-//                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-//                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
 
-//        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-//                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-//                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+        // Need a version of QTP that jumps over pooling to normalization
+//        QtpEntityBuilder qtpEntityBuilder = runQtpProcess(iceEntityBuilder.getNormCatchRack(),
+//                iceEntityBuilder.getNormCatchBarcodes(), iceEntityBuilder.getMapBarcodeToNormCatchTubes(),
+//                Workflow.AGILENT_EXOME_EXPRESS, "1");
 //
 //        final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
 //                VesselPosition.A01);

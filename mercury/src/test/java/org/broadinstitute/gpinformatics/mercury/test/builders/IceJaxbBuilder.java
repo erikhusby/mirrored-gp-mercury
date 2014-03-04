@@ -27,6 +27,8 @@ public class IceJaxbBuilder {
     private final List<BettaLIMSMessage> messageList = new ArrayList<>();
     private String poolRackBarcode;
     private List<String> poolTubeBarcodes = new ArrayList<>();
+    private String poolTestRackBarcode;
+    private String poolTestTubeBarcode;
     private String spriRackBarcode;
     private List<String> spriTubeBarcodes = new ArrayList<>();
     private String firstHybPlateBarcode;
@@ -48,6 +50,7 @@ public class IceJaxbBuilder {
     private PlateEventType iceCatchEnrichmentSetup;
     private PlateTransferEventType iceCatchEnrichmentCleanup;
     private PlateTransferEventType iceCatchPico;
+    private PlateCherryPickEvent icePoolTest;
 
     public IceJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
             String pondRegRackBarcode, List<String> pondRegTubeBarcodes,
@@ -61,7 +64,7 @@ public class IceJaxbBuilder {
     }
 
     public IceJaxbBuilder invoke() {
-        List<BettaLimsMessageTestFactory.CherryPick> cherryPicks = new ArrayList<>();
+        List<BettaLimsMessageTestFactory.CherryPick> poolCherryPicks = new ArrayList<>();
         // Pool each row into a single tube
         poolRackBarcode = testPrefix + "IcePool";
         for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
@@ -70,7 +73,7 @@ public class IceJaxbBuilder {
             @SuppressWarnings({"NumericCastThatLosesPrecision"})
             String destinationWell = bettaLimsMessageTestFactory.buildWellName(
                     (((int) Math.ceil(i / 12.0) - 1) * 12) + 1, BettaLimsMessageTestFactory.WellNameType.LONG);
-            cherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcode, sourceWell, poolRackBarcode,
+            poolCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(pondRegRackBarcode, sourceWell, poolRackBarcode,
                     destinationWell));
         }
         for (int i = 1; i <= pondRegTubeBarcodes.size(); i++) {
@@ -80,10 +83,24 @@ public class IceJaxbBuilder {
         }
         icePoolingTransfer = bettaLimsMessageTestFactory.buildCherryPick("IcePoolingTransfer",
                 Collections.singletonList(pondRegRackBarcode), Collections.singletonList(pondRegTubeBarcodes),
-                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes), cherryPicks);
+                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes), poolCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, icePoolingTransfer);
 
-        // todo IcePoolTest?
+        poolTestRackBarcode = testPrefix + "IcePoolTestRack";
+        poolTestTubeBarcode = testPrefix + "IcePoolTest";
+        List<BettaLimsMessageTestFactory.CherryPick> poolTestCherryPicks = new ArrayList<>();
+        for (int i = 0; i < poolTubeBarcodes.size(); i++) {
+            if (poolTubeBarcodes.get(i) != null) {
+                poolTestCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(poolRackBarcode,
+                        bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.LONG),
+                        poolTestRackBarcode, "A01"));
+            }
+        }
+        icePoolTest = bettaLimsMessageTestFactory.buildCherryPick("IcePoolTest",
+                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
+                Collections.singletonList(poolTestRackBarcode),
+                Collections.singletonList(Collections.singletonList(poolTestTubeBarcode)), poolTestCherryPicks);
+        bettaLimsMessageTestFactory.addMessage(messageList, icePoolTest);
 
         spriRackBarcode = testPrefix + "SpriRack";
         iceSPRIConcentration = bettaLimsMessageTestFactory.buildRackToRack(
@@ -193,6 +210,10 @@ public class IceJaxbBuilder {
         return icePoolingTransfer;
     }
 
+    public PlateCherryPickEvent getIcePoolTest() {
+        return icePoolTest;
+    }
+
     public PlateTransferEventType getIceSPRIConcentration() {
         return iceSPRIConcentration;
     }
@@ -235,5 +256,13 @@ public class IceJaxbBuilder {
 
     public PlateTransferEventType getIceCatchPico() {
         return iceCatchPico;
+    }
+
+    public String getBaitTube1Barcode() {
+        return baitTube1Barcode;
+    }
+
+    public String getBaitTube2Barcode() {
+        return baitTube2Barcode;
     }
 }
