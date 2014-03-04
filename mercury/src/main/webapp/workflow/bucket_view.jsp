@@ -49,15 +49,16 @@
                             };
                         },
                         'loaddata': function (value, settings) {
-
                             return {
                                 "selectedEntryIds": this.parentNode.getAttribute('id')
                             };
                         },
+//                        If you need to debug the generated html you need to ignore onblur events
+//                        "onblur" : "ignore",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-                        submit: '<input type="submit" value="Save" class="updatePdoSave"/>'
+                        submit: 'Save'
                     });
                     $j(".icon-pencil").show();
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
