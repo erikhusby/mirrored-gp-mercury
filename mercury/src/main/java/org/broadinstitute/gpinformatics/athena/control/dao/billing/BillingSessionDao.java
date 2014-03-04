@@ -32,6 +32,7 @@ public class BillingSessionDao extends GenericDao {
 
         Long sessionId = Long.parseLong(businessKey.substring(BillingSession.ID_PREFIX.length()));
 
-        return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId, LockModeType.PESSIMISTIC_READ);
+        return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId,
+                LockModeType.PESSIMISTIC_READ);
     }
 }

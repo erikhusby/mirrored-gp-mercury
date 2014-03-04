@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
  * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
- *
+ * <p/>
  * Transaction is SUPPORTS so as to apply to all find methods to let them see any currently active transaction but not
  * begin, and therefore commit (along with any changes queued up in the persistence context), their own transaction.
  */
@@ -51,7 +51,7 @@ public class GenericDao {
 
     /**
      * Flushes changes in the extended persistence context to the database.
-     *
+     * <p/>
      * Transaction is MANDATORY because flush does not make sense outside the context of a transaction.
      * MLC changing this to REQUIRED as it does make sense outside a transaction for Arquillian tests.
      */
@@ -62,7 +62,7 @@ public class GenericDao {
 
     /**
      * Clears the extended persistence context causing all managed entities to become detached.
-     *
+     * <p/>
      * Transaction is SUPPORTS (default).
      */
     public void clear() {
@@ -71,10 +71,10 @@ public class GenericDao {
 
     /**
      * Adds the given object as a managed entity in the extended persistence context.
-     *
+     * <p/>
      * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
-     * @param entity    the entity to persist
+     * @param entity the entity to persist
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persist(Object entity) {
@@ -83,10 +83,10 @@ public class GenericDao {
 
     /**
      * Adds the given objects as a managed entities in the extended persistence context.
-     *
+     * <p/>
      * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
-     * @param entities  the entities to persist
+     * @param entities the entities to persist
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void persistAll(Collection<?> entities) {
@@ -98,10 +98,10 @@ public class GenericDao {
 
     /**
      * Marks the given entity for removal from the underlying data store.
-     *
+     * <p/>
      * Transaction is REQUIRED for write operations, but wider transactions can still be used for larger units of work
      *
-     * @param entity    the entity to remove
+     * @param entity the entity to remove
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void remove(Object entity) {
@@ -110,10 +110,11 @@ public class GenericDao {
 
     /**
      * Returns an entity manager for the request-scoped extended persistence context.
-     *
+     * <p/>
      * Transaction is SUPPORTS (default).
      *
      * @return the persistence context
+     *
      * @see ThreadEntityManager#getEntityManager()
      */
     public EntityManager getEntityManager() {
@@ -122,7 +123,7 @@ public class GenericDao {
 
     /**
      * Returns a criteria builder for the request-scoped extended persistence context.
-     *
+     * <p/>
      * Transaction is SUPPORTS (default).
      *
      * @return the criteria builder
@@ -134,8 +135,9 @@ public class GenericDao {
     /**
      * Returns all entities of the specified entity type.
      *
-     * @param entity the class of entity to return
+     * @param entity        the class of entity to return
      * @param <ENTITY_TYPE> the type of the entity to return
+     *
      * @return list of entities, or empty list if none found
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity) {
@@ -143,13 +145,15 @@ public class GenericDao {
     }
 
     /**
-    * Returns all entities of the specified entity type.
+     * Returns all entities of the specified entity type.
      *
-    * @param entity the class of entity to return
-    * @param <ENTITY_TYPE> the type of the entity to return
-    * @return list of entities, or empty list if none found
-    */
-    public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, @Nullable GenericDaoCallback<ENTITY_TYPE> callback) {
+     * @param entity        the class of entity to return
+     * @param <ENTITY_TYPE> the type of the entity to return
+     *
+     * @return list of entities, or empty list if none found
+     */
+    public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity,
+                                                   @Nullable GenericDaoCallback<ENTITY_TYPE> callback) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -159,7 +163,7 @@ public class GenericDao {
         }
 
         try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
+            return getQuery(criteriaQuery, LockModeType.NONE).getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }
@@ -168,10 +172,11 @@ public class GenericDao {
     /**
      * Returns all entities of the specified entity type in the specified range.
      *
-     * @param entity the class of entity to return
-     * @param first index to start at
-     * @param max maximum number of entities to return
+     * @param entity        the class of entity to return
+     * @param first         index to start at
+     * @param max           maximum number of entities to return
      * @param <ENTITY_TYPE> the type of the entity to return
+     *
      * @return list of entities, or empty list if none found
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, int first, int max) {
@@ -179,7 +184,7 @@ public class GenericDao {
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> from = criteriaQuery.from(entity);
         CriteriaQuery<ENTITY_TYPE> select = criteriaQuery.select(from);
-        TypedQuery<ENTITY_TYPE> typedQuery = getEntityManager().createQuery(select);
+        TypedQuery<ENTITY_TYPE> typedQuery = getQuery(select, LockModeType.NONE);
         typedQuery.setFirstResult(first);
         typedQuery.setMaxResults(max);
 
@@ -194,14 +199,15 @@ public class GenericDao {
     /**
      * Returns a single entity that matches a specified value for a specified property.
      *
-     * @param entity the class of entity to return
+     * @param entity            the class of entity to return
      * @param singularAttribute the metadata field for the property to query
-     * @param value the value to query
-     * @param lockModeType
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param value             the value to query
+     * @param lockModeType      the lock mode type for
+     * @param <VALUE_TYPE>      the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>   the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                          there is inheritance
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     *
      * @return entity that matches the value, or null if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
@@ -226,16 +232,18 @@ public class GenericDao {
             return null;
         }
     }
+
     /**
      * Returns a single entity that matches a specified value for a specified property.
      *
-     * @param entity the class of entity to return
+     * @param entity            the class of entity to return
      * @param singularAttribute the metadata field for the property to query
-     * @param value the value to query
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param value             the value to query
+     * @param <VALUE_TYPE>      the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>   the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                          there is inheritance
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     *
      * @return entity that matches the value, or null if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
@@ -244,9 +252,25 @@ public class GenericDao {
         return findSingle(entity, singularAttribute, value, LockModeType.NONE);
     }
 
+    /**
+     * Extracts the call to retrieve a Typed Query from the entity manager in order to handle setting (or not setting)
+     * the lock mode in one place
+     *
+     * @param criteriaQuery Criteria Query object that contains conditions for the query
+     * @param lockModeType
+     * @param <ENTITY_TYPE>
+     *
+     * @return
+     */
     public <ENTITY_TYPE> TypedQuery<ENTITY_TYPE> getQuery(
             CriteriaQuery<ENTITY_TYPE> criteriaQuery, LockModeType lockModeType) {
-        return getEntityManager().createQuery(criteriaQuery).setLockMode(lockModeType);
+
+        TypedQuery<ENTITY_TYPE> query = getEntityManager().createQuery(criteriaQuery);
+        if (lockModeType == LockModeType.NONE) {
+            return query;
+        } else {
+            return query.setLockMode(lockModeType);
+        }
     }
 
     /**
@@ -273,7 +297,7 @@ public class GenericDao {
         }
 
         try {
-            return getEntityManager().createQuery(criteriaQuery).getSingleResult();
+            return getQuery(criteriaQuery, LockModeType.NONE).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
         }
@@ -282,14 +306,15 @@ public class GenericDao {
     /**
      * Returns a list of entities that matches a list of values for a specified property.
      *
-     * @param entity the class of entity to return
-     * @param singularAttribute the metadata field for the property to query
-     * @param values list of values to query
+     * @param entity             the class of entity to return
+     * @param singularAttribute  the metadata field for the property to query
+     * @param values             list of values to query
      * @param genericDaoCallback optional callback to add fetches to the specified {@link Root}
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                           there is inheritance
+     * @param <ENTITY_TYPE>      the type of the entity to return
+     *
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
@@ -317,7 +342,7 @@ public class GenericDao {
                     @Override
                     public Query createCriteriaInQuery(Collection<VALUE_TYPE> parameterList) {
                         criteriaQuery.where(root.get(singularAttribute).in(parameterList));
-                        return getEntityManager().createQuery(criteriaQuery);
+                        return getQuery(criteriaQuery, LockModeType.NONE);
                     }
                 }
         );
@@ -332,17 +357,19 @@ public class GenericDao {
     /**
      * Returns a list of entities that matches a specified value for a specified property.
      *
-     * @param entity the class of entity to return
+     * @param entity            the class of entity to return
      * @param singularAttribute the metadata field for the property to query
-     * @param value the value to query
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param value             the value to query
+     * @param <VALUE_TYPE>      the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>   the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                          there is inheritance
+     * @param <ENTITY_TYPE>     the type of the entity to return
+     *
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findList(
-            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute,
+            VALUE_TYPE value) {
         if (value == null) {
             // Need to special case null value to handle it correctly.
             return findAll(entity, new GenericDaoCallback<ENTITY_TYPE>() {
@@ -358,9 +385,10 @@ public class GenericDao {
     /**
      * Looks up an entity by its JPA id.
      *
-     * @param entity the class of the entity to return
-     * @param id the entity's JPA id
+     * @param entity        the class of the entity to return
+     * @param id            the entity's JPA id
      * @param <ENTITY_TYPE> the name of the entity class
+     *
      * @return a single entity, or null if not found
      */
     public <ENTITY_TYPE> ENTITY_TYPE findById(Class<ENTITY_TYPE> entity, Long id) {
@@ -401,7 +429,7 @@ public class GenericDao {
 
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
+            return getQuery(criteriaQuery, LockModeType.NONE).getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }
@@ -423,8 +451,8 @@ public class GenericDao {
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> Collection<ENTITY_TYPE> findListWithWildcardList(
             Class<ENTITY_TYPE> entity, List<String> values, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
-        Set<ENTITY_TYPE> foundValues=new HashSet<>();
-        for (String value:values) {
+        Set<ENTITY_TYPE> foundValues = new HashSet<>();
+        for (String value : values) {
             foundValues.addAll(findListWithWildcard(entity, value, ignoreCase, singularAttributes));
         }
 
