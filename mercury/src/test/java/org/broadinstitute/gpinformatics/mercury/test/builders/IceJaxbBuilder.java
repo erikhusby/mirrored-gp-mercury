@@ -86,26 +86,28 @@ public class IceJaxbBuilder {
                 Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes), poolCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, icePoolingTransfer);
 
+        spriRackBarcode = testPrefix + "SpriRack";
+        iceSPRIConcentration = bettaLimsMessageTestFactory.buildRackToRack(
+                "IceSPRIConcentration", poolRackBarcode, poolTubeBarcodes, spriRackBarcode, spriTubeBarcodes);
+        bettaLimsMessageTestFactory.addMessage(messageList, iceSPRIConcentration);
+
         poolTestRackBarcode = testPrefix + "IcePoolTestRack";
         poolTestTubeBarcode = testPrefix + "IcePoolTest";
         List<BettaLimsMessageTestFactory.CherryPick> poolTestCherryPicks = new ArrayList<>();
-        for (int i = 0; i < poolTubeBarcodes.size(); i++) {
-            if (poolTubeBarcodes.get(i) != null) {
-                poolTestCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(poolRackBarcode,
+        for (int i = 0; i < spriTubeBarcodes.size(); i++) {
+            if (spriTubeBarcodes.get(i) != null) {
+                poolTestCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(spriRackBarcode,
                         bettaLimsMessageTestFactory.buildWellName(i + 1, BettaLimsMessageTestFactory.WellNameType.LONG),
                         poolTestRackBarcode, "A01"));
             }
         }
         icePoolTest = bettaLimsMessageTestFactory.buildCherryPick("IcePoolTest",
-                Collections.singletonList(poolRackBarcode), Collections.singletonList(poolTubeBarcodes),
+                Collections.singletonList(spriRackBarcode), Collections.singletonList(spriTubeBarcodes),
                 Collections.singletonList(poolTestRackBarcode),
                 Collections.singletonList(Collections.singletonList(poolTestTubeBarcode)), poolTestCherryPicks);
         bettaLimsMessageTestFactory.addMessage(messageList, icePoolTest);
 
-        spriRackBarcode = testPrefix + "SpriRack";
-        iceSPRIConcentration = bettaLimsMessageTestFactory.buildRackToRack(
-                "IceSPRIConcentration", poolRackBarcode, poolTubeBarcodes, spriRackBarcode, spriTubeBarcodes);
-        bettaLimsMessageTestFactory.addMessage(messageList, iceSPRIConcentration);
+        // todo jmt IcePoolTest is followed by NormalizationTransfer, DenatureTransfer, MiSeq?
 
         firstHybPlateBarcode = testPrefix + "1stHyb";
         ice1stHybridization = bettaLimsMessageTestFactory.buildRackToPlate(

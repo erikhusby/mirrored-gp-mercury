@@ -468,15 +468,15 @@
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>IcePoolTest</name>
-                <labEventTypes>ICE_POOL_TEST</labEventTypes>
+                <name>IceSPRIConcentration</name>
+                <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>IceSPRIConcentration</name>
-                <labEventTypes>ICE_SPRI_CONCENTRATION</labEventTypes>
+                <name>IcePoolTest</name>
+                <labEventTypes>ICE_POOL_TEST</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>

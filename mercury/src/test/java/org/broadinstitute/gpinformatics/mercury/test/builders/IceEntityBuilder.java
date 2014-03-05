@@ -59,15 +59,6 @@ public class IceEntityBuilder {
         labEventHandler.processEvent(icePoolingTransfer);
         TubeFormation poolRack = (TubeFormation) icePoolingTransfer.getTargetLabVessels().iterator().next();
 
-        LabEventTest.validateWorkflow("IcePoolTest", poolRack);
-        mapBarcodeToVessel.clear();
-        mapBarcodeToVessel.put(poolRack.getLabel(), poolRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : poolRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
-        }
-        LabEvent icePoolTest = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolTest(), mapBarcodeToVessel);
-        labEventHandler.processEvent(icePoolTest);
-
         LabEventTest.validateWorkflow("IceSPRIConcentration", poolRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(poolRack.getLabel(), poolRack);
@@ -78,6 +69,15 @@ public class IceEntityBuilder {
                 mapBarcodeToVessel);
         labEventHandler.processEvent(iceSpriConcentration);
         TubeFormation spriRack = (TubeFormation) iceSpriConcentration.getTargetLabVessels().iterator().next();
+
+        LabEventTest.validateWorkflow("IcePoolTest", spriRack);
+        mapBarcodeToVessel.clear();
+        mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
+        for (TwoDBarcodedTube twoDBarcodedTube : spriRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+        LabEvent icePoolTest = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolTest(), mapBarcodeToVessel);
+        labEventHandler.processEvent(icePoolTest);
 
         LabEventTest.validateWorkflow("Ice1stHybridization", spriRack);
         mapBarcodeToVessel.clear();
