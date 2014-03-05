@@ -9,6 +9,7 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.LockModeType;
 import java.util.List;
 
 /**
@@ -31,6 +32,7 @@ public class BillingSessionDao extends GenericDao {
 
         Long sessionId = Long.parseLong(businessKey.substring(BillingSession.ID_PREFIX.length()));
 
-        return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId);
+        return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId,
+                LockModeType.PESSIMISTIC_READ);
     }
 }

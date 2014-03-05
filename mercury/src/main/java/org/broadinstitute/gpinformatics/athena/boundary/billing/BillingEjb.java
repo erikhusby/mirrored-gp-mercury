@@ -88,6 +88,10 @@ public class BillingEjb {
         endSession(billingSession);
     }
 
+    public BillingSession findSessionByBusinessKey(@Nonnull String sessionKey) {
+        return billingSessionDao.findByBusinessKey(sessionKey);
+    }
+
     /**
      * Transactional method to end a billing session with appropriate handling for complete or partial failure.
      *
@@ -134,7 +138,14 @@ public class BillingEjb {
         List<BillingResult> results = new ArrayList<>();
         Set<String> updatedPDOs = new HashSet<>();
 
-        for (QuoteImportItem item : billingSession.getUnBilledQuoteImportItems(priceListCache)) {
+        List<QuoteImportItem> unBilledQuoteImportItems =
+                billingSession.getUnBilledQuoteImportItems(priceListCache);
+
+        if(unBilledQuoteImportItems.size() == 0) {
+            throw new BillingException("There are no items available to bill in this billing session");
+        }
+
+        for (QuoteImportItem item : unBilledQuoteImportItems) {
 
             BillingResult result = new BillingResult();
             results.add(result);
