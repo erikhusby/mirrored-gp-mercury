@@ -241,7 +241,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidateNestedProperties({
             @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION}),
             @Validate(field = "title", required = true, maxlength = 255, on = {SAVE_ACTION}, label = "Name"),
-            @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes")
+            @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
+//            @Validate(field = "skipQuoteReason", on = {SAVE_ACTION}, maxlength = 255, label = "Reason for Quote"),
+            @Validate(field = "productOrderKit.comments", on = {SAVE_ACTION},maxlength = 255, label = "Product order kit comments")
     })
     private ProductOrder editOrder;
 
@@ -482,7 +484,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(kitDetail.getBspMaterialName(), "a material information", action);
                 requireField(kitDetail.getOrganismId(), "an organism", action);
             }
-            requireField(kit.getSiteId(), "a site", action);
+            requireField(kit.getSiteId(), "a shipping location", action);
             requireField(kit.getSampleCollectionId(), "a collection", action);
 
             // Avoid NPE if Research Project isn't set yet.
