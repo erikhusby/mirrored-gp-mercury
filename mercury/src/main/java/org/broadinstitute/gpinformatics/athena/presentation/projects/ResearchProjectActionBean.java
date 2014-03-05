@@ -231,6 +231,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
+     * Validation of project name.
+     *
+     * @param errors The errors object
+     */
+    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
+    public void validateCollaborationInformation(ValidationErrors errors) {
+        // Cannot start a collaboration with an outside user if there is no PM specified.
+        if (editResearchProject.getProjectManagers().length < 1) {
+            errors.add("title", new SimpleError("A project manager must exist before starting a collaboration"));
+        }
+    }
+
+    /**
      * Validation for beginning a collaboration.
      *
      * @param errors The errors object

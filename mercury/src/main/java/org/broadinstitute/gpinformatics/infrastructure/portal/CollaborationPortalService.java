@@ -75,6 +75,10 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
             @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
+        if (researchProject.getProjectManagers().length < 1) {
+            throw new IllegalArgumentException(
+                    "Cannot start a collaboration on a research project with no Project Manager");
+        }
 
         String url = portalConfig.getWsUrl(Endpoint.BEGIN_COLLABORATION.getSuffixUrl());
         WebResource resource = getJerseyClient().resource(url);
