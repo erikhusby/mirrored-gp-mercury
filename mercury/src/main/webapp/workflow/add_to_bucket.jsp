@@ -32,7 +32,7 @@
 
 
                 $j("#rework-reason-value").change(function () {
-                    if (this.value == -1) {
+                    if (this.value == 'Other...') {
                         $j("#rework-reason-user-value").show();
                     } else {
                         $j("#rework-reason-user-value").hide();
@@ -46,7 +46,7 @@
                     $j("#rework-reason-value").show();
                     $j("#rework-comment-label").show();
                     $j("#commentText").show();
-                    if ($j("#rework-reason-value").val() == -1) {
+                    if ($j("#rework-reason-value").val() == 'Other...') {
                         $j("#rework-reason-user-value").show();
                     } else {
                         $j("#rework-reason-user-value").hide();
