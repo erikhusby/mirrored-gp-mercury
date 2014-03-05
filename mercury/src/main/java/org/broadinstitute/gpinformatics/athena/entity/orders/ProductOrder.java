@@ -1448,7 +1448,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     @Transient
     public boolean canSkipQuote() {
-        return !StringUtils.isBlank(getSkipQuoteReason());
+        return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
     }
 
 }

@@ -125,7 +125,7 @@
             <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
             <div class="controls">
                 <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
-                                value="${actionBean.selectedWorkflowDef}">
+                                value="selectedWorkflowDef.name">
                     <stripes:option value="">Select a Workflow</stripes:option>
                     <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
                 </stripes:select>
