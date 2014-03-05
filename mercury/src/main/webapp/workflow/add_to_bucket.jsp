@@ -32,7 +32,7 @@
 
 
                 $j("#rework-reason-value").change(function () {
-                    if (this.value == -1) {
+                    if (this.value == 'Other...') {
                         $j("#rework-reason-user-value").show();
                     } else {
                         $j("#rework-reason-user-value").hide();
