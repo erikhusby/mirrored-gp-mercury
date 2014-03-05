@@ -625,7 +625,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
     }
 
-    @After(stages = LifecycleStage.EventHandling)
+    @After(stages = LifecycleStage.EventHandling,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION})
     public void setCollaborationInfo() throws CollaborationNotFoundException, CollaborationPortalException {
         // If there is no invitation email, then there was never a collaboration set up, so just return empty.
         if (!StringUtils.isBlank(editResearchProject.getCollaborationId())) {
