@@ -1973,7 +1973,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
             boolean hasQuote=!StringUtils.isBlank(editOrder.getQuoteId());
             if (!hasQuote) {
-                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
+                if (editOrder.isSampleInitiation()) {
+                    requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
+                }
                 requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             }
         }

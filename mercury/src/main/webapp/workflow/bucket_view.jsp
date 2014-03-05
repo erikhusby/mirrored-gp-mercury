@@ -49,15 +49,16 @@
                             };
                         },
                         'loaddata': function (value, settings) {
-
                             return {
                                 "selectedEntryIds": this.parentNode.getAttribute('id')
                             };
                         },
+//                        If you need to debug the generated html you need to ignore onblur events
+//                        "onblur" : "ignore",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-                        submit: '<input type="submit" value="Save" class="updatePdoSave"/>'
+                        submit: 'Save'
                     });
                     $j(".icon-pencil").show();
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
@@ -240,7 +241,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
+                    <td class="editable ellipsis"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
