@@ -388,17 +388,17 @@ public class BaseEventTest {
     /**
      * This method runs the entities through the QTP process.
      *
+     *
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
      * @param mapBarcodeToTube A map of barcodes to tubes that will be run the starting point of the pico/plating process.
-     * @param workflow         The workflow name for the current workflow.
      * @param barcodeSuffix    Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube, Workflow workflow,
-                                          String barcodeSuffix) {
+            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+            String barcodeSuffix) {
 
         return new QtpEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),

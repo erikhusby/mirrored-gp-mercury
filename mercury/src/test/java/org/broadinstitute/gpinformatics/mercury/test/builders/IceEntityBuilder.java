@@ -29,6 +29,8 @@ public class IceEntityBuilder {
     private final List<String> pondRegTubeBarcodes;
     private String testPrefix;
     private TubeFormation catchEnrichRack;
+    private List<String> catchEnrichBarcodes;
+    private Map<String, TwoDBarcodedTube> mapBarcodeToCatchEnrichTubes;
 
     public IceEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -46,6 +48,7 @@ public class IceEntityBuilder {
     public IceEntityBuilder invoke() {
         IceJaxbBuilder iceJaxbBuilder = new IceJaxbBuilder(bettaLimsMessageTestFactory, testPrefix, pondRegRackBarcode,
                 pondRegTubeBarcodes, testPrefix + "IceBait1", testPrefix + "IceBait2").invoke();
+        catchEnrichBarcodes = iceJaxbBuilder.getCatchEnrichTubeBarcodes();
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
 
@@ -151,5 +154,19 @@ public class IceEntityBuilder {
 
     public TubeFormation getCatchEnrichRack() {
         return catchEnrichRack;
+    }
+
+    public List<String> getCatchEnrichBarcodes() {
+        return catchEnrichBarcodes;
+    }
+
+    public Map<String, TwoDBarcodedTube> getMapBarcodeToCatchEnrichTubes() {
+        if (mapBarcodeToCatchEnrichTubes == null) {
+            mapBarcodeToCatchEnrichTubes = new HashMap<>();
+            for (TwoDBarcodedTube twoDBarcodedTube : catchEnrichRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToCatchEnrichTubes.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+            }
+        }
+        return mapBarcodeToCatchEnrichTubes;
     }
 }

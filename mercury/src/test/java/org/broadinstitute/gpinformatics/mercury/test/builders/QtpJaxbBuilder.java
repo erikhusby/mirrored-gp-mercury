@@ -18,6 +18,8 @@ public class QtpJaxbBuilder {
     private final String testPrefix;
     private final List<List<String>> listLcsetListNormCatchBarcodes;
     private final List<String> normCatchRackBarcodes;
+    private final boolean doEco;
+    private final boolean doPoolingTransfer;
 
     private String poolRackBarcode;
     private List<String> poolTubeBarcodes = new ArrayList<>();
@@ -43,16 +45,16 @@ public class QtpJaxbBuilder {
     private BettaLIMSMessage stripTubeTransferMessage;
     private BettaLIMSMessage flowcellTransferMessage;
     private BettaLIMSMessage flowcellLoadMessage;
-    private final boolean doEco;
 
     public QtpJaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageFactory, String testPrefix,
-                          List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
-                          boolean doEco) {
+            List<List<String>> listLcsetListNormCatchBarcodes, List<String> normCatchRackBarcodes,
+            boolean doPoolingTransfer, boolean doEco) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageFactory;
         this.testPrefix = testPrefix;
         this.listLcsetListNormCatchBarcodes = listLcsetListNormCatchBarcodes;
         this.normCatchRackBarcodes = normCatchRackBarcodes;
         this.doEco = doEco;
+        this.doPoolingTransfer = doPoolingTransfer;
     }
 
     public String getPoolRackBarcode() {
@@ -104,25 +106,32 @@ public class QtpJaxbBuilder {
     }
 
     public QtpJaxbBuilder invoke() {
-        int i = 0;
-        // PoolingTransfer
-        poolRackBarcode = "PoolRack" + testPrefix;
-        for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
-            List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
-                    new ArrayList<>();
-            for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
-                poolingCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(normCatchRackBarcodes.get(i),
-                        bettaLimsMessageTestFactory.buildWellName(rackPosition,
-                                BettaLimsMessageTestFactory.WellNameType.SHORT), poolRackBarcode,
-                        "A1"));
+        if (doPoolingTransfer) {
+            int i = 0;
+            // PoolingTransfer
+            poolRackBarcode = "PoolRack" + testPrefix;
+            for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
+                List<BettaLimsMessageTestFactory.CherryPick> poolingCherryPicks =
+                        new ArrayList<>();
+                for (int rackPosition = 1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
+                    poolingCherryPicks.add(new BettaLimsMessageTestFactory.CherryPick(normCatchRackBarcodes.get(i),
+                            bettaLimsMessageTestFactory.buildWellName(rackPosition,
+                                    BettaLimsMessageTestFactory.WellNameType.SHORT), poolRackBarcode,
+                            "A1"));
+                }
+                poolTubeBarcodes.add("Pool" + testPrefix + i);
+                poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
+                        Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
+                        Collections.singletonList(poolRackBarcode),
+                        Collections.singletonList(Collections.singletonList(poolTubeBarcodes.get(i))), poolingCherryPicks);
+                poolingTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
+                i++;
             }
-            poolTubeBarcodes.add("Pool" + testPrefix + i);
-            poolingTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("PoolingTransfer",
-                    Arrays.asList(normCatchRackBarcodes.get(i)), Collections.singletonList(normCatchBarcodes),
-                    Collections.singletonList(poolRackBarcode),
-                    Collections.singletonList(Collections.singletonList(poolTubeBarcodes.get(i))), poolingCherryPicks);
-            poolingTransferMessage = bettaLimsMessageTestFactory.addMessage(messageList, poolingTransferJaxb);
-            i++;
+        } else {
+            poolRackBarcode = normCatchRackBarcodes.get(0);
+            for (List<String> normCatchBarcodes : listLcsetListNormCatchBarcodes) {
+                poolTubeBarcodes.addAll(normCatchBarcodes);
+            }
         }
 
         // EcoTransfer
