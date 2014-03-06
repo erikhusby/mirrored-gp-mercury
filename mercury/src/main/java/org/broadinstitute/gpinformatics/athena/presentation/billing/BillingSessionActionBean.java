@@ -1,12 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -17,18 +27,25 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.util.*;
-
-import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements.
@@ -38,6 +55,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private static final String SESSION_LIST_PAGE = "/billing/sessions.jsp";
     private static final String SESSION_VIEW_PAGE = "/billing/view.jsp";
+    private static final Log log = LogFactory.getLog(BillingSessionActionBean.class);
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -78,11 +96,13 @@ public class BillingSessionActionBean extends CoreActionBean {
      * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
      * order list, so create is not needed here.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
+    @Before(stages = LifecycleStage.BindingAndValidation,
+            on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
     public void init() {
+        log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
         if (sessionKey != null) {
-            editSession = billingSessionDao.findByBusinessKey(sessionKey);
+            editSession = billingEjb.findSessionByBusinessKey(sessionKey);
         }
     }
 
@@ -96,7 +116,8 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution list() {
         // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view.
         if (!StringUtils.isBlank(billingSession)) {
-            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", billingSession);
+            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
+                    .addParameter("sessionKey", billingSession);
         }
 
         return new ForwardResolution(SESSION_LIST_PAGE);
@@ -110,7 +131,8 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent("downloadTracker")
     public Resolution downloadTracker() {
 
-        List<ProductOrder> productOrders = productOrderDao.findListForBilling(editSession.getProductOrderBusinessKeys());
+        List<ProductOrder> productOrders =
+                productOrderDao.findListForBilling(editSession.getProductOrderBusinessKeys());
 
         SampleLedgerExporter exporter = sampleLedgerExporterFactory.makeExporter(productOrders);
 
@@ -177,24 +199,34 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(pageUrl, sessionKey);
+        log.warn("Billing request for " + pageUrl);
 
         boolean errorsInBilling = false;
 
-        for (BillingEjb.BillingResult billingResult : billingResults) {
+        List<BillingEjb.BillingResult> billingResults = null;
+        try {
+            billingResults = billingEjb.bill(pageUrl, sessionKey);
 
-            if (billingResult.isError()) {
-                errorsInBilling = true;
-                addGlobalValidationError(billingResult.getErrorMessage());
+            for (BillingEjb.BillingResult billingResult : billingResults) {
 
-            } else {
-                String workUrl =
-                        quoteLink.workUrl(billingResult.getQuoteImportItem().getQuoteId(), billingResult.getWorkId());
+                if (billingResult.isError()) {
+                    errorsInBilling = true;
+                    addGlobalValidationError(billingResult.getErrorMessage());
 
-                String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
-                addMessage("Sent to quote server: " + link + " to see the value");
+                } else {
+                    String workUrl =
+                            quoteLink.workUrl(billingResult.getQuoteImportItem().getQuoteId(),
+                                    billingResult.getWorkId());
+
+                    String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
+                    addMessage("Sent to quote server: " + link + " to see the value");
+                }
             }
+        } catch (BillingException e) {
+            errorsInBilling = true;
+            addGlobalValidationError(e.getMessage());
         }
+
 
         if (errorsInBilling) {
             return getSourcePageResolution();
@@ -238,6 +270,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     }
 
     private final Map<String, String> priceItemNameMap = new HashMap<>();
+
     public Map<String, String> getQuotePriceItemNameMap() {
         Collection<QuotePriceItem> quotePriceItems = priceListCache.getQuotePriceItems();
         if (priceItemNameMap.isEmpty() && !quotePriceItems.isEmpty()) {

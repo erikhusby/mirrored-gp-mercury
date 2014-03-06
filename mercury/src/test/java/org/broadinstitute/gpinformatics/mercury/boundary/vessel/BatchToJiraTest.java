@@ -126,6 +126,7 @@ public class BatchToJiraTest extends Arquillian {
         assertThat(gssrIdsText.trim(), equalTo("SM-01"));
 
         // now try it with SM-02 as a rework
+        // FIXME find a different way to do this.  This method, addReworkToBatch, is not a production used method.
         reworkEjb.addReworkToBatch(batch, tube2Label, "scottmat");
         batchEjb.batchToJira("andrew", null, batch, CreateFields.IssueType.EXOME_EXPRESS);
 

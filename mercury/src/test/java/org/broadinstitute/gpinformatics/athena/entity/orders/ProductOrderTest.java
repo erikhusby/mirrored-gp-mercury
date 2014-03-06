@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -208,4 +209,22 @@ public class ProductOrderTest {
         pdo.setQuoteId(quoteId);
         Assert.assertEquals(pdo.getQuoteStringForJiraTicket(),quoteId);
     }
+
+    @Test
+    public void
+    testQuoteRequired() {
+        boolean hasQuote = false;
+        String quoteOrNoQuoteString = "just because";
+        int numberOfSamples = 4;
+        ProductOrder pdo = ProductOrderTestFactory.buildSampleInitiationProductOrder(numberOfSamples);
+
+        Assert.assertTrue(pdo.canSkipQuote());
+        Assert.assertEquals(
+                TestUtils.getFirst(pdo.getProductOrderKit().getKitOrderDetails()).getNumberOfSamples().longValue(),
+                numberOfSamples);
+
+
+
+    }
+
 }

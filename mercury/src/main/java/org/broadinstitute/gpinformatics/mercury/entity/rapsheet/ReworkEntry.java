@@ -102,7 +102,9 @@ public class ReworkEntry extends RapSheetEntry {
 
     /**
      * Why the rework is happening. This list needs to be added to.
+     * TODO SGM:  To be removed after the deployment of the v1.44 release
      */
+    @Deprecated
     public static enum ReworkReasonEnum {
         MACHINE_ERROR("Machine Error"),
         UNKNOWN_ERROR("Unknown Error");

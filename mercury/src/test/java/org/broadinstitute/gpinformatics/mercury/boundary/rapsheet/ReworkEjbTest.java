@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessa
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet.ReworkEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -156,6 +157,9 @@ public class ReworkEjbTest extends Arquillian {
 
     @Inject
     private LabBatchEjb labBatchEJB;
+
+    @Inject
+    private ReworkReasonDao reworkReasonDao;
 
 
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
@@ -503,8 +507,7 @@ public class ReworkEjbTest extends Arquillian {
         mapBarcodeToTube.clear();
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPath() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
@@ -514,9 +517,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             reworkEjb.addAndValidateCandidates(Collections.singleton(
                     bucketCandidate),
-                    new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "test Rework", "scottmat",
+                    unknownReason, "test Rework", "scottmat",
                     Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
         }
 
@@ -807,8 +812,8 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -819,9 +824,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()),
+                            unknownReason,
                             "test Rework", "jowalsh",
                             Workflow.AGILENT_EXOME_EXPRESS,
                             "Pico/Plating Bucket"));
@@ -839,21 +846,24 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testAddAndValidateReworksHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
 
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
         for (String barcode : mapBarcodeToTube.keySet()) {
-            ReworkEjb.BucketCandidate candidate = new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
+            ReworkEjb.BucketCandidate candidate =
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
         }
+        String unknownReason =
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
         Collection<String> validationMessages = reworkEjb
                 .addAndValidateCandidates(bucketCandidates,
-                        new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "test Rework",
+                        unknownReason, "test Rework",
                         "jowalsh", Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
@@ -863,8 +873,8 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithValidationPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -882,9 +892,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(
                     bucketCandidate),
-                    new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "", "scottmat",
+                    unknownReason, "", "scottmat",
                     Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
         }
 
@@ -922,9 +934,11 @@ public class ReworkEjbTest extends Arquillian {
                 ReworkEjb.BucketCandidate bucketCandidate =
                         new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
                 bucketCandidate.setReworkItem(true);
+                String unknownReason =
+                        ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
                 reworkEjb.addAndValidateCandidates(Collections.singleton(
                         bucketCandidate),
-                        new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "", "scottmat",
+                        unknownReason, "", "scottmat",
                         Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
@@ -937,8 +951,8 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testHappyPathWithAncestorValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst9");
@@ -958,11 +972,13 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()),
-                            "Pico/Plating Bucket", "",
-                            Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                            unknownReason, "", "scottmat",
+                            Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -986,8 +1002,8 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidation() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -998,9 +1014,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "", "scottmat",
+                            unknownReason, "", "scottmat",
                             Workflow.AGILENT_EXOME_EXPRESS,
                             "Pico/Plating Bucket"));
         }
@@ -1016,8 +1034,8 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(entries.contains(mapBarcodeToTube.values().iterator().next()));
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestors() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1037,10 +1055,12 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()),
-                            "Pico/Plating Bucket", "", Workflow.AGILENT_EXOME_EXPRESS, "scottmat"));
+                            unknownReason, "", "scottmat", Workflow.AGILENT_EXOME_EXPRESS,
+                            "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1064,8 +1084,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1094,9 +1113,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "", "scottmat",
+                            unknownReason, "", "scottmat",
                             Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
         }
 
@@ -1121,8 +1142,8 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    //fixme SGM:  failing with unique constraint on LabEvent.  FIx it.
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1152,9 +1173,11 @@ public class ReworkEjbTest extends Arquillian {
             ReworkEjb.BucketCandidate bucketCandidate =
                     new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
             bucketCandidate.setReworkItem(true);
+            String unknownReason =
+                    ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
             validationMessages.addAll(reworkEjb
                     .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            new ReworkReason(ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue()), "", "scottmat",
+                            unknownReason, "", "scottmat",
                             Workflow.AGILENT_EXOME_EXPRESS,
                             "Pico/Plating Bucket"));
         }

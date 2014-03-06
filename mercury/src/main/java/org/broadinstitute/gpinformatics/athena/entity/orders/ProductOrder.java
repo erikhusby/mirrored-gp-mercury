@@ -870,23 +870,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return sampleCounts.bspSampleCount == sampleCounts.uniqueSampleCount;
     }
 
+
     /**
      * Returns true if the product for this PDO
      * has a RIN risk criteria.
      */
     public boolean isRinScoreValidationRequired() {
-        boolean isRinCheckRequired = false;
-        Product product = getProduct();
         if (product != null) {
             for (RiskCriterion riskCriterion : product.getRiskCriteria()) {
                 if (RiskCriterion.RiskCriteriaType.RIN == riskCriterion.getType()) {
-                    isRinCheckRequired = true;
-                    break;
+                    return true;
                 }
-
             }
         }
-        return isRinCheckRequired;
+
+        return false;
     }
 
     /**
@@ -1450,7 +1448,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     @Transient
     public boolean canSkipQuote() {
-        return !StringUtils.isBlank(getSkipQuoteReason());
+        return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
     }
 
 }

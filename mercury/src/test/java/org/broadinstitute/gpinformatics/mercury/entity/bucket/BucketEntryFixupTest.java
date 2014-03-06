@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -153,7 +154,9 @@ public class BucketEntryFixupTest extends Arquillian {
     public void populateNewDefaultReworkReasons() throws Exception {
         final List<ReworkReason> reworkReasons = reworkReasonDao.findAll();
 
-        Set<String> newReasons = ImmutableSet.of("Low Quant", "User Error", "Product Upgrade");
+        Set<String> newReasons = ImmutableSet.of("Low Quant", "User Error", "Product Upgrade",
+                ReworkEntry.ReworkReasonEnum.MACHINE_ERROR.getValue(),
+                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue());
         Function<String, Boolean> reasonExistenceFunction = new Function<String, Boolean>() {
             @Override
             public Boolean apply(@Nullable String s) {

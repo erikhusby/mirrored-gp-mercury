@@ -12,9 +12,9 @@ import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
 @Stateful
-@TransactionAttribute( TransactionAttributeType.SUPPORTS)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
-public class ReworkReasonDao extends GenericDao{
+public class ReworkReasonDao extends GenericDao {
 
     public ReworkReason findById(Long reworkId) {
         return findById(ReworkReason.class, reworkId);

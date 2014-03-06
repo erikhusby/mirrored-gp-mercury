@@ -8,6 +8,12 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
+    <style type="text/css">
+        td.editable span {
+            line-height: 78px;
+            padding: 3px;
+        }
+    </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
         function submitBucket() {
@@ -26,7 +32,7 @@
                 columnsEditable=true;
             </security:authorizeBlock>
 
-            var editablePdo = function()  {
+                var editablePdo = function()  {
                 if (columnsEditable) {
                     var oTable = $j('#bucketEntryView').dataTable();
                     $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
@@ -43,25 +49,25 @@
                             };
                         },
                         'loaddata': function (value, settings) {
-
                             return {
                                 "selectedEntryIds": this.parentNode.getAttribute('id')
                             };
                         },
+//                        If you need to debug the generated html you need to ignore onblur events
+//                        "onblur" : "ignore",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-
-                        submit: "Save"
+                        submit: 'Save'
                     });
+                    $j(".icon-pencil").show();
                     $j("th.editable").attr("title","Click the values in this column to edit their values.");
-                    if ($j("th.editable div").length == 0) {
-                        $j("th.editable").append('<div class="icon-pencil"></div>');
-                    }
                 } else {
+                    $j(".icon-pencil").hide();
                     $j(".editable").removeClass("editable")
                 }
-            }
+
+            };
 
             $j('#bucketEntryView').dataTable({
                 "oTableTools":ttExportDefines,
@@ -119,7 +125,7 @@
             <stripes:label for="workflowSelect" name="Select Workflow" class="control-label"/>
             <div class="controls">
                 <stripes:select id="workflowSelect" name="selectedWorkflowDef" onchange="submitWorkflow()"
-                                value="${actionBean.selectedWorkflowDef}">
+                                value="selectedWorkflowDef.name">
                     <stripes:option value="">Select a Workflow</stripes:option>
                     <stripes:options-collection collection="${actionBean.possibleWorkflows}" label="name" value="name"/>
                 </stripes:select>
@@ -200,7 +206,7 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
-                <th class="editable" style="width: 50; white-space: nowrap">PDO</th>
+                <th class="editable">PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
@@ -235,11 +241,11 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable" style="white-space: nowrap">${entry.poBusinessKey}</td>
+                    <td class="editable ellipsis"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
-                    <td>
+                    <td class="ellipsis">
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
                     </td>
                     <td>
@@ -250,7 +256,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
                     </td>
-                    <td>
+                    <td class="ellipsis">
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:mm:ss"/>
                     </td>
                     <td>
