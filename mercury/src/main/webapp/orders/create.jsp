@@ -839,7 +839,7 @@
                             <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
                             <div id="skipQuoteReasonDiv">
                                 Please enter a reason for skipping the quote *
-                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
+                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
                             </div>
                         </div>
                     </div>
