@@ -9,10 +9,14 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
     <style type="text/css">
-        td.editable span {
-            line-height: 78px;
-            padding: 3px;
+        td.editable {
+            width: 105px !important;
+            height: 78px;
         }
+        .editable select {
+            width: auto !important;
+        }
+
     </style>
     <script src="${ctxpath}/resources/scripts/jquery.jeditable.mini.js" type="text/javascript"></script>
     <script type="text/javascript">
@@ -38,8 +42,9 @@
                     $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/view/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
+                            var cellValue='<span class="ellipsis">'+sValue+'</span><span style="display: none;" class="icon-pencil"></span>';
                             var aPos = oTable.fnGetPosition(this);
-                            oTable.fnUpdate(sValue, aPos[0], aPos[1]);
+                            oTable.fnUpdate(cellValue, aPos[0], aPos[1]);
                         },
                         'submitdata': function (value, settings) {
                             return {
@@ -54,14 +59,16 @@
                             };
                         },
 //                        If you need to debug the generated html you need to ignore onblur events
-//                        "onblur" : "ignore",
+                        "onblur" : "ignore",
+                        cssclass: "editable",
                         tooltip: 'Click the value in this field to edit',
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
-                        submit: 'Save'
+                        submit: 'Save',
+                        height: "auto",
+                        width: "auto"
                     });
                     $j(".icon-pencil").show();
-                    $j("th.editable").attr("title","Click the values in this column to edit their values.");
                 } else {
                     $j(".icon-pencil").hide();
                     $j(".editable").removeClass("editable")
@@ -206,7 +213,7 @@
                 </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
-                <th class="editable">PDO</th>
+                <th>PDO</th>
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
@@ -241,7 +248,9 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable ellipsis"><span>${entry.poBusinessKey}</span><span style="display: none;" class="icon-pencil"></span>
+                    <td class="editable"><span class="ellipsis">${entry.poBusinessKey}</span><span style="display: none;"
+                                                                                           class="icon-pencil"></span>
+                    </td>
                     <td>
                         <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
