@@ -663,4 +663,185 @@
         <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena" />
     </changeSet>
 
+    <changeSet author="dryan" id="GPLIM-2560-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="consent"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="consent">
+            <column name="consent_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="identifier" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="consent" columnNames="consent_id" schemaName="athena"/>
+        <addUniqueConstraint columnNames="identifier, name"
+                             constraintName="unk_consent_id_name" schemaName="athena"
+                             tableName="consent"/>
+        <createSequence sequenceName="seq_consent" schemaName="athena" startValue="1" incrementBy="50"/>
+
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-1-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="consent_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="consent_aud">
+            <column name="consent_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="identifier" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="consent_aud" columnNames="consent_id, rev" schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="consent_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_CONSENT_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+
+    <changeSet author="dryan" id="GPLIM-2560-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_consents"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="product_order_consents">
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consents" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="product_order_consents" columnNames="consents" schemaName="athena"
+                             constraintName="uk_pdo_consents"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-2-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="product_order_consents_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="product_order_consents_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consents" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="product_order_consents_aud" columnNames="rev, product_order, consents" schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="product_order_consents_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_PDO_CONSENTS_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+
+    <changeSet author="dryan" id="GPLIM-2560-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="research_project_consents"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="research_project_consents">
+            <column name="research_project" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consents" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="research_project_consents" columnNames="consents" schemaName="athena"
+                             constraintName="uk_rp_consents"/>
+
+    </changeSet>
+
+
+    <changeSet author="dryan" id="GPLIM-2560-3-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="research_project_consents_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="research_project_consents_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+
+            <column name="research_project" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consents" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="research_project_consents_aud" columnNames="rev, research_project, consents"
+                       schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="research_project_consents_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_RP_CONSENTS_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <or>
+                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_CONSENTS_CONSENT" schemaName="athena"/>
+                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_CONSENTS_PDO" schemaName="athena"/>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_CONSENT" schemaName="athena"/>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_RP" schemaName="athena"/>
+                </or>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="FK_PDO_CONSENTS_CONSENT" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="product_order_consents" baseColumnNames="consents"
+                                 referencedTableName="consent" referencedColumnNames="consent_id"/>
+        <addForeignKeyConstraint constraintName="FK_PDO_CONSENTS_PDO" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="product_order_consents" baseColumnNames="product_order"
+                                 referencedTableName="PRODUCT_ORDER" referencedColumnNames="product_order_id"/>
+        <addForeignKeyConstraint constraintName="FK_RP_CONSENTS_CONSENT" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="research_project_consents" baseColumnNames="consents"
+                                 referencedTableName="consent" referencedColumnNames="consent_id"/>
+        <addForeignKeyConstraint constraintName="FK_RP_CONSENTS_RP" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="research_project_consents" baseColumnNames="research_project"
+                                 referencedTableName="research_project" referencedColumnNames="research_project_id"/>
+    </changeSet>
+
 </databaseChangeLog>

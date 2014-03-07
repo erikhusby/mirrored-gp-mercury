@@ -83,6 +83,7 @@ public class ProductOrderTest {
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("laneCount")
                 .ignoreProperty("modifiedBy")
+                .ignoreProperty("consents")
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
                 .ignoreProperty("modifiedDate")

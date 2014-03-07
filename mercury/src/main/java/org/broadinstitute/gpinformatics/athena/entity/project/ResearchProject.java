@@ -146,6 +146,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
+    @OneToMany
+    private Collection<Consent> consents;
+
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
@@ -286,6 +289,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
+    }
+
+    public Collection<Consent> getConsents() {
+        return consents;
+    }
+
+    public void setConsents(Collection<Consent> consents) {
+        this.consents = consents;
     }
 
     /**

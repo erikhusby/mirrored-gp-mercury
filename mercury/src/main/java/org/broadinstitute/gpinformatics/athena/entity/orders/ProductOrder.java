@@ -11,6 +11,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -165,6 +166,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
+
+    @OneToMany
+    private Collection<Consent> consents;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -826,6 +830,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public Long getProductOrderId() {
         return productOrderId;
+    }
+
+
+    public Collection<Consent> getConsents() {
+        return consents;
+    }
+
+    public void setConsents(Collection<Consent> consents) {
+        this.consents = consents;
     }
 
     /**
