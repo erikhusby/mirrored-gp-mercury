@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -66,10 +67,10 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    @ManyToMany(mappedBy = "consents")
+    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
     private Collection<ProductOrder> productOrders;
 
-    @ManyToMany(mappedBy = "consents")
+    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
     private Collection<ResearchProject> researchProjects;
 
     public Consent() {

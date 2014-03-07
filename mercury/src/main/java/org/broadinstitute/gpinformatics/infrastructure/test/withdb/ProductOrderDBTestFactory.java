@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -14,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -36,6 +38,10 @@ public class ProductOrderDBTestFactory {
         List<ResearchProject> projects = researchProjectDao.findAllResearchProjects();
         assertThat(projects, is(not(nullOrEmptyCollection())));
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
+        long time = new Date().getTime();
+        Consent consent = new Consent("IRB Consent for - " + time
+                , Consent.Type.IRB, ""+time);
+                project.addConsent(consent);
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.AGILENT_EXOME_EXPRESS
                 .getWorkflowName());

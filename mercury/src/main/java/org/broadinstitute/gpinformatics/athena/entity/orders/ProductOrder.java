@@ -49,6 +49,7 @@ import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -71,6 +72,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String DRAFT_PREFIX = "Draft-";
 
     private static final String REQUISITION_PREFIX = "REQ-";
+
+    public Collection<Consent> findAvailableConsents() {
+        return researchProject.getConsents();
+    }
+
+    public void addConsent(@Nonnull Consent ... consent) {
+        getConsents().addAll(Arrays.asList(consent));
+    }
 
     public enum SaveType {CREATING, UPDATING}
 
@@ -158,6 +167,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private ProductOrderKit productOrderKit;
 
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    private Collection<Consent> consents=new ArrayList<>();
+
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
@@ -167,9 +179,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
-
-    @ManyToMany
-    private Collection<Consent> consents;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -836,10 +845,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public Collection<Consent> getConsents() {
         return consents;
-    }
-
-    public void setConsents(Collection<Consent> consents) {
-        this.consents = consents;
     }
 
     /**

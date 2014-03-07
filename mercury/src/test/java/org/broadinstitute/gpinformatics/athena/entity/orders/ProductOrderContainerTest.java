@@ -3,14 +3,20 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -19,6 +25,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Collection;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -29,6 +36,15 @@ public class ProductOrderContainerTest extends Arquillian {
 
     @Inject
     ResearchProjectEjb researchProjectEjb;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private ProductDao productDao;
 
     @Inject
     JiraService jiraService;
@@ -80,6 +96,26 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
     }
+
+    public void testSimpleProductOrderWithConsent() throws Exception {
+        ProductOrder testOrder =  ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
+        testOrder.setCreatedBy(10950L);
+
+        Collection<Consent> availableConsents = testOrder.findAvailableConsents();
+        Assert.assertFalse(availableConsents.isEmpty());
+        testOrder.addConsent(TestUtils.getFirst(availableConsents));
+
+        BspUser bspUser = new BspUser();
+        bspUser.setUserId(10950L);
+//        testOrder.setCreatedBy(10950l);
+        testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
+//        ProductOrderJiraUtil.placeOrder(testOrder, jiraService);
+        productOrderDao.persist(testOrder.getProduct());
+        productOrderDao.persist(testOrder);
+        Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
+
+
+}
 
     public void testSimpleNonBspProductOrder() throws Exception {
         ProductOrder testOrder =

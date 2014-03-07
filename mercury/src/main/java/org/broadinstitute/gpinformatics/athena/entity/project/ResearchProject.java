@@ -35,6 +35,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -147,8 +148,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
-    @ManyToMany
-    private Collection<Consent> consents;
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    private Collection<Consent> consents = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -677,6 +678,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      */
     public boolean isSavedInJira() {
         return !StringUtils.isBlank(getJiraTicketKey());
+    }
+
+    public void addConsent(Consent ... consent) {
+        consents.addAll(Arrays.asList(consent));
     }
 
     public enum Status implements StatusType {
