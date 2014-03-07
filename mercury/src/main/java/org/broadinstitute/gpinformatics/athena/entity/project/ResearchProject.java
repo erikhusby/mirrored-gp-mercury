@@ -8,8 +8,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -25,6 +25,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PostLoad;
@@ -146,7 +147,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
-    @OneToMany
+    @ManyToMany
     private Collection<Consent> consents;
 
     // This is used for edit to keep track of changes to the object.

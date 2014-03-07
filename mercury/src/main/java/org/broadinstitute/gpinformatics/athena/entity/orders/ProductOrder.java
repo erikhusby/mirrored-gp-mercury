@@ -37,6 +37,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -167,7 +168,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
 
-    @OneToMany
+    @ManyToMany
     private Collection<Consent> consents;
 
     /**

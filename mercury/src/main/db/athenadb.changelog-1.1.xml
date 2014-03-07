@@ -737,8 +737,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addUniqueConstraint tableName="product_order_consents" columnNames="consents" schemaName="athena"
-                             constraintName="uk_pdo_consents"/>
     </changeSet>
     <changeSet author="dryan" id="GPLIM-2560-2-aud">
         <preConditions onFail="MARK_RAN">
@@ -781,9 +779,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addUniqueConstraint tableName="research_project_consents" columnNames="consents" schemaName="athena"
-                             constraintName="uk_rp_consents"/>
-
     </changeSet>
 
 
