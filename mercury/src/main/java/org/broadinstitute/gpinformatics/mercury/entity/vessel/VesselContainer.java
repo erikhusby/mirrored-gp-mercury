@@ -946,11 +946,7 @@ public class VesselContainer<T extends LabVessel> {
         // Clone ancestors
         List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
         for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
-            try {
-                currentSampleInstances.add(ancestorSampleInstance.clone());
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
+            currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
         }
 
         if (!appliedReagents) {

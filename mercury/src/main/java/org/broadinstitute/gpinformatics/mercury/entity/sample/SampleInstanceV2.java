@@ -19,7 +19,7 @@ import java.util.Set;
  * A transient class returned by LabVessel.getSampleInstances.  It accumulates information encountered
  * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
-public class SampleInstanceV2 implements Cloneable {
+public class SampleInstanceV2 {
 
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
     private List<Reagent> reagents = new ArrayList<>();
@@ -38,6 +38,19 @@ public class SampleInstanceV2 implements Cloneable {
     }
 
     /**
+     * Makes a copy of an (ancestor) SampleInstance.
+     */
+    public SampleInstanceV2(SampleInstanceV2 other) {
+        this.rootMercurySamples.addAll(other.rootMercurySamples);
+        this.reagents.addAll(other.reagents);
+        this.singleBucketEntry = other.singleBucketEntry;
+        this.allBucketEntries.addAll(other.allBucketEntries);
+        this.singleInferredBucketedBatch = other.singleInferredBucketedBatch;
+        this.allProductOrderSamples.addAll(other.allProductOrderSamples);
+        this.allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
+    }
+
+    /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
      * that far.  May be null for a vessel that holds only reagents.
@@ -50,7 +63,7 @@ public class SampleInstanceV2 implements Cloneable {
     }
 
     /**
-     * Returns all batches of the given type associated with ancestor vessels, sorted by increasing distance in the
+     * Returns all batches associated with ancestor vessels, sorted by increasing distance in the
      * transfer history.
      */
     public List<LabBatchStartingVessel> getAllBatchVessels() {
@@ -63,6 +76,7 @@ public class SampleInstanceV2 implements Cloneable {
      * @param labBatchType Pass type SAMPLES_IMPORT to get the Aliquot.  Pass null to get all batches.
      */
     public List<LabBatchStartingVessel> getAllBatchVessels(LabBatch.LabBatchType labBatchType) {
+        // Entities are added starting at the root, so reverse the list to sort by increasing distance.
         // todo jmt use a Deque?
         List<LabBatchStartingVessel> reverseBatchVessels = new ArrayList<>(allLabBatchStartingVessels);
         Collections.reverse(reverseBatchVessels);
@@ -125,7 +139,9 @@ public class SampleInstanceV2 implements Cloneable {
      * todo jmt how should this be sorted?
      */
     public List<ProductOrderSample> getAllProductOrderSamples() {
-        return allProductOrderSamples;
+        List<ProductOrderSample> reverseProductOrderSample = new ArrayList<>(allProductOrderSamples);
+        Collections.reverse(reverseProductOrderSample);
+        return reverseProductOrderSample;
     }
 
     /**
@@ -185,20 +201,6 @@ todo jmt not sure if this applies.
             System.out.println("Adding reagent " + newReagent);
         }
         SampleInstance.addReagent(newReagent, reagents);
-    }
-
-    /**
-     * Makes a copy of an (ancestor) SampleInstance.
-     */
-    @Override
-    public SampleInstanceV2 clone() throws CloneNotSupportedException {
-        SampleInstanceV2 clone = (SampleInstanceV2) super.clone();
-        clone.rootMercurySamples = new HashSet<>(rootMercurySamples);
-        clone.reagents = new ArrayList<>(reagents);
-        clone.allBucketEntries = new ArrayList<>(allBucketEntries);
-        clone.allProductOrderSamples = new ArrayList<>(allProductOrderSamples);
-        clone.allLabBatchStartingVessels = new ArrayList<>(allLabBatchStartingVessels);
-        return clone;
     }
 
     /**
