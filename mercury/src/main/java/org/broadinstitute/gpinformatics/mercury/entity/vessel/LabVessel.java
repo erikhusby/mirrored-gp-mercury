@@ -1769,7 +1769,7 @@ public abstract class LabVessel implements Serializable {
                 for (LabVessel labVessel : labEvent.getSourceLabVessels()) {
                     lcSetsFromRecursion.addAll(recurseEvents(visitedLabEvents, labVessel.getTransfersToWithReArrays()));
                 }
-                Set<LabBatch> computedLcSets = labEvent.computeLcSets();
+                Set<LabBatch> computedLcSets = labEvent.getComputedLcSets();
                 if (computedLcSets.isEmpty()) {
                     returnLcSets.addAll(lcSetsFromRecursion);
                     labEvent.addComputedLcSets(lcSetsFromRecursion);

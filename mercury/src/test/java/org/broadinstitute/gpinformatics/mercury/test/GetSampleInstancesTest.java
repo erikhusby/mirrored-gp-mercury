@@ -81,7 +81,8 @@ public class GetSampleInstancesTest {
 
         // sample initiation PDO
         ProductOrder sampleInitProductOrder = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-SI",
-                Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1");
+                Workflow.ICE, 101L, "Test research project", "Test research project", false, "SamInit", "1",
+                "ExExQuoteId");
         String rootSample1 = sampleInitProductOrder.getSamples().get(0).getSampleKey();
         String rootSample2 = sampleInitProductOrder.getSamples().get(1).getSampleKey();
         String rootSample3 = sampleInitProductOrder.getSamples().get(2).getSampleKey();

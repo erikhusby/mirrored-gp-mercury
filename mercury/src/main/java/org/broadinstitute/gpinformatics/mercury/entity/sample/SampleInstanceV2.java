@@ -239,7 +239,7 @@ todo jmt not sure if this applies.
      * Applies a LabEvent, specifically computed LCSets.
      */
     public void applyEvent(LabEvent labEvent) {
-        Set<LabBatch> computedLcsets = labEvent.computeLcSets();
+        Set<LabBatch> computedLcsets = labEvent.getComputedLcSets();
         // A single computed LCSET can help resolve ambiguity of multiple bucket entries.
         if (computedLcsets.size() == 1) {
             singleInferredBucketedBatch = computedLcsets.iterator().next();

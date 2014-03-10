@@ -663,4 +663,22 @@
         <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena" />
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2386-1">
+        <addColumn schemaName="athena" tableName="product_order_sample">
+            <column name="mercury_sample" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-2">
+        <addColumn schemaName="athena" tableName="product_order_sample_aud">
+            <column name="mercury_sample" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-3">
+        <addForeignKeyConstraint constraintName="fk_pos_mercury_sample"
+                baseTableSchemaName="athena" baseTableName="product_order_sample" baseColumnNames="mercury_sample"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
 </databaseChangeLog>

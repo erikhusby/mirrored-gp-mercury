@@ -418,14 +418,14 @@ todo jmt adder methods
         if (manualOverrideLcSet != null) {
             return Collections.singleton(manualOverrideLcSet);
         }
-        return computedLcSets;
+        return computeLcSets();
     }
 
     public void addComputedLcSets(Set<LabBatch> lcSets) {
         computedLcSets.addAll(lcSets);
     }
 
-    public Set<LabBatch> computeLcSets() {
+    Set<LabBatch> computeLcSets() {
         if (computedLcSets == null) {
             computedLcSets = new HashSet<>();
             for (SectionTransfer sectionTransfer : sectionTransfers) {
