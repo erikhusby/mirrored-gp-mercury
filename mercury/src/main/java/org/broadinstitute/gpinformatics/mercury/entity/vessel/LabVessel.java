@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.hibernate.annotations.BatchSize;
@@ -50,6 +51,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -572,9 +574,18 @@ public abstract class LabVessel implements Serializable {
 
 
     /**
-     * Returned from getAncestors and getDescendants
+     * Returned from getAncestors and getDescendants.  Allows code to be shared between evaluateCriteria and
+     * getSampleInstances.
      */
     public static class VesselEvent {
+
+        public static final Comparator<VesselEvent> COMPARE_VESSEL_EVENTS_BY_DATE =
+                new Comparator<VesselEvent>() {
+                    @Override
+                    public int compare(VesselEvent o1, VesselEvent o2) {
+                        return o1.getLabEvent().getEventDate().compareTo(o2.getLabEvent().getEventDate());
+                    }
+                };
 
         private final LabVessel labVessel;
         private final VesselContainer<?> vesselContainer;
@@ -946,7 +957,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return ancestors and events
      */
-    private List<VesselEvent> getAncestors() {
+    List<VesselEvent> getAncestors() {
         List<VesselEvent> vesselEvents = new ArrayList<>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
@@ -955,6 +966,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
         }
+        Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -977,6 +989,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
+        Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -1066,6 +1079,17 @@ public abstract class LabVessel implements Serializable {
     @SuppressWarnings("unused")
     public Set<LabBatchStartingVessel> getLabBatchStartingVessels() {
         return labBatches;
+    }
+
+    public List<LabBatchStartingVessel> getLabBatchStartingVesselsByDate() {
+        List<LabBatchStartingVessel> batchVesselsByDate = new ArrayList<>(labBatches);
+        Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
+            @Override
+            public int compare(LabBatchStartingVessel o1, LabBatchStartingVessel o2) {
+                return o1.getLabBatch().getCreatedOn().compareTo(o2.getLabBatch().getCreatedOn());
+            }
+        });
+        return batchVesselsByDate;
     }
 
     public Set<LabBatchStartingVessel> getDilutionReferences() {
@@ -1757,4 +1781,31 @@ public abstract class LabVessel implements Serializable {
         }
         return returnLcSets;
     }
+
+    @Transient
+    private List<SampleInstanceV2> sampleInstances;
+
+    public List<SampleInstanceV2> getSampleInstancesV2() {
+        if (sampleInstances == null) {
+            sampleInstances = new ArrayList<>();
+            if (getContainerRole() != null) {
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
+            }
+            List<VesselEvent> ancestorEvents = getAncestors();
+            if (ancestorEvents.isEmpty()) {
+                sampleInstances.add(new SampleInstanceV2(this));
+            } else {
+                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+            }
+        }
+        return sampleInstances;
+    }
+
+    /**
+     * This is for database-free testing only, when a new transfer makes the caches stale.
+     */
+    public void clearCaches() {
+        sampleInstances = null;
+    }
+
 }

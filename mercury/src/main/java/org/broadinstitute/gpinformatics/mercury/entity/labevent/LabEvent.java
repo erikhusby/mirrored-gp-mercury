@@ -168,7 +168,7 @@ public class LabEvent {
      * Set by transfer traversal, based on ancestor lab batches and transfers.
      */
     @Transient
-    private Set<LabBatch> computedLcSets = new HashSet<>();
+    private Set<LabBatch> computedLcSets;
 
     /**
      * Can be set by a user to indicate the LCSET, in the absence of any distinguishing context, e.g. a set of samples
@@ -426,15 +426,16 @@ todo jmt adder methods
     }
 
     public Set<LabBatch> computeLcSets() {
-        Set<LabBatch> computedLcSets = new HashSet<>();
-        for (SectionTransfer sectionTransfer : sectionTransfers) {
-            computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
-                    sectionTransfer.getSourceSection()));
-        }
-        computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
-        if (LabVessel.DIAGNOSTICS) {
-            System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets + " -> " +
-                               getTargetLabVessels().iterator().next().getLabel());
+        if (computedLcSets == null) {
+            computedLcSets = new HashSet<>();
+            for (SectionTransfer sectionTransfer : sectionTransfers) {
+                computedLcSets.addAll(sectionTransfer.getSourceVesselContainer().getComputedLcSetsForSection(
+                        sectionTransfer.getSourceSection()));
+            }
+            computedLcSets.addAll(computeLcSetsForCherryPickTransfers());
+            if (LabVessel.DIAGNOSTICS) {
+                System.out.println("computedLcSets for " + labEventType.getName() + " " + computedLcSets);
+            }
         }
         return computedLcSets;
     }

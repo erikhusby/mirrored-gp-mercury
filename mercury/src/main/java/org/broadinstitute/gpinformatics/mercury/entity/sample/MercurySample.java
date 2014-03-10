@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.RapSheet;
@@ -15,8 +16,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -38,6 +42,9 @@ public class MercurySample extends AbstractSample {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private RapSheet rapSheet;
+
+    @OneToMany(mappedBy = "mercurySample", fetch = FetchType.LAZY,  cascade = CascadeType.PERSIST)
+    private Set<ProductOrderSample> productOrderSamples = new HashSet<>();
 
     /**
      * For JPA
@@ -68,6 +75,15 @@ public class MercurySample extends AbstractSample {
     @Override
     public String getSampleKey() {
         return sampleKey;
+    }
+
+    public Set<ProductOrderSample> getProductOrderSamples() {
+        return productOrderSamples;
+    }
+
+    public void addProductOrderSample(ProductOrderSample productOrderSample) {
+        productOrderSamples.add(productOrderSample);
+        productOrderSample.setMercurySample(this);
     }
 
     @Override
