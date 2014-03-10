@@ -29,6 +29,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
@@ -396,5 +398,11 @@ public class ProductOrderActionBeanTest {
         Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
 
 
+    }
+
+    public void testGetProductOrderLink() {
+        AppConfig productionConfig = AppConfig.produce(Deployment.PROD);
+        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
+                "http://mercury.broadinstitute.org/Mercury//orders/order.action?view=&productOrder=PDO-1");
     }
 }
