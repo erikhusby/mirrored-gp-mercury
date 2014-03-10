@@ -907,6 +907,15 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstances;
     }
 
+    public List<SampleInstanceV2> getSampleInstancesV2() {
+        List<SampleInstanceV2> sampleInstanceList = new ArrayList<>();
+        VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
+        for (VesselPosition vesselPosition : vesselPositions) {
+            sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));
+        }
+        return sampleInstanceList;
+    }
+
     /**
      * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
      */
@@ -937,25 +946,21 @@ public class VesselContainer<T extends LabVessel> {
 
         // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
         // away the bait.
-        boolean appliedReagents = false;
-        if (ancestorSampleInstances.isEmpty()) {
-            ancestorSampleInstances.addAll(reagentSampleInstances);
-            appliedReagents = true;
-        }
-
-        // Clone ancestors
         List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
-        for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
-            currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+        if (ancestorSampleInstances.isEmpty()) {
+            currentSampleInstances.add(new SampleInstanceV2());
+        } else {
+            // Clone ancestors
+            for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+                currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+            }
         }
 
-        if (!appliedReagents) {
-            // Apply reagents
-            for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
-                for (Reagent reagent : reagentSampleInstance.getReagents()) {
-                    for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                        currentSampleInstance.addReagent(reagent);
-                    }
+        // Apply reagents
+        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+            for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.addReagent(reagent);
                 }
             }
         }

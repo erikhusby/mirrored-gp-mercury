@@ -347,7 +347,8 @@ public class GetSampleInstancesTest {
             add(sequencingProductOrder.getSamples().get(sampleIndex));
         }};
         Assert.assertEquals(new HashSet<>(sampleInstance.getAllProductOrderSamples()), expected);
-        Assert.assertEquals(sampleInstance.getSingleProductOrderSample(),                sequencingProductOrder.getSamples().get(sampleIndex));
+        Assert.assertEquals(sampleInstance.getSingleProductOrderSample(),
+                sequencingProductOrder.getSamples().get(sampleIndex));
 
         // Verify control
         sampleInstances = shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position3);

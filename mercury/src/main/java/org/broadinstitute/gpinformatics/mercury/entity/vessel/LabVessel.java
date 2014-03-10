@@ -570,7 +570,8 @@ public abstract class LabVessel implements Serializable {
 
 
     /**
-     * Returned from getAncestors and getDescendants
+     * Returned from getAncestors and getDescendants.  Allows code to be shared between evaluateCriteria and
+     * getSampleInstances.
      */
     public static class VesselEvent {
 
@@ -932,7 +933,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
         }
-        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -955,7 +956,7 @@ public abstract class LabVessel implements Serializable {
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
         }
-        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
+        Collections.sort(vesselEvents, VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -1770,6 +1771,9 @@ public abstract class LabVessel implements Serializable {
     public List<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
             sampleInstances = new ArrayList<>();
+            if (getContainerRole() != null) {
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
+            }
             List<VesselEvent> ancestorEvents = getAncestors();
             if (ancestorEvents.isEmpty()) {
                 sampleInstances.add(new SampleInstanceV2(this));

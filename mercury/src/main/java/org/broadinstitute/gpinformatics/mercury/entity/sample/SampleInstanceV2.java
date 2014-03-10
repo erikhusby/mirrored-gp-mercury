@@ -30,6 +30,12 @@ public class SampleInstanceV2 {
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
 
     /**
+     * For a reagent-only sample instance.
+     */
+    public SampleInstanceV2() {
+    }
+
+    /**
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
@@ -40,14 +46,15 @@ public class SampleInstanceV2 {
     /**
      * Makes a copy of an (ancestor) SampleInstance.
      */
+    @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public SampleInstanceV2(SampleInstanceV2 other) {
-        this.rootMercurySamples.addAll(other.rootMercurySamples);
-        this.reagents.addAll(other.reagents);
-        this.singleBucketEntry = other.singleBucketEntry;
-        this.allBucketEntries.addAll(other.allBucketEntries);
-        this.singleInferredBucketedBatch = other.singleInferredBucketedBatch;
-        this.allProductOrderSamples.addAll(other.allProductOrderSamples);
-        this.allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
+        rootMercurySamples.addAll(other.rootMercurySamples);
+        reagents.addAll(other.reagents);
+        singleBucketEntry = other.singleBucketEntry;
+        allBucketEntries.addAll(other.allBucketEntries);
+        singleInferredBucketedBatch = other.singleInferredBucketedBatch;
+        allProductOrderSamples.addAll(other.allProductOrderSamples);
+        allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
     }
 
     /**
@@ -94,6 +101,13 @@ public class SampleInstanceV2 {
     }
 
     /**
+     * Returns the nearest batch.
+     */
+    public LabBatchStartingVessel getSingleBatchVessel() {
+        return getSingleBatchVessel(null);
+    }
+
+    /**
      * Returns the nearest batch of the given type.
      */
     public LabBatchStartingVessel getSingleBatchVessel(LabBatch.LabBatchType labBatchType) {
@@ -135,8 +149,8 @@ public class SampleInstanceV2 {
     }
 
     /**
-     * Returns all Product Orders associated with samples in ancestor vessels.
-     * todo jmt how should this be sorted?
+     * Returns all Product Orders associated with samples in ancestor vessels, sorted by increasing distance in the
+     * transfer history.
      */
     public List<ProductOrderSample> getAllProductOrderSamples() {
         List<ProductOrderSample> reverseProductOrderSample = new ArrayList<>(allProductOrderSamples);
@@ -148,7 +162,10 @@ public class SampleInstanceV2 {
      * Returns the nearest Product Order associated with samples in ancestor vessels.
      */
     public ProductOrderSample getSingleProductOrderSample() {
-        return null;
+        if (allProductOrderSamples.isEmpty()) {
+            return null;
+        }
+        return allProductOrderSamples.get(allProductOrderSamples.size() - 1);
     }
 
     /**
