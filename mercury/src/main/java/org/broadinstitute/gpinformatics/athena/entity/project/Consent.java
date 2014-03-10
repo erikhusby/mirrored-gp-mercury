@@ -11,8 +11,11 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -34,7 +37,7 @@ import java.util.Collection;
 @Audited
 
 @Table(name = "CONSENT", schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"name", "identifier"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"identifier", "type"}))
 public class Consent implements Serializable, BusinessObject {
     public enum Type {
         IRB("IRB Protocol"),
@@ -67,14 +70,7 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ProductOrder> productOrders;
-
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ResearchProject> researchProjects;
-
-    public Consent() {
-        this(null, null, null);
+    protected Consent() {
     }
 
     public Consent(String name, Type type, String identifier) {
@@ -106,19 +102,24 @@ public class Consent implements Serializable, BusinessObject {
         return consentId;
     }
 
-    public Collection<ResearchProject> getResearchProjects() {
-        return researchProjects;
+    @Override
+    public boolean equals(Object other) {
+        if(this == other) {
+            return true;
+        }
+
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, Consent.class)) {
+            return false;
+        }
+
+        Consent castOther = OrmUtil.proxySafeCast(other, Consent.class);
+
+        return new EqualsBuilder().append(getIdentifier(), castOther.getIdentifier())
+                .append(getType(), castOther.getType()).append(getName(), castOther.getName()).isEquals();
     }
 
-    public void setResearchProjects(Collection<ResearchProject> researchProjects) {
-        this.researchProjects = researchProjects;
-    }
-
-    public Collection<ProductOrder> getProductOrders() {
-        return productOrders;
-    }
-
-    public void setProductOrders(Collection<ProductOrder> productOrders) {
-        this.productOrders = productOrders;
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getIdentifier()).append(getType()).append(getName()).toHashCode();
     }
 }

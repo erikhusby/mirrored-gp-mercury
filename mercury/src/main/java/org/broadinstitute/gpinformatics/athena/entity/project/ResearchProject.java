@@ -25,6 +25,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -149,6 +150,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private String jiraTicketKey;
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "athena")
     private Collection<Consent> consents = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.

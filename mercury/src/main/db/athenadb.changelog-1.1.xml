@@ -684,11 +684,17 @@
             </column>
         </createTable>
         <addPrimaryKey tableName="consent" columnNames="consent_id" schemaName="athena"/>
-        <addUniqueConstraint columnNames="identifier, name"
-                             constraintName="unk_consent_id_name" schemaName="athena"
+        <addUniqueConstraint columnNames="identifier, type"
+                             constraintName="unk_consent_id_type" schemaName="athena"
                              tableName="consent"/>
+    </changeSet>
+    <changeSet id="GPLIM-2560-1-sequence" author="dryan">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="seq_consent" schemaName="athena" />
+            </not>
+        </preConditions>
         <createSequence sequenceName="seq_consent" schemaName="athena" startValue="1" incrementBy="50"/>
-
     </changeSet>
 
     <changeSet author="dryan" id="GPLIM-2560-1-aud">
@@ -699,16 +705,16 @@
         </preConditions>
         <createTable schemaName="athena" tableName="consent_aud">
             <column name="consent_id" type="number(19,0)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="identifier" type="varchar2(255 char)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="name" type="varchar2(255 char)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="type" type="varchar2(255 char)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false"/>
@@ -781,7 +787,6 @@
         </createTable>
     </changeSet>
 
-
     <changeSet author="dryan" id="GPLIM-2560-3-aud">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -809,15 +814,10 @@
                                  referencedColumnNames="REV_INFO_ID"/>
     </changeSet>
 
-    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS">
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-1">
         <preConditions onFail="MARK_RAN">
             <not>
-                <or>
                     <foreignKeyConstraintExists foreignKeyName="FK_PDO_CONSENTS_CONSENT" schemaName="athena"/>
-                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_CONSENTS_PDO" schemaName="athena"/>
-                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_CONSENT" schemaName="athena"/>
-                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_RP" schemaName="athena"/>
-                </or>
             </not>
         </preConditions>
 
@@ -825,18 +825,41 @@
                                  baseTableSchemaName="athena"
                                  baseTableName="product_order_consents" baseColumnNames="consents"
                                  referencedTableName="consent" referencedColumnNames="consent_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_CONSENTS_PDO" schemaName="athena"/>
+            </not>
+        </preConditions>
+
         <addForeignKeyConstraint constraintName="FK_PDO_CONSENTS_PDO" referencedTableSchemaName="athena"
                                  baseTableSchemaName="athena"
                                  baseTableName="product_order_consents" baseColumnNames="product_order"
                                  referencedTableName="PRODUCT_ORDER" referencedColumnNames="product_order_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_CONSENT" schemaName="athena"/>
+            </not>
+        </preConditions>
+
         <addForeignKeyConstraint constraintName="FK_RP_CONSENTS_CONSENT" referencedTableSchemaName="athena"
                                  baseTableSchemaName="athena"
                                  baseTableName="research_project_consents" baseColumnNames="consents"
                                  referencedTableName="consent" referencedColumnNames="consent_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-4">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_CONSENTS_RP" schemaName="athena"/>
+            </not>
+        </preConditions>
+
         <addForeignKeyConstraint constraintName="FK_RP_CONSENTS_RP" referencedTableSchemaName="athena"
                                  baseTableSchemaName="athena"
                                  baseTableName="research_project_consents" baseColumnNames="research_project"
                                  referencedTableName="research_project" referencedColumnNames="research_project_id"/>
     </changeSet>
-
 </databaseChangeLog>

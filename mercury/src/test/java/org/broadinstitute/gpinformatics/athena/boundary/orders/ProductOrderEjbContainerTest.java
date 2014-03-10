@@ -3,12 +3,14 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mocks.HappyQuoteServiceMock;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -16,11 +18,13 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 
 public class ProductOrderEjbContainerTest extends Arquillian {
 
@@ -38,7 +42,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         // it's test because we need a real jira.  And the mock quote server is here because the stub explodes
         // in intellij with "Failed to read quotes from disk", presumably because the arquillian deployment
         // doesn't have the right working directory.
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,HappyQuoteServiceMock.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV,HappyQuoteServiceMock.class);
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -58,6 +62,24 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         quoteFromJira = getQuoteFieldFromJiraTicket(pdo);
 
         Assert.assertEquals(quoteFromJira, ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testConsentRelationship() throws Exception {
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-test1");
+
+        Date today = new Date();
+        Consent consent = new Consent("test Consent" + today.getTime(),
+                Consent.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, "1322" + today.getTime());
+        productOrder.getResearchProject().addConsent(consent);
+
+        pdoDao.flush();
+
+        Assert.assertEquals(productOrder.findAvailableConsents().size(), 1);
+
+        productOrder.addConsent(productOrder.getResearchProject().getConsents().toArray(new Consent[productOrder.getResearchProject().getConsents().size()]));
+        pdoDao.flush();
+        Assert.assertEquals(productOrder.getConsents().size(), 1);
     }
 
     /**
