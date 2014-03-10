@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -232,8 +233,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
             String aliquotId = workCompleteMessage.getAliquotId();
             if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
-                String stockId = stockIdByAliquotId.get("SM-" + aliquotId);
+                aliquotId = "SM-" + BSPLSIDUtil.lsidToBareId(aliquotId);
+                workCompleteMessageBySample.put(aliquotId, workCompleteMessage);
+                String stockId = stockIdByAliquotId.get(aliquotId);
                 if (stockId == null) {
                     throw new RuntimeException("Couldn't find a stock sample for aliquot: " + aliquotId);
                 }
@@ -268,8 +270,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         ProductOrderSample.DeliveryStatus status = sample.getDeliveryStatus();
         getWriter().writeCell(status.getDisplayName());
 
+        Product product = sample.getProductOrder().getProduct();
         // product name.
-        getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
+        getWriter().writeCell(product.getProductName());
 
         // Product Order ID.
         String pdoKey = sample.getProductOrder().getBusinessKey();
@@ -282,7 +285,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(getBspFullName(sample.getProductOrder().getCreatedBy()));
 
         // Lane Count
-        if (BillingTrackerHeader.LANE_COUNT.shouldShow(sample.getProductOrder().getProduct())) {
+        if (BillingTrackerHeader.LANE_COUNT.shouldShow(product)) {
             getWriter().writeCell(sample.getProductOrder().getLaneCount());
         }
 
@@ -292,12 +295,39 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // work complete date is the date of any ledger items that are ready to be billed.
         getWriter().writeCell(sample.getWorkCompleteDate(), getDateStyle());
 
+        // work complete message data
+        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
+
+        // BSP receipt data
+        Date receiptDate = null;
+        Date metadataUploadDate = null;
+        if (workCompleteMessage != null) {
+            receiptDate = workCompleteMessage.getReceiptDate();
+            metadataUploadDate = workCompleteMessage.getMetadataUploadDate();
+        }
+
+        // BSP receipt properties
+        if (BillingTrackerHeader.RECEIPT_DATE.shouldShow(product)) {
+            if (receiptDate != null) {
+                getWriter().writeCell(receiptDate, getDateStyle());
+            } else {
+                getWriter().writeCell("");
+            }
+        }
+
+        if (BillingTrackerHeader.METADATA_UPLOAD_DATE.shouldShow(product)) {
+            if (metadataUploadDate != null) {
+                getWriter().writeCell(metadataUploadDate, getDateStyle());
+            } else {
+                getWriter().writeCell("");
+            }
+        }
+
         // Picard metrics
         BigInteger pfReads = null;
         BigInteger pfAlignedGb = null;
         BigInteger pfReadsAlignedInPairs = null;
         Double percentCoverageAt20x = null;
-        WorkCompleteMessage workCompleteMessage = workCompleteMessageBySample.get(sample.getSampleKey());
         if (workCompleteMessage != null) {
             pfReads = workCompleteMessage.getPfReads();
             pfAlignedGb = workCompleteMessage.getAlignedGb();
@@ -327,7 +357,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         // % coverage at 20x
-        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(sample.getProductOrder().getProduct())) {
+        if (BillingTrackerHeader.PERCENT_COVERAGE_AT_20X.shouldShow(product)) {
             if (percentCoverageAt20x != null) {
                 getWriter().writeCell(percentCoverageAt20x, getPercentageStyle());
             } else {

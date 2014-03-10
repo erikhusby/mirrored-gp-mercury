@@ -24,17 +24,23 @@ public enum BillingTrackerHeader implements ColumnHeader {
     },
     AUTO_LEDGER_TIMESTAMP("Auto Ledger Timestamp", 10, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
     WORK_COMPLETE_DATE("Date Completed", 11, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER, true),
-    PF_READS("PF Reads", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PF_ALIGNED_GB("PF Aligned GB", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 15, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
+    RECEIPT_DATE("Receipt Date", 12, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true) {
+        @Override public boolean shouldShow(Product product) { return product.isSampleInitiationProduct(); }
+    },
+    METADATA_UPLOAD_DATE("Metadata Upload Date", 13, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_HEADER, true) {
+        @Override public boolean shouldShow(Product product) { return product.isSampleInitiationProduct(); }
+    },
+    PF_READS("PF Reads", 14, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_ALIGNED_GB("PF Aligned GB", 15, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PF_READS_ALIGNED_IN_PAIRS("PF Reads Aligned in Pairs", 16, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    PERCENT_COVERAGE_AT_20X("% Coverage at 20X", 17, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE) {
         @Override public boolean shouldShow(Product product) {
             return product.isSameProductFamily(ProductFamily.ProductFamilyName.EXOME);
         }
     },
-    TABLEAU_LINK("Tableau", 16, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
-    QUOTE_ID("Quote ID", 17, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
-    SORT_COLUMN("Sort Column", 18, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
+    TABLEAU_LINK("Tableau", 18, ColumnHeader.OPTIONAL_HEADER, ColumnHeader.OPTIONAL_VALUE),
+    QUOTE_ID("Quote ID", 19, ColumnHeader.REQUIRED_HEADER, ColumnHeader.OPTIONAL_HEADER),
+    SORT_COLUMN("Sort Column", 20, ColumnHeader.REQUIRED_HEADER, ColumnHeader.REQUIRED_VALUE);
 
     public static final String BILLED = "Billed";
     public static final String UPDATE = "Update Quantity To";
