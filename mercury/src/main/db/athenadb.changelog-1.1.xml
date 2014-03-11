@@ -862,4 +862,13 @@
                                  baseTableName="research_project_consents" baseColumnNames="research_project"
                                  referencedTableName="research_project" referencedColumnNames="research_project_id"/>
     </changeSet>
+    <changeSet id="GPLIM-2560-1-unique_alias" author="scottmat">
+        <preConditions>
+            <sqlCheck expectedResult="0">
+                select * from all_constraints
+                and constraint_name = 'UNQ_CONSENT_ALIAS';
+            </sqlCheck>
+        </preConditions>
+        <addUniqueConstraint tableName="consent" columnNames="name" schemaName="athena" constraintName="UNQ_CONSENT_ALIAS"/>
+    </changeSet>
 </databaseChangeLog>

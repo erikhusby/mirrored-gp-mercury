@@ -42,7 +42,7 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         // it's test because we need a real jira.  And the mock quote server is here because the stub explodes
         // in intellij with "Failed to read quotes from disk", presumably because the arquillian deployment
         // doesn't have the right working directory.
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV,HappyQuoteServiceMock.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST, HappyQuoteServiceMock.class);
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -62,24 +62,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         quoteFromJira = getQuoteFieldFromJiraTicket(pdo);
 
         Assert.assertEquals(quoteFromJira, ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
-    }
-
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testConsentRelationship() throws Exception {
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(pdoDao, "SM-test1");
-
-        Date today = new Date();
-        Consent consent = new Consent("test Consent" + today.getTime(),
-                Consent.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, "1322" + today.getTime());
-        productOrder.getResearchProject().addConsent(consent);
-
-        pdoDao.flush();
-
-        Assert.assertEquals(productOrder.findAvailableConsents().size(), 1);
-
-        productOrder.addConsent(productOrder.getResearchProject().getConsents().toArray(new Consent[productOrder.getResearchProject().getConsents().size()]));
-        pdoDao.flush();
-        Assert.assertEquals(productOrder.getConsents().size(), 1);
     }
 
     /**

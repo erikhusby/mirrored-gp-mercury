@@ -42,8 +42,7 @@ public class Consent implements Serializable, BusinessObject {
     public enum Type {
         IRB("IRB Protocol"),
         ORSP_NOT_ENGAGED("ORSP Not Engaged"),
-        ORSP_NOT_HUMAN_SUBJECTS_RESEARCH("ORSP Not Human Subjects Research"),
-        NO_IRB_ORSP_REQUIRED("No IBB/ORSP Required");
+        ORSP_NOT_HUMAN_SUBJECTS_RESEARCH("ORSP Not Human Subjects Research");
 
         private String name;
 
@@ -70,7 +69,13 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    protected Consent() {
+    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
+    private Collection<ProductOrder> productOrders;
+
+    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
+    private Collection<ResearchProject> researchProjects;
+
+    public Consent() {
     }
 
     public Consent(String name, Type type, String identifier) {
@@ -100,6 +105,14 @@ public class Consent implements Serializable, BusinessObject {
 
     public Long getConsentId() {
         return consentId;
+    }
+
+    public Collection<ResearchProject> getResearchProjects() {
+        return researchProjects;
+    }
+
+    public Collection<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     @Override
