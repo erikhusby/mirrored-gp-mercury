@@ -597,9 +597,11 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 numVesselsAdded += renderEmbedder(graph, vesselVertexQueue, alternativeIds,
                         cherryPickTransfer.getSourceVesselContainer().getEmbedder());
 
-                Vertex sourceReceptacleVertex = graph.getMapIdToVertex().get(
-                        cherryPickTransfer.getSourceVesselContainer()
-                                .getVesselAtPosition(cherryPickTransfer.getSourcePosition()).getLabel() + "|" +
+                LabVessel receptacle =  cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(
+                        cherryPickTransfer.getSourcePosition());
+                String barcode = receptacle == null ? cherryPickTransfer.getSourcePosition().name() :
+                        receptacle.getLabel();
+                Vertex sourceReceptacleVertex = graph.getMapIdToVertex().get(barcode + "|" +
                         cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel());
                 LabVessel vesselAtPosition = cherryPickTransfer.getTargetVesselContainer()
                         .getVesselAtPosition(cherryPickTransfer.getTargetPosition());

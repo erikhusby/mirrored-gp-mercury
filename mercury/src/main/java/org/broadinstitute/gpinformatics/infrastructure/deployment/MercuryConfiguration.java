@@ -141,7 +141,6 @@ public class MercuryConfiguration {
 
     private static Class<? extends AbstractConfig> getConfigClass(String configKey) {
         if (configKeyToClassMap == null) {
-            configKeyToClassMap = new HashMap<>();
 
             ServletContext servletContext = getServletContext();
 
@@ -162,6 +161,7 @@ public class MercuryConfiguration {
                 if (CollectionUtils.isEmpty(annotatedClassNames)) {
                     throw new RuntimeException("No @ConfigKey annotated class names found!");
                 }
+                configKeyToClassMap = new HashMap<>();
                 // Add any found config classes to our Map.
                 for (String annotatedClassName : annotatedClassNames) {
                     @SuppressWarnings("unchecked")

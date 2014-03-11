@@ -16,11 +16,15 @@ import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -330,8 +334,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String prepopulatePostReceiveOptions;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
-        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
-               + PRODUCT_ORDER_PARAMETER + "=" + productOrderKey;
+        List<NameValuePair> parameters = new ArrayList<>();
+        parameters.add(new BasicNameValuePair(CoreActionBean.VIEW_ACTION, ""));
+        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrderKey));
+        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
+                .format(parameters, CharEncoding.UTF_8);
     }
 
     /**

@@ -228,4 +228,13 @@ public class LabEventFixupTest extends Arquillian {
             }
         }
     }
+
+    /**
+     * Delete a transfer that was resubmitted with a changed disambiguator.
+     */
+    @Test(enabled = false)
+    public void fixupGplim2535Part2() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 385541L);
+        labEventDao.remove(labEvent);
+    }
 }

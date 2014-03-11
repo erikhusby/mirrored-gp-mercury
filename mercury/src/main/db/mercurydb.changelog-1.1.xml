@@ -465,4 +465,9 @@
             <column name="user_defined_reason" type="number(19,0)" />
         </addColumn>
     </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-1a">
+        <sql>grant references on mercury.mercury_sample to athena</sql>
+    </changeSet>
+
 </databaseChangeLog>

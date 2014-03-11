@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.jboss.weld.context.bound.BoundSessionContext;
 
 import javax.ejb.ActivationConfigProperty;
@@ -40,6 +42,12 @@ public class BettaLimsMessageBean implements MessageListener {
     @Inject
     private SessionContextUtility sessionContextUtility;
 
+    @Inject
+    private AppConfig appConfig;
+
+    @Inject
+    private EmailSender emailSender;
+
     public BettaLimsMessageBean() {
     }
 
@@ -62,7 +70,8 @@ public class BettaLimsMessageBean implements MessageListener {
                         String text = ((TextMessage) message).getText();
                         bettaLimsMessageResource.storeAndProcess(text);
                     } catch (Exception e) {
-                        // todo jmt email LIMS oddities
+                        emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                                "[Mercury] Failed to process JMS message", e.getMessage());
                     }
                 } else {
                     // todo jmt email LIMS oddities
