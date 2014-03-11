@@ -11,6 +11,13 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
+                $j('#new-consent-dialog').dialog({
+                    autoOpen: false,
+                    height: 500,
+                    width: 500,
+                    modal: true
+                })
+
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
                 })
@@ -252,6 +259,44 @@
                 </div>
             </fieldset>
         </div>
+
+        <div id="new-consent-dialog">
+            <p>Enter the protocol or determination number and we'll see if there's an existing consent already defined.</p>
+            <form>
+                <input type="text" name="q">
+            </form>
+        </div>
+
+        <div style="clear:both;">
+            <h4 style="display:inline">Consents</h4>
+            <a href="#" id="add-new-consent" class="pull-right"><i class="icon-plus"></i>Add New Consent</a>
+        </div>
+
+        <table class="table simple">
+            <thead>
+                <th style="width:10em">Identifier</th>
+                <th>Alias</th>
+                <th style="width:25em">Type</th>
+                <th style="width:5em"></th>
+                <th style="width:9em"></th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>13423</td>
+                    <td>Manhattan Project reference consent</td>
+                    <td>IRB Protocol #</td>
+                    <td style="text-align:center"><a href="#">Edit...</a></td>
+                    <td style="text-align:center"><button class="btn">Remove</button></td>
+                </tr>
+                <tr>
+                    <td>34423</td>
+                    <td>Project common reference consent</td>
+                    <td>ORSP "Not Engaged" Determination #</td>
+                    <td style="text-align:center"><a href="#">Edit...</a></td>
+                    <td style="text-align:center"><button class="btn">Remove</button></td>
+                </tr>
+            </tbody>
+        </table>
 
         <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>
