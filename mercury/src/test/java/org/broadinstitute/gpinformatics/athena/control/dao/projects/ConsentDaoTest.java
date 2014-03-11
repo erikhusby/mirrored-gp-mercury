@@ -37,10 +37,10 @@ public class ConsentDaoTest extends ContainerTest {
 
         consent1 = new Consent("Test first consent", Consent.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
                 dupeIdentifier);
-        consent2 = new Consent("Test first consent DupeName", Consent.Type.NO_IRB_ORSP_REQUIRED,
+        consent2 = new Consent("Test first consent DupeName", Consent.Type.ORSP_NOT_ENGAGED,
                 dupeIdentifier);
         nonDupeIdentifier = "testConsent no dupe" + today.getTime();
-        consent3 = new Consent("Test third consent", Consent.Type.NO_IRB_ORSP_REQUIRED,
+        consent3 = new Consent("Test third consent", Consent.Type.ORSP_NOT_ENGAGED,
                 nonDupeIdentifier);
 
         consentDao.persist(consent1);
