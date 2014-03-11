@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class ReceiveSamplesEjbTest extends ContainerTest {
 
     @Inject
@@ -79,7 +79,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         productOrderDao.flush();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void tearDown() throws Exception {
 
         if(productOrderSampleDao == null) {
@@ -140,6 +140,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         }
     }
 
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testValidationNoIssues() throws Exception {
 
         List<String> testSampleRequestList = new ArrayList<>();
