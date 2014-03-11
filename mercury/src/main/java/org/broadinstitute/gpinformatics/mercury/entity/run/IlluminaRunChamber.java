@@ -5,16 +5,31 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.hibernate.envers.Audited;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import java.util.HashSet;
 import java.util.Set;
 
+@Entity
+@Audited
 public class IlluminaRunChamber extends RunChamber {
 
+    /** For JPA. */
+    protected IlluminaRunChamber() {
+    }
+
+    public IlluminaRunChamber(String label) {
+        super(label);
+    }
+
+    @ManyToOne
     private IlluminaFlowcell flowcell;
     
     private int laneNumber;
 
+    @ManyToOne
     private LabVessel library;
     
     public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber,LabVessel library) {
