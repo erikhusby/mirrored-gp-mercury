@@ -490,12 +490,17 @@ public class ProductOrderEjb {
         if (productOrder.getFundingDeadline() != null) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
+        } else {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, ""));
+
         }
 
         if (productOrder.getPublicationDeadline() != null) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline()))
             );
+        } else {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, ""));
         }
 
         // Add the Requisition name to the list of fields when appropriate.
