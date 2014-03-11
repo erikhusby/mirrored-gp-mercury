@@ -44,7 +44,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
     private List<ProductOrderSample> samplesToDelete;
     private ProductOrder testProductOrder;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void setUp() throws Exception {
 
         if(productOrderSampleDao == null) {
@@ -108,7 +108,7 @@ public class ReceiveSamplesEjbTest extends ContainerTest {
         samplesToDelete.clear();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testValidationOneSampleShort() throws Exception {
 
         List<String> testSampleRequestList = new ArrayList<>();
