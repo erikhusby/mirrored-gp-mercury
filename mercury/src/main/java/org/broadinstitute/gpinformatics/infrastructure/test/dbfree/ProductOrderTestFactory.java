@@ -27,17 +27,23 @@ import java.util.UUID;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Submitted;
 
 public class ProductOrderTestFactory {
+    public static final String JIRA_KEY = "PD0-2WGS";
+    public static final String SAMPLE_SUFFIX = "A";
+    public static final String TEST_SKIP_QUOTE_REASON = "I am skipping the quote because I can.";
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
-            Workflow workflow, long creatorId, String rpTitle, String rpSynopsis, boolean irbNotEngaged,
-            String productPartNumber, String sampleSuffix) {
-
-        PriceItem exExPriceItem =
-                new PriceItem("ExExQuoteId", PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
-                        PriceItem.NAME_EXOME_EXPRESS);
+                                                       Workflow workflow, long creatorId, String rpTitle,
+                                                       String rpSynopsis, boolean irbNotEngaged,
+                                                       String productPartNumber, String sampleSuffix, String quoteId) {
         Product dummyProduct =
                 ProductTestFactory.createDummyProduct(workflow, productPartNumber);
-        dummyProduct.setPrimaryPriceItem(exExPriceItem);
+
+        if (StringUtils.isNotBlank(quoteId)){
+        PriceItem exExPriceItem =
+                new PriceItem(quoteId, PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
+                        PriceItem.NAME_EXOME_EXPRESS);
+            dummyProduct.setPrimaryPriceItem(exExPriceItem);
+        }
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>(sampleCount);
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
@@ -54,7 +60,9 @@ public class ProductOrderTestFactory {
         if (StringUtils.isNotBlank(jiraKey)) {
             productOrder.setJiraTicketKey(jiraKey);
         }
-        productOrder.setOrderStatus(Submitted);
+        if (StringUtils.isBlank(quoteId)){
+            productOrder.setSkipQuoteReason(TEST_SKIP_QUOTE_REASON);
+        }
 
         Product dummyAddOnProduct =
                 ProductTestFactory.createDummyProduct(Workflow.NONE, "partNumber");
@@ -73,7 +81,8 @@ public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
         return createDummyProductOrder(1, jiraTicketKey, Workflow.AGILENT_EXOME_EXPRESS, 10950, "MyResearchProject",
-                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", "A");
+                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", SAMPLE_SUFFIX, "ExExQuoteId"
+        );
     }
 
     public static Map<String, ProductOrder> buildTestProductOrderMap() {
@@ -98,26 +107,40 @@ public class ProductOrderTestFactory {
     public static ProductOrder buildExExProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.AGILENT_EXOME_EXPRESS, 101, "Test RP",
                 AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", "A");
+                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-1IC", Workflow.ICE, 101, "Test RP",
                 AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", "A");
+                ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
         return createDummyProductOrder(maxSamples, "PD0-1HS",
                 Workflow.HYBRID_SELECTION, 101,
                 "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix);
+                ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
-        return createDummyProductOrder(maxSamples, "PD0-2WGS", Workflow.WHOLE_GENOME,
+        return createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.WHOLE_GENOME,
                 301, "Test RP", AthenaClientServiceStub.rpSynopsis,
-                ResearchProject.IRB_ENGAGED, "P-WGS-9294", "A");
+                ResearchProject.IRB_ENGAGED, "P-WGS-9294", SAMPLE_SUFFIX, "ExExQuoteId");
+    }
+
+    public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
+
+        ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
+                AthenaClientServiceStub.TEST_CREATOR, AthenaClientServiceStub.pdoTitle,
+                AthenaClientServiceStub.rpSynopsis,
+                ResearchProject.IRB_ENGAGED, Product.SAMPLE_INITIATION_PART_NUMBER, SAMPLE_SUFFIX, null);
+        sampleInitiationProductOrder.setProductOrderKit(ProdOrderKitTestFactory.createDummyProductOrderKit(maxSamples));
+        sampleInitiationProductOrder.getProduct().setPartNumber(Product.SAMPLE_INITIATION_PART_NUMBER);
+        ProductFamily sampleInitiationProductFamily = new ProductFamily(ProductFamily.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE_NAME);
+        sampleInitiationProductOrder.getProduct().setProductFamily(sampleInitiationProductFamily);
+        sampleInitiationProductOrder.setSkipQuoteReason(ProductOrderTestFactory.TEST_SKIP_QUOTE_REASON);
+        return sampleInitiationProductOrder;
     }
 
 

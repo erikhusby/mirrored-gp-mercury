@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
 
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -383,13 +386,11 @@ public class VesselContainer<T extends LabVessel> {
         return vesselToMapPosition.get(vesselAtPosition);
     }
 
-    @Transient
     public Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType) {
         Set<LabVessel> sourceVessels = new HashSet<>();
         return getSampleInstances(sampleType, labBatchType, sourceVessels);
     }
 
-    @Transient
     private Set<SampleInstance> getSampleInstances(LabVessel.SampleType sampleType, LabBatch.LabBatchType labBatchType,
                                                    Set<LabVessel> sourceVessels) {
         Set<SampleInstance> sampleInstances = new LinkedHashSet<>();
@@ -425,7 +426,6 @@ public class VesselContainer<T extends LabVessel> {
      *
      * @return contained vessels
      */
-    @Transient
     public Set<T> getContainedVessels() {
         // Wrap in HashSet so equals works against other Sets
         //noinspection unchecked
@@ -437,7 +437,6 @@ public class VesselContainer<T extends LabVessel> {
         child.addToContainer(this);
     }
 
-    @Transient
     public Set<VesselPosition> getPositions() {
         if (hasAnonymousVessels()) {
             Set<VesselPosition> positions = new HashSet<>();
@@ -520,6 +519,7 @@ public class VesselContainer<T extends LabVessel> {
             vesselEvents.add(new LabVessel.VesselEvent(vesselToSectionTransfer.getSourceVessel(), null, null,
                     vesselToSectionTransfer.getLabEvent()));
         }
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -552,6 +552,7 @@ public class VesselContainer<T extends LabVessel> {
             }
 
         }
+        Collections.sort(vesselEvents, LabVessel.VesselEvent.COMPARE_VESSEL_EVENTS_BY_DATE);
         return vesselEvents;
     }
 
@@ -888,6 +889,111 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         return result;
+    }
+
+    @Transient
+    private Map<VesselPosition, List<SampleInstanceV2>> mapPositionToSampleInstances =
+            new EnumMap<>(VesselPosition.class);
+
+    public List<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
+        List<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
+        if (sampleInstances == null) {
+            T vesselAtPosition = getVesselAtPosition(vesselPosition);
+
+            // Get ancestor events
+            List<LabVessel.VesselEvent> ancestorEvents;
+            if (vesselAtPosition == null) {
+                ancestorEvents = getAncestors(vesselPosition);
+            } else {
+                ancestorEvents = vesselAtPosition.getAncestors();
+            }
+            sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+
+            mapPositionToSampleInstances.put(vesselPosition, sampleInstances);
+        }
+        return sampleInstances;
+    }
+
+    public List<SampleInstanceV2> getSampleInstancesV2() {
+        List<SampleInstanceV2> sampleInstanceList = new ArrayList<>();
+        VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
+        for (VesselPosition vesselPosition : vesselPositions) {
+            sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));
+        }
+        return sampleInstanceList;
+    }
+
+    /**
+     * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
+     */
+    static List<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
+            List<LabVessel.VesselEvent> ancestorEvents) {
+        // Get ancestor SampleInstances
+        List<SampleInstanceV2> ancestorSampleInstances = new ArrayList<>();
+        for (LabVessel.VesselEvent ancestor : ancestorEvents) {
+            LabVessel ancestorLabVessel = ancestor.getLabVessel();
+            if (ancestorLabVessel == null) {
+                ancestorSampleInstances.addAll(ancestor.getVesselContainer().getSampleInstancesAtPositionV2(
+                        ancestor.getPosition()));
+            } else {
+                ancestorSampleInstances.addAll(ancestorLabVessel.getSampleInstancesV2());
+            }
+        }
+
+        // Filter sample instances that are reagent only
+        Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
+        List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
+        while (iterator.hasNext()) {
+            SampleInstanceV2 sampleInstance = iterator.next();
+            if (sampleInstance.isReagentOnly()) {
+                reagentSampleInstances.add(sampleInstance);
+                iterator.remove();
+            }
+        }
+
+        // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
+        // away the bait.
+        List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
+        if (ancestorSampleInstances.isEmpty()) {
+            currentSampleInstances.add(new SampleInstanceV2());
+        } else {
+            // Clone ancestors
+            for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+                currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+            }
+        }
+
+        // Apply reagents
+        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+            for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.addReagent(reagent);
+                }
+            }
+        }
+
+        // Apply vessel changes to clones
+        if (labVessel != null) {
+            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                currentSampleInstance.applyVesselChanges(labVessel);
+            }
+        }
+
+        // Apply events to clones
+        for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
+            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+            }
+        }
+
+        return currentSampleInstances;
+    }
+
+    /**
+     * This is for database-free testing only, when a new transfer makes the caches stale.
+     */
+    public void clearCaches() {
+        mapPositionToSampleInstances.clear();
     }
 
 }

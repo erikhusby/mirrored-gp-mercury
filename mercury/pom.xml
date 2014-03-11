@@ -156,8 +156,8 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>3.1.8</clover.version>
-        <clover.plugin.version>3.1.8</clover.plugin.version>
+        <clover.version>3.2.2</clover.version>
+        <clover.plugin.version>3.2.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
         <!-- For site reports -->
@@ -2071,6 +2071,16 @@
                     <groups>${tests.groups}</groups>
                     <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <forkMode>never</forkMode>
+                    <properties>
+                        <property>
+                            <name>usedefaultlisteners</name>
+                            <value>false</value> <!-- disabling default listeners is optional -->
+                        </property>
+                        <property>
+                            <name>listener</name>
+                            <value>org.broadinstitute.gpinformatics.infrastructure.test.TestListener</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
 

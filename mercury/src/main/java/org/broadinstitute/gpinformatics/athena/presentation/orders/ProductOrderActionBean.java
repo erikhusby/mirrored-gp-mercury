@@ -14,14 +14,17 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -238,11 +241,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
-    @ValidateNestedProperties({
-            @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION}),
-            @Validate(field = "title", required = true, maxlength = 255, on = {SAVE_ACTION}, label = "Name"),
-            @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes")
-    })
+    /*
+     * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
+     * phase, we are moving annotation based validations to be specifically called out in the code after updating the
+     * token input fields
+     */
     private ProductOrder editOrder;
 
     // For create, we can also have a research project key to default.
@@ -331,8 +334,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String prepopulatePostReceiveOptions;
 
     public static String getProductOrderLink(String productOrderKey, AppConfig appConfig) {
-        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + CoreActionBean.VIEW_ACTION + "&"
-               + PRODUCT_ORDER_PARAMETER + "=" + productOrderKey;
+        List<NameValuePair> parameters = new ArrayList<>();
+        parameters.add(new BasicNameValuePair(CoreActionBean.VIEW_ACTION, ""));
+        parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrderKey));
+        return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
+                .format(parameters, CharEncoding.UTF_8);
     }
 
     /**
@@ -396,8 +402,44 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
+        // update or add to list of kit details
+        for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
+
+            if (kitDetails.get(kitDetailIndex) != null &&
+                postReceiveOptionKeys.get(kitDetailIndex) != null) {
+
+                Set<PostReceiveOption> selectedOptions = new HashSet<>();
+
+                for (String selectedPostReceiveOption : postReceiveOptionKeys.get(kitDetailIndex)) {
+                    selectedOptions.add(PostReceiveOption.valueOf(selectedPostReceiveOption));
+                }
+
+                kitDetails.get(kitDetailIndex)
+                        .setPostReceiveOptions(selectedOptions);
+            }
+        }
+
+
+        if (StringUtils.isNotBlank(editOrder.getComments()) && editOrder.getComments().length() > 2000) {
+            addValidationError("comments", "Description field cannot exceed 2000 characters");
+        }
+        if (StringUtils.isBlank(editOrder.getName()) || editOrder.getName().length() > 255) {
+            addValidationError("title", "Name is required and cannot exceed 255 characters");
+        }
+        if (StringUtils.isNotBlank(editOrder.getSkipQuoteReason()) &&
+            editOrder.canSkipQuote() && editOrder.getSkipQuoteReason().length() > 255) {
+            addValidationError("skipQuoteReason", "Reason for Quote cannot exceed 255 characters");
+        }
+        if (editOrder.getProductOrderKit() != null &&
+            StringUtils.isNotBlank(editOrder.getProductOrderKit().getComments()) &&
+            editOrder.getProductOrderKit().getComments().length() > 255) {
+            addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
+        }
+//                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
+
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
+
             doValidation(SAVE_ACTION);
         } else {
             // Even in draft, created by must be set. This can't be checked using @Validate (yet),
@@ -425,8 +467,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
-            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.", org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
-                    .splitCamelCase(action),
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
+                    org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
+                            .splitCamelCase(action),
                     editOrder.getName(),
                     name);
         }
@@ -472,27 +515,34 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.isSampleInitiation()) {
             requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         } else {
-            ProductOrderKit kit = editOrder.getProductOrderKit();
-            initializeKitDetails();
-            requireField(!kitDetails.isEmpty(), "kit details", action);
-            for (ProductOrderKitDetail kitDetail : kitDetails) {
-                Long numberOfSamples = kitDetail.getNumberOfSamples();
-                requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples", action);
-                requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
-                requireField(kitDetail.getBspMaterialName(), "a material information", action);
-                requireField(kitDetail.getOrganismId(), "an organism", action);
-            }
-            requireField(kit.getSiteId(), "a site", action);
-            requireField(kit.getSampleCollectionId(), "a collection", action);
+            if (action.equals(SAVE_ACTION)) {
+                // If this is not a draft and a sample initiation order, reset the kit details to the properly selected details
+                if(!editOrder.isDraft()) {
+                    kitDetails.clear();
+                    initializeKitDetails();
+                }
 
-            // Avoid NPE if Research Project isn't set yet.
-            if (researchProject != null) {
-                requireField(researchProject.getBroadPIs().length > 0,
-                        "a Research Project with a primary investigator", action);
-                requireField(researchProject.getExternalCollaborators().length > 0,
-                        "a Research Project with an external collaborator", action);
+                requireField(!kitDetails.isEmpty(), "kit details", action);
+                for (ProductOrderKitDetail kitDetail : kitDetails) {
+                    Long numberOfSamples = kitDetail.getNumberOfSamples();
+                    requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples",
+                            action);
+                    requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
+                    requireField(kitDetail.getBspMaterialName(), "a material information", action);
+                    requireField(kitDetail.getOrganismId(), "an organism", action);
+                }
+                requireField(editOrder.getProductOrderKit().getSiteId(), "a shipping location", action);
+                requireField(editOrder.getProductOrderKit().getSampleCollectionId(), "a collection", action);
+
+                // Avoid NPE if Research Project isn't set yet.
+                if (researchProject != null) {
+                    requireField(researchProject.getBroadPIs().length > 0,
+                            "a Research Project with a primary investigator", action);
+                    requireField(researchProject.getExternalCollaborators().length > 0,
+                            "a Research Project with an external collaborator", action);
+                }
+                validateTransferMethod(editOrder);
             }
-            validateTransferMethod(editOrder);
         }
 
         requireField(researchProject, "a research project", action);
@@ -998,24 +1048,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        // update or add to list of kit details
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
-        for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
-
-            if (kitDetails.get(kitDetailIndex) != null &&
-                postReceiveOptionKeys.get(kitDetailIndex) != null) {
-
-                Set<PostReceiveOption> selectedOptions = new HashSet<>();
-
-                for(String selectedPostReceiveOption: postReceiveOptionKeys.get(kitDetailIndex)) {
-                    selectedOptions.add(PostReceiveOption.valueOf(selectedPostReceiveOption));
-                }
-
-                kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(selectedOptions);
-            }
-        }
-
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
@@ -1151,7 +1184,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         kitIndexObject.put(kitDefinitionIndexIdentifier, this.kitDefinitionQueryIndex);
         kitIndexObject.put("dataList", itemList);
-        if(StringUtils.isNotBlank(prepopulatePostReceiveOptions)) {
+        if (StringUtils.isNotBlank(prepopulatePostReceiveOptions)) {
             kitIndexObject.put("prepopulatePostReceiveOptions", prepopulatePostReceiveOptions);
         }
 
@@ -1971,11 +2004,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validateQuoteOptions(String action) {
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-            boolean hasQuote=!StringUtils.isBlank(editOrder.getQuoteId());
+            boolean hasQuote = !StringUtils.isBlank(editOrder.getQuoteId());
             if (!hasQuote) {
-                if (editOrder.isSampleInitiation()) {
-                    requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
-                }
+                requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
                 requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             }
         }

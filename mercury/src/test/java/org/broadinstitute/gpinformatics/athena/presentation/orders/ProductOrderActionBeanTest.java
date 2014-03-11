@@ -3,17 +3,17 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
-import net.sourceforge.stripes.action.StreamingResolution;
-import net.sourceforge.stripes.mock.MockHttpServletRequest;
-import net.sourceforge.stripes.mock.MockHttpServletResponse;
-import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
-import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.controller.DispatcherServlet;
 import net.sourceforge.stripes.controller.StripesFilter;
+import net.sourceforge.stripes.mock.MockHttpServletRequest;
+import net.sourceforge.stripes.mock.MockHttpServletResponse;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
@@ -29,7 +29,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -47,13 +52,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderActionBeanTest {
 
     private ProductOrderActionBean actionBean;
@@ -71,7 +77,7 @@ public class ProductOrderActionBeanTest {
     public static final long TEST_COLLECTION = 1062L;
 
 
-    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
+    @BeforeMethod
     private void setUp() {
         actionBean = new ProductOrderActionBean();
         actionBean.setContext(new CoreActionBeanContext());
@@ -140,7 +146,6 @@ public class ProductOrderActionBeanTest {
      * are turned into "N/A" by the action bean
      * @throws JSONException
      */
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testNonNumericRinScore() throws JSONException {
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRinScore());
         Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), expectedNonNumericRinScore);
@@ -151,14 +156,12 @@ public class ProductOrderActionBeanTest {
      * are handled as real numbers by the action bean
      * @throws JSONException
      */
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testNumericRinScore() throws JSONException {
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRinScore());
         Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)),
                 expectedNumericValue);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testValidateRinScoresWhenProductHasRinRisk() {
         setRinRiskProduct(pdo);
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
@@ -166,7 +169,6 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testValidateRinScoresWhenProductHasNoRinRisk() {
         setNonRinRiskProduct(pdo);
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
@@ -174,7 +176,6 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testIsRinScoreValidationRequired() {
         setRinRiskProduct(pdo);
         Assert.assertTrue(pdo.isRinScoreValidationRequired());
@@ -182,20 +183,17 @@ public class ProductOrderActionBeanTest {
         Assert.assertFalse(pdo.isRinScoreValidationRequired());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testCanBadRinScoreBeUsedForOnRiskCalculation() {
         BSPSampleDTO badRinScoreSample = getSamplDTOWithBadRinScore();
         Assert.assertFalse(badRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testCanGoodRinScoreBeUsedForOnRiskCalculation() {
         BSPSampleDTO goodRinScoreSample = getSampleDTOWithGoodRinScore();
         Assert.assertTrue(goodRinScoreSample.canRinScoreBeUsedForOnRiskCalculation());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
-        public void testPostReceiveOptions() throws Exception {
+    public void testPostReceiveOptions() throws Exception {
         Product product = new Product();
         pdo.setProduct(product);
         pdo.setProductOrderKit(createGoodPdoKit());
@@ -225,18 +223,17 @@ public class ProductOrderActionBeanTest {
             JsonNode node = resultIterator.next();
 
             Set<PostReceiveOption> postReceiveOptionSet = new HashSet<>(node.get(nodeKey).size());
-            for(String returnedOption : Arrays.asList(node.get(nodeKey).asText())) {
+            for (String returnedOption : Arrays.asList(node.get(nodeKey).asText())) {
                 postReceiveOptionSet.add(PostReceiveOption.valueOf(returnedOption));
             }
 
-            Assert.assertTrue(postReceiveOptionSet.size()>0);
+            Assert.assertTrue(postReceiveOptionSet.size() > 0);
             PostReceiveOption option = TestUtils.getFirst(postReceiveOptionSet);
             Assert.assertTrue(option.getDefaultToChecked() == node.get(nodeChecked).asBoolean());
             Assert.assertFalse(option.getArchived());
         }
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testSampleKitWithValidationErrors() {
         Product product = new Product();
         pdo.setProduct(product);
@@ -249,7 +246,6 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(actionBean.getContext().getValidationErrors().size(), 1);
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testSampleKitNoValidationErrors() {
         Product product = new Product();
         pdo.setProduct(product);
@@ -259,7 +255,6 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(actionBean.getContext().getValidationErrors().isEmpty());
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testPostReceiveOptionKeys() {
         Product product = new Product();
         pdo.setProduct(product);
@@ -269,6 +264,7 @@ public class ProductOrderActionBeanTest {
         actionBean.initSampleKitInfo();
         Assert.assertFalse(actionBean.getPostReceiveOptionKeys().isEmpty());
     }
+
     private BSPSampleDTO getSamplDTOWithBadRinScore() {
         Map<BSPSampleSearchColumn, String> dataMap = new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
             put(BSPSampleSearchColumn.RIN, expectedNonNumericRinScore);
@@ -292,7 +288,7 @@ public class ProductOrderActionBeanTest {
         return product;
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE, enabled = false)
+    @Test(enabled = false)
     public void testQuoteOptOutAjaxCallStripes() throws Exception {
         Product product = createSimpleProduct("P-EX-0001",ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
@@ -325,7 +321,6 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(roundtrip.getOutputString(),"{\"supportsSkippingQuote\":false}");
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE)
     public void testQuoteOptOutAjaxCall() throws Exception {
         Product product = createSimpleProduct("P-EX-0001", ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
@@ -373,10 +368,10 @@ public class ProductOrderActionBeanTest {
         };
     }
 
-    @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "quoteOptionsDataProvider")
+    @Test(dataProvider = "quoteOptionsDataProvider")
     public void testQuoteSkippingValidation(String action, String quoteId, String reason,
                                             boolean expectedToPassValidation, String testErrorMessage) {
-        ProductOrder pdo = new ProductOrder();
+        ProductOrder pdo = ProductOrderTestFactory.buildSampleInitiationProductOrder(22);
         pdo.setSkipQuoteReason(reason);
         pdo.setQuoteId(quoteId);
         actionBean.clearValidationErrors();
@@ -384,5 +379,30 @@ public class ProductOrderActionBeanTest {
         actionBean.validateQuoteOptions(action);
 
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPassValidation, testErrorMessage);
+    }
+
+    public void testQuoteRequiredAfterProductChange() {
+        boolean hasQuote = false;
+        String quoteOrNoQuoteString = "just because";
+        int numberOfSamples = 4;
+        actionBean.setEditOrder(ProductOrderTestFactory.buildSampleInitiationProductOrder(numberOfSamples));
+        actionBean.clearValidationErrors();
+        actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+
+        Product dummyProduct =
+                ProductTestFactory.createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false);
+        actionBean.getEditOrder().setProduct(dummyProduct);
+        actionBean.getEditOrder().setQuoteId("");
+        actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
+        Assert.assertFalse(actionBean.getValidationErrors().isEmpty());
+
+
+    }
+
+    public void testGetProductOrderLink() {
+        AppConfig productionConfig = AppConfig.produce(Deployment.PROD);
+        Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
+                "http://mercury.broadinstitute.org/Mercury//orders/order.action?view=&productOrder=PDO-1");
     }
 }

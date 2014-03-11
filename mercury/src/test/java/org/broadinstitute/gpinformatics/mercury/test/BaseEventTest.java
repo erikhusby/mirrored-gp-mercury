@@ -646,7 +646,7 @@ public class BaseEventTest {
      *
      * @param labVessel starting point in graph.
      */
-    public void runTransferVisualizer(LabVessel labVessel) {
+    public static void runTransferVisualizer(LabVessel labVessel) {
         // Disabled by default, because it would block Bamboo tests.
         if (false) {
             TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
@@ -654,8 +654,10 @@ public class BaseEventTest {
             transferEntityGrapher.setMaxNumVesselsPerRequest(10000);
             Graph graph = new Graph();
             ArrayList<TransferVisualizer.AlternativeId> alternativeIds = new ArrayList<>();
-//            alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
-//            alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            if (false) {
+                alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
+                alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
+            }
             transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, alternativeIds);
 
             TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
