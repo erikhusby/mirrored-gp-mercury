@@ -67,6 +67,10 @@ public class BillingSession implements Serializable {
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
 
+    // Do NOT use eager fetches on this class unless you verify (via hibernate logging) that the pessimistic locking
+    // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
+    // applied to them
+
     protected BillingSession() {}
 
     public BillingSession(@Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
