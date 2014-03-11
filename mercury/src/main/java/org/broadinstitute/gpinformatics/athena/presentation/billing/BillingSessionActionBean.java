@@ -199,7 +199,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        log.warn("Billing request for " + pageUrl);
+        log.debug("Billing request for " + pageUrl);
 
         boolean errorsInBilling = false;
 

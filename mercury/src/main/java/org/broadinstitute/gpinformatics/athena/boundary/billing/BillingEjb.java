@@ -141,7 +141,7 @@ public class BillingEjb {
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-        if(unBilledQuoteImportItems.size() == 0) {
+        if(unBilledQuoteImportItems.isEmpty()) {
             throw new BillingException("There are no items available to bill in this billing session");
         }
 
