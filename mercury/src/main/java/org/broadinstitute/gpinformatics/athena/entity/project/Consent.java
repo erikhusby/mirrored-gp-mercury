@@ -26,6 +26,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -69,12 +70,6 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ProductOrder> productOrders;
-
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ResearchProject> researchProjects;
-
     public Consent() {
     }
 
@@ -105,14 +100,6 @@ public class Consent implements Serializable, BusinessObject {
 
     public Long getConsentId() {
         return consentId;
-    }
-
-    public Collection<ResearchProject> getResearchProjects() {
-        return researchProjects;
-    }
-
-    public Collection<ProductOrder> getProductOrders() {
-        return productOrders;
     }
 
     @Override

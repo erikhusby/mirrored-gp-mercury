@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.testng.Arquillian;
@@ -12,7 +13,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Date;
 
-public class ConsentContainerTest extends Arquillian {
+public class ConsentContainerTest extends ContainerTest {
 
     @Inject
     ProductOrderDao pdoDao;
