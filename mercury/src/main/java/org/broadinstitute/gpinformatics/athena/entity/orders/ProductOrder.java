@@ -11,7 +11,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -74,12 +74,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
-    public Collection<Consent> findAvailableConsents() {
-        return researchProject.getConsents();
+    public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
+        return researchProject.getRegulatoryInfos();
     }
 
-    public void addConsent(@Nonnull Consent ... consent) {
-        getConsents().addAll(Arrays.asList(consent));
+    public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
+        getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -169,8 +169,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private ProductOrderKit productOrderKit;
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
-    @JoinTable(schema = "athena")
-    private Collection<Consent> consents=new ArrayList<>();
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -845,8 +845,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
 
-    public Collection<Consent> getConsents() {
-        return consents;
+    public Collection<RegulatoryInfo> getRegulatoryInfos() {
+        return regulatoryInfos;
     }
 
     /**
