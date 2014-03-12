@@ -124,7 +124,6 @@ public class BucketViewActionBean extends CoreActionBean {
     private Date dueDate;
     private String selectedLcset;
     private LabBatch batch;
-    private String vesselRemovalReason;
 
     public LabBatch getBatch() {
         return batch;
@@ -254,14 +253,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public List<Long> getReworkEntryIds() {
         return reworkEntryIds;
-    }
-
-    public String getVesselRemovalReason() {
-        return vesselRemovalReason;
-    }
-
-    public void setVesselRemovalReason(String vesselRemovalReason) {
-        this.vesselRemovalReason = vesselRemovalReason;
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation)
@@ -503,7 +494,7 @@ public class BucketViewActionBean extends CoreActionBean {
     public Resolution confirmRemoveFromBucket() {
         separateEntriesByType();
 
-        bucketEjb.removeEntriesByIds(selectedEntryIds, vesselRemovalReason);
+        bucketEjb.removeEntriesByIds(selectedEntryIds, "");
 
         addMessage(String.format("Successfully removed %d sample(s) and %d rework(s) from bucket '%s'.",
                 bucketEntryIds.size(), reworkEntryIds.size(), selectedBucket));
