@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
@@ -28,8 +29,8 @@ public class PDOSamples {
 
     public PDOSamples() {}
 
-    public void addPdoSamplePair(@Nonnull String pdoKey, @Nonnull String sampleName,
-                                 Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk) {
+    public void addPdoSample(@Nonnull String pdoKey, @Nonnull String sampleName,
+                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk) {
         pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk));
     }
 
@@ -89,16 +90,21 @@ public class PDOSamples {
             String requestedPdoKey = requestedPdoSample.getPdoKey();
             String requestedSampleName = requestedPdoSample.getSampleName();
             for (ProductOrderSample pdoSample : pdoSamples) {
-                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName
-                        .equals(pdoSample.getName())) {
-                    pdoSamplesResults
-                            .addPdoSamplePair(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),
-                                    pdoSample.isOnRisk());
+                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
+                    PDOSample pdoSampleBean = new PDOSample(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),pdoSample.isOnRisk());
+                    Collection<String> riskCategories = new HashSet<>();
+                    if (pdoSample.isOnRisk()) {
+                        for (RiskItem riskItem : pdoSample.getRiskItems()) {
+                            riskCategories.add(riskItem.getRiskCriterion().getCalculationString());
+                        }
+                    }
+                    pdoSampleBean.setRiskCategories(riskCategories);
+                    pdoSamplesResults.getPdoSamples().add(pdoSampleBean);
                     foundIt = true;
                 }
             }
             if (!foundIt) {
-                pdoSamplesResults.addPdoSamplePair(requestedPdoKey, requestedSampleName, null, null);
+                pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null);
                 String errorMessage = MessageFormat
                         .format("Could not find sample {0} in PDO {1}.", requestedSampleName, requestedPdoKey);
                 pdoSamplesResults.addError(errorMessage);
