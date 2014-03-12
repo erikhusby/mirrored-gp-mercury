@@ -279,7 +279,6 @@ public class BucketEjb {
                 logger.error("Error attempting to create jira removal comment for " +
                              mapEntry.getKey() + " " +
                              mapEntry.getValue().size() + " samples.", ioe);
-                throw new RuntimeException(ioe.getMessage());
             }
         }
     }
