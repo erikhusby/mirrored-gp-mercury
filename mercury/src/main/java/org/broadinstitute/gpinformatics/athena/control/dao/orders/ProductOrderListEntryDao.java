@@ -159,7 +159,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             } else {
                 listOfAndTerms.add(
                         cb.between(productOrderRoot.get(
-                                ProductOrder_.placedDate), placedDate.getStart(), placedDate.getEndTime()));
+                                ProductOrder_.placedDate), placedDate.getStartTime(), placedDate.getEndTime()));
             }
         }
 

@@ -211,9 +211,9 @@ public class GenericDao {
      * @return entity that matches the value, or null if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
-    ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
-                           SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value,
-                           LockModeType lockModeType) {
+    ENTITY_TYPE findSingleSafely(Class<ENTITY_TYPE> entity,
+                                 SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value,
+                                 LockModeType lockModeType) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -249,7 +249,7 @@ public class GenericDao {
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE>
     ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
                            SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
-        return findSingle(entity, singularAttribute, value, LockModeType.NONE);
+        return findSingleSafely(entity, singularAttribute, value, LockModeType.NONE);
     }
 
     /**

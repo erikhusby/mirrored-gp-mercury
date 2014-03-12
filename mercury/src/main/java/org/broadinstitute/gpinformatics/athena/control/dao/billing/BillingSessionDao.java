@@ -32,7 +32,13 @@ public class BillingSessionDao extends GenericDao {
 
         Long sessionId = Long.parseLong(businessKey.substring(BillingSession.ID_PREFIX.length()));
 
-        return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId,
+        /*
+         * To prevent multiple users (or the same user with a double click) from bill the same work twice, we are
+         * locking the record until the act of billing is complete.
+         *
+         * TODO  Examine other potential cases in the application that may need pessimistic locking
+         */
+        return findSingleSafely(BillingSession.class, BillingSession_.billingSessionId, sessionId,
                 LockModeType.PESSIMISTIC_READ);
     }
 }
