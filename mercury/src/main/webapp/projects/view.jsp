@@ -33,7 +33,7 @@
 
             function resetRegulatoryInfoDialog() {
                 $j('#regulatoryInfoQuery').val('');
-                $j('#addRegulatoryInfoDialogQueryResults').empty();
+                $j('#addRegulatoryInfoDialogQueryResults tbody').empty();
                 $j('#addRegulatoryInfoDialogSheet2').hide();
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
@@ -50,7 +50,7 @@
 
             function showRegulatoryInfo(infos) {
                 $j('#addRegulatoryInfoDialogSheet2').show();
-                var table = $j('#addRegulatoryInfoDialogQueryResults');
+                var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
 
                 function makeCell(text) {
                     return $j('<td>' + text + '</td>');
@@ -60,6 +60,8 @@
                     var info = infos[i];
                     var row = $j('<tr/>');
                     row.append(makeCell(info.identifier));
+                    row.append(makeCell(info.alias));
+                    row.append(makeCell(info.type));
                     table.append(row);
                 }
             }
@@ -316,7 +318,15 @@
             </div>
             <div id="addRegulatoryInfoDialogSheet2" style="display: none;">
                 <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
-                <table id="addRegulatoryInfoDialogQueryResults">
+                <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
+                    <thead>
+                        <th style="width:10em">Identifier</th>
+                        <th>Alias</th>
+                        <th style="width:17em">Type</th>
+                        <th style="width:9em"></th>
+                    </thead>
+                    <tbody>
+                    </tbody>
                 </table>
             </div>
         </div>

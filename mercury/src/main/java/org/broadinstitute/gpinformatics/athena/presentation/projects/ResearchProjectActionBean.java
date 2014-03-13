@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
@@ -433,7 +434,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution queryRegulatoryInfo() throws JSONException {
         JSONArray results = new JSONArray();
         JSONObject result = new JSONObject();
+        result.put("id", 1L);
         result.put("identifier", q);
+        result.put("type", RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH.getName());
+        result.put("alias", "MIT COUHES Lander Phase 2");
         results.put(result);
         return createTextResolution(results.toString());
     }
