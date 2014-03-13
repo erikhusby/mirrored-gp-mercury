@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -98,7 +99,7 @@ public class PDOSamples {
                             riskCategories.add(riskItem.getRiskCriterion().getCalculationString());
                         }
                     }
-                    pdoSampleBean.setRiskCategories(riskCategories);
+                    pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
                     pdoSamplesResults.getPdoSamples().add(pdoSampleBean);
                     foundIt = true;
                 }

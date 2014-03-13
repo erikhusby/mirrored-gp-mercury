@@ -400,19 +400,21 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public PDOSamples getPdoSampleStatus(PDOSamples pdoSamplePairs) {
         PDOSamples pdoSamplesResult = new PDOSamples();
-        try {
-            List<ProductOrderSample> allPdoSamples = new ArrayList<>();
-            Map<String, Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
-            for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
-                String pdoKey = pdoKeyToSamplesList.getKey();
-                Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-                List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
-                allPdoSamples.addAll(pdoSamples);
+        if (pdoSamplePairs != null) {
+            try {
+                List<ProductOrderSample> allPdoSamples = new ArrayList<>();
+                Map<String, Set<String>> pdoToSamples = pdoSamplePairs.convertPdoSamplePairsListToMap();
+                for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
+                    String pdoKey = pdoKeyToSamplesList.getKey();
+                    Set<String> sampleNames = pdoKeyToSamplesList.getValue();
+                    List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
+                    allPdoSamples.addAll(pdoSamples);
+                }
+                pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
+            } catch (Throwable t) {
+                log.error("Failed to return PDO/Sample billing information.", t);
+                pdoSamplesResult.addError(t.getMessage());
             }
-            pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
-        } catch (Throwable t) {
-            log.error("Failed to return PDO/Sample billing information.", t);
-            pdoSamplesResult.addError(t.getMessage());
         }
         return pdoSamplesResult;
     }

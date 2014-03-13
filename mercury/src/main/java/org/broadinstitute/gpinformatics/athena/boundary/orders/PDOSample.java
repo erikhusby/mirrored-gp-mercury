@@ -33,13 +33,13 @@ public class PDOSample {
 
     private Boolean onRisk;
 
-    private Collection<String> riskCategories;
+    private List<String> riskCategories;
 
-    public Collection<String> getRiskCategories() {
+    public List<String> getRiskCategories() {
         return riskCategories;
     }
 
-    public void setRiskCategories(Collection<String> riskCategories) {
+    public void setRiskCategories(List<String> riskCategories) {
         this.riskCategories = riskCategories;
     }
 
