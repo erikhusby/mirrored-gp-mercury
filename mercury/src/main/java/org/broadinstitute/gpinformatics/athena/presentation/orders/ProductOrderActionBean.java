@@ -175,6 +175,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
     private PreferenceEjb preferenceEjb;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -360,6 +363,15 @@ public class ProductOrderActionBean extends CoreActionBean {
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
+    }
+
+    public Map<String, List<String>> setupRegulatoryInformation(ResearchProject researchProject) {
+        Map<String, List<String>> projectRegulatoryMap=new HashMap<>();
+        projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfoStrings());
+        for (ResearchProject project : researchProject.getAllParents()){
+            projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfoStrings());
+        }
+        return projectRegulatoryMap;
     }
 
     /**
@@ -1160,6 +1172,27 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getRegulatoryInfo")
+    public Resolution getRegulatoryInfo() throws Exception {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+
+        JSONArray itemList = new JSONArray();
+        if (researchProject != null) {
+            Map<String, List<String>> regulatoryInfoByProject = setupRegulatoryInformation(researchProject);
+            for (Map.Entry<String, List<String>> regulatoryEntries : regulatoryInfoByProject.entrySet()) {
+                if (!regulatoryEntries.getValue().isEmpty()) {
+                    JSONObject item = new JSONObject();
+                    item.put("key", regulatoryEntries.getKey());
+                    JSONArray values = new JSONArray(regulatoryEntries.getValue());
+                    item.put("value", values);
+                    itemList.put(item);
+                }
+            }
+
+        }
         return createTextResolution(itemList.toString());
     }
 

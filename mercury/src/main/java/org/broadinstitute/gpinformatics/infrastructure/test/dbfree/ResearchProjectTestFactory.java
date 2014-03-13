@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -47,6 +48,16 @@ public class ResearchProjectTestFactory {
         researchProject.addPerson(RoleType.SCIENTIST, 222);
         researchProject.addPerson(RoleType.BROAD_PI, 10950);
         researchProject.addPerson(RoleType.BROAD_PI, 10951);
+
+        String identifier = String.valueOf(new Date().getTime());
+        RegulatoryInfo regulatoryInfo =
+                new RegulatoryInfo("IRB for " + title, RegulatoryInfo.Type.IRB, "IRB-" + identifier);
+        researchProject.addRegulatoryInfo(regulatoryInfo);
+        regulatoryInfo =
+                new RegulatoryInfo("Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
+                        "ABC-" + identifier);
+        researchProject.addRegulatoryInfo(regulatoryInfo);
+
         return researchProject;
     }
 

@@ -58,6 +58,8 @@
                     $j("#researchProject").tokenInput(
                             "${ctxpath}/orders/order.action?projectAutocomplete=", {
                                 hintText: "Type a project name",
+                                onAdd: updateUIForProjectChoice,
+                                onDelete: updateUIForProjectChoice,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
@@ -165,6 +167,7 @@
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     updateUIForProductChoice();
+                    updateUIForProjectChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
                     initializeQuoteOptions();
@@ -237,6 +240,22 @@
 
         <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
+        function updateUIForProjectChoice(){
+            var projectKey = $j("#researchProject").val();
+            if (projectKey == null || projectKey == "") {
+                $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
+
+                $j("#regulatoryInfo").hide();
+            }else{
+                $j("#regulatoryInfo").show();
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey,
+                    dataType: 'json',
+                    success: setupRegulatoryInfoSelect
+                });
+            }
+        }
+
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
@@ -256,7 +275,6 @@
                     $j("#sampleListEdit").show();
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
-
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
@@ -380,6 +398,39 @@
             else {
                 skipQuoteDiv.hide();
             }
+        }
+
+        function setupRegulatoryInfoSelect(data){
+            var maxSize=8;
+            var size=0;
+            var selectText = '<select size="'+maxSize+'" multiple="true" name="editOrder.regulatoryInfos" id="regulatoryInfo">';
+            if (data.length==0){
+                $j("#regulatorySelect").text('No Regulatory options have been set up.');
+            }   else {
+            $j.each(data, function (index, val) {
+                size++;
+                var projectName = val.key;
+                var regulatoryList = val.value;
+                selectText += '<optgroup label="' + projectName + '">';
+                for (var index in regulatoryList) {
+                    size++;
+                    selectText += '<option>' + regulatoryList[index] + '</option>';
+                }
+                selectText += '</optgroup>';
+            });
+
+            selectText += '</select>';
+            var selectDiv = $j("#regulatorySelect");
+            selectDiv.hide();
+            selectDiv.html(selectText);
+            var selects =selectDiv.find("select");
+            if (size<maxSize) {
+                selects.attr('size', size);
+            }
+            selects.css("width", "397px");
+            selects.addClass("defaultText,input-xlarge");
+            selectDiv.fadeIn();
+        }
         }
 
         function setupAddonCheckboxes(data) {
@@ -751,6 +802,13 @@
                                         class="defaultText"
                                         title="Enter the research project for this order"/>
                             </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="regulatoryInfo" class="control-label">
+                                Regulatory Information
+                            </stripes:label>
+                            <div id="regulatorySelect" class="controls controls-text"></div>
                         </div>
                     </c:when>
                     <c:otherwise>
