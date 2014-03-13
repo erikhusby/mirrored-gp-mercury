@@ -1,6 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A "subsection" of a run cartridge.
@@ -26,6 +32,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
  * that we can reliably load with sample.
  *
  */
+@Entity
+@Audited
 public abstract class RunChamber extends LabVessel {
 
     /** For JPA. */

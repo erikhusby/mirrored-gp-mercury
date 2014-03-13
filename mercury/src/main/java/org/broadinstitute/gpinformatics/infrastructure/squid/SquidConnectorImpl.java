@@ -7,7 +7,9 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
+import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunLaneSynopsisBean;
 import org.broadinstitute.gpinformatics.mercury.squid.generated.SolexaRunSynopsisBean;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
@@ -52,6 +54,13 @@ public class SquidConnectorImpl implements SquidConnector {
         solexaRunSynopsis.setActualReadStructure(readStructureData.getActualReadStructure());
         solexaRunSynopsis.setSetupReadStructure(readStructureData.getSetupReadStructure());
         solexaRunSynopsis.setImagedAreaPerLaneMM2(readStructureData.getImagedArea());
+        for (LaneReadStructure laneReadStructure : readStructureData.getLaneStructures()) {
+            SolexaRunLaneSynopsisBean solexaRunLaneSynopsisBean = new SolexaRunLaneSynopsisBean();
+            solexaRunLaneSynopsisBean.setLane(laneReadStructure.getLaneNumber().toString());
+            solexaRunLaneSynopsisBean.setActualReadStructure(laneReadStructure.getActualReadStructure());
+            solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
+        }
+
 
         ClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getClasses().add(JacksonJsonProvider.class);

@@ -470,4 +470,65 @@
         <sql>grant references on mercury.mercury_sample to athena</sql>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2359-1">
+        <addColumn schemaName="mercury" tableName="lab_vessel">
+            <column name="lane_number" type="number(10,0)"/>
+            <column name="flowcell" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2359-2">
+        <addColumn schemaName="mercury" tableName="lab_vessel_aud">
+            <column name="lane_number" type="number(10,0)"/>
+            <column name="flowcell" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2359-3">
+        <createTable schemaName="mercury" tableName="sequencing_run_chamber">
+            <column name="sequencing_run_chamber_id" type="number(19,0)">
+                <constraints nullable="no"/>
+            </column>
+            <column name="actual_read_structure" type="varchar2(255)"/>
+            <column name="lane_name" type="varchar2(255)"/>
+            <column name="sequencing_run" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="sequencing_run_chamber" columnNames="sequencing_run_chamber_id"/>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2359-4">
+        <createTable schemaName="mercury" tableName="sequencing_run_chamber_aud">
+            <column name="sequencing_run_chamber_id" type="number(19,0)">
+                <constraints nullable="no"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="no"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="actual_read_structure" type="varchar2(255)"/>
+            <column name="lane_name" type="varchar2(255)"/>
+            <column name="sequencing_run" type="number(19,0)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="sequencing_run_chamber_aud" columnNames="sequencing_run_chamber_id, rev"/>
+    </changeSet>
+<!--
+    alter table mercury.lab_vessel
+        add constraint FK71AE1528E2DA5B23
+        foreign key (flowcell)
+        references mercury.lab_vessel;
+
+x    alter table mercury.sequencing_run_chamber
+x        add constraint FK31081B6930FAA525
+x        foreign key (run_chamber)
+x        references mercury.lab_vessel;
+
+    alter table mercury.sequencing_run_chamber
+        add constraint FK31081B697CA79ECF
+        foreign key (sequencing_run)
+        references mercury.sequencing_run;
+
+    alter table mercury.sequencing_run_chamber_aud
+        add constraint FKEF76E8DA8A39BE24
+        foreign key (rev)
+        references mercury.rev_info;
+
+    create sequence mercury.SEQ_SEQUENCING_RUN_CHAMBER start with 1 increment by 50;
+-->
 </databaseChangeLog>

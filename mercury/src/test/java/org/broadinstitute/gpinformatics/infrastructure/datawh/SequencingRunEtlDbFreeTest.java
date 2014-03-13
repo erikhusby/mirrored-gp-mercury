@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,7 +30,7 @@ public class SequencingRunEtlDbFreeTest {
     private String machineName = "The \"terminator\"";
     private long operator = 1234L;
 
-    private SequencingRun run;
+    private IlluminaSequencingRun run;
     private SequencingRunEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
@@ -41,7 +42,7 @@ public class SequencingRunEtlDbFreeTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
-        run = new SequencingRun(runName, barcode, machineName, operator, false, runDate, new IlluminaFlowcell(),
+        run = new IlluminaSequencingRun(new IlluminaFlowcell(), runName, barcode, machineName, operator, false, runDate,
                 "/some/dirname");
         run.setSetupReadStructure(setupReadStructure);
         run.setActualReadStructure(actualReadStructure);

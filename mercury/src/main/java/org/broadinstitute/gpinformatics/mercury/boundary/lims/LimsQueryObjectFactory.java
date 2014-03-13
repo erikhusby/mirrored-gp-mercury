@@ -11,7 +11,9 @@
 
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
@@ -19,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTe
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
@@ -104,9 +107,18 @@ public class LimsQueryObjectFactory {
      *
      * @return a newly created ReadStructureRequest.
      */
-    public static ReadStructureRequest createReadStructureRequest(@Nonnull SequencingRun sequencingRun) {
-        return createReadStructureRequest(sequencingRun.getRunName(), sequencingRun.getRunBarcode(),
-                sequencingRun.getSetupReadStructure(), sequencingRun.getActualReadStructure(),
-                sequencingRun.getImagedAreaPerMM2(), sequencingRun.getLanesSequenced(), null);
+    public static ReadStructureRequest createReadStructureRequest(@Nonnull IlluminaSequencingRun sequencingRun) {
+        ReadStructureRequest readStructureRequest = createReadStructureRequest(sequencingRun.getRunName(),
+                sequencingRun.getRunBarcode(), sequencingRun.getSetupReadStructure(),
+                sequencingRun.getActualReadStructure(), sequencingRun.getImagedAreaPerMM2(),
+                sequencingRun.getLanesSequenced(), null);
+        for (IlluminaSequencingRunChamber sequencingRunChamber : sequencingRun.getSequencingRunChambers()) {
+            LaneReadStructure laneReadStructure = new LaneReadStructure();
+            laneReadStructure.setLaneNumber(BigInteger.valueOf(sequencingRunChamber.getLaneNumber()));
+            laneReadStructure.setActualReadStructure(sequencingRunChamber.getActualReadStructure());
+            readStructureRequest.getLaneStructures().add(laneReadStructure);
+        }
+
+        return readStructureRequest;
     }
 }

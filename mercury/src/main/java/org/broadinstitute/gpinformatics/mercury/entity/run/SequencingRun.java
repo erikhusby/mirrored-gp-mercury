@@ -27,14 +27,6 @@ public class SequencingRun {
 
     private Date runDate;
 
-    private String setupReadStructure;
-
-    private String actualReadStructure;
-
-    private Double imagedAreaPerMM2;
-
-    private String lanesSequenced;
-
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "run_cartridge")
     private RunCartridge runCartridge;
@@ -140,37 +132,5 @@ public class SequencingRun {
     /** For test purposes only. */
     public void setSequencingRunId(long runId) {
         sequencingRunId = runId;
-    }
-
-    public String getSetupReadStructure() {
-        return setupReadStructure;
-    }
-
-    public void setSetupReadStructure(String setupReadStructure) {
-        this.setupReadStructure = setupReadStructure;
-    }
-
-    public String getActualReadStructure() {
-        return actualReadStructure;
-    }
-
-    public void setActualReadStructure(String actualReadStructure) {
-        this.actualReadStructure = actualReadStructure;
-    }
-
-    public Double getImagedAreaPerMM2() {
-        return imagedAreaPerMM2;
-    }
-
-    public void setImagedAreaPerMM2(Double imagedAreaPerMM2) {
-        this.imagedAreaPerMM2 = imagedAreaPerMM2;
-    }
-
-    public String getLanesSequenced() {
-        return lanesSequenced;
-    }
-
-    public void setLanesSequenced(String lanesSequenced) {
-        this.lanesSequenced = lanesSequenced;
     }
 }

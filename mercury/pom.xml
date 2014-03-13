@@ -1908,6 +1908,26 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>unpack-xsd-files</id>
+                        <!-- Using the initialize phase because it is before the generate sources phase -->
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>SquidWS</groupId>
+                                    <artifactId>squidWS</artifactId>
+                                    <version>1.0-SNAPSHOT</version>
+                                    <type>war</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <includes>**/*.xsd</includes>
+                            <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -1961,8 +1981,8 @@
                         </goals>
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>SolexaRunSynopsis.xsd</schemaFiles>
-                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <schemaFiles>SolexaRun.xsd</schemaFiles>
+                            <schemaDirectory>${project.basedir}/target/xsd-includes/WEB-INF/wsdl</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>

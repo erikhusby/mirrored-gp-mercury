@@ -182,7 +182,8 @@ public class ZimsIlluminaRunFactory {
                     loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
                 }
                 ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
-                        sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue());
+                        sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue(),
+                        illuminaRun.getSequencingRunChamber(laneNumber).getActualReadStructure());
                 run.addLane(lane);
             }
         }
