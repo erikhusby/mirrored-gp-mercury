@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -65,6 +66,19 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertFalse(returnedPdoSamples.getPdoSamples().isEmpty());
         Assert.assertEquals(pdoSamples.getPdoSamples().size(), returnedPdoSamples.getPdoSamples().size());
         Assert.assertEquals(returnedPdoSamples.getErrors().size(), pdoSamples.getAtRiskPdoSamples().size());
+
+        boolean foundSampleWithMultipleRiskFactors = false;
+        for (PDOSample pdoSample : returnedPdoSamples.getAtRiskPdoSamples()) {
+            if ("SM-3RAE1".equals(pdoSample.getSampleName())) {
+                String samplePdoText = pdoSample.getPdoKey() + "/" + pdoSample.getSampleName();
+                foundSampleWithMultipleRiskFactors = true;
+                Collection<String> riskCategories = pdoSample.getRiskCategories();
+                Assert.assertEquals(riskCategories.size(),2,"Risk categories are not being listed properly.  Check the list of risks associated with " + samplePdoText);
+                Assert.assertTrue(riskCategories.contains("Is FFPE"),"Check the risks for " + samplePdoText);
+                Assert.assertTrue(riskCategories.contains("Total DNA < .250"),"Check the risks for " + samplePdoText);
+            }
+        }
+        Assert.assertTrue(foundSampleWithMultipleRiskFactors,"No assertions were done to verify that samples with multiple risk factors are handled properly via web service call used by squid to update the risk categorized samples field in LCSET tickets.");
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
@@ -95,7 +109,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         PDOSamples pdoSamples = new PDOSamples();
 
         for (String sampleId : sampleIds) {
-            pdoSamples.addPdoSamplePair(pdoKey, sampleId, false, false);
+            pdoSamples.addPdoSample(pdoKey, sampleId, false, false);
         }
         return pdoSamples;
     }
