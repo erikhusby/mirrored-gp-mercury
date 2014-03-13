@@ -24,7 +24,7 @@ public class BillingSessionDao extends GenericDao {
         return findAll(BillingSession.class);
     }
 
-    public BillingSession findByBusinessKey(@Nonnull String businessKey) {
+    public BillingSession findByBusinessKey(@Nonnull String businessKey, boolean withLock) {
 
         if (!businessKey.startsWith(BillingSession.ID_PREFIX)) {
             throw new IllegalArgumentException("Business key must start with: " + BillingSession.ID_PREFIX);
@@ -38,7 +38,11 @@ public class BillingSessionDao extends GenericDao {
          *
          * TODO  Examine other potential cases in the application that may need pessimistic locking
          */
+        if(withLock) {
         return findSingleSafely(BillingSession.class, BillingSession_.billingSessionId, sessionId,
                 LockModeType.PESSIMISTIC_READ);
+        } else {
+            return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId);
+        }
     }
 }

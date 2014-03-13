@@ -262,13 +262,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         FAILING_PRICE_ITEM_SAMPLE = SM_5678;
         BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         // The BillingSession should exist as this billing attempt should have been partially successful.
         assertThat(billingSession, is(not(nullValue())));
@@ -298,12 +298,12 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         totalItems = sampleNameList.length;
 
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(), false);
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
@@ -312,7 +312,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
@@ -323,7 +323,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
@@ -345,12 +345,12 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
 
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
-        billingSession = billingEjb.findSessionByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey(),false);
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
