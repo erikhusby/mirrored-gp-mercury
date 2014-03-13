@@ -102,7 +102,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
         if (sessionKey != null) {
-            editSession = billingSessionDao.findByBusinessKey(sessionKey,false);
+            editSession = billingSessionDao.findByBusinessKey(sessionKey);
         }
     }
 

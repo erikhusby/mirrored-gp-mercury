@@ -84,7 +84,7 @@ public class BillingEjb {
      * @param sessionKey The billing session's key
      */
     public void endSession(@Nonnull String sessionKey) {
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey, true);
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         endSession(billingSession);
     }
 
@@ -127,7 +127,7 @@ public class BillingEjb {
      */
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey, true);
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
 
         boolean errorsInBilling = false;
 

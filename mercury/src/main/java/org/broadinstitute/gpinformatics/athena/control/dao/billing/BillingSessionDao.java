@@ -24,7 +24,31 @@ public class BillingSessionDao extends GenericDao {
         return findAll(BillingSession.class);
     }
 
-    public BillingSession findByBusinessKey(@Nonnull String businessKey, boolean withLock) {
+    /**
+     * Wrapper for the find by business key method that indicates that a pessimistic lock is not necessary
+     * @param businessKey   Unique Identifier for a billing Session
+     * @return
+     */
+    public BillingSession findByBusinessKey(@Nonnull String businessKey) {
+        return findByBusinessKey(businessKey, false);
+    }
+
+    /**
+     * Wrapper for the find by business key method that indicates that a pessimistic lock is necessary
+     * @param businessKey   Unique Identifier for a billing Session
+     * @return
+     */
+    public BillingSession findByBusinessKeyWithLock(@Nonnull String businessKey) {
+        return findByBusinessKey(businessKey, true);
+    }
+
+    /**
+     * Finds a billing session based on a session Identifier
+     * @param businessKey   Unique Identifier for a billing Session
+     * @param withLock      Indicates whether to apply a Pessimistic Lock to the read to protect against double billing
+     * @return
+     */
+    private BillingSession findByBusinessKey(@Nonnull String businessKey, boolean withLock) {
 
         if (!businessKey.startsWith(BillingSession.ID_PREFIX)) {
             throw new IllegalArgumentException("Business key must start with: " + BillingSession.ID_PREFIX);

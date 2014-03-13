@@ -80,7 +80,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         billingSessionDao.clear();
 
         // Re-fetch the updated BillingSession from the database.
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(businessKey, false);
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(businessKey);
 
         assertThat(billingSession, is(not(nullValue())));
 
