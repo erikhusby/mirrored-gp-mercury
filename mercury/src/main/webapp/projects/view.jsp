@@ -11,17 +11,58 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
-                $j('#new-consent-dialog').dialog({
+                $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
                     height: 500,
-                    width: 500,
-                    modal: true
-                })
+                    width: 700,
+                    modal: true,
+                    close: resetRegulatoryInfoDialog
+                });
+
+                $j('#addRegulatoryInfo').click(function(event) {
+                    event.preventDefault();
+                    $j('#addRegulatoryInfoDialog').dialog("open");
+                });
+
+                $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
 
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
-                })
+                });
             });
+
+            function resetRegulatoryInfoDialog() {
+                $j('#regulatoryInfoQuery').val('');
+                $j('#addRegulatoryInfoDialogQueryResults').empty();
+                $j('#addRegulatoryInfoDialogSheet2').hide();
+                $j('#addRegulatoryInfoDialogSheet1').show();
+            }
+
+            function searchRegulatoryInfo(event) {
+                event.preventDefault();
+                $j.ajax({
+                    url: '${ctxpath}/projects/project.action?regulatoryInfoQuery=&q=' + $j('#regulatoryInfoQuery').val(),
+                    dataType: 'json',
+                    success: showRegulatoryInfo
+                });
+                $j('#addRegulatoryInfoDialogSheet1').hide();
+            }
+
+            function showRegulatoryInfo(infos) {
+                $j('#addRegulatoryInfoDialogSheet2').show();
+                var table = $j('#addRegulatoryInfoDialogQueryResults');
+
+                function makeCell(text) {
+                    return $j('<td>' + text + '</td>');
+                }
+
+                for (var i = 0; i < infos.length; i++) {
+                    var info = infos[i];
+                    var row = $j('<tr/>');
+                    row.append(makeCell(info.identifier));
+                    table.append(row);
+                }
+            }
         </script>
 
         <style type="text/css">
@@ -260,16 +301,29 @@
             </fieldset>
         </div>
 
-        <div id="new-consent-dialog">
-            <p>Enter the protocol or determination number and we'll see if there's an existing consent already defined.</p>
-            <form>
-                <input type="text" name="q">
-            </form>
+        <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
+            <div id="addRegulatoryInfoDialogSheet1">
+                <p>Enter the protocol or determination number to see if the regulatory information is already known to Mercury.</p>
+                <form id="regulatoryInfoSearchForm">
+                    <div class="control-group">
+                        <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
+                        <div class="controls">
+                            <input id="regulatoryInfoQuery" type="text" name="q">
+                            <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="addRegulatoryInfoDialogSheet2" style="display: none;">
+                <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
+                <table id="addRegulatoryInfoDialogQueryResults">
+                </table>
+            </div>
         </div>
 
         <div style="clear:both;">
-            <h4 style="display:inline">Consents</h4>
-            <a href="#" id="add-new-consent" class="pull-right"><i class="icon-plus"></i>Add New Consent</a>
+            <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+            <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
         </div>
 
         <table class="table simple">

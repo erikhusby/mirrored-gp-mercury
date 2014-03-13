@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
@@ -408,6 +409,33 @@ public class ResearchProjectActionBean extends CoreActionBean {
         Collection<ResearchProject> childResearchProjects = editResearchProject.getAllChildren();
         childResearchProjects.add(editResearchProject);
         return createTextResolution(projectTokenInput.getJsonString(getQ(), childResearchProjects));
+    }
+
+    /**
+     * Handles an AJAX action event to search for regulatory information, case-insensitively, from the value in this.q.
+     * The JSONObjects in the returned array will have the following properties:
+     *
+     * <dl>
+     *     <dt>id</dt>
+     *     <dd>the RegulatoryInfo's primary key</dd>
+     *     <dt>identifier</dt>
+     *     <dd>the externally assigned identifier, such as IRB Protocol #</dd>
+     *     <dt>type</dt>
+     *     <dd>the type of regulatory information, such as IRB Protocol</dd>
+     *     <dt>alias</dt>
+     *     <dd>the name given to this information for the benefit of Mercury users</dd>
+     * </dl>
+     *
+     * @return the regulatory information search results
+     * @throws Exception
+     */
+    @HandlesEvent("regulatoryInfoQuery")
+    public Resolution queryRegulatoryInfo() throws JSONException {
+        JSONArray results = new JSONArray();
+        JSONObject result = new JSONObject();
+        result.put("identifier", q);
+        results.put(result);
+        return createTextResolution(results.toString());
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
