@@ -404,7 +404,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
-        // update or add to list of kit details
+        /*
+         * update or add to list of kit details
+         * Due to the kit Details being stored as a set in the ProductOrderKit entity, it was currently not possible
+         * to have Stripes directly update the collection of kit details.  Therefore, a temporary list of kit details
+         * are initialized when the page is loaded, and parsed when the page is submitted.
+         */
         for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
 
             if (kitDetails.get(kitDetailIndex) != null &&
