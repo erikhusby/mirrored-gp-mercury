@@ -15,12 +15,12 @@
                     autoOpen: false,
                     height: 500,
                     width: 700,
-                    modal: true,
-                    close: resetRegulatoryInfoDialog
+                    modal: true
                 });
 
                 $j('#addRegulatoryInfo').click(function(event) {
                     event.preventDefault();
+                    resetRegulatoryInfoDialog();
                     $j('#addRegulatoryInfoDialog').dialog("open");
                 });
 
@@ -34,6 +34,7 @@
             function resetRegulatoryInfoDialog() {
                 $j('#regulatoryInfoQuery').val('');
                 $j('#addRegulatoryInfoDialogQueryResults tbody').empty();
+                $j('#regulatoryInfoType option').prop('disabled', false);
                 $j('#addRegulatoryInfoDialogSheet2').hide();
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
@@ -62,7 +63,13 @@
                     row.append($j('<td/>').append(info.type));
                     row.append($j('<td/>').append(addButton));
                     table.append(row);
+
+                    $j('#regulatoryInfoType option:contains(' + info.type + ')').prop('disabled', true);
                 }
+
+                // pre-populate new regulatory information form
+                $j('#identifierDisplay').text($j('#regulatoryInfoQuery').val());
+                $j('#identifier').val($j('#regulatoryInfoQuery').val());
             }
         </script>
 
@@ -309,13 +316,13 @@
                     <div class="control-group">
                         <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
                         <div class="controls">
-                            <input id="regulatoryInfoQuery" type="text" name="q">
+                            <input id="regulatoryInfoQuery" type="text" name="q" required>
                             <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
                         </div>
                     </div>
                 </form>
             </div>
-            <div id="addRegulatoryInfoDialogSheet2" style="display: none;">
+            <div id="addRegulatoryInfoDialogSheet2">
                 <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
                 <stripes:form action="project.action">
                     <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
@@ -334,9 +341,40 @@
                 </stripes:form>
                 <hr>
                 <p>Fill in the details below to add new regulatory information to Mercury and this research project.</p>
-                <form id="regulatoryInfoCreateForm">
+                <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
+                    <stripes:hidden name="addNewRegulatoryInfo"/>
+                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+                    <div class="control-group view-control-group">
+                        <label class="control-label">Identifier</label>
 
-                </form>
+                        <div class="controls">
+                            <div id="identifierDisplay" class="form-value">${actionBean.q}</div>
+                            <input type="hidden" id="identifier" name="identifier"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
+                        <div class="controls">
+                            <stripes:select id="regulatoryInfoType" name="regulatoryInfoType">
+                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type" label="name"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="alias" class="control-label"/>
+                        <div class="controls">
+                            <input type="text" name="alias" required>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="controls">
+                            <stripes:submit name="add" value="Add" class="btn btn-primary"/>
+                        </div>
+                    </div>
+                </stripes:form>
             </div>
         </div>
 

@@ -65,6 +65,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
+    public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -168,7 +169,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
      * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -454,6 +455,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
     public Resolution addRegulatoryInfoToResearchProject() {
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    @HandlesEvent(ADD_NEW_REGULATORY_INFO)
+    public Resolution addNewRegulatoryInfo() {
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
