@@ -52,30 +52,17 @@
                 $j('#addRegulatoryInfoDialogSheet2').show();
                 var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
 
-                function makeCell(text) {
-                    return $j('<td>' + text + '</td>');
-                }
-
                 for (var i = 0; i < infos.length; i++) {
                     var info = infos[i];
+                    var addButton = $j('<input type="submit" value="Add" class="btn">');
+                    addButton.click(function() { $j('#regulatoryInfoId').val(info.id); });
                     var row = $j('<tr/>');
-                    row.append(makeCell(info.identifier));
-                    row.append(makeCell(info.alias));
-                    row.append(makeCell(info.type));
-                    var inputId = 'addRegInfo' + info.id;
-                    row.append('<td><input id="' + inputId + '" type="submit" value="Add" class="btn" onclick="return addRegulatoryInfoToResearchProject(' + info.id + ');"></td>');
+                    row.append($j('<td/>').append(info.identifier));
+                    row.append($j('<td/>').append(info.alias));
+                    row.append($j('<td/>').append(info.type));
+                    row.append($j('<td/>').append(addButton));
                     table.append(row);
-                    $('#' + inputId).click(function() {
-                        alert(id);
-                        addRegulatoryInfoToResearchProject(info.id);
-                    })
                 }
-            }
-
-            function addRegulatoryInfoToResearchProject(id) {
-                alert(id);
-                $j('#regulatoryInfoId').val(id);
-                return false;
             }
         </script>
 
@@ -333,7 +320,7 @@
                 <stripes:form action="project.action">
                     <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
                     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-                    <hidden id="regulatoryInfoId" name="regulatoryInfoId"></hidden>
+                    <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
                     <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
                         <thead>
                         <th style="width:10em">Identifier</th>

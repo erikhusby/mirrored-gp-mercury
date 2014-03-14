@@ -447,12 +447,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
+     * Associates regulatory information with a research project. The RegulatoryInformation is looked up by the value in
+     * this.regulatoryInfoId.
      *
-     * @return
+     * @return a redirect to the research project view page
      */
     @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
     public Resolution addRegulatoryInfoToResearchProject() {
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
