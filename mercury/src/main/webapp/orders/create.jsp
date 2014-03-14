@@ -243,8 +243,6 @@
             if ((productKey == null) || (productKey == "")) {
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
-                $j("#skipQuoteDiv").hide();
-                $j("#skipQuoteReasonDiv").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -374,12 +372,17 @@
 
         function updateSkipQuoteVisibility(data) {
             var skipQuoteDiv = $j("#skipQuoteDiv");
+            var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
                 skipQuoteDiv.show();
+                quoteDiv.hide();
             }
             else {
+                $j("#skipQuote").prop('checked', false);
                 skipQuoteDiv.hide();
+                quoteDiv.show();
             }
+            updateQuoteOptions();
         }
 
         function setupAddonCheckboxes(data) {
