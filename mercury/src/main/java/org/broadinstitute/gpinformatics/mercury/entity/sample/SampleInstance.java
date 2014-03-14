@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -18,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -101,33 +101,42 @@ public class SampleInstance {
      * @param newReagent reagent to add
      */
     public void addReagent(Reagent newReagent) {
+        addReagent(newReagent, reagents);
+    }
+
+    static void addReagent(Reagent newReagent, List<Reagent> reagents) {
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =
                     OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
-            Collection<MolecularIndex> newValues =
-                    newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().values();
             boolean foundExistingIndex = false;
             boolean foundMergedScheme = false;
             // The new index has to be merged with other indexes encountered, if any.
             // E.g. If the field index is Illumina_P7-A, and the new index is Illumina_P5-B, we need a merged index
             // called Illumina_P5-B_P7-A.
-            for (int i = 0; i < reagents.size(); i++) {
-                Reagent fieldReagent = reagents.get(i);
+            // Need to find a scheme that holds the field position / sequence combination(s) and the new
+            // position / sequence combination(s).
+            Iterator<Reagent> iterator = reagents.iterator();
+            while (iterator.hasNext()) {
+                Reagent fieldReagent = iterator.next();
                 if (OrmUtil.proxySafeIsInstance(fieldReagent, MolecularIndexReagent.class)) {
                     foundExistingIndex = true;
                     MolecularIndexReagent fieldMolecularIndexReagent =
                             OrmUtil.proxySafeCast(fieldReagent, MolecularIndexReagent.class);
-                    Collection<MolecularIndex> values = fieldMolecularIndexReagent.getMolecularIndexingScheme()
-                            .getIndexes().values();
-                    for (MolecularIndex molecularIndex : values) {
-                        for (MolecularIndexingScheme molecularIndexingScheme :
-                                molecularIndex.getMolecularIndexingSchemes()) {
-                            if (molecularIndexingScheme.getIndexes().values().containsAll(
-                                    newValues)) {
+                    for (MolecularIndex molecularIndex : fieldMolecularIndexReagent.getMolecularIndexingScheme()
+                            .getIndexes().values()) {
+                        for (MolecularIndexingScheme molecularIndexingScheme : molecularIndex
+                                .getMolecularIndexingSchemes()) {
+                            Set<Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex>> entries =
+                                    molecularIndexingScheme.getIndexes().entrySet();
+                            if (entries.containsAll(
+                                    fieldMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet()) &&
+                                    entries.containsAll(
+                                        newMolecularIndexReagent.getMolecularIndexingScheme().getIndexes().entrySet())) {
                                 foundMergedScheme = true;
-                                reagents.remove(i);
+                                iterator.remove();
                                 reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+                                break;
                             }
                         }
                     }

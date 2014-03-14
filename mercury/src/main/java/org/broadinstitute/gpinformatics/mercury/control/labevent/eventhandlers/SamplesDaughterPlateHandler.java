@@ -60,8 +60,9 @@ public class SamplesDaughterPlateHandler extends AbstractEventHandler {
         ClientResponse response = webResource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, message);
 
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            logger.error("POST to " + urlString + " returned " +
-                         response.getClientResponseStatus().getReasonPhrase());
+            throw new RuntimeException(
+                    "POST to " + urlString + " returned " + response.getClientResponseStatus().getReasonPhrase());
+
         }
 
     }

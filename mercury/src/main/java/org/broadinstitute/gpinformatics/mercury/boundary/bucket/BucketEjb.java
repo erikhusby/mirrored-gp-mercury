@@ -279,7 +279,6 @@ public class BucketEjb {
                 logger.error("Error attempting to create jira removal comment for " +
                              mapEntry.getKey() + " " +
                              mapEntry.getValue().size() + " samples.", ioe);
-                throw new RuntimeException(ioe.getMessage());
             }
         }
     }
@@ -301,10 +300,6 @@ public class BucketEjb {
      * @param newPdoValue new value for PDO
      */
     public void updateEntryPdo(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String newPdoValue) {
-        if (bucketEntries.isEmpty()) {
-            throw new RuntimeException("Empty list of bucket entries.");
-        }
-        boolean bucketsChanged = false;
         // bin up the bucket entries by old pdoKey, in case they are different.
         Map<String, List<BucketEntry>> pdoBucketMapNew = new HashMap<>();
         List<BucketEntry> changedBuckets = new ArrayList<>(bucketEntries.size());
@@ -313,7 +308,6 @@ public class BucketEjb {
             String originalPdo = bucketEntry.getPoBusinessKey();
             // Do nothing unless we are actually changing something!
             if (!newPdoValue.equals(originalPdo)) {
-                bucketsChanged = true;
                 if (pdoBucketMapNew.get(originalPdo) == null) {
                     pdoBucketMapNew.put(originalPdo, new ArrayList<BucketEntry>());
                 }
@@ -326,8 +320,6 @@ public class BucketEjb {
         logger.info(String.format("Changing PDO to %s for %d bucket entries (%s)", newPdoValue, updatingList.size(),
                 StringUtils.join(updatingList, ", ")));
 
-        if (bucketsChanged) {
-            bucketDao.persistAll(changedBuckets);
-        }
+        bucketDao.persistAll(changedBuckets);
     }
 }

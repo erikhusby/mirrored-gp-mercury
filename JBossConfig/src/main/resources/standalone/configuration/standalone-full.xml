@@ -349,8 +349,8 @@
                     <authentication>
                        <login-module code="org.broadinstitute.gp.portal.PortalLoginModule" flag="optional">
                        <module-option name="dsJndiName" value="java:jboss/jdbc/portal_pool"/>
-                       <module-option name="principalsQuery" value="SELECT password as PASSWD FROM sec_user su, sec_domain_user sdu WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdu.domain = 'GAP' AND su.is_enabled = 1"/>
-                       <module-option name="rolesQuery" value="SELECT sr.id as ROLEID, sr.name as Role, 'Roles' FROM sec_user su, sec_domain_user sdu, sec_role sr, sec_domain_user_role sdur WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdur.role_id = sr.id AND sdur.domain_user_id = sdu.id AND sdu.domain = 'GAP' AND su.is_enabled = 1"/>
+                       <module-option name="principalsQuery" value="SELECT password as PASSWD FROM sec_user su, sec_domain_user sdu WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdu.domain = 'COLLABORATE' AND su.is_enabled = 1"/>
+                       <module-option name="rolesQuery" value="SELECT sr.id as ROLEID, sr.name as Role, 'Roles' FROM sec_user su, sec_domain_user sdu, sec_role sr, sec_domain_user_role sdur WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdur.role_id = sr.id AND sdur.domain_user_id = sdu.id AND sdu.domain = 'COLLABORATE' AND su.is_enabled = 1"/>
                        <module-option name="unauthenticatedIdentity" value="guest"/>
                        </login-module>
                    </authentication>

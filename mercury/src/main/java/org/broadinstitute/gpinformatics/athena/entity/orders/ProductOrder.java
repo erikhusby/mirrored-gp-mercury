@@ -11,6 +11,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -36,6 +37,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -47,6 +50,7 @@ import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -69,6 +73,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String DRAFT_PREFIX = "Draft-";
 
     private static final String REQUISITION_PREFIX = "REQ-";
+
+    public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
+        return researchProject.getRegulatoryInfos();
+    }
+
+    public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
+        getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
+    }
 
     public enum SaveType {CREATING, UPDATING}
 
@@ -156,6 +168,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private ProductOrderKit productOrderKit;
 
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
+
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
@@ -163,7 +179,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Transient
     private Date oneYearAgo = DateUtils.addYears(new Date(), -1);
 
-    @Column(name = "SKIP_QUOTE_REASON", length = 255)
+    @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
 
     /**
@@ -828,6 +844,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return productOrderId;
     }
 
+
+    public Collection<RegulatoryInfo> getRegulatoryInfos() {
+        return regulatoryInfos;
+    }
+
     /**
      * @return true if order is in Draft
      */
@@ -1448,7 +1469,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
      */
     @Transient
     public boolean canSkipQuote() {
-        return !StringUtils.isBlank(getSkipQuoteReason());
+        return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
     }
 
 }

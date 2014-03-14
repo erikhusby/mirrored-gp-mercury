@@ -8,8 +8,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
@@ -25,6 +25,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.PostLoad;
@@ -34,6 +36,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -154,6 +157,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Index(name = "ix_rp_jira")
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @JoinTable(schema = "athena", name = "RP_REGULATORY_INFOS",
+            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")})
+    private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -303,6 +311,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setInvitationEmail(String invitationEmail) {
         this.invitationEmail = invitationEmail;
+    }
+
+    public Collection<RegulatoryInfo> getRegulatoryInfos() {
+        return regulatoryInfos;
+    }
+
+    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
+        this.regulatoryInfos = regulatoryInfos;
     }
 
     /**
@@ -687,6 +703,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      */
     public boolean isSavedInJira() {
         return !StringUtils.isBlank(getJiraTicketKey());
+    }
+
+    public void addRegulatoryInfo(RegulatoryInfo... regulatoryInfo) {
+        regulatoryInfos.addAll(Arrays.asList(regulatoryInfo));
     }
 
     /***

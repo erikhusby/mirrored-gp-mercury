@@ -663,4 +663,229 @@
         <dropTable tableName="PDO_KIT_POST_RECEIVE_OPT_AUD" schemaName="athena" />
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2386-1">
+        <addColumn schemaName="athena" tableName="product_order_sample">
+            <column name="mercury_sample" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-2">
+        <addColumn schemaName="athena" tableName="product_order_sample_aud">
+            <column name="mercury_sample" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-3">
+        <addForeignKeyConstraint constraintName="fk_pos_mercury_sample"
+                baseTableSchemaName="athena" baseTableName="product_order_sample" baseColumnNames="mercury_sample"
+                referencedTableSchemaName="mercury" referencedTableName="mercury_sample" referencedColumnNames="mercury_sample_id"/>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="regulatory_info"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="regulatory_info">
+            <column name="regulatory_info_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="identifier" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="regulatory_info" columnNames="regulatory_info_id" schemaName="athena"/>
+        <addUniqueConstraint columnNames="identifier, type"
+                             constraintName="unk_regulatory_info_id_type" schemaName="athena"
+                             tableName="regulatory_info"/>
+    </changeSet>
+    <changeSet id="GPLIM-2560-1-sequence" author="dryan">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="seq_regulatory_info" schemaName="athena" />
+            </not>
+        </preConditions>
+        <createSequence sequenceName="seq_regulatory_info" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-1-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="regulatory_info_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="regulatory_info_aud">
+            <column name="regulatory_info_id" type="number(19,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="identifier" type="varchar2(255 char)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="name" type="varchar2(255 char)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="type" type="varchar2(255 char)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="regulatory_info_aud" columnNames="regulatory_info_id, rev" schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="regulatory_info_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_REG_INFO_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+
+    <changeSet author="dryan" id="GPLIM-2560-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="pdo_regulatory_infos"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="pdo_regulatory_infos">
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="regulatory_infos" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-2-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="pdo_regulatory_infos_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="pdo_regulatory_infos_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+
+            <column name="product_order" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="regulatory_infos" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="pdo_regulatory_infos_aud" columnNames="rev, product_order, regulatory_infos" schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="pdo_regulatory_infos_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_PDO_REG_INFOS_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+
+    <changeSet author="dryan" id="GPLIM-2560-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="rp_regulatory_infos"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="rp_regulatory_infos">
+            <column name="research_project" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="regulatory_infos" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-3-aud">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="rp_regulatory_infos_aud"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="rp_regulatory_infos_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+
+            <column name="research_project" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="regulatory_infos" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="rp_regulatory_infos_aud" columnNames="rev, research_project, regulatory_infos"
+                       schemaName="athena"/>
+        <addForeignKeyConstraint baseTableName="rp_regulatory_infos_aud" baseTableSchemaName="ATHENA"
+                                 baseColumnNames="REV" constraintName="FK_RP_REG_INFOS_AUD_REV_INFO "
+                                 referencedTableName="REV_INFO" referencedTableSchemaName="MERCURY"
+                                 referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-1">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_REG_INFOS_REG_INFO" schemaName="athena"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="FK_PDO_REG_INFOS_REG_INFO" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="pdo_regulatory_infos" baseColumnNames="regulatory_infos"
+                                 referencedTableName="regulatory_info" referencedColumnNames="regulatory_info_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_PDO_REGULATORY_INFOS_PDO" schemaName="athena"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="FK_PDO_REGULATORY_INFOS_PDO" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="pdo_regulatory_infos" baseColumnNames="product_order"
+                                 referencedTableName="PRODUCT_ORDER" referencedColumnNames="product_order_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-3">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_REG_INFOS_REG_INFO" schemaName="athena"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="FK_RP_REG_INFOS_REG_INFO" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="rp_regulatory_infos" baseColumnNames="regulatory_infos"
+                                 referencedTableName="regulatory_info" referencedColumnNames="regulatory_info_id"/>
+    </changeSet>
+    <changeSet author="dryan" id="GPLIM-2560-4-FK_CONSTRAINTS-4">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                    <foreignKeyConstraintExists foreignKeyName="FK_RP_REGULATORY_INFOS_RP" schemaName="athena"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="FK_RP_REGULATORY_INFOS_RP" referencedTableSchemaName="athena"
+                                 baseTableSchemaName="athena"
+                                 baseTableName="rp_regulatory_infos" baseColumnNames="research_project"
+                                 referencedTableName="research_project" referencedColumnNames="research_project_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-2560-1-unique_alias" author="scottmat">
+        <preConditions>
+            <sqlCheck expectedResult="0">
+                select count (*) from all_constraints where constraint_name = 'UNQ_REGULATORY_INFO_ALIAS'
+            </sqlCheck>
+        </preConditions>
+        <addUniqueConstraint tableName="regulatory_info" columnNames="name" schemaName="athena" constraintName="UNQ_REGULATORY_INFO_ALIAS"/>
+    </changeSet>
 </databaseChangeLog>

@@ -22,7 +22,10 @@ import java.util.Collection;
  */
 public class DeploymentBuilder {
 
-    private static final String MERCURY_WAR = "Mercury-Arquillian.war";
+    public static final String MERCURY_APP_NAME = "Mercury-Arquillian";
+
+    private static final String MERCURY_WAR = MERCURY_APP_NAME + ".war";
+
 
     /**
      * Called by default {@link #buildMercuryWar()}, and also useful explicitly in the rare case where you want an

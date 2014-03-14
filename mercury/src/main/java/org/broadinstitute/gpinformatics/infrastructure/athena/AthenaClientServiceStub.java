@@ -18,7 +18,8 @@ import java.util.*;
 @Alternative
 public class AthenaClientServiceStub implements AthenaClientService {
 
-    private static final Long TEST_CREATOR = 1111L;
+    public static final Long TEST_CREATOR = 1111L;
+    public static final String pdoTitle= "Test synopsis";
     public static final String rpSynopsis = "Test synopsis";
     public static final String otherRpSynopsis = "To Study Stuff";
     private static Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<>();

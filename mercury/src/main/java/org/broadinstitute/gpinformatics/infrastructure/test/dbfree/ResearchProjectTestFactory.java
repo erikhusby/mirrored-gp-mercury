@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.test.dbfree;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
@@ -60,6 +61,10 @@ public class ResearchProjectTestFactory {
             ResearchProjectEjb researchProjectEjb, BSPUserList userList, String researchProjectTitle) throws IOException {
         ResearchProject dummyProject =
                 new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
+        RegulatoryInfo regulatoryInfo =
+                        new RegulatoryInfo("IRB Consent for " + researchProjectTitle, RegulatoryInfo.Type.IRB, "8675309");
+        dummyProject.addRegulatoryInfo(regulatoryInfo);
+
 
         BspUser user = userList.getById(TEST_CREATOR);
         dummyProject.addPeople(RoleType.PM, Collections.singletonList(user));

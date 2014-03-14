@@ -465,4 +465,15 @@
             <column name="user_defined_reason" type="number(19,0)" />
         </addColumn>
     </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2386-1a">
+        <sql>grant references on mercury.mercury_sample to athena</sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-2485-drop-old-reason" author="scottmat">
+        <preConditions>
+            <columnExists tableName="rework_detail" columnName="rework_reason" schemaName="mercury" />
+        </preConditions>
+        <dropColumn tableName="rework_detail" columnName="rework_reason" schemaName="mercury" />
+    </changeSet>
 </databaseChangeLog>

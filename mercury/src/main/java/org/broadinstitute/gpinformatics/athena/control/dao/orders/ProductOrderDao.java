@@ -12,8 +12,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.CriteriaInClauseCreator;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -388,7 +386,8 @@ public class ProductOrderDao extends GenericDao {
         Join<ProductOrderKit, ProductOrderKitDetail> kitDetailJoin = productOrderKitJoin.join(
                 ProductOrderKit_.kitOrderDetails, JoinType.LEFT);
 
-        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
+        predicates.add(criteriaBuilder
+                .equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
         predicates.add(criteriaBuilder.isNull(kitDetailJoin.get(ProductOrderKitDetail_.numberOfSamples)));
 
         productOrderCriteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));

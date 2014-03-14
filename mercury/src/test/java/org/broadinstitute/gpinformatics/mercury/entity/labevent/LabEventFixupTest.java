@@ -228,4 +228,26 @@ public class LabEventFixupTest extends Arquillian {
             }
         }
     }
+
+    /**
+     * Delete a transfer that was resubmitted with a changed disambiguator.
+     */
+    @Test(enabled = false)
+    public void fixupGplim2535Part2() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 385541L);
+        labEventDao.remove(labEvent);
+    }
+
+    // Removes auto daughter plate creation causing cyclic transfer
+    @Test(enabled = false)
+    public void fixupGplim2568() {
+        long[] ids = {399358L};
+        for (long id : ids) {
+            LabEvent labEvent = labEventDao.findById(LabEvent.class, id);
+            if (labEvent != null) {
+                labEventDao.remove(labEvent);
+            }
+        }
+    }
+
 }

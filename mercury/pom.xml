@@ -12,7 +12,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.44-SNAPSHOT</version>
+    <version>1.45-SNAPSHOT</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -156,10 +156,12 @@
 
     <properties>
         <!-- Clover -->
-        <clover.version>3.1.8</clover.version>
-        <clover.plugin.version>3.1.8</clover.plugin.version>
+        <clover.version>3.2.2</clover.version>
+        <clover.plugin.version>3.2.2</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
+
+        <deltaspike.version>0.5</deltaspike.version>
         <!-- For site reports -->
         <jira.url>http://prodinfojira.broadinstitute.org:8080/jira</jira.url>
         <bamboo.url>http://prodinfobuild.broadinstitute.org:8085</bamboo.url>
@@ -891,7 +893,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.4:1521:gpinfprd</database.url>
+                    <database.url>jdbc:oracle:thin:@192.168.195.17:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -1705,6 +1707,33 @@
             <version>4.3.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.deltaspike.core</groupId>
+            <artifactId>deltaspike-core-api</artifactId>
+            <version>${deltaspike.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.deltaspike.core</groupId>
+            <artifactId>deltaspike-core-impl</artifactId>
+            <version>${deltaspike.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.deltaspike.cdictrl</groupId>
+            <artifactId>deltaspike-cdictrl-api</artifactId>
+            <version>${deltaspike.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.deltaspike.cdictrl</groupId>
+            <artifactId>deltaspike-cdictrl-weld</artifactId>
+            <version>${deltaspike.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!--
                 <dependency>
                     <groupId>com.jprofiler</groupId>
@@ -2071,6 +2100,16 @@
                     <groups>${tests.groups}</groups>
                     <excludedGroups>${tests.excludedGroups}</excludedGroups>
                     <forkMode>never</forkMode>
+                    <properties>
+                        <property>
+                            <name>usedefaultlisteners</name>
+                            <value>false</value> <!-- disabling default listeners is optional -->
+                        </property>
+                        <property>
+                            <name>listener</name>
+                            <value>org.broadinstitute.gpinformatics.infrastructure.test.TestListener</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
 

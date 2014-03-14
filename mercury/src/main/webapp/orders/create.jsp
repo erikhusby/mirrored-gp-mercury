@@ -243,8 +243,6 @@
             if ((productKey == null) || (productKey == "")) {
                 $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 $j("#sampleInitiationKitRequestEdit").hide();
-                $j("#skipQuoteDiv").hide();
-                $j("#skipQuoteReasonDiv").hide();
                 $j("#numberOfLanesDiv").fadeOut(duration);
             } else {
                 if (productKey == '<%= Product.SAMPLE_INITIATION_PART_NUMBER %>') {
@@ -374,12 +372,17 @@
 
         function updateSkipQuoteVisibility(data) {
             var skipQuoteDiv = $j("#skipQuoteDiv");
+            var quoteDiv = $j("#quote");
             if (data.supportsSkippingQuote) {
                 skipQuoteDiv.show();
+                quoteDiv.hide();
             }
             else {
+                $j("#skipQuote").prop('checked', false);
                 skipQuoteDiv.hide();
+                quoteDiv.show();
             }
+            updateQuoteOptions();
         }
 
         function setupAddonCheckboxes(data) {
@@ -839,7 +842,7 @@
                             <input type="checkbox" id="skipQuote" name="skipQuote" value="${actionBean.editOrder.canSkipQuote()}" title="Click to start a PDO without a quote" />No quote required
                             <div id="skipQuoteReasonDiv">
                                 Please enter a reason for skipping the quote *
-                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote"/>
+                                <stripes:text id="skipQuoteReason" name="editOrder.skipQuoteReason" title="Fill in a reason for skipping the quote" maxlength="255"/>
                             </div>
                         </div>
                     </div>

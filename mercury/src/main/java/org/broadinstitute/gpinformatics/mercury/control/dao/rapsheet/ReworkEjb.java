@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -137,9 +136,6 @@ public class ReworkEjb {
             }
         }
 
-        if (productOrderKeys.isEmpty()) {
-            return Collections.emptySet();
-        }
         return productOrderKeys;
     }
 
@@ -258,9 +254,9 @@ public class ReworkEjb {
      * @throws ValidationException
      */
     private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
-                                  ReworkReason reworkReason, LabEventType reworkFromStep,
-                                  @Nonnull Bucket bucket, String comment, @Nonnull String userName,
-                                  boolean reworkCandidate)
+                                   ReworkReason reworkReason, LabEventType reworkFromStep,
+                                   @Nonnull Bucket bucket, String comment, @Nonnull String userName,
+                                   boolean reworkCandidate)
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(candidateVessel), bucket,
@@ -296,7 +292,6 @@ public class ReworkEjb {
      * Validate and add a group of reworks to the specified bucket. This is the primary entry point for clients, e.g.
      * action beans.
      *
-     *
      * @param bucketCandidates tubes/samples/PDOs that are to be reworked
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
@@ -316,7 +311,7 @@ public class ReworkEjb {
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         ReworkReason reason = reworkReasonDao.findByReason(reworkReason);
-        if(reason ==null) {
+        if (reason == null) {
             reason = new ReworkReason(reworkReason);
         }
         Collection<String> validationMessages = new ArrayList<>();
@@ -387,15 +382,16 @@ public class ReworkEjb {
      * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
      *
-     * @param candidateVessel       a LabVessel instance being submitted to a bucket
-     * @param bucketDef             the bucket that the samples will be added to
-     * @param productOrderKey       the product order for which the vessel is being added to a bucket
-     * @param sampleKey             the sample being for which the vessel represents
-     * @param reworkItem            Indicates whether the sample being added is for rework
+     * @param candidateVessel a LabVessel instance being submitted to a bucket
+     * @param bucketDef       the bucket that the samples will be added to
+     * @param productOrderKey the product order for which the vessel is being added to a bucket
+     * @param sampleKey       the sample being for which the vessel represents
+     * @param reworkItem      Indicates whether the sample being added is for rework
      *
      * @return Collection of validation messages
      */
-    public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel, @Nonnull WorkflowBucketDef bucketDef,
+    public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel,
+                                                 @Nonnull WorkflowBucketDef bucketDef,
                                                  @Nonnull String productOrderKey, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
@@ -484,7 +480,7 @@ public class ReworkEjb {
         }
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey) {
-            this.tubeBarcode=tubeBarcode;
+            this.tubeBarcode = tubeBarcode;
             this.productOrderKey = productOrderKey;
         }
 

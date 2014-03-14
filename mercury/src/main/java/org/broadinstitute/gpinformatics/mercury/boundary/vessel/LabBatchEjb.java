@@ -435,11 +435,13 @@ public class LabBatchEjb {
     public void addToLabBatch(String businessKey, List<Long> bucketEntryIds, List<Long> reworkEntries)
             throws IOException {
         LabBatch batch = labBatchDao.findByBusinessKey(businessKey);
+        Set<String> pdoKeys = new HashSet<>();
 
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(bucketEntryIds);
         Set<LabVessel> labVessels = new HashSet<>();
         for (BucketEntry bucketEntry : bucketEntries) {
             labVessels.add(bucketEntry.getLabVessel());
+            pdoKeys.add(bucketEntry.getPoBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
         }
 
@@ -452,6 +454,7 @@ public class LabBatchEjb {
 
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
+            pdoKeys.add(entry.getPoBusinessKey());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
         }
@@ -482,6 +485,12 @@ public class LabBatchEjb {
                 batch.getBatchDescription()));
 
         jiraService.updateIssue(batch.getJiraTicket().getTicketName(), customFields);
+
+        //link the JIRA tickets for the batch created to the pdo batches.
+        for (String pdoKey : pdoKeys) {
+            linkJiraBatchToTicket(pdoKey, batch);
+        }
+
     }
 
     /*
