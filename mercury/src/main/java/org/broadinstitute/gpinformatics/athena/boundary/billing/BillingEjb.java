@@ -86,12 +86,8 @@ public class BillingEjb {
      * @param sessionKey The billing session's key
      */
     public void endSession(@Nonnull String sessionKey) {
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         endSession(billingSession);
-    }
-
-    public BillingSession findSessionByBusinessKey(@Nonnull String sessionKey) {
-        return billingSessionDao.findByBusinessKey(sessionKey);
     }
 
     /**
@@ -132,7 +128,8 @@ public class BillingEjb {
      *         associated with the BillingSession.
      */
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
 
         boolean errorsInBilling = false;
 
@@ -142,7 +139,8 @@ public class BillingEjb {
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-        if(unBilledQuoteImportItems.size() == 0) {
+        if(unBilledQuoteImportItems.isEmpty()) {
+            endSession(billingSession);
             throw new BillingException(NO_ITEMS_TO_BILL_ERROR_TEXT);
         }
 
