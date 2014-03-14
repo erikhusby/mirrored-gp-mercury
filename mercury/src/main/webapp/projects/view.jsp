@@ -62,8 +62,20 @@
                     row.append(makeCell(info.identifier));
                     row.append(makeCell(info.alias));
                     row.append(makeCell(info.type));
+                    var inputId = 'addRegInfo' + info.id;
+                    row.append('<td><input id="' + inputId + '" type="submit" value="Add" class="btn" onclick="return addRegulatoryInfoToResearchProject(' + info.id + ');"></td>');
                     table.append(row);
+                    $('#' + inputId).click(function() {
+                        alert(id);
+                        addRegulatoryInfoToResearchProject(info.id);
+                    })
                 }
+            }
+
+            function addRegulatoryInfoToResearchProject(id) {
+                alert(id);
+                $j('#regulatoryInfoId').val(id);
+                return false;
             }
         </script>
 
@@ -318,16 +330,26 @@
             </div>
             <div id="addRegulatoryInfoDialogSheet2" style="display: none;">
                 <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
-                <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
-                    <thead>
+                <stripes:form action="project.action">
+                    <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
+                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+                    <hidden id="regulatoryInfoId" name="regulatoryInfoId"></hidden>
+                    <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
+                        <thead>
                         <th style="width:10em">Identifier</th>
                         <th>Alias</th>
                         <th style="width:17em">Type</th>
                         <th style="width:9em"></th>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </stripes:form>
+                <hr>
+                <p>Fill in the details below to add new regulatory information to Mercury and this research project.</p>
+                <form id="regulatoryInfoCreateForm">
+
+                </form>
             </div>
         </div>
 

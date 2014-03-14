@@ -56,13 +56,15 @@ import java.util.Map;
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
-
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
-    public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
+    public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
     private static final String PROJECT = "Research Project";
+
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
+
+    public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -101,6 +103,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * The search query.
      */
     private String q;
+
+    private Long regulatoryInfoId;
 
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
@@ -164,7 +168,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
      * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -442,6 +446,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(results.toString());
     }
 
+    /**
+     *
+     * @return
+     */
+    @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
+    public Resolution addRegulatoryInfoToResearchProject() {
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
     // Complete Data getters are for the prepopulates on the create.jsp
 
     public String getIrbsCompleteData() throws Exception {
@@ -518,6 +531,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    public Long getRegulatoryInfoId() {
+        return regulatoryInfoId;
+    }
+
+    public void setRegulatoryInfoId(Long regulatoryInfoId) {
+        this.regulatoryInfoId = regulatoryInfoId;
     }
 
     /**
