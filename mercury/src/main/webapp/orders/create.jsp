@@ -242,6 +242,8 @@
 
         function updateUIForProjectChoice(){
             var projectKey = $j("#researchProject").val();
+            var pdoId = "${actionBean.editOrder.productOrderId}";
+
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
 
@@ -249,7 +251,7 @@
             }else{
                 $j("#regulatoryInfo").show();
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey,
+                    url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey + "&pdoId=" + pdoId,
                     dataType: 'json',
                     success: setupRegulatoryInfoSelect
                 });
@@ -401,36 +403,41 @@
         }
 
         function setupRegulatoryInfoSelect(data){
-            var maxSize=8;
-            var size=0;
-            var selectText = '<select size="'+maxSize+'" multiple="true" name="editOrder.regulatoryInfos" id="regulatoryInfo">';
-            if (data.length==0){
+            if (data.length == 0) {
                 $j("#regulatorySelect").text('No Regulatory options have been set up.');
-            }   else {
-            $j.each(data, function (index, val) {
-                size++;
-                var projectName = val.key;
-                var regulatoryList = val.value;
-                selectText += '<optgroup label="' + projectName + '">';
-                for (var index in regulatoryList) {
-                    size++;
-                    selectText += '<option>' + regulatoryList[index] + '</option>';
-                }
-                selectText += '</optgroup>';
-            });
+            } else {
+                var maxSize = 8;
+                var size = 0;
+                var selectText = '<stripes:form partial="true" beanclass="${actionBean.class.name}"><stripes:select size="'+maxSize+'" multiple="true" name="selectedRegulatoryIds" id="regulatoryInfo">';
 
-            selectText += '</select>';
-            var selectDiv = $j("#regulatorySelect");
-            selectDiv.hide();
-            selectDiv.html(selectText);
-            var selects =selectDiv.find("select");
-            if (size<maxSize) {
-                selects.attr('size', size);
+                $j.each(data, function (index, val) {
+                    size++;
+                    var projectName = val.group;
+                    var regulatoryList = val.value;
+                    selectText += '<optgroup label="' + projectName + '">';
+                    for (var index in regulatoryList) {
+                        size++;
+                        var selected=""
+                        if (regulatoryList[index].selected){
+                            selected="selected"
+                        }
+                        selectText += '<option '+selected+' value="'+regulatoryList[index].key+'">' + regulatoryList[index].value + '</option>';
+                    }
+                    selectText += '</optgroup>';
+                });
+
+                selectText += '</stripes:select></stripes:form>';
+                var selectDiv = $j("#regulatorySelect");
+                selectDiv.hide();
+                selectDiv.html(selectText);
+                var selects = selectDiv.find("select");
+                if (size < maxSize) {
+                    selects.attr('size', size);
+                }
+                selects.css("width", "397px");
+                selects.addClass("defaultText,input-xlarge");
+                selectDiv.fadeIn();
             }
-            selects.css("width", "397px");
-            selects.addClass("defaultText,input-xlarge");
-            selectDiv.fadeIn();
-        }
         }
 
         function setupAddonCheckboxes(data) {

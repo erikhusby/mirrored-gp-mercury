@@ -732,6 +732,25 @@ function formatInput(item) {
     </div>
 </div>
 
+<div class="view-control-group control-group">
+    <label class="control-label label-form">Regulatory Information</label>
+
+    <div class="controls">
+        <div class="form-value">
+            <c:choose>
+            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
+                        ${regulatoryInfo.displayText}<br/>
+                </c:forEach>
+            </c:when>
+                <c:otherwise>
+                    No regulatory information entered.
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</div>
+
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Owner</label>

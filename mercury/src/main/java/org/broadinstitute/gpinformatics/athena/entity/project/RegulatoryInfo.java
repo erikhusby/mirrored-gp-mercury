@@ -80,7 +80,7 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
 
     @Override
     public String getBusinessKey() {
-        return identifier;
+        return String.valueOf(getRegulatoryInfoId());
     }
 
     @Override

@@ -78,6 +78,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return researchProject.getRegulatoryInfos();
     }
 
+    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
+        this.regulatoryInfos = regulatoryInfos;
+    }
+
     public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }

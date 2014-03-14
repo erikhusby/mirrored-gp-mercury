@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
 import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
@@ -404,12 +405,12 @@ public class ProductOrderActionBeanTest {
         mamaResearchProject.setParentResearchProject(grannyResearchProject);
         uncleResearchProject.setParentResearchProject(grannyResearchProject);
 
-        Map<String, List<String>> regulatoryInfoByProject
+        Map<String, Collection<RegulatoryInfo>> regulatoryInfoByProject
                 = actionBean.setupRegulatoryInformation(babyResearchProject);
 
         Assert.assertEquals(regulatoryInfoByProject.size(), 3);
         List<String> titles = Arrays.asList("MamaResearchProject", "GrannyResearchProject", "BabyResearchProject" );
-        for (Map.Entry<String, List<String>> regulatoryCollection : regulatoryInfoByProject.entrySet()) {
+        for (Map.Entry<String, Collection<RegulatoryInfo>> regulatoryCollection : regulatoryInfoByProject.entrySet()) {
             Assert.assertTrue(titles.contains(regulatoryCollection.getKey()));
             Assert.assertFalse(regulatoryCollection.getKey().equals("UncleResearchProject"));
             Assert.assertEquals(regulatoryCollection.getValue().size(), 2);
