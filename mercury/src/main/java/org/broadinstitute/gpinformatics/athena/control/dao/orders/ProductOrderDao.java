@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -128,7 +129,8 @@ public class ProductOrderDao extends GenericDao {
      *
      * @return The matching order
      */
-    public ProductOrder findByBusinessKey(@Nonnull final String key, FetchSpec... fetchSpecs) {
+    public ProductOrder findByBusinessKey(@Nonnull final String key, LockModeType lockModeType,
+                                          FetchSpec... fetchSpecs) {
 
         return findSingle(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs) {
             @Override
@@ -146,7 +148,17 @@ public class ProductOrderDao extends GenericDao {
 
                 criteriaQuery.where(predicate);
             }
-        });
+        },lockModeType);
+    }
+
+    /**
+     * Wraps a call to the main findByBusinessKey with a lock mode of NONE for generic calls
+     * @param key
+     * @param fetchSpecs
+     * @return
+     */
+    public ProductOrder findByBusinessKey(@Nonnull final String key, FetchSpec... fetchSpecs) {
+        return findByBusinessKey(key, LockModeType.NONE, fetchSpecs);
     }
 
     /**

@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary;
 
+import javax.ejb.ApplicationException;
+
 /**
  * @author Scott Matthews
  *         Date: 5/8/12
  *         Time: 11:56 AM
  */
+@ApplicationException(rollback = true)
 public class InformaticsServiceException extends RuntimeException {
 
     public InformaticsServiceException ( String s ) {

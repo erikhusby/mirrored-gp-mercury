@@ -972,15 +972,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         String originalBusinessKey = editOrder.getBusinessKey();
 
         try {
-            editOrder.prepareToSave(userBean.getBspUser());
-            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
-            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            if (editOrder.isSampleInitiation()) {
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
-                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
-                addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-            }
+            productOrderEjb.placeProductOrder(originalBusinessKey);
+            addMessage("Created BSP work request ''{0}'' for this order.",
+                    editOrder.getProductOrderKit().getWorkRequestId());
 
             originalBusinessKey = null;
             productOrderDao.persist(editOrder);

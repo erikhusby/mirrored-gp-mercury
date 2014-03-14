@@ -9,6 +9,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -20,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -34,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -42,6 +45,7 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.persistence.LockModeType;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -84,6 +88,10 @@ public class ProductOrderEjb {
     private final BSPSampleDataFetcher sampleDataFetcher;
 
     private final MercuryClientService mercuryClientService;
+
+    @Inject
+    private BSPKitRequestService bspKitRequestService;
+
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -951,8 +959,8 @@ public class ProductOrderEjb {
     }
 
     public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                               @Nonnull Collection<ProductOrderSample> samples,
-                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+                              @Nonnull Collection<ProductOrderSample> samples,
+                              @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -972,6 +980,42 @@ public class ProductOrderEjb {
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
             updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
+        }
+    }
+
+    /**
+     * Encapsulates the logic for placing a product order.  This encompasses:
+     * <ul>
+     * <li>creating the PDO ticket in Jira</li>
+     * <li>(if sample initiation) creating and submitting a kit request to BSP</li>
+     * </ul>
+     * <p/>
+     * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
+     *
+     * @param businessKey Business key by which to look up the currently persisted Product order
+     */
+    public void placeProductOrder(String businessKey) {
+        ProductOrder editOrder = productOrderDao.findByBusinessKey(businessKey, LockModeType.PESSIMISTIC_READ);
+        if (editOrder == null) {
+            throw new InformaticsServiceException("There is no product order associated with the business key " +
+                                                  businessKey);
+        }
+        if (editOrder.isSubmitted()) {
+            throw new InformaticsServiceException("This product order " + editOrder.getBusinessKey() +
+                                                  " has already been submitted to Jira");
+        }
+        editOrder.prepareToSave(userBean.getBspUser());
+        try {
+            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            if (editOrder.isSampleInitiation()) {
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
+                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
+            }
+        } catch (IOException e) {
+            log.error("An exception occurred attempting to create a Product Order in Jira", e);
+            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
     }
 }
