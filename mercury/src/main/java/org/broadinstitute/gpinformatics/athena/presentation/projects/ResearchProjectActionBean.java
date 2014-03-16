@@ -18,8 +18,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -89,6 +91,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private RegulatoryInfoDao regulatoryInfoDao;
+
+    @Inject
+    private RegulatoryInfoEjb regulatoryInfoEjb;
+
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
@@ -106,6 +114,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String q;
 
     private Long regulatoryInfoId;
+
+    private String regulatoryInfoIdentifier;
+
+    private RegulatoryInfo.Type regulatoryInfoType;
+
+    private String regulatoryInfoAlias;
 
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
@@ -437,14 +451,21 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @HandlesEvent("regulatoryInfoQuery")
     public Resolution queryRegulatoryInfo() throws JSONException {
+        List<RegulatoryInfo> infos = regulatoryInfoDao.findByIdentifier(q);
         JSONArray results = new JSONArray();
-        JSONObject result = new JSONObject();
-        result.put("id", 1L);
-        result.put("identifier", q);
-        result.put("type", RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH.getName());
-        result.put("alias", "MIT COUHES Lander Phase 2");
-        results.put(result);
+        for (RegulatoryInfo info : infos) {
+            results.put(regulatoryInfoToJSONObject(info));
+        }
         return createTextResolution(results.toString());
+    }
+
+    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo) throws JSONException {
+        JSONObject object = new JSONObject();
+        object.put("id", regulatoryInfo.getRegulatoryInfoId());
+        object.put("identifier", regulatoryInfo.getIdentifier());
+        object.put("type", regulatoryInfo.getType().getName());
+        object.put("alias", regulatoryInfo.getName());
+        return object;
     }
 
     /**
@@ -455,12 +476,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
     public Resolution addRegulatoryInfoToResearchProject() {
+        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfoId, editResearchProject);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     @HandlesEvent(ADD_NEW_REGULATORY_INFO)
     public Resolution addNewRegulatoryInfo() {
+        RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
+                .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
+        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfo.getRegulatoryInfoId(), editResearchProject);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
@@ -549,6 +574,30 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setRegulatoryInfoId(Long regulatoryInfoId) {
         this.regulatoryInfoId = regulatoryInfoId;
+    }
+
+    public String getRegulatoryInfoIdentifier() {
+        return regulatoryInfoIdentifier;
+    }
+
+    public void setRegulatoryInfoIdentifier(String regulatoryInfoIdentifier) {
+        this.regulatoryInfoIdentifier = regulatoryInfoIdentifier;
+    }
+
+    public RegulatoryInfo.Type getRegulatoryInfoType() {
+        return regulatoryInfoType;
+    }
+
+    public void setRegulatoryInfoType(RegulatoryInfo.Type regulatoryInfoType) {
+        this.regulatoryInfoType = regulatoryInfoType;
+    }
+
+    public String getRegulatoryInfoAlias() {
+        return regulatoryInfoAlias;
+    }
+
+    public void setRegulatoryInfoAlias(String regulatoryInfoAlias) {
+        this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
     /**

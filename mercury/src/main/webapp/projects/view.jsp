@@ -349,7 +349,7 @@
 
                         <div class="controls">
                             <div id="identifierDisplay" class="form-value">${actionBean.q}</div>
-                            <input type="hidden" id="identifier" name="identifier"/>
+                            <input type="hidden" id="identifier" name="regulatoryInfoIdentifier"/>
                         </div>
                     </div>
 
@@ -365,7 +365,7 @@
                     <div class="control-group">
                         <stripes:label for="alias" class="control-label"/>
                         <div class="controls">
-                            <input type="text" name="alias" required>
+                            <input type="text" name="regulatoryInfoAlias" required>
                         </div>
                     </div>
 
@@ -392,20 +392,15 @@
                 <th style="width:9em"></th>
             </thead>
             <tbody>
-                <tr>
-                    <td>13423</td>
-                    <td>Manhattan Project reference consent</td>
-                    <td>IRB Protocol #</td>
-                    <td style="text-align:center"><a href="#">Edit...</a></td>
-                    <td style="text-align:center"><button class="btn">Remove</button></td>
-                </tr>
-                <tr>
-                    <td>34423</td>
-                    <td>Project common reference consent</td>
-                    <td>ORSP "Not Engaged" Determination #</td>
-                    <td style="text-align:center"><a href="#">Edit...</a></td>
-                    <td style="text-align:center"><button class="btn">Remove</button></td>
-                </tr>
+                <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
+                    <tr>
+                        <td>${regulatoryInfo.identifier}</td>
+                        <td>${regulatoryInfo.name}</td>
+                        <td>${regulatoryInfo.type.name}</td>
+                        <td style="text-align:center"><a href="#">Edit...</a></td>
+                        <td style="text-align:center"><button class="btn">Remove</button></td>
+                    </tr>
+                </c:forEach>
             </tbody>
         </table>
 
