@@ -469,6 +469,8 @@ public enum LabEventType {
     SAMPLE_IMPORT("SampleImport", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE,
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    SEQ_PLATING_NORMALIZATION("SeqPlatingNormalization", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,

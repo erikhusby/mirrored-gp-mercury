@@ -150,8 +150,9 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     private String jiraTicketKey;
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
-    @JoinTable(schema = "athena")
-    private Collection<Consent> consents = new ArrayList<>();
+    @JoinTable(schema = "athena", name = "RP_REGULATORY_INFOS",
+            joinColumns = {@JoinColumn(name="RESEARCH_PROJECT")})
+    private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -295,12 +296,12 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         this.accessControlEnabled = accessControlEnabled;
     }
 
-    public Collection<Consent> getConsents() {
-        return consents;
+    public Collection<RegulatoryInfo> getRegulatoryInfos() {
+        return regulatoryInfos;
     }
 
-    public void setConsents(Collection<Consent> consents) {
-        this.consents = consents;
+    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
+        this.regulatoryInfos = regulatoryInfos;
     }
 
     /**
@@ -682,8 +683,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return !StringUtils.isBlank(getJiraTicketKey());
     }
 
-    public void addConsent(Consent ... consent) {
-        consents.addAll(Arrays.asList(consent));
+    public void addRegulatoryInfo(RegulatoryInfo... regulatoryInfo) {
+        regulatoryInfos.addAll(Arrays.asList(regulatoryInfo));
     }
 
     public enum Status implements StatusType {

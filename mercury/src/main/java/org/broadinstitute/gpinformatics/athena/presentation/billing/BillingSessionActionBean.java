@@ -102,7 +102,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
         if (sessionKey != null) {
-            editSession = billingEjb.findSessionByBusinessKey(sessionKey);
+            editSession = billingSessionDao.findByBusinessKey(sessionKey);
         }
     }
 
@@ -199,7 +199,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public Resolution bill() {
 
         String pageUrl = getContext().getRequest().getRequestURL().toString();
-        log.warn("Billing request for " + pageUrl);
+        log.debug("Billing request for " + pageUrl);
 
         boolean errorsInBilling = false;
 

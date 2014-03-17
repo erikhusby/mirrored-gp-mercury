@@ -13,12 +13,10 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -26,20 +24,17 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.Collection;
 
 @Entity
 @Audited
 
-@Table(name = "CONSENT", schema = "athena",
+@Table(name = "REGULATORY_INFO", schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"identifier", "type"}))
-public class Consent implements Serializable, BusinessObject {
+public class RegulatoryInfo implements Serializable, BusinessObject {
     public enum Type {
         IRB("IRB Protocol"),
         ORSP_NOT_ENGAGED("ORSP Not Engaged"),
@@ -56,9 +51,9 @@ public class Consent implements Serializable, BusinessObject {
         }
     }
     @Id
-    @SequenceGenerator(name="seq_consent", schema = "athena", sequenceName="seq_consent")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_consent")
-    private Long consentId;
+    @SequenceGenerator(name="seq_regulatory_info", schema = "athena", sequenceName="seq_regulatory_info")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_regulatory_info")
+    private Long regulatoryInfoId;
 
     @Column(name="name", nullable = false)
     private String name;
@@ -70,10 +65,10 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    public Consent() {
+    public RegulatoryInfo() {
     }
 
-    public Consent(String name, Type type, String identifier) {
+    public RegulatoryInfo(String name, Type type, String identifier) {
         this.name = name;
         this.type = type;
         this.identifier = identifier;
@@ -98,8 +93,8 @@ public class Consent implements Serializable, BusinessObject {
         return identifier;
     }
 
-    public Long getConsentId() {
-        return consentId;
+    public Long getRegulatoryInfoId() {
+        return regulatoryInfoId;
     }
 
     @Override
@@ -108,11 +103,11 @@ public class Consent implements Serializable, BusinessObject {
             return true;
         }
 
-        if (other == null || !OrmUtil.proxySafeIsInstance(other, Consent.class)) {
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, RegulatoryInfo.class)) {
             return false;
         }
 
-        Consent castOther = OrmUtil.proxySafeCast(other, Consent.class);
+        RegulatoryInfo castOther = OrmUtil.proxySafeCast(other, RegulatoryInfo.class);
 
         return new EqualsBuilder().append(getIdentifier(), castOther.getIdentifier())
                 .append(getType(), castOther.getType()).append(getName(), castOther.getName()).isEquals();

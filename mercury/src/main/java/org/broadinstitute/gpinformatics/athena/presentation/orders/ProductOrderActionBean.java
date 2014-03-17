@@ -241,6 +241,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
+    private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
+
     /*
      * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
      * phase, we are moving annotation based validations to be specifically called out in the code after updating the
@@ -402,7 +404,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
 
-        // update or add to list of kit details
+        /*
+         * update or add to list of kit details
+         * Due to the kit Details being stored as a set in the ProductOrderKit entity, it was currently not possible
+         * to have Stripes directly update the collection of kit details.  Therefore, a temporary list of kit details
+         * are initialized when the page is loaded, and parsed when the page is submitted.
+         */
         for (int kitDetailIndex = 0; kitDetailIndex < kitDetails.size(); kitDetailIndex++) {
 
             if (kitDetails.get(kitDetailIndex) != null &&
@@ -1233,14 +1240,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
         BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
-        Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
-        Date picoRunDate = bspSampleDTO.getPicoRunDate();
-        String picoRunDateString = "No Pico";
-
-        if (picoRunDate != null) {
-            picoRunDateString = dateFormatter.format(picoRunDate);
-        }
         item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
         item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
         item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
@@ -1248,7 +1248,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, picoRunDateString);
+        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
@@ -1264,6 +1264,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             item.put(BSPSampleDTO.PACKAGE_DATE, "");
             item.put(BSPSampleDTO.RECEIPT_DATE, "");
         }
+    }
+
+    private static String formatPicoRunDate(Date picoRunDate) {
+        if (picoRunDate == null) {
+            return "No Pico";
+        }
+
+        return dateFormatter.format(picoRunDate);
     }
 
     private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {

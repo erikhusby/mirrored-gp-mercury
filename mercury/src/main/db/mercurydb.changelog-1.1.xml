@@ -470,4 +470,10 @@
         <sql>grant references on mercury.mercury_sample to athena</sql>
     </changeSet>
 
+    <changeSet id="GPLIM-2485-drop-old-reason" author="scottmat">
+        <preConditions>
+            <columnExists tableName="rework_detail" columnName="rework_reason" schemaName="mercury" />
+        </preConditions>
+        <dropColumn tableName="rework_detail" columnName="rework_reason" schemaName="mercury" />
+    </changeSet>
 </databaseChangeLog>
