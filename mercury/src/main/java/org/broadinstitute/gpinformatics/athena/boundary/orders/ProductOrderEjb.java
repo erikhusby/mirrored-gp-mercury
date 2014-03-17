@@ -491,7 +491,8 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
         } else {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, ""));
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, null));
+//            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, "1970-01-01"));
 
         }
 
@@ -500,7 +501,8 @@ public class ProductOrderEjb {
                     JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline()))
             );
         } else {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, ""));
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, null));
+//            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, "1970-01-01"));
         }
 
         // Add the Requisition name to the list of fields when appropriate.
