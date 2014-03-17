@@ -2093,6 +2093,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    public void validateRegulatoryInformation(String action) {
+        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+                requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met", action);
+        }
+    }
+
     public KitType getChosenKitType() {
         return chosenKitType;
     }

@@ -49,6 +49,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,6 +75,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
+    // Date needs to be validated (could be 4/7/2014).
+    public static final String IRB_REQUIRED_START_DATE_STRING = "04/14/2014";
+
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
         return researchProject.getRegulatoryInfos();
     }
@@ -84,6 +88,17 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
+    }
+
+    public boolean regulatoryRequirementsMet() {
+        Date testDate=getPlacedDate();
+        if (getPlacedDate() == null) {
+            testDate = new Date();
+        }
+        if (testDate.after(getIrbRequiredStartDate())){
+            return !getRegulatoryInfos().isEmpty();
+        }
+        return true;
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -1465,6 +1480,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public void invalidate() {
             countsValid = false;
         }
+    }
+
+    public static Date getIrbRequiredStartDate() {
+        Date irbRequiredStartDate;
+        Date date;
+        try {
+            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(IRB_REQUIRED_START_DATE_STRING);
+        } catch (ParseException e) {
+            date = new Date();
+        }
+        irbRequiredStartDate =
+                            org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
+        return irbRequiredStartDate;
     }
 
 
