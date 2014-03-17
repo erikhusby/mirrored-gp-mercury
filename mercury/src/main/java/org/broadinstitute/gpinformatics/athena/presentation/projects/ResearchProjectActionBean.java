@@ -58,11 +58,11 @@ import java.util.Map;
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
+
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
-
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
-    private static final String PROJECT = "Research Project";
 
+    private static final String PROJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
@@ -481,6 +481,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
+    /**
+     * Creates a new regulatory information record and adds it to the research project currently being viewed.
+     *
+     * @return a redirect to the research project view page
+     */
     @HandlesEvent(ADD_NEW_REGULATORY_INFO)
     public Resolution addNewRegulatoryInfo() {
         RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
