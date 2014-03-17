@@ -11,10 +11,66 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
+                $j('#addRegulatoryInfoDialog').dialog({
+                    autoOpen: false,
+                    height: 500,
+                    width: 700,
+                    modal: true
+                });
+
+                $j('#addRegulatoryInfo').click(function(event) {
+                    event.preventDefault();
+                    resetRegulatoryInfoDialog();
+                    $j('#addRegulatoryInfoDialog').dialog("open");
+                });
+
+                $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
+
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
-                })
+                });
             });
+
+            function resetRegulatoryInfoDialog() {
+                $j('#regulatoryInfoQuery').val('');
+                $j('#addRegulatoryInfoDialogQueryResults tbody').empty();
+                $j('#regulatoryInfoType option').prop('disabled', false);
+                $j('#addRegulatoryInfoDialogSheet2').hide();
+                $j('#addRegulatoryInfoDialogSheet1').show();
+            }
+
+            function searchRegulatoryInfo(event) {
+                event.preventDefault();
+                $j.ajax({
+                    url: '${ctxpath}/projects/project.action?regulatoryInfoQuery=&q=' + $j('#regulatoryInfoQuery').val(),
+                    dataType: 'json',
+                    success: showRegulatoryInfo
+                });
+                $j('#addRegulatoryInfoDialogSheet1').hide();
+            }
+
+            function showRegulatoryInfo(infos) {
+                $j('#addRegulatoryInfoDialogSheet2').show();
+                var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
+
+                for (var i = 0; i < infos.length; i++) {
+                    var info = infos[i];
+                    var addButton = $j('<input type="submit" value="Add" class="btn">');
+                    addButton.click(function() { $j('#regulatoryInfoId').val(info.id); });
+                    var row = $j('<tr/>');
+                    row.append($j('<td/>').append(info.identifier));
+                    row.append($j('<td/>').append(info.alias));
+                    row.append($j('<td/>').append(info.type));
+                    row.append($j('<td/>').append(addButton));
+                    table.append(row);
+
+                    $j('#regulatoryInfoType option:contains(' + info.type + ')').prop('disabled', true);
+                }
+
+                // pre-populate new regulatory information form
+                $j('#identifierDisplay').text($j('#regulatoryInfoQuery').val());
+                $j('#identifier').val($j('#regulatoryInfoQuery').val());
+            }
         </script>
 
         <style type="text/css">
@@ -252,6 +308,101 @@
                 </div>
             </fieldset>
         </div>
+
+        <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
+            <div id="addRegulatoryInfoDialogSheet1">
+                <p>Enter the protocol or determination number to see if the regulatory information is already known to Mercury.</p>
+                <form id="regulatoryInfoSearchForm">
+                    <div class="control-group">
+                        <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
+                        <div class="controls">
+                            <input id="regulatoryInfoQuery" type="text" name="q" required>
+                            <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="addRegulatoryInfoDialogSheet2">
+                <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
+                <stripes:form action="project.action">
+                    <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
+                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+                    <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
+                    <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
+                        <thead>
+                        <th style="width:10em">Identifier</th>
+                        <th>Alias</th>
+                        <th style="width:17em">Type</th>
+                        <th style="width:9em"></th>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </stripes:form>
+                <hr>
+                <p>Fill in the details below to add new regulatory information to Mercury and this research project.</p>
+                <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
+                    <stripes:hidden name="addNewRegulatoryInfo"/>
+                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+                    <div class="control-group view-control-group">
+                        <label class="control-label">Identifier</label>
+
+                        <div class="controls">
+                            <div id="identifierDisplay" class="form-value">${actionBean.q}</div>
+                            <input type="hidden" id="identifier" name="regulatoryInfoIdentifier"/>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
+                        <div class="controls">
+                            <stripes:select id="regulatoryInfoType" name="regulatoryInfoType">
+                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type" label="name"/>
+                            </stripes:select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <stripes:label for="alias" class="control-label"/>
+                        <div class="controls">
+                            <input type="text" name="regulatoryInfoAlias" required>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="controls">
+                            <stripes:submit name="add" value="Add" class="btn btn-primary"/>
+                        </div>
+                    </div>
+                </stripes:form>
+            </div>
+        </div>
+
+        <div style="clear:both;">
+            <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
+            <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
+        </div>
+
+        <table class="table simple">
+            <thead>
+                <th style="width:10em">Identifier</th>
+                <th>Alias</th>
+                <th style="width:25em">Type</th>
+                <th style="width:5em"></th>
+                <th style="width:9em"></th>
+            </thead>
+            <tbody>
+                <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
+                    <tr>
+                        <td>${regulatoryInfo.identifier}</td>
+                        <td>${regulatoryInfo.name}</td>
+                        <td>${regulatoryInfo.type.name}</td>
+                        <td style="text-align:center"><a href="#">Edit...</a></td>
+                        <td style="text-align:center"><button class="btn">Remove</button></td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
 
         <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>
