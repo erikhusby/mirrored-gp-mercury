@@ -244,6 +244,10 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
+    public ProductOrder findByIdSafely(@Nonnull Long orderId, LockModeType lockModeType) {
+        return findSingleSafely(ProductOrder.class, ProductOrder_.productOrderId, orderId, lockModeType);
+    }
+
     public Map<String, ProductOrderCompletionStatus> getAllProgress() {
         return getProgress(null);
     }

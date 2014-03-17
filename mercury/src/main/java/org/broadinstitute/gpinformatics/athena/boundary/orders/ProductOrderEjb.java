@@ -988,10 +988,12 @@ public class ProductOrderEjb {
      * <p/>
      * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
      *
-     * @param businessKey Business key by which to look up the currently persisted Product order
+     * @param businessKey Business key by which to reference the currently persisted Product order
+     * @param productOrderID
      */
-    public void placeProductOrder(String businessKey) {
-        ProductOrder editOrder = productOrderDao.findByBusinessKey(businessKey, LockModeType.PESSIMISTIC_READ);
+    public void placeProductOrder(String businessKey, Long productOrderID) {
+        ProductOrder editOrder = productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
+
         if (editOrder == null) {
             throw new InformaticsServiceException("There is no product order associated with the business key " +
                                                   businessKey);
