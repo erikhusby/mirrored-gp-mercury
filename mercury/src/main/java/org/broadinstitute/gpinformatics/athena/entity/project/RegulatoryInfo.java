@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -24,10 +25,13 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashSet;
 
 @Entity
 @Audited
@@ -65,6 +69,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
+    private Collection<ResearchProject> researchProjects = new HashSet<>();
+
     public RegulatoryInfo() {
     }
 
@@ -74,9 +81,13 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         this.identifier = identifier;
     }
 
+    public String getDisplayText() {
+        return getIdentifier() + " - " + getName();
+    }
+
     @Override
     public String getBusinessKey() {
-        return identifier;
+        return String.valueOf(getRegulatoryInfoId());
     }
 
     @Override
@@ -95,6 +106,18 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
 
     public Long getRegulatoryInfoId() {
         return regulatoryInfoId;
+    }
+
+    public Collection<ResearchProject> getResearchProjects() {
+        return researchProjects;
+    }
+
+    public void addResearchProject(ResearchProject researchProject) {
+        researchProjects.add(researchProject);
+    }
+
+    public void removeResearchProject(ResearchProject researchProject) {
+        researchProjects.remove(researchProject);
     }
 
     @Override

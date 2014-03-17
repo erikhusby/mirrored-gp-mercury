@@ -24,16 +24,17 @@ public class RegulatoryInfoContainerTest extends ContainerTest {
         Date today = new Date();
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("test Consent" + today.getTime(),
                 RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, "1322" + today.getTime());
-        productOrder.getResearchProject().addRegulatoryInfo(regulatoryInfo);
-
+        productOrder.getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
+        regulatoryInfo = new RegulatoryInfo("test irb" + today.getTime(),
+                RegulatoryInfo.Type.IRB, "1322" + today.getTime());
+        productOrder.getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
         pdoDao.flush();
 
-        Assert.assertEquals(productOrder.findAvailableRegulatoryInfos().size(), 1);
+        Assert.assertEquals(productOrder.findAvailableRegulatoryInfos().size(), 2);
 
-        productOrder.addRegulatoryInfo(productOrder.getResearchProject().getRegulatoryInfos()
-                .toArray(new RegulatoryInfo[productOrder.getResearchProject().getRegulatoryInfos().size()]));
+        productOrder.getRegulatoryInfos().addAll(productOrder.getResearchProject().getRegulatoryInfos());
         pdoDao.flush();
-        Assert.assertEquals(productOrder.getRegulatoryInfos().size(), 1);
+        Assert.assertEquals(productOrder.getRegulatoryInfos().size(), 2);
     }
 
 

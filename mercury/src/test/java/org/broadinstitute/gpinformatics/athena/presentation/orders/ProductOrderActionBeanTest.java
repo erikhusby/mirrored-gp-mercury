@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
 import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -34,6 +36,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.codehaus.jackson.JsonNode;
@@ -379,6 +382,40 @@ public class ProductOrderActionBeanTest {
         actionBean.validateQuoteOptions(action);
 
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPassValidation, testErrorMessage);
+    }
+
+    public void testParentHierarchy() {
+        ResearchProject grannyResearchProject= ResearchProjectTestFactory
+                .createDummyResearchProject(12, "GrannyResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject uncleResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(120, "UncleResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject mamaResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(1200, "MamaResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject babyResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(12000, "BabyResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        babyResearchProject.setParentResearchProject(mamaResearchProject);
+        mamaResearchProject.setParentResearchProject(grannyResearchProject);
+        uncleResearchProject.setParentResearchProject(grannyResearchProject);
+
+        Map<String, Collection<RegulatoryInfo>> regulatoryInfoByProject
+                = actionBean.setupRegulatoryInformation(babyResearchProject);
+
+        Assert.assertEquals(regulatoryInfoByProject.size(), 3);
+        List<String> titles = Arrays.asList("MamaResearchProject", "GrannyResearchProject", "BabyResearchProject" );
+        for (Map.Entry<String, Collection<RegulatoryInfo>> regulatoryCollection : regulatoryInfoByProject.entrySet()) {
+            Assert.assertTrue(titles.contains(regulatoryCollection.getKey()));
+            Assert.assertFalse(regulatoryCollection.getKey().equals("UncleResearchProject"));
+            Assert.assertEquals(regulatoryCollection.getValue().size(), 2);
+        }
+        Assert.assertEquals(regulatoryInfoByProject.size(), 3, "Should have three projects here.");
     }
 
     public void testQuoteRequiredAfterProductChange() {

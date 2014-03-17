@@ -300,6 +300,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return regulatoryInfos;
     }
 
+    public List<String> getRegulatoryInfoStrings() {
+        List<String> strings=new ArrayList<>();
+        for (RegulatoryInfo regulatoryInfo : regulatoryInfos) {
+            strings.add(regulatoryInfo.getDisplayText());
+        }
+        return strings;
+    }
+
     public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
         this.regulatoryInfos = regulatoryInfos;
     }
@@ -553,6 +561,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return collectChildResearchProjects(collectedProjects);
     }
 
+    public Collection<ResearchProject> getAllParents() {
+        Collection<ResearchProject> collectedProjects = new TreeSet<>();
+        if (getParentResearchProject()!=null) {
+            collectedProjects.add(getParentResearchProject());
+        }
+        return collectParentResearchProjects(collectedProjects);
+    }
+
     /**
      * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
      *
@@ -560,10 +576,27 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
      *
      * @return collection of research projects
      */
-    private static Collection<ResearchProject> collectChildResearchProjects(
-            Collection<ResearchProject> collectedProjects) {
+    private static Collection<ResearchProject> collectChildResearchProjects(Collection<ResearchProject> collectedProjects) {
         for (ResearchProject childResearchProject : collectedProjects) {
             collectedProjects.addAll(collectChildResearchProjects(childResearchProject.getChildProjects()));
+        }
+        return collectedProjects;
+    }
+
+    /**
+     * Recursive function to traverse through the full research project hierarchy tree to get all the projects.
+     *
+     * @param collectedProjects the list of collected parent research projects
+     *
+     * @return collection of research projects
+     */
+    private static Collection<ResearchProject> collectParentResearchProjects(Collection<ResearchProject> collectedProjects) {
+        for (ResearchProject researchProject : collectedProjects) {
+            if (researchProject.getParentResearchProject()!=null) {
+                collectedProjects.add(researchProject);
+                collectedProjects.addAll(
+                        collectParentResearchProjects(Arrays.asList(researchProject.getParentResearchProject())));
+            }
         }
         return collectedProjects;
     }
@@ -685,6 +718,14 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void addRegulatoryInfo(RegulatoryInfo... regulatoryInfo) {
         regulatoryInfos.addAll(Arrays.asList(regulatoryInfo));
+        for (RegulatoryInfo info : regulatoryInfo) {
+            info.addResearchProject(this);
+        }
+    }
+
+    public void removeRegulatoryInfo(RegulatoryInfo regulatoryInfo) {
+        regulatoryInfos.remove(regulatoryInfo);
+        regulatoryInfo.removeResearchProject(this);
     }
 
     public enum Status implements StatusType {
