@@ -719,8 +719,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public void addRegulatoryInfo(RegulatoryInfo... regulatoryInfo) {
         regulatoryInfos.addAll(Arrays.asList(regulatoryInfo));
         for (RegulatoryInfo info : regulatoryInfo) {
-            info.addToResearchProject(this);
+            info.addResearchProject(this);
         }
+    }
+
+    public void removeRegulatoryInfo(RegulatoryInfo regulatoryInfo) {
+        regulatoryInfos.remove(regulatoryInfo);
+        regulatoryInfo.removeResearchProject(this);
     }
 
     public enum Status implements StatusType {

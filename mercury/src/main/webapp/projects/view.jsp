@@ -383,26 +383,31 @@
             <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
         </div>
 
-        <table class="table simple">
-            <thead>
-                <th style="width:10em">Identifier</th>
-                <th>Alias</th>
-                <th style="width:25em">Type</th>
-                <th style="width:5em"></th>
-                <th style="width:9em"></th>
-            </thead>
-            <tbody>
-                <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
-                    <tr>
-                        <td>${regulatoryInfo.identifier}</td>
-                        <td>${regulatoryInfo.name}</td>
-                        <td>${regulatoryInfo.type.name}</td>
-                        <td style="text-align:center"><a href="#">Edit...</a></td>
-                        <td style="text-align:center"><button class="btn">Remove</button></td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+        <stripes:form beanclass="${actionBean.class.name}">
+            <stripes:hidden name="removeRegulatoryInfo"/>
+            <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+            <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
+            <table class="table simple">
+                <thead>
+                    <th style="width:10em">Identifier</th>
+                    <th>Alias</th>
+                    <th style="width:25em">Type</th>
+                    <th style="width:5em"></th>
+                    <th style="width:9em"></th>
+                </thead>
+                <tbody>
+                    <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
+                        <tr>
+                            <td>${regulatoryInfo.identifier}</td>
+                            <td>${regulatoryInfo.name}</td>
+                            <td>${regulatoryInfo.type.name}</td>
+                            <td style="text-align:center"><a href="#">Edit...</a></td>
+                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" class="btn">Remove</stripes:submit></td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
+        </stripes:form>
 
         <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>

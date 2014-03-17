@@ -68,6 +68,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
     public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
+    public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -183,7 +184,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
      * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO})
+    @Before(stages = LifecycleStage.BindingAndValidation,
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION,
+                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -491,6 +494,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
         RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
                 .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
         regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfo.getRegulatoryInfoId(), editResearchProject);
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    /**
+     * Removes a regulatory info record from the current research project. The ID of the regulatory info comes from
+     * this.regulatoryInfoId.
+     *
+     * @return a redirect to the research project view page
+     */
+    @HandlesEvent(REMOVE_REGULATORY_INFO_ACTION)
+    public Resolution removeRegulatoryInfo() {
+        regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, editResearchProject);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
