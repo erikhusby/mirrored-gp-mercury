@@ -50,13 +50,14 @@ public class SquidConnectorImpl implements SquidConnector {
 
         SolexaRunSynopsisBean solexaRunSynopsis = new SolexaRunSynopsisBean();
         solexaRunSynopsis.setRunBarcode(readStructureData.getRunBarcode());
+        solexaRunSynopsis.setRunName(readStructureData.getRunName());
         solexaRunSynopsis.setLanesSequenced(readStructureData.getLanesSequenced());
         solexaRunSynopsis.setActualReadStructure(readStructureData.getActualReadStructure());
         solexaRunSynopsis.setSetupReadStructure(readStructureData.getSetupReadStructure());
         solexaRunSynopsis.setImagedAreaPerLaneMM2(readStructureData.getImagedArea());
         for (LaneReadStructure laneReadStructure : readStructureData.getLaneStructures()) {
             SolexaRunLaneSynopsisBean solexaRunLaneSynopsisBean = new SolexaRunLaneSynopsisBean();
-            solexaRunLaneSynopsisBean.setLane(laneReadStructure.getLaneNumber().toString());
+            solexaRunLaneSynopsisBean.setLaneNumber(laneReadStructure.getLaneNumber());
             solexaRunLaneSynopsisBean.setActualReadStructure(laneReadStructure.getActualReadStructure());
             solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
         }

@@ -73,10 +73,10 @@ public class IlluminaSequencingRunFactory implements Serializable {
 
         for (LaneReadStructure laneReadStructure : readStructureRequest.getLaneStructures()) {
             IlluminaSequencingRunChamber sequencingRunChamber = run.getSequencingRunChamber(
-                    laneReadStructure.getLaneNumber().intValue());
+                    laneReadStructure.getLaneNumber());
             if (sequencingRunChamber == null) {
                 sequencingRunChamber = new IlluminaSequencingRunChamber(run,
-                        laneReadStructure.getLaneNumber().intValue());
+                        laneReadStructure.getLaneNumber());
                 run.addSequencingRunChamber(sequencingRunChamber);
             }
             sequencingRunChamber.setActualReadStructure(laneReadStructure.getActualReadStructure());

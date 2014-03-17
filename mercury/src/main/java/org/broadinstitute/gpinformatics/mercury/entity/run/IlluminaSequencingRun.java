@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import java.util.Date;
@@ -23,7 +24,7 @@ public class IlluminaSequencingRun extends SequencingRun {
 
     private String lanesSequenced;
 
-    @OneToMany(mappedBy = "illuminaSequencingRun")
+    @OneToMany(mappedBy = "illuminaSequencingRun", cascade = CascadeType.PERSIST)
     private Set<IlluminaSequencingRunChamber> sequencingRunChambers = new HashSet<>();
 
     public IlluminaSequencingRun(IlluminaFlowcell flowcell,

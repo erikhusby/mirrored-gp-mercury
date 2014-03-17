@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -181,9 +182,14 @@ public class ZimsIlluminaRunFactory {
                 if (sequencingTemplateLanes != null && sequencingTemplateLanes.size() == numberOfLanes) {
                     loadingConcentration = sequencingTemplateLanes.get(laneNumber - 1).getLoadingConcentration();
                 }
+                IlluminaSequencingRunChamber sequencingRunChamber = illuminaRun.getSequencingRunChamber(laneNumber);
+                String actualReadStructure = null;
+                if (sequencingRunChamber != null) {
+                    actualReadStructure = sequencingRunChamber.getActualReadStructure();
+                }
                 ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
                         sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue(),
-                        illuminaRun.getSequencingRunChamber(laneNumber).getActualReadStructure());
+                        actualReadStructure);
                 run.addLane(lane);
             }
         }

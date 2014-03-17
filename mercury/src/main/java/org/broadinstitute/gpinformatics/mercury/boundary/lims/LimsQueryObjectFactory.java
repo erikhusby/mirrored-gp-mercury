@@ -114,7 +114,7 @@ public class LimsQueryObjectFactory {
                 sequencingRun.getLanesSequenced(), null);
         for (IlluminaSequencingRunChamber sequencingRunChamber : sequencingRun.getSequencingRunChambers()) {
             LaneReadStructure laneReadStructure = new LaneReadStructure();
-            laneReadStructure.setLaneNumber(BigInteger.valueOf(sequencingRunChamber.getLaneNumber()));
+            laneReadStructure.setLaneNumber(sequencingRunChamber.getLaneNumber());
             laneReadStructure.setActualReadStructure(sequencingRunChamber.getActualReadStructure());
             readStructureRequest.getLaneStructures().add(laneReadStructure);
         }

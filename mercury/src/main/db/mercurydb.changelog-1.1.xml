@@ -485,50 +485,48 @@
     <changeSet author="thompson" id="GPLIM-2359-3">
         <createTable schemaName="mercury" tableName="sequencing_run_chamber">
             <column name="sequencing_run_chamber_id" type="number(19,0)">
-                <constraints nullable="no"/>
+                <constraints nullable="false"/>
+            </column>
+            <column name="dtype" type="varchar2(31)">
+                <constraints nullable="false"/>
             </column>
             <column name="actual_read_structure" type="varchar2(255)"/>
-            <column name="lane_name" type="varchar2(255)"/>
-            <column name="sequencing_run" type="number(19,0)"/>
+            <column name="lane_number" type="number(10,0)"/>
+            <column name="illumina_sequencing_run" type="number(19,0)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="sequencing_run_chamber" columnNames="sequencing_run_chamber_id"/>
     </changeSet>
     <changeSet author="thompson" id="GPLIM-2359-4">
         <createTable schemaName="mercury" tableName="sequencing_run_chamber_aud">
             <column name="sequencing_run_chamber_id" type="number(19,0)">
-                <constraints nullable="no"/>
+                <constraints nullable="false"/>
+            </column>
+            <column name="dtype" type="varchar2(31)">
+                <constraints nullable="false"/>
             </column>
             <column name="rev" type="number(19,0)">
-                <constraints nullable="no"/>
+                <constraints nullable="false"/>
             </column>
             <column name="revtype" type="number(3,0)"/>
             <column name="actual_read_structure" type="varchar2(255)"/>
-            <column name="lane_name" type="varchar2(255)"/>
-            <column name="sequencing_run" type="number(19,0)"/>
+            <column name="lane_number" type="number(10,0)"/>
+            <column name="illumina_sequencing_run" type="number(19,0)"/>
         </createTable>
         <addPrimaryKey schemaName="mercury" tableName="sequencing_run_chamber_aud" columnNames="sequencing_run_chamber_id, rev"/>
     </changeSet>
-<!--
-    alter table mercury.lab_vessel
-        add constraint FK71AE1528E2DA5B23
-        foreign key (flowcell)
-        references mercury.lab_vessel;
+    <changeSet author="thompson" id="GPLIM-2359-5">
+        <addForeignKeyConstraint constraintName="FK_LV_FLOWCELL"
+                baseTableSchemaName="mercury" baseTableName="lab_vessel" baseColumnNames="flowcell"
+                referencedTableSchemaName="mercury" referencedTableName="lab_vessel" referencedColumnNames="lab_vessel_id"/>
+        <addForeignKeyConstraint constraintName="FK_SRC_SEQUENCING_RUN"
+                baseTableSchemaName="mercury" baseTableName="sequencing_run_chamber" baseColumnNames="illumina_sequencing_run"
+                referencedTableSchemaName="mercury" referencedTableName="sequencing_run" referencedColumnNames="sequencing_run_id"/>
+        <addForeignKeyConstraint constraintName="FK_SRCA_REF_INFO"
+                baseTableSchemaName="mercury" baseTableName="sequencing_run_chamber_aud" baseColumnNames="rev"
+                referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="REV_INFO_ID"/>
+    </changeSet>
+    <changeSet author="thompson" id="GPLIM-2359-6">
+        <createSequence schemaName="mercury" sequenceName="SEQ_SEQUENCING_RUN_CHAMBER" incrementBy="50" startValue="1"/>
+    </changeSet>
 
-x    alter table mercury.sequencing_run_chamber
-x        add constraint FK31081B6930FAA525
-x        foreign key (run_chamber)
-x        references mercury.lab_vessel;
-
-    alter table mercury.sequencing_run_chamber
-        add constraint FK31081B697CA79ECF
-        foreign key (sequencing_run)
-        references mercury.sequencing_run;
-
-    alter table mercury.sequencing_run_chamber_aud
-        add constraint FKEF76E8DA8A39BE24
-        foreign key (rev)
-        references mercury.rev_info;
-
-    create sequence mercury.SEQ_SEQUENCING_RUN_CHAMBER start with 1 increment by 50;
--->
 </databaseChangeLog>
