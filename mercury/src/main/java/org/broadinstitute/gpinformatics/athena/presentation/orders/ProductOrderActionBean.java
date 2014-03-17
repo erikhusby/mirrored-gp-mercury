@@ -974,11 +974,24 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
 
             productOrderEjb.placeProductOrder(originalBusinessKey);
-            addMessage("Created BSP work request ''{0}'' for this order.",
-                    editOrder.getProductOrderKit().getWorkRequestId());
 
             originalBusinessKey = null;
+
+            /*
+             * FIXME: Would Rather have this block in the placeProductOrder ejb call above Throwing a non rollback
+             * application exception in the case of a sample kit submit failure.  bspKitRequestService would have to
+             * be reworked to allow injection though.
+             */
+            if (editOrder.isSampleInitiation()) {
+                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
+                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
+                addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+            }
+
             productOrderDao.persist(editOrder);
+            addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+
         } catch (Exception e) {
 
             // If we get here with an original business key, then clear out the session and refetch the order.
@@ -994,9 +1007,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             entryInit();
             return getSourcePageResolution();
         }
-
-        addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
-        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
 
         return createViewResolution(editOrder.getBusinessKey());
     }

@@ -89,10 +89,6 @@ public class ProductOrderEjb {
 
     private final MercuryClientService mercuryClientService;
 
-    @Inject
-    private BSPKitRequestService bspKitRequestService;
-
-
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
@@ -1009,10 +1005,6 @@ public class ProductOrderEjb {
             ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            if (editOrder.isSampleInitiation()) {
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
-                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
-            }
         } catch (IOException e) {
             log.error("An exception occurred attempting to create a Product Order in Jira", e);
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
