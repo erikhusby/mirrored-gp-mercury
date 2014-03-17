@@ -404,11 +404,18 @@
 
         function setupRegulatoryInfoSelect(data){
             if (data.length == 0) {
-                $j("#regulatorySelect").text('No Regulatory options have been set up.');
+                $j("#regulatorySelect").text('No options have been set up in the research project. ');
+                var researchProject = $j("#researchProject").val();
+                if (researchProject != null) {
+                    var link = $j('<a/>');
+                    $j(link).attr('href', '${ctxpath}/projects/project.action?view='.concat('&researchProject=' + researchProject));
+                    $j(link).append("(".concat(researchProject).concat(")"))
+                    $j("#regulatorySelect").append(link);
+                }
             } else {
                 var maxSize = 8;
                 var size = 0;
-                var selectText = '<stripes:form partial="true" beanclass="${actionBean.class.name}"><stripes:select size="'+maxSize+'" multiple="true" name="selectedRegulatoryIds" id="regulatoryInfo">';
+                var selectText = '<select size="' + maxSize + '" multiple="true" name="selectedRegulatoryIds" id="regulatoryInfo">';
 
                 $j.each(data, function (index, val) {
                     size++;
@@ -417,16 +424,16 @@
                     selectText += '<optgroup label="' + projectName + '">';
                     for (var index in regulatoryList) {
                         size++;
-                        var selected=""
-                        if (regulatoryList[index].selected){
-                            selected="selected"
+                        var selected = ""
+                        if (regulatoryList[index].selected) {
+                            selected = "selected"
                         }
-                        selectText += '<option '+selected+' value="'+regulatoryList[index].key+'">' + regulatoryList[index].value + '</option>';
+                        selectText += '<option ' + selected + ' value="' + regulatoryList[index].key + '">' + regulatoryList[index].value + '</option>';
                     }
                     selectText += '</optgroup>';
                 });
 
-                selectText += '</stripes:select></stripes:form>';
+                selectText += '</select>';
                 var selectDiv = $j("#regulatorySelect");
                 selectDiv.hide();
                 selectDiv.html(selectText);
