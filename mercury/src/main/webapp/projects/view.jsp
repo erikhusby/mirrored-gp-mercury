@@ -35,7 +35,9 @@
                 $j('#regulatoryInfoQuery').val('');
                 $j('#addRegulatoryInfoDialogQueryResults tbody').empty();
                 $j('#regulatoryInfoType option').prop('disabled', false);
-                $j('#addRegulatoryInfoDialogSheet2').hide();
+                $j('#addRegulatoryInfoDialogSheet2Found').hide();
+                $j('#addRegulatoryInfoDialogSheet2NotFound').hide();
+                $j('#addRegulatoryInfoDialogSheet3').hide();
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
 
@@ -50,7 +52,12 @@
             }
 
             function showRegulatoryInfo(infos) {
-                $j('#addRegulatoryInfoDialogSheet2').show();
+                if (infos.length > 0) {
+                    $j('#addRegulatoryInfoDialogSheet2Found').show();
+                } else {
+                    $j('#addRegulatoryInfoDialogSheet2NotFound').show();
+                }
+                $j('#addRegulatoryInfoDialogSheet3').show();
                 var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
 
                 for (var i = 0; i < infos.length; i++) {
@@ -311,7 +318,7 @@
 
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
             <div id="addRegulatoryInfoDialogSheet1">
-                <p>Enter the protocol or determination number to see if the regulatory information is already known to Mercury.</p>
+                <p>Enter the IRB Protocol or ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
                 <form id="regulatoryInfoSearchForm">
                     <div class="control-group">
                         <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
@@ -322,7 +329,7 @@
                     </div>
                 </form>
             </div>
-            <div id="addRegulatoryInfoDialogSheet2">
+            <div id="addRegulatoryInfoDialogSheet2Found">
                 <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
                 <stripes:form action="project.action">
                     <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
@@ -331,7 +338,7 @@
                     <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
                         <thead>
                         <th style="width:10em">Identifier</th>
-                        <th>Alias</th>
+                        <th>Protocol Title</th>
                         <th style="width:17em">Type</th>
                         <th style="width:9em"></th>
                         </thead>
@@ -340,6 +347,11 @@
                     </table>
                 </stripes:form>
                 <hr>
+            </div>
+            <div id="addRegulatoryInfoDialogSheet2NotFound">
+                <p>No regulatory information found in Mercury</p>
+            </div>
+            <div id="addRegulatoryInfoDialogSheet3">
                 <p>Fill in the details below to add new regulatory information to Mercury and this research project.</p>
                 <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
                     <stripes:hidden name="addNewRegulatoryInfo"/>
@@ -363,7 +375,7 @@
                     </div>
 
                     <div class="control-group">
-                        <stripes:label for="alias" class="control-label"/>
+                        <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
                         <div class="controls">
                             <input type="text" name="regulatoryInfoAlias" required>
                         </div>
@@ -390,7 +402,7 @@
             <table class="table simple">
                 <thead>
                     <th style="width:10em">Identifier</th>
-                    <th>Alias</th>
+                    <th>Protocol Title</th>
                     <th style="width:25em">Type</th>
                     <th style="width:5em"></th>
                     <th style="width:9em"></th>
