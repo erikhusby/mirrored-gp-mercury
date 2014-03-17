@@ -18,6 +18,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RegulatoryInfoTest {
     private ResearchProject researchProject=null;
@@ -44,7 +46,7 @@ public class RegulatoryInfoTest {
         Assert.assertEquals(regulatoryInfo.getType(), irb);
     }
     public void testGetConsentFromProductOrder() {
-        researchProject.addRegulatoryInfo(regulatoryInfo1, regulatoryInfo2);
+        researchProject.setRegulatoryInfos(Arrays.asList(regulatoryInfo1, regulatoryInfo2));
         productOrder.setResearchProject(researchProject);
 
         Assert.assertTrue(productOrder.findAvailableRegulatoryInfos().contains(regulatoryInfo1));
@@ -52,15 +54,15 @@ public class RegulatoryInfoTest {
     }
 
     public void testAddConsentToProductOrder() {
-        researchProject.addRegulatoryInfo(regulatoryInfo1, regulatoryInfo2);
-        productOrder.addRegulatoryInfo(regulatoryInfo1);
+        researchProject.setRegulatoryInfos(Arrays.asList(regulatoryInfo1, regulatoryInfo2));
+        productOrder.setRegulatoryInfos(Arrays.asList(regulatoryInfo1));
 
         Assert.assertTrue(productOrder.getRegulatoryInfos().contains(regulatoryInfo1));
         Assert.assertFalse(productOrder.getRegulatoryInfos().contains(regulatoryInfo2));
     }
 
     public void testAddConsentToResearchProject() {
-        researchProject.addRegulatoryInfo(regulatoryInfo1, regulatoryInfo2);
+        researchProject.setRegulatoryInfos(Arrays.asList(regulatoryInfo1, regulatoryInfo2));
 
         Assert.assertTrue(researchProject.getRegulatoryInfos().contains(regulatoryInfo1));
         Assert.assertTrue(researchProject.getRegulatoryInfos().contains(regulatoryInfo2));

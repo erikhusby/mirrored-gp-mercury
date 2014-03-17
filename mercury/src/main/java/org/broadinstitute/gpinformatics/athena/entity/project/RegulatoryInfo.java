@@ -81,9 +81,13 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         this.identifier = identifier;
     }
 
+    public String getDisplayText() {
+        return getIdentifier() + " - " + getName();
+    }
+
     @Override
     public String getBusinessKey() {
-        return identifier;
+        return String.valueOf(getRegulatoryInfoId());
     }
 
     @Override

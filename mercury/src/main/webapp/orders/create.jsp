@@ -58,6 +58,8 @@
                     $j("#researchProject").tokenInput(
                             "${ctxpath}/orders/order.action?projectAutocomplete=", {
                                 hintText: "Type a project name",
+                                onAdd: updateUIForProjectChoice,
+                                onDelete: updateUIForProjectChoice,
                                 prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                                 resultsFormatter: formatInput,
                                 tokenDelimiter: "${actionBean.projectTokenInput.separator}",
@@ -165,6 +167,7 @@
                         updateUIForMaterialInfoChoice(index, getSelectedPostReceiveOptions(index));
                     });
                     updateUIForProductChoice();
+                    updateUIForProjectChoice();
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
                     initializeQuoteOptions();
@@ -237,6 +240,24 @@
 
         <%--postReceiveOption.length = ${fn:length(actionBean.postReceiveOptionKeys)};--%>
 
+        function updateUIForProjectChoice(){
+            var projectKey = $j("#researchProject").val();
+            var pdoId = "${actionBean.editOrder.productOrderId}";
+
+            if (projectKey == null || projectKey == "") {
+                $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
+
+                $j("#regulatoryInfo").hide();
+            }else{
+                $j("#regulatoryInfo").show();
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey + "&pdoId=" + pdoId,
+                    dataType: 'json',
+                    success: setupRegulatoryInfoSelect
+                });
+            }
+        }
+
         function updateUIForProductChoice() {
 
             var productKey = $j("#product").val();
@@ -254,7 +275,6 @@
                     $j("#sampleListEdit").show();
                     $j("#sampleInitiationKitRequestEdit").hide();
                 }
-
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
@@ -383,6 +403,54 @@
                 quoteDiv.show();
             }
             updateQuoteOptions();
+        }
+
+        function setupRegulatoryInfoSelect(data){
+            if (data.length == 0) {
+                $j("#regulatorySelect").text('No options have been set up in the research project. ');
+                var researchProject = $j("#researchProject").val();
+                if (researchProject != null) {
+                    var link = $j('<a/>');
+                    $j(link).attr('href', '${ctxpath}/projects/project.action?view='.concat('&researchProject=' + researchProject));
+                    $j(link).append("(".concat(researchProject).concat(")"))
+                    $j("#regulatorySelect").append(link);
+                }
+            } else {
+                var maxSize = 8;
+                var size = 0;
+                var selectObj = $j('<select id="regulatoryInfo" name="selectedRegulatoryIds" multiple="true"></select>');
+                $j(selectObj).attr('size', maxSize);
+
+                $j.each(data, function (index, val) {
+                    size++;
+                    var projectName = val.group;
+                    var regulatoryList = val.value;
+                    var optGroup=$j('<optgroup/>');
+                    $j(optGroup).attr("label", projectName);
+                    for (var index in regulatoryList) {
+                        size++;
+                        var option=$j("<option/>");
+                        if (regulatoryList[index].selected) {
+                            $j(option).attr("selected", "");
+                        }
+                        $j(optGroup).append(optGroup);
+                        $j(option).append(regulatoryList[index].value);
+                        $j(option).attr('value', regulatoryList[index].key);
+                        $j(optGroup).append(option);
+                    }
+                    $j(selectObj).append(optGroup);
+                });
+
+                var selectDiv = $j("#regulatorySelect");
+                selectDiv.hide();
+                selectDiv.append(selectObj);
+                if (size < maxSize) {
+                    selectObj.attr('size', size);
+                }
+                selectObj.css("width", "397px");
+                selectObj.addClass("defaultText,input-xlarge");
+                selectDiv.fadeIn();
+            }
         }
 
         function setupAddonCheckboxes(data) {
@@ -754,6 +822,13 @@
                                         class="defaultText"
                                         title="Enter the research project for this order"/>
                             </div>
+                        </div>
+
+                        <div class="control-group">
+                            <stripes:label for="regulatoryInfo" class="control-label">
+                                Regulatory Information
+                            </stripes:label>
+                            <div id="regulatorySelect" class="controls controls-text"></div>
                         </div>
                     </c:when>
                     <c:otherwise>
