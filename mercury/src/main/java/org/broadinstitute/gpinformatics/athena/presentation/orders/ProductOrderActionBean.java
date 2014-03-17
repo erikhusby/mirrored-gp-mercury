@@ -1211,7 +1211,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getRegulatoryInfo() throws Exception {
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
         String pdoId = getContext().getRequest().getParameter("pdoId");
-        editOrder = productOrderDao.findById(Long.parseLong(pdoId));
+        if (!StringUtils.isBlank(pdoId)) {
+            editOrder = productOrderDao.findById(Long.parseLong(pdoId));
+        }
         JSONArray itemList = new JSONArray();
         if (researchProject != null) {
             Map<String, Collection<RegulatoryInfo>>
@@ -1222,10 +1224,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     item.put("group", regulatoryEntries.getKey());
                     JSONArray values = new JSONArray();
                     for (RegulatoryInfo regulatoryInfo : regulatoryEntries.getValue()) {
-                        JSONObject regulatoryInfoJson=new JSONObject();
+                        JSONObject regulatoryInfoJson = new JSONObject();
                         regulatoryInfoJson.put("key", regulatoryInfo.getBusinessKey());
                         regulatoryInfoJson.put("value", regulatoryInfo.getDisplayText());
-                        if (editOrder.getRegulatoryInfos().contains(regulatoryInfo)){
+                        if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
                             regulatoryInfoJson.put("selected", true);
                         }
                         values.put(regulatoryInfoJson);
