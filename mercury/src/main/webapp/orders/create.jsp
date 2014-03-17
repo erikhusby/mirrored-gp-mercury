@@ -415,34 +415,37 @@
             } else {
                 var maxSize = 8;
                 var size = 0;
-                var selectText = '<select size="' + maxSize + '" multiple="true" name="selectedRegulatoryIds" id="regulatoryInfo">';
+                var selectObj = $j('<select id="regulatoryInfo" name="selectedRegulatoryIds" multiple="true"></select>');
+                $j(selectObj).attr('size', maxSize);
 
                 $j.each(data, function (index, val) {
                     size++;
                     var projectName = val.group;
                     var regulatoryList = val.value;
-                    selectText += '<optgroup label="' + projectName + '">';
+                    var optGroup=$j('<optgroup/>');
+                    $j(optGroup).attr("label", projectName);
                     for (var index in regulatoryList) {
                         size++;
-                        var selected = ""
+                        var option=$j("<option/>");
                         if (regulatoryList[index].selected) {
-                            selected = "selected"
+                            $j(option).attr("selected", "");
                         }
-                        selectText += '<option ' + selected + ' value="' + regulatoryList[index].key + '">' + regulatoryList[index].value + '</option>';
+                        $j(optGroup).append(optGroup);
+                        $j(option).append(regulatoryList[index].value);
+                        $j(option).attr('value', regulatoryList[index].key);
+                        $j(optGroup).append(option);
                     }
-                    selectText += '</optgroup>';
+                    $j(selectObj).append(optGroup);
                 });
 
-                selectText += '</select>';
                 var selectDiv = $j("#regulatorySelect");
                 selectDiv.hide();
-                selectDiv.html(selectText);
-                var selects = selectDiv.find("select");
+                selectDiv.append(selectObj);
                 if (size < maxSize) {
-                    selects.attr('size', size);
+                    selectObj.attr('size', size);
                 }
-                selects.css("width", "397px");
-                selects.addClass("defaultText,input-xlarge");
+                selectObj.css("width", "397px");
+                selectObj.addClass("defaultText,input-xlarge");
                 selectDiv.fadeIn();
             }
         }
