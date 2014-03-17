@@ -112,8 +112,12 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         return researchProjects;
     }
 
-    public void addToResearchProject(ResearchProject researchProject) {
+    public void addResearchProject(ResearchProject researchProject) {
         researchProjects.add(researchProject);
+    }
+
+    public void removeResearchProject(ResearchProject researchProject) {
+        researchProjects.remove(researchProject);
     }
 
     @Override

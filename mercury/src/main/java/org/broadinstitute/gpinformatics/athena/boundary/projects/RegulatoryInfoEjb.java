@@ -36,4 +36,9 @@ public class RegulatoryInfoEjb {
         RegulatoryInfo regulatoryInfo = regulatoryInfoDao.findById(RegulatoryInfo.class, regulatoryInfoId);
         researchProject.addRegulatoryInfo(regulatoryInfo);
     }
+
+    public void removeRegulatoryInfoFromResearchProject(Long regulatoryInfoId, ResearchProject researchProject) {
+        RegulatoryInfo regulatoryInfo = regulatoryInfoDao.findById(RegulatoryInfo.class, regulatoryInfoId);
+        researchProject.removeRegulatoryInfo(regulatoryInfo);
+    }
 }
