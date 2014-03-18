@@ -57,9 +57,9 @@
                 } else {
                     $j('#addRegulatoryInfoDialogSheet2NotFound').show();
                 }
-                $j('#addRegulatoryInfoDialogSheet3').show();
                 var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
 
+                var foundTypes = [];
                 for (var i = 0; i < infos.length; i++) {
                     var info = infos[i];
                     var addButton = $j('<input type="submit" value="Add" class="btn">');
@@ -72,6 +72,18 @@
                     table.append(row);
 
                     $j('#regulatoryInfoType option:contains(' + info.type + ')').prop('disabled', true);
+                    foundTypes.push(info.type);
+                }
+                var options = $j('#regulatoryInfoType option');
+                for (var i = 0; i < options.length; i++) {
+                    var option = $j(options[i]);
+                    if (foundTypes.indexOf(option.text()) == -1) {
+                        option.prop('selected', true);
+                        $j('#addRegulatoryInfoDialogSheet3').show();
+                        break;
+                    } else {
+                        option.prop('selected', false);
+                    }
                 }
 
                 // pre-populate new regulatory information form
