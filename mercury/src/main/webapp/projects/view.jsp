@@ -38,6 +38,13 @@
                 $j('#addRegulatoryInfoDialogSheet2Found').hide();
                 $j('#addRegulatoryInfoDialogSheet2NotFound').hide();
                 $j('#addRegulatoryInfoDialogSheet3').hide();
+                $j('#addRegInfoInstructions').show();
+                $j('#titleInput').val('');
+                $j('#regInfoTypeEdit').show();
+                $j('#regInfoTypeView').hide();
+                $j('#addNewSubmit').show();
+                $j('#editSubmit').hide();
+                $j('#regulatoryInfoDialogAction').prop('name', 'addNewRegulatoryInfo');
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
 
@@ -57,8 +64,8 @@
                 } else {
                     $j('#addRegulatoryInfoDialogSheet2NotFound').show();
                 }
-                var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
 
+                var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
                 var foundTypes = [];
                 for (var i = 0; i < infos.length; i++) {
                     var info = infos[i];
@@ -89,6 +96,32 @@
                 // pre-populate new regulatory information form
                 $j('#identifierDisplay').text($j('#regulatoryInfoQuery').val());
                 $j('#identifier').val($j('#regulatoryInfoQuery').val());
+            }
+
+            function openRegulatoryInfoEditDialog(regulatoryInfoId, identifier, type, title) {
+                $j('#addRegulatoryInfoDialog').dialog("open");
+                showRegulatoryInfoEditForm();
+
+                $j('#identifierDisplay').text(identifier);
+                $j('#editRegulatoryInfoId').val(regulatoryInfoId);
+                $j('#typeDisplay').text(type);
+                $j('#titleInput').val(title);
+
+                return false;
+            }
+
+            function showRegulatoryInfoEditForm() {
+                $j('#addRegulatoryInfoDialogSheet1').hide();
+                $j('#addRegulatoryInfoDialogSheet2Found').hide();
+                $j('#addRegulatoryInfoDialogSheet2NotFound').hide();
+
+                $j('#addRegInfoInstructions').hide();
+                $j('#regulatoryInfoDialogAction').prop('name', 'editRegulatoryInfo');
+                $j('#regInfoTypeEdit').hide();
+                $j('#regInfoTypeView').show();
+                $j('#addNewSubmit').hide();
+                $j('#editSubmit').show();
+                $j('#addRegulatoryInfoDialogSheet3').show();
             }
         </script>
 
@@ -364,20 +397,21 @@
                 <p>No regulatory information found in Mercury</p>
             </div>
             <div id="addRegulatoryInfoDialogSheet3">
-                <p>Fill in the details below to add new regulatory information to Mercury and this research project.</p>
+                <p id="addRegInfoInstructions">Fill in the details below to add new regulatory information to Mercury and this research project.</p>
                 <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
-                    <stripes:hidden name="addNewRegulatoryInfo"/>
+                    <stripes:hidden id="regulatoryInfoDialogAction" name="addNewRegulatoryInfo"/>
                     <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
+                    <input type="hidden" id="editRegulatoryInfoId" name="regulatoryInfoId">
                     <div class="control-group view-control-group">
                         <label class="control-label">Identifier</label>
 
                         <div class="controls">
-                            <div id="identifierDisplay" class="form-value">${actionBean.q}</div>
+                            <div id="identifierDisplay" class="form-value"></div>
                             <input type="hidden" id="identifier" name="regulatoryInfoIdentifier"/>
                         </div>
                     </div>
 
-                    <div class="control-group">
+                    <div id="regInfoTypeEdit" class="control-group">
                         <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
                         <div class="controls">
                             <stripes:select id="regulatoryInfoType" name="regulatoryInfoType">
@@ -386,16 +420,25 @@
                         </div>
                     </div>
 
+                    <div id="regInfoTypeView" class="control-group view-control-group">
+                        <label class="control-label">Type</label>
+
+                        <div class="controls">
+                            <div id="typeDisplay" class="form-value"></div>
+                        </div>
+                    </div>
+
                     <div class="control-group">
                         <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
                         <div class="controls">
-                            <input type="text" name="regulatoryInfoAlias" required>
+                            <input id="titleInput" type="text" name="regulatoryInfoAlias" required>
                         </div>
                     </div>
 
                     <div class="control-group">
                         <div class="controls">
-                            <stripes:submit name="add" value="Add" class="btn btn-primary"/>
+                            <stripes:submit id="addNewSubmit" name="add" class="btn btn-primary">Add</stripes:submit>
+                            <stripes:submit id="editSubmit" name="add" class="btn btn-primary">Edit</stripes:submit>
                         </div>
                     </div>
                 </stripes:form>
@@ -425,7 +468,7 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center"><a href="#">Edit...</a></td>
+                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId}, '${regulatoryInfo.identifier}', '${regulatoryInfo.type}', '${regulatoryInfo.name}');">Edit...</a></td>
                             <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>
