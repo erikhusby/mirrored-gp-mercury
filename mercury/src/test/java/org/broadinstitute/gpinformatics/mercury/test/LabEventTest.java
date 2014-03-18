@@ -991,6 +991,7 @@ public class LabEventTest extends BaseEventTest {
                 VesselPosition.A01);
         LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
+        // todo jmt denature rack has 8 source tubes, but 2500 builder is expecting only 1
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
                         ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
