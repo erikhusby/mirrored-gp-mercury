@@ -1909,8 +1909,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>unpack-xsd-files</id>
-                        <!-- Using the initialize phase because it is before the generate sources phase -->
+                        <id>unpack</id>
                         <phase>initialize</phase>
                         <goals>
                             <goal>unpack</goal>
@@ -1921,11 +1920,11 @@
                                     <groupId>SquidWS</groupId>
                                     <artifactId>squidWS</artifactId>
                                     <version>1.0-SNAPSHOT</version>
-                                    <type>war</type>
+                                    <classifier>XSD</classifier>
+                                    <type>tar</type>
+                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
-                            <includes>**/*.xsd</includes>
-                            <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
@@ -1982,7 +1981,7 @@
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
                             <schemaFiles>SolexaRun.xsd</schemaFiles>
-                            <schemaDirectory>${project.basedir}/target/xsd-includes/WEB-INF/wsdl</schemaDirectory>
+                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>
