@@ -95,7 +95,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (getPlacedDate() == null) {
             testDate = new Date();
         }
-        if (testDate.after(getIrbRequiredStartDate())){
+        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
             return !getRegulatoryInfos().isEmpty();
         }
         return true;

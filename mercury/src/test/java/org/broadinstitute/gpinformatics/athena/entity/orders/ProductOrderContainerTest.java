@@ -110,10 +110,7 @@ public class ProductOrderContainerTest extends Arquillian {
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
 //        ProductOrderJiraUtil.placeOrder(testOrder, jiraService);
         productOrderDao.persist(testOrder.getProduct());
-        productOrderDao.persist(testOrder);
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
-
-
 }
 
     public void testSimpleNonBspProductOrder() throws Exception {
