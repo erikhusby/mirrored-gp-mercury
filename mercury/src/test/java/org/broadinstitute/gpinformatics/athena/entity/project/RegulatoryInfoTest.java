@@ -32,7 +32,6 @@ public class RegulatoryInfoTest {
         researchProject = productOrder.getResearchProject();
         regulatoryInfo1 = new RegulatoryInfo("My IRB Consent", RegulatoryInfo.Type.IRB, "IRB-12345");
         regulatoryInfo2 = new RegulatoryInfo("My Not Human Consent", RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, "213412");
-
     }
 
     public void testCreateConsent() {
@@ -41,10 +40,10 @@ public class RegulatoryInfoTest {
         String name = "My IRB Consent";
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo(name, irb, identifier);
 
-        Assert.assertEquals(regulatoryInfo.getBusinessKey(), identifier);
         Assert.assertEquals(regulatoryInfo.getIdentifier(), identifier);
         Assert.assertEquals(regulatoryInfo.getType(), irb);
     }
+
     public void testGetConsentFromProductOrder() {
         researchProject.setRegulatoryInfos(Arrays.asList(regulatoryInfo1, regulatoryInfo2));
         productOrder.setResearchProject(researchProject);
