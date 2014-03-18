@@ -19,11 +19,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
@@ -42,6 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
@@ -70,6 +74,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
+    public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
+    public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
+    public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
+
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
@@ -95,6 +103,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private ProjectTokenInput projectTokenInput;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
+    @Inject
+    private RegulatoryInfoDao regulatoryInfoDao;
+
+    @Inject
+    private RegulatoryInfoEjb regulatoryInfoEjb;
+
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
     private Long selectedCollaborator;
@@ -113,6 +128,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * The search query.
      */
     private String q;
+
+    private Long regulatoryInfoId;
+
+    private String regulatoryInfoIdentifier;
+
+    private RegulatoryInfo.Type regulatoryInfoType;
+
+    private String regulatoryInfoAlias;
 
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
@@ -182,7 +205,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * for existence.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION})
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION,
+                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -490,6 +514,83 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(projectTokenInput.getJsonString(getQ(), childResearchProjects));
     }
 
+    /**
+     * Handles an AJAX action event to search for regulatory information, case-insensitively, from the value in this.q.
+     * The JSONObjects in the returned array will have the following properties:
+     *
+     * <dl>
+     *     <dt>id</dt>
+     *     <dd>the RegulatoryInfo's primary key</dd>
+     *     <dt>identifier</dt>
+     *     <dd>the externally assigned identifier, such as IRB Protocol #</dd>
+     *     <dt>type</dt>
+     *     <dd>the type of regulatory information, such as IRB Protocol</dd>
+     *     <dt>alias</dt>
+     *     <dd>the name given to this information for the benefit of Mercury users</dd>
+     * </dl>
+     *
+     * @return the regulatory information search results
+     * @throws JSONException
+     */
+    @HandlesEvent("regulatoryInfoQuery")
+    public Resolution queryRegulatoryInfo() throws JSONException {
+        List<RegulatoryInfo> infos = regulatoryInfoDao.findByIdentifier(q);
+        JSONArray results = new JSONArray();
+        for (RegulatoryInfo info : infos) {
+            results.put(regulatoryInfoToJSONObject(info));
+        }
+        return createTextResolution(results.toString());
+    }
+
+    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo) throws JSONException {
+        JSONObject object = new JSONObject();
+        object.put("id", regulatoryInfo.getRegulatoryInfoId());
+        object.put("identifier", regulatoryInfo.getIdentifier());
+        object.put("type", regulatoryInfo.getType().getName());
+        object.put("alias", regulatoryInfo.getName());
+        return object;
+    }
+
+    /**
+     * Associates regulatory information with a research project. The RegulatoryInformation is looked up by the value in
+     * this.regulatoryInfoId.
+     *
+     * @return a redirect to the research project view page
+     */
+    @HandlesEvent(ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION)
+    public Resolution addRegulatoryInfoToResearchProject() {
+        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfoId, editResearchProject);
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    /**
+     * Creates a new regulatory information record and adds it to the research project currently being viewed.
+     *
+     * @return a redirect to the research project view page
+     */
+    @HandlesEvent(ADD_NEW_REGULATORY_INFO)
+    public Resolution addNewRegulatoryInfo() {
+        RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
+                .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
+        regulatoryInfoEjb.addRegulatoryInfoToResearchProject(regulatoryInfo.getRegulatoryInfoId(), editResearchProject);
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    /**
+     * Removes a regulatory info record from the current research project. The ID of the regulatory info comes from
+     * this.regulatoryInfoId.
+     *
+     * @return a redirect to the research project view page
+     */
+    @HandlesEvent(REMOVE_REGULATORY_INFO_ACTION)
+    public Resolution removeRegulatoryInfo() {
+        regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, editResearchProject);
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
     // Complete Data getters are for the prepopulates on the create.jsp
 
     public String getIrbsCompleteData() throws Exception {
@@ -566,6 +667,38 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    public Long getRegulatoryInfoId() {
+        return regulatoryInfoId;
+    }
+
+    public void setRegulatoryInfoId(Long regulatoryInfoId) {
+        this.regulatoryInfoId = regulatoryInfoId;
+    }
+
+    public String getRegulatoryInfoIdentifier() {
+        return regulatoryInfoIdentifier;
+    }
+
+    public void setRegulatoryInfoIdentifier(String regulatoryInfoIdentifier) {
+        this.regulatoryInfoIdentifier = regulatoryInfoIdentifier;
+    }
+
+    public RegulatoryInfo.Type getRegulatoryInfoType() {
+        return regulatoryInfoType;
+    }
+
+    public void setRegulatoryInfoType(RegulatoryInfo.Type regulatoryInfoType) {
+        this.regulatoryInfoType = regulatoryInfoType;
+    }
+
+    public String getRegulatoryInfoAlias() {
+        return regulatoryInfoAlias;
+    }
+
+    public void setRegulatoryInfoAlias(String regulatoryInfoAlias) {
+        this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
     /**

@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrder
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -103,7 +102,7 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Collection<RegulatoryInfo> availableRegulatoryInfos = testOrder.findAvailableRegulatoryInfos();
         Assert.assertFalse(availableRegulatoryInfos.isEmpty());
-        testOrder.addRegulatoryInfo(TestUtils.getFirst(availableRegulatoryInfos));
+        testOrder.setRegulatoryInfos(availableRegulatoryInfos);
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(10950L);

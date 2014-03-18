@@ -41,7 +41,10 @@ public class ProductOrderDBTestFactory {
         long time = new Date().getTime();
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("IRB Consent for - " + time
                 , RegulatoryInfo.Type.IRB, ""+time);
-                project.addRegulatoryInfo(regulatoryInfo);
+                project.getRegulatoryInfos().add(regulatoryInfo);
+        regulatoryInfo = new RegulatoryInfo("Non-Human Subjects Research for - " + time
+                , RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, ""+time);
+                project.getRegulatoryInfos().add(regulatoryInfo);
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.AGILENT_EXOME_EXPRESS
                 .getWorkflowName());

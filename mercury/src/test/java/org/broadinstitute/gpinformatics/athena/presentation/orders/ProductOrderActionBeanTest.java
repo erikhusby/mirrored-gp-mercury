@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
 import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -34,6 +36,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 import org.codehaus.jackson.JsonNode;
@@ -47,10 +51,13 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -106,8 +113,8 @@ public class ProductOrderActionBeanTest {
         List<ProductOrderSample> pdoSamples = new ArrayList<> ();
         BSPSampleDTO sampleWithGoodRin = getSampleDTOWithGoodRinScore();
         BSPSampleDTO sampleWithBadRin = getSamplDTOWithBadRinScore();
-        pdoSamples.add(new ProductOrderSample(sampleWithGoodRin.getSampleId(),sampleWithGoodRin));
-        pdoSamples.add(new ProductOrderSample(sampleWithBadRin.getSampleId(),sampleWithBadRin));
+        pdoSamples.add(new ProductOrderSample(sampleWithGoodRin.getSampleId(), sampleWithGoodRin));
+        pdoSamples.add(new ProductOrderSample(sampleWithBadRin.getSampleId(), sampleWithBadRin));
         pdoSamples.add(new ProductOrderSample("123.0")); // throw in a gssr sample
         return pdoSamples;
     }
@@ -381,11 +388,50 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPassValidation, testErrorMessage);
     }
 
+    public void testParentHierarchy() {
+        ResearchProject grannyResearchProject= ResearchProjectTestFactory
+                .createDummyResearchProject(12, "GrannyResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject uncleResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(120, "UncleResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject mamaResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(1200, "MamaResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        ResearchProject babyResearchProject = ResearchProjectTestFactory
+                .createDummyResearchProject(12000, "BabyResearchProject", "To Study Stuff",
+                        ResearchProject.IRB_ENGAGED);
+
+        babyResearchProject.setParentResearchProject(mamaResearchProject);
+        mamaResearchProject.setParentResearchProject(grannyResearchProject);
+        uncleResearchProject.setParentResearchProject(grannyResearchProject);
+
+        Map<String, Collection<RegulatoryInfo>> regulatoryInfoByProject
+                = actionBean.setupRegulatoryInformation(babyResearchProject);
+
+        Assert.assertEquals(regulatoryInfoByProject.size(), 3);
+        List<String> titles = Arrays.asList("MamaResearchProject", "GrannyResearchProject", "BabyResearchProject" );
+        for (Map.Entry<String, Collection<RegulatoryInfo>> regulatoryCollection : regulatoryInfoByProject.entrySet()) {
+            Assert.assertTrue(titles.contains(regulatoryCollection.getKey()));
+            Assert.assertFalse(regulatoryCollection.getKey().equals("UncleResearchProject"));
+            Assert.assertEquals(regulatoryCollection.getValue().size(), 2);
+        }
+        Assert.assertEquals(regulatoryInfoByProject.size(), 3, "Should have three projects here.");
+    }
+
+
+    private void getSampleInitiationProductOrder() {
+        int numberOfSamples = 4;
+        actionBean.setEditOrder(ProductOrderTestFactory.buildSampleInitiationProductOrder(numberOfSamples));
+    }
+
     public void testQuoteRequiredAfterProductChange() {
         boolean hasQuote = false;
         String quoteOrNoQuoteString = "just because";
-        int numberOfSamples = 4;
-        actionBean.setEditOrder(ProductOrderTestFactory.buildSampleInitiationProductOrder(numberOfSamples));
+        getSampleInitiationProductOrder();
         actionBean.clearValidationErrors();
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
@@ -405,4 +451,45 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(ProductOrderActionBean.getProductOrderLink("PDO-1", productionConfig),
                 "http://mercury.broadinstitute.org/Mercury//orders/order.action?view=&productOrder=PDO-1");
     }
+
+    @DataProvider(name = "regulatoryOptionsDataProvider")
+    public Object[][] regulatoryOptionsDataProvider() throws ParseException {
+        Date grandfatheredInDate = DateUtils.parseDate("01/01/2014");
+        Date newDate = DateUtils.parseDate(ProductOrder.IRB_REQUIRED_START_DATE_STRING);
+        newDate = DateUtils.addToDate(newDate, Calendar.SECOND, 1);
+        RegulatoryInfo regulatoryInfo = new RegulatoryInfo("TEST-1234", RegulatoryInfo.Type.IRB, "12345");
+
+        return new Object[][]{
+                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,newDate, true, "Has IRB and Past IRB_REQUIRED_START_DATE"},
+                {ProductOrderActionBean.PLACE_ORDER, null,newDate, false, "No IRB and Past IRB_REQUIRED_START_DATE"},
+                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,grandfatheredInDate, true, "Has IRB but before IRB_REQUIRED_START_DATE"},
+                {ProductOrderActionBean.PLACE_ORDER, null,grandfatheredInDate, true, "No IRB but before IRB_REQUIRED_START_DATE"}
+        };
+    }
+
+
+    @Test(dataProvider = "regulatoryOptionsDataProvider")
+    public void testRegulatoryInformation(String action, RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass, String failMessage) throws ParseException {
+        // Set up initial state for objects and validate
+        getSampleInitiationProductOrder();
+        actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().clear();
+        Assert.assertTrue(actionBean.getEditOrder().getRegulatoryInfos().isEmpty());
+        actionBean.getEditOrder().getRegulatoryInfos().clear();
+        Assert.assertTrue(actionBean.getEditOrder().getRegulatoryInfos().isEmpty());
+        actionBean.clearValidationErrors();
+        Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
+
+        // Now test test validation using passed-in parameters.
+        actionBean.getEditOrder().setPlacedDate(placedDate);
+        if (regulatoryInfo != null) {
+            actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
+            actionBean.getEditOrder().getRegulatoryInfos().add(regulatoryInfo);
+        }
+
+        actionBean.validateRegulatoryInformation(ProductOrderActionBean.VALIDATE_ORDER);
+
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass, failMessage);
+    }
+
+
 }

@@ -43,6 +43,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -59,6 +60,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefin
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
@@ -122,6 +125,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
     public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
+    public static final String REGULATORY_ID_PARAMETER = "selectedRegulatoryIds";
 
     private static final String PRODUCT_ORDER = "Product Order";
     public static final String CREATE_ORDER = CoreActionBean.CREATE + PRODUCT_ORDER;
@@ -173,6 +177,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
 
     @Inject
     private PreferenceEjb preferenceEjb;
@@ -322,6 +329,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private RegulatoryInfoDao regulatoryInfoDao;
+
     private Map<String, Date> productOrderSampleReceiptDates;
 
     private List<ProductOrderKitDetail> kitDetails = new ArrayList<>();
@@ -341,6 +351,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         parameters.add(new BasicNameValuePair(PRODUCT_ORDER_PARAMETER, productOrderKey));
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
                 .format(parameters, CharEncoding.UTF_8);
+    }
+    private List<Long> selectedRegulatoryIds=new ArrayList<>();
+
+    public List<Long> getSelectedRegulatoryIds() {
+        return selectedRegulatoryIds;
+    }
+
+    public void setSelectedRegulatoryIds(List<Long> selectedRegulatoryIds) {
+        this.selectedRegulatoryIds = selectedRegulatoryIds;
     }
 
     /**
@@ -362,6 +381,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    public Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
+        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap=new HashMap<>();
+        projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfos());
+        for (ResearchProject project : researchProject.getAllParents()){
+            projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
+        }
+        return projectRegulatoryMap;
+    }
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
@@ -377,6 +405,22 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
+        }
+    }
+
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION, VALIDATE_ORDER})
+    public void initRegulatoryParameter() {
+        String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
+        List<Long> selectedIds = new ArrayList<>();
+        if (regulatoryIds != null) {
+            for (String regulatoryId : regulatoryIds) {
+                selectedIds.add(Long.parseLong(regulatoryId));
+            }
+            List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
+                    .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+            editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
+        } else {
+            editOrder.getRegulatoryInfos().clear();
         }
     }
 
@@ -1165,6 +1209,40 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getRegulatoryInfo")
+    public Resolution getRegulatoryInfo() throws Exception {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        String pdoId = getContext().getRequest().getParameter("pdoId");
+        if (!StringUtils.isBlank(pdoId)) {
+            editOrder = productOrderDao.findById(Long.parseLong(pdoId));
+        }
+        JSONArray itemList = new JSONArray();
+        if (researchProject != null) {
+            Map<String, Collection<RegulatoryInfo>>
+                    regulatoryInfoByProject = setupRegulatoryInformation(researchProject);
+            for (Map.Entry<String, Collection<RegulatoryInfo>> regulatoryEntries : regulatoryInfoByProject.entrySet()) {
+                if (!regulatoryEntries.getValue().isEmpty()) {
+                    JSONObject item = new JSONObject();
+                    item.put("group", regulatoryEntries.getKey());
+                    JSONArray values = new JSONArray();
+                    for (RegulatoryInfo regulatoryInfo : regulatoryEntries.getValue()) {
+                        JSONObject regulatoryInfoJson = new JSONObject();
+                        regulatoryInfoJson.put("key", regulatoryInfo.getBusinessKey());
+                        regulatoryInfoJson.put("value", regulatoryInfo.getDisplayText());
+                        if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
+                            regulatoryInfoJson.put("selected", true);
+                        }
+                        values.put(regulatoryInfoJson);
+                    }
+                    item.put("value", values);
+                    itemList.put(item);
+                }
+            }
+
+        }
         return createTextResolution(itemList.toString());
     }
 
@@ -2017,6 +2095,12 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipQuote(), "an explanation for why a quote cannot be entered", action);
                 requireField(hasQuote || editOrder.canSkipQuote(), "a quote specified", action);
             }
+        }
+    }
+
+    public void validateRegulatoryInformation(String action) {
+        if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
+                requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met", action);
         }
     }
 
