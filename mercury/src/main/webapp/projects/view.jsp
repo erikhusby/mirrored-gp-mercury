@@ -514,7 +514,7 @@
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
                             <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId}, '${regulatoryInfo.identifier}', '${regulatoryInfo.type}', '${regulatoryInfo.name}');">Edit...</a></td>
-                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" class="btn">Remove</stripes:submit></td>
+                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${!regulatoryInfo.productOrders.isEmpty()}" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>
                 </tbody>
