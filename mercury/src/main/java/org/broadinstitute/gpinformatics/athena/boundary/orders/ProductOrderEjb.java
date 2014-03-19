@@ -843,10 +843,6 @@ public class ProductOrderEjb {
             throws NoSuchPDOException, IOException {
         // Since we can't directly change the JIRA status of a PDO, we need to use a JIRA transition which in turn will
         // update the status.
-        try {
-            Thread.sleep(1000 * 65);
-        }
-        catch(InterruptedException e) {}
         ProductOrder order = findProductOrder(jiraTicketKey);
         if (order.updateOrderStatus()) {
             String operation;
