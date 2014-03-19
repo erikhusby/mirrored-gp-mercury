@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -88,6 +89,10 @@ public class ProductOrderEjb {
     private final BSPSampleDataFetcher sampleDataFetcher;
 
     private final MercuryClientService mercuryClientService;
+
+    @Inject
+    private BSPKitRequestService bspKitRequestService;
+
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -631,6 +636,10 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
+    public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,ProductOrderDao.FetchSpec... fetchSpecs) {
+        return productOrderDao.findByBusinessKey(jiraTicket, LockModeType.PESSIMISTIC_READ, fetchSpecs);
+    }
+
     /**
      * Transition the delivery statuses of the specified samples in the DB.
      *
@@ -988,11 +997,19 @@ public class ProductOrderEjb {
      * <p/>
      * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
      *
-     * @param businessKey Business key by which to reference the currently persisted Product order
+     * @param businessKey       Business key by which to reference the currently persisted Product order
      * @param productOrderID
+     * @param messageCollection
      */
-    public void placeProductOrder(String businessKey, Long productOrderID) {
-        ProductOrder editOrder = productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
+    public ProductOrder placeProductOrder(@Nonnull String businessKey, @Nonnull Long productOrderID,
+                                  @Nonnull MessageCollection messageCollection) {
+        ProductOrder editOrder =
+                productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_FORCE_INCREMENT);
+
+        if(!editOrder.getBusinessKey().equals(businessKey)) {
+            throw new InformaticsServiceException("Expecting the product order to be " + businessKey +
+                                                  "but it is " +editOrder.getBusinessKey());
+        }
 
         if (editOrder == null) {
             throw new InformaticsServiceException("There is no product order associated with the business key " +
@@ -1004,6 +1021,7 @@ public class ProductOrderEjb {
         }
         editOrder.prepareToSave(userBean.getBspUser());
         try {
+
             ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -1011,5 +1029,23 @@ public class ProductOrderEjb {
             log.error("An exception occurred attempting to create a Product Order in Jira", e);
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
+
+        if (editOrder.isSampleInitiation()) {
+            try {
+                submitSampleKitRequest(editOrder, messageCollection);
+            } catch (Exception e) {
+                messageCollection.addError("Unable to create a sample kit Request");
+            }
+        }
+
+        return editOrder;
+    }
+
+
+    public void submitSampleKitRequest(ProductOrder order, MessageCollection messageCollection) {
+        String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
+        order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
+        messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+
     }
 }

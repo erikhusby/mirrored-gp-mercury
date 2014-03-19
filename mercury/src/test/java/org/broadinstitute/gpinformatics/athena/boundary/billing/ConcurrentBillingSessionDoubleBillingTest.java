@@ -64,7 +64,7 @@ import java.util.Set;
  * a very, very bad thing.  See https://gpinfojira.broadinstitute.org:8443/jira/browse/GPLIM-2501
  * for an example of double billing.
  */
-public class ConcurrentBillingSessionDoubleBillingTest extends Arquillian {
+public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentBillingSessionDoubleBillingTest.class);
 
@@ -159,21 +159,6 @@ public class ConcurrentBillingSessionDoubleBillingTest extends Arquillian {
         Assert.assertEquals(billingError.getMessage(),BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
         Assert.assertEquals(numBillingThreadsRun,2,"Both billing threads should be run to verify the fix for double billing.  We are at risk for double billing.");
 
-    }
-
-    /**
-     * Creates a new jndi context and looks up the given bean
-     */
-    private static <T> T getBeanFromJNDI(Class<T> beanClass) {
-        T bean = null;
-        try {
-            InitialContext ctx = new InitialContext();
-            bean = (T)ctx.lookup("java:global/" + DeploymentBuilder.MERCURY_APP_NAME + "/" + beanClass.getSimpleName());
-        }
-        catch(NamingException e) {
-            throw new RuntimeException("Could not lookup " + beanClass.getSimpleName() + " from jndi.",e);
-        }
-        return bean;
     }
 
     public class PDOLookupThread implements Runnable {

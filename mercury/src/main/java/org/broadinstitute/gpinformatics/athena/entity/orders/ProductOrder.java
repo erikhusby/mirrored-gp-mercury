@@ -47,6 +47,7 @@ import javax.persistence.PostLoad;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -185,6 +186,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
+
+    @Version
+    private Long version;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
