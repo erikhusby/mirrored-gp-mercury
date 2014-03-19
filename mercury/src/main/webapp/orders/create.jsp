@@ -202,9 +202,11 @@
 
         function handleUpdateRegulatory(skipRegulatoryChecked){
             if (skipRegulatoryChecked) {
+                $j("#regulatorySelect :selected").prop("selected", false)
                 $j("#regulatorySelect").hide();
                 $j("#skipRegulatoryDiv").show();
             } else {
+                $j("#skipRegulatoryInfoReason").val("");
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatorySelect").show();
                 populateRegulatorySelect();
