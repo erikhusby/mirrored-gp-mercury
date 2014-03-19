@@ -455,20 +455,29 @@ public class ProductOrderActionBeanTest {
     public Object[][] regulatoryOptionsDataProvider() throws ParseException {
         Date grandfatheredInDate = DateUtils.parseDate("01/01/2014");
         Date newDate = DateUtils.parseDate(ProductOrder.IRB_REQUIRED_START_DATE_STRING);
-
+        String skipReviewReason="not human subjects research";
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("TEST-1234", RegulatoryInfo.Type.IRB, "12345");
 
         return new Object[][]{
-                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,newDate, true, "Has IRB and Past IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, null,newDate, false, "No IRB and Past IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,grandfatheredInDate, true, "Has IRB but before IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, null,grandfatheredInDate, true, "No IRB but before IRB_REQUIRED_START_DATE"}
+                {ProductOrderActionBean.PLACE_ORDER, false, "", regulatoryInfo, newDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, false, "", null, newDate, false},
+                {ProductOrderActionBean.PLACE_ORDER, false, "", regulatoryInfo, grandfatheredInDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, false, "", null, grandfatheredInDate, false},
+                {ProductOrderActionBean.PLACE_ORDER, true, skipReviewReason, regulatoryInfo, newDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, skipReviewReason, null, newDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, skipReviewReason, regulatoryInfo, grandfatheredInDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, skipReviewReason, null, grandfatheredInDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, null, regulatoryInfo, newDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, null, null, newDate, false},
+                {ProductOrderActionBean.PLACE_ORDER, true, null, regulatoryInfo, grandfatheredInDate, true},
+                {ProductOrderActionBean.PLACE_ORDER, true, null, null, grandfatheredInDate, false}
         };
     }
 
 
     @Test(dataProvider = "regulatoryOptionsDataProvider")
-    public void testRegulatoryInformation(String action, RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass, String failMessage) throws ParseException {
+    public void testRegulatoryInformation(String action, boolean skipRegulatory, String skipRegulatoryReason,
+                                          RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass) throws ParseException {
         // Set up initial state for objects and validate
         getSampleInitiationProductOrder();
         actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().clear();
@@ -478,6 +487,9 @@ public class ProductOrderActionBeanTest {
         actionBean.clearValidationErrors();
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
+        if (skipRegulatory) {
+            actionBean.getEditOrder().setSkipRegulatoryReason(skipRegulatoryReason);
+        }
         // Now test test validation using passed-in parameters.
         actionBean.getEditOrder().setPlacedDate(placedDate);
         if (regulatoryInfo != null) {
@@ -485,10 +497,11 @@ public class ProductOrderActionBeanTest {
             actionBean.getEditOrder().getRegulatoryInfos().add(regulatoryInfo);
         }
 
-        actionBean.validateRegulatoryInformation(ProductOrderActionBean.VALIDATE_ORDER);
+        actionBean.validateRegulatoryInformation(action);
 
-        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass, failMessage);
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
     }
+
 
 
 }
