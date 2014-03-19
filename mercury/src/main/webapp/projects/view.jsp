@@ -25,6 +25,7 @@
                 });
 
                 $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
+                $j('#regulatoryInfoCreateForm').submit(validateTitle);
 
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
@@ -45,6 +46,7 @@
                 $j('#addNewSubmit').show();
                 $j('#editSubmit').hide();
                 $j('#regulatoryInfoDialogAction').prop('name', 'addNewRegulatoryInfo');
+                $j('#titleValidationError').text('');
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
 
@@ -98,7 +100,29 @@
                 $j('#identifier').val($j('#regulatoryInfoQuery').val());
             }
 
+            function validateTitle(event) {
+                event.preventDefault();
+                var form = this;
+                $j.ajax({
+                    url: '${ctxpath}/projects/project.action',
+                    data: {
+                        validateTitle: '',
+                        regulatoryInfoId: $j('#editRegulatoryInfoId').val(),
+                        regulatoryInfoAlias: $j('#titleInput').val()
+                    },
+                    dataType: 'text',
+                    success: function handleTitleValidation(result) {
+                        if (result) {
+                            $j('#titleValidationError').text('Title is already in use by ' + result + '.');
+                        } else {
+                            form.submit();
+                        }
+                    }
+                });
+            }
+
             function openRegulatoryInfoEditDialog(regulatoryInfoId, identifier, type, title) {
+                resetRegulatoryInfoDialog();
                 $j('#addRegulatoryInfoDialog').dialog("open");
                 showRegulatoryInfoEditForm();
 
@@ -432,13 +456,14 @@
                         <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
                         <div class="controls">
                             <input id="titleInput" type="text" name="regulatoryInfoAlias" required>
+                            <p id="titleValidationError"></p>
                         </div>
                     </div>
 
                     <div class="control-group">
                         <div class="controls">
                             <stripes:submit id="addNewSubmit" name="add" class="btn btn-primary">Add</stripes:submit>
-                            <stripes:submit id="editSubmit" name="add" class="btn btn-primary">Edit</stripes:submit>
+                            <stripes:submit id="editSubmit" name="edit" class="btn btn-primary">Edit</stripes:submit>
                         </div>
                     </div>
                 </stripes:form>
