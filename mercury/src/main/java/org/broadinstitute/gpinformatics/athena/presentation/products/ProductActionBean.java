@@ -311,7 +311,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        editProduct.setWorkflow(workflow == null ? Workflow.NONE : workflow);
+        if (userBean.isDeveloperUser()) {
+            editProduct.setWorkflow(workflow == null ? Workflow.NONE : workflow);
+        }
         productEjb.saveProduct(
                 editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
                 allLengthsMatch(), criteria, operators, values);
