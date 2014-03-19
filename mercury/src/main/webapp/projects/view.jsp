@@ -72,7 +72,7 @@
                 for (var i = 0; i < infos.length; i++) {
                     var info = infos[i];
                     var addButton = $j('<input type="submit" value="Add" class="btn">');
-                    addButton.click(function() { $j('#regulatoryInfoId').val(info.id); });
+                    addButton.attr('name', info.id);
                     var row = $j('<tr/>');
                     row.append($j('<td/>').append(info.identifier));
                     row.append($j('<td/>').append(info.alias));
@@ -83,6 +83,17 @@
                     $j('#regulatoryInfoType option:contains(' + info.type + ')').prop('disabled', true);
                     foundTypes.push(info.type);
                 }
+
+                // Catch clicks on the table, check that it's an "Add" button, and take the button's "name" as the ID to use.
+                table.click(function (event) {
+                    var target = event.target;
+                    if (target.nodeName == "INPUT" &&
+                            target.type == "submit" &&
+                            target.value == "Add") {
+                        $j('#regulatoryInfoId').val(target.name);
+                    }
+                });
+
                 var options = $j('#regulatoryInfoType option');
                 for (var i = 0; i < options.length; i++) {
                     var option = $j(options[i]);
