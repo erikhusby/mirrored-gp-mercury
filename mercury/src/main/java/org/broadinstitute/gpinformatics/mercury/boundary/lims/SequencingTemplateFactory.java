@@ -314,17 +314,20 @@ public class SequencingTemplateFactory {
 
         Collection<LabBatch> miseqBatches = miSeqReagentKit.getAllLabBatches(LabBatch.LabBatchType.MISEQ);
 
-        if (miseqBatches.size() > 1) {
+        Set<String> denatureBarcodes = new HashSet<>();
+        for (LabBatch miseqBatch : miseqBatches) {
+            denatureBarcodes.add(miseqBatch.getStartingVesselByPosition(VesselPosition.LANE1).getLabel());
+        }
+
+        if (denatureBarcodes.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one MiSeq Batches " +
                                                                 "associated with %s", miSeqReagentKit.getLabel()));
         }
 
-        for (LabBatch poolTestBatch : miseqBatches) {
-            lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
-                    IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
-                    concentration, "",
-                    poolTestBatch.getStartingVesselByPosition(VesselPosition.LANE1).getLabel()));
-        }
+        lanes.add(LimsQueryObjectFactory.createSequencingTemplateLaneType(
+                IlluminaFlowcell.FlowcellType.MiSeqFlowcell.getVesselGeometry().getRowNames()[0],
+                concentration, "",
+                denatureBarcodes.iterator().next()));
         return LimsQueryObjectFactory.createSequencingTemplate(null, null, isPoolTest,
                 sequencingConfig.getInstrumentWorkflow().getValue(), sequencingConfig.getChemistry().getValue(),
                 sequencingConfig.getReadStructure().getValue(),
