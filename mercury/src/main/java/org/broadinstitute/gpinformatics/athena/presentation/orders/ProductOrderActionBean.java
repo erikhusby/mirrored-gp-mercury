@@ -452,8 +452,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                     SAVE_ACTION);
         }
 
-        requireField(skipRegulatoryInfo && !StringUtils.isBlank(editOrder.getSkipRegulatoryReason()),
-                "a reason for not choosing regulatory information", SAVE_ACTION);
+        if (!editOrder.regulatoryRequirementsMet()) {
+            requireField(skipRegulatoryInfo && editOrder.canSkipRegulatoryRequirements(),
+                    "a reason for not choosing regulatory information", SAVE_ACTION);
+        }
 
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
