@@ -98,8 +98,6 @@ public class ProductActionBean extends CoreActionBean {
     })
     private Product editProduct;
 
-    private Workflow workflow;
-
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
     }
@@ -473,13 +471,5 @@ public class ProductActionBean extends CoreActionBean {
 
     public Workflow getWorkflowNone() {
         return Workflow.NONE;
-    }
-
-    public Workflow getWorkflow() {
-        return workflow;
-    }
-
-    public void setWorkflow(Workflow workflow) {
-        this.workflow = workflow;
     }
 }
