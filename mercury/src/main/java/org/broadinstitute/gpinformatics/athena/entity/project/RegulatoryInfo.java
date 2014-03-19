@@ -95,6 +95,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Type getType() {
         return type;
@@ -133,11 +136,11 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         RegulatoryInfo castOther = OrmUtil.proxySafeCast(other, RegulatoryInfo.class);
 
         return new EqualsBuilder().append(getIdentifier(), castOther.getIdentifier())
-                .append(getType(), castOther.getType()).append(getName(), castOther.getName()).isEquals();
+                .append(getType(), castOther.getType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getIdentifier()).append(getType()).append(getName()).toHashCode();
+        return new HashCodeBuilder().append(getIdentifier()).append(getType()).toHashCode();
     }
 }

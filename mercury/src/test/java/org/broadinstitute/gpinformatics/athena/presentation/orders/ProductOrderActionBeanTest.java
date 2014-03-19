@@ -54,7 +54,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -456,7 +455,7 @@ public class ProductOrderActionBeanTest {
     public Object[][] regulatoryOptionsDataProvider() throws ParseException {
         Date grandfatheredInDate = DateUtils.parseDate("01/01/2014");
         Date newDate = DateUtils.parseDate(ProductOrder.IRB_REQUIRED_START_DATE_STRING);
-        newDate = DateUtils.addToDate(newDate, Calendar.SECOND, 1);
+
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("TEST-1234", RegulatoryInfo.Type.IRB, "12345");
 
         return new Object[][]{

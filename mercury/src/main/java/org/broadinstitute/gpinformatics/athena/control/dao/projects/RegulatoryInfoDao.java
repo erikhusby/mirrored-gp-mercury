@@ -22,4 +22,7 @@ public class RegulatoryInfoDao extends GenericDao {
         return findList(RegulatoryInfo.class, RegulatoryInfo_.identifier, identifier);
     }
 
+    public List<RegulatoryInfo> findByName(String name) {
+        return findList(RegulatoryInfo.class, RegulatoryInfo_.name, name);
+    }
 }
