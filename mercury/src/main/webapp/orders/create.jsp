@@ -171,7 +171,12 @@
                     updateFundsRemaining();
                     updateUIForCollectionChoice();
                     initializeQuoteOptions();
+
                     $j("#skipQuote").on("change", toggleSkipQuote);
+                    $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
+                    $j("#regulatoryInfo").change(function () {
+                        $j("#attestationConfirmed").attr("checked", false)
+                    });
                 }
 
         );
@@ -189,6 +194,22 @@
         </c:forEach>
 
         var quoteBeforeSkipping;
+        function toggleSkipRegulatory() {
+            var skipRegulatoryChecked = $j("#skipRegulatoryInfoCheckbox").prop("checked");
+            $j("#attestationConfirmed").attr("checked", false);
+            handleUpdateRegulatory(skipRegulatoryChecked);
+        }
+
+        function handleUpdateRegulatory(skipRegulatoryChecked){
+            if (skipRegulatoryChecked) {
+                $j("#regulatorySelect").hide();
+                $j("#skipRegulatoryDiv").show();
+            } else {
+                $j("#skipRegulatoryDiv").hide();
+                $j("#regulatorySelect").show();
+                populateRegulatorySelect();
+            }
+        }
 
         function toggleSkipQuote() {
             skipQuote = $j("#skipQuote").prop('checked');
@@ -211,6 +232,7 @@
             updateQuoteOptions();
             quoteBeforeSkipping = "${actionBean.editOrder.quoteId}";
         }
+
         function updateQuoteOptions() {
             skipQuote = $j("#skipQuote").prop('checked');
             $j("#skipQuote").prop('checked', skipQuote);
@@ -242,20 +264,42 @@
 
         function updateUIForProjectChoice(){
             var projectKey = $j("#researchProject").val();
-            var pdoId = "${actionBean.editOrder.productOrderId}";
+            var skipRegulatory = false;
+            skipRegulatory = ${actionBean.editOrder.canSkipRegulatoryRequirements()};
+            $j("#skipRegulatoryInfoCheckbox").prop('checked', skipRegulatory);
 
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
-
+                $j("#regulatoryActive").hide();
+                $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
+                skipRegulatory = false;
             }else{
+                $j("#regulatorySelect").contents().filter(function () {
+                    return this.nodeType == Node.TEXT_NODE;
+                  }).remove();
+                 if (!skipRegulatory) {
+                    populateRegulatorySelect();
+                 }
                 $j("#regulatoryInfo").show();
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey + "&pdoId=" + pdoId,
-                    dataType: 'json',
-                    success: setupRegulatoryInfoSelect
-                });
+                $j("#regulatoryActive").show();
+
             }
+            handleUpdateRegulatory(skipRegulatory);
+        }
+
+        function populateRegulatorySelect() {
+            var projectKey = $j("#researchProject").val();
+            var pdoId = "${actionBean.editOrder.productOrderId}";
+
+            if (projectKey) {
+            $j.ajax({
+                url: "${ctxpath}/orders/order.action?getRegulatoryInfo=&researchProjectKey=" + projectKey + "&pdoId=" + pdoId,
+                dataType: 'json',
+                success: setupRegulatoryInfoSelect
+            });
+            }
+
         }
 
         function updateUIForProductChoice() {
@@ -406,10 +450,11 @@
         }
 
         function setupRegulatoryInfoSelect(data){
+            $j("#regulatorySelect").empty();
             if (data.length == 0) {
                 $j("#regulatorySelect").text('No options have been set up in the research project. ');
                 var researchProject = $j("#researchProject").val();
-                if (researchProject != null) {
+                if (researchProject != null && researchProject!="") {
                     var link = $j('<a/>');
                     $j(link).attr('href', '${ctxpath}/projects/project.action?view='.concat('&researchProject=' + researchProject));
                     $j(link).append("(".concat(researchProject).concat(")"))
@@ -828,7 +873,27 @@
                             <stripes:label for="regulatoryInfo" class="control-label">
                                 Regulatory Information
                             </stripes:label>
+
+
+                            <div id="regulatoryActive" class="controls">
+                                <stripes:checkbox name="skipRegulatoryInfo" id="skipRegulatoryInfoCheckbox"
+                                       title="Click if no IRB/ORSP review is required."/>No IRB/ORSP Review Required
+                            </div>
+                            <div id="skipRegulatoryDiv" class="controls controls-text">
+                                Please enter a reason for not including regulatory information<br/>(eg: mouse
+                                samples)<br/>
+                                <stripes:text id="skipRegulatoryInfoReason" name="editOrder.skipRegulatoryReason"
+                                              maxlength="255"/>
+                            </div>
                             <div id="regulatorySelect" class="controls controls-text"></div>
+                            <div class="controls controls-text">
+
+                                <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
+                                By checking this box, I am attesting that I am fully aware of the regulatory
+                                requirements for this project, that these requirements have been met, and that the
+                                information I have provided is accurate. Disregard of relevant requirements and/or
+                                falsification of information may lead to quarantining of data.
+                            </div>
                         </div>
                     </c:when>
                     <c:otherwise>

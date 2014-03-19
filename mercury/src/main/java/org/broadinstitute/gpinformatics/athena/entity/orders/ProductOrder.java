@@ -98,7 +98,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
             return !getRegulatoryInfos().isEmpty();
         }
-        return true;
+        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
+    }
+
+    public boolean canSkipRegulatoryRequirements() {
+        return !StringUtils.isBlank(skipRegulatoryReason);
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -200,6 +204,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
+
+    @Column(name = "SKIP_REGULATORY_REASON")
+    private String skipRegulatoryReason;
+
+    @Column(name = "attestation_confirmed")
+    private boolean attestationConfirmed=false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -944,6 +954,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.skipQuoteReason = skipQuoteReason;
     }
 
+    public String getSkipRegulatoryReason() {
+        return skipRegulatoryReason;
+    }
+
+    public void setSkipRegulatoryReason(String skipRegulatoryReason) {
+        this.skipRegulatoryReason = skipRegulatoryReason;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -1480,6 +1498,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public void invalidate() {
             countsValid = false;
         }
+    }
+
+    public boolean isAttestationConfirmed() {
+        return attestationConfirmed;
+    }
+
+    public void setAttestationConfirmed(boolean attestationConfirmed) {
+        this.attestationConfirmed = attestationConfirmed;
     }
 
     public static Date getIrbRequiredStartDate() {
