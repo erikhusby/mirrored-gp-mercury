@@ -575,6 +575,28 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="PORTAL-10-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT" columnName="INVITATION_EMAIL"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT">
+            <column name="INVITATION_EMAIL" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="PORTAL-10-2" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT_AUD" columnName="INVITATION_EMAIL"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT_AUD">
+            <column name="INVITATION_EMAIL" type="varchar2(255 char)"/>
+        </addColumn>
+    </changeSet>
+
     <changeSet id="PORTAL-10-3" author="hrafal">
         <sql>
             ALTER TABLE ATHENA.PROJECT_PERSON drop CONSTRAINT CHECK_ROLE
@@ -584,6 +606,28 @@
             ADD CONSTRAINT CHECK_ROLE
             CHECK (ROLE IN ('PRIMARY_EXTERNAL', 'BROAD_SCIENTIST', 'EXTERNAL', 'PM_IN_CHARGE', 'PM', 'PDM', 'BROAD_PI', 'SCIENTIST', 'OTHER', 'UNSPECIFIED'))
         </sql>
+    </changeSet>
+
+    <changeSet id="PORTAL-10-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT" columnName="COLLABORATION_ID"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT">
+            <column name="COLLABORATION_ID" type="varchar2(50 char)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="PORTAL-10-5" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="RESEARCH_PROJECT_AUD" columnName="COLLABORATION_ID"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="athena" tableName="RESEARCH_PROJECT_AUD">
+            <column name="COLLABORATION_ID" type="varchar2(50 char)"/>
+        </addColumn>
     </changeSet>
 
     <changeSet author="scottmat" id="GPLIM-2502-1">
