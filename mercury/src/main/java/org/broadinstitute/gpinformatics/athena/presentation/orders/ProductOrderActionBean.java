@@ -250,6 +250,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
+    private boolean skipRegulatoryInfo;
+
     /*
      * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
      * phase, we are moving annotation based validations to be specifically called out in the code after updating the
@@ -444,6 +446,16 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addValidationError("title", "A product order already exists with this name.");
             }
         }
+        if (editOrder.isSubmitted()) {
+            requireField(editOrder.isAttestationConfirmed(),
+                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                    SAVE_ACTION);
+        }
+
+        if (!editOrder.regulatoryRequirementsMet()) {
+            requireField(skipRegulatoryInfo && editOrder.canSkipRegulatoryRequirements(),
+                    "a reason for not choosing regulatory information", SAVE_ACTION);
+        }
 
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
@@ -556,7 +568,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
-
+        validateRegulatoryInformation(action);
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
@@ -653,9 +665,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
-
         doValidation(action);
-
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
@@ -932,6 +942,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         validateUser(EDIT_ACTION);
         setSubmitString(EDIT_ORDER);
         populateTokenListsFromObjectData();
+
         owner.setup(editOrder.getCreatedBy());
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
@@ -1099,11 +1110,21 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
+        updateRegulatoryInformation();
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    private void updateRegulatoryInformation() {
+        if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
+            editOrder.setSkipRegulatoryReason(null);
+        }
+        if (isSkipRegulatoryInfo() && editOrder.getSkipRegulatoryReason().isEmpty()) {
+            editOrder.getRegulatoryInfos().clear();
+        }
     }
 
     private void updateTokenInputFields() {
@@ -2100,7 +2121,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validateRegulatoryInformation(String action) {
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-                requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met", action);
+            boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
+            boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
+
+            if (!regulatoryRequirementsMet) {
+                requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
+            } else {
+                requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
+            }
         }
     }
 
@@ -2166,5 +2194,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String[] getDeletedKits() {
         return deletedKits;
+    }
+
+    public boolean isSkipRegulatoryInfo() {
+        return skipRegulatoryInfo;
+    }
+
+    public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
+        this.skipRegulatoryInfo = skipRegulatoryInfo;
     }
 }
