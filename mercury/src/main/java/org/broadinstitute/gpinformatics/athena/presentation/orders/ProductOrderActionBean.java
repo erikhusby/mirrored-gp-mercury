@@ -1326,7 +1326,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
+        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
@@ -1344,12 +1344,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private static String formatPicoRunDate(Date picoRunDate) {
-        if (picoRunDate == null) {
-            return "No Pico";
+    private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {
+
+        String returnValue = defaultReturn;
+        if (picoRunDate != null) {
+            returnValue = dateFormatter.format(picoRunDate);
         }
 
-        return dateFormatter.format(picoRunDate);
+        return returnValue;
     }
 
     private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
