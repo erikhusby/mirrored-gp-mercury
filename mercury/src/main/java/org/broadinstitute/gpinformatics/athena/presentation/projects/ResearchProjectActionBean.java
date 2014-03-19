@@ -208,7 +208,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION,
-                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION})
+                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION,
+                    BEGIN_COLLABORATION_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
