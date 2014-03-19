@@ -5,12 +5,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.deltaspike.cdise.api.ContextControl;
 import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.bsp.client.util.MessageCollection;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.ConcurrentBaseTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserListTest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -23,10 +21,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProdOrderKitTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -57,12 +54,15 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     @Inject
     ProductOrderEjb productOrderEjb;
 
+    @Inject
+    UserBean userBean;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
-    private static Long productOrderId;
-    private static String productOrderKey;
+    private Long productOrderId;
+    private String productOrderKey;
     private int numPlaceOrderThreadsRun = 0;
     private static Long basePdoKey;
 
@@ -74,15 +74,20 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
 
-        if(utx == null) {
+        if (utx == null) {
             return;
         }
+
+        userBean.loginTestUser();
 
         basePdoKey = (new Date()).getTime();
         utx.begin();
 
         ProductOrder testOrder = ProductOrderTestFactory.createProductOrder("SM-test2", "SM-243w");
+        testOrder.setQuoteId("MMM4AM");
         testOrder.setCreatedBy(1933584925L);
+        testOrder.setJiraTicketKey("");
+        testOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
         productOrderEjb.persistProductOrder(ProductOrder.SaveType.CREATING, testOrder, new ArrayList<String>(),
                 new ArrayList<ProductOrderKitDetail>());
 
@@ -109,10 +114,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (pdoLookupThread.getError() != null) {
             pdoJiraError = pdoLookupThread.getError();
+            logger.info("Error found in Thread 1: "+ pdoJiraError.getMessage() );
             numErrors++;
         }
         if (pdoLookupThread2.getError() != null) {
             pdoJiraError = pdoLookupThread2.getError();
+            logger.info("Error found in Thread 2: "+ pdoJiraError.getMessage() );
             numErrors++;
         }
 
@@ -126,33 +133,35 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
         @Override
         public void run() {
-            ProductOrderEjb threadEjb= null;
+            ProductOrderEjb threadEjb = null;
             ContextControl ctxCtrl = BeanProvider.getContextualReference(ContextControl.class);
             ctxCtrl.startContext(RequestScoped.class);
             try {
-                threadEjb= getBeanFromJNDI(ProductOrderEjb.class);
+                threadEjb = getBeanFromJNDI(ProductOrderEjb.class);
                 numPlaceOrderThreadsRun++;
 
                 MessageCollection messageCollection = new MessageCollection();
 
+                logger.info("Thread "+numPlaceOrderThreadsRun+": coming in, jira reference is: " + productOrderKey);
+
                 ProductOrder placedProductOrder =
                         threadEjb.placeProductOrder(productOrderKey, productOrderId, messageCollection);
 
-                if(!placedProductOrder.getBusinessKey().equals("PDO-"+basePdoKey)) {
+                logger.info("Thread "+numPlaceOrderThreadsRun+": coming out, jira reference is: " +
+                             placedProductOrder.getBusinessKey());
+                if (!placedProductOrder.getBusinessKey().equals("PDO-" + basePdoKey)) {
                     throw new RuntimeException("Unexpected PDO key returned");
                 }
-            }
-            catch(RuntimeException e) {
+            } catch (RuntimeException e) {
+                logger.info(e.getMessage());
                 error = e;
                 throw e;
-            }
-            finally {
+            } finally {
                 try {
                     ctxCtrl.stopContext(RequestScoped.class);
-                }
-                catch(Throwable t) {
+                } catch (Throwable t) {
                     // not much to be done about this!
-                    logger.error("Failed to stop context",t);
+                    logger.error("Failed to stop context", t);
                 }
             }
         }
@@ -171,7 +180,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
                                      Collection<CustomField> customFields)
                 throws IOException {
 
-            JiraIssue dummyIssue = new JiraIssue("PDO-"+basePdoKey,this);
+            JiraIssue dummyIssue = new JiraIssue("PDO-" + basePdoKey, this);
             basePdoKey++;
             return dummyIssue;
         }
@@ -278,4 +287,5 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
             return null;
         }
     }
+
 }

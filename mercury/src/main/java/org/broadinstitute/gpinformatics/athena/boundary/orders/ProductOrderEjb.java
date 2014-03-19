@@ -636,7 +636,8 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
-    public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,ProductOrderDao.FetchSpec... fetchSpecs) {
+    public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,
+                                                            ProductOrderDao.FetchSpec... fetchSpecs) {
         return productOrderDao.findByBusinessKey(jiraTicket, LockModeType.PESSIMISTIC_READ, fetchSpecs);
     }
 
@@ -998,18 +999,15 @@ public class ProductOrderEjb {
      * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
      *
      * @param businessKey       Business key by which to reference the currently persisted Product order
-     * @param productOrderID
-     * @param messageCollection
+     * @param productOrderID    Database identifier of the Product order which we wish to find.  Used because at this
+     *                          phase, the business key could change from draft-xxx to PDO-yyy.
+     * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
+     *                          a value or throwing an exception.
      */
     public ProductOrder placeProductOrder(@Nonnull String businessKey, @Nonnull Long productOrderID,
-                                  @Nonnull MessageCollection messageCollection) {
+                                          @Nonnull MessageCollection messageCollection) {
         ProductOrder editOrder =
                 productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_FORCE_INCREMENT);
-
-        if(!editOrder.getBusinessKey().equals(businessKey)) {
-            throw new InformaticsServiceException("Expecting the product order to be " + businessKey +
-                                                  "but it is " +editOrder.getBusinessKey());
-        }
 
         if (editOrder == null) {
             throw new InformaticsServiceException("There is no product order associated with the business key " +
@@ -1041,11 +1039,17 @@ public class ProductOrderEjb {
         return editOrder;
     }
 
-
+    /**
+     * Helper method to separate sample kit submission to its own transaction.  This will allow Product order creation
+     * to succeed and commit the transition from Product Order draft to Submit even if the attempt to create a
+     * sample kit in Bsp results in an exception, which should not roll back product order submission
+     * @param order             Order to which the new sample kit is to be associated
+     * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
+     *                          a value or throwing an exception.
+     */
     public void submitSampleKitRequest(ProductOrder order, MessageCollection messageCollection) {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-
     }
 }

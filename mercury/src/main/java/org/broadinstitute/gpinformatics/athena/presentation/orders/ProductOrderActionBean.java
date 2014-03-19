@@ -352,7 +352,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
                 .format(parameters, CharEncoding.UTF_8);
     }
-    private List<Long> selectedRegulatoryIds=new ArrayList<>();
+
+    private List<Long> selectedRegulatoryIds = new ArrayList<>();
 
     public List<Long> getSelectedRegulatoryIds() {
         return selectedRegulatoryIds;
@@ -382,9 +383,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
-        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap=new HashMap<>();
+        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap = new HashMap<>();
         projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfos());
-        for (ResearchProject project : researchProject.getAllParents()){
+        for (ResearchProject project : researchProject.getAllParents()) {
             projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
         }
         return projectRegulatoryMap;
@@ -567,7 +568,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             if (action.equals(SAVE_ACTION)) {
                 // If this is not a draft and a sample initiation order, reset the kit details to the properly selected details
-                if(!editOrder.isDraft()) {
+                if (!editOrder.isDraft()) {
                     kitDetails.clear();
                     initializeKitDetails();
                 }
@@ -1024,31 +1025,21 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             productOrderEjb.placeProductOrder(originalBusinessKey, editOrder.getProductOrderId(), messageCollection);
 
+            addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            /*
-             * FIXME: Would Rather have this block in the placeProductOrder ejb call above Throwing a non rollback
-             * application exception in the case of a sample kit submit failure.  bspKitRequestService would have to
-             * be reworked to allow injection though.
-             */
-            if (editOrder.isSampleInitiation()) {
-
-                addMessage("Created BSP work request ''{0}'' for this order.",
-                        editOrder.getProductOrderKit().getWorkRequestId());
-            }
-
-            addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
-
-            if(messageCollection.hasInfos()) {
-                for(String info:messageCollection.getInfos()) {
+            if (messageCollection.hasInfos()) {
+                for (String info : messageCollection.getInfos()) {
                     addMessage(info);
                 }
             }
-            if(messageCollection.hasErrors()) {
-                for(String error:messageCollection.getErrors()) {
+            if (messageCollection.hasErrors()) {
+                for (String error : messageCollection.getErrors()) {
                     addGlobalValidationError(error);
                 }
             }
+
+            // FIXME:  TEAR. DOWN. THIS. WALL!!!!
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
