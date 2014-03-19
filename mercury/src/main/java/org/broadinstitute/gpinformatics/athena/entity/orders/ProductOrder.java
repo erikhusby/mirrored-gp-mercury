@@ -209,7 +209,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipRegulatoryReason;
 
     @Column(name = "attestation_confirmed")
-    private boolean attestationConfirmed=false;
+    private Boolean attestationConfirmed=false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -1500,11 +1500,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
-    public boolean isAttestationConfirmed() {
+    public Boolean isAttestationConfirmed() {
+        if (attestationConfirmed == null) {
+            attestationConfirmed = false;
+        }
         return attestationConfirmed;
     }
 
-    public void setAttestationConfirmed(boolean attestationConfirmed) {
+    public void setAttestationConfirmed(Boolean attestationConfirmed) {
         this.attestationConfirmed = attestationConfirmed;
     }
 
