@@ -94,7 +94,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMultithreaded() throws Exception {
         Throwable pdoJiraError = null;
-        startingKey = "PDO-"+basePdoKey;
+        startingKey = "PDO-" + basePdoKey;
         PDOLookupThread pdoLookupThread = new PDOLookupThread();
         PDOLookupThread pdoLookupThread2 = new PDOLookupThread();
         Thread thread1 = new Thread(pdoLookupThread);
@@ -109,12 +109,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (pdoLookupThread.getError() != null) {
             pdoJiraError = pdoLookupThread.getError();
-            logger.info("Error found in Thread 1: "+ pdoJiraError.getMessage() );
+            logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (pdoLookupThread2.getError() != null) {
             pdoJiraError = pdoLookupThread2.getError();
-            logger.info("Error found in Thread 2: "+ pdoJiraError.getMessage() );
+            logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }
 
