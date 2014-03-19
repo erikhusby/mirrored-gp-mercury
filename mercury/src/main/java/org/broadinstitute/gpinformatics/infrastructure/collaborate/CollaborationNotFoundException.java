@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.portal;
+package org.broadinstitute.gpinformatics.infrastructure.collaborate;
 
 public class CollaborationNotFoundException extends Exception {
 

@@ -17,9 +17,9 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalException;
-import org.broadinstitute.gpinformatics.infrastructure.portal.CollaborationPortalService;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalService;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,8 +33,11 @@ import javax.inject.Inject;
 @Stateful
 @RequestScoped
 public class CollaborationEjb {
+
     private final ResearchProjectDao researchProjectDao;
+
     private final BSPUserList userList;
+
     private final CollaborationPortalService collaborationPortalService;
 
     // EJBs require a no arg constructor.
@@ -72,18 +75,18 @@ public class CollaborationEjb {
      * </dl>
      *
      * @param researchProjectKey The research project business key so it can be fetched as part of the transaction here.
-     * @param specifiedCollaborator The bsp user id for an external collaborator that was specified
+     * @param selectedCollaborator The bsp user id for an external collaborator that was specified
      * @param collaboratorEmail The email of a collaborator that was specifically specified
      * @param collaborationMessage The optional extra message from the project manager
      */
     public void beginCollaboration(@Nonnull String researchProjectKey, @Nullable Long selectedCollaborator,
-                                   @Nullable String specifiedCollaborator, @Nullable String collaborationMessage)
+                                   @Nullable String collaboratorEmail, @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
-        if ((selectedCollaborator == null) && (specifiedCollaborator == null)) {
+        if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
             throw new IllegalArgumentException("must specify a collaborator domain user id or an email address");
         }
         // Look up the selected id.
@@ -94,7 +97,7 @@ public class CollaborationEjb {
 
         // If there is no bsp user, look up by email.
         if (bspUser == null) {
-            bspUser = userList.getByEmail(specifiedCollaborator);
+            bspUser = userList.getByEmail(collaboratorEmail);
         }
 
         // Add the user as the primary collaborator.
@@ -105,13 +108,13 @@ public class CollaborationEjb {
             researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
         }
 
-        if (specifiedCollaborator != null) {
-            researchProject.setInvitationEmail(specifiedCollaborator);
+        if (collaboratorEmail != null) {
+            researchProject.setInvitationEmail(collaboratorEmail);
         }
 
         // Now tell the portal to create this collaborator.
          String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
-                 selectedCollaborator, specifiedCollaborator, collaborationMessage);
+                 selectedCollaborator, researchProjectKey, collaborationMessage);
 
         researchProject.setCollaborationId(collaborationId);
     }

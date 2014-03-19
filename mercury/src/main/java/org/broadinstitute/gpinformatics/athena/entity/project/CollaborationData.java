@@ -27,7 +27,8 @@ public class CollaborationData {
     private String description;
 
     // Used to create domain user for portal (and BSP, if needed).
-    private String collaboratorEmail;
+    private String researchProjectKey;
+
     private Long collaboratorDomainUserId;
 
     private Long projectManagerId;
@@ -45,16 +46,16 @@ public class CollaborationData {
      *
      * @param name The name
      * @param description The description
-     * @param collaboratorEmail The email
+     * @param researchProjectKey The research project
      * @param collaboratorDomainUserId The collaborators identifier
      * @param projectManagerId The identifier of the project manager
-     * @param collaborationMessage The email message to the collaborator
+     * @param emailMessage The email message to the collaborator
      */
-    public CollaborationData(String name, String description, String collaboratorEmail, Long collaboratorDomainUserId,
+    public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorDomainUserId,
                              Long projectManagerId, String emailMessage) {
         this.name = name;
         this.description = description;
-        this.collaboratorEmail = collaboratorEmail;
+        this.researchProjectKey = researchProjectKey;
         this.collaboratorDomainUserId = collaboratorDomainUserId;
         this.projectManagerId = projectManagerId;
         this.emailMessage = emailMessage;
@@ -76,12 +77,12 @@ public class CollaborationData {
         this.description = description;
     }
 
-    public String getCollaboratorEmail() {
-        return collaboratorEmail;
+    public String getResearchProjectKey() {
+        return researchProjectKey;
     }
 
-    public void setCollaboratorEmail(String collaboratorEmail) {
-        this.collaboratorEmail = collaboratorEmail;
+    public void setResearchProjectKey(String researchProjectKey) {
+        this.researchProjectKey = researchProjectKey;
     }
 
     public Long getCollaboratorDomainUserId() {

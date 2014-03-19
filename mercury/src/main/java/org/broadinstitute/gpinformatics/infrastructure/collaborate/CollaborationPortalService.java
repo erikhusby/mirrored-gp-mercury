@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.portal;
+package org.broadinstitute.gpinformatics.infrastructure.collaborate;
 
 
 import com.sun.jersey.api.client.Client;
@@ -26,9 +26,8 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
     private static final long serialVersionUID = 5340477906783139812L;
 
     enum Endpoint {
-
-        BEGIN_COLLABORATION("/portal/collaborate/create"),
-        GET_COLLABORATION_DETAILS("/portal/collaborate/getCollaboration");
+        BEGIN_COLLABORATION("/rest/collaborate/create"),
+        GET_COLLABORATION_DETAILS("/rest/collaborate/get/");
 
         String suffixUrl;
 
@@ -41,21 +40,21 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         }
     }
 
-    private PortalConfig portalConfig;
+    private final CollaborateConfig config;
 
     /**
      * Container free constructor, need to initialize all dependencies explicitly.
      *
-     * @param bspConfig The configuration for connecting with bsp.
+     * @param config The configuration for connecting with the collaboration portal.
      */
     @Inject
-    public CollaborationPortalService(PortalConfig portalConfig) {
-        this.portalConfig = portalConfig;
+    public CollaborationPortalService(CollaborateConfig config) {
+        this.config = config;
     }
 
     @Override
     protected void customizeClient(Client client) {
-        specifyHttpAuthCredentials(client, portalConfig);
+//        specifyHttpAuthCredentials(client, portalConfig);
     }
 
     /**
@@ -63,7 +62,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
      * state of the user in BSP and the Portal, te account will be created/added to the appropriate application. If
      * the user does not have a portal account, an invitation will be sent for them to fill in all needed information.
      *
-     * @param researchProjectKey The business key of the research project.
+     * @param researchProject The research project.
      * @param selectedCollaborator The actual existing collaborator identifier.
      * @param specifiedCollaborator The email specified for an existing user or a new user.
      * @param collaborationMessage The optional message from the PM to the collaborator.
@@ -80,7 +79,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
                     "Cannot start a collaboration on a research project with no Project Manager");
         }
 
-        String url = portalConfig.getWsUrl(Endpoint.BEGIN_COLLABORATION.getSuffixUrl());
+        String url = config.getUrlBase() + Endpoint.BEGIN_COLLABORATION.getSuffixUrl();
         WebResource resource = getJerseyClient().resource(url);
 
         CollaborationData collaboration =
@@ -101,7 +100,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
     public CollaborationData getCollaboration(String collaborationId)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
-        String url = portalConfig.getWsUrl(Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + collaborationId);
+        String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + collaborationId;
         WebResource resource = getJerseyClient().resource(url);
 
         try {
