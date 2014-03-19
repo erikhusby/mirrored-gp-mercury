@@ -403,8 +403,8 @@
                             Workflow
                         </stripes:label>
                         <div class="controls">
-                            <stripes:select name="workflow" id="workflow">
-                                <stripes:option value="">None</stripes:option>
+                            <stripes:select name="editProduct.workflow" id="workflow">
+                                <stripes:option value="${actionBean.workflowNone}">None</stripes:option>
                                 <stripes:options-collection collection="${actionBean.visibleWorkflowList}" label="workflowName"/>
                             </stripes:select>
                         </div>
