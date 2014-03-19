@@ -70,6 +70,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
+    public static final String VALIDATE_TITLE_ACTION = "validateTitle";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -510,6 +511,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
         regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, editResearchProject);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    @HandlesEvent(VALIDATE_TITLE_ACTION)
+    public Resolution validateTitle() {
+        String result = "";
+        List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
+        for (RegulatoryInfo info : infos) {
+            if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
+                result = String.format("%s: %s", info.getType().getName(), info.getIdentifier());
+                break;
+            }
+        }
+        return createTextResolution(result);
     }
 
     /**
