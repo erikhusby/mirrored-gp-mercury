@@ -69,6 +69,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
     public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
+    public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
+    public static final String VALIDATE_TITLE_ACTION = "validateTitle";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -186,7 +188,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION,
-                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION})
+                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -507,6 +509,32 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(REMOVE_REGULATORY_INFO_ACTION)
     public Resolution removeRegulatoryInfo() {
         regulatoryInfoEjb.removeRegulatoryInfoFromResearchProject(regulatoryInfoId, editResearchProject);
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    @HandlesEvent(VALIDATE_TITLE_ACTION)
+    public Resolution validateTitle() {
+        String result = "";
+        List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
+        for (RegulatoryInfo info : infos) {
+            if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
+                result = String.format("%s: %s", info.getType().getName(), info.getIdentifier());
+                break;
+            }
+        }
+        return createTextResolution(result);
+    }
+
+    /**
+     * Edits a regulatory info record, specifically the title (alias, name). The ID of the regulatory info comes from
+     * this.regulatoryInfoId and the new title comes from this.regulatoryInfoAlias.
+     *
+     * @return a redirect to the research project view page
+     */
+    @HandlesEvent(EDIT_REGULATORY_INFO_ACTION)
+    public Resolution editRegulatoryInfo() {
+        regulatoryInfoEjb.editRegulatoryInfo(regulatoryInfoId, regulatoryInfoAlias);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }

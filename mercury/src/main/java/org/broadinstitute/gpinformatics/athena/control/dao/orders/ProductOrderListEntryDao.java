@@ -85,7 +85,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
                         productOrderRoot.get(ProductOrder_.orderStatus),
                         productOrderProductJoin.get(Product_.productName),
-                        productOrderRoot.get(ProductOrder_.product),
+                        productOrderProductJoin,
                         productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
