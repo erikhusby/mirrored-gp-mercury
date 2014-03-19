@@ -300,13 +300,55 @@ public class LabVesselFixupTest extends Arquillian {
             add(new ImmutablePair<>("0156300250", "0150673621"));
             add(new ImmutablePair<>("0156293801", "0150675799"));
         }};
-        for (Pair<String, String> pair : listOfPairs) {
+        fixupBucketEntries(listOfPairs, "LCSET-4641");
+        labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2604() {
+        List<Pair<String, String>> listOfPairs = new ArrayList<Pair<String, String>>() {{
+            add(new ImmutablePair<>("1084965340", "0154862189"));
+            add(new ImmutablePair<>("1084961967", "0154845147"));
+            add(new ImmutablePair<>("1084965330", "0154862178"));
+            add(new ImmutablePair<>("1084964546", "0154862117"));
+            add(new ImmutablePair<>("1084965338", "0154862113"));
+            add(new ImmutablePair<>("1084965341", "0154862190"));
+            add(new ImmutablePair<>("1084964562", "0154862141"));
+            add(new ImmutablePair<>("1084961960", "0154862193"));
+            add(new ImmutablePair<>("1084965334", "0154862165"));
+            add(new ImmutablePair<>("1084961979", "0154862203"));
+            add(new ImmutablePair<>("1084961978", "0154862118"));
+            add(new ImmutablePair<>("1084964588", "0154862151"));
+            add(new ImmutablePair<>("1084965332", "0154862187"));
+            add(new ImmutablePair<>("1084962684", "0154862129"));
+            add(new ImmutablePair<>("1084961964", "0154862156"));
+            add(new ImmutablePair<>("1084962683", "0154862158"));
+            add(new ImmutablePair<>("1084965352", "0154862166"));
+            add(new ImmutablePair<>("1084961961", "0154862143"));
+            add(new ImmutablePair<>("1084965351", "0154862197"));
+            add(new ImmutablePair<>("1084965346", "0154862191"));
+            add(new ImmutablePair<>("1084961965", "0154862139"));
+            add(new ImmutablePair<>("1084965347", "0154862200"));
+            add(new ImmutablePair<>("1084965343", "0154862152"));
+            add(new ImmutablePair<>("1084962681", "0154862167"));
+            add(new ImmutablePair<>("1084961813", "0154862128"));
+            add(new ImmutablePair<>("1084961983", "0154862144"));
+            add(new ImmutablePair<>("1084957972", "0154862112"));
+            add(new ImmutablePair<>("1084961988", "0154862125"));
+            add(new ImmutablePair<>("1084961987", "0154862198"));
+        }};
+        fixupBucketEntries(listOfPairs, "LCSET-5239");
+        labVesselDao.flush();
+    }
+
+    private void fixupBucketEntries(List<Pair<String, String>> listOfPairsOldNew, String lcset) {
+        for (Pair<String, String> pair : listOfPairsOldNew) {
             LabVessel labVesselOld = labVesselDao.findByIdentifier(pair.getLeft());
             LabVessel labVesselNew = labVesselDao.findByIdentifier(pair.getRight());
             Set<BucketEntry> bucketEntries = labVesselOld.getModifiableBucketEntries();
             BucketEntry bucketEntry = null;
             for (BucketEntry currentBucketEntry : bucketEntries) {
-                if (currentBucketEntry.getLabBatch().getBatchName().equals("LCSET-4641")) {
+                if (currentBucketEntry.getLabBatch().getBatchName().equals(lcset)) {
                     bucketEntry = currentBucketEntry;
                 }
             }
@@ -317,7 +359,6 @@ public class LabVesselFixupTest extends Arquillian {
             labVesselNew.addBucketEntry(bucketEntry);
             bucketEntries.remove(bucketEntry);
         }
-        labVesselDao.flush();
     }
 
     @Test(enabled = false)
