@@ -11,7 +11,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
-import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -49,6 +49,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,12 +75,30 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
-    public Collection<Consent> findAvailableConsents() {
-        return researchProject.getConsents();
+    // Date needs to be validated (could be 4/7/2014).
+    public static final String IRB_REQUIRED_START_DATE_STRING = "04/14/2014";
+
+    public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
+        return researchProject.getRegulatoryInfos();
     }
 
-    public void addConsent(@Nonnull Consent ... consent) {
-        getConsents().addAll(Arrays.asList(consent));
+    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
+        this.regulatoryInfos = regulatoryInfos;
+    }
+
+    public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
+        getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
+    }
+
+    public boolean regulatoryRequirementsMet() {
+        Date testDate=getPlacedDate();
+        if (getPlacedDate() == null) {
+            testDate = new Date();
+        }
+        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
+            return !getRegulatoryInfos().isEmpty();
+        }
+        return true;
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -169,8 +188,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private ProductOrderKit productOrderKit;
 
     @ManyToMany(cascade = {CascadeType.PERSIST})
-    @JoinTable(schema = "athena")
-    private Collection<Consent> consents=new ArrayList<>();
+    @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
+    private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -845,8 +864,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
 
-    public Collection<Consent> getConsents() {
-        return consents;
+    public Collection<RegulatoryInfo> getRegulatoryInfos() {
+        return regulatoryInfos;
     }
 
     /**
@@ -1461,6 +1480,19 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public void invalidate() {
             countsValid = false;
         }
+    }
+
+    public static Date getIrbRequiredStartDate() {
+        Date irbRequiredStartDate;
+        Date date;
+        try {
+            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(IRB_REQUIRED_START_DATE_STRING);
+        } catch (ParseException e) {
+            date = new Date();
+        }
+        irbRequiredStartDate =
+                            org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
+        return irbRequiredStartDate;
     }
 
 

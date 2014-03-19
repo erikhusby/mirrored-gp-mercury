@@ -7,9 +7,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -101,9 +100,9 @@ public class ProductOrderContainerTest extends Arquillian {
         ProductOrder testOrder =  ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
         testOrder.setCreatedBy(10950L);
 
-        Collection<Consent> availableConsents = testOrder.findAvailableConsents();
-        Assert.assertFalse(availableConsents.isEmpty());
-        testOrder.addConsent(TestUtils.getFirst(availableConsents));
+        Collection<RegulatoryInfo> availableRegulatoryInfos = testOrder.findAvailableRegulatoryInfos();
+        Assert.assertFalse(availableRegulatoryInfos.isEmpty());
+        testOrder.setRegulatoryInfos(availableRegulatoryInfos);
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(10950L);
@@ -111,10 +110,7 @@ public class ProductOrderContainerTest extends Arquillian {
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
 //        ProductOrderJiraUtil.placeOrder(testOrder, jiraService);
         productOrderDao.persist(testOrder.getProduct());
-        productOrderDao.persist(testOrder);
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
-
-
 }
 
     public void testSimpleNonBspProductOrder() throws Exception {

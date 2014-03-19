@@ -34,6 +34,9 @@ import java.util.Set;
 
 /**
  * EJB for receiving samples within BSP.
+ *
+ * The container test for this, ReceiveSamplesEjbTest, has been Disabled.  If this is re-introduced, enable it and add
+ * more to it.
  */
 @Stateful
 @RequestScoped

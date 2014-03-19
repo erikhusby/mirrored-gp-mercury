@@ -25,6 +25,8 @@ public class BillingEjb {
 
     private static final Log log = LogFactory.getLog(BillingEjb.class);
 
+    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT = "There are no items available to bill in this billing session";
+
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
      */
@@ -84,12 +86,8 @@ public class BillingEjb {
      * @param sessionKey The billing session's key
      */
     public void endSession(@Nonnull String sessionKey) {
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         endSession(billingSession);
-    }
-
-    public BillingSession findSessionByBusinessKey(@Nonnull String sessionKey) {
-        return billingSessionDao.findByBusinessKey(sessionKey);
     }
 
     /**
@@ -131,7 +129,7 @@ public class BillingEjb {
      */
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
-        BillingSession billingSession = billingSessionDao.findByBusinessKey(sessionKey);
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
 
         boolean errorsInBilling = false;
 
@@ -141,8 +139,9 @@ public class BillingEjb {
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-        if(unBilledQuoteImportItems.size() == 0) {
-            throw new BillingException("There are no items available to bill in this billing session");
+        if(unBilledQuoteImportItems.isEmpty()) {
+            endSession(billingSession);
+            throw new BillingException(NO_ITEMS_TO_BILL_ERROR_TEXT);
         }
 
         for (QuoteImportItem item : unBilledQuoteImportItems) {

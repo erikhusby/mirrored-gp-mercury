@@ -13,7 +13,6 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
@@ -32,13 +31,14 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 
 @Entity
 @Audited
 
-@Table(name = "CONSENT", schema = "athena",
+@Table(name = "REGULATORY_INFO", schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"identifier", "type"}))
-public class Consent implements Serializable, BusinessObject {
+public class RegulatoryInfo implements Serializable, BusinessObject {
     public enum Type {
         IRB("IRB Protocol"),
         ORSP_NOT_ENGAGED("ORSP Not Engaged"),
@@ -55,9 +55,9 @@ public class Consent implements Serializable, BusinessObject {
         }
     }
     @Id
-    @SequenceGenerator(name="seq_consent", schema = "athena", sequenceName="seq_consent")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_consent")
-    private Long consentId;
+    @SequenceGenerator(name="seq_regulatory_info", schema = "athena", sequenceName="seq_regulatory_info")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_regulatory_info")
+    private Long regulatoryInfoId;
 
     @Column(name="name", nullable = false)
     private String name;
@@ -69,24 +69,25 @@ public class Consent implements Serializable, BusinessObject {
     @Column(name="identifier", nullable = false)
     private String identifier;
 
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ProductOrder> productOrders;
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
+    private Collection<ResearchProject> researchProjects = new HashSet<>();
 
-    @ManyToMany(mappedBy = "consents", cascade = {CascadeType.PERSIST})
-    private Collection<ResearchProject> researchProjects;
-
-    public Consent() {
+    public RegulatoryInfo() {
     }
 
-    public Consent(String name, Type type, String identifier) {
+    public RegulatoryInfo(String name, Type type, String identifier) {
         this.name = name;
         this.type = type;
         this.identifier = identifier;
     }
 
+    public String getDisplayText() {
+        return getIdentifier() + " - " + getName();
+    }
+
     @Override
     public String getBusinessKey() {
-        return identifier;
+        return String.valueOf(getRegulatoryInfoId());
     }
 
     @Override
@@ -94,6 +95,9 @@ public class Consent implements Serializable, BusinessObject {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Type getType() {
         return type;
@@ -103,16 +107,20 @@ public class Consent implements Serializable, BusinessObject {
         return identifier;
     }
 
-    public Long getConsentId() {
-        return consentId;
+    public Long getRegulatoryInfoId() {
+        return regulatoryInfoId;
     }
 
     public Collection<ResearchProject> getResearchProjects() {
         return researchProjects;
     }
 
-    public Collection<ProductOrder> getProductOrders() {
-        return productOrders;
+    public void addResearchProject(ResearchProject researchProject) {
+        researchProjects.add(researchProject);
+    }
+
+    public void removeResearchProject(ResearchProject researchProject) {
+        researchProjects.remove(researchProject);
     }
 
     @Override
@@ -121,18 +129,18 @@ public class Consent implements Serializable, BusinessObject {
             return true;
         }
 
-        if (other == null || !OrmUtil.proxySafeIsInstance(other, Consent.class)) {
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, RegulatoryInfo.class)) {
             return false;
         }
 
-        Consent castOther = OrmUtil.proxySafeCast(other, Consent.class);
+        RegulatoryInfo castOther = OrmUtil.proxySafeCast(other, RegulatoryInfo.class);
 
         return new EqualsBuilder().append(getIdentifier(), castOther.getIdentifier())
-                .append(getType(), castOther.getType()).append(getName(), castOther.getName()).isEquals();
+                .append(getType(), castOther.getType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getIdentifier()).append(getType()).append(getName()).toHashCode();
+        return new HashCodeBuilder().append(getIdentifier()).append(getType()).toHashCode();
     }
 }

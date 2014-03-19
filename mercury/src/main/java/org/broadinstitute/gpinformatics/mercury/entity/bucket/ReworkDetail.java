@@ -38,11 +38,6 @@ public class ReworkDetail {
     @OneToMany(mappedBy = "reworkDetail")
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Deprecated
-    private ReworkEntry.ReworkReasonEnum reworkReason = ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR;
-
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name="user_defined_reason")
     private ReworkReason reason;
@@ -84,11 +79,6 @@ public class ReworkDetail {
 
     public void removeBucketEntry(BucketEntry bucketEntry) {
         bucketEntries.remove(bucketEntry);
-    }
-
-    @Deprecated
-    public ReworkEntry.ReworkReasonEnum getReworkReason() {
-        return reworkReason;
     }
 
     public ReworkLevel getReworkLevel() {

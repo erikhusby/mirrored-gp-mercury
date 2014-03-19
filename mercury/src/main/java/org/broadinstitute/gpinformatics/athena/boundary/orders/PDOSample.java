@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * Bean used by web service to get billing status
  * for a product order sample
@@ -27,6 +32,16 @@ public class PDOSample {
     private Boolean hasPrimaryPriceItemBeenBilled;
 
     private Boolean onRisk;
+
+    private List<String> riskCategories;
+
+    public List<String> getRiskCategories() {
+        return riskCategories;
+    }
+
+    public void setRiskCategories(List<String> riskCategories) {
+        this.riskCategories = riskCategories;
+    }
 
     public String getPdoKey() {
         return pdoKey;

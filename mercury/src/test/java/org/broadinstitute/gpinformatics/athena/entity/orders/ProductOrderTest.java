@@ -83,7 +83,6 @@ public class ProductOrderTest {
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("laneCount")
                 .ignoreProperty("modifiedBy")
-                .ignoreProperty("consents")
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
                 .ignoreProperty("modifiedDate")
@@ -99,6 +98,7 @@ public class ProductOrderTest {
                 .ignoreProperty("publicationDeadline")
                 .ignoreProperty("productOrderKit")
                 .ignoreProperty("skipQuoteReason")
+                .ignoreProperty("regulatoryInfos")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

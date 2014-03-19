@@ -30,16 +30,18 @@ public class PDOSamplesTest {
 
     private PDOSamples pdoSamples;
 
+    private Product riskyProduct;
+
     @BeforeMethod
     public void setUp() {
         pdoSamplesList = new ArrayList<>();
         pdoSamples = new PDOSamples();
-        pdoSamples.addPdoSamplePair(pdoKey, sample1, null, null);
-        pdoSamples.addPdoSamplePair(pdoKey, sample2, null, null);
+        pdoSamples.addPdoSample(pdoKey, sample1, null, null);
+        pdoSamples.addPdoSample(pdoKey, sample2, null, null);
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-        Product riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true);
+        riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true);
         ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 Arrays.asList(pdoSample1),
                         "newQuote", dummyProduct,
@@ -75,6 +77,9 @@ public class PDOSamplesTest {
         PDOSamples atRiskPDOSamples = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertTrue(!atRiskPDOSamples.getPdoSamples().isEmpty());
         Assert.assertEquals(atRiskPDOSamples.getAtRiskPdoSamples().size(), 1);
+        Assert.assertEquals(atRiskPDOSamples.getAtRiskPdoSamples().iterator().next().getRiskCategories().size(),1,"The risk categorized samples field in LCSET tickets is going to be filled in improperly.");
+        String riskCategory = atRiskPDOSamples.getAtRiskPdoSamples().iterator().next().getRiskCategories().iterator().next();
+        Assert.assertEquals(riskCategory,riskyProduct.getRiskCriteria().iterator().next().getCalculationString(),"The risk categorized samples field in LCSET tickets is not going to show the right value.");
     }
 
     private boolean doesPdoSamplePairContainSample(PDOSamples pdoSamples,String sampleName) {
@@ -88,7 +93,7 @@ public class PDOSamplesTest {
     }
 
     public void testSomeSamplesAreNotFound() {
-        pdoSamples.addPdoSamplePair("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
+        pdoSamples.addPdoSample("PDO-NOTFOUND", "SM-NOTTHERE", null, null);
 
         PDOSamples pdoSamplesResult = pdoSamples.buildOutputPDOSamplePairsFromInputAndQueryResults(pdoSamplesList);
         Assert.assertEquals(pdoSamplesResult.getPdoSamples().size(),3);
@@ -120,7 +125,7 @@ public class PDOSamplesTest {
     }
 
     public void testListToMapConversion() {
-        pdoSamples.addPdoSamplePair(pdoKey2, sample1, null, null);
+        pdoSamples.addPdoSample(pdoKey2, sample1, null, null);
         Map<String,Set<String>> pdoToSamples = pdoSamples.convertPdoSamplePairsListToMap();
         Assert.assertEquals(pdoToSamples.keySet().size(),2);
         Assert.assertTrue(pdoToSamples.containsKey(pdoKey));

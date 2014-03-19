@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.Consent;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderSampleTestFactory;
@@ -39,9 +39,12 @@ public class ProductOrderDBTestFactory {
         assertThat(projects, is(not(nullOrEmptyCollection())));
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
         long time = new Date().getTime();
-        Consent consent = new Consent("IRB Consent for - " + time
-                , Consent.Type.IRB, ""+time);
-                project.addConsent(consent);
+        RegulatoryInfo regulatoryInfo = new RegulatoryInfo("IRB Consent for - " + time
+                , RegulatoryInfo.Type.IRB, ""+time);
+                project.getRegulatoryInfos().add(regulatoryInfo);
+        regulatoryInfo = new RegulatoryInfo("Non-Human Subjects Research for - " + time
+                , RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH, ""+time);
+                project.getRegulatoryInfos().add(regulatoryInfo);
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName, Workflow.AGILENT_EXOME_EXPRESS
                 .getWorkflowName());
