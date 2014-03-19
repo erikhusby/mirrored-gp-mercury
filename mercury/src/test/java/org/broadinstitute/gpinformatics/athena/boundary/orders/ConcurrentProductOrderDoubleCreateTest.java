@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.ConcurrentBaseTe
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -32,18 +34,16 @@ import org.testng.annotations.Test;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
     private static final Log logger = LogFactory.getLog(ConcurrentProductOrderDoubleCreateTest.class);
@@ -57,35 +57,31 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     @Inject
     UserBean userBean;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private UserTransaction utx;
-
     private Long productOrderId;
     private String productOrderKey;
     private int numPlaceOrderThreadsRun = 0;
     private static Long basePdoKey;
+    private String startingKey;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyJiraService.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(ControlBusinessKeyJiraService.class);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
 
-        if (utx == null) {
+        if (productOrderEjb == null) {
             return;
         }
 
         userBean.loginTestUser();
 
         basePdoKey = (new Date()).getTime();
-        utx.begin();
 
         ProductOrder testOrder = ProductOrderTestFactory.createProductOrder("SM-test2", "SM-243w");
         testOrder.setQuoteId("MMM4AM");
-        testOrder.setCreatedBy(1933584925L);
+        testOrder.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         testOrder.setJiraTicketKey("");
         testOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
         productOrderEjb.persistProductOrder(ProductOrder.SaveType.CREATING, testOrder, new ArrayList<String>(),
@@ -93,13 +89,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
         productOrderId = testOrder.getProductOrderId();
         productOrderKey = testOrder.getBusinessKey();
-        utx.commit();
     }
-
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMultithreaded() throws Exception {
         Throwable pdoJiraError = null;
+        startingKey = "PDO-"+basePdoKey;
         PDOLookupThread pdoLookupThread = new PDOLookupThread();
         PDOLookupThread pdoLookupThread2 = new PDOLookupThread();
         Thread thread1 = new Thread(pdoLookupThread);
@@ -123,8 +118,14 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
             numErrors++;
         }
 
-        Assert.assertEquals(numErrors, 0,
+        logger.info("Finding PDO for order id: " + productOrderId);
+
+        ProductOrder alteredOrder = productOrderDao.findById(productOrderId);
+
+        Assert.assertEquals(numErrors, 1,
                 "At least one of the calls to place order called to Jira and created a new ticket when it wasn't expected");
+        Assert.assertEquals(alteredOrder.getBusinessKey(), startingKey,
+                "The Product order key was reset by a Second thread after being submitted.");
     }
 
     public class PDOLookupThread implements Runnable {
@@ -136,20 +137,23 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
             ProductOrderEjb threadEjb = null;
             ContextControl ctxCtrl = BeanProvider.getContextualReference(ContextControl.class);
             ctxCtrl.startContext(RequestScoped.class);
+            ctxCtrl.startContext(SessionScoped.class);
             try {
                 threadEjb = getBeanFromJNDI(ProductOrderEjb.class);
-                numPlaceOrderThreadsRun++;
+                int threadVal = numPlaceOrderThreadsRun++;
 
                 MessageCollection messageCollection = new MessageCollection();
 
-                logger.info("Thread "+numPlaceOrderThreadsRun+": coming in, jira reference is: " + productOrderKey);
+                logger.info("Thread " + threadVal + ": coming in, jira reference is: " + productOrderKey);
+
+                userBean.loginTestUser();
 
                 ProductOrder placedProductOrder =
-                        threadEjb.placeProductOrder(productOrderKey, productOrderId, messageCollection);
+                        threadEjb.placeProductOrder(productOrderId, productOrderKey, messageCollection);
 
-                logger.info("Thread "+numPlaceOrderThreadsRun+": coming out, jira reference is: " +
-                             placedProductOrder.getBusinessKey());
-                if (!placedProductOrder.getBusinessKey().equals("PDO-" + basePdoKey)) {
+                logger.info("Thread " + threadVal + ": coming out, jira reference is: " +
+                            placedProductOrder.getBusinessKey());
+                if (!placedProductOrder.getBusinessKey().equals(startingKey)) {
                     throw new RuntimeException("Unexpected PDO key returned");
                 }
             } catch (RuntimeException e) {
@@ -158,6 +162,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
                 throw e;
             } finally {
                 try {
+                    ctxCtrl.stopContext(SessionScoped.class);
                     ctxCtrl.stopContext(RequestScoped.class);
                 } catch (Throwable t) {
                     // not much to be done about this!
@@ -172,7 +177,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     }
 
     @Alternative
-    private static class DummyJiraService implements JiraService {
+    private static class ControlBusinessKeyJiraService implements JiraService {
 
         @Override
         public JiraIssue createIssue(CreateFields.ProjectType projectType, @Nullable String reporter,
@@ -221,7 +226,12 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
 
         @Override
         public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
-            return null;
+            Map<String, CustomFieldDefinition> customFields = new HashMap<>();
+            for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
+                customFields.put(requiredFieldName, new CustomFieldDefinition("stub_custom_field_" + requiredFieldName,
+                        requiredFieldName, true));
+            }
+            return customFields;
         }
 
         @Override

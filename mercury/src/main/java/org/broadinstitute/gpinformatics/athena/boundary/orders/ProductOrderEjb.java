@@ -998,20 +998,19 @@ public class ProductOrderEjb {
      * <p/>
      * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
      *
-     * @param businessKey       Business key by which to reference the currently persisted Product order
      * @param productOrderID    Database identifier of the Product order which we wish to find.  Used because at this
      *                          phase, the business key could change from draft-xxx to PDO-yyy.
+     * @param businessKey       Business key by which to reference the currently persisted Product order
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
-     *                          a value or throwing an exception.
      */
-    public ProductOrder placeProductOrder(@Nonnull String businessKey, @Nonnull Long productOrderID,
-                                          @Nonnull MessageCollection messageCollection) {
+    public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
+                                          MessageCollection messageCollection) {
         ProductOrder editOrder =
-                productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_FORCE_INCREMENT);
+                productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
 
         if (editOrder == null) {
-            throw new InformaticsServiceException("There is no product order associated with the business key " +
-                                                  businessKey);
+            throw new InformaticsServiceException(
+                    "The product order was not found: " + ((businessKey == null) ? "" : businessKey));
         }
         if (editOrder.isSubmitted()) {
             throw new InformaticsServiceException("This product order " + editOrder.getBusinessKey() +
@@ -1032,7 +1031,10 @@ public class ProductOrderEjb {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
-                messageCollection.addError("Unable to create a sample kit Request");
+                log.error("Unable to successfully complete the sample kit creation");
+                if(messageCollection != null) {
+                    messageCollection.addError("Unable to successfully complete the sample kit creation");
+                }
             }
         }
 
@@ -1047,9 +1049,11 @@ public class ProductOrderEjb {
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      *                          a value or throwing an exception.
      */
-    public void submitSampleKitRequest(ProductOrder order, MessageCollection messageCollection) {
+    public void submitSampleKitRequest(@Nonnull ProductOrder order, MessageCollection messageCollection) {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
-        messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+        if(messageCollection != null) {
+            messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+        }
     }
 }

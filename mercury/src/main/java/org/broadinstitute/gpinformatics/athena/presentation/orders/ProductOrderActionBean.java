@@ -1023,7 +1023,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         MessageCollection messageCollection = new MessageCollection();
         try {
 
-            productOrderEjb.placeProductOrder(originalBusinessKey, editOrder.getProductOrderId(), messageCollection);
+            productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey, messageCollection);
 
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
