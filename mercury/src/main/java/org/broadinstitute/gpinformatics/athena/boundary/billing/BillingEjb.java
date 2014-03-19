@@ -18,6 +18,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -203,7 +204,15 @@ public class BillingEjb {
         item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
     }
 
-    public void updateBilledPdos(Set<String> updatedPDOs) {
+    public void updateBilledPdos(Collection<BillingResult> billingResults) {
+
+        Collection<String> updatedPDOs = new ArrayList<>();
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
