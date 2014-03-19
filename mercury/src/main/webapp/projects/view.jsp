@@ -470,7 +470,7 @@
             </div>
         </div>
 
-        <div style="clear:both;">
+        <div style="clear:both;" class="tableBar">
             <h4 style="display:inline">Regulatory Information for ${actionBean.editResearchProject.title}</h4>
             <a href="#" id="addRegulatoryInfo" class="pull-right"><i class="icon-plus"></i>Add Regulatory Information</a>
         </div>
