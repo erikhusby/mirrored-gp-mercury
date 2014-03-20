@@ -175,7 +175,10 @@ public class ReworkEjb {
                 Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
-                    if (!sample.getProductOrder().isDraft()) {
+                    Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+                    boolean isWorkflowSupported = Workflow.SUPPORTED_WORKFLOWS.contains(workflow);
+
+                    if (!sample.getProductOrder().isDraft() && isWorkflowSupported) {
 
                         List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
                         Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
@@ -214,19 +217,23 @@ public class ReworkEjb {
                 Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
                 bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
                 for (ProductOrderSample sample : samples) {
-                    String sampleKey = sample.getName();
-                    String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-                    final BucketCandidate candidate =
-                            new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                    tubeBarcode, sample.getProductOrder(), null, "");
-                    if (!sample.getProductOrder().getProduct()
-                            .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
-                        candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                       " for Sample " + sampleKey +
-                                                       " is not part of the Exome family");
-                    }
+                    Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+                    boolean isWorkflowSupported = Workflow.SUPPORTED_WORKFLOWS.contains(workflow);
 
-                    bucketCandidates.add(candidate);
+                    if (isWorkflowSupported) {
+                        String sampleKey = sample.getName();
+                        String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
+
+
+                        BucketCandidate candidate = new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),tubeBarcode, sample.getProductOrder(), null, "");
+                        if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                                           " for Sample " + sampleKey +
+                                                           " is not part of the Exome family");
+                        }
+
+                        bucketCandidates.add(candidate);
+                    }
                 }
             }
         }
