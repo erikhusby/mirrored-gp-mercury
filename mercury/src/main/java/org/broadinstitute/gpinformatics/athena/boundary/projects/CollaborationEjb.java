@@ -108,13 +108,18 @@ public class CollaborationEjb {
             researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
         }
 
+        // If bspUser is still null, we must create a BSP user for the collaborator.
+        if (bspUser == null) {
+            throw new IllegalArgumentException("For now, Collaborator must be a known BSP user.");
+        }
+
         if (collaboratorEmail != null) {
             researchProject.setInvitationEmail(collaboratorEmail);
         }
 
         // Now tell the portal to create this collaborator.
          String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
-                 selectedCollaborator, researchProjectKey, collaborationMessage);
+                 bspUser.getDomainUserId(), researchProjectKey, collaborationMessage);
 
         researchProject.setCollaborationId(collaborationId);
     }

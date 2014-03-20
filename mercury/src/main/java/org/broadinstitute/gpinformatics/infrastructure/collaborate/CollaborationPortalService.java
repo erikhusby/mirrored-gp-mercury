@@ -6,8 +6,10 @@ import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.annotation.Nonnull;
@@ -52,6 +54,9 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         this.config = config;
     }
 
+    @Inject
+    private BSPUserList bspUserList;
+
     @Override
     protected void customizeClient(Client client) {
 //        specifyHttpAuthCredentials(client, portalConfig);
@@ -78,20 +83,24 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
             throw new IllegalArgumentException(
                     "Cannot start a collaboration on a research project with no Project Manager");
         }
+        BspUser projectManager = bspUserList.getById(researchProject.getProjectManagers()[0]);
+        if (projectManager == null) {
+            throw new IllegalArgumentException("Not a valid BSP Project Manager");
+        }
 
         String url = config.getUrlBase() + Endpoint.BEGIN_COLLABORATION.getSuffixUrl();
         WebResource resource = getJerseyClient().resource(url);
 
         CollaborationData collaboration =
                 new CollaborationData(researchProject.getName(), researchProject.getSynopsis(), specifiedCollaborator,
-                        selectedCollaborator, researchProject.getProjectManagers()[0], collaborationMessage);
+                        selectedCollaborator, projectManager.getDomainUserId(), collaborationMessage);
 
         resource.type(MediaType.APPLICATION_XML).post(ClientResponse.class, collaboration);
 
         try {
             return resource.accept(MediaType.TEXT_PLAIN).get(String.class);
         } catch (UniformInterfaceException e) {
-            throw new CollaborationNotFoundException("Could not find any quotes at " + url);
+            throw new CollaborationNotFoundException("Could not communicate with collaboration portal at " + url);
         } catch (ClientHandlerException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
@@ -106,7 +115,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         try {
             return resource.accept(MediaType.APPLICATION_XML).get(CollaborationData.class);
         } catch (UniformInterfaceException e) {
-            throw new CollaborationNotFoundException("Could not find any quotes at " + url);
+            throw new CollaborationNotFoundException("Could not communicate with collaboration portal at " + url);
         } catch (ClientHandlerException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
