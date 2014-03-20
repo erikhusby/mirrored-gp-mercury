@@ -164,7 +164,7 @@ public class IlluminaRunResource implements Serializable {
             }
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(),
                     tZamboniLane.getSequencedLibraryName(), tZamboniLane.getSequencedLibraryCreationDate(),
-                    tZamboniLane.getLoadingConcentration()));
+                    tZamboniLane.getLoadingConcentration(), tZamboniLane.getActualReadStructure()));
         }
 
         return runBean;

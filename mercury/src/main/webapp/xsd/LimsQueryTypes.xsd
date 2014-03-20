@@ -116,6 +116,13 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:complexType name="laneReadStructure">
+        <xsd:sequence>
+            <xsd:element name="laneNumber" type="xsd:int"/>
+            <xsd:element name="actualReadStructure" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
     <xsd:complexType name="readStructureRequest">
         <xsd:sequence>
             <xsd:element name="runName" type="xsd:string" />
@@ -129,6 +136,7 @@
             <!-- if something goes wrong during the processing of this,
             here's a human readable error string -->
             <xsd:element name="error" type="xsd:string" />
+            <xsd:element name="laneStructures" type="laneReadStructure" maxOccurs="unbounded"/>
         </xsd:sequence>
     </xsd:complexType>
 
