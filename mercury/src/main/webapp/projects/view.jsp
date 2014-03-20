@@ -53,7 +53,12 @@
             function searchRegulatoryInfo(event) {
                 event.preventDefault();
                 $j.ajax({
-                    url: '${ctxpath}/projects/project.action?regulatoryInfoQuery=&q=' + $j('#regulatoryInfoQuery').val(),
+                    url: '${ctxpath}/projects/project.action',
+                    data: {
+                        regulatoryInfoQuery: '',
+                        researchProject: '${actionBean.editResearchProject.businessKey}',
+                        q: $j('#regulatoryInfoQuery').val()
+                    },
                     dataType: 'json',
                     success: showRegulatoryInfo
                 });
@@ -73,6 +78,9 @@
                     var info = infos[i];
                     var addButton = $j('<input type="submit" value="Add" class="btn">');
                     addButton.attr('name', info.id);
+                    if (info.alreadyAdded) {
+                        addButton.prop('disabled', true);
+                    }
                     var row = $j('<tr/>');
                     row.append($j('<td/>').append(info.identifier));
                     row.append($j('<td/>').append(info.alias));
@@ -399,7 +407,8 @@
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
             <div id="addRegulatoryInfoDialogSheet1">
                 <p>Enter the IRB Protocol or ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
-                <form id="regulatoryInfoSearchForm">
+                <stripes:form id="regulatoryInfoSearchForm" beanclass="${actionBean.class.name}">
+                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
                     <div class="control-group">
                         <stripes:label for="regulatoryInfoQuery" class="control-label">Identifier</stripes:label>
                         <div class="controls">
@@ -407,7 +416,7 @@
                             <button id="regulatoryInfoSearchButton" class="btn btn-primary">Search</button>
                         </div>
                     </div>
-                </form>
+                </stripes:form>
             </div>
             <div id="addRegulatoryInfoDialogSheet2Found">
                 <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
@@ -505,7 +514,7 @@
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
                             <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId}, '${regulatoryInfo.identifier}', '${regulatoryInfo.type}', '${regulatoryInfo.name}');">Edit...</a></td>
-                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" class="btn">Remove</stripes:submit></td>
+                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${!regulatoryInfo.productOrders.isEmpty()}" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>
                 </tbody>

@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
@@ -72,6 +73,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
     private Collection<ResearchProject> researchProjects = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
+    private Collection<ProductOrder> productOrders = new HashSet<>();
+
     public RegulatoryInfo() {
     }
 
@@ -121,6 +125,10 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
 
     public void removeResearchProject(ResearchProject researchProject) {
         researchProjects.remove(researchProject);
+    }
+
+    public Collection<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     @Override
