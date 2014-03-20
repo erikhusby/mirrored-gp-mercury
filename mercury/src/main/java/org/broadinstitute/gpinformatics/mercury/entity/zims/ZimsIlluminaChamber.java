@@ -28,6 +28,9 @@ public class ZimsIlluminaChamber {
     @JsonProperty("loadingConcentration")
     private Double loadingConcentration;
 
+    @JsonProperty("actualReadStructure")
+    private String actualReadStructure;
+
     private static SimpleDateFormat creationTimeDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     public ZimsIlluminaChamber() {}
@@ -38,13 +41,15 @@ public class ZimsIlluminaChamber {
             final String primer,
             final String sequencedLibraryName,
             String creationTime,
-            Double loadingConcentration) {
+            Double loadingConcentration,
+            String actualReadStructure) {
         this.chamberName = Short.toString(chamberName);
         this.libraries = libraries;
         this.primer = primer;
         this.sequencedLibraryName = sequencedLibraryName;
         this.creationTime = creationTime;
         this.loadingConcentration = loadingConcentration;
+        this.actualReadStructure = actualReadStructure;
     }
 
     public ZimsIlluminaChamber(
@@ -53,9 +58,10 @@ public class ZimsIlluminaChamber {
             final String primer,
             final String sequencedLibraryName,
             final Date creationTime,
-            Double loadingConcentration) {
+            Double loadingConcentration,
+            String actualReadStructure) {
         this(chamberName, libraries, primer, sequencedLibraryName, creationTimeDateFormat.format(creationTime),
-                loadingConcentration);
+                loadingConcentration, actualReadStructure);
     }
     
     public String getPrimer() {
@@ -80,5 +86,9 @@ public class ZimsIlluminaChamber {
 
     public Double getLoadingConcentration() {
         return loadingConcentration;
+    }
+
+    public String getActualReadStructure() {
+        return actualReadStructure;
     }
 }

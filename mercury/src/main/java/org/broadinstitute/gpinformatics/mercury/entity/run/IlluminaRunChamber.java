@@ -3,34 +3,44 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
+import org.hibernate.envers.Audited;
 
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import java.util.HashSet;
 import java.util.Set;
 
+@Entity
+@Audited
 public class IlluminaRunChamber extends RunChamber {
 
+    /** For JPA. */
+    protected IlluminaRunChamber() {
+    }
+
+    @ManyToOne
     private IlluminaFlowcell flowcell;
     
     private int laneNumber;
 
-    private LabVessel library;
-    
-    public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber,LabVessel library) {
-        super("don't know");
+    public IlluminaRunChamber(IlluminaFlowcell flowcell, int laneNumber) {
+        super(flowcell.getLabel() + "_lane_" + laneNumber);
         this.flowcell = flowcell;
         this.laneNumber = laneNumber;
-        this.library = library;
     }
 
     @Override
     public String getChamberName() {
-        return Integer.toString(this.laneNumber);
+        return Integer.toString(laneNumber);
     }
 
     public int getLaneNumber() {
-        return this.laneNumber;
+        return laneNumber;
+    }
+
+    public IlluminaFlowcell getFlowcell() {
+        return flowcell;
     }
 
     @Override
