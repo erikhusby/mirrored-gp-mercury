@@ -2136,7 +2136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         }
         if (editOrder.isSubmitted()) {
-            requireField((boolean)editOrder.isAttestationConfirmed(),
+            requireField((boolean)editOrder.getAttestationConfirmed(),
                     "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                     action);
         }
