@@ -1500,7 +1500,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+
     public Boolean isAttestationConfirmed() {
+        return getAttestationConfirmed();
+    }
+
+    public Boolean getAttestationConfirmed() {
         if (attestationConfirmed == null) {
             attestationConfirmed = false;
         }
