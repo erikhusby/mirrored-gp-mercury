@@ -229,7 +229,7 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim2611() {
         // Override routing for shearing transfer
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 401897L);
