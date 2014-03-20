@@ -596,6 +596,30 @@ public class ReworkEjbTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testWorkflowSensitivityOfBucketCandidates() throws Exception {
+        createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
+
+        // first set the workflow to something unsupported.  nothing should end up as a candidate.
+        Workflow initialWorkflow = null;
+        for (ProductOrderSample pdoSample : bucketReadySamples1) {
+            initialWorkflow = pdoSample.getProductOrder().getProduct().getWorkflow();
+            pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.WHOLE_GENOME);
+        }
+        Collection<ReworkEjb.BucketCandidate> candidates =
+                reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
+
+        // reset the workflow to a supported workflow
+        for (ProductOrderSample pdoSample : bucketReadySamples1) {
+            pdoSample.getProductOrder().getProduct().setWorkflow(initialWorkflow);
+        }
+
+        Assert.assertEquals(candidates.size(), 0,"Unsupported workflows may be added incorrectly to the bucket, resulting in general ExEx panic and support burden.");
+        // now requery with a supported workflow and you should have bucket candidates
+        candidates = reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
+        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testHappyPathFindCandidatesBySampleId() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
