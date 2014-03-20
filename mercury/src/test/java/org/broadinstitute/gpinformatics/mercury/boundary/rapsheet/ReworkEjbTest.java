@@ -600,9 +600,7 @@ public class ReworkEjbTest extends Arquillian {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
         // first set the workflow to something unsupported.  nothing should end up as a candidate.
-        Workflow initialWorkflow = null;
         for (ProductOrderSample pdoSample : bucketReadySamples1) {
-            initialWorkflow = pdoSample.getProductOrder().getProduct().getWorkflow();
             pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.WHOLE_GENOME);
         }
         Collection<ReworkEjb.BucketCandidate> candidates =
@@ -610,7 +608,7 @@ public class ReworkEjbTest extends Arquillian {
 
         // reset the workflow to a supported workflow
         for (ProductOrderSample pdoSample : bucketReadySamples1) {
-            pdoSample.getProductOrder().getProduct().setWorkflow(initialWorkflow);
+            pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         }
 
         Assert.assertEquals(candidates.size(), 0,"Unsupported workflows may be added incorrectly to the bucket, resulting in general ExEx panic and support burden.");
