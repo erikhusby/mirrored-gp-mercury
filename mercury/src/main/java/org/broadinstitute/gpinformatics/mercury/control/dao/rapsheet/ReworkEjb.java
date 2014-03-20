@@ -176,9 +176,8 @@ public class ReworkEjb {
                 // make sure we have a matching product order sample
                 for (ProductOrderSample sample : productOrderSamples) {
                     Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-                    boolean isWorkflowSupported = Workflow.SUPPORTED_WORKFLOWS.contains(workflow);
 
-                    if (!sample.getProductOrder().isDraft() && isWorkflowSupported) {
+                    if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
 
                         List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
                         Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
@@ -218,9 +217,8 @@ public class ReworkEjb {
                 bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
                 for (ProductOrderSample sample : samples) {
                     Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-                    boolean isWorkflowSupported = Workflow.SUPPORTED_WORKFLOWS.contains(workflow);
 
-                    if (isWorkflowSupported) {
+                    if (Workflow.isWorkflowSupportedByMercury(workflow)) {
                         String sampleKey = sample.getName();
                         String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
 
