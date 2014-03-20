@@ -743,8 +743,14 @@ function formatInput(item) {
                         ${regulatoryInfo.displayText}<br/>
                 </c:forEach>
             </c:when>
+
                 <c:otherwise>
-                    No regulatory information entered.
+                    <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
+                        Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
+                    </c:when>
+                        <c:otherwise>
+                            No regulatory information entered.
+                        </c:otherwise></c:choose>
                 </c:otherwise>
             </c:choose>
         </div>

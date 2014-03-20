@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.hibernate.envers.Audited;
@@ -72,6 +73,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
     private Collection<ResearchProject> researchProjects = new HashSet<>();
 
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "regulatoryInfos")
+    private Collection<ProductOrder> productOrders = new HashSet<>();
+
     public RegulatoryInfo() {
     }
 
@@ -95,6 +99,9 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Type getType() {
         return type;
@@ -120,6 +127,10 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         researchProjects.remove(researchProject);
     }
 
+    public Collection<ProductOrder> getProductOrders() {
+        return productOrders;
+    }
+
     @Override
     public boolean equals(Object other) {
         if(this == other) {
@@ -133,11 +144,11 @@ public class RegulatoryInfo implements Serializable, BusinessObject {
         RegulatoryInfo castOther = OrmUtil.proxySafeCast(other, RegulatoryInfo.class);
 
         return new EqualsBuilder().append(getIdentifier(), castOther.getIdentifier())
-                .append(getType(), castOther.getType()).append(getName(), castOther.getName()).isEquals();
+                .append(getType(), castOther.getType()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getIdentifier()).append(getType()).append(getName()).toHashCode();
+        return new HashCodeBuilder().append(getIdentifier()).append(getType()).toHashCode();
     }
 }

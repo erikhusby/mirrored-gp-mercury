@@ -889,6 +889,49 @@
         <addUniqueConstraint tableName="regulatory_info" columnNames="name" schemaName="athena" constraintName="UNQ_REGULATORY_INFO_ALIAS"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2451-1" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="skip_regulatory_reason" tableName="product_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="skip_regulatory_reason" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2451-2" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="skip_regulatory_reason" tableName="product_order_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud" schemaName="athena">
+            <column name="skip_regulatory_reason" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2451-3" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="attestation_confirmed" tableName="product_order" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="attestation_confirmed" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-2451-4" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="attestation_confirmed" tableName="product_order_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud" schemaName="athena">
+            <column name="attestation_confirmed" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+
     <changeSet id="GPLIM-2572-add-version" author="scottmat">
         <preConditions>
             <not>

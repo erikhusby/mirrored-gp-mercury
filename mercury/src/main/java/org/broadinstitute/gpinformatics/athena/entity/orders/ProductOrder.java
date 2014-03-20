@@ -50,6 +50,7 @@ import javax.persistence.Transient;
 import javax.persistence.Version;
 import java.io.Serializable;
 import java.text.MessageFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,6 +76,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
+    // Date needs to be validated (could be 4/7/2014).
+    public static final String IRB_REQUIRED_START_DATE_STRING = "04/14/2014";
+
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
         return researchProject.getRegulatoryInfos();
     }
@@ -85,6 +89,21 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
+    }
+
+    public boolean regulatoryRequirementsMet() {
+        Date testDate=getPlacedDate();
+        if (getPlacedDate() == null) {
+            testDate = new Date();
+        }
+        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
+            return !getRegulatoryInfos().isEmpty();
+        }
+        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
+    }
+
+    public boolean canSkipRegulatoryRequirements() {
+        return !StringUtils.isBlank(skipRegulatoryReason);
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -127,10 +146,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "TITLE", unique = true, length = 255, nullable = false)
     private String title = "";
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     private ResearchProject researchProject;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -189,6 +208,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Version
     private Long version;
+
+    @Column(name = "SKIP_REGULATORY_REASON")
+    private String skipRegulatoryReason;
+
+    @Column(name = "attestation_confirmed")
+    private Boolean attestationConfirmed=false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -933,6 +958,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.skipQuoteReason = skipQuoteReason;
     }
 
+    public String getSkipRegulatoryReason() {
+        return skipRegulatoryReason;
+    }
+
+    public void setSkipRegulatoryReason(String skipRegulatoryReason) {
+        this.skipRegulatoryReason = skipRegulatoryReason;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -1469,6 +1502,30 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public void invalidate() {
             countsValid = false;
         }
+    }
+
+    public Boolean isAttestationConfirmed() {
+        if (attestationConfirmed == null) {
+            attestationConfirmed = false;
+        }
+        return attestationConfirmed;
+    }
+
+    public void setAttestationConfirmed(Boolean attestationConfirmed) {
+        this.attestationConfirmed = attestationConfirmed;
+    }
+
+    public static Date getIrbRequiredStartDate() {
+        Date irbRequiredStartDate;
+        Date date;
+        try {
+            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(IRB_REQUIRED_START_DATE_STRING);
+        } catch (ParseException e) {
+            date = new Date();
+        }
+        irbRequiredStartDate =
+                            org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
+        return irbRequiredStartDate;
     }
 
 
