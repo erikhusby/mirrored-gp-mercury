@@ -54,7 +54,7 @@ public class SequencingRunEtlDbFreeTest {
     public void testEtlFlags() throws Exception {
         replay(mocks);
 
-        assertEquals(tst.entityClass, SequencingRun.class);
+        assertEquals(tst.entityClass, IlluminaSequencingRun.class);
         assertEquals(tst.baseFilename, "sequencing_run");
         assertEquals(tst.entityId(run), (Long) entityId);
 
@@ -62,7 +62,7 @@ public class SequencingRunEtlDbFreeTest {
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        expect(dao.findById(SequencingRun.class, -1L)).andReturn(null);
+        expect(dao.findById(IlluminaSequencingRun.class, -1L)).andReturn(null);
         replay(mocks);
 
         assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
@@ -71,7 +71,7 @@ public class SequencingRunEtlDbFreeTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
+        expect(dao.findById(IlluminaSequencingRun.class, entityId)).andReturn(run);
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
