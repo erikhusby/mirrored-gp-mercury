@@ -273,6 +273,7 @@
             if (projectKey == null || projectKey == "") {
                 $j("#regulatorySelect").text('When you select a project, its regulatory options will show up here');
                 $j("#regulatoryActive").hide();
+                $j("#attestationDiv").hide();
                 $j("#skipRegulatoryDiv").hide();
                 $j("#regulatoryInfo").hide();
                 skipRegulatory = false;
@@ -285,6 +286,7 @@
                  }
                 $j("#regulatoryInfo").show();
                 $j("#regulatoryActive").show();
+                $j("#attestationDiv").show();
 
             }
             handleUpdateRegulatory(skipRegulatory);
@@ -888,7 +890,7 @@
                                               maxlength="255"/>
                             </div>
                             <div id="regulatorySelect" class="controls controls-text"></div>
-                            <div class="controls controls-text">
+                            <div id="attestationDiv" class="controls controls-text">
 
                                 <stripes:checkbox name="editOrder.attestationConfirmed" id="attestationConfirmed"/>
                                 By checking this box, I am attesting that I am fully aware of the regulatory
