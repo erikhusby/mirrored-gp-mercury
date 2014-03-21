@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -111,11 +112,13 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         int numErrors = 0;
         if (pdoLookupThread.getError() != null) {
             pdoJiraError = pdoLookupThread.getError();
+            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
         if (pdoLookupThread2.getError() != null) {
             pdoJiraError = pdoLookupThread2.getError();
+            Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
         }
