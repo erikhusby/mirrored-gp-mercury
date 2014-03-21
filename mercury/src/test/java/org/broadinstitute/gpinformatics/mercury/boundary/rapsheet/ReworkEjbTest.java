@@ -473,7 +473,7 @@ public class ReworkEjbTest extends Arquillian {
         existingReworks = reworkEjb.getVesselsForRework("Pico/Plating Bucket").size();
 
         bucketDao.persist(pBucket);
-
+        resetExExProductWorkflow();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -489,6 +489,7 @@ public class ReworkEjbTest extends Arquillian {
         nonExExProductOrder.setOrderStatus(ProductOrder.OrderStatus.Completed);
         extraProductOrder = productOrderDao.findByBusinessKey(extraProductOrder.getBusinessKey());
         extraProductOrder.setOrderStatus(ProductOrder.OrderStatus.Completed);
+        resetExExProductWorkflow();
 
         List<ProductOrder> ordersToUpdate = new ArrayList<>();
 
@@ -1332,6 +1333,15 @@ public class ReworkEjbTest extends Arquillian {
                 reworkEjb.findBucketCandidatePdos(bucketEntryIds);
         Assert.assertFalse(bucketCandidatePdos.isEmpty());
         Assert.assertEquals(bucketCandidatePdos.size(), 2);
+    }
+
+    private void resetExExProductWorkflow() {
+        if (exExProductOrder2 != null) {
+            exExProductOrder2.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        }
+        if (exExProductOrder1 != null) {
+            exExProductOrder1.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        }
     }
 
 }
