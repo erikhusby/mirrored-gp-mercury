@@ -370,9 +370,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 }
                 for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                     BucketEntry entry = iter.next();
-                    if (
-//                            mapPdoKeyToWorkflow.containsKey(entry.getPoBusinessKey()) &&
-                        !selectedWorkflowDef.getName().equals(
+                    if (!selectedWorkflowDef.getName().equals(
                             mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()).getWorkflowName())) {
                         iter.remove();
                         bucketEntries.remove(entry);
