@@ -47,6 +47,7 @@ import javax.persistence.PostLoad;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -96,9 +97,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             testDate = new Date();
         }
         if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
-            return !getRegulatoryInfos().isEmpty();
+            return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
         }
         return true;
+    }
+
+    public boolean canSkipRegulatoryRequirements() {
+        return !StringUtils.isBlank(skipRegulatoryReason);
     }
 
     public enum SaveType {CREATING, UPDATING}
@@ -141,10 +146,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "TITLE", unique = true, length = 255, nullable = false)
     private String title = "";
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private ResearchProject researchProject;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -200,6 +205,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
+
+    @Version
+    private Long version;
+
+    @Column(name = "SKIP_REGULATORY_REASON")
+    private String skipRegulatoryReason;
+
+    @Column(name = "attestation_confirmed")
+    private Boolean attestationConfirmed=false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -944,6 +958,14 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         this.skipQuoteReason = skipQuoteReason;
     }
 
+    public String getSkipRegulatoryReason() {
+        return skipRegulatoryReason;
+    }
+
+    public void setSkipRegulatoryReason(String skipRegulatoryReason) {
+        this.skipRegulatoryReason = skipRegulatoryReason;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -1480,6 +1502,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         public void invalidate() {
             countsValid = false;
         }
+    }
+
+
+    public Boolean isAttestationConfirmed() {
+        return getAttestationConfirmed();
+    }
+
+    public Boolean getAttestationConfirmed() {
+        if (attestationConfirmed == null) {
+            attestationConfirmed = false;
+        }
+        return attestationConfirmed;
+    }
+
+    public void setAttestationConfirmed(Boolean attestationConfirmed) {
+        this.attestationConfirmed = attestationConfirmed;
     }
 
     public static Date getIrbRequiredStartDate() {

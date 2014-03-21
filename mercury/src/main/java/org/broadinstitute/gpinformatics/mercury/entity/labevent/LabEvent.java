@@ -422,6 +422,9 @@ todo jmt adder methods
     }
 
     public void addComputedLcSets(Set<LabBatch> lcSets) {
+        if (computedLcSets == null) {
+            computedLcSets = new HashSet<>();
+        }
         computedLcSets.addAll(lcSets);
     }
 

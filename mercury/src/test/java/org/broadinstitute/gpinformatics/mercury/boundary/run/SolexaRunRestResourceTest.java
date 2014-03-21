@@ -18,14 +18,19 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
+import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -48,7 +53,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
@@ -109,7 +114,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
          *
          */
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(DEV, AthenaClientServiceStub.class,
+                .buildMercuryWarWithAlternatives(TEST, AthenaClientServiceStub.class,
                         BSPSampleSearchServiceStub.class);
     }
 
@@ -302,5 +307,37 @@ public class SolexaRunRestResourceTest extends Arquillian {
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getImagedArea(),
                 readStructureData.getImagedArea());
 
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @RunAsClient
+    public void testMercuryLanes(@ArquillianResource URL baseUrl) {
+        String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
+
+        ReadStructureRequest readStructureData = new ReadStructureRequest();
+        readStructureData.setRunBarcode("H7HBEADXX140225");
+        readStructureData.setImagedArea(20.23932);
+        readStructureData.setLanesSequenced("2,5");
+        readStructureData.setActualReadStructure("71T8B8B101T");
+        readStructureData.setActualReadStructure("76T8B8B76T");
+        for (int i = 1; i <= 8; i++) {
+            LaneReadStructure laneReadStructure = new LaneReadStructure();
+            laneReadStructure.setLaneNumber(i);
+            laneReadStructure.setActualReadStructure("STRUC" + i);
+            readStructureData.getLaneStructures().add(laneReadStructure);
+        }
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+        ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
+                type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).
+                post(ReadStructureRequest.class);
+
+        ZimsIlluminaRun zimsIlluminaRun = IlluminaRunResourceLiveTest.getZimsIlluminaRun(baseUrl,
+                "140225_SL-HDJ_0314_AFCH7HBEADXX");
+        for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
+            Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(), "STRUC" + zimsIlluminaChamber.getName());
+        }
     }
 }

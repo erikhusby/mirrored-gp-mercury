@@ -10,7 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
-import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
 import javax.annotation.Nonnull;
@@ -25,7 +26,7 @@ import java.text.MessageFormat;
  */
 public class IlluminaSequencingRunFactory implements Serializable {
 
-    private final static Log log = LogFactory.getLog(IlluminaSequencingRunFactory.class);
+    private static final Log log = LogFactory.getLog(IlluminaSequencingRunFactory.class);
 
     private JiraCommentUtil jiraCommentUtil;
 
@@ -44,7 +45,7 @@ public class IlluminaSequencingRunFactory implements Serializable {
      */
     @DaoFree
     public ReadStructureRequest storeReadsStructureDBFree(ReadStructureRequest readStructureRequest,
-                                                           SequencingRun run) {
+                                                           IlluminaSequencingRun run) {
 
         if (StringUtils.isBlank(readStructureRequest.getActualReadStructure()) &&
             StringUtils.isBlank(readStructureRequest.getSetupReadStructure()) &&
@@ -68,6 +69,17 @@ public class IlluminaSequencingRunFactory implements Serializable {
 
         if (StringUtils.isNotBlank(readStructureRequest.getLanesSequenced())) {
             run.setLanesSequenced(readStructureRequest.getLanesSequenced());
+        }
+
+        for (LaneReadStructure laneReadStructure : readStructureRequest.getLaneStructures()) {
+            IlluminaSequencingRunChamber sequencingRunChamber = run.getSequencingRunChamber(
+                    laneReadStructure.getLaneNumber());
+            if (sequencingRunChamber == null) {
+                sequencingRunChamber = new IlluminaSequencingRunChamber(run,
+                        laneReadStructure.getLaneNumber());
+                run.addSequencingRunChamber(sequencingRunChamber);
+            }
+            sequencingRunChamber.setActualReadStructure(laneReadStructure.getActualReadStructure());
         }
 
         return LimsQueryObjectFactory.createReadStructureRequest(run);

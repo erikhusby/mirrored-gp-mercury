@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * This represents the workflow associated with a product.
@@ -18,6 +19,10 @@ public enum Workflow {
     /** Use this to indicate that no workflow is associated. */
     NONE(null, false);
 
+    /**
+     * The name of the workflow. More than that, this is the value that is persisted (at least in some cases, i.e.,
+     * Product.workflowName) and is therefore not necessarily appropriate as a UI label (i.e., null for the NONE value).
+     */
     @Nullable
     private final String name;
 
@@ -41,6 +46,10 @@ public enum Workflow {
         add(AGILENT_EXOME_EXPRESS);
     }};
 
+    public static boolean isWorkflowSupportedByMercury(Workflow workflow) {
+        return SUPPORTED_WORKFLOWS.contains(workflow);
+    }
+
     @Nullable
     public String getWorkflowName() {
         return name;
@@ -58,13 +67,24 @@ public enum Workflow {
         return NONE;
     }
 
-    public static Workflow[] getVisibleWorkflowList() {
+    /**
+     * Returns a list of the workflows for which the persisted workflow name is also usable as a label in the UI. This
+     * excludes, for example, the NONE value which persists as null since null does not make a good UI label. UIs should
+     * therefore use this list and, if applicable, manually add an option for the NONE value.
+     *
+     * The need for this method could be removed by adding a displayLabel property to Workflow. Additionally, the NONE
+     * value should probably be moved to the top so that it shows up as the first option instead of the last option, but
+     * that's more of a judgement call for the UI. The current implementation actually gives the UI more flexibility
+     * about where to render the NONE option (or whether or not to render it at all).
+     *
+     * @return
+     */
+    public static List<Workflow> getVisibleWorkflowList() {
         // Remove the none from the list because the names are stored in the DB and NONE is null for that.
-        Workflow[] workflows = new Workflow[Workflow.values().length - 1];
-        int i = 0;
+        List<Workflow> workflows = new ArrayList<>();
         for (Workflow currentWorkflow : Workflow.values()) {
             if (currentWorkflow.displayable) {
-                workflows[i++] = currentWorkflow;
+                workflows.add(currentWorkflow);
             }
         }
 

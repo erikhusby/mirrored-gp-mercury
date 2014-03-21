@@ -452,23 +452,55 @@ public class ProductOrderActionBeanTest {
     }
 
     @DataProvider(name = "regulatoryOptionsDataProvider")
-    public Object[][] regulatoryOptionsDataProvider() throws ParseException {
+    public Iterator<Object []> regulatoryOptionsDataProvider() throws ParseException {
         Date grandfatheredInDate = DateUtils.parseDate("01/01/2014");
         Date newDate = DateUtils.parseDate(ProductOrder.IRB_REQUIRED_START_DATE_STRING);
-
+        String skipReviewReason = "not human subjects research";
         RegulatoryInfo regulatoryInfo = new RegulatoryInfo("TEST-1234", RegulatoryInfo.Type.IRB, "12345");
+        List<Object[]> testCases = new ArrayList<>();
+        for (String action : Arrays.asList(ProductOrderActionBean.PLACE_ORDER, ProductOrderActionBean.VALIDATE_ORDER)) {
+            testCases.add(new Object[]{action, false, "", regulatoryInfo, newDate, true});
+            testCases.add(new Object[]{action, false, "", null, newDate, false});
+            testCases.add(new Object[]{action, false, "", regulatoryInfo, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, false, "", null, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, newDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, null, newDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, null, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, null, regulatoryInfo, newDate, true});
+            testCases.add(new Object[]{action, true, null, null, newDate, false});
+            testCases.add(new Object[]{action, true, null, regulatoryInfo, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, null, null, grandfatheredInDate, true});
+        }
 
-        return new Object[][]{
-                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,newDate, true, "Has IRB and Past IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, null,newDate, false, "No IRB and Past IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, regulatoryInfo,grandfatheredInDate, true, "Has IRB but before IRB_REQUIRED_START_DATE"},
-                {ProductOrderActionBean.PLACE_ORDER, null,grandfatheredInDate, true, "No IRB but before IRB_REQUIRED_START_DATE"}
-        };
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", null, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, grandfatheredInDate,
+                true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", null, grandfatheredInDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo, newDate,
+                true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, null, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo,
+                grandfatheredInDate, true});
+        testCases
+                .add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, null, grandfatheredInDate,
+                        true});
+        // skipValidation is checked but no reason is given. This should fail even if the dates are valid
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, newDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, null, newDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, grandfatheredInDate,
+                false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, null, grandfatheredInDate, false});
+
+        return testCases.iterator();
     }
 
 
     @Test(dataProvider = "regulatoryOptionsDataProvider")
-    public void testRegulatoryInformation(String action, RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass, String failMessage) throws ParseException {
+    public void testRegulatoryInformation(String action, boolean skipRegulatory, String skipRegulatoryReason,
+                                          RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass)
+            throws ParseException {
         // Set up initial state for objects and validate
         getSampleInitiationProductOrder();
         actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().clear();
@@ -478,17 +510,30 @@ public class ProductOrderActionBeanTest {
         actionBean.clearValidationErrors();
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
+
         // Now test test validation using passed-in parameters.
+        actionBean.setSkipRegulatoryInfo(skipRegulatory);
+        actionBean.getEditOrder().setSkipRegulatoryReason(skipRegulatoryReason);
         actionBean.getEditOrder().setPlacedDate(placedDate);
         if (regulatoryInfo != null) {
             actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
             actionBean.getEditOrder().getRegulatoryInfos().add(regulatoryInfo);
         }
+        actionBean.getEditOrder().setAttestationConfirmed(true);
 
-        actionBean.validateRegulatoryInformation(ProductOrderActionBean.VALIDATE_ORDER);
+        actionBean.validateRegulatoryInformation(action);
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
+        actionBean.getEditOrder().setAttestationConfirmed(false);
+        actionBean.validateRegulatoryInformation(action);
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
 
-        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass, failMessage);
+        actionBean.getEditOrder().setAttestationConfirmed(false);
+        actionBean.getEditOrder().setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        actionBean.validateRegulatoryInformation(action);
+        Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), false);
+
     }
+
 
 
 }

@@ -28,6 +28,7 @@ import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
@@ -42,7 +43,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -250,6 +250,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
+    private boolean skipRegulatoryInfo;
+
     /*
      * Due to certain items (namely as a result of token input fields) not properly being bound during the validation
      * phase, we are moving annotation based validations to be specifically called out in the code after updating the
@@ -352,7 +354,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return appConfig.getUrl() + ACTIONBEAN_URL_BINDING + "?" + URLEncodedUtils
                 .format(parameters, CharEncoding.UTF_8);
     }
-    private List<Long> selectedRegulatoryIds=new ArrayList<>();
+
+    private List<Long> selectedRegulatoryIds = new ArrayList<>();
 
     public List<Long> getSelectedRegulatoryIds() {
         return selectedRegulatoryIds;
@@ -370,7 +373,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
-            editOrder = productOrderDao.findByBusinessKey(productOrder);
+            editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(productOrder);
             if (editOrder != null) {
                 progressFetcher.loadProgress(productOrderDao, Collections.singletonList(editOrder.getProductOrderId()));
             }
@@ -382,9 +385,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
-        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap=new HashMap<>();
+        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap = new HashMap<>();
         projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfos());
-        for (ResearchProject project : researchProject.getAllParents()){
+        for (ResearchProject project : researchProject.getAllParents()) {
             projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
         }
         return projectRegulatoryMap;
@@ -470,7 +473,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-
         if (StringUtils.isNotBlank(editOrder.getComments()) && editOrder.getComments().length() > 2000) {
             addValidationError("comments", "Description field cannot exceed 2000 characters");
         }
@@ -487,6 +489,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 //                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
+        validateRegulatoryInformation(SAVE_ACTION);
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -556,7 +559,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
-
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
@@ -568,7 +570,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         } else {
             if (action.equals(SAVE_ACTION)) {
                 // If this is not a draft and a sample initiation order, reset the kit details to the properly selected details
-                if(!editOrder.isDraft()) {
+                if (!editOrder.isDraft()) {
                     kitDetails.clear();
                     initializeKitDetails();
                 }
@@ -653,12 +655,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validatePlacedOrder(String action) {
-
         doValidation(action);
-
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
+        validateRegulatoryInformation(action);
 
         updateFromInitiationTokenInputs();
     }
@@ -906,6 +907,11 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 errorResolution = getContext().getSourcePageResolution();
             } catch (SourcePageNotFoundException e) {
+
+                // FIXME?  This seems to cause the search preferences to not get loaded on the resulting list page.
+                // Because of this, the user is presented witha  list page with no search results.  If they click
+                // 'search' from that blank page, it would inadvertantly wipe out their previously defined search
+                // preferences
                 errorResolution = new ForwardResolution(ORDER_LIST_PAGE);
             }
 
@@ -932,6 +938,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         validateUser(EDIT_ACTION);
         setSubmitString(EDIT_ORDER);
         populateTokenListsFromObjectData();
+
         owner.setup(editOrder.getCreatedBy());
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
@@ -1015,25 +1022,35 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
 
+        MessageCollection messageCollection = new MessageCollection();
         try {
-            editOrder.prepareToSave(userBean.getBspUser());
-            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
-            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
-            if (editOrder.isSampleInitiation()) {
-                String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(editOrder);
-                editOrder.getProductOrderKit().setWorkRequestId(workRequestBarcode);
-                addMessage("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+            productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey, messageCollection);
+
+            addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+            originalBusinessKey = null;
+
+            if (messageCollection.hasInfos()) {
+                for (String info : messageCollection.getInfos()) {
+                    addMessage(info);
+                }
+            }
+            if (messageCollection.hasErrors()) {
+                for (String error : messageCollection.getErrors()) {
+                    addGlobalValidationError(error);
+                }
             }
 
-            originalBusinessKey = null;
+            // FIXME:  TEAR. DOWN. THIS. WALL!!!!
+            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
+
         } catch (Exception e) {
 
             // If we get here with an original business key, then clear out the session and refetch the order.
             if (originalBusinessKey != null) {
                 productOrderDao.clear();
-                editOrder = productOrderDao.findByBusinessKey(originalBusinessKey);
+                editOrder = productOrderEjb.findProductOrderByBusinessKeySafely(originalBusinessKey);
             }
 
             updateFromInitiationTokenInputs();
@@ -1043,9 +1060,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             entryInit();
             return getSourcePageResolution();
         }
-
-        addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
-        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
 
         return createViewResolution(editOrder.getBusinessKey());
     }
@@ -1099,11 +1113,21 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
+        updateRegulatoryInformation();
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
         addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    private void updateRegulatoryInformation() {
+        if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
+            editOrder.setSkipRegulatoryReason(null);
+        }
+        if (isSkipRegulatoryInfo() && StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
+            editOrder.getRegulatoryInfos().clear();
+        }
     }
 
     private void updateTokenInputFields() {
@@ -1326,7 +1350,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate()));
+        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
@@ -1344,12 +1368,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    private static String formatPicoRunDate(Date picoRunDate) {
-        if (picoRunDate == null) {
-            return "No Pico";
+    private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {
+
+        String returnValue = defaultReturn;
+        if (picoRunDate != null) {
+            returnValue = dateFormatter.format(picoRunDate);
         }
 
-        return dateFormatter.format(picoRunDate);
+        return returnValue;
     }
 
     private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
@@ -2099,9 +2125,34 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateRegulatoryInformation(String action) {
+        boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
+        boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
+
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-                requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met", action);
+
+            if (!regulatoryRequirementsMet) {
+                requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
+            } else {
+                requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
+            }
         }
+
+        if (action.equals(SAVE_ACTION)) {
+            if (skipRegulatoryInfo) {
+                canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
+            } else {
+                canSkipRegulatoryRequirements = true;
+            }
+            requireField(canSkipRegulatoryRequirements,
+                    "a reason for bypassing the regulatory requirements", action);
+
+        }
+        if (editOrder.isSubmitted()) {
+            requireField((boolean)editOrder.getAttestationConfirmed(),
+                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                    action);
+        }
+
     }
 
     public KitType getChosenKitType() {
@@ -2166,5 +2217,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String[] getDeletedKits() {
         return deletedKits;
+    }
+
+    public boolean isSkipRegulatoryInfo() {
+        return skipRegulatoryInfo;
+    }
+
+    public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
+        this.skipRegulatoryInfo = skipRegulatoryInfo;
     }
 }

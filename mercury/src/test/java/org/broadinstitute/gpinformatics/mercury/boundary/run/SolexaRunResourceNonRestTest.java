@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
+//import com.jprofiler.api.agent.Controller;
+
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
@@ -48,6 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500JaxbBuilder;
@@ -86,19 +89,19 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
-    SquidConfig squidConfig;
+    private SquidConfig squidConfig;
 
     @Inject
-    IlluminaSequencingRunDao runDao;
+    private IlluminaSequencingRunDao runDao;
 
     @Inject
-    IlluminaFlowcellDao flowcellDao;
+    private IlluminaFlowcellDao flowcellDao;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
-    MiSeqReagentKitDao miSeqReagentKitDao;
+    private MiSeqReagentKitDao miSeqReagentKitDao;
 
     @Inject
     private LabBatchEjb labBatchEjb;
@@ -140,7 +143,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -166,7 +169,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public static final String SETUP_READ_STRUCTURE = "71T8B8B101T";
     
     @Inject
-    BettaLimsMessageResource bettaLimsMessageResource;
+    private BettaLimsMessageResource bettaLimsMessageResource;
 
     @Inject
     private MiSeqReagentKitDao reagentKitDao;
@@ -181,6 +184,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+//        Controller.startCPURecording(true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
+//        Controller.startProbeRecording(Controller.PROBE_NAME_PERSISTENCE, true);
 
         if (flowcellDao == null) {
             return;
@@ -281,6 +287,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                            File.separator + runName;
         File runFile = new File(runFileDirectory);
         runFile.mkdirs();
+//        Controller.stopCPURecording();
     }
 
     @AfterMethod(groups = EXTERNAL_INTEGRATION)
@@ -366,6 +373,40 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Assert.assertEquals(readStructureResultByName.getRunName(), run.getRunName());
         Assert.assertEquals(readStructureResultByName.getRunBarcode(), miSeqRunBarcode);
+    }
+
+    /**
+     * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
+     * method will also create a run to associate the read structures.
+     */
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testLaneReadStructure() {
+        SolexaRunResource runResource =
+                new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
+                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+        SolexaRunBean runBean =
+                new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
+                        reagentKitBarcode);
+        runResource.registerRun(runBean, miSeqFlowcell);
+        IlluminaSequencingRun run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
+
+        ReadStructureRequest readStructureWithRunName = LimsQueryObjectFactory
+                .createReadStructureRequest(run.getRunName(), null, SETUP_READ_STRUCTURE, ACTUAL_READ_STRUCTURE,
+                        IMAGED_AREA, LANES_SEQUENCED, null);
+        LaneReadStructure laneReadStructure = new LaneReadStructure();
+        laneReadStructure.setLaneNumber(1);
+        laneReadStructure.setActualReadStructure("STRUC1");
+        readStructureWithRunName.getLaneStructures().add(laneReadStructure);
+
+        Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructureWithRunName);
+
+        Assert.assertEquals(readStructureStoreResponse.getStatus(), Response.Status.OK.getStatusCode());
+        ReadStructureRequest readStructureResultByName = (ReadStructureRequest) readStructureStoreResponse.getEntity();
+
+        Assert.assertEquals(readStructureResultByName.getRunName(), run.getRunName());
+        Assert.assertEquals(readStructureResultByName.getRunBarcode(), miSeqRunBarcode);
+        Assert.assertEquals(readStructureResultByName.getLaneStructures().size(), 1);
+        Assert.assertEquals(readStructureResultByName.getLaneStructures().get(0).getActualReadStructure(), "STRUC1");
     }
 
     /**

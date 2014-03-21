@@ -71,6 +71,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + PROJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + PROJECT;
 
+    public static final String REGULATORY_INFO_QUERY_ACTION = "regulatoryInfoQuery";
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
     public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
@@ -204,9 +205,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * for existence.
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION,
-                    ADD_NEW_REGULATORY_INFO, REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION,
-                    BEGIN_COLLABORATION_ACTION})
+            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
+                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO,
+                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION})
     public void init() {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -532,22 +533,24 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return the regulatory information search results
      * @throws JSONException
      */
-    @HandlesEvent("regulatoryInfoQuery")
+    @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
     public Resolution queryRegulatoryInfo() throws JSONException {
         List<RegulatoryInfo> infos = regulatoryInfoDao.findByIdentifier(q);
         JSONArray results = new JSONArray();
         for (RegulatoryInfo info : infos) {
-            results.put(regulatoryInfoToJSONObject(info));
+            results.put(regulatoryInfoToJSONObject(info, editResearchProject.getRegulatoryInfos().contains(info)));
         }
         return createTextResolution(results.toString());
     }
 
-    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo) throws JSONException {
+    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
+            throws JSONException {
         JSONObject object = new JSONObject();
         object.put("id", regulatoryInfo.getRegulatoryInfoId());
         object.put("identifier", regulatoryInfo.getIdentifier());
         object.put("type", regulatoryInfo.getType().getName());
         object.put("alias", regulatoryInfo.getName());
+        object.put("alreadyAdded", alreadyAdded);
         return object;
     }
 

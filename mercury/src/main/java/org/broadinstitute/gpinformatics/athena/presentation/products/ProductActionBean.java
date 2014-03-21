@@ -98,8 +98,6 @@ public class ProductActionBean extends CoreActionBean {
     })
     private Product editProduct;
 
-    private Workflow workflow;
-
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
     }
@@ -159,9 +157,6 @@ public class ProductActionBean extends CoreActionBean {
             if (editProduct.getProductFamily() != null) {
                 productFamilyId = editProduct.getProductFamily().getProductFamilyId();
             }
-
-            // Set the workflow value from the edit product.
-            workflow = editProduct.getWorkflow();
         }
     }
 
@@ -311,7 +306,6 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
-        editProduct.setWorkflow(workflow == null ? Workflow.NONE : workflow);
         productEjb.saveProduct(
                 editProduct, addOnTokenInput, priceItemTokenInput, materialTypeTokenInput,
                 allLengthsMatch(), criteria, operators, values);
@@ -471,15 +465,11 @@ public class ProductActionBean extends CoreActionBean {
      *
      * @return The workflows
      */
-    public Workflow[] getVisibleWorkflowList() {
+    public List<Workflow> getVisibleWorkflowList() {
         return Workflow.getVisibleWorkflowList();
     }
 
-    public Workflow getWorkflow() {
-        return workflow;
-    }
-
-    public void setWorkflow(Workflow workflow) {
-        this.workflow = workflow;
+    public Workflow getWorkflowNone() {
+        return Workflow.NONE;
     }
 }

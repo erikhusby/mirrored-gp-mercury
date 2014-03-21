@@ -6,9 +6,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
@@ -20,6 +22,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -34,6 +37,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -42,6 +46,7 @@ import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.persistence.LockModeType;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -84,6 +89,10 @@ public class ProductOrderEjb {
     private final BSPSampleDataFetcher sampleDataFetcher;
 
     private final MercuryClientService mercuryClientService;
+
+    @Inject
+    private BSPKitRequestService bspKitRequestService;
+
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -627,6 +636,11 @@ public class ProductOrderEjb {
         return productOrder;
     }
 
+    public ProductOrder findProductOrderByBusinessKeySafely(@Nonnull String jiraTicket,
+                                                            ProductOrderDao.FetchSpec... fetchSpecs) {
+        return productOrderDao.findByBusinessKey(jiraTicket, LockModeType.PESSIMISTIC_READ, fetchSpecs);
+    }
+
     /**
      * Transition the delivery statuses of the specified samples in the DB.
      *
@@ -951,8 +965,8 @@ public class ProductOrderEjb {
     }
 
     public void removeSamples(@Nonnull BspUser bspUser, @Nonnull String jiraTicketKey,
-                               @Nonnull Collection<ProductOrderSample> samples,
-                               @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
+                              @Nonnull Collection<ProductOrderSample> samples,
+                              @Nonnull MessageReporter reporter) throws IOException, NoSuchPDOException {
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
         // If removeAll returns false, no samples were removed -- should never happen.
@@ -972,6 +986,74 @@ public class ProductOrderEjb {
                     ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
             updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
+        }
+    }
+
+    /**
+     * Encapsulates the logic for placing a product order.  This encompasses:
+     * <ul>
+     * <li>creating the PDO ticket in Jira</li>
+     * <li>(if sample initiation) creating and submitting a kit request to BSP</li>
+     * </ul>
+     * <p/>
+     * To avoid double ticket creations, we are employing a pessimistic lock on the Product order record.
+     *
+     * @param productOrderID    Database identifier of the Product order which we wish to find.  Used because at this
+     *                          phase, the business key could change from draft-xxx to PDO-yyy.
+     * @param businessKey       Business key by which to reference the currently persisted Product order
+     * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
+     */
+    public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
+                                          MessageCollection messageCollection) {
+        ProductOrder editOrder =
+                productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
+
+        if (editOrder == null) {
+            throw new InformaticsServiceException(
+                    "The product order was not found: " + ((businessKey == null) ? "" : businessKey));
+        }
+        if (editOrder.isSubmitted()) {
+            throw new InformaticsServiceException("This product order " + editOrder.getBusinessKey() +
+                                                  " has already been submitted to Jira");
+        }
+        editOrder.prepareToSave(userBean.getBspUser());
+        try {
+
+            ProductOrderJiraUtil.placeOrder(editOrder, jiraService);
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+        } catch (IOException e) {
+            log.error("An exception occurred attempting to create a Product Order in Jira", e);
+            throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
+        }
+
+        if (editOrder.isSampleInitiation()) {
+            try {
+                submitSampleKitRequest(editOrder, messageCollection);
+            } catch (Exception e) {
+                log.error("Unable to successfully complete the sample kit creation");
+                if(messageCollection != null) {
+                    messageCollection.addError("Unable to successfully complete the sample kit creation");
+                }
+            }
+        }
+
+        return editOrder;
+    }
+
+    /**
+     * Helper method to separate sample kit submission to its own transaction.  This will allow Product order creation
+     * to succeed and commit the transition from Product Order draft to Submit even if the attempt to create a
+     * sample kit in Bsp results in an exception, which should not roll back product order submission
+     * @param order             Order to which the new sample kit is to be associated
+     * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
+     *                          a value or throwing an exception.
+     */
+    public void submitSampleKitRequest(@Nonnull ProductOrder order, MessageCollection messageCollection) {
+        String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
+        order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
+        if(messageCollection != null) {
+            messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
         }
     }
 }

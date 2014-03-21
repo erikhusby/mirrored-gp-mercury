@@ -276,18 +276,20 @@ public class GenericDao {
     /**
      * Returns a single entity that matches a specified value for a specified property.
      *
-     * @param entity             the class of entity to return
-     * @param genericDaoCallback optional callback to add fetches to the specified {@link Root}
-     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE
-     *                           if
-     *                           there is inheritance
-     * @param <ENTITY_TYPE>      the type of the entity to return
+     * @param entity                the class of entity to return
+     * @param genericDaoCallback    optional callback to add fetches to the specified {@link Root}
+     * @param lockModeType          lock mode for the query.  LockModeTYpe.NONE should be the default to use for
+     *                              regular queries
+     * @param <METADATA_TYPE>       the type on which the property is defined, this can be different from
+     *                              the ENTITY_TYPE if there is inheritance
+     * @param <ENTITY_TYPE>         the type of the entity to return
      *
      * @return entity that matches the value, or null if not found
      */
     public <METADATA_TYPE,
             ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
-                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
+                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback,
+                                                                      LockModeType lockModeType) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -297,10 +299,28 @@ public class GenericDao {
         }
 
         try {
-            return getQuery(criteriaQuery, LockModeType.NONE).getSingleResult();
+            return getQuery(criteriaQuery, lockModeType).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
         }
+    }
+
+    /**
+     * Wraps a call to find single with a lockmode type set to NONE
+     * @see #findSingle(Class, org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.GenericDaoCallback, javax.persistence.LockModeType)
+     *
+     * @param entity
+     * @param genericDaoCallback
+     * @param <METADATA_TYPE>
+     * @param <ENTITY_TYPE>
+     * @return
+     *
+     */
+    public <METADATA_TYPE,
+            ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
+                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
+
+        return findSingle(entity, genericDaoCallback, LockModeType.NONE);
     }
 
     /**
