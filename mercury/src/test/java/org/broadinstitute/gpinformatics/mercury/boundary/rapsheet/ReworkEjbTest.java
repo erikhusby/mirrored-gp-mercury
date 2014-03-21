@@ -580,14 +580,12 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : mapBarcodeToTube.keySet()) {
             bucketDao.findByName(bucketName);
-            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),
-                    twoDBarcodedTubeDao.findByBarcode(barcode), BucketEntry.BucketEntryType.PDO_ENTRY);
+            BucketEntry newEntry = pBucket.addEntry(exExProductOrder1.getBusinessKey(),twoDBarcodedTubeDao.findByBarcode(barcode), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
             bucketDao.persist(pBucket);
         }
 
-        Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
+        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
         Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
 
         for (ReworkEjb.BucketCandidate candidate : candidates) {
@@ -603,18 +601,9 @@ public class ReworkEjbTest extends Arquillian {
         for (ProductOrderSample pdoSample : bucketReadySamples1) {
             pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.WHOLE_GENOME);
         }
-        Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
-
-        // reset the workflow to a supported workflow
-        for (ProductOrderSample pdoSample : bucketReadySamples1) {
-            pdoSample.getProductOrder().getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
-        }
+        Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
 
         Assert.assertEquals(candidates.size(), 0,"Unsupported workflows may be added incorrectly to the bucket, resulting in general ExEx panic and support burden.");
-        // now requery with a supported workflow and you should have bucket candidates
-        candidates = reworkEjb.findBucketCandidates(new ArrayList<>(mapBarcodeToTube.keySet()));
-        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -753,9 +742,6 @@ public class ReworkEjbTest extends Arquillian {
         List<ReworkEjb.BucketCandidate> candidates = new ArrayList<>();
 
         for (String barcode : mapBarcodeToTube.keySet()) {
-
-            //TODO SGM:  This way of forcing finding a PDO for non Exome Express seems sketchy since non EXEX
-            // product orders cannot enter a bucket to get a bucket
             bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder.getBusinessKey(),
                     twoDBarcodedTubeDao.findByBarcode(barcode), BucketEntry.BucketEntryType.PDO_ENTRY);
@@ -765,13 +751,7 @@ public class ReworkEjbTest extends Arquillian {
             candidates.addAll(reworkEjb.findBucketCandidates(barcode));
         }
 
-        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
-
-        for (ReworkEjb.BucketCandidate candidate : candidates) {
-            Assert.assertFalse(candidate.isValid());
-            Assert.assertTrue(mapBarcodeToTube.keySet().contains(candidate.getTubeBarcode()));
-        }
-
+        Assert.assertEquals(candidates.size(),0,"Non exome workflows can make it into the bucket.  Do we support " + nonExExProductOrder.getProduct().getName() + " now?");
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -800,10 +780,7 @@ public class ReworkEjbTest extends Arquillian {
                         appConfig.getUrl(), 2);
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-
-            //TODO SGM:  This way of forcing finding a PDO for non Exome Express seems sketchy since non EXEX
-            // product orders cannot enter a bucket to get a bucket
-            bucketDao.findByName(bucketName);
+           bucketDao.findByName(bucketName);
             BucketEntry newEntry = pBucket.addEntry(nonExExProductOrder.getBusinessKey(),
                     twoDBarcodedTubeDao.findByBarcode(barcode), BucketEntry.BucketEntryType.PDO_ENTRY);
             newEntry.setStatus(BucketEntry.Status.Archived);
@@ -815,23 +792,7 @@ public class ReworkEjbTest extends Arquillian {
             }
         }
 
-        Assert.assertEquals(candidates.size(), mapBarcodeToTube.size());
-
-        for (ReworkEjb.BucketCandidate candidate : candidates) {
-            Assert.assertFalse(candidate.isValid());
-            //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
-
-            Assert.assertEquals(candidate.getProductOrderKey(), nonExExProductOrder.getBusinessKey());
-        }
-
-        for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
-
-            TwoDBarcodedTube currentTube = twoDBarcodedTubeDao.findByBarcode(barcode);
-            for (BucketEntry currentEntry : currentTube.getBucketEntries()) {
-                currentEntry.setStatus(BucketEntry.Status.Archived);
-            }
-            twoDBarcodedTubeDao.persist(currentTube);
-        }
+        Assert.assertEquals(candidates.size(),0,"Non exome workflows can make it into the bucket.  Do we support " + nonExExProductOrder.getProduct().getName() + " now?");
     }
 
 
