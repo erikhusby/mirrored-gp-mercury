@@ -146,10 +146,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "TITLE", unique = true, length = 255, nullable = false)
     private String title = "";
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private ResearchProject researchProject;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private Product product;
 
     @Enumerated(EnumType.STRING)
