@@ -242,4 +242,10 @@ public class WorkflowTest {
         }
         Assert.assertFalse(meetsCriteria, "Bucket criteria should have failed.");
     }
+
+    @Test
+    public void testSupportedWorkflows() {
+        Assert.assertTrue(Workflow.isWorkflowSupportedByMercury(Workflow.AGILENT_EXOME_EXPRESS),"Uh oh, mercury doesn't support exome express!");
+        Assert.assertFalse(Workflow.isWorkflowSupportedByMercury(Workflow.WHOLE_GENOME),"Do we support WGS in mercury? Party time!");
+    }
 }
