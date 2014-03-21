@@ -46,6 +46,10 @@ public enum Workflow {
         add(AGILENT_EXOME_EXPRESS);
     }};
 
+    public static boolean isWorkflowSupportedByMercury(Workflow workflow) {
+        return SUPPORTED_WORKFLOWS.contains(workflow);
+    }
+
     @Nullable
     public String getWorkflowName() {
         return name;
