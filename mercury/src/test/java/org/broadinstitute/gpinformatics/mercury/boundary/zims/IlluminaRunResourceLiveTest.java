@@ -77,7 +77,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/30/2012 10:06");
     }
 
-    private ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) {
+    public static ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) {
         String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);

@@ -229,6 +229,15 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupGplim2611() {
+        // Override routing for shearing transfer
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 401897L);
+        LabBatch labBatch = labBatchDao.findByName("LCSET-5177");
+        labEvent.setManualOverrideLcSet(labBatch);
+        labEventDao.flush();
+    }
+
     /**
      * Delete a transfer that was resubmitted with a changed disambiguator.
      */

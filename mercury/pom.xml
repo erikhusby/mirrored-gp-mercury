@@ -12,7 +12,7 @@
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
-    <version>1.47-SNAPSHOT</version>
+    <version>1.45.4-RC</version>
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
     <!-- CHANGE rest-pom.xml WHEN CHANGING THIS!! -->
@@ -1937,6 +1937,25 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>SquidWS</groupId>
+                                    <artifactId>squidWS</artifactId>
+                                    <version>1.0-SNAPSHOT</version>
+                                    <classifier>XSD</classifier>
+                                    <type>tar</type>
+                                    <outputDirectory>${project.basedir}/target/xsd-includes</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
@@ -1990,8 +2009,8 @@
                         </goals>
                         <configuration>
                             <!-- each execution needs to specify the schemaFile(s) to use -->
-                            <schemaFiles>SolexaRunSynopsis.xsd</schemaFiles>
-                            <schemaDirectory>src/main/webapp/xsd</schemaDirectory>
+                            <schemaFiles>SolexaRun.xsd</schemaFiles>
+                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
                             <packageName>org.broadinstitute.gpinformatics.mercury.squid.generated</packageName>
                             <!-- each execution must have a unique staleFile -->
                             <staleFile>${project.build.directory}/jaxb2/.SolexaRunSynopsisXjcStaleFlag</staleFile>

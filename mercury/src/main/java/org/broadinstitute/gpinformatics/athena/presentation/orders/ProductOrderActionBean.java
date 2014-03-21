@@ -447,16 +447,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addValidationError("title", "A product order already exists with this name.");
             }
         }
-        if (editOrder.isSubmitted()) {
-            requireField(editOrder.isAttestationConfirmed(),
-                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
-                    SAVE_ACTION);
-        }
-
-        if (!editOrder.regulatoryRequirementsMet()) {
-            requireField(skipRegulatoryInfo && editOrder.canSkipRegulatoryRequirements(),
-                    "a reason for not choosing regulatory information", SAVE_ACTION);
-        }
 
         // Whether we are draft or not, we should populate the proper edit fields for validation.
         updateTokenInputFields();
@@ -499,6 +489,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 //                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
+        validateRegulatoryInformation(SAVE_ACTION);
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -568,7 +559,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void doValidation(String action) {
         requireField(editOrder.getCreatedBy(), "an owner", action);
-        validateRegulatoryInformation(action);
         if (editOrder.getCreatedBy() != null) {
             String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
             requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
@@ -669,6 +659,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
+        validateRegulatoryInformation(action);
 
         updateFromInitiationTokenInputs();
     }
@@ -1134,7 +1125,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.getRegulatoryInfos().isEmpty() && !isSkipRegulatoryInfo()) {
             editOrder.setSkipRegulatoryReason(null);
         }
-        if (isSkipRegulatoryInfo() && editOrder.getSkipRegulatoryReason().isEmpty()) {
+        if (isSkipRegulatoryInfo() && StringUtils.isBlank(editOrder.getSkipRegulatoryReason())) {
             editOrder.getRegulatoryInfos().clear();
         }
     }
@@ -2134,9 +2125,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateRegulatoryInformation(String action) {
+        boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
+        boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
+
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-            boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
-            boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
 
             if (!regulatoryRequirementsMet) {
                 requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
@@ -2144,6 +2136,23 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
             }
         }
+
+        if (action.equals(SAVE_ACTION)) {
+            if (skipRegulatoryInfo) {
+                canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
+            } else {
+                canSkipRegulatoryRequirements = true;
+            }
+            requireField(canSkipRegulatoryRequirements,
+                    "a reason for bypassing the regulatory requirements", action);
+
+        }
+        if (editOrder.isSubmitted()) {
+            requireField((boolean)editOrder.getAttestationConfirmed(),
+                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                    action);
+        }
+
     }
 
     public KitType getChosenKitType() {

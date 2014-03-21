@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 @Entity
 @Audited
-public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
+public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<IlluminaRunChamber> {
     public IlluminaFlowcell(String flowcellBarcode) {
         this(FlowcellType.getTypeForBarcode(flowcellBarcode),flowcellBarcode);
     }
@@ -227,7 +227,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     private String flowcellBarcode;
 
     @Embedded
-    VesselContainer<RunChamber> vesselContainer = new VesselContainer<>(this);
+    private VesselContainer<IlluminaRunChamber> vesselContainer = new VesselContainer<>(this);
 
     public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode) {
         super(flowcellBarcode);
@@ -259,7 +259,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     @Override
-    public VesselContainer<RunChamber> getContainerRole() {
+    public VesselContainer<IlluminaRunChamber> getContainerRole() {
         return this.vesselContainer;
     }
 
@@ -283,7 +283,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
     @Override
     public Iterable<RunChamber> getChambers() {
-        return this.vesselContainer.getContainedVessels();
+        return new HashSet<RunChamber>(vesselContainer.getContainedVessels());
     }
 
     @Override

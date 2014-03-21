@@ -97,9 +97,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             testDate = new Date();
         }
         if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
-            return !getRegulatoryInfos().isEmpty();
+            return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
         }
-        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
+        return true;
     }
 
     public boolean canSkipRegulatoryRequirements() {
@@ -1504,7 +1504,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         }
     }
 
+
     public Boolean isAttestationConfirmed() {
+        return getAttestationConfirmed();
+    }
+
+    public Boolean getAttestationConfirmed() {
         if (attestationConfirmed == null) {
             attestationConfirmed = false;
         }

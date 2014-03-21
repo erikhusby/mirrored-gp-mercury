@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,7 +30,7 @@ public class SequencingRunEtlDbFreeTest {
     private String machineName = "The \"terminator\"";
     private long operator = 1234L;
 
-    private SequencingRun run;
+    private IlluminaSequencingRun run;
     private SequencingRunEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
@@ -41,7 +42,7 @@ public class SequencingRunEtlDbFreeTest {
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
-        run = new SequencingRun(runName, barcode, machineName, operator, false, runDate, new IlluminaFlowcell(),
+        run = new IlluminaSequencingRun(new IlluminaFlowcell(), runName, barcode, machineName, operator, false, runDate,
                 "/some/dirname");
         run.setSetupReadStructure(setupReadStructure);
         run.setActualReadStructure(actualReadStructure);
@@ -53,7 +54,7 @@ public class SequencingRunEtlDbFreeTest {
     public void testEtlFlags() throws Exception {
         replay(mocks);
 
-        assertEquals(tst.entityClass, SequencingRun.class);
+        assertEquals(tst.entityClass, IlluminaSequencingRun.class);
         assertEquals(tst.baseFilename, "sequencing_run");
         assertEquals(tst.entityId(run), (Long) entityId);
 
@@ -61,7 +62,7 @@ public class SequencingRunEtlDbFreeTest {
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        expect(dao.findById(SequencingRun.class, -1L)).andReturn(null);
+        expect(dao.findById(IlluminaSequencingRun.class, -1L)).andReturn(null);
         replay(mocks);
 
         assertEquals(tst.dataRecords(etlDateString, false, -1L).size(), 0);
@@ -70,7 +71,7 @@ public class SequencingRunEtlDbFreeTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(dao.findById(SequencingRun.class, entityId)).andReturn(run);
+        expect(dao.findById(IlluminaSequencingRun.class, entityId)).andReturn(run);
         replay(mocks);
 
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
