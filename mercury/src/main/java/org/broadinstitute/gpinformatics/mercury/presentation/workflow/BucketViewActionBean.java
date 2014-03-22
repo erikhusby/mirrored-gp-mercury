@@ -370,11 +370,19 @@ public class BucketViewActionBean extends CoreActionBean {
                 }
                 for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                     BucketEntry entry = iter.next();
-                    if (!selectedWorkflowDef.getName().equals(
-                            mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()).getWorkflowName())) {
+                    if (mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()) == null) {
+                        addGlobalValidationError(String.format("%s for %s does not exist within mercury",
+                                entry.getPoBusinessKey(), entry.getLabVessel().getLabel()));
                         iter.remove();
                         bucketEntries.remove(entry);
                         reworkEntries.remove(entry);
+                    } else {
+                        if (!selectedWorkflowDef.getName().equals(
+                                mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()).getWorkflowName())) {
+                            iter.remove();
+                            bucketEntries.remove(entry);
+                            reworkEntries.remove(entry);
+                        }
                     }
                 }
                 // Doesn't show JIRA details if there are no bucket entries.
@@ -482,7 +490,7 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
-    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION )
+    @HandlesEvent(REMOVE_FROM_BUCKET_ACTION)
     public Resolution removeFromBucket() {
 
         separateEntriesByType();
@@ -530,7 +538,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @HandlesEvent(CHANGE_PDO)
     public Resolution changePdo() throws JSONException {
-        String newPdoValue=getContext().getRequest().getParameter("newPdoValue");
+        String newPdoValue = getContext().getRequest().getParameter("newPdoValue");
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
         bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
 
