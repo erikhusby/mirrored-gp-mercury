@@ -2133,7 +2133,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     "a reason for bypassing the regulatory requirements", action);
 
         }
-        if (editOrder.isSubmitted()) {
+        if (editOrder.isSubmitted() && !editOrder.orderPredatesRegulatoryRequirement()) {
             requireField((boolean)editOrder.getAttestationConfirmed(),
                     "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
                     action);

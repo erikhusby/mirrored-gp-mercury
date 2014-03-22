@@ -90,17 +90,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }
 
-    public boolean regulatoryRequirementsMet() {
-        Date testDate=getPlacedDate();
+    @Transient
+    public boolean orderPredatesRegulatoryRequirement() {
+        Date testDate = getPlacedDate();
         if (getPlacedDate() == null) {
             testDate = new Date();
         }
-        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
-            return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
-        }
-        return true;
+        return testDate.compareTo(getIrbRequiredStartDate()) < 0;
     }
 
+    @Transient
+    public boolean regulatoryRequirementsMet() {
+        if (orderPredatesRegulatoryRequirement()){
+            return true;
+        }
+        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+    }
+
+    @Transient
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
