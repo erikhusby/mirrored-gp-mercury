@@ -99,6 +99,7 @@ public class ProductOrderTest {
                 .ignoreProperty("productOrderKit")
                 .ignoreProperty("skipQuoteReason")
                 .ignoreProperty("skipRegulatoryReason")
+                .ignoreProperty("attestationConfirmed")
                 .ignoreProperty("regulatoryInfos")
                 .build();
         tester.testBean(ProductOrder.class, configuration);

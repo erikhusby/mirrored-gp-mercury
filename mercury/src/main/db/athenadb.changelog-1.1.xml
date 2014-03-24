@@ -931,4 +931,22 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="GPLIM-2572-add-version" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="version" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="version" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2572-initialize-version" author="scottmat">
+        <sql>
+            update product_order set version = 0 where version is null
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

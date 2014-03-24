@@ -47,6 +47,7 @@ import javax.persistence.PostLoad;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.text.ParseException;
@@ -90,17 +91,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }
 
-    public boolean regulatoryRequirementsMet() {
-        Date testDate=getPlacedDate();
+    @Transient
+    public boolean orderPredatesRegulatoryRequirement() {
+        Date testDate = getPlacedDate();
         if (getPlacedDate() == null) {
             testDate = new Date();
         }
-        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
-            return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
-        }
-        return true;
+        return testDate.compareTo(getIrbRequiredStartDate()) < 0;
     }
 
+    @Transient
+    public boolean regulatoryRequirementsMet() {
+        if (orderPredatesRegulatoryRequirement()){
+            return true;
+        }
+        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+    }
+
+    @Transient
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
@@ -145,10 +153,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "TITLE", unique = true, length = 255, nullable = false)
     private String title = "";
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private ResearchProject researchProject;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private Product product;
 
     @Enumerated(EnumType.STRING)
@@ -204,6 +212,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "SKIP_QUOTE_REASON")
     private String skipQuoteReason;
+
+    @Version
+    private Long version;
 
     @Column(name = "SKIP_REGULATORY_REASON")
     private String skipRegulatoryReason;
