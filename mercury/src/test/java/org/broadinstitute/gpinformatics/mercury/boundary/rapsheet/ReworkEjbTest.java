@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.rapsheet;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -123,6 +128,12 @@ public class ReworkEjbTest extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    PriceItemDao priceItemDao;
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
+
+    @Inject
     private ProductDao productDao;
 
     @Inject
@@ -176,6 +187,7 @@ public class ReworkEjbTest extends Arquillian {
     private String bucketName;
 
     private int existingReworks;
+    private PriceItem priceItem;
     private Product exExProduct;
     private Product nonExExProduct;
     private ResearchProject researchProject;
@@ -199,6 +211,8 @@ public class ReworkEjbTest extends Arquillian {
         if (reworkEjb == null) {
             return;
         }
+
+        setupProducts();
 
         String testPrefix = "SGM_Test_RWIT";
 
@@ -384,11 +398,6 @@ public class ReworkEjbTest extends Arquillian {
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 
-        exExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.AGILENT_EXOME_EXPRESS));
-        nonExExProduct = productDao.findByPartNumber(
-                BettaLimsMessageResourceTest.mapWorkflowToPartNum.get(Workflow.WHOLE_GENOME));
-
         bucketReadySamples1 = new ArrayList<>(2);
         bucketReadySamples1.add(new ProductOrderSample(genomicSample1));
         bucketReadySamples1.add(new ProductOrderSample(genomicSample2));
@@ -506,6 +515,67 @@ public class ReworkEjbTest extends Arquillian {
         productOrderDao.flush();
         productOrderDao.clear();
         mapBarcodeToTube.clear();
+    }
+
+    /**
+     * Creates (or re-uses) two products that are specific to this test.
+     * On product has a mercury-tracked workflow; the other does not.
+     */
+    private void setupProducts() {
+        String productFamilyName = ProductFamily.ProductFamilyName.EXOME.getFamilyName();
+        ProductFamily productFamily = productFamilyDao.find(productFamilyName);
+
+        if (productFamily == null) {
+            productFamily = new ProductFamily(productFamilyName);
+            productFamilyDao.persist(productFamily);
+        }
+
+        String quoteServerId = "ReworkEjbTest";
+        priceItem = priceItemDao.findSingle(PriceItem.class, PriceItem_.quoteServerId,quoteServerId);
+
+        if (priceItem == null) {
+            priceItem = new PriceItem(quoteServerId,quoteServerId,"Delicious Foods","Tacos");
+            priceItemDao.persist(priceItem);
+        }
+
+        String exExProductPartNumber = "ReworkEjbPartNumber1";
+        exExProduct = productDao.findByPartNumber(exExProductPartNumber);
+
+        if (exExProduct == null) {
+            exExProduct = createProduct(true,productFamily,exExProductPartNumber);
+            productDao.persist(exExProduct);
+        }
+
+        String nonExExProductPartNumber = "ReworkEjbPartNumber2";
+        nonExExProduct = productDao.findByPartNumber(nonExExProductPartNumber);
+
+        if (nonExExProduct == null) {
+            nonExExProduct = createProduct(false,productFamily,nonExExProductPartNumber);
+            productDao.persist(nonExExProduct);
+        }
+    }
+
+    private Product createProduct(boolean isExomeExpress,ProductFamily productFamily,String name) {
+        Workflow workflow = isExomeExpress ? Workflow.AGILENT_EXOME_EXPRESS : Workflow.WHOLE_GENOME;
+        Product product = new Product(name,
+                                      productFamily,
+                                      "Description",
+                                      name,
+                                      new Date(),
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      null,
+                                      true,
+                                      workflow,
+                                      false,
+                                      null);
+
+        product.setPrimaryPriceItem(priceItem);
+        return product;
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)

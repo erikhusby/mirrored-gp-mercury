@@ -495,17 +495,18 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()));
         }
 
-        // Because funding deadline and publication deadline are not required fields, check for null before adding them.
-        if (productOrder.getFundingDeadline() != null) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
+        String fundingDeadline=null;
+        if (productOrder.getFundingDeadline()!=null){
+            fundingDeadline=JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline());
         }
+        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, fundingDeadline));
 
-        if (productOrder.getPublicationDeadline() != null) {
-            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline()))
-            );
+        String publicationDeadline = null;
+        if (productOrder.getPublicationDeadline() == null){
+            publicationDeadline = JiraService.JIRA_DATE_FORMAT.format(productOrder.getPlacedDate());
         }
+        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, publicationDeadline));
+
 
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
