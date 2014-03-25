@@ -269,7 +269,7 @@
                             <c:choose>
                                 <c:when test="${actionBean.invitationPending}">
                                     <div class="notificationText">
-                                        <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                        <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.collaborationUrl}">
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaboration Portal
                                         </stripes:link>

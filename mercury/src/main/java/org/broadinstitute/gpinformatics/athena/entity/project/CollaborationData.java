@@ -11,10 +11,6 @@ import java.util.Date;
  *     there is information in BSP, that will be displayed. If this is a Broad user, LDAP will be used to help with
  *     account creation.
  * </p>
- * <p>
- *     If the user does not have a BSP account, this will create it in BSP as inactive and will tell Mercury to
- *     add the external collaborator to the research project.
- * </p>
  */
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
@@ -38,6 +34,9 @@ public class CollaborationData {
     private String emailMessage;
 
     private Date expirationDate;
+
+    /** URL to view the collaboration in the portal */
+    private String collaborationUrl;
 
     // Empty for XML streaming.
     public CollaborationData() {
@@ -117,5 +116,13 @@ public class CollaborationData {
 
     public void setExpirationDate(Date expirationDate) {
         this.expirationDate = expirationDate;
+    }
+
+    public String getCollaborationUrl() {
+        return collaborationUrl;
+    }
+
+    public void setCollaborationUrl(String collaborationUrl) {
+        this.collaborationUrl = collaborationUrl;
     }
 }
