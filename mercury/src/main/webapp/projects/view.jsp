@@ -273,7 +273,7 @@
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaboration Portal
                                         </stripes:link>
-                                        invitation sent to ${actionBean.collaborationData.collaboratorEmail}, expires on
+                                        invitation sent to ${actionBean.getUsernameForDomainUserID(actionBean.collaborationData.collaboratorDomainUserId)}, expires on
                                         <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
                                         (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
                                             <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
@@ -288,7 +288,7 @@
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaborating on Portal
                                         </stripes:link>
-                                         with ${actionBean.collaborationData.collaboratorEmail}
+                                         with ${actionBean.getUsernameForDomainUserID(actionBean.collaborationData.collaboratorDomainUserId)}
                                     </div>
                                 </c:when>
                                 <c:otherwise>

@@ -17,6 +17,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
@@ -822,5 +823,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // Invitation pending means that an email is attached to this and there is no collaborating user.
         return !StringUtils.isBlank(editResearchProject.getInvitationEmail()) &&
                (editResearchProject.getCollaboratingWith() == null);
+    }
+
+    public String getUsernameForDomainUserID(long domainUserId) {
+        for (BspUser user : bspUserList.getUsers().values()) {
+            if (user.getDomainUserId() == domainUserId) {
+                return user.getUsername();
+            }
+        }
+        return "";
     }
 }
