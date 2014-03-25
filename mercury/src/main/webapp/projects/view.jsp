@@ -229,7 +229,7 @@
                 </p>
 
                 <label style="float:left;margin-right:10px;width:auto;" for="collaboratorId">Collaborator *</label>
-                <stripes:select id="collaboratorId" name="collaborator" onchange="updateEmailField()">
+                <stripes:select id="collaboratorId" name="selectedCollaborator" onchange="updateEmailField()">
                     <stripes:option  label="Choose a Collaborator" value=""/>
 
                     <c:if test="${not empty actionBean.externalCollaboratorList.tokenObjects}">
@@ -244,7 +244,7 @@
                     </optgroup>
                 </stripes:select>
                 <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
-                              name="collaboratorEmail" maxlength="250"/>
+                              name="specifiedCollaborator" maxlength="250"/>
 
                 <p style="clear:both">
                     <label for="collaborationMessage">Optional message to send to collaborator</label>
@@ -273,7 +273,7 @@
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaboration Portal
                                         </stripes:link>
-                                        invitation sent to ${actionBean.getUsernameForDomainUserID(actionBean.collaborationData.collaboratorDomainUserId)}, expires on
+                                        invitation sent to ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}, expires on
                                         <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
                                         (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
                                             <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
@@ -288,7 +288,7 @@
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaborating on Portal
                                         </stripes:link>
-                                         with ${actionBean.getUsernameForDomainUserID(actionBean.collaborationData.collaboratorDomainUserId)}
+                                         with ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}
                                     </div>
                                 </c:when>
                                 <c:otherwise>

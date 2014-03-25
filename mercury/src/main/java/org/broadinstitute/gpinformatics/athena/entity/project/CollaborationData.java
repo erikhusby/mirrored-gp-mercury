@@ -26,11 +26,13 @@ public class CollaborationData {
     // Information about the collaboration space (mercury will send this from the research project).
     private String description;
 
-    // Used to create domain user for portal (and BSP, if needed).
+    // The research project key.
     private String researchProjectKey;
 
-    private Long collaboratorDomainUserId;
+    /** The user ID for the collaborator */
+    private Long collaboratorId;
 
+    /** The User ID for the Project Manager */
     private Long projectManagerId;
 
     private String emailMessage;
@@ -47,16 +49,16 @@ public class CollaborationData {
      * @param name The name
      * @param description The description
      * @param researchProjectKey The research project
-     * @param collaboratorDomainUserId The collaborators identifier
+     * @param collaboratorId The collaborators identifier
      * @param projectManagerId The identifier of the project manager
      * @param emailMessage The email message to the collaborator
      */
-    public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorDomainUserId,
+    public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorId,
                              Long projectManagerId, String emailMessage) {
         this.name = name;
         this.description = description;
         this.researchProjectKey = researchProjectKey;
-        this.collaboratorDomainUserId = collaboratorDomainUserId;
+        this.collaboratorId = collaboratorId;
         this.projectManagerId = projectManagerId;
         this.emailMessage = emailMessage;
     }
@@ -85,12 +87,12 @@ public class CollaborationData {
         this.researchProjectKey = researchProjectKey;
     }
 
-    public Long getCollaboratorDomainUserId() {
-        return collaboratorDomainUserId;
+    public Long getCollaboratorId() {
+        return collaboratorId;
     }
 
-    public void setCollaboratorDomainUserId(Long collaboratorDomainUserId) {
-        this.collaboratorDomainUserId = collaboratorDomainUserId;
+    public void setCollaboratorId(Long collaboratorId) {
+        this.collaboratorId = collaboratorId;
     }
 
     public Long getProjectManagerId() {

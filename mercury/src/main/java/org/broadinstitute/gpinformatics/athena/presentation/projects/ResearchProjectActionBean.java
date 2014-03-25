@@ -825,11 +825,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
                (editResearchProject.getCollaboratingWith() == null);
     }
 
-    public String getUsernameForDomainUserID(long domainUserId) {
-        for (BspUser user : bspUserList.getUsers().values()) {
-            if (user.getDomainUserId() == domainUserId) {
-                return user.getUsername();
-            }
+    public String getUsernameForUserID(long userId) {
+        BspUser user = bspUserList.getById(userId);
+        if (user != null) {
+            return user.getUsername();
         }
         return "";
     }

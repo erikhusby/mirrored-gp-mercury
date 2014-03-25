@@ -119,7 +119,7 @@ public class CollaborationEjb {
 
         // Now tell the portal to create this collaborator.
          String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
-                 bspUser.getDomainUserId(), researchProjectKey, collaborationMessage);
+                 bspUser, researchProjectKey, collaborationMessage);
 
         researchProject.setCollaborationId(collaborationId);
     }
