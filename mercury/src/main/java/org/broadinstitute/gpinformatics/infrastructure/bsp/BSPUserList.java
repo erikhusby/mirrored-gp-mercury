@@ -228,6 +228,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         private void setFields(long userId, String username, String firstName, String lastName, String email,
                                String badgeId) {
             setUserId(userId);
+            setDomainUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
