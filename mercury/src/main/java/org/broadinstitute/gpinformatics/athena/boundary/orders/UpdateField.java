@@ -86,6 +86,7 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
             oldValueToCompare = ((Map<?, ?>) previousValue).get(UPDATE_FIELD_NAME).toString();
             newValueToCompare = ((CreateFields.Reporter) newValue).getName();
         }
+        newValueToCompare = newValueToCompare == null ? "" : newValueToCompare;
         if (!oldValueToCompare.equals(newValueToCompare)) {
             return getDisplayName() + (isBulkField ? " have " : " has ") + "been updated" +
                    (!isBulkField ? " from '" + oldValueToCompare + "' to '" + newValueToCompare + "'" : "") + ".\n";
