@@ -394,6 +394,15 @@ public enum VesselPosition {
     P23,
     P24,
 
+    A25,
+    A26,
+    A27,
+    A28,
+    A29,
+    A30,
+    A31,
+    A32,
+
     TUBE1,
     TUBE2,
     TUBE3,
