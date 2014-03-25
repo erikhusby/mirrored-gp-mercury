@@ -15,6 +15,6 @@ public class TestListener extends TestListenerAdapter {
     @Override
     public void onTestStart(ITestResult result) {
         super.onTestStart(result);
-        logger.info("Starting: " + result.getName());
+        logger.info("Starting: " + result.getTestClass().getName() + "#" + result.getName());
     }
 }
