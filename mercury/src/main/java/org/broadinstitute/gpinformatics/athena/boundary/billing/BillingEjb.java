@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -161,16 +163,7 @@ public class BillingEjb {
             QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
 
             try {
-                String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", sessionKey);
-
-                result.setWorkId(workId);
-                System.out.println("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
-
-                // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
-                // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-                item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+                callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem, quoteIsReplacing);
 
                 updatedPDOs.addAll(item.getOrderKeys());
 
@@ -190,6 +183,22 @@ public class BillingEjb {
         }
 
         return results;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
+                                            BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
+                                            QuotePriceItem quoteIsReplacing) {
+        String workId = quoteService.registerNewWork(
+                quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
+                pageUrl, "billingSession", sessionKey);
+
+        result.setWorkId(workId);
+        System.out.println("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
+
+        // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
+        // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
+        item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
     }
 
     public void updateBilledPdos(Set<String> updatedPDOs) {
