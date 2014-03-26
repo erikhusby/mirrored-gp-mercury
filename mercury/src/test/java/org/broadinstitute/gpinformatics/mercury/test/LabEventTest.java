@@ -1001,11 +1001,11 @@ public class LabEventTest extends BaseEventTest {
         IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
         Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                 VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,
                 "Wrong number of reagents");
         Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                 VesselPosition.LANE2);
-        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
+        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 3,
                 "Wrong number of reagents");
 
         String machineName = "Superman";

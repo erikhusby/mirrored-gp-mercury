@@ -96,11 +96,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
-        HiSeq2500JaxbBuilder dilutionBuilder =
-                new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
-                        .invoke();
+        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
+                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
                 getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
@@ -120,11 +119,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         LabBatch fctBatch =
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
-        HiSeq2500JaxbBuilder dilutionBuilder =
-                new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName + "bad",
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
-                        .invoke();
+        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
+                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName + "bad",
+                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
                 getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
@@ -153,11 +151,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
             startingVessel.setDilutionVessel(new TwoDBarcodedTube("PreviousDilutionTube" + runDate.getTime()));
         }
 
-        HiSeq2500JaxbBuilder dilutionBuilder =
-                new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
-                        .invoke();
+        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
+                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
                 getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{
@@ -184,11 +181,10 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
 
         final String altFctTicketName = fctBatchName + "ALT";
 
-        HiSeq2500JaxbBuilder dilutionBuilder =
-                new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(), "dilutionTest" + runDate.getTime(),
-                        denatureSource.getLabel(), qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2)
-                        .invoke();
+        HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
+                "dilutionTest" + runDate.getTime(), Collections.singletonList(denatureSource.getLabel()),
+                qtpEntityBuilder.getDenatureRack().getLabel(), fctBatchName,
+                ProductionFlowcellPath.DILUTION_TO_FLOWCELL, denatureSource.getSampleInstanceCount(), null, 2).invoke();
         PlateCherryPickEvent dilutionEvent = dilutionBuilder.getDilutionJaxb();
         LabEvent dilutionTransferEntity =
                 getLabEventFactory().buildFromBettaLims(dilutionEvent, new HashMap<String, LabVessel>() {{

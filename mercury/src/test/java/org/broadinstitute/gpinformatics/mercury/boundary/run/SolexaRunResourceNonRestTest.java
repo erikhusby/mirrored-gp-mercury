@@ -250,8 +250,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource,

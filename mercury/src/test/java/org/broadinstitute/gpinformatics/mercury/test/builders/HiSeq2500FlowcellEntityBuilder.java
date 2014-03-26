@@ -22,7 +22,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -65,9 +67,17 @@ public class HiSeq2500FlowcellEntityBuilder {
         TwoDBarcodedTube denatureTube =
                 TestUtils.getFirst(denatureRack.getContainerRole().getContainedVessels());
         Assert.assertNotNull(denatureTube);
+        List<String> denatureTubeBarcodes = new ArrayList<>();
+        for (VesselPosition vesselPosition : denatureRack.getRackType().getVesselGeometry().getVesselPositions()) {
+            TwoDBarcodedTube vesselAtPosition = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
+            if (vesselAtPosition != null) {
+                denatureTubeBarcodes.add(vesselAtPosition.getLabel());
+            }
+        }
+
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                 new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                        denatureTube.getLabel(),
+                        denatureTubeBarcodes,
                         denatureRack.getLabel(), fctTicket, productionFlowcellPath,
                         denatureRack.getSampleInstanceCount(), designationName, flowcellLanes);
         hiSeq2500JaxbBuilder.invoke();
@@ -97,7 +107,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             labEventHandler.processEvent(dilutionTransferEntity);
             dilutionRack = (TubeFormation) TestUtils.getFirst(dilutionTransferEntity.getTargetLabVessels());
             Assert.assertNotNull(dilutionRack);
-            Assert.assertEquals(denatureRack.getContainerRole().getContainedVessels().size(), 1);
+            Assert.assertEquals(dilutionRack.getContainerRole().getContainedVessels().size(), 1);
 
             // DilutionToFlowcellTransfer
             LabEventTest.validateWorkflow("DilutionToFlowcellTransfer", dilutionRack);
@@ -182,13 +192,29 @@ public class HiSeq2500FlowcellEntityBuilder {
 
         Set<SampleInstance> lane1SampleInstances =
                 illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(VesselPosition.LANE1);
-        Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
+        Assert.assertEquals(lane1SampleInstances.size(), denatureTube.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
         SampleInstance sampleInstance = TestUtils.getFirst(lane1SampleInstances);
         Assert.assertNotNull(sampleInstance);
         String workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
-        int reagentsSize = !workflowName.equals(Workflow.WHOLE_GENOME.getWorkflowName()) ? 2 : 1;
+
+        int reagentsSize = 0;
+        switch (Workflow.findByName(workflowName)) {
+        case NONE:
+            reagentsSize = 0;
+            break;
+        case WHOLE_GENOME:
+            reagentsSize = 1;
+            break;
+        case AGILENT_EXOME_EXPRESS:
+        case HYBRID_SELECTION:
+            reagentsSize = 2;
+            break;
+        case ICE_EXOME_EXPRESS:
+        case ICE:
+            reagentsSize = 3;
+        }
 
         Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
 
@@ -199,9 +225,8 @@ public class HiSeq2500FlowcellEntityBuilder {
         Assert.assertNotNull(sampleInstance);
         workflowName = sampleInstance.getWorkflowName();
         Assert.assertNotNull(workflowName);
-        reagentsSize = !workflowName.equals(Workflow.WHOLE_GENOME.getWorkflowName()) ? 2 : 1;
 
-        Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
+        Assert.assertEquals(lane2SampleInstances.size(), denatureTube.getSampleInstances().size(),
                 "Wrong number of samples in flowcell lane");
 
         Assert.assertEquals(sampleInstance.getReagents().size(), reagentsSize, "Wrong number of reagents");
