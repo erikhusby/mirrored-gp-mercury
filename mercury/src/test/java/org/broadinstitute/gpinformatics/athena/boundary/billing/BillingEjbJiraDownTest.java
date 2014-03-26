@@ -17,8 +17,11 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -75,7 +78,19 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         String businessKey = writeFixtureData();
 
-        billingEjb.bill("http://www.broadinstitute.org", businessKey);
+        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org", businessKey);
+
+        Set<String> updatedPDOs = new HashSet<>();
+
+        for(BillingEjb.BillingResult result:billingResults) {
+            if(result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
+
+
 
         billingSessionDao.clear();
 

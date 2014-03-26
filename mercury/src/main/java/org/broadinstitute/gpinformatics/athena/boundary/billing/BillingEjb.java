@@ -131,13 +131,13 @@ public class BillingEjb {
      */
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
-        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
 
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<>();
         Set<String> updatedPDOs = new HashSet<>();
 
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
@@ -189,6 +189,10 @@ public class BillingEjb {
             endSession(billingSession);
         }
 
+        return results;
+    }
+
+    public void updateBilledPdos(Set<String> updatedPDOs) {
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
@@ -204,7 +208,5 @@ public class BillingEjb {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
-
-        return results;
     }
 }
