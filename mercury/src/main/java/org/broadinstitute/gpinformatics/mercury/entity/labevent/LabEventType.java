@@ -527,7 +527,7 @@ public enum LabEventType {
     ICE_CATCH_ENRICHMENT_SETUP("IceCatchEnrichmentSetup", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_CATCH_ENRICHMENT_CLEANUP("IceCatchEnrichmentCleanup", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
-            SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+            SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.PCR),
     ICE_CATCH_PICO("IceCatchPico", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
