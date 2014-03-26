@@ -185,7 +185,9 @@ public class BillingEjb {
         return results;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    // Evaluate before checking in.  Would need a forced commit (and maybe clear if not too dangerous)
+    // to truly be effective.
+//    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
                                             BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
                                             QuotePriceItem quoteIsReplacing) {
