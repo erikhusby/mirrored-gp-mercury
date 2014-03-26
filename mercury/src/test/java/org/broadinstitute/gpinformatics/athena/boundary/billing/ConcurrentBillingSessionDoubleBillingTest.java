@@ -55,6 +55,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -173,7 +174,18 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
             try {
                 billingEjb = getBeanFromJNDI(BillingEjb.class);
                 numBillingThreadsRun++;
-                billingEjb.bill("whatever", BILLING_SESSION_ID);
+                Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("whatever", BILLING_SESSION_ID);
+
+                Set<String> updatedPDOs = new HashSet<>();
+
+                for(BillingEjb.BillingResult result:billingResults) {
+                    if(result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                        updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+                    }
+                }
+
+                billingEjb.updateBilledPdos(updatedPDOs);
+
             }
             catch(RuntimeException e) {
                 error = e;

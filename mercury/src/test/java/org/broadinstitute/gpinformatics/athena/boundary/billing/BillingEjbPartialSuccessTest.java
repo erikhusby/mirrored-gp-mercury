@@ -23,25 +23,18 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import java.net.URL;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
@@ -129,7 +122,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             }
             synchronized (lockBox) {
                 quoteCount++;
-                /*log.debug*/System.out.println("Quote count is now " + quoteCount);
+                /*log.debug*/
+                System.out.println("Quote count is now " + quoteCount);
                 assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
             }
             return workId;
@@ -177,14 +171,15 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
-                                    "Replacement PriceItem Name " + uuid);
+                                          "Replacement PriceItem Name " + uuid);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
                     billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                            productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                                                              productOrder.getProduct().getPrimaryPriceItem(),
+                                                              new Date(), 3));
                 }
             }
         }
@@ -225,14 +220,15 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
-                                    "Replacement PriceItem Name " + uuid);
+                                          "Replacement PriceItem Name " + uuid);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
                     billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                            productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                                                              productOrder.getProduct().getPrimaryPriceItem(),
+                                                              new Date(), 3));
                 }
             }
         }
@@ -264,7 +260,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+                                                                        billingSession.getBusinessKey());
+
+        Set<String> updatedPDOs = new HashSet<>();
+
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
 
         billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.
@@ -300,7 +307,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+                                                                        billingSession.getBusinessKey());
+
+        Set<String> updatedPDOs = new HashSet<>();
+
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -308,8 +326,19 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should equal half the size of the total items to be billed",
-                quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+                   quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
+        Collection<BillingEjb.BillingResult> billingResults1 = billingEjb.bill("http://www.broadinstitute.org",
+                                                                         billingSession.getBusinessKey());
+
+        updatedPDOs = new HashSet<>();
+
+        for (BillingEjb.BillingResult result : billingResults1) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -317,10 +346,22 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should equal half the size of the total items to be billed",
-                quoteImportItems.size(), is(equalTo(sampleNameList.length / 4)));
+                   quoteImportItems.size(), is(equalTo(sampleNameList.length / 4)));
 
         cycleFails = false;
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults3 = billingEjb.bill("http://www.broadinstitute.org",
+                                                                         billingSession.getBusinessKey());
+
+        updatedPDOs = new HashSet<>();
+
+        for (BillingEjb.BillingResult result : billingResults3) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
+
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -328,7 +369,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should be zero",
-                quoteImportItems.size(), is(equalTo(0)));
+                   quoteImportItems.size(), is(equalTo(0)));
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
@@ -347,7 +388,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+                                                                        billingSession.getBusinessKey());
+
+        Set<String> updatedPDOs = new HashSet<>();
+
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
+        billingEjb.updateBilledPdos(updatedPDOs);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
