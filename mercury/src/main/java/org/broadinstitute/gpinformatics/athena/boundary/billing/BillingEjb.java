@@ -196,7 +196,7 @@ public class BillingEjb {
                 pageUrl, "billingSession", sessionKey);
 
         result.setWorkId(workId);
-        System.out.println("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
+        log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
