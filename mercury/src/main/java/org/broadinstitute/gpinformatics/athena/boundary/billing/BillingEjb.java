@@ -172,6 +172,8 @@ public class BillingEjb {
                 updatedPDOs.addAll(item.getOrderKeys());
 
             } catch (Exception ex) {
+                log.error("Failed to complete billing for " + quotePriceItem.getName() + " in session " + sessionKey,
+                          ex);
                 // Any exceptions in sending to the quote server will just be reported and will continue
                 // on to the next one.
                 item.setBillingMessages(ex.getMessage());
