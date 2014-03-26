@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.infrastructure.common.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -15,6 +16,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -164,6 +166,7 @@ public class BillingEjb {
                         pageUrl, "billingSession", sessionKey);
 
                 result.setWorkId(workId);
+                System.out.println("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
 
                 // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
                 // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
