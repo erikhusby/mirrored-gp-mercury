@@ -64,18 +64,16 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
     /**
      * Tell the collaboration portal that the research project should be shared with the user. Depending on the
      * state of the user in BSP and the Portal, te account will be created/added to the appropriate application. If
-     * the user does not have a portal account, an invitation will be sent for them to fill in all needed information.
+     * the user has never logged into the portal, an invitation will be sent for them to fill in all needed information.
      *
      * @param researchProject The research project.
-     * @param selectedCollaborator The actual existing collaborator identifier.
-     * @param specifiedCollaborator The email specified for an existing user or a new user.
+     * @param collaborator The collaborator.
      * @param collaborationMessage The optional message from the PM to the collaborator.
      *
      * @return The collaboration id
      */
-    public String beginCollaboration(
-            @Nonnull ResearchProject researchProject, @Nonnull BspUser selectedCollaborator, @Nullable String specifiedCollaborator,
-            @Nullable String collaborationMessage)
+    public String beginCollaboration(@Nonnull ResearchProject researchProject, @Nonnull BspUser collaborator,
+                                     @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         if (researchProject.getProjectManagers().length < 1) {
@@ -91,8 +89,9 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         WebResource resource = getJerseyClient().resource(url);
 
         CollaborationData collaboration =
-                new CollaborationData(researchProject.getName(), researchProject.getSynopsis(), specifiedCollaborator,
-                        selectedCollaborator.getUserId(), projectManager.getUserId(), collaborationMessage);
+                new CollaborationData(researchProject.getName(), researchProject.getSynopsis(),
+                        researchProject.getBusinessKey(),
+                        collaborator.getUserId(), projectManager.getUserId(), collaborationMessage);
 
         try {
             return resource.type(MediaType.APPLICATION_XML).post(String.class, collaboration);
@@ -103,7 +102,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         }
     }
 
-    public CollaborationData getCollaboration(String collaborationId)
+    public CollaborationData getCollaboration(@Nonnull String collaborationId)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + collaborationId;
@@ -112,7 +111,8 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         try {
             return resource.accept(MediaType.APPLICATION_XML).get(CollaborationData.class);
         } catch (UniformInterfaceException e) {
-            throw new CollaborationNotFoundException("Could not communicate with collaboration portal at " + url, e);
+            // No collaboration yet.
+            return null;
         } catch (ClientHandlerException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }

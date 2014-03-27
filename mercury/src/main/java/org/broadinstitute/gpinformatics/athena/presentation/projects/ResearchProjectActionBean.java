@@ -405,7 +405,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         collaborationEjb.beginCollaboration(
                 researchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
 
-        // recall init so that the updated project is retrieved
+        // Call init again so that the updated project is retrieved.
         init();
         return view();
     }
@@ -804,9 +804,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.EventHandling,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION})
     public void setCollaborationInfo() throws CollaborationNotFoundException, CollaborationPortalException {
-        // If there is no invitation email, then there was never a collaboration set up, so just return empty.
-        if (!StringUtils.isBlank(editResearchProject.getCollaborationId())) {
-            collaborationData = collaborationEjb.getCollaboration(editResearchProject.getCollaborationId());
+        if (!StringUtils.isBlank(editResearchProject.getBusinessKey())) {
+            collaborationData = collaborationEjb.getCollaboration(editResearchProject.getBusinessKey());
         }
     }
 
@@ -821,8 +820,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     public boolean isInvitationPending() {
         // Invitation pending means that an email is attached to this and there is no collaborating user.
-        return !StringUtils.isBlank(editResearchProject.getInvitationEmail()) &&
-               (editResearchProject.getCollaboratingWith() == null);
+        return collaborationData != null && collaborationData.getExpirationDate() != null;
     }
 
     public String getUsernameForUserID(long userId) {

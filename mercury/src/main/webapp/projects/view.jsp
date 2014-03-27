@@ -282,7 +282,7 @@
                                         </stripes:link>)
                                     </div>
                                 </c:when>
-                                <c:when test="${actionBean.editResearchProject.collaborationStarted}">
+                                <c:when test="${actionBean.collaborationData != null}">
                                     <div class="notificationText">
                                         <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
                                             <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>

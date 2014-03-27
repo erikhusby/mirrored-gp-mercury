@@ -38,7 +38,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -120,12 +119,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     @Column(name = "IRB_NOT_ENGAGED", nullable = false)
     private boolean irbNotEngaged = IRB_ENGAGED;
-
-    @Column(name = "INVITATION_EMAIL")
-    private String invitationEmail;
-
-    @Column(name = "COLLABORATION_ID")
-    private String collaborationId;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "PARENT_RESEARCH_PROJECT", nullable = true, insertable = true, updatable = true)
@@ -303,14 +296,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public void setAccessControlEnabled(boolean accessControlEnabled) {
         this.accessControlEnabled = accessControlEnabled;
-    }
-
-    public String getInvitationEmail() {
-        return invitationEmail;
-    }
-
-    public void setInvitationEmail(String invitationEmail) {
-        this.invitationEmail = invitationEmail;
     }
 
     public Collection<RegulatoryInfo> getRegulatoryInfos() {
@@ -750,43 +735,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         regulatoryInfo.removeResearchProject(this);
     }
 
-    /***
-     * Get the primary collaborator. This is defined as the person who is attached to the collaboration portal once
-     * the PM decides to initiate a space to share information about the project. There will be only one primary
-     * external in the initial phase, so we will only grab that one here.
-     *
-     * @return The id of the person
-     */
-    public Long getCollaboratingWith() {
-        Long[] allPrimaries = getPeople(RoleType.PRIMARY_EXTERNAL);
-
-        if ((allPrimaries == null) || (allPrimaries.length == 0)) {
-            return null;
-        }
-
-        // Eventually we may collaborate in the portal with multiple, but for now it will be just one
-        return allPrimaries[0];
-    }
-
-    /**
-     * If we successfully created the collaboration, there will be a user selected (collaboratingWith will have a
-     * value) or an email address for the invitation was sent.
-     *
-     * @return Whether a collaboration was sent or not
-     */
-    public boolean isCollaborationStarted() {
-        return (collaborationId != null);
-    }
-
-    public void setCollaborationId(String collaborationId) {
-        this.collaborationId = collaborationId;
-    }
-
-    public String getCollaborationId() {
-        return collaborationId;
-    }
-
-
     public enum Status implements StatusType {
         Open, Archived;
 
@@ -803,16 +751,6 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         public String getDisplayName() {
             return name();
         }
-    }
-
-    public boolean addPrimaryCollaborator(BspUser user) {
-        Long[] projectPersonIds = getPeople(RoleType.PRIMARY_EXTERNAL);
-        if (projectPersonIds.length > 0) {
-            return false;
-        }
-
-        List<BspUser> usersToAdd = (user == null) ? null : Collections.singletonList(user);
-        return addPeople(RoleType.PRIMARY_EXTERNAL, usersToAdd);
     }
 }
 

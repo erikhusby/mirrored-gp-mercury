@@ -11,15 +11,18 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalService;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -40,18 +43,24 @@ public class CollaborationEjb {
 
     private final CollaborationPortalService collaborationPortalService;
 
+    private final BSPUserService bspUserService;
+
+    private final UserBean userBean;
+
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public CollaborationEjb() {
-        this(null, null, null);
+        this(null, null, null, null, null);
     }
 
     @Inject
     public CollaborationEjb(ResearchProjectDao researchProjectDao, CollaborationPortalService collaborationPortalService,
-                            BSPUserList userList) {
+                            BSPUserList userList, BSPUserService bspUserService, UserBean userBean) {
         this.researchProjectDao = researchProjectDao;
         this.collaborationPortalService = collaborationPortalService;
         this.userList = userList;
+        this.bspUserService = bspUserService;
+        this.userBean = userBean;
     }
 
     /**
@@ -100,28 +109,25 @@ public class CollaborationEjb {
             bspUser = userList.getByEmail(collaboratorEmail);
         }
 
-        // Add the user as the primary collaborator.
-        if (bspUser != null) {
-            researchProject.addPrimaryCollaborator(bspUser);
-
-            // add the user as an external collaborator in case they are not there already.
-            researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
-        }
-
-        // If bspUser is still null, we must create a BSP user for the collaborator.
+        // Still no BSP user, so ask BSP to create one for us.
         if (bspUser == null) {
-            throw new IllegalArgumentException("For now, Collaborator must be a known BSP user.");
+            bspUser = bspUserService.createCollaborator(collaboratorEmail, userBean.getBspUser());
         }
 
-        if (collaboratorEmail != null) {
-            researchProject.setInvitationEmail(collaboratorEmail);
+        if (bspUser == null) {
+            throw new RuntimeException("Couldn't create a BSP user with the email address " + collaboratorEmail);
         }
+
+        // Ensure that the user is an external collaborator.
+        // Add the user as an external collaborator in case they are not there already.
+        researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
 
         // Now tell the portal to create this collaborator.
-         String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
-                 bspUser, researchProjectKey, collaborationMessage);
-
-        researchProject.setCollaborationId(collaborationId);
+        String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
+                bspUser, collaborationMessage);
+        if (StringUtils.isBlank(collaborationId)) {
+            throw new RuntimeException("Could not create a collaboration");
+        }
     }
 
     public CollaborationData getCollaboration(@Nonnull String collaborationId)
