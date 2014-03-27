@@ -5,11 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.ActionBeanBaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * This class is for ...
- *
- * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
- */
 public class SecurityActionBeanTest extends ActionBeanBaseTest<SecurityActionBean> {
 
     private static final String TEST_USERNAME = "QADudeTest";
