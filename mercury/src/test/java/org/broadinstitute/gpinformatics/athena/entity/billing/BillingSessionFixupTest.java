@@ -20,7 +20,9 @@ import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -103,6 +105,11 @@ public class BillingSessionFixupTest extends Arquillian {
     @Test
     public void reconcileDataFromQuotServer() throws IOException {
 
+        File outputFile = new File("/Users/andrew/Desktop/reconcile.txt");
+        if (outputFile.exists()) {
+            outputFile.delete();
+        }
+        PrintWriter reconcileWriter = new PrintWriter(new FileWriter(outputFile));
         List<String> spreadsheetLines = parseGregsQuoteServerSpreadsheet();
         //List<String> spreadsheetLines = new ArrayList<>();
         //spreadsheetLines.add("DNA8AX\tMiSeq up to 300 cycles\t1924\tMiSeq up to 300 cycles\t1924\t1\thttp://mercury/Mercury/billing/session.action\tbillingSession\tBILL-82\t15-JAN-13");
@@ -120,7 +127,8 @@ public class BillingSessionFixupTest extends Arquillian {
                                                           quoteData.quantity,
                                                           quoteData.workDate);
             }
-            System.out.println(spreadsheetLine + "\t" + reconcileResult);
+            reconcileWriter.println(spreadsheetLine + "\t" + reconcileResult);
+            reconcileWriter.flush();
         }
 
     }
