@@ -19,9 +19,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,6 +38,9 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private BillingAdaptor billingAdaptor;
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
@@ -78,8 +79,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         String businessKey = writeFixtureData();
 
-        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org", businessKey);
-        billingEjb.updateBilledPdos(billingResults);
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org", businessKey);
 
         billingSessionDao.clear();
 

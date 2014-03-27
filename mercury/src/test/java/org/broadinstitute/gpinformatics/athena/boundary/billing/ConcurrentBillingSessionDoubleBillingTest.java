@@ -143,14 +143,13 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public void run() {
-            BillingEjb billingEjb = null;
+            BillingAdaptor billingAdaptor = null;
             ContextControl ctxCtrl = BeanProvider.getContextualReference(ContextControl.class);
             ctxCtrl.startContext(RequestScoped.class);
             try {
-                billingEjb = getBeanFromJNDI(BillingEjb.class);
+                billingAdaptor = getBeanFromJNDI(BillingAdaptor.class);
                 numBillingThreadsRun.incrementAndGet();
-                Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("whatever", BILLING_SESSION_ID);
-                billingEjb.updateBilledPdos(billingResults);
+                Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("whatever", BILLING_SESSION_ID);
             }
             catch(RuntimeException e) {
                 error = e;

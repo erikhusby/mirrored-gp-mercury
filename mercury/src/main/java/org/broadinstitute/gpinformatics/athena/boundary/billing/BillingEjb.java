@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.infrastructure.common.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -13,16 +12,12 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -30,7 +25,8 @@ public class BillingEjb {
 
     private static final Log log = LogFactory.getLog(BillingEjb.class);
 
-    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT = "There are no items available to bill in this billing session";
+    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT =
+            "There are no items available to bill in this billing session";
 
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
@@ -100,7 +96,7 @@ public class BillingEjb {
      *
      * @param billingSession BillingSession to be ended.
      */
-    private void endSession(@Nonnull BillingSession billingSession) {
+    public void endSession(@Nonnull BillingSession billingSession) {
 
         // Remove all the sessions from the non-billed items.
         boolean allFailed = billingSession.cancelSession();
@@ -114,6 +110,23 @@ public class BillingEjb {
         }
     }
 
+    public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
+        BillingSession session = billingSessionDao.findByBusinessKeyWithLock(billingSessionKey);
+
+        // TODO Update future status to lock session
+
+        return session;
+    }
+
+    public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
+
+        // TODO unlock billingSession
+
+        // Only persisting to have some action to force persistence.  Will remove once we actually have a status locking
+        // mechanism
+        billingSessionDao.persist(billingSession);
+    }
+
 
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
@@ -125,26 +138,26 @@ public class BillingEjb {
      * {@link BillingResult#getWorkId()} will contain
      * the work id result.
      *
-     *
-     * @param pageUrl        URL to be included in the call to the quote server.
-     * @param sessionKey     Key to be included in the call to the quote server.
+     * @param pageUrl    URL to be included in the call to the quote server.
+     * @param sessionKey Key to be included in the call to the quote server.
      *
      * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     *         associated with the BillingSession.
+     * associated with the BillingSession.
+     *
+     * @deprecated This method will no longer be used.  Instead, the method defined in BillingAdaptor should be used
      */
+    @Deprecated
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
-
 
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<>();
-        Set<String> updatedPDOs = new HashSet<>();
 
         BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-        if(unBilledQuoteImportItems.isEmpty()) {
+        if (unBilledQuoteImportItems.isEmpty()) {
             endSession(billingSession);
             throw new BillingException(NO_ITEMS_TO_BILL_ERROR_TEXT);
         }
@@ -166,8 +179,6 @@ public class BillingEjb {
             try {
                 callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem, quoteIsReplacing);
 
-                updatedPDOs.addAll(item.getOrderKeys());
-
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue
                 // on to the next one.
@@ -186,9 +197,19 @@ public class BillingEjb {
         return results;
     }
 
-    // Evaluate before checking in.  Would need a forced commit (and maybe clear if not too dangerous)
-    // to truly be effective.
-//    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    /**
+     * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
+     * separate the steps of billing a session into smaller finite transactions so we can record more to the database
+     * sooner
+     *
+     * @param pageUrl          URL to be included in the call to the quote server.
+     * @param sessionKey       Business key of the Billing session of which the price item is associated
+     * @param item             Representation of the quote and its ledger entries that are to be billed
+     * @param result           Outcome of to be reported back to the user of the attempt to bill the quote item
+     * @param quote            in depth representation of quote to which the item is being charged
+     * @param quotePriceItem   Quote server representation of the Price item that is represented in mercury.
+     * @param quoteIsReplacing Set if the price item is replacing a previously defined item.
+     */
     public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
                                             BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
                                             QuotePriceItem quoteIsReplacing) {
@@ -204,6 +225,14 @@ public class BillingEjb {
         item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
     }
 
+    /**
+     * Separation of the action of calling to Jira and updating
+     *
+     * @param billingResults
+     *
+     * @deprecated This is deprecated.  Reference method in BillingAdaptor
+     */
+    @Deprecated
     public void updateBilledPdos(Collection<BillingResult> billingResults) {
 
         Collection<String> updatedPDOs = new ArrayList<>();

@@ -64,16 +64,18 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private static String FAILING_PRICE_ITEM_NAME = "";
     private static String FAILING_PRICE_ITEM_SAMPLE = "";
 
-    private static int quoteCount;
-    private static int totalItems;
+    protected static int quoteCount;
+    protected static int totalItems;
 
-    private static boolean cycleFails = true;
-    private static Result lastResult = Result.FAIL;
+    protected static boolean cycleFails = true;
+    protected static Result lastResult = Result.FAIL;
+    @Inject
+    private BillingAdaptor billingAdaptor;
 
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
-    private static final Object lockBox = new Object();
+    protected static final Object lockBox = new Object();
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -206,7 +208,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      *
      * @param orderSamples
      */
-    private BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
+    protected BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
 
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(orderSamples.length);
         for (String sample : orderSamples) {
@@ -260,7 +262,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
         billingEjb.updateBilledPdos(billingResults);
 
@@ -298,7 +300,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
         billingEjb.updateBilledPdos(billingResults);
 
@@ -309,8 +311,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         assertThat("the size of the unBilled items should equal half the size of the total items to be billed",
                    quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
-        Collection<BillingEjb.BillingResult> billingResults1 = billingEjb.bill("http://www.broadinstitute.org",
-                                                                         billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults1 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
+                                                                               billingSession.getBusinessKey());
         billingEjb.updateBilledPdos(billingResults1);
 
         billingSessionDao.clear();
@@ -322,7 +324,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                    quoteImportItems.size(), is(equalTo(sampleNameList.length / 4)));
 
         cycleFails = false;
-        Collection<BillingEjb.BillingResult> billingResults3 = billingEjb.bill("http://www.broadinstitute.org",
+        Collection<BillingEjb.BillingResult> billingResults3 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                          billingSession.getBusinessKey());
         billingEjb.updateBilledPdos(billingResults3);
 
@@ -352,7 +354,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org",
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
         billingEjb.updateBilledPdos(billingResults);
 
@@ -360,6 +362,5 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
-
     }
 }
