@@ -77,7 +77,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private static final String REQUISITION_PREFIX = "REQ-";
 
     // Date needs to be validated (could be 4/7/2014).
-    public static final String IRB_REQUIRED_START_DATE_STRING = "04/14/2014";
+    public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
         return researchProject.getRegulatoryInfos();
@@ -91,17 +91,24 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }
 
-    public boolean regulatoryRequirementsMet() {
-        Date testDate=getPlacedDate();
+    @Transient
+    public boolean orderPredatesRegulatoryRequirement() {
+        Date testDate = getPlacedDate();
         if (getPlacedDate() == null) {
             testDate = new Date();
         }
-        if (testDate.compareTo(getIrbRequiredStartDate()) >= 0){
-            return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements();
-        }
-        return true;
+        return testDate.before(getIrbRequiredStartDate());
     }
 
+    @Transient
+    public boolean regulatoryRequirementsMet() {
+        if (orderPredatesRegulatoryRequirement()){
+            return true;
+        }
+        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+    }
+
+    @Transient
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }
