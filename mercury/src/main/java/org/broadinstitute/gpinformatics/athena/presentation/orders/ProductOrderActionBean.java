@@ -384,15 +384,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
-        Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap = new HashMap<>();
-        projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfos());
-        for (ResearchProject project : researchProject.getAllParents()) {
-            projectRegulatoryMap.put(project.getTitle(), project.getRegulatoryInfos());
-        }
-        return projectRegulatoryMap;
-    }
-
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified.
      */
@@ -1243,31 +1234,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(pdoId)) {
             editOrder = productOrderDao.findById(Long.parseLong(pdoId));
         }
-        JSONArray itemList = new JSONArray();
-        if (researchProject != null) {
-            Map<String, Collection<RegulatoryInfo>>
-                    regulatoryInfoByProject = setupRegulatoryInformation(researchProject);
-            for (Map.Entry<String, Collection<RegulatoryInfo>> regulatoryEntries : regulatoryInfoByProject.entrySet()) {
-                if (!regulatoryEntries.getValue().isEmpty()) {
-                    JSONObject item = new JSONObject();
-                    item.put("group", regulatoryEntries.getKey());
-                    JSONArray values = new JSONArray();
-                    for (RegulatoryInfo regulatoryInfo : regulatoryEntries.getValue()) {
-                        JSONObject regulatoryInfoJson = new JSONObject();
-                        regulatoryInfoJson.put("key", regulatoryInfo.getBusinessKey());
-                        regulatoryInfoJson.put("value", regulatoryInfo.getDisplayText());
-                        if (editOrder != null && editOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
-                            regulatoryInfoJson.put("selected", true);
-                        }
-                        values.put(regulatoryInfoJson);
-                    }
-                    item.put("value", values);
-                    itemList.put(item);
-                }
-            }
+        ProductOrderRegulatoryInformation
+                regulatoryInformation = new ProductOrderRegulatoryInformation(researchProject, editOrder);
 
-        }
-        return createTextResolution(itemList.toString());
+        return createTextResolution(regulatoryInformation.getJson());
     }
 
     @HandlesEvent("getPostReceiveOptions")

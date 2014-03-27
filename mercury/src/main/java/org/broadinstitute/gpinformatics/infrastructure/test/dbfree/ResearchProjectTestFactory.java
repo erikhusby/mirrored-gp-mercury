@@ -51,12 +51,13 @@ public class ResearchProjectTestFactory {
 
         String identifier = String.valueOf(new Date().getTime());
         RegulatoryInfo regulatoryInfo =
-                new RegulatoryInfo("IRB for " + title, RegulatoryInfo.Type.IRB, "IRB-" + identifier);
-        researchProject.getRegulatoryInfos().add(regulatoryInfo);
+                new RegulatoryInfo(1234l, "IRB for " + title, RegulatoryInfo.Type.IRB, "IRB-" + identifier);
+        researchProject.addRegulatoryInfo(regulatoryInfo);
         regulatoryInfo =
-                new RegulatoryInfo("Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
+                new RegulatoryInfo(1435l, "Consent for " + title, RegulatoryInfo.Type.ORSP_NOT_HUMAN_SUBJECTS_RESEARCH,
                         "ABC-" + identifier);
-        researchProject.getRegulatoryInfos().add(regulatoryInfo);
+
+        researchProject.addRegulatoryInfo(regulatoryInfo);
 
         return researchProject;
     }
@@ -74,7 +75,7 @@ public class ResearchProjectTestFactory {
                 new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
         RegulatoryInfo regulatoryInfo =
                         new RegulatoryInfo("IRB Consent for " + researchProjectTitle, RegulatoryInfo.Type.IRB, "8675309");
-        dummyProject.getRegulatoryInfos().add(regulatoryInfo);
+        dummyProject.addRegulatoryInfo(regulatoryInfo);
 
 
         BspUser user = userList.getById(TEST_CREATOR);

@@ -738,7 +738,7 @@ function formatInput(item) {
     <div class="controls">
         <div class="form-value">
             <c:choose>
-            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+            <c:when test="${actionBean.editOrder.hasRegulatoryInfo()}">
                 <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
                         ${regulatoryInfo.displayText}<br/>
                 </c:forEach>
