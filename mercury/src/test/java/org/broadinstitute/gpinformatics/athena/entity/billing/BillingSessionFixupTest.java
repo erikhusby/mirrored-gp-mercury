@@ -17,6 +17,12 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -91,5 +97,75 @@ public class BillingSessionFixupTest extends Arquillian {
         billingSessionDao.persistAll(Collections.emptyList());
 
         logger.info("Registered Manual billing");
+    }
+
+    @Test
+    public void reconcileDataFromQuotServer() throws IOException {
+
+        List<String> spreadsheetLines = parseGregsQuoteServerSpreadsheet();
+        //List<String> spreadsheetLines = new ArrayList<>();
+        //spreadsheetLines.add("DNA8FD\tHiSeq 44 Single lane\t1041\tHiSeq 44 Single lane\t1041\t1\thttp://mercury/Mercury/billing/session.action\tbillingSession\tBILL-82\t31-JAN-13");
+        System.out.println("Read " + spreadsheetLines.size() + " lines from the spreadsheet");
+        for (String spreadsheetLine : spreadsheetLines) {
+            QuoteServerReconciliationData quoteData = parseQuoteData(spreadsheetLine);
+            BillingSession billingSession = billingSessionDao.findByBusinessKey(quoteData.billingSession);
+            String reconcileResult = null;
+            if (billingSession == null) {
+                reconcileResult = "vaporized!";
+            }
+            else {
+                reconcileResult = billingSession.reconcile(quoteData.quote,
+                                                          quoteData.priceItem,
+                                                          quoteData.quantity,
+                                                          quoteData.workDate);
+            }
+            System.out.println(spreadsheetLine + "\t" + reconcileResult);
+        }
+
+    }
+
+    private List<String> parseGregsQuoteServerSpreadsheet() throws IOException {
+        File file = new File("/Users/andrew/Desktop/mercury_work.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = null;
+        List<String> linesFromFile = new ArrayList<>();
+        // skip header row
+        reader.readLine();
+
+        while ((line = reader.readLine()) != null) {
+            linesFromFile.add(new String(line));
+        }
+        return linesFromFile;
+    }
+
+    private QuoteServerReconciliationData parseQuoteData(String quoteSpreadsheetLine) {
+        QuoteServerReconciliationData quoteServerData = new QuoteServerReconciliationData();
+        String[] splitData = quoteSpreadsheetLine.split("\t");
+        quoteServerData.quote = splitData[0].trim();
+        quoteServerData.priceItem = splitData[1].trim();
+        quoteServerData.quantity = Double.parseDouble(splitData[5].trim());
+        String dateString = splitData[9].trim();
+        quoteServerData.billingSession = splitData[8].trim();
+        try {
+            quoteServerData.workDate = new SimpleDateFormat("dd-MMM-yy").parse(dateString);
+        }
+        catch(ParseException e) {
+            throw new RuntimeException("Could not parse date " + dateString,e);
+        }
+        return quoteServerData;
+    }
+
+    private class QuoteServerReconciliationData {
+
+        public String quote;
+
+        public String priceItem;
+
+        public double quantity;
+
+        public Date workDate;
+
+        public String billingSession;
+
     }
 }

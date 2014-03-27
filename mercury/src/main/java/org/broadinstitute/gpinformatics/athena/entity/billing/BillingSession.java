@@ -23,6 +23,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,11 +35,10 @@ import java.util.Set;
 
 /**
  * This handles the billing session.
- *
  */
 @Entity
 @Audited
-@Table(name= "BILLING_SESSION", schema = "athena")
+@Table(name = "BILLING_SESSION", schema = "athena")
 public class BillingSession implements Serializable {
     private static final long serialVersionUID = -5063307042006128046L;
 
@@ -45,21 +46,22 @@ public class BillingSession implements Serializable {
     public static final String SUCCESS = "Billed Successfully";
 
     @Id
-    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION", allocationSize = 1)
+    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION",
+                       allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_SESSION")
     @Column(name = "BILLING_SESSION_ID")
     private Long billingSessionId;
 
-    @Column(name="CREATED_DATE")
+    @Column(name = "CREATED_DATE")
     private Date createdDate;
 
-    @Column(name="CREATED_BY")
+    @Column(name = "CREATED_BY")
     private Long createdBy;
 
-    @Column(name="BILLED_DATE")
+    @Column(name = "BILLED_DATE")
     private Date billedDate;
 
-    @Column(name="BILLING_SESSION_TYPE")
+    @Column(name = "BILLING_SESSION_TYPE")
     @Enumerated(EnumType.STRING)
     private BillingSessionType billingSessionType;
 
@@ -71,7 +73,8 @@ public class BillingSession implements Serializable {
     // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
     // applied to them
 
-    protected BillingSession() {}
+    protected BillingSession() {
+    }
 
     public BillingSession(@Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
         this.createdBy = createdBy;
@@ -90,9 +93,9 @@ public class BillingSession implements Serializable {
      * This is a 'special' constructor to recreate a billing session that may have been deleted. It is being built for
      * fixup tests. The billing session is considered billed even though nothing has gone to the quote server.
      *
-     * @param billedDate If the desire is to set this as already billed (if something was billed already
-     *                   in the quote server). If null, this is left open to bill and end.
-     * @param createdBy The user who is creating this.
+     * @param billedDate  If the desire is to set this as already billed (if something was billed already
+     *                    in the quote server). If null, this is left open to bill and end.
+     * @param createdBy   The user who is creating this.
      * @param ledgerItems All the ledger entries that will be added to this session.
      */
     BillingSession(@Nullable Date billedDate, @Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
@@ -272,5 +275,53 @@ public class BillingSession implements Serializable {
         public Date getBucketDate(Date workCompleteDate) {
             return rollupCalculator.getBucketDate(workCompleteDate);
         }
+    }
+
+    public String reconcile(String quote, String billingItem, double amount, Date workReportedDate) {
+
+        boolean perfectMatch = false;
+        String result = null;
+
+        double totalQuantity = 0;
+        for (LedgerEntry ledgerEntry : ledgerEntryItems) {
+            if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
+                billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName()) &&
+                org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
+
+                if (Math.floor(amount) == Math.floor(ledgerEntry.getQuantity())) {
+                    perfectMatch = true;
+                    break;
+                }
+                else {
+                    totalQuantity += ledgerEntry.getQuantity();
+                }
+            }
+        }
+
+        if (perfectMatch) {
+            result = "ok";
+        }
+        else if (totalQuantity > 0) {
+            if (Math.floor(totalQuantity) == Math.floor(amount)) {
+                result = "ok";  //quote summary rolls up by day...so 2 ledger items on the same day for the same thing (quote and price item) are aggregated
+            }
+        }
+        else {
+            for (LedgerEntry ledgerEntry : ledgerEntryItems) {
+                if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
+                    org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate()) &&
+                    !billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
+                    result = "price item mismatch: " + billingItem + " vs. " + ledgerEntry.getPriceItem().getName() + " for " + quote + "  " + getBusinessKey();
+                }
+                if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
+                     !org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate()) &&
+                     billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
+                    result = "date mismatch: quote server says " + dateFormat.format(workReportedDate) +
+                             " mercury says " + dateFormat.format(ledgerEntry.getWorkCompleteDate());
+                }
+            }
+        }
+        return result;
     }
 }
