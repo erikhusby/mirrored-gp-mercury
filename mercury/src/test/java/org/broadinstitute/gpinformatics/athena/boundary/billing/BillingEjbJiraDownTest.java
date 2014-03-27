@@ -79,18 +79,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
         String businessKey = writeFixtureData();
 
         Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org", businessKey);
-
-        Set<String> updatedPDOs = new HashSet<>();
-
-        for(BillingEjb.BillingResult result:billingResults) {
-            if(result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
-                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
-            }
-        }
-
-        billingEjb.updateBilledPdos(updatedPDOs);
-
-
+        billingEjb.updateBilledPdos(billingResults);
 
         billingSessionDao.clear();
 
