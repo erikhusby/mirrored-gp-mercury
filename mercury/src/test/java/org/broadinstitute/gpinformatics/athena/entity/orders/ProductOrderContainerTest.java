@@ -96,22 +96,33 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
     }
 
-    public void testSimpleProductOrderWithConsent() throws Exception {
+    public void testSimpleProductOrderWithRegulatoryInfo() throws Exception {
         ProductOrder testOrder =  ProductOrderDBTestFactory.createTestExExProductOrder(researchProjectDao, productDao);
+        productOrderDao.persist(testOrder.getResearchProject());
+        productOrderDao.flush();
+
         testOrder.setCreatedBy(10950L);
 
         Collection<RegulatoryInfo> availableRegulatoryInfos = testOrder.findAvailableRegulatoryInfos();
         Assert.assertFalse(availableRegulatoryInfos.isEmpty());
-        testOrder.setRegulatoryInfos(availableRegulatoryInfos);
+
+        testOrder.addRegulatoryInfo(
+                availableRegulatoryInfos.toArray(new RegulatoryInfo[availableRegulatoryInfos.size()]));
 
         BspUser bspUser = new BspUser();
         bspUser.setUserId(10950L);
-//        testOrder.setCreatedBy(10950l);
         testOrder.prepareToSave(bspUser, ProductOrder.SaveType.CREATING);
-//        ProductOrderJiraUtil.placeOrder(testOrder, jiraService);
-        productOrderDao.persist(testOrder.getProduct());
+        productOrderDao.persist(testOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
-}
+
+        testOrder = productOrderDao.findByBusinessKey(testOrder.getBusinessKey());
+
+        Assert.assertEquals(availableRegulatoryInfos, testOrder.findAvailableRegulatoryInfos());
+
+    }
 
     public void testSimpleNonBspProductOrder() throws Exception {
         ProductOrder testOrder =
