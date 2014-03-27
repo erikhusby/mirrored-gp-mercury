@@ -9,12 +9,10 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.mercury.BSPJerseyClient;
-import org.openqa.selenium.io.IOUtils;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -53,14 +51,7 @@ public class BSPUserService extends BSPJerseyClient {
                 getJerseyClient().resource(urlString).type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).
                         post(ClientResponse.class, parameters);
 
-        String response;
-        try {
-            response = IOUtils.readFully(clientResponse.getEntityInputStream());
-        } catch (IOException e) {
-            log.error("Error calling web service " + urlString + " with parameters " + parameters, e);
-            return null;
-        }
-
+        String response = clientResponse.getEntity(String.class);
         Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
 
         if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
