@@ -76,7 +76,7 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
      * @return the web service URL used by JAX RS web services in BSP
      */
     public String getJaxRsWebServiceUrl(String suffix) {
-        return String.format("%s%s:%d/bsp/webservice/rest/%s", getHttpScheme(), getHost(), getPort(), suffix);
+        return getUrl("rest/" + suffix);
     }
 
     public static BSPConfig produce(Deployment deployment) {
