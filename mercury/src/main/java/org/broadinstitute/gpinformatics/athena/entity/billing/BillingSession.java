@@ -281,15 +281,20 @@ public class BillingSession implements Serializable {
 
         boolean perfectMatch = false;
         String result = null;
+        boolean miseqMismatch = false;
 
         double totalQuantity = 0;
+        boolean checkEverythingOtherThanAmount = false;
         for (LedgerEntry ledgerEntry : ledgerEntryItems) {
             if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId())) {
                 if (billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName()) &&
                     org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
 
-                    if (Math.floor(amount) == Math.floor(ledgerEntry.getQuantity())) {
+                    checkEverythingOtherThanAmount = true;
+
+                    if (isAmountMatch(amount, ledgerEntry.getQuantity())) {
                         perfectMatch = true;
+                        totalQuantity = ledgerEntry.getQuantity();
                         break;
                     }
                     else {
@@ -303,13 +308,18 @@ public class BillingSession implements Serializable {
             result = "ok";
         }
         else if (totalQuantity > 0) {
-            if (Math.floor(totalQuantity) == Math.floor(amount)) {
+            if (isAmountMatch(amount,totalQuantity)) {
                 result = "ok";  //quote summary rolls up by day...so 2 ledger items on the same day for the same thing (quote and price item) are aggregated
             }
         }
+        else if (checkEverythingOtherThanAmount) {
+            result = "amount mismatch: " + amount + " vs " + totalQuantity;
+        }
         else {
+            boolean noSuchQuote = true;
             for (LedgerEntry ledgerEntry : ledgerEntryItems) {
                 if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId())) {
+                    noSuchQuote = false;
                     if (org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
                         if (!billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
                             // same day, same quote, but no price item match.
@@ -324,9 +334,27 @@ public class BillingSession implements Serializable {
                                      " mercury says " + dateFormat.format(ledgerEntry.getWorkCompleteDate());
                         }
                     }
+                    if (!billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName()) &&
+                        isAmountMatch(amount,ledgerEntry.getQuantity()) &&
+                        billingItem.toLowerCase().contains("miseq") &&
+                        ledgerEntry.getPriceItem().getName().toLowerCase().contains("miseq")) {
+                        miseqMismatch = true;
+                    }
+                    // check for amount match, but price item and date mismatch
                 }
             }
+            if (noSuchQuote) {
+                result = "Could not find " + quote + " in " + getBusinessKey();
+            }
+        }
+        if (result == null && miseqMismatch) {
+            result = "smells like miseq; dates and price items are not consistent, though";
         }
         return result;
+    } 
+    private boolean isAmountMatch(double amount1, double amount2) {
+        double absAmount1 = Math.abs(amount1);
+        double absAmount2 = Math.abs(amount2);
+        return (Math.floor(absAmount1) == Math.floor(absAmount2) || Math.ceil(absAmount1) == Math.ceil(absAmount2)) ;
     }
 }

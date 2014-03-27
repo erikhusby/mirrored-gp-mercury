@@ -110,9 +110,10 @@ public class BillingSessionFixupTest extends Arquillian {
             outputFile.delete();
         }
         PrintWriter reconcileWriter = new PrintWriter(new FileWriter(outputFile));
-        List<String> spreadsheetLines = parseGregsQuoteServerSpreadsheet();
+       List<String> spreadsheetLines = parseGregsQuoteServerSpreadsheet();
         //List<String> spreadsheetLines = new ArrayList<>();
-        //spreadsheetLines.add("DNA8AX\tMiSeq up to 300 cycles\t1924\tMiSeq up to 300 cycles\t1924\t1\thttp://mercury/Mercury/billing/session.action\tbillingSession\tBILL-82\t15-JAN-13");
+        //spreadsheetLines.add("DNA8AX\tMiSeq up to 300 cycles\t1924\tMiSeq up to 300 cycles\t1924\t1\thttp://mercury/Mercury/billing/view.xhtml\tbillingSession\tBILL-62\t15-Jan-13\t29-Jan-13");
+
         System.out.println("Read " + spreadsheetLines.size() + " lines from the spreadsheet");
         for (String spreadsheetLine : spreadsheetLines) {
             QuoteServerReconciliationData quoteData = parseQuoteData(spreadsheetLine);
