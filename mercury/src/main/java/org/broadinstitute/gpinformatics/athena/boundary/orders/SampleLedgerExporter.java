@@ -232,12 +232,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         for (WorkCompleteMessage workCompleteMessage : workCompleteMessages) {
             String aliquotId = workCompleteMessage.getAliquotId();
             if (BSPLSIDUtil.isBspLsid(aliquotId)) {
-                aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
-                String stockId = stockIdByAliquotId.get("SM-" + aliquotId);
-                if (stockId == null) {
-                    throw new RuntimeException("Couldn't find a stock sample for aliquot: " + aliquotId);
+                aliquotId = "SM-" + BSPLSIDUtil.lsidToBareId(aliquotId);
+                String stockId = stockIdByAliquotId.get(aliquotId);
+                if (stockId != null) {
+                    workCompleteMessageBySample.put(stockId, workCompleteMessage);
+                } else {
+                    /*
+                     * This isn't necessarily a useful thing to do, but it may work in some cases. While it may not be
+                     * tremendously useful, it's better than doing nothing or throwing an exception.
+                     */
+                    workCompleteMessageBySample.put(aliquotId, workCompleteMessage);
                 }
-                workCompleteMessageBySample.put(stockId, workCompleteMessage);
             }
         }
         return workCompleteMessageBySample;
