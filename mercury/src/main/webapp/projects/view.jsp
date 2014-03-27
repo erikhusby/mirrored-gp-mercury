@@ -270,7 +270,6 @@
                                 <c:when test="${actionBean.invitationPending}">
                                     <div class="notificationText">
                                         <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.collaborationUrl}">
-                                            <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaboration Portal
                                         </stripes:link>
                                         invitation sent to ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}, expires on
@@ -285,7 +284,6 @@
                                 <c:when test="${actionBean.collaborationData != null}">
                                     <div class="notificationText">
                                         <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
-                                            <stripes:param name="collaborationId" value="${actionBean.editResearchProject.collaborationId}"/>
                                             Collaborating on Portal
                                         </stripes:link>
                                          with ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}
