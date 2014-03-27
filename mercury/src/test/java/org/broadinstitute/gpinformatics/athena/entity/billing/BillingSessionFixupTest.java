@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 public class BillingSessionFixupTest extends Arquillian {
 
@@ -43,7 +44,7 @@ public class BillingSessionFixupTest extends Arquillian {
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
@@ -104,14 +105,14 @@ public class BillingSessionFixupTest extends Arquillian {
 
         List<String> spreadsheetLines = parseGregsQuoteServerSpreadsheet();
         //List<String> spreadsheetLines = new ArrayList<>();
-        //spreadsheetLines.add("DNA8FD\tHiSeq 44 Single lane\t1041\tHiSeq 44 Single lane\t1041\t1\thttp://mercury/Mercury/billing/session.action\tbillingSession\tBILL-82\t31-JAN-13");
+        //spreadsheetLines.add("DNA8AX\tMiSeq up to 300 cycles\t1924\tMiSeq up to 300 cycles\t1924\t1\thttp://mercury/Mercury/billing/session.action\tbillingSession\tBILL-82\t15-JAN-13");
         System.out.println("Read " + spreadsheetLines.size() + " lines from the spreadsheet");
         for (String spreadsheetLine : spreadsheetLines) {
             QuoteServerReconciliationData quoteData = parseQuoteData(spreadsheetLine);
             BillingSession billingSession = billingSessionDao.findByBusinessKey(quoteData.billingSession);
             String reconcileResult = null;
             if (billingSession == null) {
-                reconcileResult = "vaporized!";
+                reconcileResult = quoteData.billingSession + " was vaporized!";
             }
             else {
                 reconcileResult = billingSession.reconcile(quoteData.quote,

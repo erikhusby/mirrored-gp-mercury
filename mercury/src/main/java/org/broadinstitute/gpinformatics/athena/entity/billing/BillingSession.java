@@ -284,16 +284,17 @@ public class BillingSession implements Serializable {
 
         double totalQuantity = 0;
         for (LedgerEntry ledgerEntry : ledgerEntryItems) {
-            if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
-                billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName()) &&
-                org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
+            if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId())) {
+                if (billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName()) &&
+                    org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
 
-                if (Math.floor(amount) == Math.floor(ledgerEntry.getQuantity())) {
-                    perfectMatch = true;
-                    break;
-                }
-                else {
-                    totalQuantity += ledgerEntry.getQuantity();
+                    if (Math.floor(amount) == Math.floor(ledgerEntry.getQuantity())) {
+                        perfectMatch = true;
+                        break;
+                    }
+                    else {
+                        totalQuantity += ledgerEntry.getQuantity();
+                    }
                 }
             }
         }
@@ -308,17 +309,21 @@ public class BillingSession implements Serializable {
         }
         else {
             for (LedgerEntry ledgerEntry : ledgerEntryItems) {
-                if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
-                    org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate()) &&
-                    !billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
-                    result = "price item mismatch: " + billingItem + " vs. " + ledgerEntry.getPriceItem().getName() + " for " + quote + "  " + getBusinessKey();
-                }
-                if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId()) &&
-                     !org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate()) &&
-                     billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
-                    result = "date mismatch: quote server says " + dateFormat.format(workReportedDate) +
-                             " mercury says " + dateFormat.format(ledgerEntry.getWorkCompleteDate());
+                if (quote.equalsIgnoreCase(ledgerEntry.getQuoteId())) {
+                    if (org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
+                        if (!billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
+                            // same day, same quote, but no price item match.
+                            result = "price item mismatch: " + billingItem + " vs. " + ledgerEntry.getPriceItem().getName() + " for " + quote + "  " + getBusinessKey();
+                        }
+                    }
+                    if (billingItem.equalsIgnoreCase(ledgerEntry.getPriceItem().getName())) {
+                        if (!org.apache.commons.lang3.time.DateUtils.isSameDay(workReportedDate,ledgerEntry.getWorkCompleteDate())) {
+                            // same quote, same price item, different day
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
+                            result = "date mismatch: quote server says " + dateFormat.format(workReportedDate) +
+                                     " mercury says " + dateFormat.format(ledgerEntry.getWorkCompleteDate());
+                        }
+                    }
                 }
             }
         }
