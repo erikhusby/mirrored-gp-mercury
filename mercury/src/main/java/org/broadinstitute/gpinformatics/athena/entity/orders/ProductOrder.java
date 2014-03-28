@@ -1065,8 +1065,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         MERCURY_URL("Mercury URL"),
         SAMPLE_IDS("Sample IDs"),
         REPORTER("Reporter"),
-        FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline"),
+        FUNDING_DEADLINE("Funding Deadline", true),
+        PUBLICATION_DEADLINE("Publication Deadline", true),
         DESCRIPTION("Description"),
         STATUS("Status"),
         REQUISITION_ID("Requisition ID"),
@@ -1077,15 +1077,27 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         SUMMARY("Summary");
 
         private final String fieldName;
+        private boolean nullable;
 
-        private JiraField(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        JiraField(String fieldName) {
+            this(fieldName, false);
+        }
+
+        private JiraField(String fieldName, boolean nullable) {
+            this.fieldName = fieldName;
+            this.nullable = nullable;
         }
 
         @Nonnull
         @Override
         public String getName() {
             return fieldName;
+        }
+
+
+        @Override
+        public boolean isNullable() {
+            return nullable;
         }
     }
 
