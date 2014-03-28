@@ -826,7 +826,7 @@
                         Name <c:if test="${actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
+                        <stripes:text id="orderName" name="editOrder.title" class="defaultText input-xlarge"
                             maxlength="255" title="Enter the name of the new order"/>
                     </div>
                 </div>
