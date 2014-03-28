@@ -27,6 +27,9 @@ public class BillingEjb {
 
     public static final String NO_ITEMS_TO_BILL_ERROR_TEXT =
             "There are no items available to bill in this billing session";
+    public static final String LOCKED_SESSION_TEXT=
+            "This billing session is currently in the process of being processed for billing.  If you believe this " +
+            "is in error, please contact the informatics group for assistance";
 
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
