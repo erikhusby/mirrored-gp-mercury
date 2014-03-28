@@ -141,6 +141,7 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         try {
+            // todo jmt why is workflow hardcoded?
             Collection<String> validationMessages =
                     reworkEjb.addAndValidateCandidates(bucketCandidates, submittedReason, commentText,
                             getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
@@ -177,6 +178,7 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
+        // todo jmt why is workflow hardcoded?
         // Only supports Agilent Exome Express.
         ProductWorkflowDef workflowDef =
                 workflowConfig.getWorkflowByName(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
