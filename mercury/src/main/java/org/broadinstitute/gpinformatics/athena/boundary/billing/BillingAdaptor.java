@@ -95,9 +95,7 @@ public class BillingAdaptor implements Serializable {
 
         BillingSession billingSession = billingEjb.findAndLockSession(sessionKey);
 
-        if (false /*If the session is locked */) {
-            // FIXME Change this logic to kick out if it retrieves a session that is Locked for update
-            // IS Good, Ya?
+        if (billingSession.isSessionLocked()) {
             return Collections.emptyList();
         }
 

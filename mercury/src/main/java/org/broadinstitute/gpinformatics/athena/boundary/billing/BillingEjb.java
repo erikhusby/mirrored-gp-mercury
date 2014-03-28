@@ -113,18 +113,14 @@ public class BillingEjb {
     public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
         BillingSession session = billingSessionDao.findByBusinessKeyWithLock(billingSessionKey);
 
-        // TODO Update future status to lock session
+        session.lockSession();
 
         return session;
     }
 
     public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
 
-        // TODO unlock billingSession
-
-        // Only persisting to have some action to force persistence.  Will remove once we actually have a status locking
-        // mechanism
-        billingSessionDao.persist(billingSession);
+        billingSession.unlockSession();
     }
 
 

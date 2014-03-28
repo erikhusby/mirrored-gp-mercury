@@ -949,4 +949,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-2634-add-session-status" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="BILLING_SESSION_STATUS" schemaName="athena" tableName="BILLING_SESSION" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_SESSION" schemaName="athena">
+            <column name="BILLING_SESSION_STATUS" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

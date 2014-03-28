@@ -67,6 +67,10 @@ public class BillingSession implements Serializable {
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
 
+    @Column(name="BILLING_SESSION_STATUS")
+    @Enumerated(EnumType.STRING)
+    private BillingSessionStatusType status;
+
     // Do NOT use eager fetches on this class unless you verify (via hibernate logging) that the pessimistic locking
     // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
     // applied to them
@@ -132,6 +136,26 @@ public class BillingSession implements Serializable {
 
     public Long getBillingSessionId() {
         return billingSessionId;
+    }
+
+    public BillingSessionStatusType getStatus() {
+        return status;
+    }
+
+    public void setStatus(BillingSessionStatusType status) {
+        this.status = status;
+    }
+
+    public boolean isSessionLocked() {
+        return ((status != null) && (status== BillingSessionStatusType.LOCKED_FOR_BILLING));
+    }
+
+    public void lockSession() {
+        status = BillingSessionStatusType.LOCKED_FOR_BILLING;
+    }
+
+    public void unlockSession() {
+        status = BillingSessionStatusType.UNLOCKED;
     }
 
     /**
@@ -272,5 +296,9 @@ public class BillingSession implements Serializable {
         public Date getBucketDate(Date workCompleteDate) {
             return rollupCalculator.getBucketDate(workCompleteDate);
         }
+    }
+
+    public enum BillingSessionStatusType {
+        LOCKED_FOR_BILLING, UNLOCKED, CLOSED;
     }
 }
