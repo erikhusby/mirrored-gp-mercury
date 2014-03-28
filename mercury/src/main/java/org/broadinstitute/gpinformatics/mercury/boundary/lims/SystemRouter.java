@@ -4,6 +4,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
@@ -17,7 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -39,7 +40,6 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.BOTH;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter.System.SQUID;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch.LabBatchType;
 
 /**
@@ -241,13 +241,13 @@ public class SystemRouter implements Serializable {
         // Could not determine System by event analysis, fall through to sample instance analysis.
         Set<System> routingOptions = EnumSet.noneOf(System.class);
         // Determine which samples might be controls
-        Set<SampleInstance> possibleControls = new HashSet<>();
+        Set<SampleInstanceV2> possibleControls = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
-                Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
-                for (SampleInstance sampleInstance : sampleInstances) {
-                    String productOrderKey = sampleInstance.getProductOrderKey();
-                    if (productOrderKey == null) {
+                List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+                for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                    ProductOrderSample singleProductOrderSample = sampleInstance.getSingleProductOrderSample();
+                    if (singleProductOrderSample == null) {
                         possibleControls.add(sampleInstance);
                     }
                 }
@@ -258,8 +258,8 @@ public class SystemRouter implements Serializable {
         Collection<String> sampleNames = new ArrayList<>();
         Map<String, BSPSampleDTO> mapSampleNameToDto = null;
         if (!possibleControls.isEmpty()) {
-            for (SampleInstance sampleInstance : possibleControls) {
-                sampleNames.add(sampleInstance.getStartingSample().getSampleKey());
+            for (SampleInstanceV2 sampleInstance : possibleControls) {
+                sampleNames.add(sampleInstance.getMercuryRootSampleName());
             }
             mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
@@ -304,27 +304,27 @@ public class SystemRouter implements Serializable {
             if (vessel == null) {
                 routingOptions.add(SQUID);
             } else {
-                Set<SampleInstance> sampleInstances = vessel.getSampleInstances(SampleType.PREFER_PDO, LabBatchType.WORKFLOW);
+                List<SampleInstanceV2> sampleInstances = vessel.getSampleInstancesV2();
                 if (sampleInstances.isEmpty()) {
                     routingOptions.add(SQUID);
                 } else {
-                    Set<SampleInstance> possibleControls = new HashSet<>();
-                    for (SampleInstance sampleInstance : sampleInstances) {
-                        if (sampleInstance.getAllWorkflowLabBatches().isEmpty()) {
+                    Set<SampleInstanceV2> possibleControls = new HashSet<>();
+                    for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                        if (sampleInstance.getAllBatchVessels(LabBatchType.WORKFLOW).isEmpty()) {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
-                            LabBatch batch = sampleInstance.getLabBatch();
+                            LabBatch batch = sampleInstance.getSingleBatch();
                             if (workflowName != null && batch != null) {
                                 ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,
                                         batch.getCreatedOn());
                                 if (intent == Intent.SYSTEM_OF_RECORD) {
                                     System system;
                                     if (productWorkflowDef.getInValidation()) {
-                                        LabBatch labBatch = sampleInstance.getLabBatch();
+                                        LabBatch labBatch = sampleInstance.getSingleBatch();
                                         if(labBatch == null) {
                                             throw new RuntimeException("No lab batch for sample " +
-                                                                     sampleInstance.getStartingSample().getSampleKey());
+                                                                     sampleInstance.getMercuryRootSampleName());
                                         }
                                         // Per Andrew, we can assume that validation plastic has only one LCSET
                                         if(labBatch.isValidationBatch()) {
@@ -357,8 +357,8 @@ public class SystemRouter implements Serializable {
                             badCrspRouting();
                             routingOptions.add(SQUID);
                         } else {
-                            for (SampleInstance possibleControl : possibleControls) {
-                                String sampleKey = possibleControl.getStartingSample().getSampleKey();
+                            for (SampleInstanceV2 possibleControl : possibleControls) {
+                                String sampleKey = possibleControl.getMercuryRootSampleName();
                                 BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
                                 if (sampleDTO == null) {
                                     // Don't know what this is, but it isn't for Mercury.
@@ -373,7 +373,7 @@ public class SystemRouter implements Serializable {
                                          * had a non-batched control re-arrayed into it.
                                          */
                                         String workflowName = possibleControl.getWorkflowName();
-                                        LabBatch effectiveBatch = possibleControl.getLabBatch();
+                                        LabBatch effectiveBatch = possibleControl.getSingleBatch();
                                         if (workflowName != null && effectiveBatch != null) {
                                             ProductWorkflowDefVersion productWorkflowDef =
                                                     getWorkflowVersion(workflowName, effectiveBatch.getCreatedOn());

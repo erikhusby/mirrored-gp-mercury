@@ -11,13 +11,13 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
@@ -36,19 +36,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateLaneType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SequencingTemplateType;
-import sun.util.logging.resources.logging;
 
 import javax.inject.Inject;
 import java.math.BigDecimal;
@@ -109,17 +110,24 @@ public class ZimsIlluminaRunFactory {
             PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                Set<SampleInstance> sampleInstances =
-                        labVessel.getSampleInstances(LabVessel.SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
-                for (SampleInstance sampleInstance : sampleInstances) {
+                List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+                for (SampleInstanceV2 sampleInstance : sampleInstances) {
 
-                    String productOrderKey = sampleInstance.getProductOrderKey();
-                    if (productOrderKey != null) {
+                    ProductOrderSample singleProductOrderSample = sampleInstance.getSingleProductOrderSample();
+                    String productOrderKey = null;
+                    if (singleProductOrderSample != null) {
+                        productOrderKey = singleProductOrderSample.getProductOrder().getBusinessKey();
                         productOrderKeys.add(productOrderKey);
                     }
-                    String pdoSampleName = sampleInstance.getStartingSample().getSampleKey();
-                    String sampleId = (sampleInstance.getBspExportSample() != null) ?
-                            sampleInstance.getBspExportSample().getSampleKey() : pdoSampleName;
+                    String pdoSampleName = sampleInstance.getMercuryRootSampleName();
+                    String sampleId = pdoSampleName;
+                    LabBatchStartingVessel importLbsv = sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+                    if (importLbsv != null) {
+                        Set<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                        if (!mercurySamples.isEmpty()) {
+                            sampleId = mercurySamples.iterator().next().getSampleKey();
+                        }
+                    }
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                     String libraryName = libraryVessel.getLabel();
@@ -204,21 +212,19 @@ public class ZimsIlluminaRunFactory {
                                               Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
-            SampleInstance sampleInstance = sampleInstanceDto.getSampleInstance();
+            SampleInstanceV2 sampleInstance = sampleInstanceDto.getSampleInstance();
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
-            Set<LabBatch> allLabBatches = new HashSet<>(sampleInstance.getAllLabBatches());
             List<LabBatch> lcSetBatches = new ArrayList<>();
-            for (LabBatch labBatch : allLabBatches) {
-                if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                    lcSetBatches.add(labBatch);
-                }
+            for (LabBatchStartingVessel labBatchStartingVessel :
+                    sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.WORKFLOW)) {
+                lcSetBatches.add(labBatchStartingVessel.getLabBatch());
             }
 
             // if there's at least one LCSET batch, and getLabBatch (the singular version) returns null,
             // then throw an exception
-            if (lcSetBatches.size() > 1 && sampleInstance.getLabBatch() == null) {
+            if (lcSetBatches.size() > 1 && sampleInstance.getSingleBatch() == null) {
                 throw new RuntimeException(
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
@@ -230,8 +236,8 @@ public class ZimsIlluminaRunFactory {
                 }
             // else it is probably a control.
             } else {
-                if (sampleInstance.getLabBatch() != null) {
-                    lcSet = sampleInstance.getLabBatch().getBatchName();
+                if (sampleInstance.getSingleBatch() != null) {
+                    lcSet = sampleInstance.getSingleBatch().getBatchName();
                 }
             }
 
@@ -422,14 +428,14 @@ public class ZimsIlluminaRunFactory {
     static class SampleInstanceDto {
         private short laneNumber;
         private LabVessel labVessel;
-        private SampleInstance sampleInstance;
+        private SampleInstanceV2 sampleInstance;
         private String sampleId;
         private String productOrderKey;
         private String sequencedLibraryName;
         private Date sequencedLibraryDate;
         private String pdoSampleName;
 
-        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstance sampleInstance, String sampleId,
+        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstanceV2 sampleInstance, String sampleId,
                                  String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate,
                                  String pdoSampleName) {
             this.laneNumber = laneNumber;
@@ -450,7 +456,7 @@ public class ZimsIlluminaRunFactory {
             return labVessel;
         }
 
-        public SampleInstance getSampleInstance() {
+        public SampleInstanceV2 getSampleInstance() {
             return sampleInstance;
         }
 

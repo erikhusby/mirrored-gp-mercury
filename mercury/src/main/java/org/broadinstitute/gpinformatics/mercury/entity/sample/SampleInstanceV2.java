@@ -149,6 +149,17 @@ public class SampleInstanceV2 {
     }
 
     /**
+     * Returns the batch from the single bucket entry, or the single inferred batch.
+     */
+    public LabBatch getSingleBatch() {
+        BucketEntry singleBucketEntryLocal = singleBucketEntry;
+        if (singleBucketEntryLocal != null) {
+            return singleBucketEntryLocal.getLabBatch();
+        }
+        return singleInferredBucketedBatch;
+    }
+
+    /**
      * Returns all Product Orders associated with samples in ancestor vessels, sorted by increasing distance in the
      * transfer history.
      */

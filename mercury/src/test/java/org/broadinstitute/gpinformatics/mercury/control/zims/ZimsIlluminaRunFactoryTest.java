@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -153,7 +153,6 @@ public class ZimsIlluminaRunFactoryTest {
         String sourceTubeBarcode = "testTube";
         testTube = new TwoDBarcodedTube(sourceTubeBarcode);
         MercurySample mercurySample = new MercurySample(TEST_SAMPLE_ID);
-        SampleInstance instance = new SampleInstance(mercurySample);
         testTube.addSample(mercurySample);
         BucketEntry bucketEntry = new BucketEntry(testTube, PRODUCT_ORDER_KEY, BucketEntry.BucketEntryType.PDO_ENTRY);
 
@@ -165,7 +164,6 @@ public class ZimsIlluminaRunFactoryTest {
                 batchName = "LCSET-" + suffix;
             }
             LabBatch batch = new LabBatch(batchName, Collections.<LabVessel>singleton(testTube), testLabBatchType);
-            instance.getAllLabBatches().add(batch);
             if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                 JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
                 batch.setJiraTicket(lcSetTicket);
@@ -173,6 +171,8 @@ public class ZimsIlluminaRunFactoryTest {
                 batch.addBucketEntry(bucketEntry);
                 bucketEntry.setLabBatch(batch);
             }
+            // todo jmt revisit this
+            SampleInstanceV2 instance = new SampleInstanceV2(testTube);
             sampleInstanceDtoList.add(
                             new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
                                     PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
