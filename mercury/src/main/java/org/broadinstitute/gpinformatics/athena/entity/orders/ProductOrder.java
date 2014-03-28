@@ -1073,7 +1073,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         LANES_PER_SAMPLE("Lanes Per Sample"),
         REQUISITION_NAME("Requisition Name"),
         NUMBER_OF_SAMPLES("Number of Samples"),
-        ADD_ONS("Add-ons");
+        ADD_ONS("Add-ons"),
+        SUMMARY("Summary");
 
         private final String fieldName;
 
