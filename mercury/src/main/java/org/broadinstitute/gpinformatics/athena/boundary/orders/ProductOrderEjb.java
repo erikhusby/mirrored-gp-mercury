@@ -482,8 +482,6 @@ public class ProductOrderEjb {
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
 
-        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.SUMMARY, productOrder.getTitle()));
-
         pdoUpdateFields.add(PDOUpdateField.createPDOUpdateFieldForQuote(productOrder));
 
         List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
@@ -497,18 +495,20 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()));
         }
 
-        String fundingDeadline=null;
-        if (productOrder.getFundingDeadline()!=null){
-            fundingDeadline=JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline());
+        if (productOrder.getFundingDeadline() == null) {
+            pdoUpdateFields.add(PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE));
+        } else {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
         }
-        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE, fundingDeadline));
 
-        String publicationDeadline = null;
-        if (productOrder.getPublicationDeadline() == null){
-            publicationDeadline = JiraService.JIRA_DATE_FORMAT.format(productOrder.getPlacedDate());
+        if (productOrder.getPublicationDeadline() == null) {
+            pdoUpdateFields.add(
+                    PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE));
+        } else {
+            pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
+                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline())));
         }
-        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE, publicationDeadline));
-
 
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
@@ -535,7 +535,7 @@ public class ProductOrderEjb {
         for (PDOUpdateField field : pdoUpdateFields) {
             String message = field.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
             if (!message.isEmpty()) {
-                customFields.add(new CustomField(customFieldDefinitions, field.getField(), field.getNewValue()));
+                customFields.add(field.createCustomField(customFieldDefinitions));
                 updateCommentBuilder.append(message);
             }
         }
