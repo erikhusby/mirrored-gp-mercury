@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
@@ -126,14 +127,21 @@ public class BillingAdaptor implements Serializable {
                 billingEjb.callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem,
                                                        quoteIsReplacing);
             } catch (EJBTransactionRolledbackException rolledbackException) {
-                log.error(
-                        "A problem occurred saving the ledger entries for " + billingSession.getBusinessKey() + ".  " +
-                        "The quote for this item may have been successfully sent to the quote server",
-                        rolledbackException);
-                item.setBillingMessages("The quote for this price item may have been successfully committed to the " +
-                                        "quote server.  " + rolledbackException.getMessage());
-                result.setErrorMessage("The quote for this price item may have been successfully committed to the " +
-                                       "quote server.  " + rolledbackException
+
+                String errorMessage;
+                if(StringUtils.isBlank(result.getWorkId())) {
+                    errorMessage = "A Problem occurred attempting to post to the quote server for " +
+                                   billingSession.getBusinessKey() + ".";
+                } else {
+                    errorMessage = "A problem occurred saving the ledger entries for " +
+                                   billingSession.getBusinessKey() + " with work id of " + result.getWorkId() + ".  " +
+                                   "The quote for this item may have been successfully sent to the quote server";
+                }
+
+                log.error(errorMessage, rolledbackException);
+
+                item.setBillingMessages(errorMessage + rolledbackException.getMessage());
+                result.setErrorMessage(errorMessage + rolledbackException
                         .getMessage());
                 errorsInBilling = true;
             } catch (Exception ex) {
