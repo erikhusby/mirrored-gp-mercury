@@ -435,11 +435,22 @@ public class LabBatch {
 
         private final String fieldName;
         private final boolean customField;
+        private final boolean nullable;
 
         private TicketFields(String fieldNameIn, boolean customFieldInd) {
+            this(fieldNameIn, customFieldInd, false);
+        }
+        private TicketFields(String fieldNameIn, boolean customFieldInd, boolean nullable) {
             fieldName = fieldNameIn;
             customField = customFieldInd;
+            this.nullable = nullable;
         }
+
+        @Override
+        public boolean isNullable() {
+            return nullable;
+        }
+
 
         @Nonnull
         @Override

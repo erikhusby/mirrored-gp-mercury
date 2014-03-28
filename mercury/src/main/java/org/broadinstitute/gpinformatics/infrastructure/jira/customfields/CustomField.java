@@ -8,7 +8,6 @@ public class CustomField {
     @Nonnull
     private final CustomFieldDefinition definition;
 
-    @Nonnull
     private final Object value;
 
     public static class ValueContainer {
@@ -81,6 +80,9 @@ public class CustomField {
         if (definition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
+        if (value == null) {
+            throw new NullPointerException("value for " + definition.getName() + " cannot be null");
+        }
 
         this.definition = definition;
         this.value = value;
@@ -89,6 +91,8 @@ public class CustomField {
     public interface SubmissionField {
         @Nonnull
         String getName();
+
+        boolean isNullable();
     }
 
     /**
@@ -103,7 +107,12 @@ public class CustomField {
      */
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field, Object value) {
-        this(submissionFields.get(field.getName()), value);
+        CustomFieldDefinition definition = submissionFields.get(field.getName());
+        if (!field.isNullable() && value==null){
+            throw new NullPointerException("value for " + definition.getName() + " cannot be null");
+        }
+        this.definition = definition;
+        this.value = value;
     }
 
 

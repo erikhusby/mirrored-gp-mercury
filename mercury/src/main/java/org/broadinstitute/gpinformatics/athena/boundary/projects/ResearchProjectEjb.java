@@ -180,7 +180,7 @@ public class ResearchProjectEjb {
                     customFields.add(new CustomField(customFieldDefinitions, field.getField(),
                             (boolean) field.getNewValue()));
                 } else {
-                    customFields.add(new CustomField(customFieldDefinitions, field.getField(), field.getNewValue()));
+                    customFields.add(field.createCustomField(customFieldDefinitions));
                 }
                 updateCommentBuilder.append(message);
             }
@@ -222,17 +222,29 @@ public class ResearchProjectEjb {
         IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL"),
         DESCRIPTION("Description"),
-        BROAD_PIS("Broad PI(s)"),;
-        private final String fieldName;
+        BROAD_PIS("Broad PI(s)");
 
-        private RequiredSubmissionFields(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        private final String fieldName;
+        private final boolean nullable;
+
+        private RequiredSubmissionFields(String fieldName, boolean nullable) {
+            this.fieldName = fieldName;
+            this.nullable = nullable;
+        }
+
+        RequiredSubmissionFields(String fieldName) {
+            this(fieldName, false);
         }
 
         @Nonnull
         @Override
         public String getName() {
             return fieldName;
+        }
+
+        @Override
+        public boolean isNullable() {
+            return nullable;
         }
     }
 
