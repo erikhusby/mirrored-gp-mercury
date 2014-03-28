@@ -113,14 +113,27 @@ public class BillingEjb {
         }
     }
 
+    /**
+     * TODO SGM Javadoc
+     * @param billingSessionKey
+     * @return
+     */
     public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
         BillingSession session = billingSessionDao.findByBusinessKeyWithLock(billingSessionKey);
+
+        if (session.isSessionLocked()) {
+            throw new BillingException(BillingEjb.LOCKED_SESSION_TEXT);
+        }
 
         session.lockSession();
 
         return session;
     }
 
+    /**
+     * TODO SGM Javadoc
+     * @param billingSession
+     */
     public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
 
         billingSession.unlockSession();

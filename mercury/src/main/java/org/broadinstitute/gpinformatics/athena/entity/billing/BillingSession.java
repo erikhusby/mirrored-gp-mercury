@@ -22,6 +22,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Version;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -70,6 +71,9 @@ public class BillingSession implements Serializable {
     @Column(name="BILLING_SESSION_STATUS")
     @Enumerated(EnumType.STRING)
     private BillingSessionStatusType status;
+
+    @Version
+    private Long version;
 
     // Do NOT use eager fetches on this class unless you verify (via hibernate logging) that the pessimistic locking
     // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
@@ -146,14 +150,24 @@ public class BillingSession implements Serializable {
         this.status = status;
     }
 
+    /**
+     * TODO SGM Javadoc
+     * @return
+     */
     public boolean isSessionLocked() {
         return ((status != null) && (status== BillingSessionStatusType.LOCKED_FOR_BILLING));
     }
 
+    /**
+     * TODO SGM Javadoc
+     */
     public void lockSession() {
         status = BillingSessionStatusType.LOCKED_FOR_BILLING;
     }
 
+    /**
+     * TODO SGM Javadoc
+     */
     public void unlockSession() {
         status = BillingSessionStatusType.UNLOCKED;
     }

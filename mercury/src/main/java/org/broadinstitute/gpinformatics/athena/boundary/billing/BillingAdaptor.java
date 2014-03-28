@@ -95,10 +95,6 @@ public class BillingAdaptor implements Serializable {
 
         BillingSession billingSession = billingEjb.findAndLockSession(sessionKey);
 
-        if (billingSession.isSessionLocked()) {
-            throw new BillingException(BillingEjb.LOCKED_SESSION_TEXT);
-        }
-
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
