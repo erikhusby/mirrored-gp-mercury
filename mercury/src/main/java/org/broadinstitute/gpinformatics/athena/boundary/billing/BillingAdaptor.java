@@ -95,70 +95,72 @@ public class BillingAdaptor implements Serializable {
 
         BillingSession billingSession = billingEjb.findAndLockSession(sessionKey);
 
-        List<QuoteImportItem> unBilledQuoteImportItems =
-                billingSession.getUnBilledQuoteImportItems(priceListCache);
+        try {
+            List<QuoteImportItem> unBilledQuoteImportItems =
+                    billingSession.getUnBilledQuoteImportItems(priceListCache);
 
-        if (unBilledQuoteImportItems.isEmpty()) {
-            billingEjb.endSession(billingSession);
-            throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
-        }
-
-        for (QuoteImportItem item : unBilledQuoteImportItems) {
-
-            BillingEjb.BillingResult result = new BillingEjb.BillingResult();
-            results.add(result);
-            result.setQuoteImportItem(item);
-
-            Quote quote = new Quote();
-            quote.setAlphanumericId(item.getQuoteId());
-
-            QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
-
-            // Get the quote PriceItem that this is replacing, if it is a replacement.
-            QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
-
-            try {
-                billingEjb.callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem,
-                                                       quoteIsReplacing);
-            } catch (EJBTransactionRolledbackException rolledbackException) {
-
-                String errorMessage;
-                if(StringUtils.isBlank(result.getWorkId())) {
-                    errorMessage = "A Problem occurred attempting to post to the quote server for " +
-                                   billingSession.getBusinessKey() + ".";
-                } else {
-                    errorMessage = "A problem occurred saving the ledger entries for " +
-                                   billingSession.getBusinessKey() + " with work id of " + result.getWorkId() + ".  " +
-                                   "The quote for this item may have been successfully sent to the quote server";
-                }
-
-                log.error(errorMessage, rolledbackException);
-
-                item.setBillingMessages(errorMessage + rolledbackException.getMessage());
-                result.setErrorMessage(errorMessage + rolledbackException
-                        .getMessage());
-                errorsInBilling = true;
-            } catch (Exception ex) {
-                log.error("A problem occurred while submitting and logging a quote for " +
-                          billingSession.getBusinessKey() + " that has " + item.getLedgerItems().size()
-                          + " ledger items");
-                // Any exceptions in sending to the quote server will just be reported and will continue
-                // on to the next one.
-                item.setBillingMessages(ex.getMessage());
-                result.setErrorMessage(ex.getMessage());
-                errorsInBilling = true;
+            if (unBilledQuoteImportItems.isEmpty()) {
+                billingEjb.endSession(billingSession);
+                throw new BillingException(BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
             }
-        }
 
-        // If there were no errors in billing, then end the session, which will add the billed date and remove
-        // all sessions from the ledger.
-        if (!errorsInBilling) {
-            billingEjb.endSession(billingSession);
-        }
+            for (QuoteImportItem item : unBilledQuoteImportItems) {
 
-        // FIxMe  What happens if we get an exception at this point?  Do we need to have some better handling on the
-        // Action bean to display to the user that there is a Locked session and it will need Informatics Intervention?
-        billingEjb.saveAndUnlockSession(billingSession);
+                BillingEjb.BillingResult result = new BillingEjb.BillingResult();
+                results.add(result);
+                result.setQuoteImportItem(item);
+
+                Quote quote = new Quote();
+                quote.setAlphanumericId(item.getQuoteId());
+
+                QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+
+                // Get the quote PriceItem that this is replacing, if it is a replacement.
+                QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
+
+                try {
+                    billingEjb.callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem,
+                                                           quoteIsReplacing);
+                } catch (EJBTransactionRolledbackException rolledbackException) {
+
+                    String errorMessage;
+                    if(StringUtils.isBlank(result.getWorkId())) {
+                        errorMessage = "A Problem occurred attempting to post to the quote server for " +
+                                       billingSession.getBusinessKey() + ".";
+                    } else {
+                        errorMessage = "A problem occurred saving the ledger entries for " +
+                                       billingSession.getBusinessKey() + " with work id of " + result.getWorkId() + ".  " +
+                                       "The quote for this item may have been successfully sent to the quote server";
+                    }
+
+                    log.error(errorMessage, rolledbackException);
+
+                    item.setBillingMessages(errorMessage + rolledbackException.getMessage());
+                    result.setErrorMessage(errorMessage + rolledbackException
+                            .getMessage());
+                    errorsInBilling = true;
+                } catch (Exception ex) {
+                    log.error("A problem occurred while submitting and logging a quote for " +
+                              billingSession.getBusinessKey() + " that has " + item.getLedgerItems().size()
+                              + " ledger items");
+                    // Any exceptions in sending to the quote server will just be reported and will continue
+                    // on to the next one.
+                    item.setBillingMessages(ex.getMessage());
+                    result.setErrorMessage(ex.getMessage());
+                    errorsInBilling = true;
+                }
+            }
+
+            // If there were no errors in billing, then end the session, which will add the billed date and remove
+            // all sessions from the ledger.
+            if (!errorsInBilling) {
+                billingEjb.endSession(billingSession);
+            }
+        } finally {
+            // FIxMe  What happens if we get an exception at this point?  Do we need to have some better handling on the
+            // Action bean to display to the user that there is a Locked session and it will need Informatics Intervention?
+            billingEjb.saveAndUnlockSession(billingSession);
+        }
 
         return results;
     }
