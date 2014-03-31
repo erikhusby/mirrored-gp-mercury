@@ -18,5 +18,6 @@ TRAILING NULLCOLS
  is_top_level_product,
  workflow_name,
  product_family_name,
- primary_price_item_id
+ primary_price_item_id,
+ aggregation_data_type
 )
