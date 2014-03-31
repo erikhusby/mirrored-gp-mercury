@@ -34,11 +34,10 @@ import java.util.Set;
 
 /**
  * This handles the billing session.
- *
  */
 @Entity
 @Audited
-@Table(name= "BILLING_SESSION", schema = "athena")
+@Table(name = "BILLING_SESSION", schema = "athena")
 public class BillingSession implements Serializable {
     private static final long serialVersionUID = -5063307042006128046L;
 
@@ -46,21 +45,22 @@ public class BillingSession implements Serializable {
     public static final String SUCCESS = "Billed Successfully";
 
     @Id
-    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION", allocationSize = 1)
+    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION",
+                       allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_SESSION")
     @Column(name = "BILLING_SESSION_ID")
     private Long billingSessionId;
 
-    @Column(name="CREATED_DATE")
+    @Column(name = "CREATED_DATE")
     private Date createdDate;
 
-    @Column(name="CREATED_BY")
+    @Column(name = "CREATED_BY")
     private Long createdBy;
 
-    @Column(name="BILLED_DATE")
+    @Column(name = "BILLED_DATE")
     private Date billedDate;
 
-    @Column(name="BILLING_SESSION_TYPE")
+    @Column(name = "BILLING_SESSION_TYPE")
     @Enumerated(EnumType.STRING)
     private BillingSessionType billingSessionType;
 
@@ -68,7 +68,7 @@ public class BillingSession implements Serializable {
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
 
-    @Column(name="BILLING_SESSION_STATUS")
+    @Column(name = "BILLING_SESSION_STATUS")
     @Enumerated(EnumType.STRING)
     private BillingSessionStatusType status;
 
@@ -79,7 +79,8 @@ public class BillingSession implements Serializable {
     // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
     // applied to them
 
-    protected BillingSession() {}
+    protected BillingSession() {
+    }
 
     public BillingSession(@Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
         this.createdBy = createdBy;
@@ -98,9 +99,9 @@ public class BillingSession implements Serializable {
      * This is a 'special' constructor to recreate a billing session that may have been deleted. It is being built for
      * fixup tests. The billing session is considered billed even though nothing has gone to the quote server.
      *
-     * @param billedDate If the desire is to set this as already billed (if something was billed already
-     *                   in the quote server). If null, this is left open to bill and end.
-     * @param createdBy The user who is creating this.
+     * @param billedDate  If the desire is to set this as already billed (if something was billed already
+     *                    in the quote server). If null, this is left open to bill and end.
+     * @param createdBy   The user who is creating this.
      * @param ledgerItems All the ledger entries that will be added to this session.
      */
     BillingSession(@Nullable Date billedDate, @Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
@@ -151,25 +152,28 @@ public class BillingSession implements Serializable {
     }
 
     /**
-     * TODO SGM Javadoc
+     * Helper method to determine if a given billing session is locked for billing
+     *
      * @return
      */
     public boolean isSessionLocked() {
-        return ((status != null) && (status== BillingSessionStatusType.LOCKED_FOR_BILLING));
+        return ((status != null) && (status == BillingSessionStatusType.LOCKED_FOR_BILLING));
     }
 
     /**
-     * TODO SGM Javadoc
+     * Helper method to allow a user to lock a given billing session
      */
     public void lockSession() {
         status = BillingSessionStatusType.LOCKED_FOR_BILLING;
     }
 
     /**
-     * TODO SGM Javadoc
+     * Helper method to set the status of a given billing session to Unlocked only in the case if it previously was locked
      */
     public void unlockSession() {
-        status = BillingSessionStatusType.UNLOCKED;
+        if (status == BillingSessionStatusType.LOCKED_FOR_BILLING) {
+            status = BillingSessionStatusType.UNLOCKED;
+        }
     }
 
     /**

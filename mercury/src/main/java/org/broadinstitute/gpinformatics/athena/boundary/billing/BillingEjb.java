@@ -114,8 +114,8 @@ public class BillingEjb {
     }
 
     /**
-     * TODO SGM Javadoc
-     * @param billingSessionKey
+     * finder method for a billing session that will subsequently lock that billing session for billing
+     * @param billingSessionKey business key of the billing session which is to be found and locked
      * @return
      */
     public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
@@ -131,14 +131,14 @@ public class BillingEjb {
     }
 
     /**
-     * TODO SGM Javadoc
-     * @param billingSession
+     * Transactional method to unlock a billing session.  The end of the transaction will save the contents of the
+     * billing session entity
+     * @param billingSession    billing session to be unlocked
      */
     public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
 
         billingSession.unlockSession();
     }
-
 
     /**
      * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
