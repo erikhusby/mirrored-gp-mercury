@@ -130,8 +130,13 @@ public class CollaborationEjb {
         }
     }
 
-    public CollaborationData getCollaboration(@Nonnull String collaborationId)
+    public CollaborationData getCollaboration(@Nonnull String researchProjectKey)
             throws CollaborationNotFoundException, CollaborationPortalException {
-        return collaborationPortalService.getCollaboration(collaborationId);
+        return collaborationPortalService.getCollaboration(researchProjectKey);
+    }
+
+    public String resendInvitation(@Nonnull String researchProjectKey)
+            throws CollaborationNotFoundException, CollaborationPortalException {
+        return collaborationPortalService.resendInvitation(researchProjectKey);
     }
 }

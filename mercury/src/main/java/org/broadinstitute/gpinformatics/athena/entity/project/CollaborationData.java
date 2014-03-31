@@ -36,7 +36,7 @@ public class CollaborationData {
     private Date expirationDate;
 
     /** URL to view the collaboration in the portal */
-    private String collaborationUrl;
+    private String viewCollaborationUrl;
 
     // Empty for XML streaming.
     public CollaborationData() {
@@ -118,11 +118,11 @@ public class CollaborationData {
         this.expirationDate = expirationDate;
     }
 
-    public String getCollaborationUrl() {
-        return collaborationUrl;
+    public String getViewCollaborationUrl() {
+        return viewCollaborationUrl;
     }
 
-    public void setCollaborationUrl(String collaborationUrl) {
-        this.collaborationUrl = collaborationUrl;
+    public void setViewCollaborationUrl(String viewCollaborationUrl) {
+        this.viewCollaborationUrl = viewCollaborationUrl;
     }
 }

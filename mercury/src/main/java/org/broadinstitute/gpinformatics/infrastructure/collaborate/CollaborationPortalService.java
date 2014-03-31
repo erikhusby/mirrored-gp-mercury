@@ -28,7 +28,8 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
 
     enum Endpoint {
         BEGIN_COLLABORATION("/rest/collaborate/create"),
-        GET_COLLABORATION_DETAILS("/rest/collaborate/get/");
+        GET_COLLABORATION_DETAILS("/rest/collaborate/get/"),
+        RESEND_INVITATION("/rest/collaborate/resendInvitation/");
 
         String suffixUrl;
 
@@ -102,10 +103,10 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         }
     }
 
-    public CollaborationData getCollaboration(@Nonnull String collaborationId)
+    public CollaborationData getCollaboration(@Nonnull String researchProjectKey)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
-        String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + collaborationId;
+        String url = config.getUrlBase() + Endpoint.GET_COLLABORATION_DETAILS.getSuffixUrl() + researchProjectKey;
         WebResource resource = getJerseyClient().resource(url);
 
         try {
@@ -114,6 +115,19 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
             // No collaboration yet.
             return null;
         } catch (ClientHandlerException e) {
+            throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
+        }
+    }
+
+
+    public String resendInvitation(@Nonnull String researchProjectKey) throws CollaborationPortalException {
+
+        String url = config.getUrlBase() + Endpoint.RESEND_INVITATION.getSuffixUrl() + researchProjectKey;
+        WebResource resource = getJerseyClient().resource(url);
+
+        try {
+            return resource.post(String.class);
+        } catch (Exception e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
         }
     }

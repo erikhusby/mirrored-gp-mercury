@@ -17,7 +17,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.bsp.client.users.BspUser;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
@@ -27,8 +27,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
+import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
@@ -40,8 +40,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
-import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -63,7 +61,7 @@ import java.util.Map;
 @SuppressWarnings("unused")
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
-    private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
+    private static final Log log = LogFactory.getLog(ResearchProjectActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
@@ -84,6 +82,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
 
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
+
+    private static final String RESEND_INVITATION_ACTION = "resendInvitation";
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
@@ -110,6 +110,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
+    /** The research project business key */
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
@@ -183,7 +184,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private String irbList = "";
 
-    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     private CollaborationData collaborationData;
 
@@ -208,11 +209,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO,
-                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION})
-    public void init() {
+                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
+                    RESEND_INVITATION_ACTION})
+    public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
+            collaborationData = collaborationEjb.getCollaboration(researchProject);
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
@@ -265,7 +268,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void validateCollaborationInformation(ValidationErrors errors) {
         // Cannot start a collaboration with an outside user if there is no PM specified.
         if (editResearchProject.getProjectManagers().length < 1) {
-            errors.add("title", new SimpleError("A project manager must exist before starting a collaboration"));
+            errors.add("title", new SimpleError(
+                    "The research project must have a Project Manager before starting a collaboration."));
         }
     }
 
@@ -278,6 +282,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void validateCollaboration(ValidationErrors errors) {
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
             errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
+        }
+        if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
+            errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
         }
     }
 
@@ -352,7 +359,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             researchProjectEjb.submitToJira(editResearchProject);
         } catch (Exception ex) {
             String errorMessage = "Error " + createOrUpdate + " JIRA ticket for research project: " + ex.getMessage();
-            logger.error(errorMessage, ex);
+            log.error(errorMessage, ex);
             addGlobalValidationError(errorMessage);
             return new ForwardResolution(getContext().getSourcePage());
         }
@@ -544,7 +551,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(results.toString());
     }
 
-    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
+    private static JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
             throws JSONException {
         JSONObject object = new JSONObject();
         object.put("id", regulatoryInfo.getRegulatoryInfoId());
@@ -801,14 +808,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
     }
 
-    @After(stages = LifecycleStage.EventHandling,
-            on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, BEGIN_COLLABORATION_ACTION})
-    public void setCollaborationInfo() throws CollaborationNotFoundException, CollaborationPortalException {
-        if (!StringUtils.isBlank(editResearchProject.getBusinessKey())) {
-            collaborationData = collaborationEjb.getCollaboration(editResearchProject.getBusinessKey());
-        }
-    }
-
     public CollaborationData getCollaborationData() {
         return collaborationData;
     }
@@ -823,11 +822,17 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return collaborationData != null && collaborationData.getExpirationDate() != null;
     }
 
-    public String getUsernameForUserID(long userId) {
-        BspUser user = bspUserList.getById(userId);
-        if (user != null) {
-            return user.getUsername();
+    @HandlesEvent(RESEND_INVITATION_ACTION)
+    public Resolution resendInvitation() throws Exception {
+        try {
+            collaborationEjb.resendInvitation(researchProject);
+            addMessage("Invitation resent successfully");
+        } catch (Exception e) {
+            addGlobalValidationError("Could not resend invitation due to error: {2}", e.toString());
         }
-        return "";
+
+        // Call init again so that the updated project is retrieved.
+        init();
+        return view();
     }
 }

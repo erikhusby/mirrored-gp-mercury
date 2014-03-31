@@ -269,10 +269,10 @@
                             <c:choose>
                                 <c:when test="${actionBean.invitationPending}">
                                     <div class="notificationText">
-                                        <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.collaborationUrl}">
+                                        <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
                                             Collaboration Portal
                                         </stripes:link>
-                                        invitation sent to ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}, expires on
+                                        invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
                                         <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
                                         (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
                                             <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
@@ -283,10 +283,10 @@
                                 </c:when>
                                 <c:when test="${actionBean.collaborationData != null}">
                                     <div class="notificationText">
-                                        <stripes:link style="font-size:x-small;" href="${ctxpath}/collaborate/ViewCollaboration.action">
+                                        <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
                                             Collaborating on Portal
                                         </stripes:link>
-                                         with ${actionBean.getUsernameForUserID(actionBean.collaborationData.collaboratorId)}
+                                         with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
                                     </div>
                                 </c:when>
                                 <c:otherwise>
