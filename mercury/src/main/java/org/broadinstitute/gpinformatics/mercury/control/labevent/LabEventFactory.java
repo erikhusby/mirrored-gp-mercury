@@ -563,7 +563,8 @@ public class LabEventFactory implements Serializable {
                                                    boolean create, boolean source) {
         Map<String, TubeFormation> mapBarcodeToTubeFormation = new HashMap<>();
         for (PlateType plateType : platesJaxb) {
-            if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK)) {
+            if (plateType.getPhysType().equals(PHYS_TYPE_TUBE_RACK) ||
+                RackOfTubes.RackType.getByName(plateType.getPhysType()) != null) {
                 List<Pair<VesselPosition, String>> positionBarcodeList = new ArrayList<>();
                 boolean found = false;
                 for (PositionMapType positionMapType : positionMaps) {
@@ -582,7 +583,8 @@ public class LabEventFactory implements Serializable {
                             for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
                                 mapBarcodeToTube.put(receptacleType.getBarcode(),
                                         OrmUtil.proxySafeCast(mapBarcodeToVessel.get(receptacleType.getBarcode()),
-                                                TwoDBarcodedTube.class));
+                                                TwoDBarcodedTube.class)
+                                );
                             }
 
                             RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(
@@ -957,9 +959,13 @@ public class LabEventFactory implements Serializable {
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
         setTubeQuantities(mapBarcodeToTubes, positionMap);
-        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
+        RackOfTubes.RackType rackType = RackOfTubes.RackType.getByName(plate.getPhysType());
+        if(rackType == null){
+            rackType = RackOfTubes.RackType.Matrix96;
+        }
+        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, rackType);
         if (rackOfTubes == null) {
-            rackOfTubes = new RackOfTubes(plate.getBarcode(), RackOfTubes.RackType.Matrix96);
+            rackOfTubes = new RackOfTubes(plate.getBarcode(), rackType);
         }
         tubeFormation.addRackOfTubes(rackOfTubes);
         return tubeFormation;

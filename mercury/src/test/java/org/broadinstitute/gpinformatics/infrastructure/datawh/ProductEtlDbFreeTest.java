@@ -37,6 +37,7 @@ public class ProductEtlDbFreeTest {
     private static final Workflow WORKFLOW = Workflow.AGILENT_EXOME_EXPRESS;
     private static final String PRODUCT_FAMILY_NAME = "Test ProductFamily";
     private static final long PRIMARY_PRICE_ITEM_ID = 987654321L;
+    private static final String AGGREGATION_DATA_TYPE = "Exome";
     private ProductEtl productEtl;
 
     private final AuditReaderDao auditReader = EasyMock.createMock(AuditReaderDao.class);
@@ -91,6 +92,7 @@ public class ProductEtlDbFreeTest {
         EasyMock.expect(product.getWorkflow()).andReturn(WORKFLOW).anyTimes();
         EasyMock.expect(product.getProductFamily()).andReturn(family).anyTimes();
         EasyMock.expect(product.getPrimaryPriceItem()).andReturn(primaryPriceItem).anyTimes();
+        EasyMock.expect(product.getAggregationDataType()).andReturn(AGGREGATION_DATA_TYPE).anyTimes();
 
         EasyMock.expect(primaryPriceItem.getPriceItemId()).andReturn(PRIMARY_PRICE_ITEM_ID);
 
@@ -123,6 +125,7 @@ public class ProductEtlDbFreeTest {
         Assert.assertEquals(parts[i++], WORKFLOW.getWorkflowName());
         Assert.assertEquals(parts[i++], PRODUCT_FAMILY_NAME);
         Assert.assertEquals(parts[i++], String.valueOf(PRIMARY_PRICE_ITEM_ID));
+        Assert.assertEquals(parts[i++], String.valueOf(AGGREGATION_DATA_TYPE));
         Assert.assertEquals(parts.length, i);
     }
 }

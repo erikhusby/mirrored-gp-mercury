@@ -1,7 +1,5 @@
 -------------------------------------------------------
--- For release 1.31
+-- For release 1.46
 -------------------------------------------------------
-alter table event_fact add program_name  VARCHAR2(255);
-alter table im_event_fact add program_name  VARCHAR2(255);
-
-
+alter table product add aggregation_data_type  VARCHAR2(255);
+alter table im_product add aggregation_data_type  VARCHAR2(255);
