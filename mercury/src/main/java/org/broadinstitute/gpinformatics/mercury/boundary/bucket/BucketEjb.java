@@ -300,26 +300,14 @@ public class BucketEjb {
      * @param newPdoValue new value for PDO
      */
     public void updateEntryPdo(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String newPdoValue) {
-        // bin up the bucket entries by old pdoKey, in case they are different.
-        Map<String, List<BucketEntry>> pdoBucketMapNew = new HashMap<>();
-        List<BucketEntry> changedBuckets = new ArrayList<>(bucketEntries.size());
         List<String> updatingList = new ArrayList<>(bucketEntries.size());
         for (BucketEntry bucketEntry : bucketEntries) {
-            String originalPdo = bucketEntry.getPoBusinessKey();
-            // Do nothing unless we are actually changing something!
-            if (!newPdoValue.equals(originalPdo)) {
-                if (pdoBucketMapNew.get(originalPdo) == null) {
-                    pdoBucketMapNew.put(originalPdo, new ArrayList<BucketEntry>());
-                }
-                bucketEntry.setPoBusinessKey(newPdoValue);
-                changedBuckets.add(bucketEntry);
-                updatingList.add(bucketEntry.getLabVessel().getLabel());
-                pdoBucketMapNew.get(originalPdo).add(bucketEntry);
-            }
+            bucketEntry.setPoBusinessKey(newPdoValue);
+            updatingList.add(bucketEntry.getLabVessel().getLabel());
         }
         logger.info(String.format("Changing PDO to %s for %d bucket entries (%s)", newPdoValue, updatingList.size(),
                 StringUtils.join(updatingList, ", ")));
 
-        bucketDao.persistAll(changedBuckets);
+        bucketDao.persistAll(bucketEntries);
     }
 }
