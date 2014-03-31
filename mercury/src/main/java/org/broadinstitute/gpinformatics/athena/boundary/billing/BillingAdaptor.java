@@ -151,15 +151,15 @@ public class BillingAdaptor implements Serializable {
                 }
             }
 
-            // If there were no errors in billing, then end the session, which will add the billed date and remove
-            // all sessions from the ledger.
-            if (!errorsInBilling) {
-                billingEjb.endSession(billingSession);
-            }
         } finally {
             // FIxMe  What happens if we get an exception at this point?  Do we need to have some better handling on the
             // Action bean to display to the user that there is a Locked session and it will need Informatics Intervention?
             billingEjb.saveAndUnlockSession(billingSession);
+        }
+        // If there were no errors in billing, then end the session, which will add the billed date and remove
+        // all sessions from the ledger.
+        if (!errorsInBilling) {
+            billingEjb.endSession(billingSession);
         }
 
         return results;
