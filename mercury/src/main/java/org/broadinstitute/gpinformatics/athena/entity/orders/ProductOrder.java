@@ -76,7 +76,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
-    // Date needs to be validated (could be 4/7/2014).
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
