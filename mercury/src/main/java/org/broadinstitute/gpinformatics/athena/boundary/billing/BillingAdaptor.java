@@ -36,12 +36,10 @@ public class BillingAdaptor implements Serializable {
     ProductOrderEjb productOrderEjb;
 
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
-                          ProductOrderEjb productOrderEjb) {
+    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
-        this.productOrderEjb = productOrderEjb;
     }
 
     protected BillingAdaptor() {
@@ -66,7 +64,7 @@ public class BillingAdaptor implements Serializable {
 
             billingResults = bill(pageUrl, sessionKey);
             updateBilledPdos(billingResults);
-        } catch (EJBTransactionRolledbackException e) {
+        } catch (Exception e) {
             throw new RuntimeException("An error occurred during this billing Session.");
         }
 
@@ -152,8 +150,6 @@ public class BillingAdaptor implements Serializable {
             }
 
         } finally {
-            // FIxMe  What happens if we get an exception at this point?  Do we need to have some better handling on the
-            // Action bean to display to the user that there is a Locked session and it will need Informatics Intervention?
             billingEjb.saveAndUnlockSession(billingSession);
         }
         // If there were no errors in billing, then end the session, which will add the billed date and remove
@@ -196,5 +192,10 @@ public class BillingAdaptor implements Serializable {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
+    }
+
+    @Inject
+    public void setProductOrderEjb(ProductOrderEjb productOrderEjb) {
+        this.productOrderEjb = productOrderEjb;
     }
 }

@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
-import junit.framework.Assert;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ConcurrentProductOrderDoubleCreateTest;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -28,15 +28,19 @@ import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderD
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.mockito.Mockito;
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import javax.ejb.EJBTransactionRolledbackException;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -47,7 +51,6 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     @Inject
     private BillingSessionDao billingSessionDao;
-
     @Inject
     private BillingEjb billingEjb;
 
@@ -62,7 +65,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     private static final Log log = LogFactory.getLog(BillingEjbJiraDelayedTest.class);
 
-    private static AtomicInteger failureTime = new AtomicInteger(0);
+    private static final AtomicInteger failureTime = new AtomicInteger(0);
+
+    private static final AtomicInteger failureIncrement = new AtomicInteger(0);
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -70,7 +75,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public JiraIssue getIssue(String key) throws IOException {
             try {
-                Thread.sleep(1000 * 16);
+                Thread.sleep(1000 * 6);
             } catch (InterruptedException e) {
             }
 
@@ -107,7 +112,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
             System.out.println("In register New work");
             String workId = "workItemId\t1000";
             try {
-                failureTime.getAndAdd(1);
+                failureTime.getAndAdd(failureIncrement.get());
                 log.error("Setting Sleep of " + failureTime.get());
                 Thread.sleep(1000 * failureTime.get());
                 log.error("Woke up from quote call");
@@ -172,34 +177,62 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 DelayedJiraService.class, QuoteServiceStubWithWait.class);
     }
 
-    public void testTransactionTimeout() throws Exception {
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false, dataProvider = "timeoutCases")
+    public void testTransactionTimeout(String testScenario, Integer timeoutIncrement,
+                                       Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb)
+            throws Exception {
+
+        failureTime.set(0);
+        failureIncrement.set(timeoutIncrement);
+
+        log.info("[[[ The scenario is " + testScenario + "]]]");
+        log.info("[[[ timeout increment is " + timeoutIncrement + "]]]");
+        log.info("[[[ Expected number of successful entries is " + expectedSuccessfulLedgerEntries + "]]]");
+        log.info("[[[ Failure time is " + failureTime.get() + "]]]");
+        log.info("[[[ Failure time increment is " + failureIncrement.get() + "]]]");
+
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};
+
+        if (mockProductOrderEjb) {
+            ProductOrderEjb mockPDOEjb = Mockito.mock(ProductOrderEjb.class);
+            Mockito.doThrow(new RuntimeException()).when(mockPDOEjb).updateOrderStatusNoRollback(Mockito.anyString());
+            billingAdaptor.setProductOrderEjb(mockPDOEjb);
+        }
 
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
 
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-//        utx.setTransactionTimeout(5);
-//        utx.begin();
 
-        try {
-            billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
-        } catch (EJBTransactionRolledbackException e) {
-            log.error("Exception thrown calling facade bill", e);
-            e.printStackTrace();
-        }
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
-//        if(utx.getStatus() == Status.STATUS_NO_TRANSACTION) {
-//            utx.begin();
-//        }
+
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
-        Assert.assertTrue(quoteImportItems.isEmpty());
-//        if(utx.getStatus() == Status.STATUS_ACTIVE) {
-//            utx.commit();
-//        }
+        Assert.assertEquals(quoteImportItems.size(), sampleNameList.length - expectedSuccessfulLedgerEntries);
+        Assert.assertTrue(!billingSession.isSessionLocked());
+    }
+
+    @DataProvider(name = "timeoutCases")
+    public Iterator<Object[]> timeoutData() {
+
+        List<Object[]> dataList = new ArrayList<>();
+
+        //These data cases were tested with a transaction timeout set to 5 seconds
+
+        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true,});
+        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false,});
+        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true,});
+        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false,});
+        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true});
+        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false});
+        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true});
+        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false});
+        dataList.add(new Object[]{"0 sec interval mock PDOEjb", 0, 8, true});
+        dataList.add(new Object[]{"0 sec interval no mock PDOEjb", 0, 8, false});
+        return dataList.iterator();
     }
 }
