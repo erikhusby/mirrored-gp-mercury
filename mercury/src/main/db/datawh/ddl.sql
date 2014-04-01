@@ -18,8 +18,9 @@ CREATE TABLE product (
   is_top_level_product      CHAR(1) CHECK (is_top_level_product IN ('T', 'F')),
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
-  etl_date                  DATE                    NOT NULL,
-  primary_price_item_id     NUMERIC(19, 0)
+  primary_price_item_id     NUMERIC(19, 0),
+  aggregation_data_type     VARCHAR2(255),
+  etl_date                  DATE                    NOT NULL
 );
 
 CREATE TABLE price_item (
@@ -256,7 +257,8 @@ CREATE TABLE im_product (
   is_top_level_product      CHAR(1),
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
-  primary_price_item_id     NUMERIC(19, 0)
+  primary_price_item_id     NUMERIC(19, 0),
+  aggregation_data_type	    VARCHAR2(255)
 );
 
 CREATE TABLE im_price_item (

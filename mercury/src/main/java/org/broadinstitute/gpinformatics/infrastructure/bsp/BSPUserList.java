@@ -53,6 +53,15 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
+     * API to force a refresh of the cache. This should only be used when a new user is created and we want to
+     * ensure that the cache is up to date before continuing. It's package protected on purpose to make it less
+     * likely that it will be called by accident.
+     */
+    synchronized void invalidateCache() {
+        users = null;
+    }
+
+    /**
      * @param id key of user to look up
      * @return if found, the user, otherwise null
      */
@@ -202,6 +211,23 @@ public class BSPUserList extends AbstractCache implements Serializable {
         return bspUser.getFullName();
     }
 
+    /**
+     * Find the user by an email address.
+     *
+     * @param email The string to match
+     *
+     * @return The matching user, null if not found
+     */
+    public BspUser getByEmail(String email) {
+        for (BspUser user : getUsers().values()) {
+            if (user.getEmail().equalsIgnoreCase(email)) {
+                return user;
+            }
+        }
+
+        return null;
+    }
+
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
             setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org",
@@ -211,6 +237,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         private void setFields(long userId, String username, String firstName, String lastName, String email,
                                String badgeId) {
             setUserId(userId);
+            setDomainUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
@@ -223,7 +250,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
         // Could also create QADude entries on demand during login.
         String[] types = {"Test", "PM", "PDM", "LU", "LM", "BM"};
-        long userIdSeq = 101010101L;
+        long userIdSeq = 101010101;
         for (String type : types) {
             users.add(new QADudeUser(type, userIdSeq++));
         }

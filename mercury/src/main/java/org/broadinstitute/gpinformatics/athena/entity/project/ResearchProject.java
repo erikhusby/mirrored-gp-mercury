@@ -56,6 +56,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public static final boolean IRB_NOT_ENGAGED = true;
 
+    private static final long serialVersionUID = 937268527371239980L;
+
     /**
      * Compare by modified date.
      */
@@ -396,12 +398,17 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public void addPeople(RoleType role, List<BspUser> people) {
+    public boolean addPeople(RoleType role, List<BspUser> people) {
+        boolean added = false;
+
         if (people != null) {
             for (BspUser user : people) {
                 associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+                added = true;
             }
         }
+
+        return added;
     }
 
     /**
@@ -745,5 +752,5 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             return name();
         }
     }
-
 }
+

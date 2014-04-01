@@ -177,3 +177,5 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 
 /* Add to block or inline-block elements to truncate their content with ellipsis. When using with fixed-width table columns, width must be set on the td element with this class. */
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.notificationText { font-size: x-small; font-weight: 600; color: green; clear: both; margin-left: 15px; }
