@@ -65,9 +65,11 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     private static final Log log = LogFactory.getLog(BillingEjbJiraDelayedTest.class);
 
-    private static final AtomicInteger failureTime = new AtomicInteger(0);
+    private static AtomicInteger failureTime = new AtomicInteger(0);
 
-    private static final AtomicInteger failureIncrement = new AtomicInteger(0);
+    private static AtomicInteger failureIncrement = new AtomicInteger(0);
+
+    private static boolean forceSleep = true;
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -75,7 +77,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         @Override
         public JiraIssue getIssue(String key) throws IOException {
             try {
-                Thread.sleep(1000 * 6);
+                if (forceSleep) {
+                    Thread.sleep(1000 * 6);
+                }
             } catch (InterruptedException e) {
             }
 
@@ -113,9 +117,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
             String workId = "workItemId\t1000";
             try {
                 failureTime.getAndAdd(failureIncrement.get());
-                log.error("Setting Sleep of " + failureTime.get());
+                log.info("Setting Sleep of " + failureTime.get());
                 Thread.sleep(1000 * failureTime.get());
-                log.error("Woke up from quote call");
+                log.info("Woke up from quote call");
             } catch (InterruptedException e) {
             }
 
@@ -179,11 +183,13 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false, dataProvider = "timeoutCases")
     public void testTransactionTimeout(String testScenario, Integer timeoutIncrement,
-                                       Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb)
+                                       Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb,
+                                       Boolean forceSleep)
             throws Exception {
 
         failureTime.set(0);
         failureIncrement.set(timeoutIncrement);
+        this.forceSleep = forceSleep;
 
         log.info("[[[ The scenario is " + testScenario + "]]]");
         log.info("[[[ timeout increment is " + timeoutIncrement + "]]]");
@@ -223,16 +229,24 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         //These data cases were tested with a transaction timeout set to 5 seconds
 
-        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true,});
-        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false,});
-        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true,});
-        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false,});
-        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true});
-        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false});
-        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true});
-        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false});
-        dataList.add(new Object[]{"0 sec interval mock PDOEjb", 0, 8, true});
-        dataList.add(new Object[]{"0 sec interval no mock PDOEjb", 0, 8, false});
+        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true, true});
+        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true, false});
+        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false, true});
+        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false, false});
+        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true, true});
+        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true, false});
+        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false, true});
+        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false, false});
+        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true, true});
+        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true, false});
+        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false, true});
+        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false, false});
+        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true, true});
+        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true, false});
+        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false, false});
+        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false, true});
+        dataList.add(new Object[]{"0 sec interval mock PDOEjb", 0, 8, true, true});
+        dataList.add(new Object[]{"0 sec interval no mock PDOEjb", 0, 8, false, false});
         return dataList.iterator();
     }
 }
