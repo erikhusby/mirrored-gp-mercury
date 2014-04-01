@@ -114,9 +114,14 @@ public class BillingEjb {
     }
 
     /**
-     * finder method for a billing session that will subsequently lock that billing session for billing
-     * @param billingSessionKey business key of the billing session which is to be found and locked
-     * @return
+     * Obtains an advisory lock on a billing session for the purpose of performing billing against the Quote Server. It
+     * is EXTREMELY important that this method be called outside of a transactional context so that it will begin and
+     * commit its own transaction. It is, in fact, so important that I think we should consider marking this method as
+     * TransactionAttributeType.NEVER and have it call a TransactionAttributeType.REQUIRED method to do the actual work.
+     *
+     * @param billingSessionKey    business key of the billing session which is to be found and locked
+     * @return the locked billing session if this thread was able to successfully lock it for billing
+     * @throws BillingException if the billing session is locked for billing by another thread
      */
     public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
         BillingSession session = billingSessionDao.findByBusinessKeyWithLock(billingSessionKey);
@@ -225,12 +230,17 @@ public class BillingEjb {
     public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
                                             BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
                                             QuotePriceItem quoteIsReplacing) {
-        String workId = quoteService.registerNewWork(
-                quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                pageUrl, "billingSession", sessionKey);
 
-        result.setWorkId(workId);
-        log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
+        try {
+            String workId = quoteService.registerNewWork(
+                    quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
+                    pageUrl, "billingSession", sessionKey);
+
+            result.setWorkId(workId);
+            log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
+        } catch (RuntimeException e) {
+            throw new BillingException(e.getMessage(), e);
+        }
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.

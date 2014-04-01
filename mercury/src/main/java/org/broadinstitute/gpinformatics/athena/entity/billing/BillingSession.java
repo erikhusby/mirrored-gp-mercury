@@ -43,7 +43,7 @@ import java.util.Set;
 public class BillingSession implements Serializable {
     private static final long serialVersionUID = -5063307042006128046L;
 
-    private static final Log log = LogFactory.getLog(BillingEjb.class);
+    private static final Log log = LogFactory.getLog(BillingSession.class);
 
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
@@ -72,6 +72,23 @@ public class BillingSession implements Serializable {
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     private List<LedgerEntry> ledgerEntryItems;
 
+    /**
+     * Application-level lock on the billing session to prevent concurrent processes/threads from billing to the Quote
+     * Server at the same time. This is a purely advisory lock in the sense that it does not restrict any access or
+     * operation unless the code itself consults the lock. This flag should only be read and written to under a database
+     * lock using
+     * {@link org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao#findByBusinessKeyWithLock(String)}.
+     * Access this field outside of a database lock could lead to two processes having inconsistent beliefs about the
+     * state of the lock. This could lead to those processes making contradictory decisions which would entirely defeat
+     * the purpose of the lock.
+     *
+     * Finally, using a field in the database is a fairly heavy-handed approach to locking a billing session. However,
+     * there isn't a better alternative. There is no object shared between threads that can be synchronized on and the
+     * billing process needs to span multiple database transactions to avoid risking inconsistencies between Mercury and
+     * the Quote Server due to transaction timeouts. Billing is infrequent enough and contention on the same billing
+     * session is expected to be even more rare. Still, it is of utmost importance that Mercury and the Quote Server are
+     * in agreement, so these extreme measures are warranted.
+     */
     @Column(name = "BILLING_SESSION_STATUS")
     @Enumerated(EnumType.STRING)
     private BillingSessionStatusType status;
