@@ -30,12 +30,12 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.mockito.Mockito;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,6 +51,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     @Inject
     private BillingSessionDao billingSessionDao;
+
     @Inject
     private BillingEjb billingEjb;
 
@@ -61,7 +62,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private PriceListCache priceListCache;
 
     @Inject
-    UserTransaction utx;
+    private ProductOrderEjb pdoEjb;
 
     private static final Log log = LogFactory.getLog(BillingEjbJiraDelayedTest.class);
 
@@ -70,6 +71,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private static AtomicInteger failureIncrement = new AtomicInteger(0);
 
     private static boolean forceSleep = true;
+    private String[] sampleNameList = null;
+    private String billingSessionBusinessKey;
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -181,15 +184,27 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 DelayedJiraService.class, QuoteServiceStubWithWait.class);
     }
 
+    @BeforeMethod
+    public void setUp() throws Exception {
+
+        if (billingSessionDao == null) {
+            return;
+        }
+        failureTime.set(0);
+
+        sampleNameList = new String[]{"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
+                "SM-4488"};
+
+        BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
+
+        billingSessionBusinessKey = billingSession.getBusinessKey();
+    }
+
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false, dataProvider = "timeoutCases")
     public void testTransactionTimeout(String testScenario, Integer timeoutIncrement,
                                        Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb,
-                                       Boolean forceSleep)
+                                       Boolean forceSleepParam)
             throws Exception {
-
-        failureTime.set(0);
-        failureIncrement.set(timeoutIncrement);
-        this.forceSleep = forceSleep;
 
         log.info("[[[ The scenario is " + testScenario + "]]]");
         log.info("[[[ timeout increment is " + timeoutIncrement + "]]]");
@@ -197,25 +212,27 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         log.info("[[[ Failure time is " + failureTime.get() + "]]]");
         log.info("[[[ Failure time increment is " + failureIncrement.get() + "]]]");
 
-        String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
-                "SM-4488"};
+        failureIncrement.set(timeoutIncrement);
+        forceSleep = forceSleepParam;
 
         if (mockProductOrderEjb) {
             ProductOrderEjb mockPDOEjb = Mockito.mock(ProductOrderEjb.class);
             Mockito.doThrow(new RuntimeException()).when(mockPDOEjb).updateOrderStatusNoRollback(Mockito.anyString());
             billingAdaptor.setProductOrderEjb(mockPDOEjb);
+        } else {
+            billingAdaptor.setProductOrderEjb(pdoEjb);
         }
 
-        BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
+        BillingSession billingSession = billingSessionDao.findByBusinessKey(billingSessionBusinessKey);
 
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
-
-
-        billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
-
+        try {
+            billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         billingSessionDao.clear();
-        billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
+        billingSession = billingSessionDao.findByBusinessKey(billingSessionBusinessKey);
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
         Assert.assertEquals(quoteImportItems.size(), sampleNameList.length - expectedSuccessfulLedgerEntries);
@@ -229,24 +246,26 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         //These data cases were tested with a transaction timeout set to 5 seconds
 
-        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true, true});
-        dataList.add(new Object[]{"8 sec interval mock PDOEjb", 8, 0, true, false});
-        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false, true});
-        dataList.add(new Object[]{"8 sec interval no mock PDOEjb", 8, 0, false, false});
-        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true, true});
-        dataList.add(new Object[]{"4 sec interval mock PDOEjb", 4, 1, true, false});
-        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false, true});
-        dataList.add(new Object[]{"4 sec interval no mock PDOEjb", 4, 1, false, false});
-        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true, true});
-        dataList.add(new Object[]{"2 sec interval mock PDOEjb", 2, 2, true, false});
-        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false, true});
-        dataList.add(new Object[]{"2 sec interval no mock PDOEjb", 2, 2, false, false});
-        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true, true});
-        dataList.add(new Object[]{"1 sec interval mock PDOEjb", 1, 4, true, false});
-        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false, false});
-        dataList.add(new Object[]{"1 sec interval no mock PDOEjb", 1, 4, false, true});
-        dataList.add(new Object[]{"0 sec interval mock PDOEjb", 0, 8, true, true});
-        dataList.add(new Object[]{"0 sec interval no mock PDOEjb", 0, 8, false, false});
+        dataList.add(new Object[]{"8 sec interval mock PDOEjb Jira sleep", 8, 0, true, true});
+        dataList.add(new Object[]{"8 sec interval mock PDOEjb jira no sleep", 8, 0, true, false});
+        dataList.add(new Object[]{"8 sec interval no mock PDOEjb jira sleep", 8, 0, false, true});
+        dataList.add(new Object[]{"8 sec interval no mock PDOEjb jira no sleep", 8, 0, false, false});
+        dataList.add(new Object[]{"4 sec interval mock PDOEjb jira sleep", 4, 1, true, true});
+        dataList.add(new Object[]{"4 sec interval mock PDOEjb jira no sleep", 4, 1, true, false});
+        dataList.add(new Object[]{"4 sec interval no mock PDOEjb jira sleep", 4, 1, false, true});
+        dataList.add(new Object[]{"4 sec interval no mock PDOEjb jira no sleep", 4, 1, false, false});
+        dataList.add(new Object[]{"2 sec interval mock PDOEjb jira sleep", 2, 2, true, true});
+        dataList.add(new Object[]{"2 sec interval mock PDOEjb jira no sleep", 2, 2, true, false});
+        dataList.add(new Object[]{"2 sec interval no mock PDOEjb jira sleep", 2, 2, false, true});
+        dataList.add(new Object[]{"2 sec interval no mock PDOEjb jira no sleep", 2, 2, false, false});
+        dataList.add(new Object[]{"1 sec interval mock PDOEjb jira sleep", 1, 4, true, true});
+        dataList.add(new Object[]{"1 sec interval mock PDOEjb jira no sleep", 1, 4, true, false});
+        dataList.add(new Object[]{"1 sec interval no mock PDOEjb jira sleep", 1, 4, false, false});
+        dataList.add(new Object[]{"1 sec interval no mock PDOEjb jira no sleep", 1, 4, false, true});
+        dataList.add(new Object[]{"0 sec interval mock PDOEjb jira sleep", 0, 8, true, true});
+        dataList.add(new Object[]{"0 sec interval mock PDOEjb jira no sleep", 0, 8, true, false});
+        dataList.add(new Object[]{"0 sec interval no mock PDOEjb jira sleep", 0, 8, false, true});
+        dataList.add(new Object[]{"0 sec interval no mock PDOEjb jira no sleep", 0, 8, false, false});
         return dataList.iterator();
     }
 }

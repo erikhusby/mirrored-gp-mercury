@@ -16,7 +16,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +58,7 @@ public class BillingAdaptor implements Serializable {
      */
     public List<BillingEjb.BillingResult> billSessionItems(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
-        List<BillingEjb.BillingResult> billingResults = new ArrayList<>();
+        List<BillingEjb.BillingResult> billingResults;
         try {
 
             billingResults = bill(pageUrl, sessionKey);
@@ -75,15 +74,19 @@ public class BillingAdaptor implements Serializable {
      * Non-Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the
      * quote server and update billing entities as appropriate to the results of the billing attempt.  Results
      * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a
-     * QuoteImportItem, the {@link BillingResult#isError()} will return true and {@link BillingResult#getErrorMessage()}
-     * will describe the cause of the problem.  On successful billing {@link BillingResult#getWorkId()} will contain
-     * the work id result.
+     * QuoteImportItem, the
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#isError()} will return
+     * true and
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getErrorMessage()}
+     * will describe the cause of the problem.  On successful billing
+     * {@link org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb.BillingResult#getWorkId()} will
+     * contain the work id result.
      *
      * @param pageUrl    URL to be included in the call to the quote server.
      * @param sessionKey Key to be included in the call to the quote server.
      *
-     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     * associated with the BillingSession.
+     * @return List of BillingResults describing the success or failure of billing for each previously un-billed
+     * QuoteImportItem associated with the BillingSession.
      */
     private List<BillingEjb.BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
@@ -122,12 +125,13 @@ public class BillingAdaptor implements Serializable {
                 } catch (EJBTransactionRolledbackException rolledbackException) {
 
                     String errorMessage;
-                    if(StringUtils.isBlank(result.getWorkId())) {
+                    if (StringUtils.isBlank(result.getWorkId())) {
                         errorMessage = "A Problem occurred attempting to post to the quote server for " +
                                        billingSession.getBusinessKey() + ".";
                     } else {
                         errorMessage = "A problem occurred saving the ledger entries for " +
-                                       billingSession.getBusinessKey() + " with work id of " + result.getWorkId() + ".  " +
+                                       billingSession.getBusinessKey() + " with work id of " + result.getWorkId()
+                                       + ".  " +
                                        "The quote for this item may have been successfully sent to the quote server";
                     }
 

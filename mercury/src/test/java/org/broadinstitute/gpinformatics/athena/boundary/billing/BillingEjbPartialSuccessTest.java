@@ -54,9 +54,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingEjb billingEjb;
-
-    @Inject
     private PriceListCache priceListCache;
 
     public static final String SM_1234 = "SM-1234";
@@ -264,7 +261,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
-        billingEjb.updateBilledPdos(billingResults);
 
         billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.
@@ -302,7 +298,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
-        billingEjb.updateBilledPdos(billingResults);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -313,7 +308,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                    quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
         Collection<BillingEjb.BillingResult> billingResults1 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                                billingSession.getBusinessKey());
-        billingEjb.updateBilledPdos(billingResults1);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -326,8 +320,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         cycleFails = false;
         Collection<BillingEjb.BillingResult> billingResults3 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                          billingSession.getBusinessKey());
-        billingEjb.updateBilledPdos(billingResults3);
-
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -356,7 +348,6 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
                                                                         billingSession.getBusinessKey());
-        billingEjb.updateBilledPdos(billingResults);
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
