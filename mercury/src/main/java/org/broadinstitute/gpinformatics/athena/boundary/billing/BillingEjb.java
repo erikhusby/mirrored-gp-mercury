@@ -68,10 +68,6 @@ public class BillingEjb {
         }
     }
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
-
     @Inject
     private PriceListCache priceListCache;
 
@@ -153,32 +149,14 @@ public class BillingEjb {
      * separate the steps of billing a session into smaller finite transactions so we can record more to the database
      * sooner
      *
-     * @param pageUrl          URL to be included in the call to the quote server.
-     * @param sessionKey       Business key of the Billing session of which the price item is associated
      * @param item             Representation of the quote and its ledger entries that are to be billed
-     * @param result           Outcome of to be reported back to the user of the attempt to bill the quote item
-     * @param quote            in depth representation of quote to which the item is being charged
-     * @param quotePriceItem   Quote server representation of the Price item that is represented in mercury.
      * @param quoteIsReplacing Set if the price item is replacing a previously defined item.
      */
-    public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
-                                            BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
-                                            QuotePriceItem quoteIsReplacing) {
-
-
-        try {
-            String workId = quoteService.registerNewWork(
-                    quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                    pageUrl, "billingSession", sessionKey);
-
-            result.setWorkId(workId);
-            log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
-        } catch (RuntimeException e) {
-            throw new BillingException(e.getMessage(), e);
-        }
+    public void updateQuoteItem(QuoteImportItem item, QuotePriceItem quoteIsReplacing) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
         item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+        billingSessionDao.flush();
     }
 }

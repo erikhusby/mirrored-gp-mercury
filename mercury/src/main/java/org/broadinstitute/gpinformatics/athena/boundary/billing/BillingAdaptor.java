@@ -9,13 +9,14 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
-import javax.ejb.EJBTransactionRolledbackException;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -34,11 +35,15 @@ public class BillingAdaptor implements Serializable {
 
     ProductOrderEjb productOrderEjb;
 
+    QuoteService quoteService;
+
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache) {
+    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+                          QuoteService quoteService) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
+        this.quoteService = quoteService;
     }
 
     protected BillingAdaptor() {
@@ -120,9 +125,16 @@ public class BillingAdaptor implements Serializable {
                 QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
 
                 try {
-                    billingEjb.callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem,
-                                                           quoteIsReplacing);
-                } catch (EJBTransactionRolledbackException rolledbackException) {
+                    String workId = quoteService.registerNewWork(quote, quotePriceItem, quoteIsReplacing,
+                                                                 item.getWorkCompleteDate(), item.getQuantity(),
+                                                                 pageUrl, "billingSession", sessionKey);
+
+                    result.setWorkId(workId);
+                    log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
+                             + new Date());
+
+                    billingEjb.updateQuoteItem(item, quoteIsReplacing);
+                } catch (Exception ex) {
 
                     String errorMessage;
                     if (StringUtils.isBlank(result.getWorkId())) {
@@ -135,20 +147,11 @@ public class BillingAdaptor implements Serializable {
                                        "The quote for this item may have been successfully sent to the quote server";
                     }
 
-                    log.error(errorMessage, rolledbackException);
+                    log.error(errorMessage, ex);
 
-                    item.setBillingMessages(errorMessage + rolledbackException.getMessage());
-                    result.setErrorMessage(errorMessage + rolledbackException
+                    item.setBillingMessages(errorMessage + ex.getMessage());
+                    result.setErrorMessage(errorMessage + ex
                             .getMessage());
-                    errorsInBilling = true;
-                } catch (Exception ex) {
-                    log.error("A problem occurred while submitting and logging a quote for " +
-                              billingSession.getBusinessKey() + " that has " + item.getLedgerItems().size()
-                              + " ledger items");
-                    // Any exceptions in sending to the quote server will just be reported and will continue
-                    // on to the next one.
-                    item.setBillingMessages(ex.getMessage());
-                    result.setErrorMessage(ex.getMessage());
                     errorsInBilling = true;
                 }
             }

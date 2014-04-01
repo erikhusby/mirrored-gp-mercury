@@ -34,6 +34,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -49,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class BillingEjbJiraDelayedTest extends Arquillian {
 
+    private static boolean failQuoteCall;
     @Inject
     private BillingSessionDao billingSessionDao;
 
@@ -120,8 +122,12 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
             String workId = "workItemId\t1000";
             try {
                 failureTime.getAndAdd(failureIncrement.get());
-                log.info("Setting Sleep of " + failureTime.get());
-                Thread.sleep(1000 * failureTime.get());
+                if (failQuoteCall) {
+                    throw new RuntimeException("Error registering quote");
+                } else {
+                    log.info("Setting Sleep of " + failureTime.get());
+                    Thread.sleep(1000 * failureTime.get());
+                }
                 log.info("Woke up from quote call");
             } catch (InterruptedException e) {
             }
@@ -200,10 +206,11 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         billingSessionBusinessKey = billingSession.getBusinessKey();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false, dataProvider = "timeoutCases")
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = "timeoutCases", enabled = false)
     public void testTransactionTimeout(String testScenario, Integer timeoutIncrement,
                                        Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb,
-                                       Boolean forceSleepParam)
+                                       Boolean forceJiraSvcSleepParam, Boolean failQuote)
             throws Exception {
 
         log.info("[[[ The scenario is " + testScenario + "]]]");
@@ -213,11 +220,11 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         log.info("[[[ Failure time increment is " + failureIncrement.get() + "]]]");
 
         failureIncrement.set(timeoutIncrement);
-        forceSleep = forceSleepParam;
-
+        forceSleep = forceJiraSvcSleepParam;
+        failQuoteCall = failQuote;
         if (mockProductOrderEjb) {
             ProductOrderEjb mockPDOEjb = Mockito.mock(ProductOrderEjb.class);
-            Mockito.doThrow(new RuntimeException()).when(mockPDOEjb).updateOrderStatusNoRollback(Mockito.anyString());
+            Mockito.doThrow(new EJBTransactionRolledbackException()).when(mockPDOEjb).updateOrderStatusNoRollback(Mockito.anyString());
             billingAdaptor.setProductOrderEjb(mockPDOEjb);
         } else {
             billingAdaptor.setProductOrderEjb(pdoEjb);
@@ -225,11 +232,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         BillingSession billingSession = billingSessionDao.findByBusinessKey(billingSessionBusinessKey);
 
-        try {
-            billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSessionBusinessKey);
@@ -246,26 +249,139 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         //These data cases were tested with a transaction timeout set to 5 seconds
 
-        dataList.add(new Object[]{"8 sec interval mock PDOEjb Jira sleep", 8, 0, true, true});
-        dataList.add(new Object[]{"8 sec interval mock PDOEjb jira no sleep", 8, 0, true, false});
-        dataList.add(new Object[]{"8 sec interval no mock PDOEjb jira sleep", 8, 0, false, true});
-        dataList.add(new Object[]{"8 sec interval no mock PDOEjb jira no sleep", 8, 0, false, false});
-        dataList.add(new Object[]{"4 sec interval mock PDOEjb jira sleep", 4, 1, true, true});
-        dataList.add(new Object[]{"4 sec interval mock PDOEjb jira no sleep", 4, 1, true, false});
-        dataList.add(new Object[]{"4 sec interval no mock PDOEjb jira sleep", 4, 1, false, true});
-        dataList.add(new Object[]{"4 sec interval no mock PDOEjb jira no sleep", 4, 1, false, false});
-        dataList.add(new Object[]{"2 sec interval mock PDOEjb jira sleep", 2, 2, true, true});
-        dataList.add(new Object[]{"2 sec interval mock PDOEjb jira no sleep", 2, 2, true, false});
-        dataList.add(new Object[]{"2 sec interval no mock PDOEjb jira sleep", 2, 2, false, true});
-        dataList.add(new Object[]{"2 sec interval no mock PDOEjb jira no sleep", 2, 2, false, false});
-        dataList.add(new Object[]{"1 sec interval mock PDOEjb jira sleep", 1, 4, true, true});
-        dataList.add(new Object[]{"1 sec interval mock PDOEjb jira no sleep", 1, 4, true, false});
-        dataList.add(new Object[]{"1 sec interval no mock PDOEjb jira sleep", 1, 4, false, false});
-        dataList.add(new Object[]{"1 sec interval no mock PDOEjb jira no sleep", 1, 4, false, true});
-        dataList.add(new Object[]{"0 sec interval mock PDOEjb jira sleep", 0, 8, true, true});
-        dataList.add(new Object[]{"0 sec interval mock PDOEjb jira no sleep", 0, 8, true, false});
-        dataList.add(new Object[]{"0 sec interval no mock PDOEjb jira sleep", 0, 8, false, true});
-        dataList.add(new Object[]{"0 sec interval no mock PDOEjb jira no sleep", 0, 8, false, false});
+        /*
+         * Parameters for Data Provider Scenarios
+         *
+         * Test        Timeout       Expected Successful    Mock Product    Force Jira
+         * Scenario,   Increment,    Ledger Entries,        Order Ejb,      Svc Sleep,     Fail Quote
+         *
+         */
+
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         8,      0,      true,       false,      true});
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "fail quote",         8,      0,      false,      true,       true});
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         8,      0,      false,      false,      true});
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "mock PDOEjb jira " +
+                                  "no sleep " +
+                                  "don't fail quote",   8,      8,      true,       false,      false});
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "don't fail quote",   8,      8,      false,      true,       false});
+        dataList.add(new Object[]{"8 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   8,      8,      false,      false,      false});
+
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         4,      0,      true,       false,      true});
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "fail quote",         4,      0,      false,      true,       true});
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         4,      0,      false,      false,      true});
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   4,      8,      true,       false,      false});
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "don't fail quote",   4,      8,      false,      true,       false});
+        dataList.add(new Object[]{"4 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   4,      8,      false,      false,      false});
+
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         2,      0,      true,       false,      true});
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "fail quote",         2,      0,      false,      true,       true});
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         2,      0,      false,      false,      true});
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   2,      8,      true,       false,      false});
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "don't fail quote",   2,      8,      false,      true,       false});
+        dataList.add(new Object[]{"2 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   2,      8,      false,      false,      false});
+
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         1,      0,      true,       false,      true});
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "fail quote",         1,      0,      false,      false,      true});
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         1,      0,      false,      true,       true});
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   1,      8,      true,       false,      false});
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "don't fail quote",   1,      8,      false,      false,      false});
+        dataList.add(new Object[]{"1 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   1,      8,      false,      true,       false});
+
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         0,      0,      true,       false,      true});
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   0,      8,      true,       false,      false});
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "fail quote",         0,      0,      false,      true,       true});
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira sleep " +
+                                  "don't fail quote",   0,      8,      false,      true,       false});
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "fail quote",         0,      0,      false,      false,      true});
+        dataList.add(new Object[]{"0 sec interval " +
+                                  "don't mock PDOEjb " +
+                                  "jira no sleep " +
+                                  "don't fail quote",   0,      8,      false,      false,      false});
+
         return dataList.iterator();
     }
 }
