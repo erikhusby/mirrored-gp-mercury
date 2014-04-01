@@ -136,7 +136,7 @@ public class BillingEjb {
      * @param billingSession    billing session to be unlocked
      */
     public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
-
+        log.info("Setting billing session BILL-" + billingSession.getBillingSessionId() + " to unlocked");
         billingSession.unlockSession();
     }
 

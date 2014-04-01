@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -40,6 +42,8 @@ import java.util.Set;
 @Table(name = "BILLING_SESSION", schema = "athena")
 public class BillingSession implements Serializable {
     private static final long serialVersionUID = -5063307042006128046L;
+
+    private static final Log log = LogFactory.getLog(BillingEjb.class);
 
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
@@ -164,6 +168,7 @@ public class BillingSession implements Serializable {
      * Helper method to allow a user to lock a given billing session
      */
     public void lockSession() {
+        log.info("Locking billing session " + getBusinessKey());
         status = BillingSessionStatusType.LOCKED_FOR_BILLING;
     }
 
