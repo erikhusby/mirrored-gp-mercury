@@ -88,6 +88,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
 
+    private static final boolean COLLABORATION_ENABLED = false;
+
     @Inject
     private MercuryClientService mercuryClientService;
 
@@ -215,7 +217,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-            collaborationData = collaborationEjb.getCollaboration(researchProject);
+            if (COLLABORATION_ENABLED) {
+                collaborationData = collaborationEjb.getCollaboration(researchProject);
+            }
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
