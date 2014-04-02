@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class BillingEjbJiraDelayedTest extends Arquillian {
 
-    private static boolean failQuoteCall;
+    private static boolean failQuoteCall = false;
     private static boolean inContainer = true;
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -77,7 +77,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private String[] sampleNameList = null;
     private String billingSessionBusinessKey;
 
-    private int dpCallCount= 0;
+    private static int dpCallCount = 0;
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -126,6 +126,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
             try {
                 failureTime.getAndAdd(failureIncrement.get());
                 if (failQuoteCall) {
+                    log.info("Configuration is set to fail quote");
                     throw new RuntimeException("Error registering quote");
                 } else {
                     log.info("Setting Sleep of " + failureTime.get());
@@ -222,13 +223,16 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         log.info("[[[ Expected number of successful entries is " + expectedSuccessfulLedgerEntries + "]]]");
         log.info("[[[ Failure time is " + failureTime.get() + "]]]");
         log.info("[[[ Failure time increment is " + failureIncrement.get() + "]]]");
+        log.info("[[[ Fail quote is set for " + failQuote + "]]]");
 
         failureIncrement.set(timeoutIncrement);
         forceSleep = forceJiraSvcSleepParam;
         failQuoteCall = failQuote;
+        log.info("[[[ Static fail quote is set for " + failQuoteCall + "]]]");
         if (mockProductOrderEjb) {
             ProductOrderEjb mockPDOEjb = Mockito.mock(ProductOrderEjb.class);
-            Mockito.doThrow(new EJBTransactionRolledbackException()).when(mockPDOEjb).updateOrderStatusNoRollback(Mockito.anyString());
+            Mockito.doThrow(new EJBTransactionRolledbackException()).when(mockPDOEjb).updateOrderStatusNoRollback(
+                    Mockito.anyString());
             billingAdaptor.setProductOrderEjb(mockPDOEjb);
         } else {
             billingAdaptor.setProductOrderEjb(pdoEjb);
@@ -386,14 +390,13 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                   "jira no sleep " +
                                   "don't fail quote",   0,      8,      false,      false,      false});
 
-        Object [][] output = null;
+        Object[][] output = null;
 
-        if(inContainer) {
-
-            output = new Object[][] {
+        if (inContainer) {
+            output = new Object[][]{
                     dataList.get(dpCallCount)
             };
-            dpCallCount = (dpCallCount+1)%dataList.size();
+            dpCallCount = (dpCallCount + 1) % dataList.size();
         } else {
             output = dataList.toArray(new Object[dataList.size()][]);
         }
