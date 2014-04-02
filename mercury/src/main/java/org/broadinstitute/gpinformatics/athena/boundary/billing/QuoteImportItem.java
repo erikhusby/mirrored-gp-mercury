@@ -125,6 +125,9 @@ public class QuoteImportItem {
         return ledgerItems.get(0).getProductOrderSample().getProductOrder().getProduct();
     }
 
+    public Collection<LedgerEntry> getLedgerItems() {
+        return ledgerItems;
+    }
     /**
      * Calculate if this item's price item is a replacement price item on this product. It returns a quote price item
      * object that is the primary.

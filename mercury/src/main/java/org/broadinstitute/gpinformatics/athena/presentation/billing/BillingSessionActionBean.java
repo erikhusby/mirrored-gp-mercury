@@ -44,8 +44,10 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements.
@@ -206,6 +208,12 @@ public class BillingSessionActionBean extends CoreActionBean {
         List<BillingEjb.BillingResult> billingResults = null;
         try {
             billingResults = billingEjb.bill(pageUrl, sessionKey);
+            /*
+             * Not preferable because it is dependant on the results of Bill and it would be nice for the Action bean
+             * to call one method to do all that instead of duplicating the two calls in all of the test cases that
+             * need to mimic this action
+             */
+            billingEjb.updateBilledPdos(billingResults);
 
             for (BillingEjb.BillingResult billingResult : billingResults) {
 

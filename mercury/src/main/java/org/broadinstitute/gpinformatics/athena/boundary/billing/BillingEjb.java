@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.infrastructure.common.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -12,9 +13,13 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -129,13 +134,13 @@ public class BillingEjb {
      */
     public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
-        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
 
         boolean errorsInBilling = false;
 
         List<BillingResult> results = new ArrayList<>();
         Set<String> updatedPDOs = new HashSet<>();
 
+        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
         List<QuoteImportItem> unBilledQuoteImportItems =
                 billingSession.getUnBilledQuoteImportItems(priceListCache);
 
@@ -159,15 +164,7 @@ public class BillingEjb {
             QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
 
             try {
-                String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", sessionKey);
-
-                result.setWorkId(workId);
-
-                // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
-                // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-                item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+                callQuoteAndUpdateQuoteItem(pageUrl, sessionKey, item, result, quote, quotePriceItem, quoteIsReplacing);
 
                 updatedPDOs.addAll(item.getOrderKeys());
 
@@ -188,6 +185,36 @@ public class BillingEjb {
             endSession(billingSession);
         }
 
+        return results;
+    }
+
+    // Evaluate before checking in.  Would need a forced commit (and maybe clear if not too dangerous)
+    // to truly be effective.
+//    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void callQuoteAndUpdateQuoteItem(String pageUrl, String sessionKey, QuoteImportItem item,
+                                            BillingResult result, Quote quote, QuotePriceItem quotePriceItem,
+                                            QuotePriceItem quoteIsReplacing) {
+        String workId = quoteService.registerNewWork(
+                quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
+                pageUrl, "billingSession", sessionKey);
+
+        result.setWorkId(workId);
+        log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at " + new Date());
+
+        // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
+        // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
+        item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+    }
+
+    public void updateBilledPdos(Collection<BillingResult> billingResults) {
+
+        Collection<String> updatedPDOs = new ArrayList<>();
+        for (BillingEjb.BillingResult result : billingResults) {
+            if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
+                updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
+            }
+        }
+
         // Update the state of all PDOs affected by this billing session.
         for (String key : updatedPDOs) {
             try {
@@ -203,7 +230,5 @@ public class BillingEjb {
                 log.error("Failed to update PDO status after billing: " + key, e);
             }
         }
-
-        return results;
     }
 }
