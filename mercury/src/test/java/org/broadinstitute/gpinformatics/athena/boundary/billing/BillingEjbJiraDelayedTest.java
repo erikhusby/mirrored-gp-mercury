@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BillingEjbJiraDelayedTest extends Arquillian {
 
     private static boolean failQuoteCall;
+    private static boolean inContainer = true;
     @Inject
     private BillingSessionDao billingSessionDao;
 
@@ -75,6 +76,8 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private static boolean forceSleep = true;
     private String[] sampleNameList = null;
     private String billingSessionBusinessKey;
+
+    private int dpCallCount= 0;
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -185,6 +188,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
+        inContainer = false;
         return DeploymentBuilder.buildMercuryWarWithAlternatives(
                 org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV,
                 DelayedJiraService.class, QuoteServiceStubWithWait.class);
@@ -243,7 +247,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     }
 
     @DataProvider(name = "timeoutCases")
-    public Iterator<Object[]> timeoutData() {
+    public Object[][] timeoutData() {
 
         List<Object[]> dataList = new ArrayList<>();
 
@@ -382,6 +386,18 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                   "jira no sleep " +
                                   "don't fail quote",   0,      8,      false,      false,      false});
 
-        return dataList.iterator();
+        Object [][] output = null;
+
+        if(inContainer) {
+
+            output = new Object[][] {
+                    dataList.get(dpCallCount)
+            };
+            dpCallCount = (dpCallCount+1)%dataList.size();
+        } else {
+            output = dataList.toArray(new Object[dataList.size()][]);
+        }
+
+        return output;
     }
 }
