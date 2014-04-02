@@ -46,13 +46,16 @@ public class BillingAdaptor implements Serializable {
 
     QuoteService quoteService;
 
+    BillingSessionAccessEjb billingSessionAccessEjb;
+
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
-                          QuoteService quoteService) {
+                          QuoteService quoteService,BillingSessionAccessEjb billingSessionAccessEjb) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
         this.priceListCache = priceListCache;
         this.quoteService = quoteService;
+        this.billingSessionAccessEjb = billingSessionAccessEjb;
     }
 
     public BillingAdaptor() {
@@ -104,7 +107,7 @@ public class BillingAdaptor implements Serializable {
 
         List<BillingEjb.BillingResult> results = new ArrayList<>();
 
-        BillingSession billingSession = billingEjb.findAndLockSession(sessionKey);
+        BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
 
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
@@ -162,7 +165,7 @@ public class BillingAdaptor implements Serializable {
             }
 
         } finally {
-            billingEjb.saveAndUnlockSession(billingSession);
+            billingSessionAccessEjb.saveAndUnlockSession(billingSession);
         }
         // If there were no errors in billing, then end the session, which will add the billed date and remove
         // all sessions from the ledger.

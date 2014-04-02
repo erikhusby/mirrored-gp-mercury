@@ -55,6 +55,9 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     @Inject
     BillingSessionDao billingSessionDao;
 
+    @Inject
+    BillingSessionAccessEjb billingSessionAccessEjb;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
@@ -121,6 +124,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         Assert.assertNotEquals(numErrors,2,"Only one of the two billing sessions should have errored out.  Is the jndi lookup not working?  Check the server side logs.");
         Assert.assertEquals(numErrors, 1, "Only one of the two billing session should have completed without error.  We may have re-introduced a double billing bug.");
         Assert.assertEquals(RegisterWorkAlwaysWorks.workItemNumber,1,"Only one session should have hit the quote server.  We are at risk of double billing in the quote server.");
+        Assert.assertFalse(billingSessionAccessEjb.isSessionLocked(BILLING_SESSION_ID));
 
         utx.begin();
         billingSessionDao.clear();

@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -84,6 +85,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
 
     @Inject
     private SampleLedgerExporterFactory sampleLedgerExporterFactory;
@@ -296,5 +300,9 @@ public class BillingSessionActionBean extends CoreActionBean {
     @SuppressWarnings("UnusedDeclaration")
     public void setBillingSession(String billingSession) {
         this.billingSession = billingSession;
+    }
+
+    public boolean isBillingSessionLocked() {
+        return billingSessionAccessEjb.isSessionLocked(editSession.getBusinessKey());
     }
 }

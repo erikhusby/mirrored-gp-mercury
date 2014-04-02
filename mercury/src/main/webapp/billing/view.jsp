@@ -34,7 +34,7 @@
             <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="bill" value="Bill Work in Broad Quotes" class="btn"
-                                    style="margin-right:30px;" disabled="${actionBean.editSession.isSessionLocked()}"/>
+                                    style="margin-right:30px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
 
                 <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
@@ -42,7 +42,7 @@
 
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="endSession" value="End Billing Session" class="btn"
-                                    style="margin-right:15px;px;" disabled="${actionBean.editSession.isSessionLocked()}"/>
+                                    style="margin-right:15px;px;" disabled="${actionBean.isBillingSessionLocked()}"/>
                 </c:if>
             </security:authorizeBlock>
 

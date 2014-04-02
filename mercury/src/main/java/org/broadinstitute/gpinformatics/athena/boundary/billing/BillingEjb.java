@@ -107,44 +107,6 @@ public class BillingEjb {
     }
 
     /**
-     * Obtains an advisory lock on a billing session for the purpose of performing billing against the Quote Server. It
-     * is EXTREMELY important that this method be called outside of a transactional context so that it will begin and
-     * commit its own transaction. It is, in fact, so important that I think we should consider marking this method as
-     * TransactionAttributeType.NEVER and have it call a TransactionAttributeType.REQUIRED method to do the actual work.
-     *
-     * @param billingSessionKey business key of the billing session which is to be found and locked
-     *
-     * @return the locked billing session if this thread was able to successfully lock it for billing
-     *
-     * @throws BillingException if the billing session is locked for billing by another thread
-     */
-    public BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
-
-        BillingSession session;
-        session = billingSessionDao.findByBusinessKeyWithLock(billingSessionKey);
-
-        if (session.isSessionLocked()) {
-            throw new BillingException(BillingEjb.LOCKED_SESSION_TEXT);
-        }
-
-        session.lockSession();
-        billingSessionDao.persist(session);
-        return session;
-    }
-
-    /**
-     * Transactional method to unlock a billing session.  The end of the transaction will save the contents of the
-     * billing session entity
-     *
-     * @param billingSession billing session to be unlocked
-     */
-    public void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
-        log.info("Setting billing session BILL-" + billingSession.getBillingSessionId() + " to unlocked");
-        billingSession.unlockSession();
-        billingSessionDao.persist(billingSession);
-    }
-
-    /**
      * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
      * separate the steps of billing a session into smaller finite transactions so we can record more to the database
      * sooner
