@@ -2125,34 +2125,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateRegulatoryInformation(String action) {
-        boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
-        boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
 
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-
-            if (!regulatoryRequirementsMet) {
-                requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
-            } else {
-                requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
+            requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
+            if (!editOrder.orderPredatesRegulatoryRequirement()) {
+                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                        "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                        action);
             }
         }
 
         if (action.equals(SAVE_ACTION)) {
             if (skipRegulatoryInfo) {
-                canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
-            } else {
-                canSkipRegulatoryRequirements = true;
+                requireField(editOrder.canSkipRegulatoryRequirements(),
+                        "a reason for bypassing the regulatory requirements", action);
             }
-            requireField(canSkipRegulatoryRequirements,
-                    "a reason for bypassing the regulatory requirements", action);
-
         }
-        if (editOrder.isSubmitted() && !editOrder.orderPredatesRegulatoryRequirement()) {
-            requireField((boolean)editOrder.getAttestationConfirmed(),
-                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
-                    action);
-        }
-
     }
 
     public KitType getChosenKitType() {

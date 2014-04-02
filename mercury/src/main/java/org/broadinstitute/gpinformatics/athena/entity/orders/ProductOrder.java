@@ -101,10 +101,15 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     public boolean regulatoryRequirementsMet() {
-        if (orderPredatesRegulatoryRequirement()){
+        if (orderPredatesRegulatoryRequirement()) {
             return true;
         }
-        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+        if (getAttestationConfirmed()) {
+            if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Transient
