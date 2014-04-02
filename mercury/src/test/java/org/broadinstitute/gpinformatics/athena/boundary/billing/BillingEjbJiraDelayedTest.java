@@ -38,11 +38,14 @@ import javax.ejb.EJBTransactionRolledbackException;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -77,7 +80,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private String[] sampleNameList = null;
     private String billingSessionBusinessKey;
 
-    private static int dpCallCount = 0;
+    private static Map<String, Integer> dpCallCount = new HashMap<>();
 
     @Alternative
     protected static class DelayedJiraService extends
@@ -251,7 +254,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     }
 
     @DataProvider(name = "timeoutCases")
-    public Object[][] timeoutData() {
+    public Object[][] timeoutData(Method method) {
 
         List<Object[]> dataList = new ArrayList<>();
 
@@ -392,11 +395,15 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         Object[][] output = null;
 
+        if(!dpCallCount.containsKey(method.getName())) {
+            dpCallCount.put(method.getName(), 0);
+        }
+
         if (inContainer) {
             output = new Object[][]{
-                    dataList.get(dpCallCount)
+                    dataList.get(dpCallCount.get(method.getName()))
             };
-            dpCallCount = (dpCallCount + 1) % dataList.size();
+            dpCallCount.put (method.getName(), (dpCallCount.get(method.getName()) + 1) % dataList.size());
         } else {
             output = dataList.toArray(new Object[dataList.size()][]);
         }
