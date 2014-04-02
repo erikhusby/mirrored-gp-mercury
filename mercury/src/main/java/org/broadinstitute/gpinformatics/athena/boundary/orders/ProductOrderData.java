@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 
 import javax.annotation.Nonnull;
@@ -48,13 +49,13 @@ public class ProductOrderData {
      * Constructor with the {@link ProductOrder} passed in for initialization.
      *
      * @param productOrder the {@link ProductOrder}
+     * @param includeSamples if true, include the PDO samples
      */
-    public ProductOrderData(@Nonnull ProductOrder productOrder) {
+    public ProductOrderData(@Nonnull ProductOrder productOrder, boolean includeSamples) {
         title = productOrder.getTitle();
 
-        if (productOrder.getProductOrderId() != null) {
-            id = productOrder.getProductOrderId().toString();
-        }
+        // This duplicates productOrderKey; need to remove this field completely.
+        id = productOrder.getBusinessKey();
 
         productOrderKey = productOrder.getBusinessKey();
         comments = productOrder.getComments();
@@ -62,17 +63,26 @@ public class ProductOrderData {
         modifiedDate = productOrder.getModifiedDate();
         quoteId = productOrder.getQuoteId();
         status = productOrder.getOrderStatus().name();
-        aggregationDataType = null;  // productOrder.?
+        requisitionName = productOrder.getRequisitionName();
 
-        if (productOrder.getProduct() != null) {
-            product = productOrder.getProduct().getBusinessKey();
-            productName = productOrder.getProduct().getProductName();
+        Product product = productOrder.getProduct();
+        if (product != null) {
+            this.product = product.getBusinessKey();
+            productName = product.getProductName();
+            aggregationDataType = product.getAggregationDataType();
         }
 
-        samples = getSampleList(productOrder.getSamples());
 
         if (productOrder.getResearchProject() != null) {
             researchProjectId = productOrder.getResearchProject().getBusinessKey();
+        }
+
+        if (includeSamples) {
+            samples = getSampleList(productOrder.getSamples());
+        } else {
+            // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
+            // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
+            samples = null;
         }
     }
 
