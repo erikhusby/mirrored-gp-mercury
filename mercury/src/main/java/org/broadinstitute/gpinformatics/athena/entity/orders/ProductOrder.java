@@ -214,7 +214,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipQuoteReason;
 
     @Version
-    private Long version;
+    private long version;
 
     @Column(name = "SKIP_REGULATORY_REASON")
     private String skipRegulatoryReason;

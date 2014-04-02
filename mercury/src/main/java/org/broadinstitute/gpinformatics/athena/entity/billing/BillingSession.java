@@ -94,7 +94,7 @@ public class BillingSession implements Serializable {
     private BillingSessionStatusType status;
 
     @Version
-    private Long version;
+    private long version;
 
     // Do NOT use eager fetches on this class unless you verify (via hibernate logging) that the pessimistic locking
     // required by BillingSessionDao will not result in eagerly fetched tables having "for update" database locks
