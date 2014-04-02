@@ -17,7 +17,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
@@ -177,7 +179,7 @@ public class BillingAdaptor implements Serializable {
      */
     private void updateBilledPdos(Collection<BillingEjb.BillingResult> billingResults) {
 
-        Collection<String> updatedPDOs = new ArrayList<>();
+        Set<String> updatedPDOs = new HashSet<>();
         for (BillingEjb.BillingResult result : billingResults) {
             if (result.getQuoteImportItem().getBillingMessage().equals(BillingSession.SUCCESS)) {
                 updatedPDOs.addAll(result.getQuoteImportItem().getOrderKeys());
