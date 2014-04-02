@@ -411,19 +411,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION, VALIDATE_ORDER})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
+
         String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
         List<Long> selectedIds = new ArrayList<>();
-        if (regulatoryIds != null) {
-            for (String regulatoryId : regulatoryIds) {
-                selectedIds.add(Long.parseLong(regulatoryId));
+        if (editOrder.isDraft()) {
+            if (regulatoryIds != null) {
+                for (String regulatoryId : regulatoryIds) {
+                    selectedIds.add(Long.parseLong(regulatoryId));
+                }
+                List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
+                        .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+                editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
+            } else {
+                editOrder.getRegulatoryInfos().clear();
             }
-            List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                    .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
-            editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
-        } else {
-            editOrder.getRegulatoryInfos().clear();
         }
     }
 
@@ -469,7 +472,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(selectedOptions);
+                          .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -489,7 +492,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 //                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
-        validateRegulatoryInformation(SAVE_ACTION);
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -500,6 +502,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
             validateQuoteOptions(SAVE_ACTION);
+            validateRegulatoryInformation(SAVE_ACTION);
         }
     }
 
@@ -1113,7 +1116,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        updateRegulatoryInformation();
+        if (editOrder.isDraft()) {
+            updateRegulatoryInformation();
+        }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
