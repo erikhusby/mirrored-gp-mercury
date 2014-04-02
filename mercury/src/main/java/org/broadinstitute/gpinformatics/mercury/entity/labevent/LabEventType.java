@@ -329,6 +329,10 @@ public enum LabEventType {
     //Cryovial Blood Extraction
     BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    BLOOD_DEEPWELL_CHEMAGEN_TRANSFER("ExtractionsBloodDeepwellToChemagen", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    BLOOD_CHEMAGEN_TO_FINAL_RACK("ExtractionsBloodChemagenToFinalRack", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
 
     // TruSeq Custom Amplicon
