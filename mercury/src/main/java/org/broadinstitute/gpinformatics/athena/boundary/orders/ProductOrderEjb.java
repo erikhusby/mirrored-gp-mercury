@@ -482,6 +482,8 @@ public class ProductOrderEjb {
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
 
+        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.SUMMARY, productOrder.getTitle()));
+
         pdoUpdateFields.add(PDOUpdateField.createPDOUpdateFieldForQuote(productOrder));
 
         List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
