@@ -104,10 +104,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         if (orderPredatesRegulatoryRequirement()) {
             return true;
         }
-        if (getAttestationConfirmed()) {
-            if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
-                return true;
-            }
+        if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
+            return true;
         }
         return false;
     }

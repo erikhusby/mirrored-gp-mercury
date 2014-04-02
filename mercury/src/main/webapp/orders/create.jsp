@@ -220,7 +220,7 @@
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
                     $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
-                    $j("#regulatoryInfo").change(function () {
+                    $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
                 }
