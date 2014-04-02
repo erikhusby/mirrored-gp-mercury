@@ -12,6 +12,10 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,6 +29,9 @@ import java.util.Set;
  * The Billing Adaptor was derived to provide the ability to provide singular interface calls related to billingEJB
  * methods when simply calling BillingEJB will not suffice
  */
+@Stateful
+@RequestScoped
+@TransactionAttribute(TransactionAttributeType.NEVER)
 public class BillingAdaptor implements Serializable {
 
     private static final Log log = LogFactory.getLog(BillingAdaptor.class);
@@ -40,7 +47,7 @@ public class BillingAdaptor implements Serializable {
     QuoteService quoteService;
 
     @Inject
-    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao, PriceListCache priceListCache,
+    public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
                           QuoteService quoteService) {
         this.billingEjb = billingEjb;
         this.billingSessionDao = billingSessionDao;
@@ -48,7 +55,7 @@ public class BillingAdaptor implements Serializable {
         this.quoteService = quoteService;
     }
 
-    protected BillingAdaptor() {
+    public BillingAdaptor() {
     }
 
     /**
@@ -66,13 +73,9 @@ public class BillingAdaptor implements Serializable {
     public List<BillingEjb.BillingResult> billSessionItems(@Nonnull String pageUrl, @Nonnull String sessionKey) {
 
         List<BillingEjb.BillingResult> billingResults;
-        try {
 
             billingResults = bill(pageUrl, sessionKey);
             updateBilledPdos(billingResults);
-        } catch (Exception e) {
-            throw new RuntimeException("An error occurred during this billing Session.");
-        }
 
         return billingResults;
     }

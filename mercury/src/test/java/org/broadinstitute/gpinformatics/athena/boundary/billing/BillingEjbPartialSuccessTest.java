@@ -259,8 +259,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
-                                                                        billingSession.getBusinessKey());
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.

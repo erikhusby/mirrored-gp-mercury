@@ -39,9 +39,6 @@ public class BillingEjbJiraDownTest extends Arquillian {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingEjb billingEjb;
-
-    @Inject
     private BillingAdaptor billingAdaptor;
 
     @Deployment
@@ -81,7 +78,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         String businessKey = writeFixtureData();
 
-        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org", businessKey);
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", businessKey);
 
         billingSessionDao.clear();
 
