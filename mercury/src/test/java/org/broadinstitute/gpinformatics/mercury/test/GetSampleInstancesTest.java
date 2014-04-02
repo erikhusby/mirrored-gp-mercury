@@ -279,6 +279,9 @@ public class GetSampleInstancesTest {
         }
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
+
+        Assert.assertEquals(controlTube.getSampleInstancesV2().get(0).getSingleBatch().getBatchName(), "LCSET-" + lcsetNum);
+
         LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");
         StaticPlate shearingPlate = new StaticPlate("SHEAR" + lcsetNum, StaticPlate.PlateType.Eppendorf96);

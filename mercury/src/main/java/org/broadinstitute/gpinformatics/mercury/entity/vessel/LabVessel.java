@@ -1788,14 +1788,15 @@ public abstract class LabVessel implements Serializable {
     public List<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
             sampleInstances = new ArrayList<>();
-            if (getContainerRole() != null) {
-                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
-            }
-            List<VesselEvent> ancestorEvents = getAncestors();
-            if (ancestorEvents.isEmpty()) {
-                sampleInstances.add(new SampleInstanceV2(this));
+            if (getContainerRole() == null) {
+                List<VesselEvent> ancestorEvents = getAncestors();
+                if (ancestorEvents.isEmpty()) {
+                    sampleInstances.add(new SampleInstanceV2(this));
+                } else {
+                    sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                }
             } else {
-                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
             }
         }
         return sampleInstances;

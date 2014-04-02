@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 
@@ -28,6 +29,8 @@ public class SampleInstanceV2 {
     private LabBatch singleInferredBucketedBatch;
     private List<ProductOrderSample> allProductOrderSamples = new ArrayList<>();
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
+    private LabVessel labVessel;
+    private boolean examinedContainers;
 
     /**
      * For a reagent-only sample instance.
@@ -39,6 +42,7 @@ public class SampleInstanceV2 {
      * Constructs a sample instance from a LabVessel.
      */
     public SampleInstanceV2(LabVessel labVessel) {
+        this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         applyVesselChanges(labVessel);
     }
@@ -145,6 +149,30 @@ public class SampleInstanceV2 {
      * calculated for each transfer.
      */
     public LabBatch getSingleInferredBucketedBatch() {
+        if (singleInferredBucketedBatch == null && !examinedContainers) {
+            if (labVessel != null) {
+                // look at other tubes in same container(s).  If they're all of same LCSET, use it.
+                Set<LabBatch> containedLabBatches = new HashSet<>();
+                for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
+                    for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
+                        if (!containedVessel.equals(labVessel)) {
+                            List<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
+                            if (sampleInstances.size() == 1) {
+                                BucketEntry containedSingleBucketEntry =
+                                        sampleInstances.iterator().next().getSingleBucketEntry();
+                                if (containedSingleBucketEntry != null) {
+                                    containedLabBatches.add(containedSingleBucketEntry.getLabBatch());
+                                }
+                            }
+                        }
+                    }
+                }
+                if (containedLabBatches.size() == 1) {
+                    singleInferredBucketedBatch = containedLabBatches.iterator().next();
+                }
+            }
+            examinedContainers = true;
+        }
         return singleInferredBucketedBatch;
     }
 
@@ -156,7 +184,7 @@ public class SampleInstanceV2 {
         if (singleBucketEntryLocal != null) {
             return singleBucketEntryLocal.getLabBatch();
         }
-        return singleInferredBucketedBatch;
+        return getSingleInferredBucketedBatch();
     }
 
     /**
@@ -193,8 +221,9 @@ public class SampleInstanceV2 {
         if (singleBucketEntry != null && singleBucketEntry.getLabBatch() != null) {
             return singleBucketEntry.getLabBatch().getWorkflowName();
         }
-        if (singleInferredBucketedBatch != null && singleInferredBucketedBatch.getWorkflowName() != null) {
-            return singleInferredBucketedBatch.getWorkflowName();
+        LabBatch singleInferredBucketedBatchLocal = getSingleInferredBucketedBatch();
+        if (singleInferredBucketedBatchLocal != null && singleInferredBucketedBatchLocal.getWorkflowName() != null) {
+            return singleInferredBucketedBatchLocal.getWorkflowName();
         }
 /*
 todo jmt not sure if this applies.
@@ -235,6 +264,7 @@ todo jmt not sure if this applies.
      * Applies to a clone any new information in a LabVessel.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
+        this.labVessel = labVessel;
         reagents.addAll(labVessel.getReagentContents());
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
