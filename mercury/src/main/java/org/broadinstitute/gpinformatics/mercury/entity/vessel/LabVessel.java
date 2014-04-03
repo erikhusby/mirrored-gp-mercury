@@ -1807,6 +1807,10 @@ public abstract class LabVessel implements Serializable {
      */
     public void clearCaches() {
         sampleInstances = null;
+        VesselContainer<?> containerRole = getContainerRole();
+        if (containerRole != null) {
+            containerRole.clearCaches();
+        }
     }
 
 }
