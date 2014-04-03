@@ -150,7 +150,7 @@ public class ProductOrderResource {
                  + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
                  + productOrder.getSamples().size() + " samples");
 
-        return new ProductOrderData(productOrder);
+        return new ProductOrderData(productOrder, true);
     }
 
     /**
@@ -352,33 +352,7 @@ public class ProductOrderResource {
         List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
 
         for (ProductOrder productOrder : productOrderList) {
-            ProductOrderData productOrderData = new ProductOrderData();
-            productOrderData.setTitle(productOrder.getTitle());
-            productOrderData.setId(productOrder.getBusinessKey());
-            productOrderData.setComments(productOrder.getComments());
-            productOrderData.setPlacedDate(productOrder.getPlacedDate());
-            productOrderData.setModifiedDate(productOrder.getModifiedDate());
-            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
-            productOrderData.setProductName(productOrder.getProduct().getName());
-            productOrderData.setStatus(productOrder.getOrderStatus().name());
-            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
-            productOrderData.setRequisitionName(productOrder.getRequisitionName());
-            productOrderData.setQuoteId(productOrder.getQuoteId());
-
-            if (includeSamples) {
-                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
-                for (ProductOrderSample sample : productOrder.getSamples()) {
-                    sampleNames.add(sample.getName());
-                }
-                productOrderData.setSamples(sampleNames);
-            } else {
-                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
-                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
-                productOrderData.setSamples(null);
-            }
-
-            productOrderDataList.add(productOrderData);
+            productOrderDataList.add(new ProductOrderData(productOrder, includeSamples));
         }
 
         return new ProductOrders(productOrderDataList);

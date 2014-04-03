@@ -460,33 +460,43 @@ public class ProductOrderActionBeanTest {
         RegulatoryInfo nullRegulatoryInfo = null;
         List<Object[]> testCases = new ArrayList<>();
         for (String action : Arrays.asList(ProductOrderActionBean.PLACE_ORDER, ProductOrderActionBean.VALIDATE_ORDER)) {
-            testCases.add(new Object[]{action, false, "", regulatoryInfo, newDate, true});
-            testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, newDate, false});
-            testCases.add(new Object[]{action, false, "", regulatoryInfo, grandfatheredInDate, true});
-            testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, grandfatheredInDate, true});
-            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, newDate, true});
-            testCases.add(new Object[]{action, true, skipReviewReason, nullRegulatoryInfo, newDate, true});
-            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, grandfatheredInDate, true});
-            testCases.add(new Object[]{action, true, skipReviewReason, nullRegulatoryInfo, grandfatheredInDate, true});
-            testCases.add(new Object[]{action, true, null, regulatoryInfo, newDate, true});
-            testCases.add(new Object[]{action, true, null, nullRegulatoryInfo, newDate, false});
-            testCases.add(new Object[]{action, true, null, regulatoryInfo, grandfatheredInDate, true});
-            testCases.add(new Object[]{action, true, null, nullRegulatoryInfo, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, false, "", regulatoryInfo, false, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, false, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, false, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, nullRegulatoryInfo, false, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, null, regulatoryInfo, false, grandfatheredInDate, true});
+            testCases.add(new Object[]{action, true, null, nullRegulatoryInfo, false, grandfatheredInDate, true});
+
+            testCases.add(new Object[]{action, false, "", regulatoryInfo, false, newDate, false});
+            testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, false, newDate, false});
+            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, false, newDate, false});
+            testCases.add(new Object[]{action, true, skipReviewReason, nullRegulatoryInfo, false, newDate, false});
+            testCases.add(new Object[]{action, true, null, regulatoryInfo, false, newDate, false});
+            testCases.add(new Object[]{action, true, null, nullRegulatoryInfo, false, newDate, false});
+
+            testCases.add(new Object[]{action, false, "", regulatoryInfo, true, newDate, true});
+            testCases.add(new Object[]{action, false, "", nullRegulatoryInfo, true, newDate, false});
+            testCases.add(new Object[]{action, true, skipReviewReason, regulatoryInfo, true, newDate, true});
+            testCases.add(new Object[]{action, true, skipReviewReason, nullRegulatoryInfo, true, newDate, true});
+            testCases.add(new Object[]{action, true, null, regulatoryInfo, true, newDate, true});
+            testCases.add(new Object[]{action, true, null, nullRegulatoryInfo, true, newDate, false});
         }
 
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, newDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", nullRegulatoryInfo, newDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, grandfatheredInDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", nullRegulatoryInfo, grandfatheredInDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo, newDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, nullRegulatoryInfo, newDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo, grandfatheredInDate, true});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, nullRegulatoryInfo, grandfatheredInDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, false, grandfatheredInDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", nullRegulatoryInfo, false, grandfatheredInDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo, false, grandfatheredInDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, nullRegulatoryInfo, false, grandfatheredInDate, true});
+
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", regulatoryInfo, false, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, false, "", nullRegulatoryInfo, false, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, regulatoryInfo, false, newDate, true});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, skipReviewReason, nullRegulatoryInfo, false, newDate, true});
+
         // skipValidation is checked but no reason is given. This should fail even if the dates are valid
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, newDate, false});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, nullRegulatoryInfo, newDate, false});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, grandfatheredInDate, false});
-        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, nullRegulatoryInfo, grandfatheredInDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, false, newDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, nullRegulatoryInfo, false, newDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, regulatoryInfo, false, grandfatheredInDate, false});
+        testCases.add(new Object[]{ProductOrderActionBean.SAVE_ACTION, true, null, nullRegulatoryInfo, false, grandfatheredInDate, false});
 
         return testCases.iterator();
     }
@@ -494,7 +504,8 @@ public class ProductOrderActionBeanTest {
 
     @Test(dataProvider = "regulatoryOptionsDataProvider" )
     public void testRegulatoryInformation(String action, boolean skipRegulatory, String skipRegulatoryReason,
-                                          RegulatoryInfo regulatoryInfo, Date placedDate, boolean expectedToPass)
+                                          RegulatoryInfo regulatoryInfo, boolean attestationChecked, Date placedDate,
+                                          boolean expectedToPass)
             throws ParseException {
         // Set up initial state for objects and validate
         getSampleInitiationProductOrder();
@@ -509,6 +520,7 @@ public class ProductOrderActionBeanTest {
         // Now test test validation using passed-in parameters.
         actionBean.setSkipRegulatoryInfo(skipRegulatory);
         actionBean.getEditOrder().setSkipRegulatoryReason(skipRegulatoryReason);
+        actionBean.getEditOrder().setAttestationConfirmed(attestationChecked);
         actionBean.getEditOrder().setPlacedDate(placedDate);
         if (regulatoryInfo != null) {
             actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().add(regulatoryInfo);

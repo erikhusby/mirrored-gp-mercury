@@ -12,14 +12,14 @@
                         class="icon-briefcase"></span> Projects <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                     <li>
-                        <stripes:link
+                        <stripes:link id="editProject"
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and sometimes PDMs (and Developers) can create Research Projects. --%>
                     <security:authorizeBlock roles="<%= roles(Developer, PM, PDM) %>">
                         <li>
-                            <stripes:link
+                            <stripes:link id="createProject"
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                     tabindex="=1" event="create">Create</stripes:link>
                         </li>
