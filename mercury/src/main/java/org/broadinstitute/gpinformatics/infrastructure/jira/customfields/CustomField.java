@@ -8,7 +8,6 @@ public class CustomField {
     @Nonnull
     private final CustomFieldDefinition definition;
 
-    @Nonnull
     private final Object value;
 
     public static class ValueContainer {
@@ -77,7 +76,7 @@ public class CustomField {
      *                   Jira recognized field ID
      * @param value      value to be associated with the custom field.
      */
-    public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value) {
+    public CustomField(@Nonnull CustomFieldDefinition definition, Object value) {
         if (definition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
@@ -92,6 +91,8 @@ public class CustomField {
     public interface SubmissionField {
         @Nonnull
         String getName();
+
+        boolean isNullable();
     }
 
     /**
@@ -105,9 +106,13 @@ public class CustomField {
      * @param value            value to assign to the custom field
      */
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
-                       @Nonnull SubmissionField field,
-                       @Nonnull Object value) {
-        this(submissionFields.get(field.getName()), value);
+                       @Nonnull SubmissionField field, Object value) {
+        CustomFieldDefinition definition = submissionFields.get(field.getName());
+        if (!field.isNullable() && value==null){
+            throw new NullPointerException("value for " + definition.getName() + " cannot be null");
+        }
+        this.definition = definition;
+        this.value = value;
     }
 
 

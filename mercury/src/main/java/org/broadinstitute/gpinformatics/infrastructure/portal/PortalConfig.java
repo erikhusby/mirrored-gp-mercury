@@ -17,6 +17,7 @@ import java.io.Serializable;
 public class PortalConfig extends AbstractConfig  implements LoginAndPassword, Serializable  {
 
     public static final String CRSP_PORTAL_NAME = "CRSP";
+
     private String login;
 
     private String password;

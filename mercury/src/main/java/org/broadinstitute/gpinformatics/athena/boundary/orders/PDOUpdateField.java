@@ -11,13 +11,18 @@ import javax.annotation.Nonnull;
  * of the PDO JIRA ticket.
  */
 public class PDOUpdateField extends UpdateField<ProductOrder> {
-    public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
+    public PDOUpdateField(@Nonnull CustomField.SubmissionField field, Object newValue,
                           boolean isBulkField) {
         super(field, newValue, isBulkField);
     }
 
-    public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
+    public PDOUpdateField(@Nonnull CustomField.SubmissionField field, Object newValue) {
         super(field, newValue);
+    }
+
+    private PDOUpdateField(@Nonnull CustomField.SubmissionField field) {
+        super(field);
+        setNewValue(null);
     }
 
     /**
@@ -26,5 +31,12 @@ public class PDOUpdateField extends UpdateField<ProductOrder> {
     // todo arz move out of infratructure, make class similar to LCSETJiraFieldFactory?
     public static PDOUpdateField createPDOUpdateFieldForQuote(@Nonnull ProductOrder pdo) {
         return new PDOUpdateField(ProductOrder.JiraField.QUOTE_ID, pdo.getQuoteStringForJiraTicket());
+    }
+
+    /**
+     * This method will clear the value of specified field.
+     */
+    public static PDOUpdateField clearedPDOUpdateField(@Nonnull CustomField.SubmissionField field) {
+        return new PDOUpdateField(field);
     }
 }

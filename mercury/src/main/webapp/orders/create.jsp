@@ -9,6 +9,32 @@
                        sectionTitle="${actionBean.submitString}: ${actionBean.editOrder.title}">
 
     <stripes:layout-component name="extraHead">
+    <style type="text/css">
+        .multiselect {
+            width: 397px;
+            height:7em;
+            border:solid 1px #c0c0c0;
+            overflow:auto;
+        }
+
+        .multiselect label {
+            display:block;
+            margin: 0px;
+            padding-left: 15px;
+        }
+
+        .multiselect label.group {
+            padding-left: 5px;
+            color:#555555;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .multiselect-on {
+            color:#ffffff;
+            background-color:#0076da;
+        }
+    </style>
         <script type="text/javascript">
 
         var duration = {'duration' : 400};
@@ -24,6 +50,26 @@
         $j(document).ready(
 
                 function () {
+                    jQuery.fn.multiselect = function() {
+                        $j(this).each(function() {
+                            var checkboxes = $j(this).find("input:checkbox");
+                            checkboxes.each(function() {
+                                var checkbox = $j(this);
+                                // Highlight pre-selected checkboxes
+                                if (checkbox.prop("checked"))
+                                    checkbox.parent().addClass("multiselect-on");
+
+                                // Highlight checkboxes that the user selects
+                                checkbox.click(function() {
+                                    if (checkbox.prop("checked"))
+                                        checkbox.parent().addClass("multiselect-on");
+                                    else
+                                        checkbox.parent().removeClass("multiselect-on");
+                                });
+                            });
+                        });
+                    };
+
                     $j('#productList').dataTable({
                         "oTableTools": ttExportDefines,
                         "aaSorting": [
@@ -174,7 +220,7 @@
 
                     $j("#skipQuote").on("change", toggleSkipQuote);
                     $j("#skipRegulatoryInfoCheckbox").on("change", toggleSkipRegulatory);
-                    $j("#regulatoryInfo").change(function () {
+                    $j("#regulatorySelect").change(function () {
                         $j("#attestationConfirmed").attr("checked", false)
                     });
                 }
@@ -465,39 +511,40 @@
                     $j("#regulatorySelect").append(link);
                 }
             } else {
-                var maxSize = 8;
+                var maxSize = 5;
                 var size = 0;
-                var selectObj = $j('<select id="regulatoryInfo" name="selectedRegulatoryIds" multiple="true"></select>');
-                $j(selectObj).attr('size', maxSize);
-
+                var multiSelectDiv = $j('<div class="multiselect"></div>"');
                 $j.each(data, function (index, val) {
                     size++;
                     var projectName = val.group;
                     var regulatoryList = val.value;
-                    var optGroup=$j('<optgroup/>');
-                    $j(optGroup).attr("label", projectName);
+                    $j(multiSelectDiv).append('<label class = "group">' + projectName + '</label>');
                     for (var index in regulatoryList) {
                         size++;
-                        var option=$j("<option/>");
+                        var row = $j('<label></label>');
+                        var input = $j('<input type = "checkbox" name="selectedRegulatoryIds" />');
                         if (regulatoryList[index].selected) {
-                            $j(option).attr("selected", "");
+                            $j(input).attr("checked", "");
                         }
-                        $j(optGroup).append(optGroup);
-                        $j(option).append(regulatoryList[index].value);
-                        $j(option).attr('value', regulatoryList[index].key);
-                        $j(optGroup).append(option);
+
+                        $j(input).attr('value', regulatoryList[index].key);
+                        $j(row).append(input);
+                        $j(row).append(regulatoryList[index].value);
+                        $j(multiSelectDiv).append(row);
                     }
-                    $j(selectObj).append(optGroup);
                 });
 
                 var selectDiv = $j("#regulatorySelect");
                 selectDiv.hide();
-                selectDiv.append(selectObj);
+                selectDiv.append(multiSelectDiv);
+
                 if (size < maxSize) {
-                    selectObj.attr('size', size);
+                    size=maxSize;
                 }
-                selectObj.css("width", "397px");
-                selectObj.addClass("defaultText,input-xlarge");
+                $j(multiSelectDiv).attr('style', 'height: ' + (size - 1) * 2 + "em");
+                $j(function () {
+                    $j(".multiselect").multiselect();
+                });
                 selectDiv.fadeIn();
             }
         }
@@ -826,7 +873,7 @@
                         Name <c:if test="${actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
+                        <stripes:text id="orderName" name="editOrder.title" class="defaultText input-xlarge"
                             maxlength="255" title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -923,7 +970,33 @@
                                 </div>
                             </div>
                         </div>
-                    </c:otherwise></c:choose>
+                        <div class="view-control-group control-group">
+                            <label class="control-label">Regulatory Information</label>
+
+                            <div class="controls">
+                                <div class="form-value">
+                                    <c:choose>
+                                        <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                                            <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
+                                                ${regulatoryInfo.displayText}<br/>
+                                            </c:forEach>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
+                                                Regulatory information not entered because: ${actionBean.editOrder.skipRegulatoryReason}
+                                            </c:when>
+                                                <c:otherwise>
+                                                    No regulatory information entered.
+                                                </c:otherwise></c:choose>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+
 
                 <div class="control-group">
                     <stripes:label for="fundingDeadline" class="control-label">

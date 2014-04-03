@@ -482,6 +482,8 @@ public class ProductOrderEjb {
                     new PDOUpdateField(ProductOrder.JiraField.LANES_PER_SAMPLE, productOrder.getLaneCount()));
         }
 
+        pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.SUMMARY, productOrder.getTitle()));
+
         pdoUpdateFields.add(PDOUpdateField.createPDOUpdateFieldForQuote(productOrder));
 
         List<String> addOnList = new ArrayList<>(productOrder.getAddOns().size());
@@ -495,16 +497,19 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.DESCRIPTION, productOrder.getComments()));
         }
 
-        // Because funding deadline and publication deadline are not required fields, check for null before adding them.
-        if (productOrder.getFundingDeadline() != null) {
+        if (productOrder.getFundingDeadline() == null) {
+            pdoUpdateFields.add(PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE));
+        } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
                     JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
         }
 
-        if (productOrder.getPublicationDeadline() != null) {
+        if (productOrder.getPublicationDeadline() == null) {
+            pdoUpdateFields.add(
+                    PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE));
+        } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline()))
-            );
+                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline())));
         }
 
         // Add the Requisition name to the list of fields when appropriate.
@@ -532,7 +537,7 @@ public class ProductOrderEjb {
         for (PDOUpdateField field : pdoUpdateFields) {
             String message = field.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
             if (!message.isEmpty()) {
-                customFields.add(new CustomField(customFieldDefinitions, field.getField(), field.getNewValue()));
+                customFields.add(field.createCustomField(customFieldDefinitions));
                 updateCommentBuilder.append(message);
             }
         }

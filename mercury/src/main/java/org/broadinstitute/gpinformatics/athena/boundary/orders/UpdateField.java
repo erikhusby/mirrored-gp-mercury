@@ -23,7 +23,7 @@ import javax.annotation.Nonnull;
 import java.util.Map;
 
 public class UpdateField<PROJECT_TYPE extends JiraProject> {
-    private final Object newValue;
+    private Object newValue;
     private final static String UPDATE_FIELD_NAME = "name";
     private final static String UPDATE_FIELD_VALUE = "value";
 
@@ -86,22 +86,35 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
             oldValueToCompare = ((Map<?, ?>) previousValue).get(UPDATE_FIELD_NAME).toString();
             newValueToCompare = ((CreateFields.Reporter) newValue).getName();
         }
+        newValueToCompare = newValueToCompare == null ? "" : newValueToCompare;
         if (!oldValueToCompare.equals(newValueToCompare)) {
-            return getDisplayName() + (isBulkField ? " have " : " has ") + "been updated" +
-                   (!isBulkField ? " from '" + oldValueToCompare + "' to '" + newValueToCompare + "'" : "") + ".\n";
+            String returnString = String.format("%s %s been updated", getDisplayName(), isBulkField ? "have" : "has");
+            if (!isBulkField){
+                returnString += String.format(" from '%s' to '%s'", oldValueToCompare, newValueToCompare);
+            }
+            returnString += ".\n";
+
+            return returnString;
         }
         return "";
     }
 
-    public UpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue,
+    public UpdateField(@Nonnull CustomField.SubmissionField field, Object newValue,
                        boolean isBulkField) {
-        this.field = field;
+        if (newValue == null && !field.isNullable()) {
+            throw new NullPointerException("value for " + field.getName() + " cannot be null");
+        }
+            this.field = field;
         this.newValue = newValue;
         this.isBulkField = isBulkField;
     }
 
-    public UpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
+    public UpdateField(@Nonnull CustomField.SubmissionField field, Object newValue) {
         this(field, newValue, false);
+    }
+
+    protected UpdateField(@Nonnull CustomField.SubmissionField field) {
+        this(field, null);
     }
 
     public CustomField.SubmissionField getField() {
@@ -118,5 +131,14 @@ public class UpdateField<PROJECT_TYPE extends JiraProject> {
 
     public boolean isBulkField() {
         return isBulkField;
+    }
+
+    public void setNewValue(Object newValue) {
+        this.newValue = newValue;
+    }
+
+    public CustomField createCustomField(Map<String, CustomFieldDefinition> customFieldDefinitions) {
+        return new CustomField(customFieldDefinitions, field, newValue);
+
     }
 }
