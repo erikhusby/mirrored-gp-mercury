@@ -907,7 +907,11 @@ public class VesselContainer<T extends LabVessel> {
             } else {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
-            sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            if (ancestorEvents.isEmpty()) {
+                sampleInstances = Collections.emptyList();
+            } else {
+                sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            }
 
             mapPositionToSampleInstances.put(vesselPosition, sampleInstances);
         }
