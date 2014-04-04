@@ -541,7 +541,7 @@
                 if (size < maxSize) {
                     size=maxSize;
                 }
-                $j(multiSelectDiv).attr('style', 'height: ' + (size - 1) * 2 + "em");
+                $j(".multiselect").attr('style', 'height: ' + size + "em");
                 $j(function () {
                     $j(".multiselect").multiselect();
                 });

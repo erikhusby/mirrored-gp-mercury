@@ -16,22 +16,22 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * A Test to backpopulate a column which ought to be not null.
@@ -40,29 +40,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class LabBatchFixUpTest extends Arquillian {
     @Inject
     private LabBatchDao labBatchDao;
-    @Inject
-    private UserTransaction utx;
-
-    @BeforeMethod
-    public void setUp() throws Exception {
-        // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
-            return;
-        }
-
-        utx.setTransactionTimeout(3000);
-        utx.begin();
-    }
-
-    @AfterMethod
-    public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
-            return;
-        }
-
-        utx.commit();
-    }
 
     // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
@@ -177,6 +154,34 @@ public class LabBatchFixUpTest extends Arquillian {
                 }
             }
         }
+        labBatchDao.flush();
+    }
+
+    @Test(enabled = false)
+    public void removeSamplesFromLcset() {
+        LabBatch lcset = labBatchDao.findByName("LCSET-5332");
+        Set<LabBatchStartingVessel> vesselsToRemoveFromBatch = new HashSet<>();
+        Set<String> samplesToRemove = new HashSet<>();
+        samplesToRemove.add("SM-5R5KW");
+        samplesToRemove.add("SM-5U3X7");
+        samplesToRemove.add("SM-5U3X9");
+
+        for (LabBatchStartingVessel startingVessel : lcset.getLabBatchStartingVessels()) {
+            Set<SampleInstance> sampleInstances = startingVessel.getLabVessel().getSampleInstances();
+            for (SampleInstance sampleInstance : sampleInstances) {
+                String sample = sampleInstance.getStartingSample().getSampleKey();
+                if (samplesToRemove.contains(sample)) {
+                    vesselsToRemoveFromBatch.add(startingVessel);
+                }
+            }
+        }
+        int numStartingVessels = lcset.getLabBatchStartingVessels().size();
+        for (LabBatchStartingVessel vesselToRemove : vesselsToRemoveFromBatch) {
+            lcset.getLabBatchStartingVessels().remove(vesselToRemove);
+            vesselToRemove.getLabVessel().getLabBatchStartingVessels().remove(vesselToRemove);
+        }
+        int numVesselsAtEnd = lcset.getLabBatchStartingVessels().size();
+        System.out.println("Removed " + (numStartingVessels - numVesselsAtEnd) + " samples from " + lcset.getBatchName());
         labBatchDao.flush();
     }
 
