@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.sun.jersey.api.client.ClientResponse;
+import com.thoughtworks.xstream.XStream;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,10 +49,12 @@ public class BSPUserService extends BSPJerseyClient {
         String parameters = URLEncodedUtils.format(pairs, CharEncoding.UTF_8);
 
         ClientResponse clientResponse =
-                getJerseyClient().resource(urlString).type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).
-                        post(ClientResponse.class, parameters);
+                getJerseyClient().resource(urlString)
+                        .type(MediaType.APPLICATION_FORM_URLENCODED_TYPE)
+                        .accept(MediaType.TEXT_XML_TYPE)
+                        .post(ClientResponse.class, parameters);
 
-        String response = clientResponse.getEntity(String.class);
+        BspUser bspUser = (BspUser) new XStream().fromXML(clientResponse.getEntity(String.class));
         Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
 
         if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
@@ -60,16 +63,7 @@ public class BSPUserService extends BSPJerseyClient {
             return null;
         }
 
-        long userId;
-        try {
-            userId = Long.valueOf(response);
-        } catch (NumberFormatException e) {
-            log.error("Invalid User ID " + response + " returned by web service " + urlString
-                      + " with parameters " + parameters);
-            return null;
-        }
-
-        bspUserList.invalidateCache();
-        return bspUserList.getById(userId);
+        bspUserList.addUser(bspUser);
+        return bspUser;
     }
 }
