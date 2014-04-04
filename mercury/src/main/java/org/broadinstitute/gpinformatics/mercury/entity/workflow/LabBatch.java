@@ -63,7 +63,7 @@ public class LabBatch {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_BATCH")
     private Long labBatchId;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "labBatch")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, mappedBy = "labBatch")
     private Set<LabBatchStartingVessel> startingBatchLabVessels = new HashSet<>();
 
     @Deprecated

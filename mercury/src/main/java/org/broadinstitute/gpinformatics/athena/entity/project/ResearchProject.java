@@ -568,6 +568,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return collectChildResearchProjects(collectedProjects);
     }
 
+    /**
+     * Recursively Find all Research Projects which are parents of this one.
+     *
+     * @return Collection of ResearchProjects sorted by ascending depth.
+     */
     public Collection<ResearchProject> getAllParents() {
         Collection<ResearchProject> collectedProjects = new TreeSet<>();
         if (getParentResearchProject()!=null) {
