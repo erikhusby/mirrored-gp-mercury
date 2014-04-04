@@ -988,4 +988,8 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-2655-irb-nullable" author="dryan">
+        <dropNotNullConstraint tableName="RESEARCH_PROJECT" columnName="IRB_NOT_ENGAGED" schemaName="athena"/>
+    </changeSet>
+
 </databaseChangeLog>

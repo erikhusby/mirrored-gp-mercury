@@ -184,7 +184,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private CollaborationEjb collaborationEjb;
 
-    private String irbList = "";
+    private String irbList;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 

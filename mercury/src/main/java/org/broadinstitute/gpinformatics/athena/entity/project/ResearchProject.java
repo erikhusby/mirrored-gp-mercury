@@ -117,7 +117,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
 
-    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
+    @Column(name = "IRB_NOT_ENGAGED")
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
