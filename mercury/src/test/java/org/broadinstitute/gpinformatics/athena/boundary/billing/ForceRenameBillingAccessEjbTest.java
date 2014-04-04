@@ -14,7 +14,7 @@ import javax.inject.Inject;
  * TODO scottmat fill in javadoc!!!
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-public class BillingAccessEjbTest extends ContainerTest {
+public class ForceRenameBillingAccessEjbTest extends ContainerTest {
 
     @Inject
     private BillingSessionDao billingSessionDao;
