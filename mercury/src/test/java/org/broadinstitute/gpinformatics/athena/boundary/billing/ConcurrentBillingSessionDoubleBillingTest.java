@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.deltaspike.cdise.api.ContextControl;
 import org.apache.deltaspike.core.api.provider.BeanProvider;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
@@ -27,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
@@ -52,6 +54,9 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
     @Inject
     BillingSessionDao billingSessionDao;
+
+    @Inject
+    BillingSessionAccessEjb billingSessionAccessEjb;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -119,6 +124,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         Assert.assertNotEquals(numErrors,2,"Only one of the two billing sessions should have errored out.  Is the jndi lookup not working?  Check the server side logs.");
         Assert.assertEquals(numErrors, 1, "Only one of the two billing session should have completed without error.  We may have re-introduced a double billing bug.");
         Assert.assertEquals(RegisterWorkAlwaysWorks.workItemNumber,1,"Only one session should have hit the quote server.  We are at risk of double billing in the quote server.");
+        Assert.assertFalse(billingSessionAccessEjb.isSessionLocked(BILLING_SESSION_ID));
 
         utx.begin();
         billingSessionDao.clear();
@@ -132,7 +138,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
             utx.rollback();
         }
         Assert.assertTrue(billingError.getClass().equals(BillingException.class),"The session that error'd out should have thrown a BillingException");
-        Assert.assertEquals(billingError.getMessage(),BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
+        Assert.assertEquals(billingError.getMessage(),BillingEjb.LOCKED_SESSION_TEXT);
         Assert.assertEquals(numBillingThreadsRun.get(), 2, "Both billing threads should be run to verify the fix for double billing.  We are at risk for double billing.");
 
     }
@@ -143,21 +149,20 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public void run() {
-            BillingEjb billingEjb = null;
+            BillingAdaptor billingAdaptor = null;
             ContextControl ctxCtrl = BeanProvider.getContextualReference(ContextControl.class);
             ctxCtrl.startContext(RequestScoped.class);
+            ctxCtrl.startContext(SessionScoped.class);
             try {
-                billingEjb = getBeanFromJNDI(BillingEjb.class);
+                billingAdaptor = getBeanFromJNDI(BillingAdaptor.class);
                 numBillingThreadsRun.incrementAndGet();
-                Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("whatever", BILLING_SESSION_ID);
-                billingEjb.updateBilledPdos(billingResults);
-            }
-            catch(RuntimeException e) {
+                billingAdaptor.billSessionItems("whatever", BILLING_SESSION_ID);
+            } catch(RuntimeException e) {
                 error = e;
                 throw e;
-            }
-            finally {
+            } finally {
                 try {
+                    ctxCtrl.stopContext(SessionScoped.class);
                     ctxCtrl.stopContext(RequestScoped.class);
                 }
                 catch(Throwable t) {

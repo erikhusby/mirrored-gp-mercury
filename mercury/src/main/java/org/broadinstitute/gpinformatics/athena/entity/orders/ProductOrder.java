@@ -201,7 +201,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private ProductOrderKit productOrderKit;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
     private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
 
@@ -222,7 +222,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipRegulatoryReason;
 
     @Column(name = "attestation_confirmed")
-    private Boolean attestationConfirmed=false;
+    private Boolean attestationConfirmed = false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.

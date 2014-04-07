@@ -39,7 +39,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingEjb billingEjb;
+    private BillingAdaptor billingAdaptor;
 
     @Deployment
     public static WebArchive buildMercuryDeployment() {
@@ -78,8 +78,7 @@ public class BillingEjbJiraDownTest extends Arquillian {
 
         String businessKey = writeFixtureData();
 
-        Collection<BillingEjb.BillingResult> billingResults = billingEjb.bill("http://www.broadinstitute.org", businessKey);
-        billingEjb.updateBilledPdos(billingResults);
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", businessKey);
 
         billingSessionDao.clear();
 

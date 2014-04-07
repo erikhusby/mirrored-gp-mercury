@@ -938,4 +938,58 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-2634-add-session-status" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="BILLING_SESSION_STATUS" schemaName="athena" tableName="BILLING_SESSION" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_SESSION" schemaName="athena">
+            <column name="BILLING_SESSION_STATUS" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2634-add-session-version" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="BILLING_SESSION" columnName="version" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_SESSION" schemaName="athena">
+            <column name="version" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2634-initialize-version" author="scottmat">
+        <sql>
+            update BILLING_SESSION set version = 0 where version is null
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-2634-aud-add-session-status" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="BILLING_SESSION_STATUS" schemaName="athena" tableName="BILLING_SESSION_AUD" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_SESSION_AUD" schemaName="athena">
+            <column name="BILLING_SESSION_STATUS" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2634-aud-add-session-version" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists tableName="BILLING_SESSION_AUD" columnName="version" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_SESSION_AUD" schemaName="athena">
+            <column name="version" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2655-irb-nullable" author="dryan">
+        <dropNotNullConstraint tableName="RESEARCH_PROJECT" columnName="IRB_NOT_ENGAGED" schemaName="athena"/>
+    </changeSet>
+
 </databaseChangeLog>

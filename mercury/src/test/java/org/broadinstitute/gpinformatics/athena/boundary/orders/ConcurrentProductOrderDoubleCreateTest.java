@@ -188,7 +188,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     }
 
     @Alternative
-    private static class ControlBusinessKeyJiraService implements JiraService {
+    public static class ControlBusinessKeyJiraService implements JiraService {
 
         @Override
         public JiraIssue createIssue(CreateFields.ProjectType projectType, @Nullable String reporter,

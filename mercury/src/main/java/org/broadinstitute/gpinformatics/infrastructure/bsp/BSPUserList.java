@@ -53,15 +53,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
-     * API to force a refresh of the cache. This should only be used when a new user is created and we want to
-     * ensure that the cache is up to date before continuing. It's package protected on purpose to make it less
-     * likely that it will be called by accident.
-     */
-    synchronized void invalidateCache() {
-        users = null;
-    }
-
-    /**
      * @param id key of user to look up
      * @return if found, the user, otherwise null
      */
@@ -175,31 +166,35 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 addQADudeUsers(rawUsers);
             }
 
-            Collections.sort(rawUsers, new Comparator<BspUser>() {
-                @Override
-                public int compare(BspUser o1, BspUser o2) {
-                    // FIXME: need to figure out what the correct sort criteria are.
-                    CompareToBuilder builder = new CompareToBuilder();
-                    builder.append(o1.getLastName(), o2.getLastName());
-                    builder.append(o1.getFirstName(), o2.getFirstName());
-                    builder.append(o1.getUsername(), o2.getUsername());
-                    builder.append(o1.getEmail(), o2.getEmail());
-                    return builder.build();
-                }
-            });
-
-            // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
-            // our entries stay sorted and (2) it has lower overhead than a TreeMap.
-            Map<Long, BspUser> userMap = new LinkedHashMap<>(rawUsers.size());
-            for (BspUser user : rawUsers) {
-                userMap.put(user.getUserId(), user);
-            }
-
-            users = ImmutableMap.copyOf(userMap);
+            users = rebuildUsers(rawUsers);
 
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }
+    }
+
+    private static Map<Long, BspUser> rebuildUsers(List<BspUser> rawUsers) {
+        Collections.sort(rawUsers, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser o1, BspUser o2) {
+                // FIXME: need to figure out what the correct sort criteria are.
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(o1.getLastName(), o2.getLastName());
+                builder.append(o1.getFirstName(), o2.getFirstName());
+                builder.append(o1.getUsername(), o2.getUsername());
+                builder.append(o1.getEmail(), o2.getEmail());
+                return builder.build();
+            }
+        });
+
+        // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
+        // our entries stay sorted and (2) it has lower overhead than a TreeMap.
+        Map<Long, BspUser> userMap = new LinkedHashMap<>(rawUsers.size());
+        for (BspUser user : rawUsers) {
+            userMap.put(user.getUserId(), user);
+        }
+
+        return ImmutableMap.copyOf(userMap);
     }
 
     public String getUserFullName(long userId) {
@@ -226,6 +221,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
 
         return null;
+    }
+
+    /**
+     * Add a user to the list of known BSP users. This should only be called when creating a new user, to avoid
+     * making a round trip to BSP to refresh the user list.
+     * @param bspUser the user to add
+     */
+    public synchronized void addUser(BspUser bspUser) {
+        List<BspUser> userList = new ArrayList<>(users.values());
+        userList.add(bspUser);
+        users = rebuildUsers(userList);
     }
 
     public static class QADudeUser extends BspUser {

@@ -32,8 +32,6 @@ public class JiraCustomFieldsUtil {
                     ProductOrder.JiraField.PUBLICATION_DEADLINE.getName(),
                     ProductOrder.JiraField.FUNDING_DEADLINE.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.FUNDING_SOURCE.getName(),
-                    ResearchProjectEjb.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getName(),
-                    ResearchProjectEjb.RequiredSubmissionFields.IRB_IACUC_NUMBER.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.COHORTS.getName(),
                     ResearchProjectEjb.RequiredSubmissionFields.DESCRIPTION.getName(),
                     LabBatch.TicketFields.PROTOCOL.getName(),
