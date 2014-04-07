@@ -64,6 +64,9 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     private BillingAdaptor billingAdaptor;
 
     @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
+
+    @Inject
     private PriceListCache priceListCache;
 
     @Inject
@@ -158,13 +161,15 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
      * <li>Persist all of this data, outside of a transaction, flush and clear the entity manager.</li>
      * </ul>
      *
+     * @param billingSessionDao1
      * @param orderSamples
      */
-    protected BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
+    public static BillingSession writeFixtureDataOneSamplePerProductOrder(BillingSessionDao billingSessionDao1,
+                                                                   String... orderSamples) {
 
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(orderSamples.length);
         for (String sample : orderSamples) {
-            ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, sample);
+            ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao1, sample);
 
             Multimap<String, ProductOrderSample> samplesByName = ProductOrderTestFactory.groupBySampleId(productOrder);
 
@@ -174,16 +179,16 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                 PriceItem replacementPriceItem =
                         new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
                                       "Replacement PriceItem Name " + uuid);
-                billingSessionDao.persist(replacementPriceItem);
+                billingSessionDao1.persist(replacementPriceItem);
 
                 billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
             }
         }
         BillingSession billingSession = new BillingSession(-1L, billingSessionEntries);
-        billingSessionDao.persist(billingSession);
+        billingSessionDao1.persist(billingSession);
 
-        billingSessionDao.flush();
-        billingSessionDao.clear();
+        billingSessionDao1.flush();
+        billingSessionDao1.clear();
 
         return billingSession;
     }
@@ -208,7 +213,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
         sampleNameList = new String[]{"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};
 
-        BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
+        BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(billingSessionDao, sampleNameList);
 
         billingSessionBusinessKey = billingSession.getBusinessKey();
     }
@@ -249,7 +254,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
         Assert.assertEquals(quoteImportItems.size(), sampleNameList.length - expectedSuccessfulLedgerEntries);
-        Assert.assertTrue(!billingSession.isSessionLocked());
+        Assert.assertTrue(!billingSessionAccessEjb.isSessionLocked(billingSession.getBusinessKey()));
     }
 
     @DataProvider(name = "timeoutCases")

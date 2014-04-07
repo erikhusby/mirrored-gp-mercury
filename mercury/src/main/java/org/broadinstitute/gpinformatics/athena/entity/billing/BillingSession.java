@@ -173,32 +173,6 @@ public class BillingSession implements Serializable {
     }
 
     /**
-     * Helper method to determine if a given billing session is locked for billing
-     *
-     * @return
-     */
-    public boolean isSessionLocked() {
-        return ((status != null) && (status == BillingSessionStatusType.LOCKED_FOR_BILLING));
-    }
-
-    /**
-     * Helper method to allow a user to lock a given billing session
-     */
-    public void lockSession() {
-        log.info("Locking billing session " + getBusinessKey());
-        status = BillingSessionStatusType.LOCKED_FOR_BILLING;
-    }
-
-    /**
-     * Helper method to set the status of a given billing session to Unlocked only in the case if it previously was locked
-     */
-    public void unlockSession() {
-        if (status == BillingSessionStatusType.LOCKED_FOR_BILLING) {
-            status = BillingSessionStatusType.UNLOCKED;
-        }
-    }
-
-    /**
      * @return A list of only the unbilled quote items for this session.
      */
     public List<QuoteImportItem> getUnBilledQuoteImportItems(PriceListCache priceListCache) {
