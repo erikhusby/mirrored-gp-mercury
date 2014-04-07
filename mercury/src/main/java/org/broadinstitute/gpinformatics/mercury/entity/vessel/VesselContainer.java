@@ -903,7 +903,11 @@ public class VesselContainer<T extends LabVessel> {
             // Get ancestor events
             List<LabVessel.VesselEvent> ancestorEvents;
             if (vesselAtPosition == null) {
-                ancestorEvents = getAncestors(vesselPosition);
+                if (mapPositionToVessel.isEmpty()) {
+                    ancestorEvents = getAncestors(vesselPosition);
+                } else {
+                    ancestorEvents = Collections.emptyList();
+                }
             } else {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
@@ -944,53 +948,57 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        // Filter sample instances that are reagent only
-        Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
-        List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
-        while (iterator.hasNext()) {
-            SampleInstanceV2 sampleInstance = iterator.next();
-            if (sampleInstance.isReagentOnly()) {
-                reagentSampleInstances.add(sampleInstance);
-                iterator.remove();
-            }
-        }
-
-        // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
-        // away the bait.
-        List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
         if (ancestorSampleInstances.isEmpty()) {
-            currentSampleInstances.add(new SampleInstanceV2());
+            return ancestorSampleInstances;
         } else {
-            // Clone ancestors
-            for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
-                currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
-            }
-        }
-
-        // Apply reagents
-        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
-            for (Reagent reagent : reagentSampleInstance.getReagents()) {
-                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.addReagent(reagent);
+            // Filter sample instances that are reagent only
+            Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
+            List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
+            while (iterator.hasNext()) {
+                SampleInstanceV2 sampleInstance = iterator.next();
+                if (sampleInstance.isReagentOnly()) {
+                    reagentSampleInstances.add(sampleInstance);
+                    iterator.remove();
                 }
             }
-        }
 
-        // Apply vessel changes to clones
-        if (labVessel != null) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyVesselChanges(labVessel);
+            // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
+            // away the bait.
+            List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
+            if (ancestorSampleInstances.isEmpty()) {
+                currentSampleInstances.add(new SampleInstanceV2());
+            } else {
+                // Clone ancestors
+                for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+                    currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+                }
             }
-        }
 
-        // Apply events to clones
-        for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+            // Apply reagents
+            for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+                for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                    for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                        currentSampleInstance.addReagent(reagent);
+                    }
+                }
             }
-        }
 
-        return currentSampleInstances;
+            // Apply vessel changes to clones
+            if (labVessel != null) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyVesselChanges(labVessel);
+                }
+            }
+
+            // Apply events to clones
+            for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+                }
+            }
+
+            return currentSampleInstances;
+        }
     }
 
     /**

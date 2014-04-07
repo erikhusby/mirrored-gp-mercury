@@ -310,6 +310,9 @@ public class SystemRouter implements Serializable {
                 } else {
                     Set<SampleInstanceV2> possibleControls = new HashSet<>();
                     for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                        if (sampleInstance.isReagentOnly()) {
+                            continue;
+                        }
                         if (sampleInstance.getAllBatchVessels(LabBatchType.WORKFLOW).isEmpty()) {
                             possibleControls.add(sampleInstance);
                         } else {
