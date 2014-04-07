@@ -411,19 +411,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION, VALIDATE_ORDER})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
+
         String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
         List<Long> selectedIds = new ArrayList<>();
-        if (regulatoryIds != null) {
-            for (String regulatoryId : regulatoryIds) {
-                selectedIds.add(Long.parseLong(regulatoryId));
+        if (editOrder.isDraft()) {
+            if (regulatoryIds != null) {
+                for (String regulatoryId : regulatoryIds) {
+                    selectedIds.add(Long.parseLong(regulatoryId));
+                }
+                List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
+                        .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+                editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
+            } else {
+                editOrder.getRegulatoryInfos().clear();
             }
-            List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                    .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
-            editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
-        } else {
-            editOrder.getRegulatoryInfos().clear();
         }
     }
 
@@ -469,7 +472,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(selectedOptions);
+                          .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -489,7 +492,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 //                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
-        validateRegulatoryInformation(SAVE_ACTION);
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -500,6 +502,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
             validateQuoteOptions(SAVE_ACTION);
+            validateRegulatoryInformation(SAVE_ACTION);
         }
     }
 
@@ -1113,7 +1116,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        updateRegulatoryInformation();
+        if (editOrder.isDraft()) {
+            updateRegulatoryInformation();
+        }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
@@ -2125,34 +2130,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateRegulatoryInformation(String action) {
-        boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
-        boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
 
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-
-            if (!regulatoryRequirementsMet) {
-                requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
-            } else {
-                requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
+            requireField(editOrder.regulatoryRequirementsMet(), "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
+            if (!editOrder.orderPredatesRegulatoryRequirement()) {
+                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                        "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                        action);
             }
         }
 
         if (action.equals(SAVE_ACTION)) {
             if (skipRegulatoryInfo) {
-                canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
-            } else {
-                canSkipRegulatoryRequirements = true;
+                requireField(editOrder.canSkipRegulatoryRequirements(),
+                        "a reason for bypassing the regulatory requirements", action);
             }
-            requireField(canSkipRegulatoryRequirements,
-                    "a reason for bypassing the regulatory requirements", action);
-
         }
-        if (editOrder.isSubmitted() && !editOrder.orderPredatesRegulatoryRequirement()) {
-            requireField((boolean)editOrder.getAttestationConfirmed(),
-                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
-                    action);
-        }
-
     }
 
     public KitType getChosenKitType() {

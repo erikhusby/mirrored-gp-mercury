@@ -76,7 +76,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
-    // Date needs to be validated (could be 4/7/2014).
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
@@ -102,10 +101,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     public boolean regulatoryRequirementsMet() {
-        if (orderPredatesRegulatoryRequirement()){
+        if (orderPredatesRegulatoryRequirement()) {
             return true;
         }
-        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+        if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
+            return true;
+        }
+        return false;
     }
 
     @Transient
@@ -199,7 +201,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private ProductOrderKit productOrderKit;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
     private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
 
@@ -214,13 +216,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipQuoteReason;
 
     @Version
-    private Long version;
+    private long version;
 
     @Column(name = "SKIP_REGULATORY_REASON")
     private String skipRegulatoryReason;
 
     @Column(name = "attestation_confirmed")
-    private Boolean attestationConfirmed=false;
+    private Boolean attestationConfirmed = false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.

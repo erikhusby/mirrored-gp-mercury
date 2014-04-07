@@ -35,7 +35,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1386,10 +1385,8 @@ public class ReworkEjbTest extends Arquillian {
         for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
             List<BucketEntry> bucketEntries = new ArrayList<>();
             bucketEntries.add(pBucket.addEntry(exExProductOrder1.getBusinessKey(),
-                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
-                    BucketEntry.BucketEntryType.PDO_ENTRY));
-            bucketEntries.add(pBucket.addEntry(exExProductOrder2.getBusinessKey(),
-                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
+                    twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()), BucketEntry.BucketEntryType.PDO_ENTRY));
+            bucketEntries.add(pBucket.addEntry(exExProductOrder2.getBusinessKey(), twoDBarcodedTubeDao.findByBarcode(currEntry.getKey()),
                     BucketEntry.BucketEntryType.PDO_ENTRY));
             bucketDao.persist(pBucket);
             for (BucketEntry bucketEntry : bucketEntries) {
@@ -1398,9 +1395,7 @@ public class ReworkEjbTest extends Arquillian {
 
         }
 
-
-        Set<String> bucketCandidatePdos =
-                reworkEjb.findBucketCandidatePdos(bucketEntryIds);
+        Set<String> bucketCandidatePdos = reworkEjb.findBucketCandidatePdos(bucketEntryIds);
         Assert.assertFalse(bucketCandidatePdos.isEmpty());
         Assert.assertEquals(bucketCandidatePdos.size(), 2);
     }

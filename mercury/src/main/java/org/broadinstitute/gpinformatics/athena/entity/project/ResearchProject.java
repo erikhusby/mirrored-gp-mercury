@@ -56,6 +56,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
 
     public static final boolean IRB_NOT_ENGAGED = true;
 
+    private static final long serialVersionUID = 937268527371239980L;
+
     /**
      * Compare by modified date.
      */
@@ -115,7 +117,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
 
-    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
+    @Column(name = "IRB_NOT_ENGAGED")
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
@@ -396,12 +398,17 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public void addPeople(RoleType role, List<BspUser> people) {
+    public boolean addPeople(RoleType role, List<BspUser> people) {
+        boolean added = false;
+
         if (people != null) {
             for (BspUser user : people) {
                 associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
+                added = true;
             }
         }
+
+        return added;
     }
 
     /**
@@ -561,6 +568,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return collectChildResearchProjects(collectedProjects);
     }
 
+    /**
+     * Recursively Find all Research Projects which are parents of this one.
+     *
+     * @return Collection of ResearchProjects sorted by ascending depth.
+     */
     public Collection<ResearchProject> getAllParents() {
         Collection<ResearchProject> collectedProjects = new TreeSet<>();
         if (getParentResearchProject()!=null) {
@@ -745,5 +757,5 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             return name();
         }
     }
-
 }
+

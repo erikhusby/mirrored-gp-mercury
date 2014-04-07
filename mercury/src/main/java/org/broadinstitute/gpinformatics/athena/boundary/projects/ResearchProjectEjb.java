@@ -88,12 +88,6 @@ public class ResearchProjectEjb {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
                     StringUtils.join(fundingSources, ',')));
 
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                    StringUtils.join(researchProject.getIrbNumbers(), ',')));
-
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                    researchProject.getIrbNotEngaged()));
-
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
 
@@ -143,14 +137,6 @@ public class ResearchProjectEjb {
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.FUNDING_SOURCE,
                         StringUtils.join(fundingSources, ",")));
 
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                        StringUtils.join(researchProject.getIrbNumbers(), ',')));
-
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                        researchProject.getIrbNotEngaged()));
-
         String piNames = buildProjectPiJiraString(researchProject);
         if (!StringUtils.isBlank(piNames)) {
             researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
@@ -176,12 +162,7 @@ public class ResearchProjectEjb {
         for (ResearchProjectUpdateField field : researchProjectUpdateFields) {
             String message = field.getUpdateMessage(researchProject, customFieldDefinitions, issueFieldsResponse);
             if (!message.isEmpty()) {
-                if (field.getField() == RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD) {
-                    customFields.add(new CustomField(customFieldDefinitions, field.getField(),
-                            (boolean) field.getNewValue()));
-                } else {
-                    customFields.add(field.createCustomField(customFieldDefinitions));
-                }
+                customFields.add(field.createCustomField(customFieldDefinitions));
                 updateCommentBuilder.append(message);
             }
         }
@@ -218,8 +199,6 @@ public class ResearchProjectEjb {
         //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
-        IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL"),
         DESCRIPTION("Description"),
         BROAD_PIS("Broad PI(s)");

@@ -326,6 +326,11 @@ public enum LabEventType {
     DBS_FINAL_TRANSFER("DBSFinalTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    //Cryovial Blood Extraction
+    BLOOD_CRYOVIAL_EXTRACTION("BloodCryovialExtraction", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.MERCURY,
+            CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
+
     // TruSeq Custom Amplicon
     TSCA_POST_NORM_TRANSFER("TSCAPostNormTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),

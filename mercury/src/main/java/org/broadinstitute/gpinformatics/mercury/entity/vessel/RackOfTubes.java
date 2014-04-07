@@ -7,7 +7,9 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -29,14 +31,27 @@ public class RackOfTubes extends LabVessel {
 
     // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
     public enum RackType {
-        Matrix96("Matrix96", VesselGeometry.G12x8);
+        Matrix96("Matrix96", VesselGeometry.G12x8),
+        HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1);
 
+        private static final Map<String, RackType> MAP_NAME_TO_RACK_TYPE =
+                new HashMap<>(RackType.values().length);
         private final String         displayName;
         private final VesselGeometry vesselGeometry;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
+        }
+
+        static {
+            for (RackType rackType : RackType.values()) {
+                MAP_NAME_TO_RACK_TYPE.put(rackType.name(), rackType);
+            }
+        }
+
+        public static RackType getByName(String positionName) {
+            return MAP_NAME_TO_RACK_TYPE.get(positionName);
         }
 
         public String getDisplayName() {

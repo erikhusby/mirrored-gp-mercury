@@ -14,10 +14,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Date;
 
 @Stateful
 @RequestScoped
@@ -25,7 +22,11 @@ public class BillingEjb {
 
     private static final Log log = LogFactory.getLog(BillingEjb.class);
 
-    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT = "There are no items available to bill in this billing session";
+    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT =
+            "There are no items available to bill in this billing session";
+    public static final String LOCKED_SESSION_TEXT =
+            "This billing session is currently in the process of being processed for billing.  If you believe this " +
+            "is in error, please contact the informatics group for assistance";
 
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
@@ -67,10 +68,6 @@ public class BillingEjb {
         }
     }
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
-
     @Inject
     private PriceListCache priceListCache;
 
@@ -95,7 +92,7 @@ public class BillingEjb {
      *
      * @param billingSession BillingSession to be ended.
      */
-    private void endSession(@Nonnull BillingSession billingSession) {
+    public void endSession(@Nonnull BillingSession billingSession) {
 
         // Remove all the sessions from the non-billed items.
         boolean allFailed = billingSession.cancelSession();
@@ -109,101 +106,19 @@ public class BillingEjb {
         }
     }
 
-
     /**
-     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
-     * server and update billing entities as appropriate to the results of the billing attempt.  Results
-     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link BillingResult#isError()} will return
-     * true and {@link BillingResult#getErrorMessage()}
-     * will describe the cause of the problem.  On successful billing
-     * {@link BillingResult#getWorkId()} will contain
-     * the work id result.
+     * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
+     * separate the steps of billing a session into smaller finite transactions so we can record more to the database
+     * sooner
      *
-     *
-     * @param pageUrl        URL to be included in the call to the quote server.
-     * @param sessionKey     Key to be included in the call to the quote server.
-     *
-     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     *         associated with the BillingSession.
+     * @param item             Representation of the quote and its ledger entries that are to be billed
+     * @param quoteIsReplacing Set if the price item is replacing a previously defined item.
      */
-    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
+    public void updateQuoteItem(QuoteImportItem item, QuotePriceItem quoteIsReplacing) {
 
-        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
-
-        boolean errorsInBilling = false;
-
-        List<BillingResult> results = new ArrayList<>();
-        Set<String> updatedPDOs = new HashSet<>();
-
-        List<QuoteImportItem> unBilledQuoteImportItems =
-                billingSession.getUnBilledQuoteImportItems(priceListCache);
-
-        if(unBilledQuoteImportItems.isEmpty()) {
-            endSession(billingSession);
-            throw new BillingException(NO_ITEMS_TO_BILL_ERROR_TEXT);
-        }
-
-        for (QuoteImportItem item : unBilledQuoteImportItems) {
-
-            BillingResult result = new BillingResult();
-            results.add(result);
-            result.setQuoteImportItem(item);
-
-            Quote quote = new Quote();
-            quote.setAlphanumericId(item.getQuoteId());
-
-            QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
-
-            // Get the quote PriceItem that this is replacing, if it is a replacement.
-            QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
-
-            try {
-                String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", sessionKey);
-
-                result.setWorkId(workId);
-
-                // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
-                // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-                item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
-
-                updatedPDOs.addAll(item.getOrderKeys());
-
-            } catch (Exception ex) {
-                log.error("Failed to complete billing for " + quotePriceItem.getName() + " in session " + sessionKey,
-                          ex);
-                // Any exceptions in sending to the quote server will just be reported and will continue
-                // on to the next one.
-                item.setBillingMessages(ex.getMessage());
-                result.setErrorMessage(ex.getMessage());
-                errorsInBilling = true;
-            }
-        }
-
-        // If there were no errors in billing, then end the session, which will add the billed date and remove
-        // all sessions from the ledger.
-        if (!errorsInBilling) {
-            endSession(billingSession);
-        }
-
-        // Update the state of all PDOs affected by this billing session.
-        for (String key : updatedPDOs) {
-            try {
-                // Update the order status using the ProductOrderEjb with a version of the order status update
-                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
-                // are thrown.  It is still possible that this method will throw a checked exception,
-                // but these will not mark the transaction for rollback.
-                productOrderEjb.updateOrderStatusNoRollback(key);
-            } catch (Exception e) {
-                // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
-                // be able to resolve these issues.  Exceptions should only occur if a required resource,
-                // such as JIRA, is missing.
-                log.error("Failed to update PDO status after billing: " + key, e);
-            }
-        }
-
-        return results;
+        // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
+        // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
+        item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+        billingSessionDao.flush();
     }
 }

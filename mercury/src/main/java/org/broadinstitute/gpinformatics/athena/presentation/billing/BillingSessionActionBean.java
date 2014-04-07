@@ -15,8 +15,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -44,8 +46,10 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements.
@@ -78,6 +82,12 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private BillingEjb billingEjb;
+
+    @Inject
+    private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
 
     @Inject
     private SampleLedgerExporterFactory sampleLedgerExporterFactory;
@@ -205,7 +215,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         List<BillingEjb.BillingResult> billingResults = null;
         try {
-            billingResults = billingEjb.bill(pageUrl, sessionKey);
+            billingResults = billingAdaptor.billSessionItems(pageUrl, sessionKey);
 
             for (BillingEjb.BillingResult billingResult : billingResults) {
 
@@ -290,5 +300,9 @@ public class BillingSessionActionBean extends CoreActionBean {
     @SuppressWarnings("UnusedDeclaration")
     public void setBillingSession(String billingSession) {
         this.billingSession = billingSession;
+    }
+
+    public boolean isBillingSessionLocked() {
+        return billingSessionAccessEjb.isSessionLocked(editSession.getBusinessKey());
     }
 }
