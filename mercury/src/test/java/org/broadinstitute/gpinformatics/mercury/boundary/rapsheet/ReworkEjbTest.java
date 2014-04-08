@@ -30,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -519,10 +518,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            reworkEjb.addAndValidateCandidates(Collections.singleton(
-                    bucketCandidate),
-                    unknownReason, "test Rework", "scottmat",
-                    Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
+            reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate), unknownReason,
+                    "test Rework", "scottmat", "Pico/Plating Bucket");
         }
 
         bucketDao.clear();
@@ -826,12 +823,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason,
-                            "test Rework", "jowalsh",
-                            Workflow.AGILENT_EXOME_EXPRESS,
-                            "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "test Rework", "jowalsh", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -859,12 +852,9 @@ public class ReworkEjbTest extends Arquillian {
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
         }
-        String unknownReason =
-                ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-        Collection<String> validationMessages = reworkEjb
-                .addAndValidateCandidates(bucketCandidates,
-                        unknownReason, "test Rework",
-                        "jowalsh", Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
+        String unknownReason = ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
+        Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates, unknownReason,
+                "test Rework", "jowalsh", "Pico/Plating Bucket");
         Assert.assertEquals(validationMessages.size(), 2);
 
         bucketDao.clear();
@@ -894,10 +884,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(
-                    bucketCandidate),
-                    unknownReason, "", "scottmat",
-                    Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -936,10 +924,8 @@ public class ReworkEjbTest extends Arquillian {
                 bucketCandidate.setReworkItem(true);
                 String unknownReason =
                         ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-                reworkEjb.addAndValidateCandidates(Collections.singleton(
-                        bucketCandidate),
-                        unknownReason, "", "scottmat",
-                        Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket");
+                reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate), unknownReason, "",
+                        "scottmat", "Pico/Plating Bucket");
             }
             Assert.fail("With the tube in the bucket, Calling Rework should throw an Exception");
         } catch (ValidationException e) {
@@ -974,11 +960,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason, "", "scottmat",
-                            Workflow.AGILENT_EXOME_EXPRESS,
-                            "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1016,11 +999,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason, "", "scottmat",
-                            Workflow.AGILENT_EXOME_EXPRESS,
-                            "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1057,10 +1037,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason, "", "scottmat", Workflow.AGILENT_EXOME_EXPRESS,
-                            "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1115,10 +1093,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason, "", "scottmat",
-                            Workflow.AGILENT_EXOME_EXPRESS, "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();
@@ -1175,11 +1151,8 @@ public class ReworkEjbTest extends Arquillian {
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
-            validationMessages.addAll(reworkEjb
-                    .addAndValidateCandidates(Collections.singleton(bucketCandidate),
-                            unknownReason, "", "scottmat",
-                            Workflow.AGILENT_EXOME_EXPRESS,
-                            "Pico/Plating Bucket"));
+            validationMessages.addAll(reworkEjb.addAndValidateCandidates(Collections.singleton(bucketCandidate),
+                    unknownReason, "", "scottmat", "Pico/Plating Bucket"));
         }
 
         bucketDao.clear();

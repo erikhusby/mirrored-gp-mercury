@@ -36,7 +36,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -301,7 +300,6 @@ public class ReworkEjb {
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
      * @param userName         the user adding the reworks, in case vessels/samples need to be created on-the-fly
-     * @param workflow         name of the workflow in which these vessels are to be reworked
      * @param bucketName       the name of the bucket to add reworks to
      *
      * @return Collection of validation messages
@@ -310,9 +308,8 @@ public class ReworkEjb {
      *                             method to continue
      */
     public Collection<String> addAndValidateCandidates(@Nonnull Collection<BucketCandidate> bucketCandidates,
-                                                       @Nonnull String reworkReason,
-                                                       @Nonnull String comment, @Nonnull String userName,
-                                                       @Nonnull Workflow workflow, @Nonnull String bucketName)
+            @Nonnull String reworkReason, @Nonnull String comment, @Nonnull String userName,
+            @Nonnull String bucketName)
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         ReworkReason reason = reworkReasonDao.findByReason(reworkReason);
@@ -322,8 +319,7 @@ public class ReworkEjb {
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
-                validationMessages.addAll(
-                        addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment, workflow,
+                validationMessages.addAll(addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment,
                                 userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
@@ -339,7 +335,6 @@ public class ReworkEjb {
      * @param reworkReason    predefined Text describing why the given vessel needs to be reworked
      * @param bucket          the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflow        name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -347,14 +342,15 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private Collection<String> addAndValidateBucketCandidate(@Nonnull BucketCandidate bucketCandidate,
-                                                             @Nonnull ReworkReason reworkReason,
-                                                             @Nonnull Bucket bucket,
-                                                             @Nonnull String comment,
-                                                             @Nonnull Workflow workflow,
-                                                             @Nonnull String userName)
+    private Collection<String> addAndValidateBucketCandidate(
+            @Nonnull BucketCandidate bucketCandidate,
+            @Nonnull ReworkReason reworkReason,
+            @Nonnull Bucket bucket,
+            @Nonnull String comment,
+            @Nonnull String userName)
             throws ValidationException {
 
+        Workflow workflow = bucketCandidate.getProductOrder().getProduct().getWorkflow();
         WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 

@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -93,7 +92,6 @@ public class AddReworkActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/workflow/add_to_bucket.jsp";
     private static final String VESSEL_INFO_PAGE = "/workflow/vessel_info.jsp";
-    private LabEventType reworkStep;
 
     /**
      * Since the functionality of this page supports both rework and non rework vessels, validation of the mandatory
@@ -141,10 +139,8 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         try {
-            // todo jmt why is workflow hardcoded?
-            Collection<String> validationMessages =
-                    reworkEjb.addAndValidateCandidates(bucketCandidates, submittedReason, commentText,
-                            getUserBean().getLoginUserName(), Workflow.AGILENT_EXOME_EXPRESS, bucketName);
+            Collection<String> validationMessages = reworkEjb.addAndValidateCandidates(bucketCandidates,
+                    submittedReason, commentText, getUserBean().getLoginUserName(), bucketName);
             addMessage("{0} vessel(s) have been added to the {1} bucket.", bucketCandidates.size(), bucketName);
 
             if (CollectionUtils.isNotEmpty(validationMessages)) {
@@ -178,12 +174,11 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
-        // todo jmt why is workflow hardcoded?
-        // Only supports Agilent Exome Express.
-        ProductWorkflowDef workflowDef =
-                workflowConfig.getWorkflowByName(Workflow.AGILENT_EXOME_EXPRESS.getWorkflowName());
-        ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-        buckets.addAll(workflowVersion.getBuckets());
+        for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
+            ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            buckets.addAll(workflowVersion.getBuckets());
+        }
         // Set the initial bucket to the first one found.
         if (!buckets.isEmpty()) {
             bucketName = buckets.iterator().next().getName();

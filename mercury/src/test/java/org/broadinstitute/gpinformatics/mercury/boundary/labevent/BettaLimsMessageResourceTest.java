@@ -213,7 +213,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
+                "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -221,7 +221,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworkEjb.addAndValidateCandidates(
                 Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
+                "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
