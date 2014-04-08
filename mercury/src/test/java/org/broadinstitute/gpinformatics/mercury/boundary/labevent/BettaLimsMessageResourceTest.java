@@ -18,10 +18,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -33,7 +33,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
@@ -137,9 +136,6 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private BSPUserList bspUserList;
 
     @Inject
-    private MercuryClientEjb mercuryClientEjb;
-
-    @Inject
     private ReworkEjb reworkEjb;
 
     @Inject
@@ -147,6 +143,9 @@ public class BettaLimsMessageResourceTest extends Arquillian {
 
     @Inject
     private IlluminaSequencingRunDao illuminaSequencingRunDao;
+
+    @Inject
+    private BucketEjb bucketEjb;
 
     @Inject
     JiraService jiraService;
@@ -227,7 +226,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworks.add(barcodeTubeEntry.getValue());
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube2.values());
-        mercuryClientEjb.addFromProductOrder(productOrder2);
+        bucketEjb.addFromProductOrder(productOrder2, productOrder2.getSamples());
 
         // Create batch
         String batchName = "LCSET-MsgTest-" + testPrefix;
@@ -519,7 +518,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        mercuryClientEjb.addFromProductOrder(productOrder);
+        bucketEjb.addFromProductOrder(productOrder, productOrder.getSamples());
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);

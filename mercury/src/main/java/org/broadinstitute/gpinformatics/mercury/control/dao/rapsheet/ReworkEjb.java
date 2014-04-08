@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackExc
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -88,9 +87,6 @@ public class ReworkEjb {
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
-
-    @Inject
-    private MercuryClientEjb mercuryClientEjb;
 
     @Inject
     private BucketEjb bucketEjb;
@@ -287,7 +283,7 @@ public class ReworkEjb {
         LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
-            reworkVessel = mercuryClientEjb.createInitialVessels(Collections.singleton(sampleKey),
+            reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
                     userName).iterator().next();
         }
         return reworkVessel;

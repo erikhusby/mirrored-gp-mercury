@@ -32,12 +32,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BadBusinessKeyException;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -88,7 +88,7 @@ public class ProductOrderEjb {
 
     private final BSPSampleDataFetcher sampleDataFetcher;
 
-    private final MercuryClientService mercuryClientService;
+    private final BucketEjb bucketEjb;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -111,7 +111,7 @@ public class ProductOrderEjb {
                            BSPUserList userList,
                            LedgerEntryDao ledgerEntryDao,
                            BSPSampleDataFetcher sampleDataFetcher,
-                           MercuryClientService mercuryClientService) {
+                           BucketEjb bucketEjb) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -120,7 +120,7 @@ public class ProductOrderEjb {
         this.userList = userList;
         this.ledgerEntryDao = ledgerEntryDao;
         this.sampleDataFetcher = sampleDataFetcher;
-        this.mercuryClientService = mercuryClientService;
+        this.bucketEjb = bucketEjb;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -449,7 +449,7 @@ public class ProductOrderEjb {
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(order, newSamples);
+        Collection<ProductOrderSample> samples = bucketEjb.addFromProductOrder(order, newSamples);
         if (!samples.isEmpty()) {
             reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
         }

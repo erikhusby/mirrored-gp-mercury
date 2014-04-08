@@ -17,13 +17,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -110,9 +110,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private BSPUserList bspUserList;
 
     @Inject
-    private MercuryClientEjb mercuryClientEjb;
-
-    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -144,6 +141,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private BucketEjb bucketEjb;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -543,7 +543,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        mercuryClientEjb.addFromProductOrder(productOrder);
+        bucketEjb.addFromProductOrder(productOrder, productOrder.getSamples());
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
