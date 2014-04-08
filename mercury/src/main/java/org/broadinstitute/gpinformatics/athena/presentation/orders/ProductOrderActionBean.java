@@ -1044,7 +1044,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            // FIXME:  TEAR. DOWN. THIS. WALL!!!!
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
