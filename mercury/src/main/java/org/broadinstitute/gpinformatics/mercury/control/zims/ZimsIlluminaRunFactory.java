@@ -11,7 +11,6 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -22,9 +21,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplate
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -113,10 +112,10 @@ public class ZimsIlluminaRunFactory {
                 List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
 
-                    ProductOrderSample singleProductOrderSample = sampleInstance.getSingleProductOrderSample();
+                    BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
                     String productOrderKey = null;
-                    if (singleProductOrderSample != null) {
-                        productOrderKey = singleProductOrderSample.getProductOrder().getBusinessKey();
+                    if (singleBucketEntry != null) {
+                        productOrderKey = singleBucketEntry.getPoBusinessKey();
                         productOrderKeys.add(productOrderKey);
                     }
                     String pdoSampleName = sampleInstance.getMercuryRootSampleName();
@@ -216,6 +215,7 @@ public class ZimsIlluminaRunFactory {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
+/*
             List<LabBatch> lcSetBatches = new ArrayList<>();
             for (LabBatchStartingVessel labBatchStartingVessel :
                     sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.WORKFLOW)) {
@@ -240,6 +240,8 @@ public class ZimsIlluminaRunFactory {
                     lcSet = sampleInstance.getSingleBatch().getBatchName();
                 }
             }
+*/
+            String lcSet = sampleInstance.getSingleBatch().getBatchName();
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
             // the lab would only ever have one for this sample instance. All cat names are collected and the
