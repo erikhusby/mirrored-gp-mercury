@@ -230,6 +230,10 @@ public class BaseEventTest {
      */
     public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                       LabBatch workflowBatch, String lcsetSuffix) {
+        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+            twoDBarcodedTube.clearCaches();
+        }
+
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
         // Controls what the created lcset id is by temporarily overriding the static variable.

@@ -226,10 +226,9 @@ public class ZimsIlluminaRunFactoryTest {
 
     @Test(groups = DATABASE_FREE)
     public void testMakeLibraryBean() {
-        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList =
-                createSampleInstanceDto(LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
-        List<LibraryBean>
-                zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(instanceDtoList, mapSampleIdToDto,
+        List<ZimsIlluminaRunFactory.SampleInstanceDto> instanceDtoList = createSampleInstanceDto(
+                LabBatch.LabBatchType.WORKFLOW, LabBatch.LabBatchType.BSP);
+        List<LibraryBean> zimsIlluminaRuns = zimsIlluminaRunFactory.makeLibraryBeans(instanceDtoList, mapSampleIdToDto,
                 mapKeyToProductOrder, Collections.EMPTY_MAP);
         for (LibraryBean libraryBean : zimsIlluminaRuns) {
             assertThat(libraryBean.getLibrary(),

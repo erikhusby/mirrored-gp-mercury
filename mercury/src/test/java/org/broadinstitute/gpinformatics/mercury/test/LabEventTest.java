@@ -702,6 +702,7 @@ public class LabEventTest extends BaseEventTest {
 
             Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
             TwoDBarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
+            reworkTube.clearCaches();
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                     new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -744,6 +745,8 @@ public class LabEventTest extends BaseEventTest {
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
+
+            runTransferVisualizer(mapBarcodeToTube1.values().iterator().next());
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -841,6 +844,7 @@ public class LabEventTest extends BaseEventTest {
             // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
             final TwoDBarcodedTube reworkTube =
                     picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
+            reworkTube.clearCaches();
 //            workflowBatch2.addLabVessel(reworkTube);
             Map<String, TwoDBarcodedTube> mapBarcodeToTubesPlusRework =
                     new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());

@@ -215,7 +215,6 @@ public class ZimsIlluminaRunFactory {
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
-/*
             List<LabBatch> lcSetBatches = new ArrayList<>();
             for (LabBatchStartingVessel labBatchStartingVessel :
                     sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.WORKFLOW)) {
@@ -229,19 +228,9 @@ public class ZimsIlluminaRunFactory {
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
             String lcSet = null;
-            if (lcSetBatches.size() == 1) {
-                JiraTicket jiraTicket = lcSetBatches.get(0).getJiraTicket();
-                if (jiraTicket != null) {
-                    lcSet = jiraTicket.getTicketId();
-                }
-            // else it is probably a control.
-            } else {
-                if (sampleInstance.getSingleBatch() != null) {
-                    lcSet = sampleInstance.getSingleBatch().getBatchName();
-                }
+            if (sampleInstance.getSingleBatch() != null) {
+                lcSet = sampleInstance.getSingleBatch().getBatchName();
             }
-*/
-            String lcSet = sampleInstance.getSingleBatch().getBatchName();
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
             // the lab would only ever have one for this sample instance. All cat names are collected and the

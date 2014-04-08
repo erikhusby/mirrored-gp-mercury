@@ -952,8 +952,7 @@ public class SystemRouterTest extends BaseEventTest {
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         expectedRouting = SystemRouter.System.BOTH;
 
-        final ProductOrder
-                productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
+        final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");

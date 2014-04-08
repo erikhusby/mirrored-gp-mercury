@@ -4,7 +4,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MultiMap;
 import org.apache.commons.collections4.map.MultiValueMap;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService;
@@ -15,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceExcep
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
@@ -246,8 +246,8 @@ public class SystemRouter implements Serializable {
             if (labVessel != null) {
                 List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    ProductOrderSample singleProductOrderSample = sampleInstance.getSingleProductOrderSample();
-                    if (singleProductOrderSample == null) {
+                    BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
+                    if (singleBucketEntry == null) {
                         possibleControls.add(sampleInstance);
                     }
                 }
