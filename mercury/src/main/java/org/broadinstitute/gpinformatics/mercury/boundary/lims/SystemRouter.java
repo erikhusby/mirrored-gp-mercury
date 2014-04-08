@@ -246,9 +246,12 @@ public class SystemRouter implements Serializable {
             if (labVessel != null) {
                 List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
-                    if (singleBucketEntry == null) {
-                        possibleControls.add(sampleInstance);
+                    // Emulate SampleInstanceV1 behavior
+                    if (sampleInstance.getMercuryRootSampleName() != null) {
+                        BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
+                        if (singleBucketEntry == null) {
+                            possibleControls.add(sampleInstance);
+                        }
                     }
                 }
             }

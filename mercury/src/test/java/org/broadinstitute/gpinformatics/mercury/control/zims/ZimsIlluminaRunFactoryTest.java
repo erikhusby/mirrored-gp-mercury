@@ -155,6 +155,7 @@ public class ZimsIlluminaRunFactoryTest {
         MercurySample mercurySample = new MercurySample(TEST_SAMPLE_ID);
         testTube.addSample(mercurySample);
         BucketEntry bucketEntry = new BucketEntry(testTube, PRODUCT_ORDER_KEY, BucketEntry.BucketEntryType.PDO_ENTRY);
+        testTube.addBucketEntry(bucketEntry);
 
         for (int i = 0; i < testLabBatchTypes.length; i++) {
             LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[i];
@@ -171,11 +172,9 @@ public class ZimsIlluminaRunFactoryTest {
                 batch.addBucketEntry(bucketEntry);
                 bucketEntry.setLabBatch(batch);
             }
-            // todo jmt revisit this
             SampleInstanceV2 instance = new SampleInstanceV2(testTube);
-            sampleInstanceDtoList.add(
-                            new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance, TEST_SAMPLE_ID,
-                                    PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
+            sampleInstanceDtoList.add(new ZimsIlluminaRunFactory.SampleInstanceDto(LANE_NUMBER, testTube, instance,
+                    TEST_SAMPLE_ID, PRODUCT_ORDER_KEY, null, null, mercurySample.getSampleKey()));
         }
 
         return sampleInstanceDtoList;
