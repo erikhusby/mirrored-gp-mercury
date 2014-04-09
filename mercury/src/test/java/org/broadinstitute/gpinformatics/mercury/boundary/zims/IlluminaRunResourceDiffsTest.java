@@ -41,6 +41,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
             for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
                 // Exclude runs created by tests
                 if (!illuminaSequencingRun.getRunName().contains("Flowcell")) {
+                    System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
                     String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
                             new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
                             illuminaSequencingRun.getRunName());
