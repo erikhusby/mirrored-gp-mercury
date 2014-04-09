@@ -1,22 +1,35 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -26,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,30 +49,44 @@ import java.util.Set;
 @Stateful
 @RequestScoped
 public class BucketEjb {
-
-    private LabEventFactory labEventFactory;
-
-    private JiraService jiraService;
+    private final LabEventFactory labEventFactory;
+    private final JiraService jiraService;
+    private final BucketDao bucketDao;
+    private final ProductOrderDao productOrderDao;
+    private final LabVesselDao labVesselDao;
+    private final BucketEntryDao bucketEntryDao;
+    private final WorkflowLoader workflowLoader;
+    private final BSPUserList bspUserList;
+    private final LabVesselFactory labVesselFactory;
+    private final BSPSampleDataFetcher bspSampleDataFetcher;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
-    private BucketDao bucketDao;
-
-    private AthenaClientService athenaClientService;
-
-    @Inject
-    private BucketEntryDao bucketEntryDao;
-
     public BucketEjb() {
+        this(null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
-    public BucketEjb(LabEventFactory labEventFactory, JiraService jiraService, BucketDao bucketDao,
-                     AthenaClientService athenaClientService) {
+    public BucketEjb(LabEventFactory labEventFactory,
+                     JiraService jiraService,
+                     BucketDao bucketDao,
+                     BucketEntryDao bucketEntryDao,
+                     ProductOrderDao productOrderDao,
+                     LabVesselDao labVesselDao,
+                     LabVesselFactory labVesselFactory,
+                     BSPSampleDataFetcher bspSampleDataFetcher,
+                     BSPUserList bspUserList,
+                     WorkflowLoader workflowLoader) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
-        this.athenaClientService = athenaClientService;
+        this.bucketEntryDao = bucketEntryDao;
+        this.productOrderDao = productOrderDao;
+        this.labVesselDao = labVesselDao;
+        this.labVesselFactory = labVesselFactory;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
+        this.bspUserList = bspUserList;
+        this.workflowLoader = workflowLoader;
     }
 
     /**
@@ -158,7 +186,7 @@ public class BucketEjb {
         for (BucketEntry entry : bucket.getBucketEntries()) {
             pdoKeys.add(entry.getPoBusinessKey());
         }
-        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
         for (ProductOrder pdo : pdos) {
             if (workflow != null && pdo.getProduct() == null ||
                 workflow == null && pdo.getProduct() != null ||
@@ -310,4 +338,128 @@ public class BucketEjb {
 
         bucketDao.persistAll(bucketEntries);
     }
+
+    /**
+     * Puts the product order samples from productOrder into the appropriate bucket
+     * @return the samples that were actually added to the bucket.
+     */
+    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder productOrder){
+        return addSamplesToBucket(productOrder, productOrder.getSamples());
+    }
+
+    /**
+     * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
+     *
+     * @return the samples that were actually added to the bucket
+     */
+    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder order,
+                                                             Collection<ProductOrderSample> samples) {
+
+        Workflow workflow = order.getProduct() != null ? order.getProduct().getWorkflow() : null;
+        if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
+            return Collections.emptyList();
+        }
+
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        ProductWorkflowDefVersion workflowDefVersion =
+                workflowConfig.getWorkflow(order.getProduct().getWorkflow()).getEffectiveVersion();
+        WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
+
+        Bucket initialBucket = null;
+        if (initialBucketDef != null) {
+            initialBucket = findOrCreateBucket(initialBucketDef.getName());
+        }
+        if (initialBucket == null) {
+            return Collections.emptyList();
+        }
+
+        String username = null;
+        Long bspUserId = order.getCreatedBy();
+        if (bspUserId != null) {
+            BspUser bspUser = bspUserList.getById(bspUserId);
+            if (bspUser != null) {
+                username = bspUser.getUsername();
+            }
+        }
+
+        // Finds existing vessels for the pdo samples, or if none, then either the sample has not been received
+        // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
+        // MercurySample for the latter.
+        Map<String, Collection<ProductOrderSample>> nameToSampleMap = new HashMap<>();
+        Set<String> sampleKeyList = new HashSet<>();
+        for (ProductOrderSample pdoSample : samples) {
+            // A pdo can have multiple samples all with same sample name but with different sample position.
+            // Each one will get a MercurySample and LabVessel put into the bucket.
+            Collection<ProductOrderSample> pdoSampleList = nameToSampleMap.get(pdoSample.getName());
+            if (pdoSampleList == null) {
+                pdoSampleList = new ArrayList<>();
+                nameToSampleMap.put(pdoSample.getName(), pdoSampleList);
+            }
+            pdoSampleList.add(pdoSample);
+            sampleKeyList.add(pdoSample.getName());
+        }
+
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
+
+        // Finds samples with no existing vessels.
+        Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
+        for (LabVessel vessel : vessels) {
+            for (MercurySample sample : vessel.getMercurySamples()) {
+                samplesWithoutVessel.remove(sample.getSampleKey());
+            }
+        }
+
+        if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
+            vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
+        }
+
+        Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
+
+        add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
+                LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
+                order.getBusinessKey()
+        );
+
+        if (initialBucket.getBucketId() == null) {
+            bucketDao.persist(initialBucket);
+        }
+
+        List<ProductOrderSample> samplesAdded = new ArrayList<>();
+        for (LabVessel vessel : validVessels) {
+            for (MercurySample sample : vessel.getMercurySamples()) {
+                samplesAdded.addAll(nameToSampleMap.get(sample.getSampleKey()));
+            }
+        }
+        return samplesAdded;
+    }
+
+
+    private Collection<LabVessel> applyBucketCriteria(Collection<LabVessel> vessels, WorkflowBucketDef bucketDef) {
+        Collection<LabVessel> validVessels = new HashSet<>();
+        for (LabVessel vessel : vessels) {
+            if (bucketDef.meetsBucketCriteria(vessel)) {
+                validVessels.add(vessel);
+            }
+        }
+        return validVessels;
+    }
+    /**
+         * Creates LabVessels to mirror BSP receptacles based on the given BSP sample IDs.
+         *
+         * @param samplesWithoutVessel    BSP sample IDs that need LabVessels
+         * @param username                the user performing the operation leading to the LabVessels being created
+         * @return the created LabVessels
+         */
+        public Collection<LabVessel> createInitialVessels(Collection<String>samplesWithoutVessel, String username) {
+            Collection<LabVessel> vessels = new ArrayList<>();
+            Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
+            for (String sampleName : samplesWithoutVessel) {
+                BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
+                if (bspDto != null && bspDto.isSampleReceived()) {
+                    vessels.addAll(labVesselFactory
+                            .buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(), username, new Date()));
+                }
+            }
+            return vessels;
+        }
 }

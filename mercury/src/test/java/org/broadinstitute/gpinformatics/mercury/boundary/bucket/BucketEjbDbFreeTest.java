@@ -1,5 +1,6 @@
-package org.broadinstitute.gpinformatics.infrastructure.mercury;
+package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -8,11 +9,13 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -28,6 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -43,6 +47,7 @@ import java.util.Map;
 
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -51,19 +56,15 @@ import static org.easymock.EasyMock.verify;
 
 /**
  * DbFree test of MercuryClientEjb.
- *
- * @author epolk
- * @author breilly
  */
 // singleThreaded because EasyMock mocks are not thread-safe during recording.
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
-public class MercuryClientEjbDbFreeTest {
+public class BucketEjbDbFreeTest {
     private final LabEventType EVENT_TYPE = LabEventType.PICO_PLATING_BUCKET;
     private final String EVENT_LOCATION = LabEvent.UI_EVENT_LOCATION;
 
     private final int SAMPLE_SIZE = 5;
 
-    private MercuryClientEjb service;
     private ProductOrder pdo;
     private LabBatch labBatch;
     private final WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -74,13 +75,18 @@ public class MercuryClientEjbDbFreeTest {
     private final Collection<ProductOrderSample> expectedSamples = new ArrayList<>();
     private final List<LabVessel> labVessels = new ArrayList<>();
 
-    private BucketEjb bucketEjb = createMock(BucketEjb.class);
-    private BucketDao bucketDao = createMock(BucketDao.class);
-    private LabVesselDao labVesselDao = createMock(LabVesselDao.class);
+    private BucketEjb bucketEjb;
+
+    private LabEventFactory labEventFactory = EasyMock.createNiceMock(LabEventFactory.class);
+    private BucketDao bucketDao = createNiceMock(BucketDao.class);
+    private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
+    private ProductOrderDao productOrderDao = createMock(ProductOrderDao.class);
+    private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
     private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
-    private Object[] mocks = new Object[]{bucketEjb, bucketDao, labVesselDao, bspSampleDataFetcher, labVesselFactory};
+    private Object[] mocks =
+            new Object[]{bucketDao, bucketEntryDao, productOrderDao, labVesselDao, bspSampleDataFetcher, labVesselFactory, labEventFactory};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     private void beforeClass() {
@@ -112,8 +118,7 @@ public class MercuryClientEjbDbFreeTest {
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        service = new MercuryClientEjb(bucketEjb, bucketDao, workflowLoader, bspUserList, labVesselDao,
-                bspSampleDataFetcher, labVesselFactory);
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao, productOrderDao, labVesselDao, labVesselFactory, bspSampleDataFetcher, bspUserList, workflowLoader);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
@@ -170,7 +175,6 @@ public class MercuryClientEjbDbFreeTest {
         }
     }
 
-
     public void testSamplesToPicoBucket() throws Exception {
         for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
@@ -187,8 +191,9 @@ public class MercuryClientEjbDbFreeTest {
             // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
             // The 4th sample is in house so a standalone vessel/sample should be created.
             List<LabVessel> mockVessels = new ArrayList<>();
+            ProductOrderSample pdoSample = null;
             for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
-                ProductOrderSample pdoSample = pdo.getSamples().get(rackPosition - 1);
+                pdoSample = pdo.getSamples().get(rackPosition - 1);
                 if (rackPosition != 1 && rackPosition != 4) {
                     mockVessels.add(labVessels.get(rackPosition - 1));
                 }
@@ -200,23 +205,19 @@ public class MercuryClientEjbDbFreeTest {
                             .andReturn(mockCreatedVessels);
                 }
             }
-
+            expect(labEventFactory.buildFromBatchRequests((Collection<BucketEntry>) anyObject(), (String) anyObject(),
+                    (LabBatch) anyObject(), (String) anyObject(), (String) anyObject(), (LabEventType) anyObject()))
+            .andReturn(Collections.<LabEvent>emptyList());
             expect(labVesselDao.findBySampleKeyList((Collection<String>)anyObject())).andReturn(mockVessels);
-            expect(bucketEjb.findOrCreateBucket(initialBucketDef.getName())).andReturn(bucket);
+
+            expect(bucketDao.findByName((initialBucketDef.getName()))).andReturn(bucket);
             // Should be OK to return more samples in map than was asked for.
             expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
             bucketDao.persist(bucket);
 
-            // It's OK to return an empty collection because the returned bucket entries are only needed for rework cases.
-            expect(bucketEjb.add((List<LabVessel>)anyObject(), eq(bucket),
-                    eq(BucketEntry.BucketEntryType.PDO_ENTRY), eq(pdoCreator), eq(EVENT_LOCATION),
-                    eq(LabEvent.UI_PROGRAM_NAME),
-                    eq(EVENT_TYPE),
-                    eq(pdo.getBusinessKey()))).andReturn(Collections.<BucketEntry>emptySet());
-
             replay(mocks);
 
-            Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo);
+            Collection<ProductOrderSample> addedSamples = bucketEjb.addSamplesToBucket(pdo);
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);
