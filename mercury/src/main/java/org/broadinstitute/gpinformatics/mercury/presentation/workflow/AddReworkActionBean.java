@@ -13,6 +13,7 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
@@ -43,6 +44,9 @@ public class AddReworkActionBean extends CoreActionBean {
     public static final String OTHER_REASON_REFERENCE = "Other...";
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -133,7 +137,8 @@ public class AddReworkActionBean extends CoreActionBean {
         }
 
         for (String selectedBucketCandidate : selectedBucketCandidates) {
-            ReworkEjb.BucketCandidate candidate = ReworkEjb.BucketCandidate.fromString(selectedBucketCandidate);
+            ReworkEjb.BucketCandidate candidate = ReworkEjb.BucketCandidate.fromString(selectedBucketCandidate,
+                    productOrderDao);
             candidate.setReworkItem(selectedReworkVessels.contains(candidate.toString()));
             bucketCandidates.add(candidate);
         }

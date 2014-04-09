@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -75,13 +76,13 @@ public class ReworkEjb {
     private static final Log logger = LogFactory.getLog(ReworkEjb.class);
 
     @Inject
-    MercurySampleDao mercurySampleDao;
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
-    ReworkEntryDao reworkEntryDao;
+    private ReworkEntryDao reworkEntryDao;
 
     @Inject
-    LabVesselDao labVesselDao;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private AthenaClientService athenaClientService;
@@ -132,7 +133,7 @@ public class ReworkEjb {
             String label = entry.getLabVessel().getLabel();
             Collection<BucketCandidate> bucketCandidates = findBucketCandidates(label);
             for (BucketCandidate bucketCandidate : bucketCandidates) {
-                productOrderKeys.add(bucketCandidate.getProductOrderKey());
+                productOrderKeys.add(bucketCandidate.getProductOrder().getBusinessKey());
             }
         }
 
@@ -188,8 +189,7 @@ public class ReworkEjb {
                             eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
                         }
 
-                        BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
-                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
+                        BucketCandidate candidate = new BucketCandidate(entryMap.getKey(), vessel.getLabel(),
                                 sample.getProductOrder(), vessel, eventName);
 
                         if (!sample.getProductOrder().getProduct()
@@ -220,8 +220,7 @@ public class ReworkEjb {
                     String sampleKey = sample.getName();
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
                     final BucketCandidate candidate =
-                            new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),
-                                    tubeBarcode, sample.getProductOrder(), null, "");
+                            new BucketCandidate(sampleKey, tubeBarcode, sample.getProductOrder(), null, "");
                     if (!sample.getProductOrder().getProduct()
                             .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                         candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
@@ -359,11 +358,11 @@ public class ReworkEjb {
 
         Collection<String> validationMessages =
                 validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                        bucketCandidate.getProductOrderKey(), bucketCandidate.getSampleKey(),
+                        bucketCandidate.getProductOrder().getBusinessKey(), bucketCandidate.getSampleKey(),
                         bucketCandidate.isReworkItem());
 
-        addCandidate(reworkVessel, bucketCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
-                userName, bucketCandidate.isReworkItem());
+        addCandidate(reworkVessel, bucketCandidate.getProductOrder().getBusinessKey(), reworkReason, reworkFromStep,
+                bucket, comment, userName, bucketCandidate.isReworkItem());
 
         return validationMessages;
     }
@@ -461,7 +460,6 @@ public class ReworkEjb {
         public static final String REWORK_INDICATOR = "Rework";
         private final String tubeBarcode;
         private String sampleKey;
-        private String productOrderKey;
         private ProductOrder productOrder;
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
@@ -479,20 +477,20 @@ public class ReworkEjb {
             this.tubeBarcode = tubeBarcode;
         }
 
-        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey) {
+        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull ProductOrder productOrder) {
             this.tubeBarcode=tubeBarcode;
-            this.productOrderKey = productOrderKey;
+            this.productOrder = productOrder;
         }
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
-                               @Nonnull String productOrderKey) {
-            this(tubeBarcode, productOrderKey);
+                               @Nonnull ProductOrder productOrder) {
+            this(tubeBarcode, productOrder);
             this.sampleKey = sampleKey;
         }
 
-        public BucketCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
+        public BucketCandidate(@Nonnull String sampleKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel, String lastEventStep) {
-            this(tubeBarcode, sampleKey, productOrderKey);
+            this(tubeBarcode, sampleKey, productOrder);
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
@@ -500,10 +498,6 @@ public class ReworkEjb {
 
         public String getSampleKey() {
             return sampleKey;
-        }
-
-        public String getProductOrderKey() {
-            return productOrderKey;
         }
 
         public String getTubeBarcode() {
@@ -540,15 +534,15 @@ public class ReworkEjb {
 
         @Override
         public String toString() {
-            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrderKey);
+            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrder.getBusinessKey());
         }
 
-        public static BucketCandidate fromString(String s) {
+        public static BucketCandidate fromString(String s, ProductOrderDao productOrderDao) {
             String[] parts = s.split("\\|");
             String tubeBarcode = parts[0];
             String sampleKey = parts[1];
             String productOrderKey = parts[2];
-            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey);
+            return new BucketCandidate(tubeBarcode, sampleKey, productOrderDao.findByBusinessKey(productOrderKey));
         }
     }
 }

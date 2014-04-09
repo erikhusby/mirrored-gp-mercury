@@ -514,7 +514,7 @@ public class ReworkEjbTest extends Arquillian {
         for (Map.Entry<String, TwoDBarcodedTube> entry : mapBarcodeToTube.entrySet()) {
             TwoDBarcodedTube vessel = entry.getValue();
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(vessel.getLabel(), exExProductOrder1);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -663,8 +663,8 @@ public class ReworkEjbTest extends Arquillian {
         for (ReworkEjb.BucketCandidate candidate : candidates) {
             Assert.assertEquals(candidate.getSampleKey(), genomicSample3);
             Assert.assertTrue(candidate.isValid());
-            Assert.assertTrue(expectedPDOs.contains(candidate.getProductOrderKey()));
-            expectedPDOs.remove(candidate.getProductOrderKey());
+            Assert.assertTrue(expectedPDOs.contains(candidate.getProductOrder().getBusinessKey()));
+            expectedPDOs.remove(candidate.getProductOrder().getBusinessKey());
         }
 
         // Make sure all that candidates were found for all expected PDOs.
@@ -715,7 +715,7 @@ public class ReworkEjbTest extends Arquillian {
         for (ReworkEjb.BucketCandidate candidate : candidates) {
             //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
             Assert.assertTrue(candidate.isValid());
-            Assert.assertEquals(candidate.getProductOrderKey(), exExProductOrder1.getBusinessKey());
+            Assert.assertEquals(candidate.getProductOrder().getBusinessKey(), exExProductOrder1.getBusinessKey());
         }
 
     }
@@ -796,7 +796,7 @@ public class ReworkEjbTest extends Arquillian {
             Assert.assertFalse(candidate.isValid());
             //TODO SGM/BR  Need to figure a way to get Stub search really working to validate the Barcode
 
-            Assert.assertEquals(candidate.getProductOrderKey(), nonExExProductOrder.getBusinessKey());
+            Assert.assertEquals(candidate.getProductOrder().getBusinessKey(), nonExExProductOrder.getBusinessKey());
         }
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
@@ -819,7 +819,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : mapBarcodeToTube.keySet()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -848,7 +848,7 @@ public class ReworkEjbTest extends Arquillian {
         Collection<ReworkEjb.BucketCandidate> bucketCandidates = new ArrayList<>();
         for (String barcode : mapBarcodeToTube.keySet()) {
             ReworkEjb.BucketCandidate candidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1);
             candidate.setReworkItem(true);
             bucketCandidates.add(candidate);
         }
@@ -880,7 +880,7 @@ public class ReworkEjbTest extends Arquillian {
             bucketDao.persist(pBucket);
 
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -920,7 +920,7 @@ public class ReworkEjbTest extends Arquillian {
             }
             for (Map.Entry<String, TwoDBarcodedTube> currEntry : mapBarcodeToTube.entrySet()) {
                 ReworkEjb.BucketCandidate bucketCandidate =
-                        new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1.getBusinessKey());
+                        new ReworkEjb.BucketCandidate(currEntry.getKey(), exExProductOrder1);
                 bucketCandidate.setReworkItem(true);
                 String unknownReason =
                         ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -956,7 +956,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder1);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -995,7 +995,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : mapBarcodeToTube.keySet()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -1033,7 +1033,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -1089,7 +1089,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();
@@ -1147,7 +1147,7 @@ public class ReworkEjbTest extends Arquillian {
 
         for (String barcode : hybridSelectionJaxbBuilder.getNormCatchBarcodes()) {
             ReworkEjb.BucketCandidate bucketCandidate =
-                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2.getBusinessKey());
+                    new ReworkEjb.BucketCandidate(barcode, exExProductOrder2);
             bucketCandidate.setReworkItem(true);
             String unknownReason =
                     ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue();

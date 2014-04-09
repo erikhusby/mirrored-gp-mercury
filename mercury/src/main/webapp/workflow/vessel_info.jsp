@@ -104,7 +104,7 @@
                                     <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels"
                                                       value="${candidate}"/>
                                 </td>
-                                <td>${candidate.productOrderKey}</td>
+                                <td>${candidate.productOrder.businessKey}</td>
                                 <td>${candidate.productOrder.product.productName}</td>
                                 <td>
                                     <c:forEach items="${candidate.labVessel.nearestWorkflowLabBatches}" var="batch">
