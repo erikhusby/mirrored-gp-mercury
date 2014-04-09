@@ -216,7 +216,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipQuoteReason;
 
     @Version
-    private long version;
+    private long version = 0; // without explicit assignment, ReworkEjbTest writes pdos with null versions to the database, which breaks lots of other tests in weird ways
 
     @Column(name = "SKIP_REGULATORY_REASON")
     private String skipRegulatoryReason;

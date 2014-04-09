@@ -56,14 +56,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         Assert.assertEquals(quoteFromJira, ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
     }
 
-    /**
-     * Gets the text of the quote field from
-     * the jira ticket that corresponds to the given pdo.
-     */
-    private String getQuoteFieldFromJiraTicket(ProductOrder pdo) throws IOException {
-        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.QUOTE_ID.getName());
-    }
-
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testSummaryFieldPropagatesToJira() throws Exception {
         String pdoName = "PDO-310";
@@ -74,10 +66,19 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         pdoEjb.updateJiraIssue(pdo);
         String titleFromJira = getSummaryFieldFromJiraTicket(pdo);
 
-        Assert.assertEquals(titleFromJira, newTitle, "jira summary field is not synchronized with pdo title.");
+        Assert.assertEquals(titleFromJira,newTitle,"jira summary field is not synchronized with pdo title.");
+    }
+
+
+    /**
+     * Gets the text of the quote field from
+     * the jira ticket that corresponds to the given pdo.
+     */
+    private String getQuoteFieldFromJiraTicket(ProductOrder pdo) throws IOException {
+        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.QUOTE_ID.getName());
     }
 
     private String getSummaryFieldFromJiraTicket(ProductOrder pdo) throws IOException {
-        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
+        return (String)jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
     }
 }
