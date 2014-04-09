@@ -58,7 +58,7 @@
         <profile>
             <id>CRSP</id>
             <properties>
-                <crowd.applicaiton.name>clia_mercury</crowd.applicaiton.name>
+                <crowd.application.name>clia_mercury</crowd.application.name>
                 <crowd.application.password>exsdRTGFygHTG</crowd.application.password>
                 <roleprefix>CRSP-</roleprefix>
                 <ssl.keystore.password>?</ssl.keystore.password>
