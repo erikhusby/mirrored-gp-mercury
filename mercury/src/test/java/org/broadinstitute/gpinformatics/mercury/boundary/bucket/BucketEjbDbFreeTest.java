@@ -175,7 +175,6 @@ public class BucketEjbDbFreeTest {
         }
     }
 
-
     public void testSamplesToPicoBucket() throws Exception {
         for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
@@ -218,7 +217,7 @@ public class BucketEjbDbFreeTest {
 
             replay(mocks);
 
-            Collection<ProductOrderSample> addedSamples = bucketEjb.addFromProductOrder(pdo, pdo.getSamples());
+            Collection<ProductOrderSample> addedSamples = bucketEjb.addSamplesToBucket(pdo);
             Assert.assertEqualsNoOrder(addedSamples.toArray(), expectedSamples.toArray());
 
             verify(mocks);

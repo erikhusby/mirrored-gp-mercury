@@ -449,7 +449,7 @@ public class ProductOrderEjb {
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
                                    @Nonnull MessageReporter reporter) {
         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-        Collection<ProductOrderSample> samples = bucketEjb.addFromProductOrder(order, newSamples);
+        Collection<ProductOrderSample> samples = bucketEjb.addSamplesToBucket(order, newSamples);
         if (!samples.isEmpty()) {
             reporter.addMessage("{0} samples have been added to the pico bucket.", samples.size());
         }

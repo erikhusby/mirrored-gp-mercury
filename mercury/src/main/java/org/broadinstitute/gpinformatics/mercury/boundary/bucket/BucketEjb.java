@@ -340,14 +340,20 @@ public class BucketEjb {
     }
 
     /**
+     * Puts the product order samples from productOrder into the appropriate bucket
+     * @return the samples that were actually added to the bucket.
+     */
+    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder productOrder){
+        return addSamplesToBucket(productOrder, productOrder.getSamples());
+    }
+
+    /**
      * Puts product order samples into the appropriate bucket.  Does nothing if the product is not supported in Mercury.
      *
      * @return the samples that were actually added to the bucket
-     * @param order
-     * @param samples
      */
-    public Collection<ProductOrderSample> addFromProductOrder(ProductOrder order,
-                                                              Collection<ProductOrderSample> samples) {
+    public Collection<ProductOrderSample> addSamplesToBucket(ProductOrder order,
+                                                             Collection<ProductOrderSample> samples) {
 
         Workflow workflow = order.getProduct() != null ? order.getProduct().getWorkflow() : null;
         if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {

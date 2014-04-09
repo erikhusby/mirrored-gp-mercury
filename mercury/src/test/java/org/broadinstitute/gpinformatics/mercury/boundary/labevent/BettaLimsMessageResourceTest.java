@@ -226,7 +226,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         reworks.add(barcodeTubeEntry.getValue());
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube2.values());
-        bucketEjb.addFromProductOrder(productOrder2, productOrder2.getSamples());
+        bucketEjb.addSamplesToBucket(productOrder2);
 
         // Create batch
         String batchName = "LCSET-MsgTest-" + testPrefix;
@@ -518,7 +518,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        bucketEjb.addFromProductOrder(productOrder, productOrder.getSamples());
+        bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);

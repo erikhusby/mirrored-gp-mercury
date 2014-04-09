@@ -543,7 +543,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
                                 Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        bucketEjb.addFromProductOrder(productOrder, productOrder.getSamples());
+        bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
