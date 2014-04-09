@@ -44,6 +44,13 @@ public class SampleInstanceV2 {
     public SampleInstanceV2(LabVessel labVessel) {
         this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
+        if (LabVessel.DIAGNOSTICS) {
+            System.out.print("Created sample instance ");
+            if (!labVessel.getMercurySamples().isEmpty()) {
+                System.out.print(labVessel.getMercurySamples().iterator().next().getSampleKey());
+            }
+            System.out.println();
+        }
         applyVesselChanges(labVessel);
     }
 
