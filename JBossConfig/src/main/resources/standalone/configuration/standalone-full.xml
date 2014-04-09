@@ -388,7 +388,7 @@
                             <module-option name="ignorePasswordCase" value="true"/>
                         </login-module>
                         <login-module code="com.atlassian.crowd.application.jaas.CrowdLoginModule" flag="sufficient" module="com.atlassian.crowd">
-                            <module-option name="application.name" value="${crowd.applicaiton.name}"/>
+                            <module-option name="application.name" value="${crowd.application.name}"/>
                             <module-option name="application.password" value="${crowd.application.password}"/>
                             <module-option name="crowd.server.url" value="${crowd.application.serverurl}"/>
                             <module-option name="flatRoles" value="false"/>
