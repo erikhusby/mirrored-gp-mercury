@@ -78,23 +78,6 @@ public class ProductOrderEjbContainerTest extends Arquillian {
         return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.QUOTE_ID.getName());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testSummaryFieldPropagatesToJira() throws Exception {
-        String pdoName = "PDO-310";
-        ProductOrder pdo = pdoDao.findByBusinessKey(pdoName);
-        String newTitle = "And now for something different " + System.currentTimeMillis();
-        pdo.setTitle(newTitle);
-
-        pdoEjb.updateJiraIssue(pdo);
-        String titleFromJira = getSummaryFieldFromJiraTicket(pdo);
-
-        Assert.assertEquals(titleFromJira, newTitle, "jira summary field is not synchronized with pdo title.");
-    }
-
-    private String getSummaryFieldFromJiraTicket(ProductOrder pdo) throws IOException {
-        return (String) jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
-    }
-
     private String getSummaryFieldFromJiraTicket(ProductOrder pdo) throws IOException {
         return (String)jiraService.getIssue(pdo.getBusinessKey()).getField(ProductOrder.JiraField.SUMMARY.getName());
     }
