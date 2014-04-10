@@ -9,7 +9,9 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompare;
 import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.JSONCompareResult;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -35,24 +37,28 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testMercury() {
-        try {
-            List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
-                    IlluminaSequencingRun.class);
-            for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
-                // Exclude runs created by tests
-                if (!illuminaSequencingRun.getRunName().contains("Flowcell")) {
-                    System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
+        List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
+                IlluminaSequencingRun.class);
+        for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
+            // Exclude runs created by tests
+            if (!illuminaSequencingRun.getRunName().contains("Flowcell")) {
+                System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
+                try {
                     String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
                             new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
                             illuminaSequencingRun.getRunName());
                     String referenceRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
                             new URL("http://mercurydev:8080/Mercury/"),
                             illuminaSequencingRun.getRunName());
-                    JSONAssert.assertEquals(referenceRun, localRun, JSONCompareMode.LENIENT);
+                    JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, localRun,
+                            JSONCompareMode.LENIENT);
+                    if (jsonCompareResult.failed()) {
+                        System.out.println(jsonCompareResult.getMessage());
+                    }
+                } catch (Throwable e) {
+                    System.out.println(e);
                 }
             }
-        } catch (MalformedURLException | JSONException e) {
-            throw new RuntimeException(e);
         }
     }
 }
