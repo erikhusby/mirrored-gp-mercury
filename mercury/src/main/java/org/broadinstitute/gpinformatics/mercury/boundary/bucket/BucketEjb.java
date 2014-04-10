@@ -5,9 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -52,7 +52,7 @@ public class BucketEjb {
     private final LabEventFactory labEventFactory;
     private final JiraService jiraService;
     private final BucketDao bucketDao;
-    private final ProductOrderDao productOrderDao;
+    private AthenaClientService athenaClientService;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
     private final WorkflowLoader workflowLoader;
@@ -71,7 +71,7 @@ public class BucketEjb {
                      JiraService jiraService,
                      BucketDao bucketDao,
                      BucketEntryDao bucketEntryDao,
-                     ProductOrderDao productOrderDao,
+                     AthenaClientService athenaClientService,
                      LabVesselDao labVesselDao,
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
@@ -81,7 +81,7 @@ public class BucketEjb {
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
         this.bucketEntryDao = bucketEntryDao;
-        this.productOrderDao = productOrderDao;
+        this.athenaClientService = athenaClientService;
         this.labVesselDao = labVesselDao;
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
@@ -186,7 +186,7 @@ public class BucketEjb {
         for (BucketEntry entry : bucket.getBucketEntries()) {
             pdoKeys.add(entry.getPoBusinessKey());
         }
-        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
+        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
         for (ProductOrder pdo : pdos) {
             if (workflow != null && pdo.getProduct() == null ||
                 workflow == null && pdo.getProduct() != null ||
@@ -255,7 +255,7 @@ public class BucketEjb {
     }
 
     public void removeEntriesByIds(@Nonnull Collection<Long> bucketEntryIds, String reason) {
-        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(new ArrayList<Long>(bucketEntryIds));
+        List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(new ArrayList<>(bucketEntryIds));
         removeEntries(bucketEntries, reason);
     }
 
