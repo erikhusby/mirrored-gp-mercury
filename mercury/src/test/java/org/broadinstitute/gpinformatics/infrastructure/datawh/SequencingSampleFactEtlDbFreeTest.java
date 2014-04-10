@@ -408,7 +408,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);

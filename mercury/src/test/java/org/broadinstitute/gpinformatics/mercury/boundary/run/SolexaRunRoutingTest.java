@@ -110,7 +110,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), Workflow.WHOLE_GENOME, "1");
+                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
@@ -219,7 +219,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), Workflow.WHOLE_GENOME, "1");
+                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
         MiSeqReagentKitEntityBuilder miseqReagentBuilder =
                 runMiSeqReagentEntityBuilder(qtpEntityBuilder.getDenatureRack(), "1", reagentBlockBarcode);

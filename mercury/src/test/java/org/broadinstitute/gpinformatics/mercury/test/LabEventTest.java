@@ -79,6 +79,7 @@ import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructur
 import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressShearingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
@@ -277,7 +278,7 @@ public class LabEventTest extends BaseEventTest {
                 libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.HYBRID_SELECTION, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,
@@ -424,7 +425,7 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
 
         final LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -540,7 +541,7 @@ public class LabEventTest extends BaseEventTest {
      * Build object graph for Exome Express with different optional messages, verify chain of events.
      */
     @Test(groups = {TestGroups.DATABASE_FREE})
-    public void testExomeExpressAlternative() throws Exception {
+    public void testExomeExpressAlternative() {
         expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK,
@@ -571,7 +572,7 @@ public class LabEventTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                         ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
@@ -725,7 +726,7 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder2.getPondRegTubeBarcodes(), "2");
             QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "2");
+                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
@@ -740,7 +741,7 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
@@ -870,7 +871,7 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder2.getPondRegTubeBarcodes(), "2");
             QtpEntityBuilder qtpEntityBuilder2 = runQtpProcess(hybridSelectionEntityBuilder2.getNormCatchRack(),
                     hybridSelectionEntityBuilder2.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "2");
+                    hybridSelectionEntityBuilder2.getMapBarcodeToNormCatchTubes(), "2");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder2 =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder2.getDenatureRack(), "2" + "ADXX", null,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
@@ -886,7 +887,7 @@ public class LabEventTest extends BaseEventTest {
                             libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                     runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", null,
                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "squidDesignationName",
@@ -934,6 +935,162 @@ public class LabEventTest extends BaseEventTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(groups = {TestGroups.DATABASE_FREE})
+    public void testExomeExpressIce() {
+        // e.g. 0157473471
+//        Controller.startCPURecording(true);
+        expectedRouting = SystemRouter.System.MERCURY;
+
+        // Use Standard Exome product, to verify that workflow is taken from LCSet, not Product
+        ProductOrder productOrder = ProductOrderTestFactory.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK - 2,
+                "A");
+        AthenaClientServiceStub.addProductOrder(productOrder);
+        Date runDate = new Date();
+        // todo jmt create bucket, then batch, rather than rack then batch then bucket
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+        workflowBatch.setCreatedOn(new Date());
+        workflowBatch.setWorkflow(Workflow.ICE_EXOME_EXPRESS);
+
+        bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
+
+        TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        }
+
+        PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
+                String.valueOf(runDate.getTime()), "1", true);
+        ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
+                runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                        picoPlatingEntityBuilder.getNormTubeFormation(),
+                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
+                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+
+        IceEntityBuilder iceEntityBuilder = runIceProcess(libraryConstructionEntityBuilder.getPondRegRack(),
+                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+
+        // Need a version of QTP that jumps over pooling to normalization
+        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(
+                getBettaLimsMessageTestFactory(), getLabEventFactory(), getLabEventHandler(),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack()),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichRack().getLabel()),
+                Collections.singletonList(iceEntityBuilder.getCatchEnrichBarcodes()),
+                iceEntityBuilder.getMapBarcodeToCatchEnrichTubes(), "1").invoke(false, true);
+
+        final LabVessel denatureSource = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(
+                VesselPosition.A01);
+        LabBatch fctBatch = new LabBatch(FCT_TICKET, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
+
+        // todo jmt denature rack has 8 source tubes, but 2500 builder is expecting only 1
+        HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
+                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
+
+        runTransferVisualizer(mapBarcodeToTube.values().iterator().next());
+
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 3,
+                "Wrong number of reagents");
+        Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE2);
+        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 3,
+                "Wrong number of reagents");
+
+        String machineName = "Superman";
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
+
+        File runPath = null;
+        try {
+            runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        String flowcellBarcode = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode();
+
+        SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode,
+                flowcellBarcode + dateFormat.format(runDate),
+                runDate, machineName,
+                runPath.getAbsolutePath(), null);
+
+        IlluminaSequencingRunFactory runFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
+        IlluminaSequencingRun run =
+                runFactory.buildDbFree(runBean, hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
+
+        ReadStructureRequest readStructureRequest = new ReadStructureRequest();
+        readStructureRequest.setRunBarcode(run.getRunBarcode());
+        readStructureRequest.setSetupReadStructure("71T8B8B71T");
+        readStructureRequest.setActualReadStructure("101T8B8B101T");
+        readStructureRequest.setImagedArea(new Double("185.2049407959"));
+        readStructureRequest.setLanesSequenced("3,6");
+
+        runFactory.storeReadsStructureDBFree(readStructureRequest, run);
+
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = constructZimsIlluminaRunFactory(productOrder);
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(run);
+        Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 2, "Wrong number of lanes");
+        Assert.assertEquals(zimsIlluminaRun.getActualReadStructure(), readStructureRequest.getActualReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getSetupReadStructure(), readStructureRequest.getSetupReadStructure());
+        Assert.assertEquals(zimsIlluminaRun.getImagedAreaPerLaneMM2(), readStructureRequest.getImagedArea());
+        Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
+        Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
+
+        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+        List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
+
+        String[] expectedEventNames = {
+                "SamplesDaughterPlateCreation",
+                "SamplesNormalizationTransfer",
+                "PicoPlatingPostNorm",
+                "ShearingTransfer",
+                "PostShearingTransferCleanup",
+                "ShearingQC",
+                "AdapterLigationCleanup",
+                "HybSelPondEnrichmentCleanup",
+                "PondRegistration",
+                "IcePoolingTransfer",
+                "IceSPRIConcentration",
+                "IcePoolTest",
+                "Ice1stHybridization",
+                "Ice1stCapture",
+                "Ice2ndCapture",
+                "IceCatchCleanup",
+                "IceCatchEnrichmentCleanup",
+//                "EcoTransfer",
+                "NormalizationTransfer",
+                "DenatureTransfer",
+                // todo jmt why aren't these events found?
+//                "DenatureToDilutionTransfer",
+//                "DilutionToFlowcellTransfer",
+        };
+        verifyEventSequence(labEventNames, expectedEventNames);
+
+        IlluminaSequencingRun illuminaSequencingRun
+                = (IlluminaSequencingRun) hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getSequencingRuns()
+                .iterator().next();
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
+                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().getSequencerModel(), "Illumina HiSeq 2500");
+
+//        Controller.stopCPURecording();
     }
 
     private ZimsIlluminaRunFactory constructZimsIlluminaRunFactory(final ProductOrder productOrder) {
@@ -1024,7 +1181,7 @@ public class LabEventTest extends BaseEventTest {
 
         QtpEntityBuilder qtpEntityBuilder =
                 runQtpProcess(sageEntityBuilder.getSageCleanupRack(), sageEntityBuilder.getSageCleanupTubeBarcodes(),
-                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), Workflow.WHOLE_GENOME, "1");
+                        sageEntityBuilder.getMapBarcodeToSageUnloadTubes(), "1");
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1", null,

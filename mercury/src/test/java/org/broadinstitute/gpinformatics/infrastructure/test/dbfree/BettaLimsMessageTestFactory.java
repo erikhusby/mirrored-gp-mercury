@@ -29,10 +29,8 @@ import javax.xml.datatype.DatatypeFactory;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +41,6 @@ import java.util.Map;
 public class BettaLimsMessageTestFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
     public static final String HISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-HBU";
-    public static final String MISEQ_SEQUENCING_STATION_MACHINE_NAME = "SL-MAA";
 
     private long time = System.currentTimeMillis();
     /**
@@ -209,39 +206,6 @@ public class BettaLimsMessageTestFactory {
         plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
 
         plateTransferEvent.setPositionMap(buildPositionMap(targetRackBarcode, targetTubeBarcodes));
-        plateTransferEvent.setPlate(buildRack(targetRackBarcode));
-
-        return plateTransferEvent;
-    }
-
-    /**
-     * Creates a transfer event from source rack to destination rack with volumes and concentrations provided.
-     *
-     * @param eventType
-     * @param sourceRackBarcode
-     * @param sourceTubeBarcodes
-     * @param sourceVolumes
-     * @param targetRackBarcode
-     * @param targetTubeBarcodes
-     * @param targetVolumes
-     * @param targetConcentration
-     *
-     * @return
-     */
-    public PlateTransferEventType buildRackToRack(String eventType, String sourceRackBarcode,
-                                                  List<String> sourceTubeBarcodes, List<String> sourceVolumes,
-                                                  String targetRackBarcode, List<String> targetTubeBarcodes,
-                                                  List<String> targetVolumes, List<String> targetConcentration) {
-
-        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-        setStationEventData(eventType, plateTransferEvent);
-
-        plateTransferEvent.setSourcePositionMap(buildPositionMap(sourceRackBarcode, sourceTubeBarcodes, sourceVolumes,
-                Collections.<String>emptyList()));
-        plateTransferEvent.setSourcePlate(buildRack(sourceRackBarcode));
-
-        plateTransferEvent.setPositionMap(
-                buildPositionMap(targetRackBarcode, targetTubeBarcodes, targetVolumes, targetConcentration));
         plateTransferEvent.setPlate(buildRack(targetRackBarcode));
 
         return plateTransferEvent;
@@ -511,36 +475,9 @@ public class BettaLimsMessageTestFactory {
         PositionMapType positionMap = new PositionMapType();
         int rackPosition = 1;
         for (String barcode : tubeBarcodes) {
-            addReceptacleToPositionMap(rackPosition, positionMap, barcode);
-            rackPosition++;
-        }
-        positionMap.setBarcode(rackBarcode);
-        return positionMap;
-    }
-
-    /**
-     * Builds a position map with volumes and concentrations.
-     *
-     * @param rackBarcode
-     * @param tubeBarcodes
-     * @param volumes the list order determines which tube is affected
-     * @param concentrations the list order determines which tube is affected
-     *
-     * @return
-     */
-    private PositionMapType buildPositionMap(String rackBarcode, List<String> tubeBarcodes, List<String> volumes,
-                                             List<String> concentrations) {
-        PositionMapType positionMap = new PositionMapType();
-        int rackPosition = 1;
-
-        Iterator<String> volumeIterator = volumes.iterator();
-        Iterator<String> concentrationIterator = concentrations.iterator();
-        for (String barcode : tubeBarcodes) {
-            // Skips updating if either volume or concentration is not passed.
-            String volume = volumeIterator.hasNext() ? volumeIterator.next() : null;
-            String concentration = concentrationIterator.hasNext() ? concentrationIterator.next() : null;
-
-            addReceptacleToPositionMap(rackPosition, positionMap, barcode, volume, concentration);
+            if (barcode != null) {
+                addReceptacleToPositionMap(rackPosition, positionMap, barcode);
+            }
             rackPosition++;
         }
         positionMap.setBarcode(rackBarcode);
@@ -585,21 +522,6 @@ public class BettaLimsMessageTestFactory {
         receptacleType.setReceptacleType("tube");
         receptacleType.setConcentration(BigDecimal.valueOf(12.2));
         receptacleType.setVolume(BigDecimal.valueOf(8.3));
-        targetPositionMap.getReceptacle().add(receptacleType);
-    }
-
-    private void addReceptacleToPositionMap(int rackPosition, PositionMapType targetPositionMap, String barcode,
-                                            String volume, String concentration) {
-        ReceptacleType receptacleType = new ReceptacleType();
-        receptacleType.setBarcode(barcode);
-        receptacleType.setPosition(buildWellName(rackPosition, WellNameType.SHORT));
-        receptacleType.setReceptacleType("tube");
-        if (concentration != null) {
-            receptacleType.setConcentration(new BigDecimal(concentration));
-        }
-        if (volume != null) {
-            receptacleType.setVolume(new BigDecimal(volume));
-        }
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 

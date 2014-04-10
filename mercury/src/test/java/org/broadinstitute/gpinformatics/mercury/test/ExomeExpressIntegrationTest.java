@@ -116,7 +116,7 @@ public class ExomeExpressIntegrationTest {
             QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                     Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                    false).invoke();
+                    true, false).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
@@ -131,10 +131,10 @@ public class ExomeExpressIntegrationTest {
                 fctName = scanner.nextLine();
             }
 
-            HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                    new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testSuffix,
-                            qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), fctName,
-                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2);
+            HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory,
+                    testSuffix, Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                    qtpJaxbBuilder.getDenatureRackBarcode(), fctName, ProductionFlowcellPath.DILUTION_TO_FLOWCELL,
+                    BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2);
 
             hiSeq2500JaxbBuilder.invoke();
 

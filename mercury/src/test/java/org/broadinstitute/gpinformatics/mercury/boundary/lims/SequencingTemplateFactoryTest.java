@@ -108,7 +108,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
                         libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
 
         denatureTube = qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         denatureTubeBarcode = denatureTube.getLabel();

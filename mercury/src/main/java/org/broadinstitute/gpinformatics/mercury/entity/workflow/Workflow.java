@@ -13,6 +13,7 @@ import java.util.List;
  */
 public enum Workflow {
     AGILENT_EXOME_EXPRESS("Agilent Exome Express"),
+    ICE_EXOME_EXPRESS("ICE Exome Express"),
     HYBRID_SELECTION("Hybrid Selection"),
     WHOLE_GENOME("Whole Genome"),
     ICE("ICE"),
@@ -44,6 +45,7 @@ public enum Workflow {
     /** Workflow processes that Mercury supports. */
     public static final Collection<Workflow> SUPPORTED_WORKFLOWS = new ArrayList<Workflow>(){{
         add(AGILENT_EXOME_EXPRESS);
+        add(ICE_EXOME_EXPRESS);
     }};
 
     public static boolean isWorkflowSupportedByMercury(Workflow workflow) {

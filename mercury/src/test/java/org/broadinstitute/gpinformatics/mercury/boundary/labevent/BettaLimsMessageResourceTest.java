@@ -186,14 +186,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                false).invoke();
+                true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
@@ -211,17 +211,17 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         Iterator<Map.Entry<String, TwoDBarcodedTube>> iterator = mapBarcodeToTube.entrySet().iterator();
         Map.Entry<String, TwoDBarcodedTube> barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateCandidates(
-                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
+                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
+                "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
         barcodeTubeEntry = iterator.next();
         reworkEjb.addAndValidateCandidates(
-                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1.getBusinessKey())),
+                Collections.singleton(new ReworkEjb.BucketCandidate(barcodeTubeEntry.getValue().getLabel(), productOrder1)),
                 ReworkEntry.ReworkReasonEnum.UNKNOWN_ERROR.getValue(), "Pico/Plating Bucket", "Test",
-                Workflow.AGILENT_EXOME_EXPRESS, "jowalsh");
+                "jowalsh");
         mapBarcodeToTube2.put(barcodeTubeEntry.getKey(), barcodeTubeEntry.getValue());
         reworks.add(barcodeTubeEntry.getValue());
 
@@ -244,14 +244,14 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                false).invoke();
+                true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
 
         hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
                 BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
@@ -280,14 +280,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
                 Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                false).invoke();
+                true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL, BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
+                Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1", ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
@@ -559,15 +560,15 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 listLcsetListNormCatchBarcodes,
                 normCatchRackBarcodes,
-                false).invoke();
+                true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage, bettaLimsMessageResource, ImportFromSquidTest.TEST_MERCURY_URL);
         }
 
-        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix, qtpJaxbBuilder.getDenatureTubeBarcode(),
-                        qtpJaxbBuilder.getDenatureRackBarcode(), null, ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,
-                        BaseEventTest.NUM_POSITIONS_IN_RACK, null, 8);
+        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
+                Collections.singletonList(qtpJaxbBuilder.getDenatureTubeBarcode()),
+                qtpJaxbBuilder.getDenatureRackBarcode(), null, ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, null, 8);
 
         IlluminaSequencingRun illuminaSequencingRun =
                 registerIlluminaSequencingRun(testPrefix, hiSeq2500JaxbBuilder.getFlowcellBarcode());
