@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -80,13 +80,13 @@ public class BucketEjbDbFreeTest {
     private LabEventFactory labEventFactory = EasyMock.createNiceMock(LabEventFactory.class);
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
-    private ProductOrderDao productOrderDao = createMock(ProductOrderDao.class);
+    private AthenaClientService athenaClientService = createMock(AthenaClientService.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
     private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
-            new Object[]{bucketDao, bucketEntryDao, productOrderDao, labVesselDao, bspSampleDataFetcher, labVesselFactory, labEventFactory};
+            new Object[]{bucketDao, bucketEntryDao, athenaClientService, labVesselDao, bspSampleDataFetcher, labVesselFactory, labEventFactory};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     private void beforeClass() {
@@ -118,7 +118,7 @@ public class BucketEjbDbFreeTest {
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao, productOrderDao, labVesselDao, labVesselFactory, bspSampleDataFetcher, bspUserList, workflowLoader);
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao, athenaClientService, labVesselDao, labVesselFactory, bspSampleDataFetcher, bspUserList, workflowLoader);
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
