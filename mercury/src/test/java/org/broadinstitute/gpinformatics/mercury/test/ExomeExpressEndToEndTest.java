@@ -28,7 +28,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplateFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -336,8 +335,6 @@ public class ExomeExpressEndToEndTest {
 //            EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
 //                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
 //                            .getName()), jiraTicket.getTicketName()));
-            BucketEjb bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao,
-                    AthenaClientProducer.stubInstance());
 
             EasyMock.replay(mockBucketDao, mockJira, labBatchDao, tubeDao, reworkEjb, bucketDao);
 

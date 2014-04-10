@@ -1,18 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObjectFinder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AlignerDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.AnalysisTypeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.analysis.ReferenceSequenceDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 
-import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
@@ -25,10 +22,6 @@ import java.util.List;
 @Default
 @RequestScoped
 public class MercuryClientServiceImpl implements MercuryClientService {
-
-    @Inject
-    private MercuryClientEjb mercuryClientEjb;
-
     @Inject
     private Deployment deployment;
 
@@ -43,11 +36,6 @@ public class MercuryClientServiceImpl implements MercuryClientService {
 
     @Inject
     private AlignerDao alignerDao;
-
-    @Override
-    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples) {
-        return mercuryClientEjb.addFromProductOrder(pdo, samples);
-    }
 
     private Collection<DisplayableItem> makeDisplayableItemCollection(List<? extends BusinessObject> items) {
         Collection<DisplayableItem> displayableItems = new ArrayList<>(items.size());

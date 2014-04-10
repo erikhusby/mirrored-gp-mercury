@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.easymock.EasyMock;
@@ -92,7 +92,8 @@ public class BucketEntryDBFreeTest {
                 EasyMock.createNiceMock(LabEventFactory.class),
                 EasyMock.createNiceMock(JiraService.class),
                 EasyMock.createNiceMock(BucketDao.class),
-                EasyMock.createNiceMock(AthenaClientService.class));
+                null, null, EasyMock.createNiceMock(LabVesselDao.class), null,
+                null, null, null);
 
         for (BucketEntry bucketEntry : bucketEntries) {
             Assert.assertEquals(bucketEntry.getPoBusinessKey(), productOrder1);

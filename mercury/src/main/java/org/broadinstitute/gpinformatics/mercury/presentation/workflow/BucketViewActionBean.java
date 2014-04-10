@@ -14,9 +14,9 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -77,7 +77,7 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private BucketDao bucketDao;
     @Inject
-    private AthenaClientService athenaClientService;
+    private ProductOrderDao productOrderDao;
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
@@ -363,7 +363,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 for (BucketEntry entry : collectiveEntries) {
                     pdoKeys.add(entry.getPoBusinessKey());
                 }
-                Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+                Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
                 for (ProductOrder pdo : pdos) {
                     mapPdoKeyToPdo.put(pdo.getBusinessKey(), pdo);
                     mapPdoKeyToWorkflow.put(pdo.getBusinessKey(), pdo.getProduct().getWorkflow());
@@ -395,7 +395,7 @@ public class BucketViewActionBean extends CoreActionBean {
 
     public ProductOrder getPDODetails(String pdoKey) {
         if (!mapPdoKeyToPdo.containsKey(pdoKey)) {
-            mapPdoKeyToPdo.put(pdoKey, athenaClientService.retrieveProductOrderDetails(pdoKey));
+            mapPdoKeyToPdo.put(pdoKey, productOrderDao.findByBusinessKey(pdoKey));
         }
         return mapPdoKeyToPdo.get(pdoKey);
     }
@@ -441,7 +441,7 @@ public class BucketViewActionBean extends CoreActionBean {
         for (BucketEntry entry : batch.getBucketEntries()) {
             pdoKeys.add(entry.getPoBusinessKey());
         }
-        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
         Set<String> workflowNames = new HashSet<>();
         for (ProductOrder pdo : pdos) {
             workflowNames.add(pdo.getProduct().getWorkflow().getWorkflowName());
