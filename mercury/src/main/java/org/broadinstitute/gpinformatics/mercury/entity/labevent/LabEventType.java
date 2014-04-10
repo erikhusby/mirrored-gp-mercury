@@ -513,6 +513,8 @@ public enum LabEventType {
             CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_SPRI_CONCENTRATION("IceSPRIConcentration", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ICE_96_PLEX_SPRI_CONCENTRATION("Ice96PlexSpriConcentration", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_1ST_HYBRIDIZATION("Ice1stHybridization", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     ICE_1S_TBAIT_ADDITION("Ice1stBaitAddition", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE, SystemOfRecord.SQUID,
