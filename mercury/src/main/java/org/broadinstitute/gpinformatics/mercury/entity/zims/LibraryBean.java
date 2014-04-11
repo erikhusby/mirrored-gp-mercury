@@ -5,6 +5,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -14,6 +15,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * A library DTO for Zamboni.  Copied from
@@ -176,6 +178,8 @@ public class LibraryBean {
     @JsonProperty("workRequestDomain")
     private String workRequestDomain;
 
+    private String stockSample;
+
 
     public LibraryBean() {}
 
@@ -317,6 +321,17 @@ public class LibraryBean {
                 }
                 productPartNumber = product.getPartNumber();
             }
+
+            // Tries to return the actual pdo sample name in case the lab silently substituted an aliquot
+            // when it started the seq plating request.
+            List<String> pdoSampleNames = ProductOrderSample.getSampleNames(productOrder.getSamples());
+            if (!pdoSampleNames.contains(productOrderSample)) {
+                if (pdoSampleNames.contains(stockSample)) {
+                    this.productOrderSample = stockSample;
+                } else if (pdoSampleNames.contains(rootSample)) {
+                    this.productOrderSample = rootSample;
+                }
+            }
         }
         this.lcSet = lcSet;
         this.workRequestType = workRequestType;
@@ -339,6 +354,7 @@ public class LibraryBean {
             primaryDisease = StringUtils.trimToNull(bspSampleDTO.getPrimaryDisease());
             sampleType = StringUtils.trimToNull(bspSampleDTO.getSampleType());
             rootSample = StringUtils.trimToNull(bspSampleDTO.getRootSample());
+            stockSample = StringUtils.trimToNull(bspSampleDTO.getStockSample());
             sampleLSID = StringUtils.trimToNull(bspSampleDTO.getSampleLsid());
             sampleId = StringUtils.trimToNull(bspSampleDTO.getSampleId());
             gender = StringUtils.trimToNull(bspSampleDTO.getGender());
