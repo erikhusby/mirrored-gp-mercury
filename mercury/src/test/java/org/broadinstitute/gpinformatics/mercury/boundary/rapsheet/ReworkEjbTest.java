@@ -1378,4 +1378,13 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertEquals(bucketCandidatePdos.size(), 2);
     }
 
+    private void resetExExProductWorkflow() {
+        if (exExProductOrder2 != null) {
+            exExProductOrder2.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        }
+        if (exExProductOrder1 != null) {
+            exExProductOrder1.getProduct().setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
+        }
+    }
+
 }
