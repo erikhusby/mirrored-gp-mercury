@@ -26,7 +26,6 @@
                 });
 
                 $j('#regulatoryInfoSearchForm').submit(searchRegulatoryInfo);
-                $j('#regulatoryInfoCreateForm').submit(validateTitle);
 
                 $j('#orderList').dataTable({
                     "oTableTools": ttExportDefines
@@ -78,19 +77,7 @@
 
             function resetRegulatoryInfoDialog() {
                 $j('#regulatoryInfoQuery').val('');
-                $j('#addRegulatoryInfoDialogQueryResults tbody').empty();
-                $j('#regulatoryInfoType option').prop('disabled', false);
-                $j('#addRegulatoryInfoDialogSheet2Found').hide();
-                $j('#addRegulatoryInfoDialogSheet2NotFound').hide();
-                $j('#addRegulatoryInfoDialogSheet3').hide();
-                $j('#addRegInfoInstructions').show();
-                $j('#titleInput').val('');
-                $j('#regInfoTypeEdit').show();
-                $j('#regInfoTypeView').hide();
-                $j('#addNewSubmit').show();
-                $j('#editSubmit').hide();
-                $j('#regulatoryInfoDialogAction').prop('name', 'addNewRegulatoryInfo');
-                $j('#titleValidationError').text('');
+                $j('#addRegulatoryInfoDialogSheet2').html('');
                 $j('#addRegulatoryInfoDialogSheet1').show();
             }
 
@@ -103,112 +90,32 @@
                         researchProject: '${actionBean.editResearchProject.businessKey}',
                         q: $j('#regulatoryInfoQuery').val()
                     },
-                    dataType: 'json',
-                    success: showRegulatoryInfo
+                    dataType: 'html',
+                    success: function(html) {
+                        $j('#addRegulatoryInfoDialogSheet2').html(html);
+                    }
                 });
                 $j('#addRegulatoryInfoDialogSheet1').hide();
             }
 
-            function showRegulatoryInfo(infos) {
-                if (infos.length > 0) {
-                    $j('#addRegulatoryInfoDialogSheet2Found').show();
-                } else {
-                    $j('#addRegulatoryInfoDialogSheet2NotFound').show();
-                }
+            function openRegulatoryInfoEditDialog(regulatoryInfoId) {
+                $j('#addRegulatoryInfoDialogSheet2').html('');
+                $j('#addRegulatoryInfoDialogSheet1').hide();
+                $j('#addRegulatoryInfoDialog').dialog("open");
 
-                var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
-                var foundTypes = [];
-                for (var i = 0; i < infos.length; i++) {
-                    var info = infos[i];
-                    var addButton = $j('<input type="submit" value="Add" class="btn">');
-                    addButton.attr('name', info.id);
-                    if (info.alreadyAdded) {
-                        addButton.prop('disabled', true);
-                    }
-                    var row = $j('<tr/>');
-                    row.append($j('<td/>').append(info.identifier));
-                    row.append($j('<td/>').append(info.alias));
-                    row.append($j('<td/>').append(info.type));
-                    row.append($j('<td/>').append(addButton));
-                    table.append(row);
-
-                    $j('#regulatoryInfoType option:contains(' + info.type + ')').prop('disabled', true);
-                    foundTypes.push(info.type);
-                }
-
-                // Catch clicks on the table, check that it's an "Add" button, and take the button's "name" as the ID to use.
-                table.click(function (event) {
-                    var target = event.target;
-                    if (target.nodeName == "INPUT" &&
-                            target.type == "submit" &&
-                            target.value == "Add") {
-                        $j('#regulatoryInfoId').val(target.name);
-                    }
-                });
-
-                var options = $j('#regulatoryInfoType option');
-                for (var i = 0; i < options.length; i++) {
-                    var option = $j(options[i]);
-                    if (foundTypes.indexOf(option.text()) == -1) {
-                        option.prop('selected', true);
-                        $j('#addRegulatoryInfoDialogSheet3').show();
-                        break;
-                    } else {
-                        option.prop('selected', false);
-                    }
-                }
-
-                // pre-populate new regulatory information form
-                $j('#identifierDisplay').text($j('#regulatoryInfoQuery').val());
-                $j('#identifier').val($j('#regulatoryInfoQuery').val());
-            }
-
-            function validateTitle(event) {
-                event.preventDefault();
-                var form = this;
                 $j.ajax({
                     url: '${ctxpath}/projects/project.action',
                     data: {
-                        validateTitle: '',
-                        regulatoryInfoId: $j('#editRegulatoryInfoId').val(),
-                        regulatoryInfoAlias: $j('#titleInput').val()
+                        viewRegulatoryInfo: '',
+                        regulatoryInfoId: regulatoryInfoId,
+                        researchProject: '${actionBean.editResearchProject.businessKey}'
                     },
-                    dataType: 'text',
-                    success: function handleTitleValidation(result) {
-                        if (result) {
-                            $j('#titleValidationError').text('Title is already in use by ' + result + '.');
-                        } else {
-                            form.submit();
-                        }
+                    dataType: 'html',
+                    success: function(html) {
+                        $j('#addRegulatoryInfoDialogSheet2').html(html);
                     }
                 });
-            }
-
-            function openRegulatoryInfoEditDialog(regulatoryInfoId, identifier, type, title) {
-                resetRegulatoryInfoDialog();
-                $j('#addRegulatoryInfoDialog').dialog("open");
-                showRegulatoryInfoEditForm();
-
-                $j('#identifierDisplay').text(identifier);
-                $j('#editRegulatoryInfoId').val(regulatoryInfoId);
-                $j('#typeDisplay').text(type);
-                $j('#titleInput').val(title);
-
                 return false;
-            }
-
-            function showRegulatoryInfoEditForm() {
-                $j('#addRegulatoryInfoDialogSheet1').hide();
-                $j('#addRegulatoryInfoDialogSheet2Found').hide();
-                $j('#addRegulatoryInfoDialogSheet2NotFound').hide();
-
-                $j('#addRegInfoInstructions').hide();
-                $j('#regulatoryInfoDialogAction').prop('name', 'editRegulatoryInfo');
-                $j('#regInfoTypeEdit').hide();
-                $j('#regInfoTypeView').show();
-                $j('#addNewSubmit').hide();
-                $j('#editSubmit').show();
-                $j('#addRegulatoryInfoDialogSheet3').show();
             }
         </script>
 
@@ -527,6 +434,7 @@
         </div>
 
         <div id="addRegulatoryInfoDialog" title="Add Regulatory Information for ${actionBean.editResearchProject.title} (${actionBean.editResearchProject.businessKey})" class="form-horizontal">
+
             <div id="addRegulatoryInfoDialogSheet1">
                 <p>Enter the IRB Protocol or ORSP Determination number to see if the regulatory information is already known to Mercury.</p>
                 <stripes:form id="regulatoryInfoSearchForm" beanclass="${actionBean.class.name}">
@@ -540,76 +448,8 @@
                     </div>
                 </stripes:form>
             </div>
-            <div id="addRegulatoryInfoDialogSheet2Found">
-                <p>Found existing regulatory information. Choose one to use or create a new one of a different type.</p>
-                <stripes:form action="project.action">
-                    <stripes:hidden name="addRegulatoryInfoToResearchProject"/>
-                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-                    <input type="hidden" id="regulatoryInfoId" name="regulatoryInfoId">
-                    <table id="addRegulatoryInfoDialogQueryResults" class="table simple">
-                        <thead>
-                        <th style="width:10em">Identifier</th>
-                        <th>Protocol Title</th>
-                        <th style="width:17em">Type</th>
-                        <th style="width:9em"></th>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </stripes:form>
-                <hr>
-            </div>
-            <div id="addRegulatoryInfoDialogSheet2NotFound">
-                <p>No regulatory information found in Mercury</p>
-            </div>
-            <div id="addRegulatoryInfoDialogSheet3">
-                <p id="addRegInfoInstructions">Fill in the details below to add new regulatory information to Mercury and this research project.</p>
-                <stripes:form id="regulatoryInfoCreateForm" beanclass="${actionBean.class.name}" class="form-horizontal">
-                    <stripes:hidden id="regulatoryInfoDialogAction" name="addNewRegulatoryInfo"/>
-                    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
-                    <input type="hidden" id="editRegulatoryInfoId" name="regulatoryInfoId">
-                    <div class="control-group view-control-group">
-                        <label class="control-label">Identifier</label>
 
-                        <div class="controls">
-                            <div id="identifierDisplay" class="form-value"></div>
-                            <input type="hidden" id="identifier" name="regulatoryInfoIdentifier"/>
-                        </div>
-                    </div>
-
-                    <div id="regInfoTypeEdit" class="control-group">
-                        <stripes:label for="regulatoryInfoType" class="control-label">Type</stripes:label>
-                        <div class="controls">
-                            <stripes:select id="regulatoryInfoType" name="regulatoryInfoType">
-                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type" label="name"/>
-                            </stripes:select>
-                        </div>
-                    </div>
-
-                    <div id="regInfoTypeView" class="control-group view-control-group">
-                        <label class="control-label">Type</label>
-
-                        <div class="controls">
-                            <div id="typeDisplay" class="form-value"></div>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
-                        <div class="controls">
-                            <input id="titleInput" type="text" name="regulatoryInfoAlias" required>
-                            <p id="titleValidationError"></p>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <div class="controls">
-                            <stripes:submit id="addNewSubmit" name="add" class="btn btn-primary">Add</stripes:submit>
-                            <stripes:submit id="editSubmit" name="edit" class="btn btn-primary">Edit</stripes:submit>
-                        </div>
-                    </div>
-                </stripes:form>
-            </div>
+            <div id="addRegulatoryInfoDialogSheet2"></div>
         </div>
 
         <div style="clear:both;" class="tableBar">
@@ -618,7 +458,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
-            <stripes:hidden name="removeRegulatoryInfo"/>
+            <input type="hidden" name="removeRegulatoryInfo">
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
@@ -635,8 +475,8 @@
                             <td>${regulatoryInfo.identifier}</td>
                             <td>${regulatoryInfo.name}</td>
                             <td>${regulatoryInfo.type.name}</td>
-                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId}, '${regulatoryInfo.identifier}', '${regulatoryInfo.type}', '${regulatoryInfo.name}');">Edit...</a></td>
-                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${!regulatoryInfo.productOrders.isEmpty()}" class="btn">Remove</stripes:submit></td>
+                            <td style="text-align:center"><a href="#" onclick="return openRegulatoryInfoEditDialog(${regulatoryInfo.regulatoryInfoId});">Edit...</a></td>
+                            <td style="text-align:center"><stripes:submit name="remove" onclick="$j('#removeRegulatoryInfoId').val(${regulatoryInfo.regulatoryInfoId});" disabled="${actionBean.isRegulatoryInfoInProductOrdersForThisResearchProject(regulatoryInfo)}" class="btn">Remove</stripes:submit></td>
                         </tr>
                     </c:forEach>
                 </tbody>
