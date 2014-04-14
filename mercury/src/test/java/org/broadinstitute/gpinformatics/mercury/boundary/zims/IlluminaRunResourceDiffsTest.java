@@ -7,15 +7,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.json.JSONException;
-import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompare;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.JSONCompareResult;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -41,7 +38,8 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
                 IlluminaSequencingRun.class);
         for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
             // Exclude runs created by tests
-            if (!illuminaSequencingRun.getRunName().contains("Flowcell")) {
+            if (!illuminaSequencingRun.getRunName().contains("Flowcell") &&
+                    !illuminaSequencingRun.getRunName().toLowerCase().contains("test")) {
                 System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
                 try {
                     String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
