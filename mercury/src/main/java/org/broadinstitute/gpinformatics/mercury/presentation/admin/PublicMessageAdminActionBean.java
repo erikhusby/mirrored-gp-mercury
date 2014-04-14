@@ -62,7 +62,9 @@ public class PublicMessageAdminActionBean extends CoreActionBean {
 
     @HandlesEvent(CLEAR_MESSAGE)
     public Resolution clearMessage() {
-        publicMessageDao.remove(publicMessage);
+        if (publicMessage != null) {
+            publicMessageDao.remove(publicMessage);
+        }
         return getSourcePageResolution();
     }
 
