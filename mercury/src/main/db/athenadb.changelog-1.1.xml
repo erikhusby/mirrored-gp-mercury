@@ -992,4 +992,28 @@
         <dropNotNullConstraint tableName="RESEARCH_PROJECT" columnName="IRB_NOT_ENGAGED" schemaName="athena"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1304-table" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="athena" tableName="public_message"/>
+            </not>
+        </preConditions>
+        <createTable schemaName="athena" tableName="public_message">
+            <column name="public_message_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="message" type="varchar2(255 char)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-1304-sequence" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists schemaName="athena" sequenceName="SEQ_PUBLIC_MESSAGE"/>
+            </not>
+        </preConditions>
+        <createSequence schemaName="athena" sequenceName="SEQ_PUBLIC_MESSAGE" incrementBy="50" startValue="1"/>
+    </changeSet>
+
 </databaseChangeLog>
