@@ -235,7 +235,12 @@ public class SequencingTemplateFactory {
             prodFlowcellBatches = flowcell.getAllLabBatches(LabBatch.LabBatchType.FCT);
         }
 
-        if (prodFlowcellBatches.size() > 1) {
+        Set<String> denatureBarcodes = new HashSet<>();
+        for (LabBatch flowcellBatch : prodFlowcellBatches) {
+            denatureBarcodes.add(flowcellBatch.getLabBatchStartingVessels().iterator().next().getLabVessel().getLabel());
+        }
+
+        if (denatureBarcodes.size() > 1) {
             throw new InformaticsServiceException(String.format("There are more than one FCT Batches " +
                                                                 "associated with %s", flowcell.getLabel()));
         }
