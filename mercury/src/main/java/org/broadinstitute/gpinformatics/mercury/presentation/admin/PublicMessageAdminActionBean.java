@@ -16,7 +16,6 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
@@ -30,9 +29,8 @@ import javax.inject.Inject;
 /**
  * This ActionBean is used for setting or clearing the mercury public message.
  */
-@UrlBinding(PublicMessageActionBean.URL_BINDING)
-public class PublicMessageActionBean extends CoreActionBean {
-    public static final String URL_BINDING = "/admin/public_message.action";
+@UrlBinding("/admin/public_message.action")
+public class PublicMessageAdminActionBean extends CoreActionBean {
     private static final String ADD_MESSAGE = "addMessage";
     private static final String CLEAR_MESSAGE = "clearMessage";
     private static final String MANAGE_PUBLIC_MESSAGE = "/admin/manage_public_message.jsp";
@@ -54,17 +52,6 @@ public class PublicMessageActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(MANAGE_PUBLIC_MESSAGE);
-    }
-
-
-    @HandlesEvent(TEXT)
-    public Resolution text() {
-        PublicMessage publicMessage = getPublicMessage();
-        String messageText = "";
-        if (publicMessage != null) {
-            messageText = publicMessage.getMessage();
-        }
-        return new StreamingResolution("text", messageText);
     }
 
     @HandlesEvent(ADD_MESSAGE)

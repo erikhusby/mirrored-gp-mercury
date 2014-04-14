@@ -123,7 +123,7 @@
             }
 
             function setupMercuryMessage() {
-                $j.ajax({url: "${ctxpath}/admin/public_message.action?text", success: function (message) {
+                $j.ajax({url: "${ctxpath}/public/public_message.action", success: function (message) {
                     if (message) {
                         $j.bootbar.danger(message, {dismissEnabled: false });
                         $j(".alert").parent().headerPersist();

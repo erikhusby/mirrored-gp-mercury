@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury Public Message"
                        sectionTitle="Manage Public Message">

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessa
 import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
 import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;

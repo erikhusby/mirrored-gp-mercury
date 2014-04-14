@@ -162,7 +162,7 @@
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.BillingSessionAccessActionBean"
                                     event="list">Manage Billing Session Locks</stripes:link></li>
                             <li><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageActionBean"
+                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageAdminActionBean"
                                     event="view">Manage Public Message</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
