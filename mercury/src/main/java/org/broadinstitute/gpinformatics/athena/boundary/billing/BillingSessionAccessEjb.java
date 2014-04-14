@@ -10,6 +10,8 @@ import javax.annotation.Nonnull;
 import javax.ejb.Singleton;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,21 +30,16 @@ public class BillingSessionAccessEjb implements Serializable {
     private Map<String, Boolean> billingSessionLockStatus = new HashMap<>();
 
     /**
-     * Obtains an advisory lock on a billing session for the purpose of performing billing against the Quote Server. It
-     * is EXTREMELY important that this method be called outside of a transactional context so that it will begin and
-     * commit its own transaction. It is, in fact, so important that I think we should consider marking this method as
-     * TransactionAttributeType.NEVER and have it call a TransactionAttributeType.REQUIRED method to do the actual work.
+     * Obtains an advisory lock on a billing session for the purpose of performing billing against the Quote Server.
      *
      * @param billingSessionKey business key of the billing session which is to be found and locked
-     *
      * @return the locked billing session if this thread was able to successfully lock it for billing
-     *
      * @throws BillingException if the billing session is locked for billing by another thread
      */
     public synchronized BillingSession findAndLockSession(@Nonnull String billingSessionKey) {
 
         BillingSession session;
-        if(BooleanUtils.isTrue(billingSessionLockStatus.get(billingSessionKey))) {
+        if (BooleanUtils.isTrue(billingSessionLockStatus.get(billingSessionKey))) {
             throw new BillingException(BillingEjb.LOCKED_SESSION_TEXT);
         }
         billingSessionLockStatus.put(billingSessionKey, Boolean.TRUE);
@@ -59,7 +56,7 @@ public class BillingSessionAccessEjb implements Serializable {
      */
     public synchronized void saveAndUnlockSession(@Nonnull BillingSession billingSession) {
 
-        if(BooleanUtils.isFalse(billingSessionLockStatus.get(billingSession.getBusinessKey()))) {
+        if (BooleanUtils.isFalse(billingSessionLockStatus.get(billingSession.getBusinessKey()))) {
             return;
         }
         log.info("Setting billing session BILL-" + billingSession.getBillingSessionId() + " to unlocked");
@@ -68,11 +65,39 @@ public class BillingSessionAccessEjb implements Serializable {
     }
 
     /**
-     * Helper method to determine if a Billing Session is currently being locked by the application for Billing
+     * Helper method to determine if a Billing Session is currently being locked by the application for Billing. This
+     * must be synchronized in order to ensure a consistent read of changes made from other threads.
+     *
      * @param billingSessionKey business key of the billing session which is to be found and locked
-     * @return
+     * @return true if the billing session is locked; false otherwise
      */
-    public boolean isSessionLocked(@Nonnull String billingSessionKey) {
+    public synchronized boolean isSessionLocked(@Nonnull String billingSessionKey) {
         return BooleanUtils.isTrue(billingSessionLockStatus.get(billingSessionKey));
+    }
+
+    /**
+     * Returns a collection of the billing sessions that are currently locked. This method is synchronized so that it
+     * gives a consistent snapshot of the lock status even if locks are actively being obtained and released. For use by
+     * an admin interface for clearing stale locks.
+     *
+     * @return the locked billing session keys
+     */
+    public synchronized Collection<String> getLockedSessions() {
+        Collection<String> lockedSessions = new ArrayList<>();
+        for (Map.Entry<String, Boolean> entry : billingSessionLockStatus.entrySet()) {
+            if (BooleanUtils.isTrue(entry.getValue())) {
+                lockedSessions.add(entry.getKey());
+            }
+        }
+        return lockedSessions;
+    }
+
+    /**
+     * Forcefully unlocks a session. For use by an admin interface for clearing stale locks.
+     *
+     * @param sessionKey    the billing session key to unlock
+     */
+    public synchronized void unlockSession(String sessionKey) {
+        billingSessionLockStatus.put(sessionKey, Boolean.FALSE);
     }
 }
