@@ -179,10 +179,15 @@ public class AddReworkActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VESSEL_INFO_ACTION, ADD_SAMPLE_ACTION})
     public void initWorkflowBuckets() {
         WorkflowConfig workflowConfig = workflowLoader.load();
+        Set<String> bucketNames = new HashSet<>();
         for (Workflow workflow : Workflow.SUPPORTED_WORKFLOWS) {
             ProductWorkflowDef workflowDef  = workflowConfig.getWorkflowByName(workflow.getWorkflowName());
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            buckets.addAll(workflowVersion.getBuckets());
+            for (WorkflowBucketDef workflowBucketDef : workflowVersion.getBuckets()) {
+                if (bucketNames.add(workflowBucketDef.getName())) {
+                    buckets.add(workflowBucketDef);
+                }
+            }
         }
         // Set the initial bucket to the first one found.
         if (!buckets.isEmpty()) {
