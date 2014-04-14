@@ -1,0 +1,22 @@
+<%@ include file="/resources/layout/taglibs.jsp" %>
+
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageActionBean"/>
+
+<stripes:layout-render name="/layout.jsp" pageTitle="Mercury Public Message"
+                       sectionTitle="Manage Public Message">
+    <stripes:layout-component name="content">
+        <stripes:form beanclass="${actionBean.class.name}">
+            <div class="control-group">
+                <stripes:label for="message" class="control-label">Public Message Text:</stripes:label>
+                <div class="controls">
+                    <stripes:textarea style="width: 300px"  rows="5" name="publicMessage.message"/>
+                </div>
+            </div>
+            <div class="actionButtons">
+                <stripes:submit name="addMessage" value="Add Message" class="btn"/>
+                <stripes:submit name="clearMessage" value="Clear Message" class="btn"/>
+            </div>
+        </stripes:form>
+    </stripes:layout-component>
+</stripes:layout-render>

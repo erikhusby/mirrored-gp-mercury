@@ -179,3 +179,8 @@ legend + .control-group { margin-top: 0px; -webkit-margin-top-collapse: separate
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .notificationText { font-size: x-small; font-weight: 600; color: green; clear: both; margin-left: 15px; }
+.alert {
+    font-size: 14px;
+    text-align: center;
+    z-index: 10000000;
+}
