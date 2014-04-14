@@ -60,9 +60,9 @@ public class PublicMessageActionBean extends CoreActionBean {
     @HandlesEvent(TEXT)
     public Resolution text() {
         PublicMessage publicMessage = getPublicMessage();
-        String messageText="";
+        String messageText = "";
         if (publicMessage != null) {
-            messageText=publicMessage.getMessage();
+            messageText = publicMessage.getMessage();
         }
         return new StreamingResolution("text", messageText);
     }

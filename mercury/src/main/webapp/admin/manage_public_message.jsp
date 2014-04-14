@@ -9,6 +9,9 @@
         <stripes:form beanclass="${actionBean.class.name}">
             <div class="control-group">
                 <stripes:label for="message" class="control-label">Public Message Text:</stripes:label>
+                <ul>
+                    <li>Message can contain html markup.</li>
+                </ul>
                 <div class="controls">
                     <stripes:textarea style="width: 300px"  rows="5" name="publicMessage.message"/>
                 </div>

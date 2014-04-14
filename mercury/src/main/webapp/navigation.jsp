@@ -161,11 +161,9 @@
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.BillingSessionAccessActionBean"
                                     event="list">Manage Billing Session Locks</stripes:link></li>
-                        </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.admin.PublicMessageActionBean"
-                                    event="view">Set Banner Message</stripes:link></li>
+                                    event="view">Manage Public Message</stripes:link></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
