@@ -414,7 +414,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
     public Resolution beginCollaboration() throws Exception {
         collaborationEjb.beginCollaboration(
-                researchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+                editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
 
         // Call init again so that the updated project is retrieved.
         init();

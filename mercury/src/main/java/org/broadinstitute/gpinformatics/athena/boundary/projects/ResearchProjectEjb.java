@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -37,6 +38,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +54,34 @@ public class ResearchProjectEjb {
     private final BSPUserList userList;
     private final BSPCohortList cohortList;
     private final AppConfig appConfig;
+    private final ResearchProjectDao researchProjectDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
     }
 
     @Inject
-    public ResearchProjectEjb(JiraService jiraService,
-                              UserBean userBean, BSPUserList userList, BSPCohortList cohortList, AppConfig appConfig) {
+    public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
+                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
         this.cohortList = cohortList;
         this.appConfig = appConfig;
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    /**
+     * Add a list of users to a research project under the specified role. If a user is already assigned that role
+     * in the research project, nothing is changed.
+     */
+    public void addPeople(String researchProjectKey, RoleType roleType, Collection<BspUser> people) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject != null) {
+            researchProject.addPeople(roleType, people);
+        }
     }
 
     public void submitToJira(@Nonnull ResearchProject researchProject) throws IOException {
