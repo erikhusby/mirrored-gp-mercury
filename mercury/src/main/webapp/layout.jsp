@@ -91,7 +91,7 @@
 
                 // add clear box to filter
                 $j('.dataTables_filter input').clearable();
-                setupMercuryMessage();
+//                setupMercuryMessage();
             });
 
             $j(function () {
