@@ -1,6 +1,7 @@
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.*" %>
 <%@ page import="static org.broadinstitute.gpinformatics.infrastructure.security.Role.roles" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -86,7 +87,7 @@
                 $j.ajax({
                     url: '${ctxpath}/projects/project.action',
                     data: {
-                        regulatoryInfoQuery: '',
+                        '<%= ResearchProjectActionBean.REGULATORY_INFO_QUERY_ACTION %>': '',
                         researchProject: '${actionBean.editResearchProject.businessKey}',
                         q: $j('#regulatoryInfoQuery').val()
                     },
@@ -106,7 +107,7 @@
                 $j.ajax({
                     url: '${ctxpath}/projects/project.action',
                     data: {
-                        viewRegulatoryInfo: '',
+                        '<%= ResearchProjectActionBean.VIEW_REGULATORY_INFO_ACTION %>': '',
                         regulatoryInfoId: regulatoryInfoId,
                         researchProject: '${actionBean.editResearchProject.businessKey}'
                     },
@@ -458,7 +459,7 @@
         </div>
 
         <stripes:form beanclass="${actionBean.class.name}">
-            <input type="hidden" name="removeRegulatoryInfo">
+            <input type="hidden" name="<%= ResearchProjectActionBean.REMOVE_REGULATORY_INFO_ACTION %>">
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">

@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix="d-stripes" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 <stripes:useActionBean var="actionBean"
@@ -66,12 +67,12 @@
                 <c:when test="${actionBean.creating}">
                     <stripes:submit id="addNewSubmit" name="addNewRegulatoryInfo" value="Add" class="btn btn-primary"/>
                     <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
-                    <input type="hidden" name="addNewRegulatoryInfo">
+                    <input type="hidden" name="<%= ResearchProjectActionBean.ADD_NEW_REGULATORY_INFO_ACTION %>">
                 </c:when>
                 <c:otherwise>
                     <stripes:submit id="editSubmit" name="editRegulatoryInfo" value="Edit" class="btn btn-primary"/>
                     <%-- Hidden action is needed because of the validateTitle() submit handler. See below. --%>
-                    <input type="hidden" name="editRegulatoryInfo">
+                    <input type="hidden" name="<%= ResearchProjectActionBean.EDIT_REGULATORY_INFO_ACTION %>">
                 </c:otherwise>
             </c:choose>
         </div>

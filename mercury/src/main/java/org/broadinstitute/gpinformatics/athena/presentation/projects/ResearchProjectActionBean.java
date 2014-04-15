@@ -73,7 +73,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String REGULATORY_INFO_QUERY_ACTION = "regulatoryInfoQuery";
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
-    public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
+    public static final String ADD_NEW_REGULATORY_INFO_ACTION = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
     public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
@@ -214,7 +214,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
-                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO,
+                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
                     RESEND_INVITATION_ACTION})
     public void init() throws Exception {
@@ -673,7 +673,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @return a redirect to the research project view page
      */
-    @HandlesEvent(ADD_NEW_REGULATORY_INFO)
+    @HandlesEvent(ADD_NEW_REGULATORY_INFO_ACTION)
     public Resolution addNewRegulatoryInfo() {
         RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
                 .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
