@@ -53,12 +53,4 @@ public class PublicMessageActionBean extends CoreActionBean {
         }
         return new StreamingResolution("text", messageText);
     }
-
-    public PublicMessage getPublicMessage() {
-        return publicMessage;
-    }
-
-    public void setPublicMessage(PublicMessage publicMessage) {
-        this.publicMessage = publicMessage;
-    }
 }
