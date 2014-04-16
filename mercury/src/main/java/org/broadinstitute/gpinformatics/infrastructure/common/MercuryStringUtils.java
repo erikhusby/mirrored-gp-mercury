@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-public class StringUtils {
+public class MercuryStringUtils {
     /**
      * Splits camel case input string into words for example productOrder would return "product order"
      *
