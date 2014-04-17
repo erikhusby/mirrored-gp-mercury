@@ -10,42 +10,41 @@
  */
 
 package org.broadinstitute.gpinformatics.mercury.presentation.admin;
+// TODO: move this out of the admin package
 
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.mock.MockHttpServletResponse;
+import net.sourceforge.stripes.mock.MockRoundtrip;
+import org.broadinstitute.gpinformatics.athena.control.dao.admin.PublicMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
-import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
-import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
+import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PublicMessageActionBeanTest {
     private static String TEST_MESSAGE_TEXT = "This is a message.";
-    private PublicMessageActionBean actionBean;
+    private PublicMessageDao mockPublicMessageDao;
 
     @BeforeMethod
     private void setUp() {
-        actionBean = new PublicMessageActionBean();
-        actionBean.setContext(new TestCoreActionBeanContext());
-        actionBean.setPublicMessage(new PublicMessage());
+        mockPublicMessageDao = mock(PublicMessageDao.class);
+        PublicMessage publicMessage = new PublicMessage();
+        publicMessage.setMessage(TEST_MESSAGE_TEXT);
+        when(mockPublicMessageDao.getMessage()).thenReturn(publicMessage);
     }
 
     public void testText() throws Exception {
-        actionBean.getPublicMessage().setMessage(TEST_MESSAGE_TEXT);
-        ResolutionCallback resolutionCallback = new ResolutionCallback() {
-            @Override
-            public Resolution getResolution() throws Exception {
-                return actionBean.text();
-            }
-        };
+        MockRoundtrip roundtrip =
+                StripesMockTestUtils.createMockRoundtrip(PublicMessageActionBean.class, mockPublicMessageDao);
 
-        MockHttpServletResponse response = MockStripesActionRunner.runStripesAction(resolutionCallback);
-        Assert.assertEquals(response.getOutputString(), TEST_MESSAGE_TEXT);
-
+        roundtrip.execute(PublicMessageActionBean.TEXT);
+        Assert.assertEquals(roundtrip.getOutputString(), TEST_MESSAGE_TEXT);
+        verify(mockPublicMessageDao).getMessage();
     }
 }
