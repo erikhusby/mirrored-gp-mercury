@@ -56,6 +56,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Inject
     private PriceListCache priceListCache;
 
+    public static final String GOOD_WORK_ID = "workItemId\t1000";
     public static final String SM_1234 = "SM-1234";
     public static final String SM_5678 = "SM-5678";
     private static String FAILING_PRICE_ITEM_NAME = "";
@@ -105,7 +106,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
-            String workId = "workItemId\t1000";
+            String workId = GOOD_WORK_ID;
 
             if (cycleFails) {
                 switch (lastResult) {
@@ -242,7 +243,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     /**
      * <ul>
-     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
+     * <li>Create the fixture data per {@link #writeFixtureData(String...)}.</li>
      * <li>Load the BillingSession and call a version of the BillingEjb method that <b>does</b> call DAO methods
      * inside a transactionally demarcated method, which should cause the EntityManager to be enrolled in the
      * transaction.</li>
@@ -275,6 +276,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
+                assertThat(ledgerEntry.getWorkItem(), is(GOOD_WORK_ID));
             }
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));

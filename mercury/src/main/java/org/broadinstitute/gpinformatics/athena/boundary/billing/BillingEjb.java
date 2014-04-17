@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -53,6 +54,11 @@ public class BillingEjb {
 
         void setWorkId(String workId) {
             this.workId = workId;
+            if (quoteImportItem != null) {
+                for (LedgerEntry ledgerEntry : quoteImportItem.getLedgerItems()) {
+                    ledgerEntry.setWorkItem(workId);
+                }
+            }
         }
 
         public String getErrorMessage() {
