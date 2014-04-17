@@ -43,7 +43,7 @@ public class PublicMessageActionBeanTest {
         MockRoundtrip roundtrip =
                 StripesMockTestUtils.createMockRoundtrip(PublicMessageActionBean.class, mockPublicMessageDao);
 
-        roundtrip.execute("text");
+        roundtrip.execute(PublicMessageActionBean.TEXT);
         Assert.assertEquals(roundtrip.getOutputString(), TEST_MESSAGE_TEXT);
         verify(mockPublicMessageDao).getMessage();
     }

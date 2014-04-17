@@ -32,7 +32,7 @@ public class PublicMessageActionBean extends CoreActionBean {
     private static final String ADD_MESSAGE = "addMessage";
     private static final String CLEAR_MESSAGE = "clearMessage";
     private static final String MANAGE_PUBLIC_MESSAGE = "/admin/manage_public_message.jsp";
-    private static final String TEXT = "text";
+    public static final String TEXT = "text";
 
     @Inject
     private PublicMessageDao publicMessageDao;
