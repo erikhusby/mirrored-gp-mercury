@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -53,4 +54,5 @@ public class BillingResultTest {
         billingResult.setWorkId(WORK_ITEM);
         // no assertion here--the test was just to verify that setWorkId doesn't NPE
     }
+
 }
