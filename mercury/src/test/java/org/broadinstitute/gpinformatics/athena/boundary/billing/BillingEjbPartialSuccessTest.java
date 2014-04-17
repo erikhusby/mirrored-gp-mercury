@@ -5,6 +5,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -49,6 +50,9 @@ import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class BillingEjbPartialSuccessTest extends Arquillian {
+
+    @Inject
+    ProductOrderDao productOrderDao;
 
     @Inject
     private BillingSessionDao billingSessionDao;
@@ -137,9 +141,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV,
-                PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -157,7 +159,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      */
     private BillingSession writeFixtureData(String... orderSamples) {
 
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, orderSamples);
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(productOrderDao, orderSamples);
         quoteCount = 0;
         totalItems = 1;
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(productOrder.getSamples().size());

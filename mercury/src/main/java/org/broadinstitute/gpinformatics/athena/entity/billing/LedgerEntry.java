@@ -66,8 +66,7 @@ public class LedgerEntry implements Serializable {
     private PriceItemType priceItemType;
 
     // work item id handed back from the quote server
-    //@Column(name = "WORK_ITEM")
-    @Transient
+    @Column(name = "QUOTE_SERVER_WORK_ITEM")
     private String workItem;
 
     /**
