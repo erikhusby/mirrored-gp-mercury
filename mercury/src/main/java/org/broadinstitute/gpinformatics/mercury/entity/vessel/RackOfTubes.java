@@ -32,7 +32,8 @@ public class RackOfTubes extends LabVessel {
     // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
     public enum RackType {
         Matrix96("Matrix96", VesselGeometry.G12x8),
-        HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1);
+        HamiltonSampleCarrier32("HamiltonSampleCarrier32", VesselGeometry.G32x1),
+        HamiltonSampleCarrier24("HamiltonSampleCarrier24", VesselGeometry.G24x1);
 
         private static final Map<String, RackType> MAP_NAME_TO_RACK_TYPE =
                 new HashMap<>(RackType.values().length);

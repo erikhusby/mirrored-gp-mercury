@@ -25,8 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.presentation.MockStripesActionRunner;
-import org.broadinstitute.gpinformatics.athena.presentation.ResolutionCallback;
+import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -327,29 +326,31 @@ public class ProductOrderActionBeanTest {
         Assert.assertEquals(roundtrip.getOutputString(),"{\"supportsSkippingQuote\":false}");
     }
 
-    public void testQuoteOptOutAjaxCall() throws Exception {
-        Product product = createSimpleProduct("P-EX-0001", ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
+    private ProductDao setupMockProductDao(Product product) {
         ProductDao productDao = EasyMock.createNiceMock(ProductDao.class);
-
-        actionBean.setProduct(product.getPartNumber());
-        actionBean.setProductDao(productDao);
-
         EasyMock.expect(productDao.findByBusinessKey((String) EasyMock.anyObject())).andReturn(product).atLeastOnce();
         EasyMock.replay(productDao);
+        return productDao;
+    }
 
-        ResolutionCallback resolutionCallback = new ResolutionCallback() {
-            @Override
-            public Resolution getResolution() throws Exception {
-                return actionBean.getSupportsSkippingQuote();
-            }
-        };
+    public void testQuoteOptOutAllowed() throws Exception {
+        Product product = createSimpleProduct("P-EX-0001", ProductFamily.ProductFamilyName.SAMPLE_INITIATION_QUALIFICATION_CELL_CULTURE.getFamilyName());
+        ProductDao productDao = setupMockProductDao(product);
 
-        MockHttpServletResponse response = MockStripesActionRunner.runStripesAction(resolutionCallback);
-        Assert.assertEquals(response.getOutputString(),"{\"supportsSkippingQuote\":true}");
+        MockRoundtrip roundtrip = StripesMockTestUtils.createMockRoundtrip(ProductOrderActionBean.class, productDao);
+        roundtrip.addParameter("product", product.getPartNumber());
+        roundtrip.execute("getSupportsSkippingQuote");
+        Assert.assertEquals(roundtrip.getResponse().getOutputString(),"{\"supportsSkippingQuote\":true}");
+    }
 
-        product.setProductFamily(new ProductFamily("Something that doesn't support optional quotes"));
-        response = MockStripesActionRunner.runStripesAction(resolutionCallback);
-        Assert.assertEquals(response.getOutputString(), "{\"supportsSkippingQuote\":false}");
+    public void testQuoteOptOutNotAllowed() throws Exception {
+        Product product = createSimpleProduct("P-EX-0001", "Some product family that doesn't support optional quotes");
+        ProductDao productDao = setupMockProductDao(product);
+
+        MockRoundtrip roundtrip = StripesMockTestUtils.createMockRoundtrip(ProductOrderActionBean.class, productDao);
+        roundtrip.addParameter("product", product.getPartNumber());
+        roundtrip.execute("getSupportsSkippingQuote");
+        Assert.assertEquals(roundtrip.getResponse().getOutputString(),"{\"supportsSkippingQuote\":false}");
     }
 
     @DataProvider(name = "quoteOptionsDataProvider")
