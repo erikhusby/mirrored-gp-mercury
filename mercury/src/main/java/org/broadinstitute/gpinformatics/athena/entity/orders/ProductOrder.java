@@ -326,9 +326,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         Multimap<String, LabVessel> vesselMap = labDataFetcher.findMapBySampleKeys(samples);
         for (ProductOrderSample sample : samples) {
-            Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
-            if (labVessels != null) {
-                sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
+            if(vesselMap.containsKey(sample.getSampleKey())) {
+                Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
+                if (labVessels != null) {
+                    sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
+                }
             }
         }
     }

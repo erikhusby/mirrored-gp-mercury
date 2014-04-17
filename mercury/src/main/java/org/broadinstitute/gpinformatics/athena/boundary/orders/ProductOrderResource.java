@@ -290,7 +290,7 @@ public class ProductOrderResource {
         try {
             // Add the samples.
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
-        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException e) {
+        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException | InformaticsServiceException e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
         }
 
@@ -381,7 +381,8 @@ public class ProductOrderResource {
                 for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
                     String pdoKey = pdoKeyToSamplesList.getKey();
                     Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-                    List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
+                    List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,
+                                                                                                    sampleNames);
                     allPdoSamples.addAll(pdoSamples);
                 }
                 pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);

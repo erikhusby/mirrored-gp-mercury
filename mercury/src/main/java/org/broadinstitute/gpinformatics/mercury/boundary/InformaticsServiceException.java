@@ -3,9 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.boundary;
 import javax.ejb.ApplicationException;
 
 /**
- * @author Scott Matthews
- *         Date: 5/8/12
- *         Time: 11:56 AM
+ * InformaticsServiceException is intended to be thrown from our Service/Boundary layer (EJBs) and is an extension of
+ * RuntimeException that is defined as an Application Exception.  This approach:
+ * <ul>
+ *     <li>Allows us to have a runtime exception that can be distinguished from other Runtime Exceptions if it needs
+ *     to be handled</li>
+ *     <li>Have a runtime exception thrown from the EJB layer that will not be Wrapped in an EJBException (because
+ *     of the ApplicationException annotation</li>
+ * </ul>
  */
 @ApplicationException(rollback = true)
 public class InformaticsServiceException extends RuntimeException {
