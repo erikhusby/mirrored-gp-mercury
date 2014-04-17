@@ -1009,7 +1009,7 @@ public class ProductOrderEjb {
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      */
     public ProductOrder placeProductOrder(@Nonnull Long productOrderID, String businessKey,
-                                          MessageCollection messageCollection) {
+                                          @Nonnull MessageCollection messageCollection) {
         ProductOrder editOrder =
                 productOrderDao.findByIdSafely(productOrderID, LockModeType.PESSIMISTIC_WRITE);
 
@@ -1036,10 +1036,9 @@ public class ProductOrderEjb {
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
-                log.error("Unable to successfully complete the sample kit creation");
-                if(messageCollection != null) {
-                    messageCollection.addError("Unable to successfully complete the sample kit creation");
-                }
+                String errorMessage = "Unable to successfully complete the sample kit creation";
+                log.error(errorMessage);
+                messageCollection.addError(errorMessage);
             }
         }
 
@@ -1054,11 +1053,9 @@ public class ProductOrderEjb {
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      *                          a value or throwing an exception.
      */
-    public void submitSampleKitRequest(@Nonnull ProductOrder order, MessageCollection messageCollection) {
+    public void submitSampleKitRequest(@Nonnull ProductOrder order, @Nonnull MessageCollection messageCollection) {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
-        if(messageCollection != null) {
-            messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-        }
+        messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
     }
 }
