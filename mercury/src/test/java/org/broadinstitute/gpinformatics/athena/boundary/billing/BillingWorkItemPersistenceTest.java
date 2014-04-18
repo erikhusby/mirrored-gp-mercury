@@ -85,13 +85,6 @@ public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
         billingSessionDao.flush();
         billingSessionDao.clear();
         billingSessionKey = billingSession.getBusinessKey();
-
-        // verify that there is no work item associated with the ledger entry
-        BillingSession billingSessionReadFromDb = billingSessionDao.findByBusinessKey(billingSessionKey);
-        for (LedgerEntry ledgerEntry : billingSessionReadFromDb.getLedgerEntryItems()) {
-            Assert.assertTrue(StringUtils.isEmpty(ledgerEntry.getWorkItem()));
-        }
-        billingSessionDao.clear();
     }
 
     @Test
