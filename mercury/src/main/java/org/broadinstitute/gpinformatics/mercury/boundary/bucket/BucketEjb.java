@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -429,20 +428,18 @@ public class BucketEjb {
 
             List<String> cannotAddToBucket = new ArrayList<>();
 
-            for (String noVesselSample:samplesWithoutVessel) {
+            for (String noVesselSample : samplesWithoutVessel) {
                 BSPSampleDTO noVesselBspDto = nameToSampleDtoMap.get(noVesselSample);
-                if(StringUtils.isBlank(noVesselBspDto.getBarcodeForLabVessel())) {
+                if (StringUtils.isBlank(noVesselBspDto.getBarcodeForLabVessel())) {
                     cannotAddToBucket.add(noVesselSample);
                 }
             }
 
-            if(!cannotAddToBucket.isEmpty()) {
+            if (!cannotAddToBucket.isEmpty()) {
                 throw new BucketException(
-                        String.format("Some of the samples for %s have not been exported to Mercury yet.  " +
-                                      "Export them and then add them to the bucket: %s", order.getBusinessKey(),
+                        String.format("Some of the samples for %s could not be added to the bucket.  " +
+                                      "There is no known plastic ware for them in BSP: %s", order.getBusinessKey(),
                                       StringUtils.join(cannotAddToBucket, ", ")));
-
-
             }
             vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
         }

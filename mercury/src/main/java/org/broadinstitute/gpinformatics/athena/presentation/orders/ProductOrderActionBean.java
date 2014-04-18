@@ -1049,8 +1049,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
-        } catch (BucketException ise) {
-            addGlobalValidationError(ise.getMessage());
         } catch (Exception e) {
 
             // If we get here with an original business key, then clear out the session and refetch the order.
@@ -1061,7 +1059,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             updateFromInitiationTokenInputs();
 
-            addGlobalValidationError(e.toString());
+            addGlobalValidationError(e.getMessage());
+            logger.error("Error while placing an order for " + editOrder.getBusinessKey(), e);
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
             entryInit();
             return getSourcePageResolution();
