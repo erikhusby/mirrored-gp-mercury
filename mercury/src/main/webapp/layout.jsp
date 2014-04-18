@@ -59,7 +59,6 @@
         <script src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.sparkline-2.1.2.min.js"></script>
-        <script src="${ctxpath}/resources/scripts/bootbar.js"></script>
         <script src="${ctxpath}/resources/scripts/jquery.headerPersist.1.0.js"></script>
 
         <script src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
@@ -125,8 +124,8 @@
             function setupMercuryMessage() {
                 $j.ajax({url: "${ctxpath}/public/public_message.action", success: function (message) {
                     if (message) {
-                        $j.bootbar.danger(message, {dismissEnabled: false });
-                        $j(".alert").parent().headerPersist();
+                        $j("body").prepend('<div style="font-size: 14px; text-align: center; z-index: 10000000;" class="alert alert-danger" id="public-message">'+message+'</div>');
+                        $j("body").headerPersist();
                     }
                 }});
             }

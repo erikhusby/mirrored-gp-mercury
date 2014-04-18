@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -72,8 +73,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String REGULATORY_INFO_QUERY_ACTION = "regulatoryInfoQuery";
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
-    public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
+    public static final String ADD_NEW_REGULATORY_INFO_ACTION = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
+    public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
 
@@ -132,6 +134,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * The search query.
      */
     private String q;
+
+    private List<RegulatoryInfo> searchResults;
 
     private Long regulatoryInfoId;
 
@@ -210,7 +214,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
-                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO,
+                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
                     RESEND_INVITATION_ACTION})
     public void init() throws Exception {
@@ -414,7 +418,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
     public Resolution beginCollaboration() throws Exception {
         collaborationEjb.beginCollaboration(
-                researchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+                editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
 
         // Call init again so that the updated project is retrieved.
         init();
@@ -529,30 +533,115 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     /**
      * Handles an AJAX action event to search for regulatory information, case-insensitively, from the value in this.q.
-     * The JSONObjects in the returned array will have the following properties:
-     *
-     * <dl>
-     *     <dt>id</dt>
-     *     <dd>the RegulatoryInfo's primary key</dd>
-     *     <dt>identifier</dt>
-     *     <dd>the externally assigned identifier, such as IRB Protocol #</dd>
-     *     <dt>type</dt>
-     *     <dd>the type of regulatory information, such as IRB Protocol</dd>
-     *     <dt>alias</dt>
-     *     <dd>the name given to this information for the benefit of Mercury users</dd>
-     * </dl>
-     *
-     * @return the regulatory information search results
-     * @throws JSONException
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
-    public Resolution queryRegulatoryInfo() throws JSONException {
-        List<RegulatoryInfo> infos = regulatoryInfoDao.findByIdentifier(q);
-        JSONArray results = new JSONArray();
-        for (RegulatoryInfo info : infos) {
-            results.put(regulatoryInfoToJSONObject(info, editResearchProject.getRegulatoryInfos().contains(info)));
+    public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
+        searchResults = regulatoryInfoDao.findByIdentifier(q);
+        regulatoryInfoIdentifier = q;
+        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
+    }
+
+    /**
+     * Determines whether or not the given regulatory information is already associated with the current research
+     * project. This is used to determine whether an existing regulatory information can be added to a project.
+     *
+     * @param regulatoryInfo    the regulatory info to check
+     * @return true if the regulatory info is associated with the research project; false otherwise
+     */
+    public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
+        return editResearchProject.getRegulatoryInfos().contains(regulatoryInfo);
+    }
+
+    /**
+     * Determines whether or not the given regulatory information is being used for a product order for the current
+     * research project. This is used to determine whether regulatory information can be safely disassociated with the
+     * project.
+     *
+     * @param regulatoryInfo    the regulatory info to check
+     * @return true if the regulatory info is in use for an order; false otherwise
+     */
+    public boolean isRegulatoryInfoInProductOrdersForThisResearchProject(RegulatoryInfo regulatoryInfo) {
+        for (ProductOrder productOrder : editResearchProject.getProductOrders()) {
+            if (productOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
+                return true;
+            }
         }
-        return createTextResolution(results.toString());
+        return false;
+    }
+
+    /**
+     * Determines whether or not the regulatory information form represents a new record.
+     *
+     * @return true if creating a new regulatory information; false otherwise
+     */
+    public boolean isCreating() {
+        return regulatoryInfoId == null;
+    }
+
+    /**
+     * Determines whether or not the regulatory information form represents an existing record.
+     *
+     * @return true if editing an existing regulatory information; false otherwise
+     */
+    public boolean isEditing() {
+        return !isCreating();
+    }
+
+    /**
+     * Returns all of the possible regulatory information types. This is used to access the enumeration values because
+     * stripes:options-enumeration does not support a "disabled" attribute.
+     *
+     * @return a collection of all values from the {@link org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type} enum
+     */
+    public Collection<RegulatoryInfo.Type> getAllTypes() {
+        return Arrays.asList(RegulatoryInfo.Type.values());
+    }
+
+    /**
+     * Determines whether or not there are any regulatory information types that can be added for the queried
+     * identifier. If there is already regulatory information for every type for the queried identifier, the UI should
+     * not prompt to create a new record.
+     *
+     * @return true if the user should be allowed to create new regulatory info; false otherwise
+     */
+    public boolean isAddRegulatoryInfoAllowed() {
+        EnumSet<RegulatoryInfo.Type> types = EnumSet.allOf(RegulatoryInfo.Type.class);
+        for (RegulatoryInfo regulatoryInfo : searchResults) {
+            types.remove(regulatoryInfo.getType());
+        }
+        return !types.isEmpty();
+    }
+
+    /**
+     * Determines whether or not a regulatory information of the given type already exists with the queried identifier.
+     *
+     * @param type    the type to check
+     * @return true if the type is already in use for the identifier; false otherwise
+     */
+    public boolean isTypeInUseForIdentifier(RegulatoryInfo.Type type) {
+        for (RegulatoryInfo searchResult : searchResults) {
+            if (searchResult.getType() == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Loads an existing regulatory information and pre-populates the regulatory information form.
+     *
+     * @return a resolution to the regulatory information form
+     */
+    @HandlesEvent(VIEW_REGULATORY_INFO_ACTION)
+    public Resolution viewRegulatoryInfo() {
+        RegulatoryInfo regulatoryInfo = regulatoryInfoDao.findById(RegulatoryInfo.class, regulatoryInfoId);
+        if (regulatoryInfo != null) {
+            regulatoryInfoIdentifier = regulatoryInfo.getIdentifier();
+            searchResults = regulatoryInfoDao.findByIdentifier(regulatoryInfoIdentifier);
+            regulatoryInfoType = regulatoryInfo.getType();
+            regulatoryInfoAlias = regulatoryInfo.getName();
+        }
+        return new ForwardResolution("regulatory_info_form.jsp");
     }
 
     private static JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
@@ -584,7 +673,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @return a redirect to the research project view page
      */
-    @HandlesEvent(ADD_NEW_REGULATORY_INFO)
+    @HandlesEvent(ADD_NEW_REGULATORY_INFO_ACTION)
     public Resolution addNewRegulatoryInfo() {
         RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
                 .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
@@ -708,6 +797,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    public List<RegulatoryInfo> getSearchResults() {
+        return searchResults;
     }
 
     public Long getRegulatoryInfoId() {

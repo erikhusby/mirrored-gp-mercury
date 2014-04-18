@@ -398,7 +398,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public boolean addPeople(RoleType role, List<BspUser> people) {
+    public boolean addPeople(RoleType role, Collection<BspUser> people) {
         boolean added = false;
 
         if (people != null) {
