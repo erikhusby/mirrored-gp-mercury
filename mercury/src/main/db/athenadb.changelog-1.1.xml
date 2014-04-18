@@ -1017,7 +1017,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-2694-persist-work-item" author="andrew">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="BILLING_LEDGER" columnName="QUOTE_SERVER_WORK_ITEM" schemaName="athena" />
             </not>
@@ -1028,7 +1028,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-2694-persist-work-item-audit" author="andrew">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <columnExists tableName="BILLING_LEDGER_AUD" columnName="QUOTE_SERVER_WORK_ITEM" schemaName="athena" />
             </not>

@@ -114,12 +114,13 @@ public class BillingEjb {
      *
      * @param item             Representation of the quote and its ledger entries that are to be billed
      * @param quoteIsReplacing Set if the price item is replacing a previously defined item.
+     * @param quoteServerWorkItem the pointer back to the quote server transaction
      */
-    public void updateQuoteItem(QuoteImportItem item, QuotePriceItem quoteIsReplacing) {
+    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing,String quoteServerWorkItem) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-        item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS,quoteServerWorkItem);
         billingSessionDao.flush();
     }
 }

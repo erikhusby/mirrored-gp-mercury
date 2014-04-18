@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
@@ -39,7 +40,7 @@ public class BillingResultTest {
 
     @Test
     public void testWorkItemIsPassedThroughToLedgerItems() {
-        quoteImportItem.setWorkItems(WORK_ITEM);
+        quoteImportItem.updateLedgerEntries(new QuotePriceItem(),"something",WORK_ITEM);
         Assert.assertFalse(quoteImportItem.getLedgerItems().isEmpty(),"No ledger items were included in this test.  Who knows if the work items were saved?");
         for (LedgerEntry ledgerEntry : quoteImportItem.getLedgerItems()) {
             Assert.assertEquals(ledgerEntry.getWorkItem(),WORK_ITEM,"Work item from the quote server was not propagated to ledger entries.  The ability to compare quote server data with mercury may be broken.");
