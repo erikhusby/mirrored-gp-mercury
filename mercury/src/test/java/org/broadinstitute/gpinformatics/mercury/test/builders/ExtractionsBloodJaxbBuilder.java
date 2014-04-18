@@ -10,8 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * User: root
- * Date: 4/1/14
+ * Builds JAXB objects for Extractions cryovial blood messages
  */
 public class ExtractionsBloodJaxbBuilder {
     private static final int NUMBER_OF_RACK_COLUMNS = 32;
