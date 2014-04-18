@@ -126,11 +126,15 @@ public class BettaLimsMessageTestFactory {
     }
 
     public String buildWellName(int positionNumber, WellNameType wellNameType) {
+        return buildWellName(NUMBER_OF_RACK_COLUMNS, positionNumber, wellNameType);
+    }
+
+    public String buildWellName(int numberOfRackColums, int positionNumber, WellNameType wellNameType) {
         @SuppressWarnings("NumericCastThatLosesPrecision")
-        char row = (char) ('A' + (positionNumber / NUMBER_OF_RACK_COLUMNS));
-        int column = positionNumber % NUMBER_OF_RACK_COLUMNS;
+        char row = (char) ('A' + (positionNumber / numberOfRackColums));
+        int column = positionNumber % numberOfRackColums;
         if (column == 0) {
-            column = NUMBER_OF_RACK_COLUMNS;
+            column = numberOfRackColums;
             row--;
         }
         String columnString = String.valueOf(column);
@@ -331,6 +335,38 @@ public class BettaLimsMessageTestFactory {
         return plateCherryPickEvent;
     }
 
+    public PlateCherryPickEvent buildCherryPickToPlate(String eventType, String sourcePhysType, List<String> sourceRackBarcodes,
+                                                List<List<String>> sourceTubeBarcodes, List<String> targetPlateBarcodes,
+                                                List<CherryPick> cherryPicks) {
+        PlateCherryPickEvent plateCherryPickEvent = new PlateCherryPickEvent();
+        setStationEventData(eventType, plateCherryPickEvent);
+
+        for (String sourceRackBarcode : sourceRackBarcodes) {
+            plateCherryPickEvent.getSourcePlate().add(
+                    buildRack(sourceRackBarcode, sourcePhysType, LabEventFactory.SECTION_ALL_96));
+        }
+        for (int i = 0, sourceTubeBarcodesSize = sourceTubeBarcodes.size(); i < sourceTubeBarcodesSize; i++) {
+            List<String> sourceTubeBarcode = sourceTubeBarcodes.get(i);
+            plateCherryPickEvent.getSourcePositionMap()
+                    .add(buildPositionMap(sourceRackBarcodes.get(i), sourceTubeBarcode));
+        }
+
+        for (String targetRackBarcode : targetPlateBarcodes) {
+            plateCherryPickEvent.getPlate().add(buildPlate(targetRackBarcode));
+        }
+
+        for (CherryPick cherryPick : cherryPicks) {
+            CherryPickSourceType cherryPickSource = new CherryPickSourceType();
+            cherryPickSource.setBarcode(cherryPick.getSourceRackBarcode());
+            cherryPickSource.setWell(cherryPick.getSourceWell());
+            cherryPickSource.setDestinationBarcode(cherryPick.getDestinationRackBarcode());
+            cherryPickSource.setDestinationWell(cherryPick.getDestinationWell());
+            plateCherryPickEvent.getSource().add(cherryPickSource);
+        }
+
+        return plateCherryPickEvent;
+    }
+
     public PlateCherryPickEvent buildCherryPickToStripTube(String eventType, List<String> sourceRackBarcodes,
                                                            List<List<String>> sourceTubeBarcodes,
                                                            String targetRackBarcode,
@@ -464,10 +500,14 @@ public class BettaLimsMessageTestFactory {
     }
 
     private PlateType buildRack(String rackBarcode) {
+        return buildRack(rackBarcode, LabEventFactory.PHYS_TYPE_TUBE_RACK, LabEventFactory.SECTION_ALL_96);
+    }
+
+    private PlateType buildRack(String rackBarcode, String physType, String section) {
         PlateType rack = new PlateType();
         rack.setBarcode(rackBarcode);
-        rack.setPhysType(LabEventFactory.PHYS_TYPE_TUBE_RACK);
-        rack.setSection(LabEventFactory.SECTION_ALL_96);
+        rack.setPhysType(physType);
+        rack.setSection(section);
         return rack;
     }
 
