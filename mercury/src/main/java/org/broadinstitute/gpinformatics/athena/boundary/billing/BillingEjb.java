@@ -34,18 +34,18 @@ public class BillingEjb {
      */
     public static class BillingResult {
 
-        private QuoteImportItem quoteImportItem;
+        private final QuoteImportItem quoteImportItem;
 
         private String workId;
 
         private String errorMessage;
 
-        public QuoteImportItem getQuoteImportItem() {
-            return quoteImportItem;
+        public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
+            this.quoteImportItem = quoteImportItem;
         }
 
-        void setQuoteImportItem(QuoteImportItem quoteImportItem) {
-            this.quoteImportItem = quoteImportItem;
+        public QuoteImportItem getQuoteImportItem() {
+            return quoteImportItem;
         }
 
         public String getWorkId() {
@@ -54,11 +54,6 @@ public class BillingEjb {
 
         void setWorkId(String workId) {
             this.workId = workId;
-            if (quoteImportItem != null) {
-                for (LedgerEntry ledgerEntry : quoteImportItem.getLedgerItems()) {
-                    ledgerEntry.setWorkItem(workId);
-                }
-            }
         }
 
         public String getErrorMessage() {

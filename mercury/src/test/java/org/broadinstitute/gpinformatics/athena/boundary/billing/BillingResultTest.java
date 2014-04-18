@@ -20,13 +20,11 @@ public class BillingResultTest {
 
     private static final String WORK_ITEM = "blah";
 
-    private BillingEjb.BillingResult billingResult;
+    private QuoteImportItem quoteImportItem;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     private void setUp() {
-        billingResult = new BillingEjb.BillingResult();
-        QuoteImportItem importItem = createQuoteImportItem(2);
-        billingResult.setQuoteImportItem(importItem);
+        quoteImportItem = createQuoteImportItem(2);
     }
 
     private QuoteImportItem createQuoteImportItem(int numEntries) {
@@ -41,18 +39,11 @@ public class BillingResultTest {
 
     @Test
     public void testWorkItemIsPassedThroughToLedgerItems() {
-        billingResult.setWorkId(WORK_ITEM);
-        Assert.assertFalse(billingResult.getQuoteImportItem().getLedgerItems().isEmpty(),"No ledger items were included in this test.  Who knows if the work items were saved?");
-        for (LedgerEntry ledgerEntry : billingResult.getQuoteImportItem().getLedgerItems()) {
+        quoteImportItem.setWorkItems(WORK_ITEM);
+        Assert.assertFalse(quoteImportItem.getLedgerItems().isEmpty(),"No ledger items were included in this test.  Who knows if the work items were saved?");
+        for (LedgerEntry ledgerEntry : quoteImportItem.getLedgerItems()) {
             Assert.assertEquals(ledgerEntry.getWorkItem(),WORK_ITEM,"Work item from the quote server was not propagated to ledger entries.  The ability to compare quote server data with mercury may be broken.");
         }
-    }
-
-    @Test
-    public void testNoErrorWhenNoLedgerItems() {
-        billingResult.setQuoteImportItem(null);
-        billingResult.setWorkId(WORK_ITEM);
-        // no assertion here--the test was just to verify that setWorkId doesn't NPE
     }
 
 }

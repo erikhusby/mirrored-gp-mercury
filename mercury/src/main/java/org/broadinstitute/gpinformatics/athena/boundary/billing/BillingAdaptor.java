@@ -120,9 +120,8 @@ public class BillingAdaptor implements Serializable {
 
             for (QuoteImportItem item : unBilledQuoteImportItems) {
 
-                BillingEjb.BillingResult result = new BillingEjb.BillingResult();
+                BillingEjb.BillingResult result = new BillingEjb.BillingResult(item);
                 results.add(result);
-                result.setQuoteImportItem(item);
 
                 Quote quote = new Quote();
                 quote.setAlphanumericId(item.getQuoteId());
@@ -138,6 +137,7 @@ public class BillingAdaptor implements Serializable {
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
+                    item.setWorkItems(workId);
                     log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
                              + new Date());
 

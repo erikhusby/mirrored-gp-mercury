@@ -80,6 +80,15 @@ public class QuoteImportItem {
         return ledgerItems.get(0).getBillingMessage();
     }
 
+    /**
+     * Sets the work item for all the underlying ledger items
+     */
+    public void setWorkItems(String workItem) {
+        for (LedgerEntry ledgerEntry : ledgerItems) {
+            ledgerEntry.setWorkItem(workItem);
+        }
+    }
+
     public void setBillingMessages(String billedMessage) {
         for (LedgerEntry ledgerItem : ledgerItems) {
             ledgerItem.setBillingMessage(billedMessage);
