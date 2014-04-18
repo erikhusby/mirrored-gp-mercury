@@ -403,14 +403,12 @@ public class BucketEjb {
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
         Multimap<String, ProductOrderSample> nameToSampleMap = ArrayListMultimap.create();
-        Map<String, BSPSampleDTO> nameToSampleDtoMap = new HashMap<>();
         Set<String> sampleKeyList = new HashSet<>();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
 
             nameToSampleMap.put(pdoSample.getName(), pdoSample);
-            nameToSampleDtoMap.put(pdoSample.getName(), pdoSample.getBspSampleDTO());
             sampleKeyList.add(pdoSample.getName());
         }
 
@@ -418,32 +416,14 @@ public class BucketEjb {
 
         // Finds samples with no existing vessels.
         Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
-        Map<String, BSPSampleDTO> sampleDtoWithoutVesselMap = new HashMap<>(nameToSampleDtoMap);
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
-                sampleDtoWithoutVesselMap.remove(sample.getSampleKey());
             }
         }
 
         if (!CollectionUtils.isEmpty(samplesWithoutVessel)) {
-
-            List<String> cannotAddToBucket = new ArrayList<>();
-
-            for (String noVesselSample : samplesWithoutVessel) {
-                BSPSampleDTO noVesselBspDto = nameToSampleDtoMap.get(noVesselSample);
-                if (StringUtils.isBlank(noVesselBspDto.getBarcodeForLabVessel())) {
-                    cannotAddToBucket.add(noVesselSample);
-                }
-            }
-
-            if (!cannotAddToBucket.isEmpty()) {
-                throw new BucketException(
-                        String.format("Some of the samples for %s could not be added to the bucket.  " +
-                                      "There is no known plastic ware for them in BSP: %s", order.getBusinessKey(),
-                                      StringUtils.join(cannotAddToBucket, ", ")));
-            }
-            vessels.addAll(createInitialVessels(samplesWithoutVessel, username, sampleDtoWithoutVesselMap));
+            vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
         }
 
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
@@ -493,14 +473,29 @@ public class BucketEjb {
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username,
                                                       Map<String, BSPSampleDTO> bspDtoMap) {
         Collection<LabVessel> vessels = new ArrayList<>();
+        List<String> cannotAddToBucket = new ArrayList<>();
+
         for (String sampleName : samplesWithoutVessel) {
             BSPSampleDTO bspDto = bspDtoMap.get(sampleName);
-            if (bspDto != null && bspDto.isSampleReceived() &&
+
+            if (bspDto != null &&
                 StringUtils.isNotBlank(bspDto.getBarcodeForLabVessel())) {
-                vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(),
-                                                                       username, new Date()));
+                if (bspDto.isSampleReceived()) {
+                    vessels.addAll(labVesselFactory.buildInitialLabVessels(sampleName, bspDto.getBarcodeForLabVessel(),
+                                                                           username, new Date()));
+                }
+            } else {
+                cannotAddToBucket.add(sampleName);
             }
         }
+
+        if (!cannotAddToBucket.isEmpty()) {
+            throw new BucketException(
+                    String.format("Some of the samples for the order could not be added to the bucket.  " +
+                                  "Some crucial BSP information cannot be found: %s",
+                                  StringUtils.join(cannotAddToBucket, ", ")));
+        }
+
         return vessels;
     }
 }
