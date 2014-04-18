@@ -1035,16 +1035,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            if (placeOrderMessageCollection.hasInfos()) {
-                for (String info : placeOrderMessageCollection.getInfos()) {
-                    addMessage(info);
-                }
-            }
-            if (placeOrderMessageCollection.hasErrors()) {
-                for (String error : placeOrderMessageCollection.getErrors()) {
-                    addGlobalValidationError(error);
-                }
-            }
+            addMessages(placeOrderMessageCollection);
 
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);

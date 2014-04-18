@@ -418,9 +418,11 @@ public class BucketEjb {
 
         // Finds samples with no existing vessels.
         Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
+        Map<String, BSPSampleDTO> sampleDtoWithoutVesselMap = new HashMap<>(nameToSampleDtoMap);
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
+                sampleDtoWithoutVesselMap.remove(sample.getSampleKey());
             }
         }
 
@@ -441,7 +443,7 @@ public class BucketEjb {
                                       "There is no known plastic ware for them in BSP: %s", order.getBusinessKey(),
                                       StringUtils.join(cannotAddToBucket, ", ")));
             }
-            vessels.addAll(createInitialVessels(samplesWithoutVessel, username));
+            vessels.addAll(createInitialVessels(samplesWithoutVessel, username, sampleDtoWithoutVesselMap));
         }
 
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
