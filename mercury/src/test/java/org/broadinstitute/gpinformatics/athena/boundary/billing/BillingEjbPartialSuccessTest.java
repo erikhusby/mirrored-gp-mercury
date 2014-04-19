@@ -44,7 +44,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -283,7 +282,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             }
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
-                assertThat(ledgerEntry.getWorkItem(), isEmptyOrNullString());
+                assertThat(ledgerEntry.getWorkItem(), is(nullValue()));
             }
         }
     }
