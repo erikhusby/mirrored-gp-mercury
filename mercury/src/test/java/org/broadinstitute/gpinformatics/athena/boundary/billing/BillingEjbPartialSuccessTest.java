@@ -5,6 +5,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -43,6 +44,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -51,11 +53,15 @@ import static org.hamcrest.Matchers.nullValue;
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
+    ProductOrderDao productOrderDao;
+
+    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
     private PriceListCache priceListCache;
 
+    public static final String GOOD_WORK_ID = "workItemId\t1000";
     public static final String SM_1234 = "SM-1234";
     public static final String SM_5678 = "SM-5678";
     private static String FAILING_PRICE_ITEM_NAME = "";
@@ -105,7 +111,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
-            String workId = "workItemId\t1000";
+            String workId = GOOD_WORK_ID;
 
             if (cycleFails) {
                 switch (lastResult) {
@@ -136,9 +142,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV,
-                PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -156,7 +160,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      */
     private BillingSession writeFixtureData(String... orderSamples) {
 
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, orderSamples);
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(productOrderDao, orderSamples);
         quoteCount = 0;
         totalItems = 1;
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(productOrder.getSamples().size());
@@ -242,7 +246,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     /**
      * <ul>
-     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
+     * <li>Create the fixture data per {@link #writeFixtureData(String...)}.</li>
      * <li>Load the BillingSession and call a version of the BillingEjb method that <b>does</b> call DAO methods
      * inside a transactionally demarcated method, which should cause the EntityManager to be enrolled in the
      * transaction.</li>
@@ -275,9 +279,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
+                assertThat(ledgerEntry.getWorkItem(), is(GOOD_WORK_ID));
             }
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
+                assertThat(ledgerEntry.getWorkItem(), isEmptyOrNullString());
             }
         }
     }

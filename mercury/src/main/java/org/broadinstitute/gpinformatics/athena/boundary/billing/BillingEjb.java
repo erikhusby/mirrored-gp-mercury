@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -33,18 +34,18 @@ public class BillingEjb {
      */
     public static class BillingResult {
 
-        private QuoteImportItem quoteImportItem;
+        private final QuoteImportItem quoteImportItem;
 
         private String workId;
 
         private String errorMessage;
 
-        public QuoteImportItem getQuoteImportItem() {
-            return quoteImportItem;
+        public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
+            this.quoteImportItem = quoteImportItem;
         }
 
-        void setQuoteImportItem(QuoteImportItem quoteImportItem) {
-            this.quoteImportItem = quoteImportItem;
+        public QuoteImportItem getQuoteImportItem() {
+            return quoteImportItem;
         }
 
         public String getWorkId() {
@@ -113,12 +114,13 @@ public class BillingEjb {
      *
      * @param item             Representation of the quote and its ledger entries that are to be billed
      * @param quoteIsReplacing Set if the price item is replacing a previously defined item.
+     * @param quoteServerWorkItem the pointer back to the quote server transaction
      */
-    public void updateQuoteItem(QuoteImportItem item, QuotePriceItem quoteIsReplacing) {
+    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing,String quoteServerWorkItem) {
 
         // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
         // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-        item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
+        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS,quoteServerWorkItem);
         billingSessionDao.flush();
     }
 }
