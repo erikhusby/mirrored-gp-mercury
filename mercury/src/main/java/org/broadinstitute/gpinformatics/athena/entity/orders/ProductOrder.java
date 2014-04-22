@@ -259,7 +259,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
 
         // Do stuff that needs to happen after serialization and here.
         readResolve();
@@ -415,7 +415,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                            List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
         setSamples(samples);
     }
 
@@ -534,7 +534,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setResearchProject(ResearchProject researchProject) {
+        if (this.researchProject != null) {
+            this.researchProject.removeProductOrder(this);
+        }
         this.researchProject = researchProject;
+        if (researchProject != null) {
+            researchProject.addProductOrder(this);
+        }
     }
 
     public Product getProduct() {
