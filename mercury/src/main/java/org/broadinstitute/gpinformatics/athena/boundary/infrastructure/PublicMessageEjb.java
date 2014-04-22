@@ -30,8 +30,15 @@ import javax.inject.Inject;
 public class PublicMessageEjb {
     private static final Log log = LogFactory.getLog(PublicMessageEjb.class);
 
-    @Inject
     private PublicMessageDao publicMessageDao;
+
+    public PublicMessageEjb() {
+    }
+
+    @Inject
+    public PublicMessageEjb(PublicMessageDao publicMessageDao) {
+        this.publicMessageDao=publicMessageDao;
+    }
 
     private PublicMessage message;
 
