@@ -10,6 +10,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="View Research Project"
                        sectionTitle="View Project: ${actionBean.editResearchProject.title}"
                        businessKeyValue="${actionBean.editResearchProject.businessKey}">
+
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
@@ -128,6 +129,16 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+        <div class="actionButtons">
+            <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.QuickQuoteActionBean" event="quickQuote">
+                    <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
+                    <img src="${ctxpath}/images/calculator.png" width="60" height="76" alt="quick quote" title="quick quote"/>
+                </stripes:link>
+            </security:authorizeBlock>
+        </div>
+
         <stripes:form beanclass="${actionBean.class.name}" id="projectForm" class="form-horizontal">
 
             <div id="confirmDialog" style="width:600px;display:none;">
