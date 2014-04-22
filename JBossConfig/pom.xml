@@ -178,7 +178,8 @@
                                     <fileset dir="${project.build.directory}/modules"/>
                                 </copy>
                                 <echo message="Updating standalone configuration"/>
-                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
+                                <property name="jboss.standalone.dir">${env.JBOSS_HOME}/standalone</property>
+                                <copy todir="${jboss.standalone.dir}" overwrite="true" verbose="true">
                                     <fileset dir="${project.build.directory}/standalone"/>
                                 </copy>
                                 <copy todir="${env.JBOSS_HOME}" overwrite="true" verbose="true"
