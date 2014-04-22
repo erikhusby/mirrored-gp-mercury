@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.admin.PublicMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 
@@ -19,32 +21,53 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
 
+/**
+ * Manipulate the public message displayed at the top of mercury pages.
+ * A PublicMessage is normally stored in the database, but allow the message object be set even when the database is unreachable.
+ */
 @Singleton
 @Startup
 public class PublicMessageEjb {
+    private static final Log log = LogFactory.getLog(PublicMessageEjb.class);
+
     @Inject
     private PublicMessageDao publicMessageDao;
 
+    private PublicMessage message;
+
     public PublicMessage getPublicMessage() {
-        return publicMessageDao.getMessage();
+        try {
+            message = publicMessageDao.getMessage();
+        } catch (Exception e) {
+            log.error("Could not fetch public message from the database", e);
+        }
+        return message;
     }
 
     public void setPublicMessage(@Nonnull PublicMessage publicMessage) {
-        clearPublicMessage();
-        publicMessageDao.persist(publicMessage);
+        message = publicMessage;
+        try {
+            publicMessageDao.persist(message);
+        } catch (Exception e) {
+            log.error("Could not persist public message", e);
+        }
+
     }
 
     public void setPublicMessage(@Nonnull String publicMessageText) {
-        clearPublicMessage();
-        PublicMessage publicMessage = new PublicMessage(publicMessageText);
-        publicMessageDao.persist(publicMessage);
+        setPublicMessage(new PublicMessage(publicMessageText));
     }
 
 
     public void clearPublicMessage() {
-        PublicMessage publicMessage = getPublicMessage();
-        if (publicMessage != null) {
-            publicMessageDao.remove(publicMessage);
+        if (message != null) {
+            try {
+                publicMessageDao.remove(message);
+            } catch (Exception e) {
+                log.error("Could not clear public message", e);
+            } finally {
+                message = null;
+            }
         }
     }
 }
