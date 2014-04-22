@@ -9,15 +9,13 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.presentation.admin;
-// TODO: move this out of the admin package
+package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import net.sourceforge.stripes.mock.MockRoundtrip;
-import org.broadinstitute.gpinformatics.athena.control.dao.admin.PublicMessageDao;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.PublicMessageEjb;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 import org.broadinstitute.gpinformatics.athena.presentation.StripesMockTestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,22 +27,22 @@ import static org.mockito.Mockito.when;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PublicMessageActionBeanTest {
     private static String TEST_MESSAGE_TEXT = "This is a message.";
-    private PublicMessageDao mockPublicMessageDao;
+    private PublicMessageEjb publicMessageEjb;
 
     @BeforeMethod
     private void setUp() {
-        mockPublicMessageDao = mock(PublicMessageDao.class);
+        publicMessageEjb = mock(PublicMessageEjb.class);
         PublicMessage publicMessage = new PublicMessage();
         publicMessage.setMessage(TEST_MESSAGE_TEXT);
-        when(mockPublicMessageDao.getMessage()).thenReturn(publicMessage);
+        when(publicMessageEjb.getPublicMessage()).thenReturn(publicMessage);
     }
 
     public void testText() throws Exception {
         MockRoundtrip roundtrip =
-                StripesMockTestUtils.createMockRoundtrip(PublicMessageActionBean.class, mockPublicMessageDao);
+                StripesMockTestUtils.createMockRoundtrip(PublicMessageActionBean.class, publicMessageEjb);
 
         roundtrip.execute(PublicMessageActionBean.TEXT);
         Assert.assertEquals(roundtrip.getOutputString(), TEST_MESSAGE_TEXT);
-        verify(mockPublicMessageDao).getMessage();
+        verify(publicMessageEjb).getPublicMessage();
     }
 }
