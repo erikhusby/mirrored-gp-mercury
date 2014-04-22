@@ -591,10 +591,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Returns all of the possible regulatory information types. This is used to access the enumeration values because
      * stripes:options-enumeration does not support a "disabled" attribute.
      *
-     * @return a collection of all values from the {@link org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo.Type} enum
+     * @return a collection of all values from the {@link RegulatoryInfo.Type} enum
      */
-    public Collection<RegulatoryInfo.Type> getAllTypes() {
-        return Arrays.asList(RegulatoryInfo.Type.values());
+    public RegulatoryInfo.Type[] getAllTypes() {
+        return RegulatoryInfo.Type.values();
     }
 
     /**

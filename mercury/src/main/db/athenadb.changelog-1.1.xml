@@ -1016,4 +1016,26 @@
         <createSequence schemaName="athena" sequenceName="SEQ_PUBLIC_MESSAGE" incrementBy="50" startValue="1"/>
     </changeSet>
 
+    <changeSet id="GPLIM-2694-persist-work-item" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER" columnName="QUOTE_SERVER_WORK_ITEM" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER" schemaName="athena">
+            <column name="QUOTE_SERVER_WORK_ITEM" type="varchar2(255 char)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-2694-persist-work-item-audit" author="andrew">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="BILLING_LEDGER_AUD" columnName="QUOTE_SERVER_WORK_ITEM" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="BILLING_LEDGER_AUD" schemaName="athena">
+            <column name="QUOTE_SERVER_WORK_ITEM" type="varchar2(255 char)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
