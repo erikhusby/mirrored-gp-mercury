@@ -44,8 +44,8 @@ public class QuoteImportItem {
             updateDateRange(ledger.getWorkCompleteDate());
             if (StringUtils.isNotBlank(ledger.getWorkItem())) {
                 workItems.add(ledger.getWorkItem());
+            }
         }
-    }
     }
 
     public Collection<String> getWorkItems() {
