@@ -1012,6 +1012,11 @@ function formatInput(item) {
                                                     onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
                                 </security:authorizeBlock>
 
+                                <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
+                                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                                    Build Squid Components
+                                </stripes:link>
+
                             </span>
 
                 <div class="pull-right">
