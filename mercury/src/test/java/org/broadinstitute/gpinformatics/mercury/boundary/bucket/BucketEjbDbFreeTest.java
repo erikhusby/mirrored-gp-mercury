@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -34,8 +35,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -175,43 +178,17 @@ public class BucketEjbDbFreeTest {
         }
     }
 
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testSamplesToPicoBucket() throws Exception {
         for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
                 continue;
             }
-            setUp(workflow);
+            setupCoreMocks(workflow, true);
 
-            WorkflowConfig workflowConfig = workflowLoader.load();
-            ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow).getEffectiveVersion();
-            WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
-
-            reset(mocks);
-
-            // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
-            // The 4th sample is in house so a standalone vessel/sample should be created.
-            List<LabVessel> mockVessels = new ArrayList<>();
-            ProductOrderSample pdoSample = null;
-            for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
-                pdoSample = pdo.getSamples().get(rackPosition - 1);
-                if (rackPosition != 1 && rackPosition != 4) {
-                    mockVessels.add(labVessels.get(rackPosition - 1));
-                }
-                if (rackPosition == 4) {
-                    List<LabVessel> mockCreatedVessels = new ArrayList<>();
-                    mockCreatedVessels.add(labVessels.get(rackPosition - 1));
-                    expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
-                            eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))
-                            .andReturn(mockCreatedVessels);
-                }
-            }
             expect(labEventFactory.buildFromBatchRequests((Collection<BucketEntry>) anyObject(), (String) anyObject(),
                     (LabBatch) anyObject(), (String) anyObject(), (String) anyObject(), (LabEventType) anyObject()))
             .andReturn(Collections.<LabEvent>emptyList());
-            expect(labVesselDao.findBySampleKeyList((Collection<String>)anyObject())).andReturn(mockVessels);
-
-            expect(bucketDao.findByName((initialBucketDef.getName()))).andReturn(bucket);
-            // Should be OK to return more samples in map than was asked for.
             expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
             bucketDao.persist(bucket);
 
@@ -224,7 +201,79 @@ public class BucketEjbDbFreeTest {
         }
     }
 
+    @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
+    public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
+        for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
+            if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
+                continue;
+            }
+            setupCoreMocks(workflow, false);
+
+            for(BSPSampleDTO sampleDTO:bspDtoMap.values()) {
+                sampleDTO.getPlasticBarcodes().clear();
+                sampleDTO.addPlastic(badLabelResult);
+            }
+
+            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
+
+            replay(mocks);
+
+            try {
+                bucketEjb.addSamplesToBucket(pdo);
+                Assert.fail("Blank barcodes for bsp samples should throw Bucket exception");
+            } catch (BucketException expected) {
+
+            }
+
+            verify(mocks);
+        }
+    }
+
+    @DataProvider(name ="badLabelProvider")
+    public Object[][] badLabelProvider(Method method) {
+        List<Object[]> badLabelInfo = new ArrayList<>();
+
+        badLabelInfo.add(new Object[]{""});
+        badLabelInfo.add(new Object[]{null});
+
+        return badLabelInfo.toArray(new Object[badLabelInfo.size()][]);
+    }
+
     private String makeTubeBarcode(int rackPosition) {
         return "R" + rackPosition;
+    }
+
+    private void setupCoreMocks(Workflow workflow, boolean createVessels) {
+        setUp(workflow);
+
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow).getEffectiveVersion();
+        WorkflowBucketDef initialBucketDef = workflowDefVersion.getInitialBucket();
+
+        reset(mocks);
+
+        // Mock should return sample for those that Mercury knows about, i.e. all except the 1st and 4th samples.
+        // The 4th sample is in house so a standalone vessel/sample should be created.
+        List<LabVessel> mockVessels = new ArrayList<>();
+        ProductOrderSample pdoSample;
+        for (int rackPosition = 1; rackPosition <= SAMPLE_SIZE; ++rackPosition) {
+            pdoSample = pdo.getSamples().get(rackPosition - 1);
+            if (rackPosition != 1 && rackPosition != 4) {
+                mockVessels.add(labVessels.get(rackPosition - 1));
+            }
+            if (createVessels) {
+                if (rackPosition == 4) {
+                    List<LabVessel> mockCreatedVessels = new ArrayList<>();
+                    mockCreatedVessels.add(labVessels.get(rackPosition - 1));
+                    expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
+                                                                   eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))
+                            .andReturn(mockCreatedVessels);
+                }
+            }
+        }
+        expect(labVesselDao.findBySampleKeyList((Collection<String>) anyObject())).andReturn(mockVessels);
+
+        expect(bucketDao.findByName((initialBucketDef.getName()))).andReturn(bucket);
+        // Should be OK to return more samples in map than was asked for.
     }
 }

@@ -315,7 +315,7 @@ public class ProductOrderEjb {
 
         throw new Exception(
                 MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, no matching sample in PDO.",
-                        order.getBusinessKey(), sampleName, aliquotId));
+                                     order.getBusinessKey(), sampleName, aliquotId));
     }
 
     /**
@@ -357,7 +357,7 @@ public class ProductOrderEjb {
         // Now can use the lockout boolean to decide whether to ignore the order for auto ledger entry.
         if (isOrderLockedOut) {
             log.error(MessageFormat.format("Cannot auto-bill order {0} because it is currently locked out.",
-                    order.getJiraTicketKey()));
+                                           order.getJiraTicketKey()));
 
             // Return false to indicate we did not process the message.
             return false;
@@ -467,15 +467,16 @@ public class ProductOrderEjb {
         validateQuote(productOrder, quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
-                JiraTransition.DEVELOPER_EDIT.getStateName());
+                                                                          JiraTransition.DEVELOPER_EDIT.getStateName());
 
         List<PDOUpdateField> pdoUpdateFields = new ArrayList<>(Arrays.asList(
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
-                        productOrder.getProduct().getProductFamily().getName()),
+                                   productOrder.getProduct().getProductFamily().getName()),
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
-                        new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))));
+                                   new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy())
+                                                                     .getUsername()))));
 
         if (productOrder.getProduct().getSupportsNumberOfLanes()) {
             pdoUpdateFields.add(
@@ -501,7 +502,8 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE));
         } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getFundingDeadline())));
+                                                   JiraService.JIRA_DATE_FORMAT.format(
+                                                           productOrder.getFundingDeadline())));
         }
 
         if (productOrder.getPublicationDeadline() == null) {
@@ -509,13 +511,14 @@ public class ProductOrderEjb {
                     PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE));
         } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
-                    JiraService.JIRA_DATE_FORMAT.format(productOrder.getPublicationDeadline())));
+                                                   JiraService.JIRA_DATE_FORMAT.format(
+                                                           productOrder.getPublicationDeadline())));
         }
 
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                    productOrder.getRequisitionName()));
+                                                   productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
@@ -712,8 +715,9 @@ public class ProductOrderEjb {
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
-                getUserName(), targetStatus.getDisplayName(),
-                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","), StringUtils.stripToEmpty(comment)));
+                                              getUserName(), targetStatus.getDisplayName(),
+                                              StringUtils.join(ProductOrderSample.getSampleNames(samples), ","),
+                                              StringUtils.stripToEmpty(comment)));
     }
 
     /**
@@ -840,6 +844,7 @@ public class ProductOrderEjb {
      * changes are pushed to JIRA as well, with a comment about the change and the current user.
      *
      * @param jiraTicketKey the key to update
+     * @param reporter
      *
      * @throws NoSuchPDOException
      * @throws IOException
@@ -864,7 +869,7 @@ public class ProductOrderEjb {
             }
             if (transition != null) {
                 issue.postTransition(transition.getStateName(),
-                        getUserName() + " performed " + operation + " transition");
+                                     getUserName() + " performed " + operation + " transition");
             }
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
@@ -911,7 +916,7 @@ public class ProductOrderEjb {
         productOrder.setOrderStatus(OrderStatus.Abandoned);
 
         transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
-                DeliveryStatus.ABANDONED, productOrder.getSamples());
+                          DeliveryStatus.ABANDONED, productOrder.getSamples());
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
@@ -933,8 +938,9 @@ public class ProductOrderEjb {
                                @Nonnull String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
-                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED), DeliveryStatus.ABANDONED, samples,
-                comment);
+                                         EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
+                                         DeliveryStatus.ABANDONED, samples,
+                                         comment);
     }
 
     /**
@@ -958,11 +964,11 @@ public class ProductOrderEjb {
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                order.getSampleString(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                                            order.getSampleString(),
+                                            ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                order.getSamples().size(),
-                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                                            order.getSamples().size(),
+                                            ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(jiraTicketKey, samples, reporter);
 
@@ -984,11 +990,11 @@ public class ProductOrderEjb {
             JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
             issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                    productOrder.getSampleString(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                                                productOrder.getSampleString(),
+                                                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                    productOrder.getSamples().size(),
-                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                                                productOrder.getSamples().size(),
+                                                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
             updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
         }
@@ -1049,6 +1055,7 @@ public class ProductOrderEjb {
      * Helper method to separate sample kit submission to its own transaction.  This will allow Product order creation
      * to succeed and commit the transition from Product Order draft to Submit even if the attempt to create a
      * sample kit in Bsp results in an exception, which should not roll back product order submission
+     *
      * @param order             Order to which the new sample kit is to be associated
      * @param messageCollection Used to transmit errors or successes to the caller (Action bean) without returning
      *                          a value or throwing an exception.
