@@ -40,10 +40,12 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -371,6 +373,14 @@ public class CoreActionBean implements ActionBean, MessageReporter {
      */
     public BuildInfoBean getBuildInfoBean() {
         return buildInfoBean;
+    }
+
+    public String getError(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+    }
+
+    public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getStackTrace();
     }
 
     /**
