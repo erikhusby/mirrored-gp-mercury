@@ -3,8 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary;
 import javax.ejb.ApplicationException;
 
 /**
- * Extension of InformaticsServiceException to allow developers to distinguish between this and either
- * InformaticsServiceExceptions or RuntimeExceptions
+ * Bucket Exception is intended to be used to represent an error when interacting with the bucket.  This may include:
+ * <ul>
+ *     <li>Creating a bucket</li>
+ *     <li>Creating/Manipulating bucket entries</li>
+ * </ul>
+ * BucketException is an extension of InformaticsServiceException to allow developers to distinguish between this and
+ * either InformaticsServiceExceptions or RuntimeExceptions
  */
 @ApplicationException(rollback = true)
 public class BucketException extends InformaticsServiceException {

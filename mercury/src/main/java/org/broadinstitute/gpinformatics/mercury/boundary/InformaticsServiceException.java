@@ -11,6 +11,11 @@ import javax.ejb.ApplicationException;
  *     <li>Have a runtime exception thrown from the EJB layer that will not be Wrapped in an EJBException (because
  *     of the ApplicationException annotation</li>
  * </ul>
+ *
+ * InformaticsServiceException is marked to rollback any transaction it is thrown from.  If that is not desirable
+ * then you must find a different approach for your EJB Method such as have a non rollback exception object defined
+ * that has the ApplicationException defined as rollback = false.  Make sure you have a good reason for doing so if
+ * you do this.
  */
 @ApplicationException(rollback = true)
 public class InformaticsServiceException extends RuntimeException {

@@ -403,19 +403,17 @@ public class BucketEjb {
         // or the sample is a derived stock that has not been seen by Mercury.  Creates both standalone vessel and
         // MercurySample for the latter.
         Multimap<String, ProductOrderSample> nameToSampleMap = ArrayListMultimap.create();
-        Set<String> sampleKeyList = new HashSet<>();
         for (ProductOrderSample pdoSample : samples) {
             // A pdo can have multiple samples all with same sample name but with different sample position.
             // Each one will get a MercurySample and LabVessel put into the bucket.
 
             nameToSampleMap.put(pdoSample.getName(), pdoSample);
-            sampleKeyList.add(pdoSample.getName());
         }
 
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleKeyList);
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(nameToSampleMap.keys());
 
         // Finds samples with no existing vessels.
-        Collection<String> samplesWithoutVessel = new ArrayList<>(sampleKeyList);
+        Collection<String> samplesWithoutVessel = new ArrayList<>(nameToSampleMap.keys());
         for (LabVessel vessel : vessels) {
             for (MercurySample sample : vessel.getMercurySamples()) {
                 samplesWithoutVessel.remove(sample.getSampleKey());
@@ -467,11 +465,6 @@ public class BucketEjb {
      */
     public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username) {
         Map<String, BSPSampleDTO> bspDtoMap = bspSampleDataFetcher.fetchSamplesFromBSP(samplesWithoutVessel);
-        return createInitialVessels(samplesWithoutVessel, username, bspDtoMap);
-    }
-
-    public Collection<LabVessel> createInitialVessels(Collection<String> samplesWithoutVessel, String username,
-                                                      Map<String, BSPSampleDTO> bspDtoMap) {
         Collection<LabVessel> vessels = new ArrayList<>();
         List<String> cannotAddToBucket = new ArrayList<>();
 
@@ -492,7 +485,7 @@ public class BucketEjb {
         if (!cannotAddToBucket.isEmpty()) {
             throw new BucketException(
                     String.format("Some of the samples for the order could not be added to the bucket.  " +
-                                  "Some crucial BSP information cannot be found: %s",
+                                  "Could not find the manufacturer label for: %s",
                                   StringUtils.join(cannotAddToBucket, ", ")));
         }
 
