@@ -65,6 +65,10 @@ public class LedgerEntry implements Serializable {
     @Enumerated(EnumType.STRING)
     private PriceItemType priceItemType;
 
+    // work item id handed back from the quote server
+    @Column(name = "QUOTE_SERVER_WORK_ITEM")
+    private String workItem;
+
     /**
      * Package private constructor for JPA use.
      */
@@ -186,6 +190,14 @@ public class LedgerEntry implements Serializable {
 
     public void setPriceItemType(PriceItemType priceItemType) {
         this.priceItemType = priceItemType;
+    }
+
+    public String getWorkItem() {
+        return workItem;
+    }
+
+    public void setWorkItem(String workItem) {
+        this.workItem = workItem;
     }
 
     @Override

@@ -305,4 +305,12 @@ public class BillingSessionActionBean extends CoreActionBean {
     public boolean isBillingSessionLocked() {
         return billingSessionAccessEjb.isSessionLocked(editSession.getBusinessKey());
     }
+
+    public String getQuoteUrl(String quote) {
+        return quoteLink.quoteUrl(quote);
+    }
+
+    public String getQuoteWorkItemUrl(String quote,String workItem) {
+        return quoteLink.workUrl(quote, workItem);
+    }
 }

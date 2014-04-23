@@ -398,7 +398,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public boolean addPeople(RoleType role, List<BspUser> people) {
+    public boolean addPeople(RoleType role, Collection<BspUser> people) {
         boolean added = false;
 
         if (people != null) {
@@ -528,6 +528,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return productOrders;
     }
 
+    public void addProductOrder(ProductOrder productOrder) {
+        productOrders.add(productOrder);
+    }
+
+    public void removeProductOrder(ProductOrder productOrder) {
+        productOrders.remove(productOrder);
+    }
 
     public String getOriginalTitle() {
         return originalTitle;

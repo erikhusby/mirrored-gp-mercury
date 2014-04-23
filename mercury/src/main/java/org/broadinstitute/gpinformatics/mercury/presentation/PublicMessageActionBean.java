@@ -18,7 +18,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import org.broadinstitute.gpinformatics.athena.control.dao.admin.PublicMessageDao;
+import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.PublicMessageEjb;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 
 import javax.inject.Inject;
@@ -29,19 +29,14 @@ import javax.inject.Inject;
 @UrlBinding(PublicMessageActionBean.URL_BINDING)
 public class PublicMessageActionBean extends CoreActionBean {
     public static final String URL_BINDING = "/public/public_message.action";
-    private static final String ADD_MESSAGE = "addMessage";
-    private static final String CLEAR_MESSAGE = "clearMessage";
-    private static final String MANAGE_PUBLIC_MESSAGE = "/admin/manage_public_message.jsp";
-    private static final String TEXT = "text";
-
-    @Inject
-    private PublicMessageDao publicMessageDao;
-
+    public static final String TEXT = "text";
     private PublicMessage publicMessage;
+    @Inject
+    private PublicMessageEjb publicMessageEjb;
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        publicMessage = publicMessageDao.getMessage();
+        publicMessage = publicMessageEjb.getPublicMessage();
     }
 
     @DefaultHandler
@@ -52,10 +47,6 @@ public class PublicMessageActionBean extends CoreActionBean {
             messageText = publicMessage.getMessage();
         }
         return new StreamingResolution("text", messageText);
-    }
-
-    public PublicMessage getPublicMessage() {
-        return publicMessage;
     }
 
     public void setPublicMessage(PublicMessage publicMessage) {

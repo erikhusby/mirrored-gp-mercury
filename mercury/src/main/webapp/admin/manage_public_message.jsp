@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="actionButtons">
-                <stripes:submit name="addMessage" value="Add Message" class="btn"/>
+                <stripes:submit name="setMessage" value="Set Message" class="btn"/>
                 <stripes:submit name="clearMessage" value="Clear Message" class="btn"/>
             </div>
         </stripes:form>

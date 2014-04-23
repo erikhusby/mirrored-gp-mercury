@@ -13,12 +13,11 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserService;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalService;
@@ -26,18 +25,17 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.util.Collections;
 
 /**
  * This class is responsible for managing a Portal collaboration for the project manager.
  */
-@Stateful
 @RequestScoped
 public class CollaborationEjb {
 
-    private final ResearchProjectDao researchProjectDao;
+    private final ResearchProjectEjb researchProjectEjb;
 
     private final BSPUserList userList;
 
@@ -54,9 +52,9 @@ public class CollaborationEjb {
     }
 
     @Inject
-    public CollaborationEjb(ResearchProjectDao researchProjectDao, CollaborationPortalService collaborationPortalService,
+    public CollaborationEjb(ResearchProjectEjb researchProjectEjb, CollaborationPortalService collaborationPortalService,
                             BSPUserList userList, BSPUserService bspUserService, UserBean userBean) {
-        this.researchProjectDao = researchProjectDao;
+        this.researchProjectEjb = researchProjectEjb;
         this.collaborationPortalService = collaborationPortalService;
         this.userList = userList;
         this.bspUserService = bspUserService;
@@ -83,21 +81,20 @@ public class CollaborationEjb {
      *         <dd>Will request user account information</dd>
      * </dl>
      *
-     * @param researchProjectKey The research project business key so it can be fetched as part of the transaction here.
+     * @param researchProject The research project
      * @param selectedCollaborator The bsp user id for an external collaborator that was specified
      * @param collaboratorEmail The email of a collaborator that was specifically specified
      * @param collaborationMessage The optional extra message from the project manager
      */
-    public void beginCollaboration(@Nonnull String researchProjectKey, @Nullable Long selectedCollaborator,
+    public void beginCollaboration(@Nonnull ResearchProject researchProject, @Nullable Long selectedCollaborator,
                                    @Nullable String collaboratorEmail, @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
-
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
             throw new IllegalArgumentException("must specify a collaborator domain user id or an email address");
         }
+
         // Look up the selected id.
         BspUser bspUser = null;
         if (selectedCollaborator != null) {
@@ -120,11 +117,12 @@ public class CollaborationEjb {
 
         // Ensure that the user is an external collaborator.
         // Add the user as an external collaborator in case they are not there already.
-        researchProject.addPerson(RoleType.EXTERNAL, bspUser.getUserId());
+        researchProjectEjb.addPeople(researchProject.getBusinessKey(), RoleType.EXTERNAL,
+                Collections.singletonList(bspUser));
 
         // Now tell the portal to create this collaborator.
-        String collaborationId = collaborationPortalService.beginCollaboration(researchProject,
-                bspUser, collaborationMessage);
+        String collaborationId =
+                collaborationPortalService.beginCollaboration(researchProject, bspUser, collaborationMessage);
         if (StringUtils.isBlank(collaborationId)) {
             throw new RuntimeException("Could not create a collaboration");
         }
