@@ -327,11 +327,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
         Multimap<String, LabVessel> vesselMap = labDataFetcher.findMapBySampleKeys(samples);
         for (ProductOrderSample sample : samples) {
-            if(vesselMap.containsKey(sample.getSampleKey())) {
-                Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
-                if (labVessels != null) {
-                    sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
-                }
+            Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
+            if (CollectionUtils.isNotEmpty(labVessels)) {
+                sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
             }
         }
     }
@@ -1499,12 +1497,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
             if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",
-                        lastPicoCount);
+                                    lastPicoCount);
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
                 formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
-                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                                    hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;
@@ -1555,12 +1553,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Date irbRequiredStartDate;
         Date date;
         try {
-            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(IRB_REQUIRED_START_DATE_STRING);
+            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(
+                    IRB_REQUIRED_START_DATE_STRING);
         } catch (ParseException e) {
             date = new Date();
         }
         irbRequiredStartDate =
-                            org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
+                org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
         return irbRequiredStartDate;
     }
 
