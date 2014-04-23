@@ -30,8 +30,10 @@ import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspForm
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -230,4 +232,15 @@ public class ProductOrderTest {
 
     }
 
+    public void testSetResearchProject() {
+        ResearchProject researchProject = new ResearchProject(0L, "ProductOrderTest Research Project", "Test", true);
+
+        productOrder.setResearchProject(researchProject);
+        assertThat(productOrder.getResearchProject(), equalTo(researchProject));
+        assertThat(researchProject.getProductOrders(), hasItem(productOrder));
+
+        productOrder.setResearchProject(null);
+        assertThat(productOrder.getResearchProject(), nullValue());
+        assertThat(researchProject.getProductOrders(), not(hasItem(productOrder)));
+    }
 }

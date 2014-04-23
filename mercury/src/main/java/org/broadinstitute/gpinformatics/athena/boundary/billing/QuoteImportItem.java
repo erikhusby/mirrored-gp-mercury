@@ -100,12 +100,13 @@ public class QuoteImportItem {
 
     /**
      * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
-     * billed.
+     * billed and the work item.
      *
      * @param itemIsReplacing The item that is replacing the primary price item.
      * @param billingMessage The message to be assigned to all entries.
+     * @param quoteServerWorkItem the id of the transaction in the quote server
      */
-    public void updateQuoteIntoLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage) {
+    public void updateLedgerEntries(QuotePriceItem itemIsReplacing, String billingMessage,String quoteServerWorkItem) {
 
         LedgerEntry.PriceItemType priceItemType = getPriceItemType(itemIsReplacing);
 
@@ -113,6 +114,7 @@ public class QuoteImportItem {
             ledgerEntry.setQuoteId(quoteId);
             ledgerEntry.setPriceItemType(priceItemType);
             ledgerEntry.setBillingMessage(billingMessage);
+            ledgerEntry.setWorkItem(quoteServerWorkItem);
         }
     }
 

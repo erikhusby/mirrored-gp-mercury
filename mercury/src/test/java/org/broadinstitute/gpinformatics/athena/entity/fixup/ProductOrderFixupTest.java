@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -466,5 +467,10 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.remove(sample);
 
         productOrderSampleDao.flush();
+    }
+
+    @Test(enabled = true)
+    public void unAbandonSamplesGplim2704() throws IOException, ProductOrderEjb.NoSuchPDOException {
+        unAbandonPDOSamples("PDO-3551", "SM-5MRVM");
     }
 }

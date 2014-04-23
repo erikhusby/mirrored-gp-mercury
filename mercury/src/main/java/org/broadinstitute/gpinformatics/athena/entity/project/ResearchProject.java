@@ -528,6 +528,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return productOrders;
     }
 
+    public void addProductOrder(ProductOrder productOrder) {
+        productOrders.add(productOrder);
+    }
+
+    public void removeProductOrder(ProductOrder productOrder) {
+        productOrders.remove(productOrder);
+    }
 
     public String getOriginalTitle() {
         return originalTitle;

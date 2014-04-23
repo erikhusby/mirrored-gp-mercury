@@ -83,7 +83,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
-        this.regulatoryInfos = regulatoryInfos;
+        this.regulatoryInfos.clear();
+        getRegulatoryInfos().addAll(regulatoryInfos);
     }
 
     public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
@@ -203,7 +204,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
-    private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
+    private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -259,7 +260,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
 
         // Do stuff that needs to happen after serialization and here.
         readResolve();
@@ -417,7 +418,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                            List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
         setSamples(samples);
     }
 
@@ -536,7 +537,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setResearchProject(ResearchProject researchProject) {
+        if (this.researchProject != null) {
+            this.researchProject.removeProductOrder(this);
+        }
         this.researchProject = researchProject;
+        if (researchProject != null) {
+            researchProject.addProductOrder(this);
+        }
     }
 
     public Product getProduct() {

@@ -94,6 +94,7 @@ public class CollaborationEjb {
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
             throw new IllegalArgumentException("must specify a collaborator domain user id or an email address");
         }
+
         // Look up the selected id.
         BspUser bspUser = null;
         if (selectedCollaborator != null) {
