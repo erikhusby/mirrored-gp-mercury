@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.athena.control.dao.admin;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
@@ -28,12 +29,9 @@ public class PublicMessageDao extends GenericDao {
      */
     public PublicMessage getMessage() {
         List<PublicMessage> publicMessages = findAll(PublicMessage.class);
-        if (publicMessages.size() > 1) {
-            throw new RuntimeException("Should have returned a maximum of one result.");
-        } else if (publicMessages.isEmpty()) {
+        if (publicMessages.isEmpty()){
             return null;
-        } else {
-            return publicMessages.iterator().next();
         }
+        return CollectionUtils.extractSingleton(publicMessages);
     }
 }
