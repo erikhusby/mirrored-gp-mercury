@@ -147,6 +147,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
         this.bspManagerFactory = bspManagerFactory;
     }
 
+    // Reload the BSP user list from the remove server. If the server is down, we return the previously retrieved
+    // list, if present, or an empty list if not. When we're not running in production, the 'QADude' users are
+    // also added.
     @Override
     public synchronized void refreshCache() {
         try {
