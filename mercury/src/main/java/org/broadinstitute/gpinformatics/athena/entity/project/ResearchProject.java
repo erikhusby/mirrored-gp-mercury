@@ -15,6 +15,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -398,17 +399,20 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public boolean addPeople(RoleType role, Collection<BspUser> people) {
-        boolean added = false;
+    /**
+     * Add to the list of people associated with this project.
+     * @param role the role of the people being added
+     * @param people the people to add
+     * @return true if any people were added
+     */
+    public boolean addPeople(@Nonnull RoleType role, @Nonnull Collection<BspUser> people) {
+        int peopleSize = associatedPeople.size();
 
-        if (people != null) {
-            for (BspUser user : people) {
-                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
-                added = true;
-            }
+        for (BspUser user : people) {
+            associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
         }
 
-        return added;
+        return peopleSize != associatedPeople.size();
     }
 
     /**

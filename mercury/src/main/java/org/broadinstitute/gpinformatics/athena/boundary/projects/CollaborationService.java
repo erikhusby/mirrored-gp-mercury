@@ -25,15 +25,13 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.util.Collections;
 
 /**
  * This class is responsible for managing a Portal collaboration for the project manager.
  */
-@RequestScoped
-public class CollaborationEjb {
+public class CollaborationService {
 
     private final ResearchProjectEjb researchProjectEjb;
 
@@ -47,13 +45,14 @@ public class CollaborationEjb {
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
-    public CollaborationEjb() {
+    public CollaborationService() {
         this(null, null, null, null, null);
     }
 
     @Inject
-    public CollaborationEjb(ResearchProjectEjb researchProjectEjb, CollaborationPortalService collaborationPortalService,
-                            BSPUserList userList, BSPUserService bspUserService, UserBean userBean) {
+    public CollaborationService(ResearchProjectEjb researchProjectEjb,
+                                CollaborationPortalService collaborationPortalService, BSPUserList userList,
+                                BSPUserService bspUserService, UserBean userBean) {
         this.researchProjectEjb = researchProjectEjb;
         this.collaborationPortalService = collaborationPortalService;
         this.userList = userList;
@@ -112,7 +111,7 @@ public class CollaborationEjb {
         }
 
         if (bspUser == null) {
-            throw new RuntimeException("Couldn't create a BSP user with the email address " + collaboratorEmail);
+            throw new RuntimeException("Could not create a BSP user with the email address " + collaboratorEmail);
         }
 
         // Ensure that the user is an external collaborator.
