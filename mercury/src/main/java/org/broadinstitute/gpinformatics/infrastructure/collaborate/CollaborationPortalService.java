@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  *
@@ -97,6 +98,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         try {
             return resource.type(MediaType.APPLICATION_XML).post(String.class, collaboration);
         } catch (UniformInterfaceException e) {
+            rethrowIfCollaborationError(e);
             throw new CollaborationNotFoundException("Could not communicate with collaboration portal at " + url, e);
         } catch (ClientHandlerException e) {
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
@@ -127,8 +129,15 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
 
         try {
             return resource.post(String.class);
-        } catch (Exception e) {
+        } catch (UniformInterfaceException e) {
+            rethrowIfCollaborationError(e);
             throw new CollaborationPortalException("Could not communicate with collaboration portal at " + url, e);
+        }
+    }
+
+    private static void rethrowIfCollaborationError(UniformInterfaceException e) throws CollaborationPortalException {
+        if (e.getResponse().getStatus() == Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()) {
+            throw new CollaborationPortalException(e.getResponse().getEntity(String.class), e);
         }
     }
 }

@@ -54,6 +54,8 @@ $j(document).ready(function () {
             updateBspInformation(tempArray);
         }
     }
+
+    $j('div.onRisk').popover();
 });
 
 var bspDataCount = 0;
@@ -1119,7 +1121,13 @@ function formatInput(item) {
                     <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
                     </td>
-                    <td>${sample.riskString}</td>
+                    <td style="text-align: center">
+                        <c:if test="${sample.onRisk}">
+                            <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
+                                <img src="${ctxpath}/images/check.png"> ...
+                            </div>
+                        </c:if>
+                    </td>
                     <td>${sample.deliveryStatus.displayName}</td>
                     <td id="completelyBilled-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td>${sample.sampleComment}</td>
