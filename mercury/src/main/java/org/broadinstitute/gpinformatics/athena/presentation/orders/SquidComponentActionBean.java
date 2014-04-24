@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
-import edu.mit.broad.prodinfo.bean.generated.SelectionOption;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -20,15 +19,14 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Action bean to support the Mercury page to assist customers to initiate the creation of a Project and/or Work
+ * request in Squid
  */
 @SuppressWarnings("unused")
 @UrlBinding(SquidComponentActionBean.ACTIONBEAN_URL_BINDING)
@@ -72,13 +70,14 @@ public class SquidComponentActionBean extends CoreActionBean {
         super("", "", ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on={CREATE_ACTION, BUILD_SQUID_COMPONENT_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, BUILD_SQUID_COMPONENT_ACTION})
     public void init() {
         productOrderKey = getContext().getRequest().getParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
         if (StringUtils.isNotBlank(productOrderKey)) {
             sourceOrder = productOrderDao.findByBusinessKey(productOrderKey);
             if (sourceOrder != null) {
-                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(sourceOrder.getProductOrderId()));
+                progressFetcher.loadProgress(productOrderDao, Collections.singletonList(
+                        sourceOrder.getProductOrderId()));
             }
         } else {
             addGlobalValidationError("Cannot create ");
@@ -103,7 +102,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     @HandlesEvent("ajaxSquidWorkRequestOptions")
     public Resolution ajaxSquidWorkRequestOptions() throws Exception {
 
-        workRequestOptions= squidConnector.getWorkRequestOptions();
+        workRequestOptions = squidConnector.getWorkRequestOptions();
         return new ForwardResolution(SQUID_WORK_REQUEST_OPTIONS_INSERT);
     }
 
