@@ -55,7 +55,7 @@ $j(document).ready(function () {
         }
     }
 
-    $j('img.onRisk').popover({ trigger: 'hover', placement: 'left' });
+    $j('div.onRisk').popover();
 });
 
 var bspDataCount = 0;
@@ -1123,7 +1123,9 @@ function formatInput(item) {
                     </td>
                     <td style="text-align: center">
                         <c:if test="${sample.onRisk}">
-                            <img src="${ctxpath}/images/check.png" class="onRisk" rel="popover" data-content="${sample.riskString}"> ...
+                            <div class="onRisk" title="On Risk Details" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
+                                <img src="${ctxpath}/images/check.png"> ...
+                            </div>
                         </c:if>
                     </td>
                     <td>${sample.deliveryStatus.displayName}</td>
