@@ -61,7 +61,8 @@ public class ProductOrderResource {
     private static final Log log = LogFactory.getLog(ProductOrderResource.class);
 
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
-    public static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
+
+    private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -88,7 +89,7 @@ public class ProductOrderResource {
     private ProductOrderSampleDao pdoSampleDao;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     /**
      * Should be used only by test code
@@ -366,8 +367,8 @@ public class ProductOrderResource {
      * Manhattan to determine whether data generation is complete for a given PDO sample.  Put another way, Manhattan
      * polls this service to see which PDO samples it should start assembling and analyzing.
      *
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
+     * @see PDOSamples
+     * @see PDOSample
      */
     @POST
     @Path(PDO_SAMPLE_STATUS)
