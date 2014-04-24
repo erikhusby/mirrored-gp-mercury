@@ -1123,7 +1123,7 @@ function formatInput(item) {
                     </td>
                     <td style="text-align: center">
                         <c:if test="${sample.onRisk}">
-                            <div class="onRisk" title="On Risk Details" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
+                            <div class="onRisk" title="On Risk Details for ${sample.name}" rel="popover" data-trigger="hover" data-placement="left" data-html="true" data-content="<div style='text-align: left'>${sample.riskString}</div>">
                                 <img src="${ctxpath}/images/check.png"> ...
                             </div>
                         </c:if>
