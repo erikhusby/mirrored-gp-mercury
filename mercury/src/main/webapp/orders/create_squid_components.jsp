@@ -20,6 +20,27 @@
                     {"bSortable": true, "sType": "html"}           // ID
                 ]
             });
+
+            $j(document).ready(
+
+                    function () {
+                        $j.ajax({
+                            url: "${ctxpath}/orders/squid_component.action?ajaxSquidProjectOptions=&",
+                            dataType: 'html',
+                            success: function(html) {
+                                $j("#squidProjectOptions").html(html);
+                            }
+                        });
+                        $j.ajax({
+                            url: "${ctxpath}/orders/squid_component.action?ajaxSquidWorkRequestOptions=&",
+                            dataType: 'html',
+                            success: function(html) {
+                                $j("#squidWorkRequestOptions").html(html);
+                            }
+                        });
+                    }
+            );
+
         </script>
     </stripes:layout-component>
 
@@ -28,87 +49,15 @@
             <div class="form-horizontal span6">
                 <stripes:hidden name="<%= ProductOrderActionBean.PRODUCT_ORDER_PARAMETER%>"/>
                 <stripes:hidden name="submitString"/>
-                <div class="control-group">
-                    <stripes:label for="initiativeSelect" class="control-label">
-                        Initiative
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.initiative" id="initiativeSelect">
-                            <stripes:option label="Select an initiative.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
 
-                <div class="control-group">
-                    <stripes:label for="projectTypeSelect" class="control-label">
-                        Project type
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.projectType" id="projectTypeSelect">
-                            <stripes:option label="Select a project Type.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="fundingSourceSelect" class="control-label">
-                        Funding source
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.fundingSource" id="fundingSourceSelect">
-                            <stripes:option label="Select a fundingSource.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
+                <div id="squidProjectOptions" ></div>
                 <p/>
 
                 <p/>
 
                 <p/>
 
-                <div class="control-group">
-                    <stripes:label for="workRequestTypeSelect" class="control-label">
-                        Work request type
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.workRequestType" id="workRequestTypeSelect">
-                            <stripes:option label="Select a work request type.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="analysisTypeSelect" class="control-label">
-                        Analysis type
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.analysisType" id="analysisTypeSelect">
-                            <stripes:option label="Select an analysis type.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="referenceSeqSelect" class="control-label">
-                        Reference sequence
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:select name="autoSquidDto.referenceSequence" id="referenceSeqSeelct">
-                            <stripes:option label="Select a reference sequence.." value="-1"/>
-                        </stripes:select>
-                    </div>
-                </div>
-
-                <div class="control-group">
-                    <stripes:label for="autoSquidDto.pairedSequence" class="control-label">
-                        Paired sequencing
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:radio value="Yes" name="autoSquidDto.pairedSequence"/>Yes
-                        <stripes:radio value="No" name="autoSquidDto.pairedSequence"/>No<br/>
-                    </div>
-                </div>
+                <div id="squidWorkRequestOptions"></div>
 
                 <c:if test="${not empty actionBean.sourceOrder.samples}">
                     <table id="sampleList" class="table simple">

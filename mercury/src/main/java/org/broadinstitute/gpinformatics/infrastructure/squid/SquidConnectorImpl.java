@@ -5,6 +5,8 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
+import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
@@ -73,5 +75,29 @@ public class SquidConnectorImpl implements SquidConnector {
         return new SquidResponse(response.getStatus(), response.getEntity(String.class));
     }
 
+
+    @Override
+    public CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException {
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+        ClientResponse response = Client.create(clientConfig).resource(squidConfig.getUrl() + "/resources/projectresource/projectoptions")
+                                        .type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        return response.getEntity(CreateProjectOptions.class);
+    }
+
+    @Override
+    public CreateWorkRequestOptions getWorkRequestOptions() throws UniformInterfaceException {
+
+        ClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getClasses().add(JacksonJsonProvider.class);
+
+        ClientResponse response = Client.create(clientConfig).resource(squidConfig.getUrl() + "/resources/projectresource/workrequestoptions")
+                                        .type(MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML).get(ClientResponse.class);
+
+        return response.getEntity(CreateWorkRequestOptions.class);
+    }
 
 }

@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
+import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
+import edu.mit.broad.prodinfo.bean.generated.SelectionOption;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -15,11 +18,11 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.SquidComponentDto
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
-import org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
@@ -36,13 +39,18 @@ public class SquidComponentActionBean extends CoreActionBean {
     private static Log logger = LogFactory.getLog(SquidComponentActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/orders/squid_component.action";
-    public static final String CREATE_SQUID_COMPONENT_PAGE = "/orders/createSquidComponents.jsp";
+    public static final String CREATE_SQUID_COMPONENT_PAGE = "/orders/create_squid_components.jsp";
+    public static final String SQUID_PROJECT_OPTIONS_INSERT = "/orders/squid_project_options.jsp";
+    public static final String SQUID_WORK_REQUEST_OPTIONS_INSERT = "/orders/squid_work_request_options.jsp";
 
     @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private SquidConnector squidConnector;
 
     @Inject
     private UserTokenInput owner;
@@ -56,6 +64,9 @@ public class SquidComponentActionBean extends CoreActionBean {
     private SquidComponentDto autoSquidDto = new SquidComponentDto();
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
+    private CreateProjectOptions squidProjectOptions;
+    private CreateWorkRequestOptions workRequestOptions;
 
     public SquidComponentActionBean() {
         super("", "", ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
@@ -80,6 +91,20 @@ public class SquidComponentActionBean extends CoreActionBean {
         setSubmitString(BUILD_SQUID_COMPONENTS);
         owner.setup(userBean.getBspUser().getUserId());
         return new ForwardResolution(CREATE_SQUID_COMPONENT_PAGE);
+    }
+
+    @HandlesEvent("ajaxSquidProjectOptions")
+    public Resolution ajaxSquidProjectOptions() throws Exception {
+
+        squidProjectOptions = squidConnector.getProjectCreationOptions();
+        return new ForwardResolution(SQUID_PROJECT_OPTIONS_INSERT);
+    }
+
+    @HandlesEvent("ajaxSquidWorkRequestOptions")
+    public Resolution ajaxSquidWorkRequestOptions() throws Exception {
+
+        workRequestOptions= squidConnector.getWorkRequestOptions();
+        return new ForwardResolution(SQUID_WORK_REQUEST_OPTIONS_INSERT);
     }
 
     public ProductOrder getSourceOrder() {
@@ -108,5 +133,13 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     public void setAutoSquidDto(SquidComponentDto autoSquidDto) {
         this.autoSquidDto = autoSquidDto;
+    }
+
+    public CreateWorkRequestOptions getWorkRequestOptions() {
+        return workRequestOptions;
+    }
+
+    public CreateProjectOptions getSquidProjectOptions() {
+        return squidProjectOptions;
     }
 }
