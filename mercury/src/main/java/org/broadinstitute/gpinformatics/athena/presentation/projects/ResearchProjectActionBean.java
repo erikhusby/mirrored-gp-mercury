@@ -417,8 +417,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
     public Resolution beginCollaboration() throws Exception {
-        collaborationEjb.beginCollaboration(
-                editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+        try {
+            collaborationEjb.beginCollaboration(
+                    editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+            addMessage("Collaboration created successfully");
+        } catch (Exception e) {
+            addGlobalValidationError("Could not create collaboration due to an error: {2}", e.getMessage());
+        }
 
         // Call init again so that the updated project is retrieved.
         init();
@@ -925,7 +930,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             collaborationEjb.resendInvitation(researchProject);
             addMessage("Invitation resent successfully");
         } catch (Exception e) {
-            addGlobalValidationError("Could not resend invitation due to error: {2}", e.toString());
+            addGlobalValidationError("Could not resend invitation due to an error: {2}", e.getMessage());
         }
 
         // Call init again so that the updated project is retrieved.
