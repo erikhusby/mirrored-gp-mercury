@@ -421,6 +421,12 @@ public class BillingTrackerProcessor extends TableProcessor {
                                     currentProductOrder.getBusinessKey()),
                             dataRowIndex);
                 }
+                Date now = new Date();
+                if (now.before(workCompleteDate)) {
+                    addDataMessage(
+                            String.format("Sample %s cannot have a completed date of %s because it is in the future.",
+                                    productOrderSample.getSampleKey(), workCompleteDateString), dataRowIndex);
+                }
 
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
                 // persist the change..

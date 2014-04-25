@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import com.sun.jersey.api.client.WebResource;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -22,6 +24,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 public class ProductOrderResourceTest extends RestServiceContainerTest {
+
+    private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
+
+    private static final String MULTIPLE_RISK_SAMPLE = "SM-3RAE1";
+
+    private static final String VALID_PDO_ID = "PDO-10";
+
     @Deployment
     public static WebArchive buildMercuryWar() {
         // need TEST here for now because there's no STUBBY version of ThriftConfig
@@ -41,7 +50,7 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
 
         ProductOrderData data = new ProductOrderData();
         data.setProductName("Scott Test Product" + testDate.getTime());
-        data.setTitle("test product anme" + testDate.getTime());
+        data.setTitle("test product name" + testDate.getTime());
         data.setQuoteId("MMMAC1");
         List<String> sampleIds = new ArrayList<>();
         Collections.addAll(sampleIds, "CSM-tsgm1" + testDate.getTime(), "CSM-tsgm2" + testDate.getTime());
@@ -57,35 +66,44 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
     public void testFetchAtRiskPDOSamplesAllAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getAtRiskSamples();
 
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)
                 .post(PDOSamples.class);
 
-        Assert.assertFalse(returnedPdoSamples.getPdoSamples().isEmpty());
         Assert.assertEquals(pdoSamples.getPdoSamples().size(), returnedPdoSamples.getPdoSamples().size());
         Assert.assertEquals(returnedPdoSamples.getErrors().size(), pdoSamples.getAtRiskPdoSamples().size());
 
+        RiskCriterion totalDnaCriterion =
+                new RiskCriterion(RiskCriterion.RiskCriteriaType.TOTAL_DNA, Operator.LESS_THAN, ".250");
+        RiskCriterion ffpeCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.FFPE, Operator.IS, null);
+
         boolean foundSampleWithMultipleRiskFactors = false;
         for (PDOSample pdoSample : returnedPdoSamples.getAtRiskPdoSamples()) {
-            if ("SM-3RAE1".equals(pdoSample.getSampleName())) {
+            if (pdoSample.getSampleName().equals(MULTIPLE_RISK_SAMPLE)) {
                 String samplePdoText = pdoSample.getPdoKey() + "/" + pdoSample.getSampleName();
                 foundSampleWithMultipleRiskFactors = true;
                 Collection<String> riskCategories = pdoSample.getRiskCategories();
-                Assert.assertEquals(riskCategories.size(),2,"Risk categories are not being listed properly.  Check the list of risks associated with " + samplePdoText);
-                Assert.assertTrue(riskCategories.contains("Is FFPE"),"Check the risks for " + samplePdoText);
-                Assert.assertTrue(riskCategories.contains("Total DNA < .250"),"Check the risks for " + samplePdoText);
+                Assert.assertEquals(riskCategories.size(), 2,
+                        "Risk categories are not being listed properly.  Check the list of risks associated with "
+                        + samplePdoText);
+                Assert.assertTrue(riskCategories.contains(ffpeCriterion.getCalculationString()),
+                        "Check the risks for " + samplePdoText);
+                Assert.assertTrue(riskCategories.contains(totalDnaCriterion.getCalculationString()),
+                        "Check the risks for " + samplePdoText);
             }
         }
-        Assert.assertTrue(foundSampleWithMultipleRiskFactors,"No assertions were done to verify that samples with multiple risk factors are handled properly via web service call used by squid to update the risk categorized samples field in LCSET tickets.");
+        Assert.assertTrue(foundSampleWithMultipleRiskFactors,
+                "No assertions were done to verify that samples with multiple risk factors are handled properly via " +
+                "web service call used by squid to update the risk categorized samples field in LCSET tickets.");
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testFetchAtRiskPDOSamplesNoneAtRisk(@ArquillianResource URL baseUrl) {
         PDOSamples pdoSamples = getNonRiskPDOSamples();
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)
@@ -95,17 +113,28 @@ public class ProductOrderResourceTest extends RestServiceContainerTest {
         Assert.assertTrue(returnedPdoSamples.getErrors().isEmpty());
     }
 
-    private PDOSamples getAtRiskSamples() {
-        return makeTestPdoSamplePairs("PDO-2350", "SM-3RAE1", "SM-3S1Q8", "SM-4AXN1", "SM-4AXN5", "SM-4AXNJ",
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindByIds(@ArquillianResource URL baseUrl) {
+        ProductOrders orders = makeWebResource(baseUrl, "pdo/" + VALID_PDO_ID)
+                .accept(MediaType.APPLICATION_XML)
+                .get(ProductOrders.class);
+        // The web API returns the PDO ID for both the "id" and "productOrderKey" results.
+        Assert.assertEquals(orders.getOrders().get(0).getId(), VALID_PDO_ID);
+        Assert.assertEquals(orders.getOrders().get(0).getProductOrderKey(), VALID_PDO_ID);
+    }
+
+    private static PDOSamples getAtRiskSamples() {
+        return makeTestPdoSamplePairs("PDO-2350", MULTIPLE_RISK_SAMPLE, "SM-3S1Q8", "SM-4AXN1", "SM-4AXN5", "SM-4AXNJ",
                 "SM-4JPLH");
     }
 
-    private PDOSamples getNonRiskPDOSamples() {
+    private static PDOSamples getNonRiskPDOSamples() {
         return makeTestPdoSamplePairs("PDO-2328", "SM-41Q94", "SM-41Q95", "SM-41Q9F", "SM-41Q9G", "SM-41Q9S",
                 "SM-41RAL");
     }
 
-    private PDOSamples makeTestPdoSamplePairs(String pdoKey, String... sampleIds) {
+    private static PDOSamples makeTestPdoSamplePairs(String pdoKey, String... sampleIds) {
         PDOSamples pdoSamples = new PDOSamples();
 
         for (String sampleId : sampleIds) {

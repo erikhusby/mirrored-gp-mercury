@@ -184,7 +184,7 @@ public class CreateFCTActionBean extends CoreActionBean {
     /**
      * This method creates FCT tickets in JIRA and persists the relevant lab batches.
      *
-     * @return A forward resolution back to the current page.
+     * @return A redirect resolution back to the current page.
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution createFCTTicket() {
@@ -217,7 +217,7 @@ public class CreateFCTActionBean extends CoreActionBean {
             addMessage("Created {0} FCT tickets with a loading concentration of {1} for denature tube {2}. {3}",
                     numberOfLanes / lanesPerFlowcell, loadingConc, denatureTubeBarcode, createdBatchLinks.toString());
         }
-        return new RedirectResolution(VIEW_PAGE);
+        return new RedirectResolution(CreateFCTActionBean.class, VIEW_ACTION);
     }
 
     @ValidationMethod(on = SAVE_ACTION)

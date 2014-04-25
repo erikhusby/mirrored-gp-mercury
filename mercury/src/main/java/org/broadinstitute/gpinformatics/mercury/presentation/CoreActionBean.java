@@ -129,12 +129,10 @@ public class CoreActionBean implements ActionBean, MessageReporter {
         return context;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getCreateAction() {
         return CREATE_ACTION;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getEditAction() {
         return EDIT_ACTION;
     }

@@ -19,7 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -186,7 +186,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private ResearchProjectEjb researchProjectEjb;
 
     @Inject
-    private CollaborationEjb collaborationEjb;
+    private CollaborationService collaborationService;
 
     private String irbList;
 
@@ -222,7 +222,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
             if (COLLABORATION_ENABLED) {
-                collaborationData = collaborationEjb.getCollaboration(researchProject);
+                collaborationData = collaborationService.getCollaboration(researchProject);
             }
         } else {
             if (getUserBean().isValidBspUser()) {
@@ -418,8 +418,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(BEGIN_COLLABORATION_ACTION)
     public Resolution beginCollaboration() throws Exception {
         try {
-            collaborationEjb.beginCollaboration(
-                    editResearchProject, selectedCollaborator, specifiedCollaborator, collaborationMessage);
+            collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
+                    collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not create collaboration due to an error: {2}", e.getMessage());
@@ -927,7 +927,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(RESEND_INVITATION_ACTION)
     public Resolution resendInvitation() throws Exception {
         try {
-            collaborationEjb.resendInvitation(researchProject);
+            collaborationService.resendInvitation(researchProject);
             addMessage("Invitation resent successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not resend invitation due to an error: {2}", e.getMessage());
