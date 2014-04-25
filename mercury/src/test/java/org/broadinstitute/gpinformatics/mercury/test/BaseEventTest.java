@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
@@ -162,7 +163,7 @@ public class BaseEventTest {
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
         bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null, null,
-                null, null, null);
+                null, null, null, EasyMock.createNiceMock(ProductOrderDao.class));
     }
 
     /**
@@ -210,7 +211,7 @@ public class BaseEventTest {
         Bucket workingBucket = new Bucket(bucketName);
 
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
-            workingBucket.addEntry(productOrder.getBusinessKey(), tube, BucketEntry.BucketEntryType.PDO_ENTRY);
+            workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         return workingBucket;
     }

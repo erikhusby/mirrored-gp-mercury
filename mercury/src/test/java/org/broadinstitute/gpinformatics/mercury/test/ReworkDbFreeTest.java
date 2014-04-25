@@ -108,9 +108,9 @@ public class ReworkDbFreeTest extends BaseEventTest {
         LabVessel tube1 = iterator.next();
         LabVessel tube2 = iterator.next();
         BucketEntry bucketEntry1 =
-                new BucketEntry(tube1, productOrder.getBusinessKey(), BucketEntry.BucketEntryType.REWORK_ENTRY);
+                new BucketEntry(tube1, productOrder, BucketEntry.BucketEntryType.REWORK_ENTRY);
         BucketEntry bucketEntry2 =
-                new BucketEntry(tube2, productOrder.getBusinessKey(), BucketEntry.BucketEntryType.REWORK_ENTRY);
+                new BucketEntry(tube2, productOrder, BucketEntry.BucketEntryType.REWORK_ENTRY);
         reworkBatch.addBucketEntry(bucketEntry1);
         reworkBatch.addBucketEntry(bucketEntry2);
 

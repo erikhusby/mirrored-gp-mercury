@@ -254,7 +254,7 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
+    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull ProductOrder productOrder,
                                    ReworkReason reworkReason, LabEventType reworkFromStep,
                                    @Nonnull Bucket bucket, String comment, @Nonnull String userName,
                                    boolean reworkCandidate)
@@ -264,7 +264,7 @@ public class ReworkEjb {
                         reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
                                 BucketEntry.BucketEntryType.PDO_ENTRY,
                         userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
-                        reworkFromStep, productOrderKey);
+                        reworkFromStep, productOrder);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
@@ -359,7 +359,7 @@ public class ReworkEjb {
                         bucketCandidate.getProductOrder().getBusinessKey(), bucketCandidate.getSampleKey(),
                         bucketCandidate.isReworkItem());
 
-        addCandidate(reworkVessel, bucketCandidate.getProductOrder().getBusinessKey(), reworkReason, reworkFromStep,
+        addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
                 bucket, comment, userName, bucketCandidate.isReworkItem());
 
         return validationMessages;

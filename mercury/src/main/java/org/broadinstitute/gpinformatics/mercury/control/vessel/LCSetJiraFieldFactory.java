@@ -66,7 +66,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (!batch.getBucketEntries().isEmpty()) {
             for (BucketEntry bucketEntry : batch.getBucketEntries()) {
-                String pdoKey = bucketEntry.getPoBusinessKey();
+                String pdoKey = bucketEntry.getProductOrder().getBusinessKey();
                 if (!pdoToVesselMap.containsKey(pdoKey)) {
                     pdoToVesselMap.put(pdoKey, new HashSet<LabVessel>());
                 }

@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactoryTest {
         MercurySample mercurySample = new MercurySample(TEST_SAMPLE_ID);
         SampleInstance instance = new SampleInstance(mercurySample);
         testTube.addSample(mercurySample);
-        BucketEntry bucketEntry = new BucketEntry(testTube, PRODUCT_ORDER_KEY, BucketEntry.BucketEntryType.PDO_ENTRY);
+        BucketEntry bucketEntry = new BucketEntry(testTube, testProductOrder, BucketEntry.BucketEntryType.PDO_ENTRY);
 
         for (int i = 0; i < testLabBatchTypes.length; i++) {
             LabBatch.LabBatchType testLabBatchType = testLabBatchTypes[i];

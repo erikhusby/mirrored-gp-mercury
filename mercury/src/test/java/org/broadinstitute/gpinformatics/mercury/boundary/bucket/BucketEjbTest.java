@@ -149,7 +149,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot1 = new TwoDBarcodedTube(twoDBarcode1);
         bspAliquot1.addSample(new MercurySample(bspStock));
-        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, poBusinessKey1, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, productOrder1, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode1, bspAliquot1);
 
 
@@ -165,7 +165,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot2 = new TwoDBarcodedTube(twoDBarcode2);
         bspAliquot2.addSample(new MercurySample(bspStock));
-        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, poBusinessKey2, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, productOrder2, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode2, bspAliquot2);
 
 
@@ -181,7 +181,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot3 = new TwoDBarcodedTube(twoDBarcode3);
         bspAliquot3.addSample(new MercurySample(bspStock));
-        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, poBusinessKey3, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode3, bspAliquot3);
 
 
@@ -197,7 +197,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot4 = new TwoDBarcodedTube(twoDBarcode4);
         bspAliquot4.addSample(new MercurySample(bspStock));
-        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, poBusinessKey3, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode4, bspAliquot4);
 
 
@@ -234,7 +234,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -244,19 +244,19 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries2 = resource.add(Collections.<LabVessel>singleton(bspAliquot2), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey2);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder2);
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
         Collection<BucketEntry> testEntries3 = resource.add(Collections.<LabVessel>singleton(bspAliquot3), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
         Collection<BucketEntry> testEntries4 = resource.add(Collections.<LabVessel>singleton(bspAliquot4), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
         Assert.assertEquals(testEntries4.size(), 1);
         BucketEntry testEntry4 = testEntries4.iterator().next();
 
@@ -288,7 +288,7 @@ public class BucketEjbTest extends ContainerTest {
             boolean doesEventHavePDO = false;
             for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
                 if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getPoBusinessKey().equals(labEvent.getProductOrderId())) {
+                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
                         doesEventHavePDO = true;
                     }
                 }
@@ -321,7 +321,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -342,7 +342,7 @@ public class BucketEjbTest extends ContainerTest {
 
 
         resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman",
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -399,7 +399,7 @@ public class BucketEjbTest extends ContainerTest {
             boolean doesEventHavePDO = false;
             for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
                 if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getPoBusinessKey().equals(labEvent.getProductOrderId())) {
+                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
                         doesEventHavePDO = true;
                     }
                 }
@@ -448,7 +448,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -464,7 +464,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
 
         resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman",
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -515,7 +515,7 @@ public class BucketEjbTest extends ContainerTest {
             boolean doesEventHavePDO = false;
             for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
                 if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getPoBusinessKey().equals(labEvent.getProductOrderId())) {
+                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
                         doesEventHavePDO = true;
                     }
                 }

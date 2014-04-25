@@ -116,7 +116,7 @@
                             ${entry.poBusinessKey}
                     </td>
                     <td>
-                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.productOrder.businessKey).title}</div>
                     </td>
                     <td>
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}

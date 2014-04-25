@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -62,9 +64,11 @@ public class BucketEntryDaoTest extends ContainerTest {
         Bucket newTestBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
         twoDBarcodeKey = "SM-1493";
+        ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
         testPoBusinessKey = "PDO-33";
-        BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testPoBusinessKey,
-                newTestBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+        testOrder.setJiraTicketKey(testPoBusinessKey);
+        BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testOrder, newTestBucket,
+                                                BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
         bucketEntryDao.clear();
@@ -98,7 +102,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
         Assert.assertEquals(dateFormatter.format(new Date()),
-                dateFormatter.format(retrievedEntry.getCreatedDate()));
+                            dateFormatter.format(retrievedEntry.getCreatedDate()));
 
         Bucket findBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
@@ -119,8 +123,10 @@ public class BucketEntryDaoTest extends ContainerTest {
         Bucket testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
         TwoDBarcodedTube vesselToDupe = tubeDao.findByBarcode(twoDBarcodeKey);
-        BucketEntry testEntry = new BucketEntry(vesselToDupe, testPoBusinessKey + "dupe",
-                testBucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+        ProductOrder testDupeOrder = ProductOrderTestFactory.createDummyProductOrder();
+        testDupeOrder.setJiraTicketKey(testPoBusinessKey + "dupe");
+        BucketEntry testEntry = new BucketEntry(vesselToDupe, testDupeOrder, testBucket,
+                                                BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();

@@ -248,7 +248,7 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable"><span class="ellipsis">${entry.poBusinessKey}</span><span style="display: none;"
+                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
                     </td>
                     <td>

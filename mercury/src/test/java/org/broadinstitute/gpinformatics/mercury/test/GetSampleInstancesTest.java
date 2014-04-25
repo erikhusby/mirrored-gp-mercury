@@ -241,12 +241,12 @@ public class GetSampleInstancesTest {
         LabBatch lcsetBatch = new LabBatch("LCSET-" + lcsetNum, extractedVessels, LabBatch.LabBatchType.WORKFLOW);
         lcsetBatch.setCreatedOn(new Date(now++));
         lcsetBatch.setWorkflowName("Exome Express");
-        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+        BucketEntry bucketEntry1 = new BucketEntry(tube1, sequencingProductOrder, new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry1.setLabBatch(lcsetBatch);
         tube1.addBucketEntry(bucketEntry1);
 
-        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder.getBusinessKey(), new Bucket("Shearing"),
+        BucketEntry bucketEntry2 = new BucketEntry(tube2, sequencingProductOrder, new Bucket("Shearing"),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntry2.setLabBatch(lcsetBatch);
         tube2.addBucketEntry(bucketEntry2);

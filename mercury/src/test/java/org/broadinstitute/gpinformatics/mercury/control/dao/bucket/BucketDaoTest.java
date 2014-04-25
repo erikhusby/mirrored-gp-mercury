@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -79,8 +81,10 @@ public class BucketDaoTest extends ContainerTest {
     public void testUpdateBucket() {
 
         Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
+        testOrder.setJiraTicketKey(ProductOrderTest.PDO_JIRA_KEY);
 
-        retrievedBucket.addEntry(ProductOrderTest.PDO_JIRA_KEY, new TwoDBarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
+        retrievedBucket.addEntry(testOrder, new TwoDBarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketDao.flush();
         bucketDao.clear();

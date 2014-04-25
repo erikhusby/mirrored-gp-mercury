@@ -361,7 +361,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 // Filters out entries whose product workflow doesn't match the selected workflow.
                 Set<String> pdoKeys = new HashSet<>();
                 for (BucketEntry entry : collectiveEntries) {
-                    pdoKeys.add(entry.getPoBusinessKey());
+                    pdoKeys.add(entry.getProductOrder().getBusinessKey());
                 }
                 Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
                 for (ProductOrder pdo : pdos) {
@@ -370,15 +370,15 @@ public class BucketViewActionBean extends CoreActionBean {
                 }
                 for (Iterator<BucketEntry> iter = collectiveEntries.iterator(); iter.hasNext(); ) {
                     BucketEntry entry = iter.next();
-                    if (mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()) == null) {
+                    if (mapPdoKeyToWorkflow.get(entry.getProductOrder().getBusinessKey()) == null) {
                         addGlobalValidationError(String.format("%s for %s does not exist within mercury",
-                                entry.getPoBusinessKey(), entry.getLabVessel().getLabel()));
+                                entry.getProductOrder().getBusinessKey(), entry.getLabVessel().getLabel()));
                         iter.remove();
                         bucketEntries.remove(entry);
                         reworkEntries.remove(entry);
                     } else {
                         if (!selectedWorkflowDef.getName().equals(
-                                mapPdoKeyToWorkflow.get(entry.getPoBusinessKey()).getWorkflowName())) {
+                                mapPdoKeyToWorkflow.get(entry.getProductOrder().getBusinessKey()).getWorkflowName())) {
                             iter.remove();
                             bucketEntries.remove(entry);
                             reworkEntries.remove(entry);
@@ -439,7 +439,7 @@ public class BucketViewActionBean extends CoreActionBean {
     private Set<String> getWorkflowNames() {
         Set<String> pdoKeys = new HashSet<>();
         for (BucketEntry entry : batch.getBucketEntries()) {
-            pdoKeys.add(entry.getPoBusinessKey());
+            pdoKeys.add(entry.getProductOrder().getBusinessKey());
         }
         Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
         Set<String> workflowNames = new HashSet<>();

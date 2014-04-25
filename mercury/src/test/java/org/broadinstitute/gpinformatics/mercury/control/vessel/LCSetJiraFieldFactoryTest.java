@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -7,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -42,19 +44,21 @@ import static org.hamcrest.Matchers.equalTo;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LCSetJiraFieldFactoryTest {
 
-    private String pdoBusinessName;
     private List<String> pdoNames;
     private Workflow workflow;
     private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
+    private ProductOrder testProductOrder;
 
     @BeforeMethod
     public void startUp() throws IOException {
-        pdoBusinessName = "PDO-999";
+        testProductOrder =
+                ProductOrderTestFactory.createDummyProductOrder("PDO-999");
+        ProductOrder singleSampleOrder = ProductOrderTestFactory.createDummyProductOrder("PDO-7");
 
         pdoNames = new ArrayList<>();
-        Collections.addAll(pdoNames, pdoBusinessName);
+        Collections.addAll(pdoNames, testProductOrder.getBusinessKey());
 
         workflow = Workflow.AGILENT_EXOME_EXPRESS;
         mapBarcodeToTube = new LinkedHashMap<>();
@@ -69,7 +73,7 @@ public class LCSetJiraFieldFactoryTest {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, sampleIndex == 1 ? "PDO-7" : pdoBusinessName,
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, sampleIndex == 1 ? singleSampleOrder : testProductOrder,
                     BucketEntry.BucketEntryType.PDO_ENTRY));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -140,8 +144,7 @@ public class LCSetJiraFieldFactoryTest {
                 WorkflowConfig workflowConfig = workflowLoader.load();
                 AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
 
-                ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
-                        athenaClientService.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflow());
+                ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(testProductOrder.getProduct().getWorkflow());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())

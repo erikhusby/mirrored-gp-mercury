@@ -1114,7 +1114,7 @@ public class SystemRouterTest extends BaseEventTest {
         Collection<BucketEntry> bucketEntries = new ArrayList<>();
         if (bucket != null) {
             for (LabVessel tube : tubes) {
-                bucketEntries.add(bucket.addEntry(jiraTicketKey, tube, BucketEntry.BucketEntryType.PDO_ENTRY));
+                bucketEntries.add(bucket.addEntry(order, tube, BucketEntry.BucketEntryType.PDO_ENTRY));
             }
             LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
                     LabBatch.LabBatchType.WORKFLOW);

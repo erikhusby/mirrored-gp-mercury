@@ -93,7 +93,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                         }
                         vessel.addSample(mercurySample);
                         // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
-                        workingBucket.addEntry(sample.getProductOrder().getBusinessKey(), vessel,
+                        workingBucket.addEntry(sample.getProductOrder(), vessel,
                                 BucketEntry.BucketEntryType.PDO_ENTRY);
                         // }
                     }

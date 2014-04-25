@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -115,7 +117,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         LabBatch testBatch =
                 labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123",
-                        LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
+                                           LabBatch.LabBatchType.WORKFLOW, CreateFields.IssueType.EXOME_EXPRESS);
 
         final String batchName = testBatch.getBatchName();
 
@@ -152,7 +154,7 @@ public class LabBatchEJBTest extends ContainerTest {
         String futureDate = dFormatter.format(future);
 
         LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
-                LabBatch.LabBatchType.WORKFLOW);
+                                           LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
@@ -179,9 +181,10 @@ public class LabBatchEJBTest extends ContainerTest {
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         LabBatch batch = new LabBatch("LabBatchEJBTest.testCreateLabBatchAndRemoveFromBucket",
-                starters, LabBatch.LabBatchType.WORKFLOW);
+                                      starters, LabBatch.LabBatchType.WORKFLOW);
         LabBatch savedBatch = labBatchEJB.createLabBatchAndRemoveFromBucket(batch, scottmat, BUCKET_NAME,
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+                                                                            LabEvent.UI_EVENT_LOCATION,
+                                                                            CreateFields.IssueType.EXOME_EXPRESS);
 
         //link the JIRA tickets for the batch created to the pdo batches.
         for (String pdoKey : LabVessel.extractPdoKeyList(starters)) {
@@ -211,8 +214,8 @@ public class LabBatchEJBTest extends ContainerTest {
         String expectedTicketId = "testCreateLabBatchAndRemoveFromBucketExistingTicket";
         LabBatch savedBatch = labBatchEJB
                 .createLabBatchAndRemoveFromBucket(new ArrayList<>(mapBarcodeToTube.keySet()), scottmat,
-                        expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
-                        CreateFields.IssueType.EXOME_EXPRESS);
+                                                   expectedTicketId, BUCKET_NAME, LabBatch.LabBatchType.WORKFLOW,
+                                                   CreateFields.IssueType.EXOME_EXPRESS);
 
         labBatchDao.flush();
         labBatchDao.clear();
@@ -230,10 +233,11 @@ public class LabBatchEJBTest extends ContainerTest {
 
     private void putTubesInBucket() {
         bucket = bucketDao.findByName(BUCKET_NAME);
-
+        ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder();
+        stubTestPDO.setJiraTicketKey(STUB_TEST_PDO_KEY);
         for (LabVessel vessel : mapBarcodeToTube.values()) {
-            bucket.addEntry(STUB_TEST_PDO_KEY, vessel,
-                    org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
+            bucket.addEntry(stubTestPDO, vessel,
+                            org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
         }
 
         for (LabVessel vessel : mapBarcodeToTube.values()) {

@@ -1227,7 +1227,7 @@ public class LabEventFactory implements Serializable {
 
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<>();
-            LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
+            LabEvent currEvent = createFromBatchItems(mapEntry.getProductOrder().getBusinessKey(), mapEntry.getLabVessel(),
                     workCounter++, operator, eventType, eventLocation, programName);
             if (null != batchIn) {
                 currEvent.setLabBatch(batchIn);

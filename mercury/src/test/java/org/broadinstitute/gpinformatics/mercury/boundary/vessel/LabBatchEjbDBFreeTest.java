@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
@@ -63,6 +64,9 @@ public class LabBatchEjbDBFreeTest {
 
         Collections.addAll(vesselSampleList, "SM-423", "SM-243", "SM-765", "SM-143", "SM-9243", "SM-118");
 
+        ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
+        testOrder.setJiraTicketKey(STUB_TEST_PDO_KEY);
+
         // starting rack
         int sampleIndex = 1;
         for (String sampleName : vesselSampleList) {
@@ -70,8 +74,7 @@ public class LabBatchEjbDBFreeTest {
             String bspStock = sampleName;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, STUB_TEST_PDO_KEY,
-                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, testOrder, BucketEntry.BucketEntryType.PDO_ENTRY));
             mapBarcodeToTube.put(barcode, bspAliquot);
             sampleIndex++;
         }

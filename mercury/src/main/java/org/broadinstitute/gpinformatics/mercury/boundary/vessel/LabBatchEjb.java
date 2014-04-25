@@ -249,7 +249,7 @@ public class LabBatchEjb {
             vessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
         }
 
         Set<LabVessel> reworkVessels = new HashSet<>();
@@ -257,7 +257,7 @@ public class LabBatchEjb {
             reworkVessels.add(bucketEntry.getLabVessel());
             String tubeBarcode = bucketEntry.getLabVessel().getLabel();
             tubeBarcodeCounts.put(tubeBarcode, tubeBarcodeCounts.get(tubeBarcode) + 1);
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
         }
 
         // Validate that no tubes appear in the proposed batch more than once
@@ -441,7 +441,7 @@ public class LabBatchEjb {
         Set<LabVessel> labVessels = new HashSet<>();
         for (BucketEntry bucketEntry : bucketEntries) {
             labVessels.add(bucketEntry.getLabVessel());
-            pdoKeys.add(bucketEntry.getPoBusinessKey());
+            pdoKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             bucketEntry.getBucket().removeEntry(bucketEntry);
         }
 
@@ -454,7 +454,7 @@ public class LabBatchEjb {
 
         for (BucketEntry entry : reworkBucketEntries) {
             reworkVessels.add(entry.getLabVessel());
-            pdoKeys.add(entry.getPoBusinessKey());
+            pdoKeys.add(entry.getProductOrder().getBusinessKey());
             entry.getBucket().removeEntry(entry);
             reworkFromBucket = entry.getBucket();
         }

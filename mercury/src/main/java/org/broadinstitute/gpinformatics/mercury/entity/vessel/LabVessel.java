@@ -811,7 +811,7 @@ public abstract class LabVessel implements Serializable {
                             if (EVENT_DIAGNOSTICS) {
                                 System.out.println("SampleInstance " +
                                                    sampleInstance.getStartingSample().getSampleKey() + " gets " +
-                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getPoBusinessKey() +
+                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getProductOrder().getBusinessKey() +
                                                    " from " + bucketEntry.getBucket().getBucketDefinitionName() +
                                                    (bucketEntry.getReworkDetail() != null ? " (rework)" : ""));
                             }
@@ -929,7 +929,7 @@ public abstract class LabVessel implements Serializable {
              */
             Set<String> productOrderKeys = new HashSet<>();
             for (BucketEntry bucketEntry : bucketEntries) {
-                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+                productOrderKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             }
             if (productOrderKeys.size() == 1) {
                 traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
@@ -1656,7 +1656,7 @@ public abstract class LabVessel implements Serializable {
 
         for (LabVessel currentAncestor : vesselHierarchy) {
             for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
-                if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                if (pdoKey.equals(currentEntry.getProductOrder().getBusinessKey()) &&
                     bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                     BucketEntry.Status.Active == currentEntry.getStatus()) {
                     return true;
@@ -1680,7 +1680,7 @@ public abstract class LabVessel implements Serializable {
             @Nonnull String pdoKey, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
 
         for (BucketEntry currentEntry : getBucketEntries()) {
-            if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+            if (pdoKey.equals(currentEntry.getProductOrder().getBusinessKey()) &&
                 bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                 compareStatus == currentEntry.getStatus()) {
                 return true;
