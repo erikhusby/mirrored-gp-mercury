@@ -114,6 +114,10 @@
             <logger category="jacorb.config">
                 <level name="ERROR"/>
             </logger>
+            <!-- Avoid 'Narrowing proxy to class' warning. See https://hibernate.atlassian.net/browse/HHH-1367 -->
+            <logger category="org.hibernate.engine.StatefulPersistenceContext">
+                <level name="ERROR"/>
+            </logger>
             <root-logger>
                 <level name="INFO"/>
                 <handlers>
@@ -365,15 +369,15 @@
         <subsystem xmlns="urn:jboss:domain:security:1.1">
 
             <security-domains>
-                 <security-domain name="COLLABORATE-Realm">
+                <security-domain name="COLLABORATE-Realm">
                     <authentication>
-                       <login-module code="org.broadinstitute.gp.portal.PortalLoginModule" flag="optional">
-                       <module-option name="dsJndiName" value="java:jboss/jdbc/portal_pool"/>
+                        <login-module code="org.broadinstitute.gp.portal.PortalLoginModule" flag="optional">
+                            <module-option name="dsJndiName" value="java:jboss/jdbc/portal_pool"/>
                        <module-option name="principalsQuery" value="SELECT password as PASSWD FROM sec_user su, sec_domain_user sdu WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdu.domain = 'COLLABORATE' AND su.is_enabled = 1"/>
                        <module-option name="rolesQuery" value="SELECT sr.id as ROLEID, sr.name as Role, 'Roles' FROM sec_user su, sec_domain_user sdu, sec_role sr, sec_domain_user_role sdur WHERE ? in (su.username, su.email_address) and su.id = sdu.user_id and sdur.role_id = sr.id AND sdur.domain_user_id = sdu.id AND sdu.domain = 'COLLABORATE' AND su.is_enabled = 1"/>
-                       <module-option name="unauthenticatedIdentity" value="guest"/>
-                       </login-module>
-                   </authentication>
+                            <module-option name="unauthenticatedIdentity" value="guest"/>
+                        </login-module>
+                    </authentication>
                 </security-domain>
 
 
