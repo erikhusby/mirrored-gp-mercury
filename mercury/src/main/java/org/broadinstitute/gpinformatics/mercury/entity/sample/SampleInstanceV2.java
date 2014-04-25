@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -21,6 +23,8 @@ import java.util.Set;
  * in a bottom-up traversal of LabEvents, from that LabVessel.
  */
 public class SampleInstanceV2 {
+
+    private static final Log log = LogFactory.getLog(SampleInstanceV2.class);
 
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
     private List<Reagent> reagents = new ArrayList<>();
@@ -45,11 +49,12 @@ public class SampleInstanceV2 {
         this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
-            System.out.print("Created sample instance ");
+            String message = "Created sample instance ";
             if (!labVessel.getMercurySamples().isEmpty()) {
-                System.out.print(labVessel.getMercurySamples().iterator().next().getSampleKey());
+                message += labVessel.getMercurySamples().iterator().next().getSampleKey();
             }
-            System.out.println();
+            message += " from " + labVessel.getLabel();
+            log.info(message);
         }
         applyVesselChanges(labVessel);
     }
@@ -262,7 +267,7 @@ todo jmt not sure if this applies.
      */
     public void addReagent(Reagent newReagent) {
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("Adding reagent " + newReagent);
+            log.info("Adding reagent " + newReagent);
         }
         SampleInstance.addReagent(newReagent, reagents);
     }
@@ -276,6 +281,10 @@ todo jmt not sure if this applies.
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
+            if (LabVessel.DIAGNOSTICS) {
+                log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
+                        " in " + labVessel.getLabel());
+            }
         }
         allLabBatchStartingVessels.addAll(labVessel.getLabBatchStartingVesselsByDate());
         for (MercurySample mercurySample : labVessel.getMercurySamples()) {
@@ -300,6 +309,11 @@ todo jmt not sure if this applies.
                         if (bucketEntry.getLabBatch() != null &&
                                 bucketEntry.getLabBatch().equals(singleInferredBucketedBatch)) {
                             singleBucketEntry = bucketEntry;
+                            if (LabVessel.DIAGNOSTICS) {
+                                log.info("Setting singleBucketEntry to " +
+                                        singleBucketEntry.getLabBatch().getBatchName() + " in " +
+                                        labEvent.getLabEventType().getName());
+                            }
                             break;
                         }
                     }
