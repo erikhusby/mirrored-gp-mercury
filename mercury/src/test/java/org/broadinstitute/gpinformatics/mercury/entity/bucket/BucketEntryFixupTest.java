@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -24,9 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * TODO scottmat fill in javadoc!!!
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketEntryFixupTest extends Arquillian {
 
@@ -43,6 +42,9 @@ public class BucketEntryFixupTest extends Arquillian {
     LabVesselDao labVesselDao;
 
     @Inject
+    ProductOrderDao productOrderDao;
+
+    @Inject
     UserTransaction utx;
 
     /**
@@ -57,7 +59,7 @@ public class BucketEntryFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -124,5 +126,17 @@ public class BucketEntryFixupTest extends Arquillian {
 
         BucketEntry bucketEntry = bucket.findEntry(vessel);
         bucket.removeEntry(bucketEntry);
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    public void setProductOrderReferences() {
+        List<BucketEntry> bucketEntriesToFix = bucketDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+
+        for(BucketEntry entry:bucketEntriesToFix) {
+            ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(entry.getPoBusinessKey());
+            if(orderToUpdate != null) {
+                entry.setProductOrder(orderToUpdate);
+            }
+        }
     }
 }
