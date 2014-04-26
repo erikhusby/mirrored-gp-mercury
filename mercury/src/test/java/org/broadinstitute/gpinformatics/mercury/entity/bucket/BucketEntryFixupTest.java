@@ -59,7 +59,7 @@ public class BucketEntryFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -128,7 +128,7 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void setProductOrderReferences() {
         List<BucketEntry> bucketEntriesToFix = bucketDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
 
