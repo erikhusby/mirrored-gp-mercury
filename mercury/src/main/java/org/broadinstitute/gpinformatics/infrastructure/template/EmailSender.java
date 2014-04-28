@@ -10,7 +10,6 @@ import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.Serializable;
@@ -20,6 +19,8 @@ import java.util.Date;
  * Encapsulates the mechanism for sending emails.
  */
 public class EmailSender implements Serializable {
+    private static final long serialVersionUID = -905091780612758760L;
+
     private static final Log LOG = LogFactory.getLog(EmailSender.class);
 
     @Resource(mappedName = "java:/mail/broadsmtp")
