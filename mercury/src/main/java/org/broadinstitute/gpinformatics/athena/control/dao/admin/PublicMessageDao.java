@@ -16,8 +16,6 @@ import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessa
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.Query;
 import java.util.List;
@@ -41,7 +39,6 @@ public class PublicMessageDao extends GenericDao {
     /**
      * Clears all PublicMessages. Ensures there are no PublicMessages persisted to the database.
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void clearMessage() {
         Query query = getEntityManager().createQuery("delete from PublicMessage");
         query.executeUpdate();
