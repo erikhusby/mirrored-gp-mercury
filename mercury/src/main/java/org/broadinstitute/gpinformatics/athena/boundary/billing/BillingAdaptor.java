@@ -137,7 +137,7 @@ public class BillingAdaptor implements Serializable {
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
-                    log.info("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
+                    log.debug("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
                              + new Date());
 
                     billingEjb.updateLedgerEntries(item, quoteIsReplacing,workId);
