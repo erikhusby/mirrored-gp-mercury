@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.ReworkReasonDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -19,12 +17,11 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketEntryFixupTest extends Arquillian {
@@ -130,12 +127,19 @@ public class BucketEntryFixupTest extends Arquillian {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void setProductOrderReferences() {
-        List<BucketEntry> bucketEntriesToFix = bucketDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
 
-        for(BucketEntry entry:bucketEntriesToFix) {
-            ProductOrder orderToUpdate = productOrderDao.findByBusinessKey(entry.getPoBusinessKey());
-            if(orderToUpdate != null) {
-                entry.setProductOrder(orderToUpdate);
+        List<BucketEntry> bucketEntriesToFix = bucketDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+        Map<String, ProductOrder> pdoCache = new HashMap<>();
+
+        for (BucketEntry entry : bucketEntriesToFix) {
+            if (StringUtils.isNotBlank(entry.getPoBusinessKey())) {
+                ProductOrder orderToUpdate = pdoCache.get(entry.getPoBusinessKey());
+                if (orderToUpdate == null) {
+                    orderToUpdate = productOrderDao.findByBusinessKey(entry.getPoBusinessKey());
+                }
+                if (orderToUpdate != null) {
+                    entry.setProductOrder(orderToUpdate);
+                }
             }
         }
     }

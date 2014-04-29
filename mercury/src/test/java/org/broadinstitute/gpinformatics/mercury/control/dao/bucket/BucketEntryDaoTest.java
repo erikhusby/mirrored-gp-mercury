@@ -33,9 +33,8 @@ import java.util.Date;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketEntryDaoTest extends ContainerTest {
 
-    //    public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket";
-//    @Inject
-//    BucketDao bucketDao;
+    @Inject
+    BucketDao bucketDao;
 
     @Inject
     BucketEntryDao bucketEntryDao;
@@ -44,17 +43,13 @@ public class BucketEntryDaoTest extends ContainerTest {
     TwoDBarcodedTubeDao tubeDao;
 
     @Inject
-    private ThreadEntityManager threadEntityManager;
+    ProductOrderDao productOrderDao;
 
+    @Inject
+    ProductDao productDao;
 
-//    @Inject
-//    ProductOrderDao productOrderDao;
-//
-//    @Inject
-//    ProductDao productDao;
-//
-//    @Inject
-//    ResearchProjectDao researchProjectDao;
+    @Inject
+    ResearchProjectDao researchProjectDao;
 
     @Inject
     private UserTransaction utx;
@@ -71,11 +66,8 @@ public class BucketEntryDaoTest extends ContainerTest {
             return;
         }
 
-        utx.begin();
 
-//        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
-
-        testBucket = bucketEntryDao.findSingle(Bucket.class, Bucket_.bucketDefinitionName,BucketDaoTest.EXTRACTION_BUCKET_NAME);
+        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         if(testBucket == null) {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
@@ -87,14 +79,11 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         twoDBarcodeKey = "SM-1493" +(new Date()).getTime();
         testPoBusinessKey = "PDO-33";
-//        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
-        testOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, testPoBusinessKey);
+        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
         if(testOrder == null) {
             testOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey);
-//            testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
-            testOrder.setProduct(bucketEntryDao.findSingle(Product.class, Product_.partNumber ,Product.EXOME_EXPRESS_V2_PART_NUMBER));
-//            testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
-            testOrder.setResearchProject(bucketEntryDao.findSingle(ResearchProject.class,ResearchProject_.title , "ADHD"));
+            testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         }
         BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testOrder, testBucket,
                                                 BucketEntry.BucketEntryType.PDO_ENTRY);
@@ -111,7 +100,6 @@ public class BucketEntryDaoTest extends ContainerTest {
             return;
         }
 
-        utx.rollback();
     }
 
     @Test
@@ -135,9 +123,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         Assert.assertEquals(dateFormatter.format(new Date()),
                             dateFormatter.format(retrievedEntry.getCreatedDate()));
 
-//        Bucket findBucket = bucketEntryDao.findSingle(Bucket.class, BucketDaoTest.EXTRACTION_BUCKET_NAME);
-        testBucket = bucketEntryDao.findSingle(Bucket.class, Bucket_.bucketDefinitionName,
-                                               BucketDaoTest.EXTRACTION_BUCKET_NAME);
+        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         if(testBucket == null) {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
@@ -162,8 +148,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     public void testFindDuplicate() {
 
         TwoDBarcodedTube vesselToDupe = tubeDao.findByBarcode(twoDBarcodeKey);
-        testBucket = bucketEntryDao.findSingle(Bucket.class, Bucket_.bucketDefinitionName,
-                                               BucketDaoTest.EXTRACTION_BUCKET_NAME);
+        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         if(testBucket == null) {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
@@ -173,21 +158,17 @@ public class BucketEntryDaoTest extends ContainerTest {
             bucketEntryDao.clear();
         }
 
-        ProductOrder testDupeOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey,
-                                                               testPoBusinessKey + "dupe");
+        ProductOrder testDupeOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "dupe");
         if(testDupeOrder == null) {
             testDupeOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "dupe");
 
-            testDupeOrder.setProduct(bucketEntryDao.findSingle(Product.class, Product_.partNumber,
-                                                               Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            testDupeOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
 
-            testDupeOrder.setResearchProject(bucketEntryDao.findSingle(ResearchProject.class,ResearchProject_.title , "ADHD"));
+            testDupeOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
             testDupeOrder.updateAddOnProducts(Collections.<Product>emptyList());
         }
         BucketEntry testEntry = new BucketEntry(vesselToDupe, testDupeOrder, testBucket,
                                                 BucketEntry.BucketEntryType.PDO_ENTRY);
-
-        Assert.assertTrue(threadEntityManager.getEntityManager().contains(testDupeOrder.getProduct().getPrimaryPriceItem()));
 
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
@@ -197,7 +178,7 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         Assert.assertNotNull(foundVessel);
 
-        testOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, testPoBusinessKey);
+        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
         BucketEntry retrievedEntry = bucketEntryDao.findByVesselAndPO(foundVessel, testOrder);
 
         Assert.assertNotNull(retrievedEntry);
@@ -211,8 +192,7 @@ public class BucketEntryDaoTest extends ContainerTest {
                         .getCreatedDate()));
         Assert.assertEquals(retrievedEntry.getProductOrder(), testOrder);
 
-        Bucket findBucket = bucketEntryDao.findSingle(Bucket.class, Bucket_.bucketDefinitionName,
-                                                      BucketDaoTest.EXTRACTION_BUCKET_NAME);
+        Bucket findBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
         try {
             BucketEntry retrievedEntry2 = bucketEntryDao.findByVesselAndBucket(foundVessel, findBucket);
@@ -241,19 +221,16 @@ public class BucketEntryDaoTest extends ContainerTest {
         TwoDBarcodedTube newFoundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
 
         Assert.assertNotNull(foundVessel); 
-        testOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, testPoBusinessKey);
+        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
 
         BucketEntry newRetrievedEntry = bucketEntryDao.findByVesselAndPO(newFoundVessel, testOrder);
         Assert.assertEquals(24, newRetrievedEntry.getProductOrderRanking().intValue());
 
-        ProductOrder replacementOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey,
-                                                                  testPoBusinessKey + "new");
+        ProductOrder replacementOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "new");
         if(replacementOrder == null) {
             replacementOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "new");
-            replacementOrder.setProduct(bucketEntryDao.findSingle(Product.class, Product_.partNumber,
-                                                                  Product.EXOME_EXPRESS_V2_PART_NUMBER));
-            replacementOrder.setResearchProject(bucketEntryDao.findSingle(ResearchProject.class, ResearchProject_.title,
-                                                                          "ADHD"));
+            replacementOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+            replacementOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
             replacementOrder.updateAddOnProducts(Collections.<Product>emptyList());
         }
         newRetrievedEntry.setProductOrder(replacementOrder);
@@ -264,8 +241,7 @@ public class BucketEntryDaoTest extends ContainerTest {
 
         TwoDBarcodedTube foundVesselAgain = tubeDao.findByBarcode(twoDBarcodeKey);
 
-        replacementOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey,
-                                                     testPoBusinessKey + "new");
+        replacementOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "new");
 
         BucketEntry retrievedEntryAgain = bucketEntryDao.findByVesselAndPO(foundVesselAgain, replacementOrder);
 
@@ -291,7 +267,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         bucketEntryDao.clear();
 
         TwoDBarcodedTube newFoundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
-        testOrder = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, testPoBusinessKey);
+        testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
 
         BucketEntry notFoundEntry = bucketEntryDao.findByVesselAndPO(newFoundVessel, testOrder);
         Assert.assertNull(notFoundEntry);
