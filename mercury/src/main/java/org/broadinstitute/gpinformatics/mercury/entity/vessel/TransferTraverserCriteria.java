@@ -344,9 +344,6 @@ public interface TransferTraverserCriteria {
             if (context.getLabVessel() != null) {
                 if (context.getLabVessel().getMercurySamples() != null) {
                     for (BucketEntry bucketEntry : context.getLabVessel().getBucketEntries()) {
-                        if (StringUtils.isBlank(bucketEntry.getProductOrder().getBusinessKey())) { // todo jmt use BucketEntry?
-                            continue;
-                        }
                         if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
                             productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
                         }
