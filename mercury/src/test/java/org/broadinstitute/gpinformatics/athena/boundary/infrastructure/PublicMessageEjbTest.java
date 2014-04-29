@@ -34,6 +34,7 @@ public class PublicMessageEjbTest extends ContainerTest {
         PublicMessage anotherPublicMessage = publicMessageEjb.getPublicMessage();
         Assert.assertNotNull(anotherPublicMessage);
         Assert.assertEquals(anotherPublicMessage.getMessage(), TEST_MESSAGE);
+        publicMessageEjb.clearPublicMessage();
     }
 
     public void testSetPublicMessage() {
@@ -43,6 +44,6 @@ public class PublicMessageEjbTest extends ContainerTest {
         publicMessage.setMessage(TEST_MESSAGE);
 
         publicMessageEjb.setPublicMessage(publicMessage);
-
+        publicMessageEjb.clearPublicMessage();
     }
 }

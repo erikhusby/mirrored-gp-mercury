@@ -1,6 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <!-- Recursive Stripes component that will display the full tree of child projects based on the supplied parameter childProjects. -->
+<%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"--%>
 
 <stripes:layout-definition>
         <stripes:useActionBean var="projectLinkBean"

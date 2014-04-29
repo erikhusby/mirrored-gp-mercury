@@ -52,6 +52,7 @@ public class PublicMessageEjb {
     }
 
     public void setPublicMessage(@Nonnull PublicMessage publicMessage) {
+        clearPublicMessage();
         message = publicMessage;
         try {
             publicMessageDao.persist(message);
@@ -69,7 +70,7 @@ public class PublicMessageEjb {
     public void clearPublicMessage() {
         if (message != null) {
             try {
-                publicMessageDao.remove(message);
+                publicMessageDao.clearMessage();
             } catch (Exception e) {
                 log.error("Could not clear public message", e);
             } finally {

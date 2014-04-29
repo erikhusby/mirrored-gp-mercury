@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.Query;
 import java.util.List;
 
 @Stateful
@@ -33,5 +34,13 @@ public class PublicMessageDao extends GenericDao {
             return null;
         }
         return CollectionUtils.extractSingleton(publicMessages);
+    }
+
+    /**
+     * Clears all PublicMessages. Ensures there are no PublicMessages persisted to the database.
+     */
+    public void clearMessage() {
+        Query query = getEntityManager().createQuery("delete from PublicMessage");
+        query.executeUpdate();
     }
 }
