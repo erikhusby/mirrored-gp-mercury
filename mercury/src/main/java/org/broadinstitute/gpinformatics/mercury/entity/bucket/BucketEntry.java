@@ -130,8 +130,9 @@ public class BucketEntry {
     public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder,
                        BucketEntryType entryType) {
         this.labVessel = labVesselIn;
-        this.productOrder = productOrder;
         this.entryType = entryType;
+
+        setProductOrder(productOrder);
 
         createdDate = new Date();
     }
@@ -171,6 +172,9 @@ public class BucketEntry {
 
     public void setProductOrder(ProductOrder productOrder) {
         this.productOrder = productOrder;
+
+        //TODO SGM-- Temporary add until GPLIM-2710 is implemented
+        setPoBusinessKey(productOrder.getBusinessKey());
     }
 
     /**
