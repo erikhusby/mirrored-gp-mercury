@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -1670,17 +1671,18 @@ public abstract class LabVessel implements Serializable {
     /**
      * Helper method to determine if a given vessel is in a bucket.
      *
-     * @param pdoKey     PDO Key with which a vessel may be associated in a bucket
+     *
+     * @param productOrder
      * @param bucketName Name of the bucket to search for associations
      * @param compareStatus Status to compare each entry to
      *
      * @return true if the entry is in the bucket with the specified status
      */
     public boolean checkCurrentBucketStatus(
-            @Nonnull String pdoKey, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
+            @Nonnull ProductOrder productOrder, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
 
         for (BucketEntry currentEntry : getBucketEntries()) {
-            if (pdoKey.equals(currentEntry.getProductOrder().getBusinessKey()) &&
+            if (productOrder.equals(currentEntry.getProductOrder()) &&
                 bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                 compareStatus == currentEntry.getStatus()) {
                 return true;

@@ -359,7 +359,7 @@ public class ReworkEjb {
 
         Collection<String> validationMessages =
                 validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                                   bucketCandidate.getProductOrder().getBusinessKey(), bucketCandidate.getSampleKey(),
+                                   bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
                                    bucketCandidate.isReworkItem());
 
         addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
@@ -383,9 +383,10 @@ public class ReworkEjb {
      * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
      *
+     *
      * @param candidateVessel a LabVessel instance being submitted to a bucket
      * @param bucketDef       the bucket that the samples will be added to
-     * @param productOrderKey the product order for which the vessel is being added to a bucket
+     * @param productOrder the product order for which the vessel is being added to a bucket
      * @param sampleKey       the sample being for which the vessel represents
      * @param reworkItem      Indicates whether the sample being added is for rework
      *
@@ -393,17 +394,17 @@ public class ReworkEjb {
      */
     public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel,
                                                  @Nonnull WorkflowBucketDef bucketDef,
-                                                 @Nonnull String productOrderKey, @Nonnull String sampleKey,
+                                                 @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
 
         List<String> validationMessages = new ArrayList<>();
 
-        if (candidateVessel.checkCurrentBucketStatus(productOrderKey, bucketDef.getName(),
+        if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(),
                                                      BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                                  candidateVessel.getLabel(), sampleKey, productOrderKey, bucketDef.getName());
+                                  candidateVessel.getLabel(), sampleKey, productOrder, bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }
