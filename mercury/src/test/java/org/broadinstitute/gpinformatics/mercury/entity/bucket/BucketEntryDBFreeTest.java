@@ -102,7 +102,7 @@ public class BucketEntryDBFreeTest {
                 Mockito.mock(LabEventFactory.class),
                 Mockito.mock(JiraService.class),
                 Mockito.mock(BucketDao.class),
-                null, null, Mockito.mock(LabVesselDao.class), null,
+                null, Mockito.mock(LabVesselDao.class), null,
                 null, null, null, productOrderDao);
 
         for (BucketEntry bucketEntry : bucketEntries) {

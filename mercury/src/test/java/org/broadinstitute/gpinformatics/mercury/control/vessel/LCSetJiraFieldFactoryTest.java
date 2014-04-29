@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -18,6 +17,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -50,12 +53,34 @@ public class LCSetJiraFieldFactoryTest {
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
     private ProductOrder testProductOrder;
+    @MockitoAnnotations.Mock
+    private ProductOrderDao productOrderDao;
+    private ProductOrder singleSampleOrder;
+    private String testOrderKey;
+    private String singleSampleTestOrder;
 
     @BeforeMethod
     public void startUp() throws IOException {
+        MockitoAnnotations.initMocks(this);
+        testOrderKey = "PDO-999";
         testProductOrder =
-                ProductOrderTestFactory.createDummyProductOrder("PDO-999");
-        ProductOrder singleSampleOrder = ProductOrderTestFactory.createDummyProductOrder("PDO-7");
+                ProductOrderTestFactory.createDummyProductOrder(testOrderKey);
+        singleSampleTestOrder = "PDO-7";
+        singleSampleOrder = ProductOrderTestFactory.createDummyProductOrder(singleSampleTestOrder);
+
+        Mockito.when(productOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Object[] arguments = invocationOnMock.getArguments();
+                ProductOrder foundOrder = null;
+                if ((arguments[0]).equals(testOrderKey)) {
+                    foundOrder = testProductOrder;
+                } else {
+                    foundOrder = singleSampleOrder;
+                }
+                return foundOrder;
+            }
+        });
 
         pdoNames = new ArrayList<>();
         Collections.addAll(pdoNames, testProductOrder.getBusinessKey());
@@ -73,8 +98,9 @@ public class LCSetJiraFieldFactoryTest {
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
-            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot, sampleIndex == 1 ? singleSampleOrder : testProductOrder,
-                    BucketEntry.BucketEntryType.PDO_ENTRY));
+            bspAliquot.addBucketEntry(new BucketEntry(bspAliquot,
+                                                      sampleIndex == 1 ? singleSampleOrder : testProductOrder,
+                                                      BucketEntry.BucketEntryType.PDO_ENTRY));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
@@ -89,7 +115,8 @@ public class LCSetJiraFieldFactoryTest {
 
     public void testLCSetFieldGeneration() throws IOException {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflow, pdoNames),
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                          new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                          LabBatch.LabBatchType.WORKFLOW);
         testBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         testBatch.setBatchDescription("Batch Test Description");
 
@@ -101,10 +128,10 @@ public class LCSetJiraFieldFactoryTest {
         int numSamples = testBatch.getStartingBatchLabVessels().size();
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory.getInstance(
-                CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
+                CreateFields.ProjectType.LCSET_PROJECT, testBatch, productOrderDao);
 
         Assert.assertEquals("1 samples from MyResearchProject PDO-7\n5 samples from MyResearchProject PDO-999\n",
-                testBuilder.generateDescription());
+                            testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
@@ -137,18 +164,18 @@ public class LCSetJiraFieldFactoryTest {
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROGRESS_STATUS.getName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS,
-                        ((CustomField.ValueContainer) field.getValue()).getValue());
+                                    ((CustomField.ValueContainer) field.getValue()).getValue());
             }
             if (fieldDefinitionName.equals(LabBatch.TicketFields.PROTOCOL.getName())) {
                 WorkflowLoader workflowLoader = new WorkflowLoader();
                 WorkflowConfig workflowConfig = workflowLoader.load();
-                AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
 
-                ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(testProductOrder.getProduct().getWorkflow());
+                ProductWorkflowDef workflowDef = workflowConfig.getWorkflow(
+                        testProductOrder.getProduct().getWorkflow());
 
                 Assert.assertEquals(
                         workflowDef.getName() + ":" + workflowDef.getEffectiveVersion(testBatch.getCreatedOn())
-                                .getVersion(), field.getValue());
+                                                                 .getVersion(), field.getValue());
 
             }
         }

@@ -68,7 +68,6 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
-        AthenaClientServiceStub.addProductOrder(productOrder);
         runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",

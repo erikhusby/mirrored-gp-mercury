@@ -83,7 +83,6 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        AthenaClientServiceStub.addProductOrder(productOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
@@ -193,7 +192,6 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        AthenaClientServiceStub.addProductOrder(productOrder);
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 

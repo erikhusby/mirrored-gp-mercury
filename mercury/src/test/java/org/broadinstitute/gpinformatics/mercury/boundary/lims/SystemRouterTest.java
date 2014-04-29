@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -82,10 +81,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Matchers.anyCollectionOf;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -126,7 +122,6 @@ public class SystemRouterTest extends BaseEventTest {
 
     private LabVesselDao mockLabVesselDao;
     private ControlDao mockControlDao;
-    private AthenaClientService mockAthenaClientService;
     private BSPSampleDataFetcher mockBspSampleDataFetcher;
     private BSPExportsService mockBspExportService;
     private int productOrderSequence = 1;
@@ -151,11 +146,11 @@ public class SystemRouterTest extends BaseEventTest {
         // existed before that method was factored out.
         mockLabVesselDao = mock(LabVesselDao.class);
         mockControlDao = mock(ControlDao.class);
-        mockAthenaClientService = mock(AthenaClientService.class);
+//        mockAthenaClientService = mock(AthenaClientService.class);
         mockBspSampleDataFetcher = mock(BSPSampleDataFetcher.class);
         mockBspExportService = mock(BSPExportsService.class);
         systemRouter = new SystemRouter(mockLabVesselDao, mockControlDao,
-                new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
+                                        new WorkflowLoader(), mockBspSampleDataFetcher, mockBspExportService);
 
         // By default, make BSP answer that it knows about all vessels and returns that they have not been exported.
         when(mockBspExportService.findExportDestinations(anyCollectionOf(LabVessel.class))).thenAnswer(
@@ -255,11 +250,12 @@ public class SystemRouterTest extends BaseEventTest {
 
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false, "agg type");
+                                  0, 0, 0, 0, "Test samples only", "None", true, Workflow.WHOLE_GENOME, false,
+                                  "agg type");
 
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test exome express samples only", "None", true,
-                Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
+                                   0, 0, 0, 0, "Test exome express samples only", "None", true,
+                                   Workflow.AGILENT_EXOME_EXPRESS, false, "agg type");
 
         picoBucket = new Bucket("Pico/Plating Bucket");
     }
@@ -335,7 +331,7 @@ public class SystemRouterTest extends BaseEventTest {
             }
         } else {
             assertThat(systemRouter.routeForVesselBarcodes(testBarcodes),
-                    is(SQUID));
+                       is(SQUID));
         }
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
         Deployment.isCRSP = oldDeployment;
@@ -348,7 +344,8 @@ public class SystemRouterTest extends BaseEventTest {
         try {
             systemRouter.routeForVesselBarcodes(testBarcodes);
             Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
-        } catch (Exception expected) {}
+        } catch (Exception expected) {
+        }
         verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
@@ -360,8 +357,9 @@ public class SystemRouterTest extends BaseEventTest {
         try {
             systemRouter.routeForVesselBarcodes(testBarcodes);
             Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
-        } catch (Exception expected) {}
-        verify(mockLabVesselDao).findByBarcodes(testBarcodes );
+        } catch (Exception expected) {
+        }
+        verify(mockLabVesselDao).findByBarcodes(testBarcodes);
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
@@ -388,7 +386,8 @@ public class SystemRouterTest extends BaseEventTest {
     }
 
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
-    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControlsAfterTransfer(ApplicationInstance instance) {
+    public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControlsAfterTransfer(
+            ApplicationInstance instance) {
         final TwoDBarcodedTube target1 = new TwoDBarcodedTube("target1");
         final TwoDBarcodedTube target2 = new TwoDBarcodedTube("target2");
         final TwoDBarcodedTube target3 = new TwoDBarcodedTube("target3");
@@ -420,7 +419,7 @@ public class SystemRouterTest extends BaseEventTest {
         boolean oldDeployment = Deployment.isCRSP;
         Deployment.isCRSP = (instance == ApplicationInstance.CRSP);
         final String testBarcode = "squidPlate";
-        if(Deployment.isCRSP) {
+        if (Deployment.isCRSP) {
             try {
                 systemRouter.routeForVessel(testBarcode);
 
@@ -475,7 +474,8 @@ public class SystemRouterTest extends BaseEventTest {
         try {
             systemRouter.routeForVessel(MERCURY_PLATE);
             Assert.fail("Expected exception: The Routing cannot be determined for options: [MERCURY, SQUID]");
-        } catch (Exception expected) {}
+        } catch (Exception expected) {
+        }
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
@@ -490,9 +490,6 @@ public class SystemRouterTest extends BaseEventTest {
         verify(mockLabVesselDao).findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_PLATE);
         }});
-        // must look up one order or the other, but not both since they're both Exome Express
-        verify(mockAthenaClientService, atMost(2)).retrieveProductOrderDetails(or(eq(order1.getBusinessKey()),
-                eq(order2.getBusinessKey())));
     }
 
     /*
@@ -574,30 +571,40 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Determines how to configure ExportResult's notFound and error properties returned by mockBspExportService.
      */
-    private enum KnownToBSP { YES, NO, ERROR }
+    private enum KnownToBSP {
+        YES, NO, ERROR
+    }
 
     /**
      * Determines how to configure ExportResult's exportDestinations property returned by mockBspExportService.
      */
-    private enum ExportFromBSP { NONE, GAP, MERCURY, SEQUENCING, PARALLEL_VALIDATION }
+    private enum ExportFromBSP {
+        NONE, GAP, MERCURY, SEQUENCING, PARALLEL_VALIDATION
+    }
 
     /**
      * Determines whether or not to use a tube barcode that mockLabVesselDao will return a LabVessel for.
      */
-    private enum KnownToMercury { YES, NO }
+    private enum KnownToMercury {
+        YES, NO
+    }
 
     /**
      * Determines whether or not to put the tube in a PDO and what type of PDO to use. When testing system-of-record,
      * NON_EXEX can be used to test both Squid-only and parallel work because Squid is the system of record in both
      * cases.
      */
-    private enum InPDO { NONE, EXEX, NON_EXEX }
+    private enum InPDO {
+        NONE, EXEX, NON_EXEX
+    }
 
     /**
      * Determines whether or not to put any events on the tube and what the event type's system of record should be. The
      * specific event type is unspecified because only the type's system-of-record that matters here.
      */
-    private enum MercuryEvent { NONE, MERCURY, SQUID, WORKFLOW_DEPENDENT }
+    private enum MercuryEvent {
+        NONE, MERCURY, SQUID, WORKFLOW_DEPENDENT
+    }
 
     /**
      * Scenarios for
@@ -605,21 +612,35 @@ public class SystemRouterTest extends BaseEventTest {
      */
     @DataProvider(name = "systemOfRecordScenarios")
     public Object[][] getSystemOfRecordScenarios() {
-        return new Object[][] {
-                new Object[] { "squidIntermediateLCTube",    KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
-                new Object[] { "bspIntermediateTube",        KnownToMercury.NO,  InPDO.NONE,     MercuryEvent.NONE,               KnownToBSP.YES,   ExportFromBSP.NONE,                SQUID },
-                new Object[] { "inSamplesLab",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
-                new Object[] { "exportedToMercury",          KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
-                new Object[] { "exportedParallelValidation", KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.PARALLEL_VALIDATION, SQUID },
-                new Object[] { "exportedToSequencing",       KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
-                new Object[] { "exportedToGap",              KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.GAP,                 null },
-                new Object[] { "errorFromBSP",               KnownToMercury.YES, InPDO.NONE,     MercuryEvent.MERCURY,            KnownToBSP.ERROR, ExportFromBSP.NONE,                null },
-                new Object[] { "parallelTubeInSamplesLab",   KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
-                new Object[] { "parallelTubeExported",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,            KnownToBSP.YES,   ExportFromBSP.SEQUENCING,          SQUID },
-                new Object[] { "parallelTubeInSeqLab",       KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                SQUID },
-                new Object[] { "exExTubeInSamplesLab",       KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.NONE,                MERCURY },
-                new Object[] { "exExTubeExported",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.YES,   ExportFromBSP.MERCURY,             MERCURY },
-                new Object[] { "exExTubeInSeqLab",           KnownToMercury.YES, InPDO.EXEX,     MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO,    ExportFromBSP.NONE,                MERCURY },
+        return new Object[][]{
+                new Object[]{"squidIntermediateLCTube", KnownToMercury.NO, InPDO.NONE, MercuryEvent.NONE, KnownToBSP.NO,
+                        ExportFromBSP.NONE, SQUID},
+                new Object[]{"bspIntermediateTube", KnownToMercury.NO, InPDO.NONE, MercuryEvent.NONE, KnownToBSP.YES,
+                        ExportFromBSP.NONE, SQUID},
+                new Object[]{"inSamplesLab", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
+                        ExportFromBSP.NONE, MERCURY},
+                new Object[]{"exportedToMercury", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
+                        ExportFromBSP.MERCURY, MERCURY},
+                new Object[]{"exportedParallelValidation", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY,
+                        KnownToBSP.YES, ExportFromBSP.PARALLEL_VALIDATION, SQUID},
+                new Object[]{"exportedToSequencing", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY,
+                        KnownToBSP.YES, ExportFromBSP.SEQUENCING, SQUID},
+                new Object[]{"exportedToGap", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.YES,
+                        ExportFromBSP.GAP, null},
+                new Object[]{"errorFromBSP", KnownToMercury.YES, InPDO.NONE, MercuryEvent.MERCURY, KnownToBSP.ERROR,
+                        ExportFromBSP.NONE, null},
+                new Object[]{"parallelTubeInSamplesLab", KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,
+                        KnownToBSP.YES, ExportFromBSP.NONE, MERCURY},
+                new Object[]{"parallelTubeExported", KnownToMercury.YES, InPDO.NON_EXEX, MercuryEvent.MERCURY,
+                        KnownToBSP.YES, ExportFromBSP.SEQUENCING, SQUID},
+                new Object[]{"parallelTubeInSeqLab", KnownToMercury.YES, InPDO.NON_EXEX,
+                        MercuryEvent.WORKFLOW_DEPENDENT, KnownToBSP.NO, ExportFromBSP.NONE, SQUID},
+                new Object[]{"exExTubeInSamplesLab", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
+                        KnownToBSP.YES, ExportFromBSP.NONE, MERCURY},
+                new Object[]{"exExTubeExported", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
+                        KnownToBSP.YES, ExportFromBSP.MERCURY, MERCURY},
+                new Object[]{"exExTubeInSeqLab", KnownToMercury.YES, InPDO.EXEX, MercuryEvent.WORKFLOW_DEPENDENT,
+                        KnownToBSP.NO, ExportFromBSP.NONE, MERCURY},
         };
     }
 
@@ -629,13 +650,13 @@ public class SystemRouterTest extends BaseEventTest {
      * using various scenarios specified by a data provider. See enums for details about the various conditions. A
      * expectedSystemOfRecord value of null is a signal that an exception is expected to be thrown.
      *
-     * @param tubeBarcode               the tube barcode to query; also a short description of the scenario
-     * @param knownToMercury            whether or not the tube is known to Mercury
-     * @param inPDO                     whether or not the tube is related to a PDO and what type of PDO
-     * @param mercuryEvent              the system-of-record classification of the event targeting the tube
-     * @param knownToBSP                whether or not the tube is known to BSP
-     * @param exportFromBSP             whether or not the tube has been exported from BSP and where it was exported to
-     * @param expectedSystemOfRecord    the expected system-of-record for the scenario; null if an exception is expected
+     * @param tubeBarcode            the tube barcode to query; also a short description of the scenario
+     * @param knownToMercury         whether or not the tube is known to Mercury
+     * @param inPDO                  whether or not the tube is related to a PDO and what type of PDO
+     * @param mercuryEvent           the system-of-record classification of the event targeting the tube
+     * @param knownToBSP             whether or not the tube is known to BSP
+     * @param exportFromBSP          whether or not the tube has been exported from BSP and where it was exported to
+     * @param expectedSystemOfRecord the expected system-of-record for the scenario; null if an exception is expected
      */
     @Test(groups = DATABASE_FREE, dataProvider = "systemOfRecordScenarios")
     public void testSystemOfRecord(String tubeBarcode, KnownToMercury knownToMercury, InPDO inPDO,
@@ -669,10 +690,11 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Create an object graph appropriate for the given scenario conditions.
      *
-     * @param tubeBarcode       the barcode of the tube to (possibly) create in Mercury
-     * @param knownToMercury    whether or not the tube is known to Mercury
-     * @param inPDO             whether or not the tube is related to a PDO and what type of PDO
-     * @param mercuryEvent      the system-of-record classification of the event targeting the tube
+     * @param tubeBarcode    the barcode of the tube to (possibly) create in Mercury
+     * @param knownToMercury whether or not the tube is known to Mercury
+     * @param inPDO          whether or not the tube is related to a PDO and what type of PDO
+     * @param mercuryEvent   the system-of-record classification of the event targeting the tube
+     *
      * @return a new tube if Mercury should know about the tube; null otherwise
      */
     private LabVessel configureMercury(final String tubeBarcode, KnownToMercury knownToMercury, InPDO inPDO,
@@ -703,15 +725,18 @@ public class SystemRouterTest extends BaseEventTest {
 
             switch (mercuryEvent) {
             case MERCURY:
-                assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.MERCURY));
+                assertThat(LabEventType.SAMPLE_RECEIPT.getSystemOfRecord(), equalTo(
+                        LabEventType.SystemOfRecord.MERCURY));
                 addInPlaceEvent(SAMPLE_RECEIPT, tube);
                 break;
             case SQUID:
-                assertThat(LabEventType.PREFLIGHT_CLEANUP.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.SQUID));
+                assertThat(LabEventType.PREFLIGHT_CLEANUP.getSystemOfRecord(), equalTo(
+                        LabEventType.SystemOfRecord.SQUID));
                 addInPlaceEvent(PREFLIGHT_CLEANUP, tube);
                 break;
             case WORKFLOW_DEPENDENT:
-                assertThat(LabEventType.A_BASE.getSystemOfRecord(), equalTo(LabEventType.SystemOfRecord.WORKFLOW_DEPENDENT));
+                assertThat(LabEventType.A_BASE.getSystemOfRecord(), equalTo(
+                        LabEventType.SystemOfRecord.WORKFLOW_DEPENDENT));
                 addInPlaceEvent(A_BASE, tube);
                 break;
             case NONE:
@@ -727,9 +752,9 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Configure BSP mock/stub behavior appropriate for the given scenario conditions.
      *
-     * @param tube             the tube that will be queried
-     * @param knownToBSP       whether or not the tube is known to BSP
-     * @param exportFromBSP    whether or not the tube has been exported from BSP and where it was exported to
+     * @param tube          the tube that will be queried
+     * @param knownToBSP    whether or not the tube is known to BSP
+     * @param exportFromBSP whether or not the tube has been exported from BSP and where it was exported to
      */
     private void configureBSP(@Nonnull LabVessel tube, KnownToBSP knownToBSP, ExportFromBSP exportFromBSP) {
         IsExported.ExportResults exportResults;
@@ -817,11 +842,11 @@ public class SystemRouterTest extends BaseEventTest {
 
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
 
         Calendar postMercuryOnlyLaunchCalendarDate = new GregorianCalendar(2013, 6, 26);
 
@@ -846,100 +871,107 @@ public class SystemRouterTest extends BaseEventTest {
             }
         } else {
             assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
-                    is(SystemRouter.System.SQUID));
+                       is(SystemRouter.System.SQUID));
         }
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+                                                                                  String.valueOf(runDate.getTime()),
+                                                                                  BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
          * we are doing the routing on those initial tubes after the plating process has run.
          */
         assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
         assertThat(systemRouter
-                .routeForVessels(new HashSet<LabVessel>(picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values())),
-                is(SystemRouter.System.MERCURY));
+                           .routeForVessels(new HashSet<LabVessel>(
+                                   picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values())),
+                   is(SystemRouter.System.MERCURY));
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
+                                               picoPlatingEntityBuilder.getNormTubeFormation(),
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 
         assertThat(systemRouter
-                .routeForVessels(
-                        Collections.<LabVessel>singleton(exomeExpressShearingEntityBuilder.getShearingCleanupPlate())),
-                is(SystemRouter.System.MERCURY));
+                           .routeForVessels(
+                                   Collections.<LabVessel>singleton(
+                                           exomeExpressShearingEntityBuilder.getShearingCleanupPlate())),
+                   is(SystemRouter.System.MERCURY));
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                        exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
+                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
 
         TubeFormation pondRegRack = libraryConstructionEntityBuilder.getPondRegRack();
 
 
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (pondRegRack)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
         TubeFormation normRack = hybridSelectionEntityBuilder.getNormCatchRack();
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (normRack)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
+                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                                                          "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (denatureTube)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
         String denatureTubeBarcode = denatureTube.getLabel();
         MiSeqReagentKit reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                "ZLAB", 1L, 1L, "systemRouterTest");
+                                                          "ZLAB", 1L, 1L, "systemRouterTest");
         final VesselToSectionTransfer sectionTransfer =
                 new VesselToSectionTransfer(denatureTube,
-                        SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
-                        reagentKit.getContainerRole(), denatureToReagentKitEvent);
+                                            SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
+                                            reagentKit.getContainerRole(), denatureToReagentKitEvent);
         denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (reagentKit)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
         //create a couple Miseq batches then one FCT (2500) batch
-        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT, BigDecimal.valueOf(
-                12.33f));
+        LabBatch fctBatch = new LabBatch(FLOWCELL_2500_TICKET, starterVessels, LabBatch.LabBatchType.FCT,
+                                         BigDecimal.valueOf(
+                                                 12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
+                                            FLOWCELL_2500_TICKET,
+                                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
+                                            Workflow.AGILENT_EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (dilutionTube)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
         String dilutionTubeBarcode = dilutionTube.getLabel();
 
         IlluminaFlowcell flowcell = flowcellEntityBuilder.getIlluminaFlowcell();
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (flowcell)),
-                is(SystemRouter.System.MERCURY));
+                   is(SystemRouter.System.MERCURY));
 
         String flowcellBarcode = flowcell.getLabel();
 
@@ -954,11 +986,11 @@ public class SystemRouterTest extends BaseEventTest {
 
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
-        AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
 
         Calendar july25CalendarDate = new GregorianCalendar(2013, 6, 25);
         Calendar preJuly25CalendarDate = new GregorianCalendar(2013, 6, 24);
@@ -966,7 +998,7 @@ public class SystemRouterTest extends BaseEventTest {
         Date today = new Date();
 
         if (today.after(july25CalendarDate.getTime()) ||
-                today.equals(july25CalendarDate.getTime())) {
+            today.equals(july25CalendarDate.getTime())) {
             workflowBatch.setCreatedOn(preJuly25CalendarDate.getTime());
         }
 
@@ -985,78 +1017,82 @@ public class SystemRouterTest extends BaseEventTest {
             }
         } else {
             assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
-                    is(SystemRouter.System.SQUID));
+                       is(SystemRouter.System.SQUID));
         }
 
         //Build Event History
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, BARCODE_SUFFIX);
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                String.valueOf(runDate.getTime()), BARCODE_SUFFIX, true);
+                                                                                  String.valueOf(runDate.getTime()),
+                                                                                  BARCODE_SUFFIX, true);
 
         /*
          * Bucketing (which is required to find batch and Product key) happens in PicoPlatingEntityBuilder so
          * we are doing the routing on those initial tubes after the plating process has run.
          */
         assertThat(systemRouter.routeForVessels(new HashSet<LabVessel>(mapBarcodeToTube.values())),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
         assertThat(systemRouter
-                .routeForVessels(new HashSet<LabVessel>(picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values())),
-                is(SystemRouter.System.BOTH));
+                           .routeForVessels(new HashSet<LabVessel>(
+                                   picoPlatingEntityBuilder.getNormBarcodeToTubeMap().values())),
+                   is(SystemRouter.System.BOTH));
 
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
+                                               picoPlatingEntityBuilder.getNormTubeFormation(),
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), BARCODE_SUFFIX);
 
         assertThat(systemRouter
-                .routeForVessels(
-                        Collections.<LabVessel>singleton(exomeExpressShearingEntityBuilder.getShearingCleanupPlate())),
-                is(SystemRouter.System.BOTH));
+                           .routeForVessels(
+                                   Collections.<LabVessel>singleton(
+                                           exomeExpressShearingEntityBuilder.getShearingCleanupPlate())),
+                   is(SystemRouter.System.BOTH));
 
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                        exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
+                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), BARCODE_SUFFIX);
 
         TubeFormation pondRegRack = libraryConstructionEntityBuilder.getPondRegRack();
 
 
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (pondRegRack)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
+                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), BARCODE_SUFFIX);
         TubeFormation normRack = hybridSelectionEntityBuilder.getNormCatchRack();
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (normRack)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
+                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                                                          "1");
 
         TwoDBarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (denatureTube)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
         String denatureTubeBarcode = denatureTube.getLabel();
         MiSeqReagentKit reagentKit = new MiSeqReagentKit("reagent_kit_barcode");
         LabEvent denatureToReagentKitEvent = new LabEvent(DENATURE_TO_REAGENT_KIT_TRANSFER, new Date(),
-                "ZLAB", 1L, 1L, "systemRouterTest");
+                                                          "ZLAB", 1L, 1L, "systemRouterTest");
         final VesselToSectionTransfer sectionTransfer =
                 new VesselToSectionTransfer(denatureTube,
-                        SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
-                        reagentKit.getContainerRole(), denatureToReagentKitEvent);
+                                            SBSSection.getBySectionName(MiSeqReagentKit.LOADING_WELL.name()),
+                                            reagentKit.getContainerRole(), denatureToReagentKitEvent);
         denatureToReagentKitEvent.getVesselToSectionTransfers().add(sectionTransfer);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (reagentKit)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
 
         Set<LabVessel> starterVessels = Collections.singleton((LabVessel) denatureTube);
@@ -1065,20 +1101,22 @@ public class SystemRouterTest extends BaseEventTest {
                 .valueOf(12.33f));
 
         HiSeq2500FlowcellEntityBuilder flowcellEntityBuilder =
-                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX", FLOWCELL_2500_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
+                runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), BARCODE_SUFFIX + "ADXX",
+                                            FLOWCELL_2500_TICKET,
+                                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
+                                            Workflow.AGILENT_EXOME_EXPRESS);
         TwoDBarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (dilutionTube)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
         String dilutionTubeBarcode = dilutionTube.getLabel();
 
         IlluminaFlowcell flowcell = flowcellEntityBuilder.getIlluminaFlowcell();
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (flowcell)),
-                is(SystemRouter.System.BOTH));
+                   is(SystemRouter.System.BOTH));
 
         String flowcellBarcode = flowcell.getLabel();
 
@@ -1110,14 +1148,13 @@ public class SystemRouterTest extends BaseEventTest {
         productOrderSequence++;
         String jiraTicketKey = "PDO-" + productOrderSequence;
         order.setJiraTicketKey(jiraTicketKey);
-        when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         Collection<BucketEntry> bucketEntries = new ArrayList<>();
         if (bucket != null) {
             for (LabVessel tube : tubes) {
                 bucketEntries.add(bucket.addEntry(order, tube, BucketEntry.BucketEntryType.PDO_ENTRY));
             }
             LabBatch labBatch = new LabBatch("LCSET-" + productOrderSequence, tubes,
-                    LabBatch.LabBatchType.WORKFLOW);
+                                             LabBatch.LabBatchType.WORKFLOW);
             labBatch.setWorkflow(product.getWorkflow());
             for (BucketEntry bucketEntry : bucketEntries) {
                 bucketEntry.setLabBatch(labBatch);
@@ -1128,9 +1165,9 @@ public class SystemRouterTest extends BaseEventTest {
 
     @DataProvider(name = "deploymentContext")
     public Object[][] sourceDeploymentContext() {
-        return new Object[][] {
-               new Object[] {ApplicationInstance.CRSP},
-               new Object[] {ApplicationInstance.RESEARCH},
+        return new Object[][]{
+                new Object[]{ApplicationInstance.CRSP},
+                new Object[]{ApplicationInstance.RESEARCH},
 
         };
     }
@@ -1151,7 +1188,8 @@ public class SystemRouterTest extends BaseEventTest {
      * {@link org.broadinstitute.gpinformatics.infrastructure.bsp.exports.BSPExportsService#findExportDestinations(java.util.Collection)}
      * that uses varargs instead of making the caller construct a collection.
      *
-     * @param labVessels    the vessels to expect
+     * @param labVessels the vessels to expect
+     *
      * @return the mock result, suitable as an argument to {@link org.mockito.Mockito#when(Object)}
      */
     private IsExported.ExportResults mockFindExportDestinations(LabVessel... labVessels) {
@@ -1171,11 +1209,13 @@ public class SystemRouterTest extends BaseEventTest {
     /**
      * Make an ExportResults object with a result for a single vessel.
      *
-     * @param tubeBarcode  tube barcode
-     * @param exportsSet   the systems to use in the result
+     * @param tubeBarcode tube barcode
+     * @param exportsSet  the systems to use in the result
+     *
      * @return a new ExportResults
      */
-    private static IsExported.ExportResults makeExportResults(String tubeBarcode, @Nonnull Set<IsExported.ExternalSystem> exportsSet) {
+    private static IsExported.ExportResults makeExportResults(String tubeBarcode,
+                                                              @Nonnull Set<IsExported.ExternalSystem> exportsSet) {
         // If the system is null create an empty Set, otherwise a singleton Set.
         return new IsExported.ExportResults(Arrays.asList(new IsExported.ExportResult(tubeBarcode, exportsSet)));
     }

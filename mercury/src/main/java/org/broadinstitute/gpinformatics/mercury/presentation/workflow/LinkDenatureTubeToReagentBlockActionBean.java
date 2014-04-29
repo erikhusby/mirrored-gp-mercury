@@ -9,8 +9,8 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -34,11 +34,12 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
     @Inject
     protected LabVesselDao labVesselDao;
     @Inject
-    protected AthenaClientService athenaClientService;
-    @Inject
     protected BettaLimsMessageResource bettaLimsMessageResource;
     @Inject
     protected VesselTransferEjb vesselTransferEjb;
+    @Inject
+    protected ProductOrderDao productOrderDao;
+
     @Validate(required = true, on = SAVE_ACTION)
     public String denatureTubeBarcode;
     private TwoDBarcodedTube denatureTube;
@@ -65,11 +66,11 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
         BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
-                        getUserBean().getLoginUserName(), "UI");
+                                              getUserBean().getLoginUserName(), "UI");
         bettaLimsMessageResource.processMessage(bettaLIMSMessage);
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
-                reagentBlockBarcode);
+                   reagentBlockBarcode);
         return new RedirectResolution(VIEW_PAGE);
     }
 
@@ -116,7 +117,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
             for (SampleInstance sample : denatureTube.getAllSamplesOfType(LabVessel.SampleType.WITH_PDO)) {
                 String productOrderKey = sample.getProductOrderKey();
                 if (StringUtils.isNotEmpty(productOrderKey)) {
-                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                    ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
                     workflowName = order.getProduct().getWorkflow().getWorkflowName();
                     break;
                 }

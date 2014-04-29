@@ -52,7 +52,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         int startingSampleSize = 15;
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(startingSampleSize);
-        AthenaClientServiceStub.addProductOrder(productOrder);
         Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
 
         LabBatch origBatch =
@@ -171,7 +170,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
         int reworkIdx = NUM_POSITIONS_IN_RACK - 1; // arbitrary choice
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(NUM_POSITIONS_IN_RACK);
-        AthenaClientServiceStub.addProductOrder(productOrder);
         Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
 
         LabBatch origBatch =
@@ -271,8 +269,6 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A", "ExExQuoteId");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-9",
                 Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B", "ExExQuoteId");
-        AthenaClientServiceStub.addProductOrder(productOrder1);
-        AthenaClientServiceStub.addProductOrder(productOrder2);
         final Date runDate = new Date();
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1");

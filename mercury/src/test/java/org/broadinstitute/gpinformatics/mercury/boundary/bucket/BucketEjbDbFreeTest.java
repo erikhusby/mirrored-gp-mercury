@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -84,13 +83,12 @@ public class BucketEjbDbFreeTest {
     private LabEventFactory labEventFactory = EasyMock.createNiceMock(LabEventFactory.class);
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
-    private AthenaClientService athenaClientService = createMock(AthenaClientService.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
     private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
-            new Object[]{bucketDao, bucketEntryDao, athenaClientService, labVesselDao, bspSampleDataFetcher,
+            new Object[]{bucketDao, bucketEntryDao, labVesselDao, bspSampleDataFetcher,
                     labVesselFactory, labEventFactory};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
@@ -124,7 +122,7 @@ public class BucketEjbDbFreeTest {
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
         bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
-                                  athenaClientService, labVesselDao, labVesselFactory, bspSampleDataFetcher,
+                                  labVesselDao, labVesselFactory, bspSampleDataFetcher,
                                   bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class));
     }
 

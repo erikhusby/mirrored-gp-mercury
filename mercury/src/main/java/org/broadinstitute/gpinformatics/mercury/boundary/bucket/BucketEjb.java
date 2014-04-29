@@ -10,7 +10,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -56,7 +56,6 @@ public class BucketEjb {
     private final LabEventFactory labEventFactory;
     private final JiraService jiraService;
     private final BucketDao bucketDao;
-    private AthenaClientService athenaClientService;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
     private final WorkflowLoader workflowLoader;
@@ -68,7 +67,7 @@ public class BucketEjb {
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
     public BucketEjb() {
-        this(null, null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -76,7 +75,6 @@ public class BucketEjb {
                      JiraService jiraService,
                      BucketDao bucketDao,
                      BucketEntryDao bucketEntryDao,
-                     AthenaClientService athenaClientService,
                      LabVesselDao labVesselDao,
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
@@ -86,7 +84,6 @@ public class BucketEjb {
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
         this.bucketEntryDao = bucketEntryDao;
-        this.athenaClientService = athenaClientService;
         this.labVesselDao = labVesselDao;
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
@@ -105,7 +102,7 @@ public class BucketEjb {
      * @param labEventLocation Machine location from which operator initiated this action
      * @param programName      Name of the program that initiated this action
      * @param eventType        Type of the Lab Event that initiated this bucket add request
-     * @param pdo           Product order for all vessels
+     * @param pdo              Product order for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
@@ -163,7 +160,8 @@ public class BucketEjb {
             BucketEntry entry = bucket.findEntry(vessel);
             if (entry != null) {
                 logger.debug("Adding entry " + entry.getBucketEntryId() + " for vessel " +
-                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getProductOrder().getBusinessKey() +
+                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getProductOrder()
+                                                                                           .getBusinessKey() +
                              " to be popped from bucket.");
                 entries.add(entry);
             } else {
@@ -195,7 +193,8 @@ public class BucketEjb {
         for (BucketEntry entry : bucket.getBucketEntries()) {
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
         }
-        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
+        Collection<ProductOrder> pdos = productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey,
+                                                                       pdoKeys);
         for (ProductOrder pdo : pdos) {
             if (workflow != null && pdo.getProduct() == null ||
                 workflow == null && pdo.getProduct() != null ||
