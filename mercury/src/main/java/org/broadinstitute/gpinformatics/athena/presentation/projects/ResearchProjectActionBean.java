@@ -422,7 +422,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
                     collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
-            addGlobalValidationError("Could not create collaboration due to an error: {2}", e.getMessage());
+            addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
         }
 
         // Call init again so that the updated project is retrieved.
