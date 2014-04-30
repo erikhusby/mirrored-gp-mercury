@@ -6,4 +6,5 @@ public class QuoteServerException extends Exception {
         super(message, cause);
     }
 
+    public QuoteServerException(String message) { super(message); }
 }

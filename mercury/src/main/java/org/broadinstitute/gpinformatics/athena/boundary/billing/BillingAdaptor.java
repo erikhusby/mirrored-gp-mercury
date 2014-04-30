@@ -154,7 +154,7 @@ public class BillingAdaptor implements Serializable {
                                        "The quote for this item may have been successfully sent to the quote server";
                     }
 
-                    log.error(errorMessage, ex);
+                    log.error(errorMessage + ex.toString());
 
                     item.setBillingMessages(errorMessage + ex.getMessage());
                     result.setErrorMessage(errorMessage + ex
