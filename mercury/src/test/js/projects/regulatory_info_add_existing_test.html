@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Regulatory Information Tests</title>
+    <link rel="stylesheet" href="../qunit-1.14.0.css">
+
+    <script src="../../../main/webapp/resources/scripts/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
+
+    <script src="../qunit-1.14.0.js"></script>
+</head>
+<body>
+
+    <div id="qunit"></div>
+
+    /* Setup */
+    <div id="qunit-fixture">
+        <table id="addRegulatoryInfoDialogQueryResults">
+            <tr>
+                <td>
+                    <input id="button1" type="submit" name="one" value="Add">
+                    <input id="button2" type="submit" name="two" value="Add">
+                </td>
+            </tr>
+        </table>
+        <input id="regulatoryInfoId">
+    </div>
+
+    /* Code Under Test */
+    <script src="../../../main/webapp/projects/regulatory_info_dialog_sheet_2.js"></script>
+
+    /* Tests */
+    <script>
+        test("Test Add", function() {
+            $j('#button1').click();
+            equal($j('#regulatoryInfoId').val(), 'one');
+
+            $j('#button2').click();
+            equal($j('#regulatoryInfoId').val(), 'two');
+        });
+    </script>
+
+</body>
+</html>
