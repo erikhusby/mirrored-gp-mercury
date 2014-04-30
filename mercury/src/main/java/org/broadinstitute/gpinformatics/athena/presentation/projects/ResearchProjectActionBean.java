@@ -579,6 +579,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @return true if creating a new regulatory information; false otherwise
      */
+    @Override
     public boolean isCreating() {
         return regulatoryInfoId == null;
     }
