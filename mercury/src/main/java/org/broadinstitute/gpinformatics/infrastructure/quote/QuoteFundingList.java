@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.xml.parsers.ParserConfigurationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -129,7 +128,7 @@ public class QuoteFundingList extends AbstractCache {
             fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (QuoteServerException | QuoteNotFoundException ex) {
             logger.error("Could not refresh the funding list.");
-        } catch (ParserConfigurationException e) {
+        } catch (Exception e) {
             logger.error("Could not refresh the funding list.", e);
         }
     }
