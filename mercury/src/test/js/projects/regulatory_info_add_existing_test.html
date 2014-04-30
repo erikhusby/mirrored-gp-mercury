@@ -9,16 +9,20 @@
     <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
     <script src="../qunit-1.14.0.js"></script>
+
+    <!-- Code Under Test -->
+    <script src="../../../main/webapp/projects/regulatory_info_dialog_sheet_2.js"></script>
 </head>
 <body>
 
     <div id="qunit"></div>
 
-    /* Setup */
+    <!-- Set Up Test Fixture -->
     <div id="qunit-fixture">
         <table id="addRegulatoryInfoDialogQueryResults">
             <tr>
                 <td>
+                    <span id="someLabel">Some Label</span>
                     <input id="button1" type="submit" name="one" value="Add">
                     <input id="button2" type="submit" name="two" value="Add">
                 </td>
@@ -27,17 +31,21 @@
         <input id="regulatoryInfoId">
     </div>
 
-    /* Code Under Test */
-    <script src="../../../main/webapp/projects/regulatory_info_dialog_sheet_2.js"></script>
-
-    /* Tests */
+    <!-- Tests -->
     <script>
-        test("Test Add", function() {
+        test('Test clicking "Add" button', function() {
+            addClickHandlerToRegInfoQueryResultsTable();
             $j('#button1').click();
             equal($j('#regulatoryInfoId').val(), 'one');
 
             $j('#button2').click();
             equal($j('#regulatoryInfoId').val(), 'two');
+        });
+
+        test('Test clicking non-button', function() {
+            addClickHandlerToRegInfoQueryResultsTable();
+            $j('#someLabel').click();
+            equal($j('#regulatoryInfoId').val(), '');
         });
     </script>
 

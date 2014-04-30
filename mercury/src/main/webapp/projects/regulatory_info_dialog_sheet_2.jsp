@@ -2,6 +2,8 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
+<script type="text/javascript" src="regulatory_info_dialog_sheet_2.js"></script>
+
 <c:choose>
     <c:when test="${actionBean.searchResults.isEmpty()}">
         <p>No regulatory information found in Mercury</p>
@@ -40,4 +42,6 @@
     <jsp:include page="regulatory_info_form.jsp"/>
 </c:if>
 
-<script type="text/javascript" src="regulatory_info_dialog_sheet_2.js"></script>
+<script type="text/javascript">
+    addClickHandlerToRegInfoQueryResultsTable();
+</script>

@@ -1,4 +1,4 @@
-(function() {
+function addClickHandlerToRegInfoQueryResultsTable() {
     // Catch clicks on the table, check that it's an "Add" button, and take the button's "name" as the ID to use.
     var table = $j('#addRegulatoryInfoDialogQueryResults tbody');
     table.click(function (event) {
@@ -9,4 +9,4 @@
             $j('#regulatoryInfoId').val(target.name);
         }
     });
-})();
+};
