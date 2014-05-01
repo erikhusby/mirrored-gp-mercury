@@ -66,11 +66,11 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
         BettaLIMSMessage bettaLIMSMessage = vesselTransferEjb
                 .denatureToReagentKitTransfer(null, denatureMap, reagentBlockBarcode,
-                                              getUserBean().getLoginUserName(), "UI");
+                        getUserBean().getLoginUserName(), "UI");
         bettaLimsMessageResource.processMessage(bettaLIMSMessage);
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
-                   reagentBlockBarcode);
+                reagentBlockBarcode);
         return new RedirectResolution(VIEW_PAGE);
     }
 

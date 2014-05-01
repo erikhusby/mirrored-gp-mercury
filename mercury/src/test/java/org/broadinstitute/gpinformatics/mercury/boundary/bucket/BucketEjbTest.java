@@ -284,20 +284,6 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
 
-        for (BucketEntry currEntry : bucketBatch) {
-            boolean doesEventHavePDO = false;
-            for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
-                if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
-                        doesEventHavePDO = true;
-                    }
-                }
-                // make sure that adding the vessel to the bucket created
-                // a new event and tagged it with the appropriate PDO
-                assertTrue(doesEventHavePDO);
-            }
-        }
-
         Assert.assertFalse(bucket.contains(testEntry1));
         Assert.assertFalse(bucket.contains(testEntry2));
         Assert.assertFalse(bucket.contains(testEntry3));
@@ -394,20 +380,6 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(vessel2.getInPlaceEvents().isEmpty());
         Assert.assertFalse(vessel3.getInPlaceEvents().isEmpty());
         Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
-
-        for (BucketEntry currEntry : bucketBatch) {
-            boolean doesEventHavePDO = false;
-            for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
-                if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
-                        doesEventHavePDO = true;
-                    }
-                }
-                // make sure that adding the vessel to the bucket created
-                // a new event and tagged it with the appropriate PDO
-                assertTrue(doesEventHavePDO);
-            }
-        }
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
@@ -510,20 +482,6 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
-
-        for (BucketEntry currEntry : bucketBatch) {
-            boolean doesEventHavePDO = false;
-            for (LabEvent labEvent : currEntry.getLabVessel().getInPlaceEvents()) {
-                if (labEvent.getProductOrderId() != null) {
-                    if (currEntry.getProductOrder().getBusinessKey().equals(labEvent.getProductOrderId())) {
-                        doesEventHavePDO = true;
-                    }
-                }
-                // make sure that adding the vessel to the bucket created
-                // a new event and tagged it with the appropriate PDO
-                assertTrue(doesEventHavePDO);
-            }
-        }
 
         Assert.assertFalse(bucket.contains(testEntry1));
         Assert.assertFalse(bucket.contains(testEntry2));
