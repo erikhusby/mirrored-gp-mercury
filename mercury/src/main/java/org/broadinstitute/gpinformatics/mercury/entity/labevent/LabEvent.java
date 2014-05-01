@@ -470,7 +470,7 @@ todo jmt adder methods
                     }
                 }
             }
-        }
+        } // TODO jmt one pooling bucket entry in a rack of 96 can override the LCSET for the other tubes.
         for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
             if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
                 computedLcSets.add(labBatchIntegerEntry.getKey());
