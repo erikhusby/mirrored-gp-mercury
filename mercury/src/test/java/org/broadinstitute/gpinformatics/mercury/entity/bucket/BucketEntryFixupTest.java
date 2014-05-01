@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -20,8 +21,11 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketEntryFixupTest extends Arquillian {
@@ -56,7 +60,7 @@ public class BucketEntryFixupTest extends Arquillian {
          * If the need comes to utilize this fixup in production, change the buildMercuryWar parameters accordingly
          */
         return DeploymentBuilder.buildMercuryWar(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD, "prod");
+                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV, "dev");
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -125,20 +129,45 @@ public class BucketEntryFixupTest extends Arquillian {
         bucket.removeEntry(bucketEntry);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
-    public void setProductOrderReferences() {
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    public void setProductOrderReferences() throws Exception {
 
-        List<BucketEntry> bucketEntriesToFix = bucketDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+        List<BucketEntry> bucketEntriesToFix = bucketEntryDao.findList(BucketEntry.class, BucketEntry_.productOrder,
+                                                                       null);
+        int counter = 0;
+
+        Set<String> badKeySet = new HashSet<>();
+
         Map<String, ProductOrder> pdoCache = new HashMap<>();
+        while (!bucketEntriesToFix.isEmpty()) {
 
-        for (BucketEntry entry : bucketEntriesToFix) {
-            if (StringUtils.isNotBlank(entry.getPoBusinessKey())) {
-                ProductOrder orderToUpdate = pdoCache.get(entry.getPoBusinessKey());
-                if (orderToUpdate == null) {
-                    orderToUpdate = productOrderDao.findByBusinessKey(entry.getPoBusinessKey());
+            for (Iterator<BucketEntry> entryIterator = bucketEntriesToFix.iterator(); entryIterator.hasNext(); ) {
+                BucketEntry entry = entryIterator.next();
+                if (StringUtils.isNotBlank(entry.getPoBusinessKey()) && !badKeySet.contains(entry.getPoBusinessKey())) {
+                    ProductOrder orderToUpdate = pdoCache.get(entry.getPoBusinessKey());
+                    if (orderToUpdate == null) {
+                        orderToUpdate = bucketEntryDao.findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey,
+                                                                  entry.getPoBusinessKey());
+                    }
+                    if (orderToUpdate != null) {
+                        pdoCache.put(entry.getPoBusinessKey(), orderToUpdate);
+                        entry.setProductOrder(orderToUpdate);
+                        counter++;
+                    } else {
+                        badKeySet.add(entry.getPoBusinessKey());
+                        entryIterator.remove();
+                    }
+                } else {
+                    entryIterator.remove();
                 }
-                if (orderToUpdate != null) {
-                    entry.setProductOrder(orderToUpdate);
+                if (counter == 100) {
+                    counter = 0;
+//                    productOrderDao.flush();
+//                    productOrderDao.clear();
+                    utx.commit();
+                    utx.begin();
+                    bucketEntriesToFix = bucketEntryDao.findList(BucketEntry.class, BucketEntry_.productOrder, null);
+                    break;
                 }
             }
         }

@@ -2,13 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
@@ -64,11 +62,8 @@ public class BucketEntryDBFreeTest {
 
     public void testBasicBeaniness() {
         BeanTester tester = new BeanTester();
-        Configuration configuration = new ConfigurationBuilder().
-                                                                        ignoreProperty("bucket").
-                                                                        ignoreProperty("labBatch").
-                                                                        ignoreProperty("labVessel").
-                                                                        build();
+        Configuration configuration = new ConfigurationBuilder().ignoreProperty("bucket").
+                ignoreProperty("labBatch").ignoreProperty("labVessel").build();
 
         tester.testBean(BucketEntry.class, configuration);
     }
@@ -98,12 +93,8 @@ public class BucketEntryDBFreeTest {
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-2"))).thenReturn(productOrder2);
         Mockito.when(productOrderDao.findByBusinessKey(Mockito.eq("PDO-1"))).thenReturn(productOrder1);
 
-        BucketEjb bucketEjb = new BucketEjb(
-                Mockito.mock(LabEventFactory.class),
-                Mockito.mock(JiraService.class),
-                Mockito.mock(BucketDao.class),
-                null, Mockito.mock(LabVesselDao.class), null,
-                null, null, null, productOrderDao);
+        BucketEjb bucketEjb = new BucketEjb(null, null, Mockito.mock(BucketDao.class), null, Mockito.mock(LabVesselDao.class), null, null, null,
+                                            null, productOrderDao);
 
         for (BucketEntry bucketEntry : bucketEntries) {
             Assert.assertEquals(bucketEntry.getProductOrder(), productOrder1);

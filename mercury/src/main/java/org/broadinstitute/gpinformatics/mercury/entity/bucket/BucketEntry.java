@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
+import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -26,6 +27,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Comparator;
 import java.util.Date;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An entry into a lab {@link Bucket}.  An entry is
@@ -83,6 +86,7 @@ public class BucketEntry {
     private String poBusinessKey;
 
     @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_order_id")
     private ProductOrder productOrder;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
@@ -161,20 +165,15 @@ public class BucketEntry {
         return poBusinessKey;
     }
 
-    @Deprecated
-    public void setPoBusinessKey(String poBusinessKey) {
-        this.poBusinessKey = poBusinessKey;
-    }
-
     public ProductOrder getProductOrder() {
         return productOrder;
     }
 
-    public void setProductOrder(ProductOrder productOrder) {
-        this.productOrder = productOrder;
+    public void setProductOrder(@Nonnull ProductOrder productOrder) {
+        this.productOrder = checkNotNull(productOrder);
 
         //TODO SGM-- Temporary add until GPLIM-2710 is implemented
-        setPoBusinessKey(productOrder.getBusinessKey());
+        this.poBusinessKey = productOrder.getBusinessKey();
     }
 
     /**

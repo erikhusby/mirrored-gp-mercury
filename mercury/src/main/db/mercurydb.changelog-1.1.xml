@@ -542,7 +542,7 @@
             </not>
         </preConditions>
         <addColumn tableName="bucket_entry" schemaName="mercury">
-            <column name="product_order" type="number(19,0)" />
+            <column name="product_order_id" type="number(19,0)" />
         </addColumn>
     </changeSet>
     <changeSet author="scottmat" id="GPLIM-2711-add-product-order-reference-aud">
@@ -553,7 +553,7 @@
             </not>
         </preConditions>
         <addColumn tableName="bucket_entry_aud" schemaName="mercury">
-            <column name="product_order" type="number(19,0)" />
+            <column name="product_order_id" type="number(19,0)" />
         </addColumn>
     </changeSet>
     <!--Uncoment after the proper grants are applied on next build-->

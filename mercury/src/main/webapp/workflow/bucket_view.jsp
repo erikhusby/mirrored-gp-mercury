@@ -252,10 +252,10 @@
                                                                                            class="icon-pencil"></span>
                     </td>
                     <td>
-                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.productOrder.businessKey).title}</div>
                     </td>
                     <td class="ellipsis">
-                            ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
+                            ${actionBean.getUserFullName(actionBean.getPDODetails(entry.productOrder.businessKey).createdBy)}
                     </td>
                     <td>
                         <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"

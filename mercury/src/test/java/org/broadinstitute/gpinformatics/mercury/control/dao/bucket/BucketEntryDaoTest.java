@@ -99,7 +99,6 @@ public class BucketEntryDaoTest extends ContainerTest {
         if (utx == null) {
             return;
         }
-
     }
 
     @Test

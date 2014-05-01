@@ -193,8 +193,7 @@ public class BucketEjb {
         for (BucketEntry entry : bucket.getBucketEntries()) {
             pdoKeys.add(entry.getProductOrder().getBusinessKey());
         }
-        Collection<ProductOrder> pdos = productOrderDao.findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey,
-                                                                       pdoKeys);
+        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
         for (ProductOrder pdo : pdos) {
             if (workflow != null && pdo.getProduct() == null ||
                 workflow == null && pdo.getProduct() != null ||
