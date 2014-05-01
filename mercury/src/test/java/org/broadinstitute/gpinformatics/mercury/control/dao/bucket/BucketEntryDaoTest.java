@@ -58,6 +58,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     private String twoDBarcodeKey;
     private String testPoBusinessKey;
     private ProductOrder testOrder;
+    private Date today;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -72,16 +73,19 @@ public class BucketEntryDaoTest extends ContainerTest {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
 
             testBucket = new Bucket(bucketDef);
-            bucketEntryDao.persist(testBucket);
-            bucketEntryDao.flush();
-            bucketEntryDao.clear();
+            bucketDao.persist(testBucket);
+            bucketDao.flush();
+            bucketDao.clear();
+            testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         }
 
-        twoDBarcodeKey = "SM-1493" +(new Date()).getTime();
+        today = new Date();
+        twoDBarcodeKey = "SM-1493" + today.getTime();
         testPoBusinessKey = "PDO-33";
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
         if(testOrder == null) {
             testOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey);
+            testOrder.setTitle(testOrder.getTitle() + today.getTime());
             testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
             testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         }
@@ -160,7 +164,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         ProductOrder testDupeOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "dupe");
         if(testDupeOrder == null) {
             testDupeOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "dupe");
-
+            testDupeOrder.setTitle(testDupeOrder.getTitle() + today.getTime());
             testDupeOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
 
             testDupeOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
@@ -228,6 +232,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         ProductOrder replacementOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "new");
         if(replacementOrder == null) {
             replacementOrder = ProductOrderTestFactory.createDummyProductOrder(testPoBusinessKey + "new");
+            replacementOrder.setTitle(replacementOrder.getTitle() + today.getTime());
             replacementOrder.setProduct(productDao.findByPartNumber(Product.EXOME_EXPRESS_V2_PART_NUMBER));
             replacementOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
             replacementOrder.updateAddOnProducts(Collections.<Product>emptyList());

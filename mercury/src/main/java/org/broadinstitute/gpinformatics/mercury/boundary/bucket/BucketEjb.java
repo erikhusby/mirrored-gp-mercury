@@ -173,49 +173,6 @@ public class BucketEjb {
     }
 
     /**
-     * Used for test purposes.  Takes the given number of samples from the bucket having the given product
-     * workflow and moves them into a new batch.  The batch may end up having fewer samples if the bucket
-     * runs out of suitable entries.
-     *
-     * @param numberOfSamples the number of samples to be taken.
-     * @param bucket          the bucket containing the samples.
-     * @param workflow        the product workflow desired
-     *
-     * @return the batch that contains the samples.
-     */
-    @DaoFree
-    public LabBatch selectEntriesAndBatchThem(int numberOfSamples, @Nonnull Bucket bucket, Workflow workflow) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<>();
-        int count = 0;
-
-        // Selects entries whose product workflow matched the specified workflow.
-        Set<String> pdoKeys = new HashSet<>();
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            pdoKeys.add(entry.getProductOrder().getBusinessKey());
-        }
-        Collection<ProductOrder> pdos = productOrderDao.findListByBusinessKeys(pdoKeys);
-        for (ProductOrder pdo : pdos) {
-            if (workflow != null && pdo.getProduct() == null ||
-                workflow == null && pdo.getProduct() != null ||
-                workflow != pdo.getProduct().getWorkflow()) {
-                pdoKeys.remove(pdo.getBusinessKey());
-            }
-        }
-
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            if (pdoKeys.contains(entry.getProductOrder().getBusinessKey())) {
-                bucketEntrySet.add(entry);
-                ++count;
-            }
-            if (count >= numberOfSamples) {
-                break;
-            }
-        }
-        return moveFromBucketToCommonBatch(bucketEntrySet);
-    }
-
-
-    /**
      * Selects the appropriate batch for the given bucket entries and moves the entries from the bucket to the batch.
      *
      * @param bucketEntries the bucket entries to be moved.
