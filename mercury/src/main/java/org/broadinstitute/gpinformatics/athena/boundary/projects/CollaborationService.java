@@ -91,7 +91,7 @@ public class CollaborationService {
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
-            throw new IllegalArgumentException("must specify a collaborator domain user id or an email address");
+            throw new IllegalArgumentException("must specify a Collaborator Domain User ID or an email address");
         }
 
         // Look up the selected id.
@@ -123,7 +123,7 @@ public class CollaborationService {
         String collaborationId =
                 collaborationPortalService.beginCollaboration(researchProject, bspUser, collaborationMessage);
         if (StringUtils.isBlank(collaborationId)) {
-            throw new RuntimeException("Could not create a collaboration");
+            throw new RuntimeException("Could not create a Collaboration");
         }
     }
 

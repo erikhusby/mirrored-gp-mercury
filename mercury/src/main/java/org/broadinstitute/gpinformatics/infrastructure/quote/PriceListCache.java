@@ -55,9 +55,10 @@ public class PriceListCache extends AbstractCache implements Serializable {
             if (rawPriceList != null) {
                 quotePriceItems = rawPriceList.getQuotePriceItems();
             }
-
+        } catch (QuoteServerException | QuoteNotFoundException e) {
+            logger.error("Could not refresh the price item list.");
         } catch (Exception ex) {
-            logger.error("Could not refresh the price item list", ex);
+            logger.error("Could not refresh the price item list.", ex);
         }
     }
 

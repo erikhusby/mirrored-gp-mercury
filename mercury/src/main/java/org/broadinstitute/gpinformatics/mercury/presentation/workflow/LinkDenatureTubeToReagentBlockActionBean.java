@@ -70,7 +70,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
         addMessage("Denature Tube {0} associated with Reagent Block {1}", denatureTubeBarcode,
                 reagentBlockBarcode);
-        return new RedirectResolution(VIEW_PAGE);
+        return new RedirectResolution(getClass());
     }
 
     @ValidationMethod(on = SAVE_ACTION)

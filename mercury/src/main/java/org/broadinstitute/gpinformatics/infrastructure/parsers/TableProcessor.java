@@ -17,7 +17,7 @@ public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
 
-    private List<String> validationMessages = new ArrayList<>();
+    private final List<String> validationMessages = new ArrayList<>();
 
     private final String sheetName;
 
