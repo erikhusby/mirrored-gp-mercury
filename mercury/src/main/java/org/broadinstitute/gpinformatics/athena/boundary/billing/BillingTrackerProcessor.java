@@ -23,7 +23,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -107,9 +106,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Only the product headers contain square brackets, so if those exist add two items for billed and updated.
         headerValues = new ArrayList<> ();
 
-        Iterator<String> headerIterator = originalHeaders.iterator();
-        while (headerIterator.hasNext()) {
-            String originalHeader = headerIterator.next();
+        for (String originalHeader : originalHeaders) {
             if (originalHeader.contains("[")) {
 
                 // Remove the previous header which was for the "Billed" column and did not have the part number.
