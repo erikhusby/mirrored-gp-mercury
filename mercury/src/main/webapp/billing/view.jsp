@@ -28,8 +28,10 @@
             });
 
             $j(window).load(function() {
+                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
                 // if the url contains a quote server work item, highlight the corresponding row
-                $j('#'.concat(${actionBean.workItemIdToHighlight})).attr('class','highlighted');
+                $j(idToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(idToHighlight).offset().top);
             });
 
         </script>
