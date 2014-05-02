@@ -3,10 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSetVolumeConcentration;
@@ -24,6 +23,7 @@ import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory.CherryPick;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
@@ -70,6 +70,9 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SageEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.ShearingEntityBuilder;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeClass;
 
 import java.util.ArrayList;
@@ -136,13 +139,25 @@ public class BaseEventTest {
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         labBatchEJB = new LabBatchEjb();
-        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
         JiraService jiraService = JiraServiceProducer.stubInstance();
         labBatchEJB.setJiraService(jiraService);
         labBatchEJB.setLabBatchDao(EasyMock.createMock(LabBatchDao.class));
 
         JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
         labBatchEJB.setJiraTicketDao(mockJira);
+
+        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                Object[] arguments = invocationOnMock.getArguments();
+
+                return ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+            }
+        });
+        labBatchEJB.setProductOrderDao(mockProductOrderDao);
+
 
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         BSPSetVolumeConcentration bspSetVolumeConcentration = BSPSetVolumeConcentrationProducer.stubInstance();
@@ -158,11 +173,11 @@ public class BaseEventTest {
 
         EventHandlerSelector eventHandlerSelector =
                 new EventHandlerSelector(new DenatureToDilutionTubeHandler(),
-                        flowcellMessageHandler, new SamplesDaughterPlateHandler());
+                                         flowcellMessageHandler, new SamplesDaughterPlateHandler());
         labEventFactory.setEventHandlerSelector(eventHandlerSelector);
 
-        bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null, null,
-                null, null, null);
+        bucketEjb = new BucketEjb(labEventFactory, jiraService, null, null, null, null,
+                                  null, null, null, EasyMock.createNiceMock(ProductOrderDao.class));
     }
 
     /**
@@ -210,15 +225,14 @@ public class BaseEventTest {
         Bucket workingBucket = new Bucket(bucketName);
 
         for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
-            workingBucket.addEntry(productOrder.getBusinessKey(), tube, BucketEntry.BucketEntryType.PDO_ENTRY);
+            workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         return workingBucket;
     }
 
 
     protected LabEventHandler getLabEventHandler() {
-        AthenaClientService athenaClientService = AthenaClientProducer.stubInstance();
-        return new LabEventHandler(new WorkflowLoader(), athenaClientService);
+        return new LabEventHandler(new WorkflowLoader());
     }
 
     /**
@@ -230,7 +244,7 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
+    public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, final ProductOrder productOrder,
                                       LabBatch workflowBatch, String lcsetSuffix) {
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
@@ -239,6 +253,22 @@ public class BaseEventTest {
         if (lcsetSuffix != null) {
             JiraServiceStub.setCreatedIssueSuffix(lcsetSuffix);
         }
+        ProductOrderDao mockProductOrderDao = Mockito.mock(ProductOrderDao.class);
+        Mockito.when(mockProductOrderDao.findByBusinessKey(Mockito.anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                Object[] arguments = invocationOnMock.getArguments();
+
+                ProductOrder dummyProductOrder = ProductOrderTestFactory.createDummyProductOrder((String) arguments[0]);
+                if((arguments[0]).equals(productOrder.getBusinessKey())) {
+                    dummyProductOrder = productOrder;
+                }
+                return dummyProductOrder;
+            }
+        });
+        labBatchEJB.setProductOrderDao(mockProductOrderDao);
+
         labBatchEJB.createLabBatch(workflowBatch, "scottmat", CreateFields.IssueType.EXOME_EXPRESS);
         JiraServiceStub.setCreatedIssueSuffix(defaultLcsetSuffix);
 
@@ -273,8 +303,8 @@ public class BaseEventTest {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
 
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(),
-                mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
+                                            labEventFactory, getLabEventHandler(),
+                                            mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -293,8 +323,8 @@ public class BaseEventTest {
             String normBarcode, String barcodeSuffix) {
 
         return new ExomeExpressShearingEntityBuilder(normBarcodeToTubeMap, normTubeFormation,
-                bettaLimsMessageTestFactory, labEventFactory,
-                getLabEventHandler(), normBarcode, barcodeSuffix).invoke();
+                                                     bettaLimsMessageTestFactory, labEventFactory,
+                                                     getLabEventHandler(), normBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -308,8 +338,8 @@ public class BaseEventTest {
     public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                                       String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
-                labEventFactory, getLabEventHandler(),
-                mapBarcodeToTube, barcodeSuffix).invoke();
+                                          labEventFactory, getLabEventHandler(),
+                                          mapBarcodeToTube, barcodeSuffix).invoke();
     }
 
     /**
@@ -327,8 +357,8 @@ public class BaseEventTest {
                                                     String rackBarcode, String barcodeSuffix) {
 
         return new ShearingEntityBuilder(mapBarcodeToTube, tubeFormation,
-                bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                rackBarcode, barcodeSuffix).invoke();
+                                         bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
+                                         rackBarcode, barcodeSuffix).invoke();
     }
 
     /**
@@ -373,6 +403,7 @@ public class BaseEventTest {
 
     /**
      * Creates an entity graph for Illumina Content Exome.
+     *
      * @param pondRegRack         The pond registration rack coming out of the library construction process.
      * @param pondRegRackBarcode  The pond registration rack barcode.
      * @param pondRegTubeBarcodes A list of pond registration tube barcodes.
@@ -381,14 +412,13 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public IceEntityBuilder runIceProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
-            List<String> pondRegTubeBarcodes, String barcodeSuffix) {
+                                          List<String> pondRegTubeBarcodes, String barcodeSuffix) {
         return new IceEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(), pondRegRack,
-                pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
+                                    pondRegRackBarcode, pondRegTubeBarcodes, barcodeSuffix).invoke();
     }
 
     /**
      * This method runs the entities through the QTP process.
-     *
      *
      * @param rack             The tube rack coming out of hybrid selection
      * @param tubeBarcodes     A list of the tube barcodes in the rack.
@@ -398,8 +428,8 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            String barcodeSuffix) {
+                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                          String barcodeSuffix) {
 
         return new QtpEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
@@ -431,8 +461,9 @@ public class BaseEventTest {
         }
         String flowcellBarcode = "flowcell" + new Date().getTime() + "ADXX";
         return new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                denatureRack, flowcellBarcode, barcodeSuffix, fctTicket, productionFlowcellPath,
-                designationName, flowcellLanes).invoke();
+                                                  denatureRack, flowcellBarcode, barcodeSuffix, fctTicket,
+                                                  productionFlowcellPath,
+                                                  designationName, flowcellLanes).invoke();
     }
 
     public MiSeqReagentKitEntityBuilder runMiSeqReagentEntityBuilder(TubeFormation denatureRack, String barcodeSuffix,
@@ -450,7 +481,7 @@ public class BaseEventTest {
                 "A" + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)] + pool[rnd.nextInt(pool.length)]
                 + pool[rnd.nextInt(pool.length)];
         return new MiSeqReagentKitEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                reagentBlockBarcode, denatureRack, flowcellBarcode).invoke();
+                                                reagentBlockBarcode, denatureRack, flowcellBarcode).invoke();
     }
 
     /**
@@ -465,7 +496,7 @@ public class BaseEventTest {
     public SageEntityBuilder runSageProcess(TubeFormation pondRegRack, String pondRegRackBarcode,
                                             List<String> pondRegTubeBarcodes) {
         return new SageEntityBuilder(bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
-                pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
+                                     pondRegRackBarcode, pondRegRack, pondRegTubeBarcodes).invoke();
     }
 
     /**
@@ -495,7 +526,7 @@ public class BaseEventTest {
                                                          List<Integer> wellsToReplace) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
         return getDaughterTubeFormationCherryPick(mapBarcodeToTube, mapBarcodeToTube2, daughterTubeBarcodes,
-                wellsToReplace);
+                                                  wellsToReplace);
     }
 
     /**
@@ -526,7 +557,8 @@ public class BaseEventTest {
                                                    List<String> daughterTubeBarcodes) {
         PlateTransferEventType daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
-                        new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack", daughterTubeBarcodes);
+                                                            new ArrayList<>(mapBarcodeToTube.keySet()), "DaughterRack",
+                                                            daughterTubeBarcodes);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
         LabEvent daughterPlateTransferEntity =
                 labEventFactory.buildFromBettaLims(daughterPlateTransferJaxb, mapBarcodeToVessel);
@@ -536,7 +568,7 @@ public class BaseEventTest {
         Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
         for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
             mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
-                    twoDBarcodedTube);
+                                         twoDBarcodedTube);
         }
 
         // Controls are added in a re-array
@@ -613,7 +645,7 @@ public class BaseEventTest {
 
         PlateCherryPickEvent daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildCherryPick("SamplesDaughterPlateCreation", sourceRacks,
-                        sourceTubes, destinationRacks, daughterTubes, cherryPicks);
+                                                            sourceTubes, destinationRacks, daughterTubes, cherryPicks);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>(mapBarcodeToTube);
         mapBarcodeToVessel.putAll(mapBarcodeToTube2);
         LabEvent daughterPlateTransferEntity =
@@ -624,7 +656,7 @@ public class BaseEventTest {
         Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
         for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
             mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
-                    twoDBarcodedTube);
+                                         twoDBarcodedTube);
         }
 
         // Controls are added in a re-array

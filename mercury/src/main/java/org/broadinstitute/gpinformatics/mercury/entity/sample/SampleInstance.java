@@ -176,7 +176,7 @@ public class SampleInstance {
 
     public void setBucketEntry(@Nonnull BucketEntry bucketEntry) {
         this.bucketEntry = bucketEntry;
-        productOrderKey = bucketEntry.getPoBusinessKey();
+        productOrderKey = bucketEntry.getProductOrder().getBusinessKey();
     }
 
     public Collection<LabBatch> getAllLabBatches() {

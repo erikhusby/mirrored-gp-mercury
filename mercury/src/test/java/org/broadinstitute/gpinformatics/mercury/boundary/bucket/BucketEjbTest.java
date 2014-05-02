@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -32,6 +34,7 @@ import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,11 +45,6 @@ import java.util.Set;
 
 import static org.testng.Assert.assertTrue;
 
-/**
- * @author Scott Matthews
- *         Date: 10/26/12
- *         Time: 2:10 PM
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketEjbTest extends ContainerTest {
 
@@ -58,6 +56,12 @@ public class BucketEjbTest extends ContainerTest {
 
     @Inject
     BucketEntryDao bucketEntryDao;
+
+    @Inject
+    ProductDao productDao;
+
+    @Inject
+    ResearchProjectDao researchProjectDao;
 
     @Inject
     TwoDBarcodedTubeDao twoDBarcodedTubeDao;
@@ -92,7 +96,6 @@ public class BucketEjbTest extends ContainerTest {
             return;
         }
 
-//        utx.setTransactionTimeout(300);
         utx.begin();
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
@@ -100,21 +103,22 @@ public class BucketEjbTest extends ContainerTest {
         poBusinessKey2 = "PDO-9";
         poBusinessKey3 = "PDO-10";
 
-        productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
-                new ResearchProject(101L, "Test RP", "Test synopsis",
-                        false));
-        productOrder2 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
-                new ResearchProject(101L, "Test RP", "Test synopsis",
-                        false));
-        productOrder3 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, Workflow.AGILENT_EXOME_EXPRESS, false, "agg type"),
-                new ResearchProject(101L, "Test RP", "Test synopsis",
-                        false));
+        Date today = new Date();
+
+        productOrder1 = new ProductOrder(101L, "Test PO1", productOrderSamples, "GSP-123",
+                                         productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
+                                         researchProjectDao.findByTitle("ADHD"));
+        productOrder1.setTitle(productOrder1.getTitle() + today.getTime());
+        today = new Date();
+        productOrder2 = new ProductOrder(101L, "Test PO2", productOrderSamples, "GSP-123",
+                                         productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
+                                         researchProjectDao.findByTitle("ADHD"));
+        productOrder2.setTitle(productOrder2.getTitle() + today.getTime());
+        today = new Date();
+        productOrder3 = new ProductOrder(101L, "Test PO3", productOrderSamples, "GSP-123",
+                                         productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER),
+                                         researchProjectDao.findByTitle("ADHD"));
+        productOrder3.setTitle(productOrder3.getTitle() + today.getTime());
 
         productOrder1.setJiraTicketKey(poBusinessKey1);
         productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
@@ -149,7 +153,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot1 = new TwoDBarcodedTube(twoDBarcode1);
         bspAliquot1.addSample(new MercurySample(bspStock));
-        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, poBusinessKey1, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, productOrder1, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode1, bspAliquot1);
 
 
@@ -165,7 +169,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot2 = new TwoDBarcodedTube(twoDBarcode2);
         bspAliquot2.addSample(new MercurySample(bspStock));
-        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, poBusinessKey2, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, productOrder2, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode2, bspAliquot2);
 
 
@@ -181,7 +185,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot3 = new TwoDBarcodedTube(twoDBarcode3);
         bspAliquot3.addSample(new MercurySample(bspStock));
-        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, poBusinessKey3, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode3, bspAliquot3);
 
 
@@ -197,7 +201,7 @@ public class BucketEjbTest extends ContainerTest {
         productOrderSamples.add(new ProductOrderSample(bspStock));
         bspAliquot4 = new TwoDBarcodedTube(twoDBarcode4);
         bspAliquot4.addSample(new MercurySample(bspStock));
-        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, poBusinessKey3, BucketEntry.BucketEntryType.PDO_ENTRY));
+        bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
         mapBarcodeToTube.put(twoDBarcode4, bspAliquot4);
 
 
@@ -211,7 +215,7 @@ public class BucketEjbTest extends ContainerTest {
 
         bucketDao.persist(bucket);
         bucketDao.flush();
-        bucketDao.clear();
+//        bucketDao.clear();
 
     }
 
@@ -234,7 +238,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -244,19 +248,19 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries2 = resource.add(Collections.<LabVessel>singleton(bspAliquot2), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey2);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder2);
         Assert.assertEquals(testEntries2.size(), 1);
         BucketEntry testEntry2 = testEntries2.iterator().next();
 
         Collection<BucketEntry> testEntries3 = resource.add(Collections.<LabVessel>singleton(bspAliquot3), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
         Assert.assertEquals(testEntries3.size(), 1);
         BucketEntry testEntry3 = testEntries3.iterator().next();
 
         Collection<BucketEntry> testEntries4 = resource.add(Collections.<LabVessel>singleton(bspAliquot4), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
         Assert.assertEquals(testEntries4.size(), 1);
         BucketEntry testEntry4 = testEntries4.iterator().next();
 
@@ -307,7 +311,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -328,7 +332,7 @@ public class BucketEjbTest extends ContainerTest {
 
 
         resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman",
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -420,7 +424,7 @@ public class BucketEjbTest extends ContainerTest {
 
         Collection<BucketEntry> testEntries1 = resource.add(Collections.<LabVessel>singleton(bspAliquot1), bucket,
                 BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, LabEvent.UI_EVENT_LOCATION,
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey1);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder1);
         Assert.assertEquals(testEntries1.size(), 1);
         BucketEntry testEntry1 = testEntries1.iterator().next();
 
@@ -436,7 +440,7 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(Collections.addAll(bucketCreateBatch, bspAliquot2, bspAliquot3, bspAliquot4));
 
         resource.add(bucketCreateBatch, bucket, BucketEntry.BucketEntryType.PDO_ENTRY, howieTest, "Superman",
-                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, poBusinessKey3);
+                LabEvent.UI_PROGRAM_NAME, LabEventType.SHEARING_BUCKET, productOrder3);
 
         bucketDao.flush();
         bucketDao.clear();
@@ -473,26 +477,6 @@ public class BucketEjbTest extends ContainerTest {
 
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
-        resource.selectEntriesAndBatchThem(3, bucket, Workflow.AGILENT_EXOME_EXPRESS);
-
-        logger.info("After the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
-
-
-        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
-
-        Assert.assertFalse(bucket.contains(testEntry1));
-        Assert.assertFalse(bucket.contains(testEntry2));
-        Assert.assertFalse(bucket.contains(testEntry3));
-        Assert.assertTrue(bucket.contains(testEntry4));
-
-        resource.removeEntry(testEntry4, "Because the test told me to!!!");
-
-        Assert.assertFalse(bucket.contains(testEntry4));
-
-        Assert.assertTrue(bucket.getBucketEntries().isEmpty());
     }
 
 }

@@ -535,4 +535,39 @@
         <createSequence schemaName="mercury" sequenceName="SEQ_SEQUENCING_RUN_CHAMBER" incrementBy="50" startValue="1"/>
     </changeSet>
 
+    <changeSet author="scottmat" id="GPLIM-2711-add-product-order-reference">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="product_order" tableName="bucket_entry" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="bucket_entry" schemaName="mercury">
+            <column name="product_order_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <changeSet author="scottmat" id="GPLIM-2711-add-product-order-reference-aud">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="product_order" tableName="bucket_entry_aud" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="bucket_entry_aud" schemaName="mercury">
+            <column name="product_order_id" type="number(19,0)" />
+        </addColumn>
+    </changeSet>
+    <!--Uncoment after the proper grants are applied on next build-->
+    <!--<changeSet author="scottmat" id="GPLIM-2711-product-order-fk">-->
+        <!--<preConditions onFail="MARK_RAN">-->
+            <!--<not>-->
+                <!--<foreignKeyConstraintExists foreignKeyName="FK_BUCKET_ENTRY_TO_PDO" foreignKeyTableName="bucket_entry"-->
+                                            <!--schemaName="Mercury"/>-->
+            <!--</not>-->
+        <!--</preConditions>-->
+        <!--<addForeignKeyConstraint constraintName="FK_BUCKET_ENTRY_TO_PDO" baseColumnNames="product_order"-->
+                                 <!--baseTableName="bucket_entry" baseTableSchemaName="mercury"-->
+                                 <!--referencedColumnNames="product_order_id" referencedTableName="product_order"-->
+                                 <!--referencedTableSchemaName="athena" />-->
+    <!--</changeSet>-->
+
 </databaseChangeLog>

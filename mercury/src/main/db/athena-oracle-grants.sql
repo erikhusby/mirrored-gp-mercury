@@ -16,7 +16,7 @@ DECLARE
 BEGIN
     FOR v_table IN c_tables
     LOOP
-        v_cmd := 'GRANT SELECT, INSERT, UPDATE, DELETE ON ' || v_table.table_name || ' TO MERCURY';
+        v_cmd := 'GRANT SELECT, INSERT, UPDATE, DELETE, REFERENCES ON ' || v_table.table_name || ' TO MERCURY';
         EXECUTE IMMEDIATE v_cmd;
     END LOOP;
     FOR v_sequence IN c_sequences

@@ -923,7 +923,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
-                bucket.addEntry(productOrder.getBusinessKey(), newTube,
+                bucket.addEntry(productOrder, newTube,
                         org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
             }
         }

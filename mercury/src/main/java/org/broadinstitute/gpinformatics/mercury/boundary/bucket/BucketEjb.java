@@ -7,9 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -55,13 +56,13 @@ public class BucketEjb {
     private final LabEventFactory labEventFactory;
     private final JiraService jiraService;
     private final BucketDao bucketDao;
-    private AthenaClientService athenaClientService;
     private final LabVesselDao labVesselDao;
     private final BucketEntryDao bucketEntryDao;
     private final WorkflowLoader workflowLoader;
     private final BSPUserList bspUserList;
     private final LabVesselFactory labVesselFactory;
     private final BSPSampleDataFetcher bspSampleDataFetcher;
+    private final ProductOrderDao productOrderDao;
 
     private static final Log logger = LogFactory.getLog(BucketEjb.class);
 
@@ -74,22 +75,21 @@ public class BucketEjb {
                      JiraService jiraService,
                      BucketDao bucketDao,
                      BucketEntryDao bucketEntryDao,
-                     AthenaClientService athenaClientService,
                      LabVesselDao labVesselDao,
                      LabVesselFactory labVesselFactory,
                      BSPSampleDataFetcher bspSampleDataFetcher,
                      BSPUserList bspUserList,
-                     WorkflowLoader workflowLoader) {
+                     WorkflowLoader workflowLoader, ProductOrderDao productOrderDao) {
         this.labEventFactory = labEventFactory;
         this.jiraService = jiraService;
         this.bucketDao = bucketDao;
         this.bucketEntryDao = bucketEntryDao;
-        this.athenaClientService = athenaClientService;
         this.labVesselDao = labVesselDao;
         this.labVesselFactory = labVesselFactory;
         this.bspSampleDataFetcher = bspSampleDataFetcher;
         this.bspUserList = bspUserList;
         this.workflowLoader = workflowLoader;
+        this.productOrderDao = productOrderDao;
     }
 
     /**
@@ -102,17 +102,17 @@ public class BucketEjb {
      * @param labEventLocation Machine location from which operator initiated this action
      * @param programName      Name of the program that initiated this action
      * @param eventType        Type of the Lab Event that initiated this bucket add request
-     * @param pdoKey           Product order key for all vessels
+     * @param pdo              Product order for all vessels
      */
     public Collection<BucketEntry> add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                                        BucketEntry.BucketEntryType entryType, @Nonnull String operator,
                                        @Nonnull String labEventLocation,
                                        @Nonnull String programName, LabEventType eventType,
-                                       @Nonnull String pdoKey) {
+                                       @Nonnull ProductOrder pdo) {
 
         List<BucketEntry> listOfNewEntries = new ArrayList<>(entriesToAdd.size());
         for (LabVessel currVessel : entriesToAdd) {
-            listOfNewEntries.add(bucket.addEntry(pdoKey, currVessel, entryType));
+            listOfNewEntries.add(bucket.addEntry(pdo, currVessel, entryType));
         }
 
         Set<LabEvent> eventList = new HashSet<>();
@@ -160,7 +160,8 @@ public class BucketEjb {
             BucketEntry entry = bucket.findEntry(vessel);
             if (entry != null) {
                 logger.debug("Adding entry " + entry.getBucketEntryId() + " for vessel " +
-                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getPoBusinessKey() +
+                             entry.getLabVessel().getLabCentricName() + " and PDO " + entry.getProductOrder()
+                                                                                           .getBusinessKey() +
                              " to be popped from bucket.");
                 entries.add(entry);
             } else {
@@ -170,49 +171,6 @@ public class BucketEjb {
         }
         return entries;
     }
-
-    /**
-     * Used for test purposes.  Takes the given number of samples from the bucket having the given product
-     * workflow and moves them into a new batch.  The batch may end up having fewer samples if the bucket
-     * runs out of suitable entries.
-     *
-     * @param numberOfSamples the number of samples to be taken.
-     * @param bucket          the bucket containing the samples.
-     * @param workflow        the product workflow desired
-     *
-     * @return the batch that contains the samples.
-     */
-    @DaoFree
-    public LabBatch selectEntriesAndBatchThem(int numberOfSamples, @Nonnull Bucket bucket, Workflow workflow) {
-        Set<BucketEntry> bucketEntrySet = new HashSet<>();
-        int count = 0;
-
-        // Selects entries whose product workflow matched the specified workflow.
-        Set<String> pdoKeys = new HashSet<>();
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            pdoKeys.add(entry.getPoBusinessKey());
-        }
-        Collection<ProductOrder> pdos = athenaClientService.retrieveMultipleProductOrderDetails(pdoKeys);
-        for (ProductOrder pdo : pdos) {
-            if (workflow != null && pdo.getProduct() == null ||
-                workflow == null && pdo.getProduct() != null ||
-                workflow != pdo.getProduct().getWorkflow()) {
-                pdoKeys.remove(pdo.getBusinessKey());
-            }
-        }
-
-        for (BucketEntry entry : bucket.getBucketEntries()) {
-            if (pdoKeys.contains(entry.getPoBusinessKey())) {
-                bucketEntrySet.add(entry);
-                ++count;
-            }
-            if (count >= numberOfSamples) {
-                break;
-            }
-        }
-        return moveFromBucketToCommonBatch(bucketEntrySet);
-    }
-
 
     /**
      * Selects the appropriate batch for the given bucket entries and moves the entries from the bucket to the batch.
@@ -277,7 +235,7 @@ public class BucketEjb {
         for (BucketEntry currEntry : bucketEntries) {
             logger.debug("Removing entry " + currEntry.getBucketEntryId() +
                          " for vessel " + currEntry.getLabVessel().getLabCentricName() +
-                         " and PDO " + currEntry.getPoBusinessKey() +
+                         " and PDO " + currEntry.getProductOrder().getBusinessKey() +
                          " from bucket " + currEntry.getBucket().getBucketDefinitionName());
             currEntry.getBucket().removeEntry(currEntry);
         }
@@ -293,10 +251,10 @@ public class BucketEjb {
 
         Map<String, Collection<BucketEntry>> pdoToEntries = new HashMap<>();
         for (BucketEntry entry : entries) {
-            Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getPoBusinessKey());
+            Collection<BucketEntry> pdoEntries = pdoToEntries.get(entry.getProductOrder().getBusinessKey());
             if (pdoEntries == null) {
                 pdoEntries = new ArrayList<>();
-                pdoToEntries.put(entry.getPoBusinessKey(), pdoEntries);
+                pdoToEntries.put(entry.getProductOrder().getBusinessKey(), pdoEntries);
             }
             pdoEntries.add(entry);
         }
@@ -346,7 +304,7 @@ public class BucketEjb {
     public void updateEntryPdo(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String newPdoValue) {
         List<String> updatingList = new ArrayList<>(bucketEntries.size());
         for (BucketEntry bucketEntry : bucketEntries) {
-            bucketEntry.setPoBusinessKey(newPdoValue);
+            bucketEntry.setProductOrder(productOrderDao.findByBusinessKey(newPdoValue));
             updatingList.add(bucketEntry.getLabVessel().getLabel());
         }
         logger.info(String.format("Changing PDO to %s for %d bucket entries (%s)", newPdoValue, updatingList.size(),
@@ -427,9 +385,7 @@ public class BucketEjb {
         Collection<LabVessel> validVessels = applyBucketCriteria(vessels, initialBucketDef);
 
         add(validVessels, initialBucket, BucketEntry.BucketEntryType.PDO_ENTRY, username,
-            LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(),
-            order.getBusinessKey()
-        );
+            LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME, initialBucketDef.getBucketEventType(), order);
 
         if (initialBucket.getBucketId() == null) {
             bucketDao.persist(initialBucket);

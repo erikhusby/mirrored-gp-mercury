@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -83,13 +83,13 @@ public class BucketEjbDbFreeTest {
     private LabEventFactory labEventFactory = EasyMock.createNiceMock(LabEventFactory.class);
     private BucketDao bucketDao = createNiceMock(BucketDao.class);
     private BucketEntryDao bucketEntryDao = createMock(BucketEntryDao.class);
-    private AthenaClientService athenaClientService = createMock(AthenaClientService.class);
     private LabVesselDao labVesselDao = createNiceMock(LabVesselDao.class);
     private BSPSampleDataFetcher bspSampleDataFetcher = createMock(BSPSampleDataFetcher.class);
     private LabVesselFactory labVesselFactory = createMock(LabVesselFactory.class);
 
     private Object[] mocks =
-            new Object[]{bucketDao, bucketEntryDao, athenaClientService, labVesselDao, bspSampleDataFetcher, labVesselFactory, labEventFactory};
+            new Object[]{bucketDao, bucketEntryDao, labVesselDao, bspSampleDataFetcher,
+                    labVesselFactory, labEventFactory};
 
     @BeforeClass(groups = TestGroups.DATABASE_FREE)
     private void beforeClass() {
@@ -121,7 +121,9 @@ public class BucketEjbDbFreeTest {
         pdo.setCreatedBy(BSPManagerFactoryStub.QA_DUDE_USER_ID);
         setupMercurySamples(pdo, expectedSamples, labVessels);
 
-        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao, athenaClientService, labVesselDao, labVesselFactory, bspSampleDataFetcher, bspUserList, workflowLoader);
+        bucketEjb = new BucketEjb(labEventFactory, JiraServiceProducer.stubInstance(), bucketDao, bucketEntryDao,
+                                  labVesselDao, labVesselFactory, bspSampleDataFetcher,
+                                  bspUserList, workflowLoader, createNiceMock(ProductOrderDao.class));
     }
 
     // Creates test samples and updates expectedSamples and labVessels.
@@ -132,39 +134,39 @@ public class BucketEjbDbFreeTest {
 
             Map<BSPSampleSearchColumn, String> bspData = new HashMap<>();
             switch (rackPosition) {
-                case 1:
-                    // Unreceived root should be rejected.
-                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
-                    break;
+            case 1:
+                // Unreceived root should be rejected.
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, null);
+                break;
 
-                case 2:
-                    // Received root but non-genomic material, should be rejected.
-                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
-                    break;
+            case 2:
+                // Received root but non-genomic material, should be rejected.
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "Tissue:Blood");
+                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
+                break;
 
-                case 3:
-                    // Received root should be accepted.
-                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                    bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
-                    expectedSamples.add(pdoSample);
-                    break;
+            case 3:
+                // Received root should be accepted.
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                bspData.put(BSPSampleSearchColumn.RECEIPT_DATE, "04/22/2013");
+                expectedSamples.add(pdoSample);
+                break;
 
-                default:
-                    // FYI case 4 will be a derived sample that Mercury doesn't know about yet.
-                    // Non-root samples should all be accepted.
-                    bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
-                    bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
-                    bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
-                    expectedSamples.add(pdoSample);
-                    break;
+            default:
+                // FYI case 4 will be a derived sample that Mercury doesn't know about yet.
+                // Non-root samples should all be accepted.
+                bspData.put(BSPSampleSearchColumn.MATERIAL_TYPE, "DNA:DNA Genomic");
+                bspData.put(BSPSampleSearchColumn.ROOT_SAMPLE, "ROOT");
+                bspData.put(BSPSampleSearchColumn.SAMPLE_ID, pdoSample.getName());
+                expectedSamples.add(pdoSample);
+                break;
             }
             BSPSampleDTO bspDto = new BSPSampleDTO(bspData);
             bspDto.addPlastic(makeTubeBarcode(rackPosition));
@@ -180,16 +182,17 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
     public void testSamplesToPicoBucket() throws Exception {
-        for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
+        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
                 continue;
             }
             setupCoreMocks(workflow, true);
 
             expect(labEventFactory.buildFromBatchRequests((Collection<BucketEntry>) anyObject(), (String) anyObject(),
-                    (LabBatch) anyObject(), (String) anyObject(), (String) anyObject(), (LabEventType) anyObject()))
-            .andReturn(Collections.<LabEvent>emptyList());
-            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
+                                                          (LabBatch) anyObject(), (String) anyObject(),
+                                                          (String) anyObject(), (LabEventType) anyObject()))
+                    .andReturn(Collections.<LabEvent>emptyList());
+            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
             bucketDao.persist(bucket);
 
             replay(mocks);
@@ -203,18 +206,18 @@ public class BucketEjbDbFreeTest {
 
     @Test(enabled = true, groups = TestGroups.DATABASE_FREE, dataProvider = "badLabelProvider")
     public void testBadLabelSamplesToPicoBucket(String badLabelResult) throws Exception {
-        for (Workflow workflow : (new Workflow[] {Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
+        for (Workflow workflow : (new Workflow[]{Workflow.AGILENT_EXOME_EXPRESS, Workflow.ICE})) {
             if (!Workflow.SUPPORTED_WORKFLOWS.contains(workflow)) {
                 continue;
             }
             setupCoreMocks(workflow, false);
 
-            for(BSPSampleDTO sampleDTO:bspDtoMap.values()) {
+            for (BSPSampleDTO sampleDTO : bspDtoMap.values()) {
                 sampleDTO.getPlasticBarcodes().clear();
                 sampleDTO.addPlastic(badLabelResult);
             }
 
-            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>)anyObject())).andReturn(bspDtoMap);
+            expect(bspSampleDataFetcher.fetchSamplesFromBSP((List<String>) anyObject())).andReturn(bspDtoMap);
 
             replay(mocks);
 
@@ -229,7 +232,7 @@ public class BucketEjbDbFreeTest {
         }
     }
 
-    @DataProvider(name ="badLabelProvider")
+    @DataProvider(name = "badLabelProvider")
     public Object[][] badLabelProvider(Method method) {
         List<Object[]> badLabelInfo = new ArrayList<>();
 
@@ -266,7 +269,8 @@ public class BucketEjbDbFreeTest {
                     List<LabVessel> mockCreatedVessels = new ArrayList<>();
                     mockCreatedVessels.add(labVessels.get(rackPosition - 1));
                     expect(labVesselFactory.buildInitialLabVessels(eq(pdoSample.getName()),
-                                                                   eq(makeTubeBarcode(rackPosition)), eq(pdoCreator), (Date)anyObject()))
+                                                                   eq(makeTubeBarcode(rackPosition)), eq(pdoCreator),
+                                                                   (Date) anyObject()))
                             .andReturn(mockCreatedVessels);
                 }
             }
