@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import com.google.common.collect.Sets;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.GetSampleDetails;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
@@ -23,26 +23,26 @@ import java.util.Set;
 public class VesselEjb {
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private MercurySampleDao mercurySampleDao;
 
     /**
-     * Registers {@code TwoDBarcodedTube}s for all specified {@param matrixBarcodes} as well as
+     * Registers {@code BarcodedTube}s for all specified {@param matrixBarcodes} as well as
      * registering any required {@code MercurySample}s.  No new {@code MercurySample}s will be
      * created for sample barcodes that already have {@code MercurySample} instances, but both
      * preexisting and newly created {@code MercurySample}s will be associated with the created
-     * {@code TwoDBarcodedTube}s.  The sample barcodes are specified within the
+     * {@code BarcodedTube}s.  The sample barcodes are specified within the
      * {@code GetSampleDetails.SampleInfo} values of the {@param sampleInfoMap}.
      */
     public void registerSamplesAndTubes(@Nonnull Collection<String> matrixBarcodes,
                                         @Nonnull Map<String, GetSampleDetails.SampleInfo> sampleInfoMap) {
 
         // Determine which Matrix barcodes are already known to Mercury.
-        List<TwoDBarcodedTube> previouslyRegisteredTubes = twoDBarcodedTubeDao.findListByBarcodes(matrixBarcodes);
+        List<BarcodedTube> previouslyRegisteredTubes = barcodedTubeDao.findListByBarcodes(matrixBarcodes);
         Set<String> previouslyRegisteredTubeBarcodes = new HashSet<>();
-        for (TwoDBarcodedTube tube : previouslyRegisteredTubes) {
+        for (BarcodedTube tube : previouslyRegisteredTubes) {
             previouslyRegisteredTubeBarcodes.add(tube.getLabel());
         }
 
@@ -81,10 +81,10 @@ public class VesselEjb {
             sampleBarcodeToMercurySample.put(mercurySample.getSampleKey(), mercurySample);
         }
 
-        // Create TwoDBarcodedTubes for all matrix barcodes to be registered and associate them with
+        // Create BarcodedTubes for all matrix barcodes to be registered and associate them with
         // the appropriate MercurySamples.
         for (String matrixBarcode : matrixBarcodesToRegister) {
-            TwoDBarcodedTube tube = new TwoDBarcodedTube(matrixBarcode);
+            BarcodedTube tube = new BarcodedTube(matrixBarcode);
             String sampleId = sampleInfoMap.get(tube.getLabel()).getSampleId();
             tube.addSample(sampleBarcodeToMercurySample.get(sampleId));
             mercurySampleDao.persist(tube);

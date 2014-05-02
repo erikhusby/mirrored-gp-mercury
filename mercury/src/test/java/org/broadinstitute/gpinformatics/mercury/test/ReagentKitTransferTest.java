@@ -22,7 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -51,7 +51,7 @@ public class ReagentKitTransferTest {
         String denatureRackBarcode = "denatureRack" + time;
         String miSeqReagentKitBarcode = "reagentKit" + time;
         Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes = new HashMap<>();
-        Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToSourceTube = new HashMap<>();
 
         Map<String, VesselPosition> sourceBarcodes = new HashMap<>();
         RackOfTubes denatureRack = new RackOfTubes(denatureRackBarcode, RackOfTubes.RackType.Matrix96);
@@ -60,8 +60,8 @@ public class ReagentKitTransferTest {
             final String tubeBarcode = String.format("denatureTube0%s-%s", i, time);
             final String position = "A0" + i;
             sourceBarcodes.put(tubeBarcode, VesselPosition.valueOf(position));
-            TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
-            Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<>();
+            BarcodedTube tube = new BarcodedTube(tubeBarcode);
+            Map<VesselPosition, BarcodedTube> positionMap = new HashMap<>();
             positionMap.put(VesselPosition.getByName(position), tube);
             TubeFormation tubeFormation = new TubeFormation(positionMap, RackOfTubes.RackType.Matrix96);
             mapBarcodeToSourceTube.put(tubeBarcode, tube);

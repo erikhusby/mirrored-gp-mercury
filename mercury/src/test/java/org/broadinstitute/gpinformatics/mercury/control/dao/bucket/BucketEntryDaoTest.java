@@ -4,20 +4,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.ThreadEntityManager;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket_;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -40,7 +34,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     BucketEntryDao bucketEntryDao;
 
     @Inject
-    TwoDBarcodedTubeDao tubeDao;
+    BarcodedTubeDao tubeDao;
 
     @Inject
     ProductOrderDao productOrderDao;
@@ -55,7 +49,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     private UserTransaction utx;
 
     private Bucket testBucket;
-    private String twoDBarcodeKey;
+    private String barcodeKey;
     private String testPoBusinessKey;
     private ProductOrder testOrder;
 
@@ -77,7 +71,7 @@ public class BucketEntryDaoTest extends ContainerTest {
             bucketEntryDao.clear();
         }
 
-        twoDBarcodeKey = "SM-1493" +(new Date()).getTime();
+        barcodeKey = "SM-1493" +(new Date()).getTime();
         testPoBusinessKey = "PDO-33";
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
         if(testOrder == null) {
@@ -85,7 +79,7 @@ public class BucketEntryDaoTest extends ContainerTest {
             testOrder.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
             testOrder.setResearchProject(researchProjectDao.findByTitle("ADHD"));
         }
-        BucketEntry testEntry = new BucketEntry(new TwoDBarcodedTube(twoDBarcodeKey), testOrder, testBucket,
+        BucketEntry testEntry = new BucketEntry(new BarcodedTube(barcodeKey), testOrder, testBucket,
                                                 BucketEntry.BucketEntryType.PDO_ENTRY);
         bucketEntryDao.persist(testEntry);
         bucketEntryDao.flush();
@@ -104,7 +98,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     @Test
     public void testFindEntry() {
 
-        TwoDBarcodedTube foundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube foundVessel = tubeDao.findByBarcode(barcodeKey);
 
         Assert.assertNotNull(foundVessel);
 
@@ -146,7 +140,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     @Test
     public void testFindDuplicate() {
 
-        TwoDBarcodedTube vesselToDupe = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube vesselToDupe = tubeDao.findByBarcode(barcodeKey);
         testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
         if(testBucket == null) {
             WorkflowBucketDef bucketDef = new WorkflowBucketDef(BucketDaoTest.EXTRACTION_BUCKET_NAME);
@@ -173,7 +167,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
-        TwoDBarcodedTube foundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube foundVessel = tubeDao.findByBarcode(barcodeKey);
 
         Assert.assertNotNull(foundVessel);
 
@@ -204,7 +198,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     @Test
     public void testUpdateEntry() {
 
-        TwoDBarcodedTube foundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube foundVessel = tubeDao.findByBarcode(barcodeKey);
 
         Assert.assertNotNull(foundVessel);
 
@@ -217,7 +211,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
-        TwoDBarcodedTube newFoundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube newFoundVessel = tubeDao.findByBarcode(barcodeKey);
 
         Assert.assertNotNull(foundVessel); 
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
@@ -238,7 +232,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
-        TwoDBarcodedTube foundVesselAgain = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube foundVesselAgain = tubeDao.findByBarcode(barcodeKey);
 
         replacementOrder = productOrderDao.findByBusinessKey(testPoBusinessKey + "new");
 
@@ -255,7 +249,7 @@ public class BucketEntryDaoTest extends ContainerTest {
     @Test
     public void testRemoveEntry() {
 
-        TwoDBarcodedTube foundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube foundVessel = tubeDao.findByBarcode(barcodeKey);
 
         Assert.assertNotNull(foundVessel);
 
@@ -265,7 +259,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         bucketEntryDao.flush();
         bucketEntryDao.clear();
 
-        TwoDBarcodedTube newFoundVessel = tubeDao.findByBarcode(twoDBarcodeKey);
+        BarcodedTube newFoundVessel = tubeDao.findByBarcode(barcodeKey);
         testOrder = productOrderDao.findByBusinessKey(testPoBusinessKey);
 
         BucketEntry notFoundEntry = bucketEntryDao.findByVesselAndPO(newFoundVessel, testOrder);

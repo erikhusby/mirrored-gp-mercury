@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
@@ -13,12 +12,12 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -57,7 +56,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
     private LabVessel denatureSource;
     private Date runDate;
     private QtpEntityBuilder qtpEntityBuilder;
-    private TwoDBarcodedTube denatureTube;
+    private BarcodedTube denatureTube;
     private Set<LabVessel> starterVessels;
 
     @Override
@@ -69,7 +68,7 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
         runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
@@ -129,12 +128,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -214,12 +213,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -309,12 +308,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -398,12 +397,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -488,12 +487,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -580,12 +579,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);
@@ -658,12 +657,12 @@ public class FlowcellMessageHandlerTest extends BaseEventTest {
                 .thenReturn(qtpEntityBuilder.getDenatureRack());
         getLabEventFactory().setTubeFormationDao(mockTubeFormationDao);
 
-        TwoDBarcodedTubeDao mockTwoDTubeDao = Mockito.mock(TwoDBarcodedTubeDao.class);
-        Mockito.when(mockTwoDTubeDao.findByBarcodes(Mockito.anyList()))
-                .thenReturn(new HashMap<String, TwoDBarcodedTube>() {{
+        BarcodedTubeDao mockTubeDao = Mockito.mock(BarcodedTubeDao.class);
+        Mockito.when(mockTubeDao.findByBarcodes(Mockito.anyList()))
+                .thenReturn(new HashMap<String, BarcodedTube>() {{
                     put(denatureTube.getLabel(), denatureTube);
                 }});
-        getLabEventFactory().setTwoDBarcodedTubeDao(mockTwoDTubeDao);
+        getLabEventFactory().setBarcodedTubeDao(mockTubeDao);
 
         RackOfTubesDao mockRackOfTubes = Mockito.mock(RackOfTubesDao.class);
         Mockito.when(mockRackOfTubes.findByBarcode(Mockito.anyString())).thenReturn(null);

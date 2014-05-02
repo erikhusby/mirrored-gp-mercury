@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderT
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.Configuration;
 import org.meanbean.test.ConfigurationBuilder;
@@ -33,20 +33,20 @@ public class BucketEntryDBFreeTest {
 
         final ProductOrder productOrder = ProductOrderTestFactory.createProductOrder();
         productOrder.setJiraTicketKey("PO-1");
-        final String twoDBarcode = "SM-2432";
+        final String barcode = "SM-2432";
         final String bucketName = "Pre-flight";
 
         Bucket bucket = new Bucket(bucketName);
 
         BucketEntry entry =
-                new BucketEntry(new TwoDBarcodedTube(twoDBarcode),
+                new BucketEntry(new BarcodedTube(barcode),
                                 productOrder, bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
 
 
         Assert.assertNotNull(entry.getProductOrder());
         Assert.assertEquals(productOrder, entry.getProductOrder());
         Assert.assertNotNull(entry.getLabVessel());
-        Assert.assertEquals(twoDBarcode, entry.getLabVessel().getLabel());
+        Assert.assertEquals(barcode, entry.getLabVessel().getLabel());
 
         Assert.assertNotNull(entry.getBucket());
         Assert.assertEquals(bucketName, entry.getBucket().getBucketDefinitionName());
@@ -74,17 +74,17 @@ public class BucketEntryDBFreeTest {
         productOrder1.setJiraTicketKey("PDO-1");
         ProductOrder productOrder2 = ProductOrderTestFactory.createProductOrder();
         productOrder2.setJiraTicketKey("PDO-2");
-        String twoDBarcode1 = "A1234567890";
-        String twoDBarcode2 = "A2345678901";
+        String barcode1 = "A1234567890";
+        String barcode2 = "A2345678901";
 
         Bucket bucket = new Bucket(bucketName);
         List<BucketEntry> bucketEntries = new ArrayList<>(2);
-        bucketEntries.add(new BucketEntry(new TwoDBarcodedTube(twoDBarcode1), productOrder1, bucket,
+        bucketEntries.add(new BucketEntry(new BarcodedTube(barcode1), productOrder1, bucket,
                                           BucketEntry.BucketEntryType.PDO_ENTRY));
         Assert.assertEquals(bucketEntries.size(), 1);
         Assert.assertNotNull(bucketEntries.iterator().next());
 
-        bucketEntries.add(new BucketEntry(new TwoDBarcodedTube(twoDBarcode2), productOrder1, bucket,
+        bucketEntries.add(new BucketEntry(new BarcodedTube(barcode2), productOrder1, bucket,
                                           BucketEntry.BucketEntryType.PDO_ENTRY));
         Assert.assertEquals(bucketEntries.size(), 2);
         Assert.assertNotNull(bucketEntries.iterator().next());

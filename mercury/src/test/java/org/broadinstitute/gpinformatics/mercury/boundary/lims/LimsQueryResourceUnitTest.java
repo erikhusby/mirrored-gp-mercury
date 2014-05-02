@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
@@ -48,7 +48,7 @@ public class LimsQueryResourceUnitTest {
     private ThriftService mockThriftService;
     private LimsQueries mockLimsQueries;
     private LimsQueryResourceResponseFactory mockResponseFactory;
-    private TwoDBarcodedTubeDao mockTwoDBarcodedTubeDao;
+    private BarcodedTubeDao mockBarcodedTubeDao;
     private LimsQueryResource resource;
     private StaticPlateDao mockStaticPlateDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
@@ -60,7 +60,7 @@ public class LimsQueryResourceUnitTest {
         mockLimsQueries = createMock(LimsQueries.class);
         sequencingTemplateFactory = createMock(SequencingTemplateFactory.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
-        mockTwoDBarcodedTubeDao = createMock(TwoDBarcodedTubeDao.class);
+        mockBarcodedTubeDao = createMock(BarcodedTubeDao.class);
         mockStaticPlateDao = createMock(StaticPlateDao.class);
         BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
         resource =
@@ -427,11 +427,11 @@ public class LimsQueryResourceUnitTest {
 
     private void replayAll() {
         replay(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
     }
 
     private void verifyAll() {
         verify(mockSystemRouter, mockThriftService, mockLimsQueries, sequencingTemplateFactory,
-                mockResponseFactory, mockTwoDBarcodedTubeDao, mockStaticPlateDao);
+                mockResponseFactory, mockBarcodedTubeDao, mockStaticPlateDao);
     }
 }

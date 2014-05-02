@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
@@ -50,7 +50,7 @@ public class ZimsIlluminaRunFactoryTest {
 
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private IlluminaFlowcell flowcell;
-    private TwoDBarcodedTube testTube;
+    private BarcodedTube testTube;
 
     private BSPSampleDataFetcher mockBSPSampleDataFetcher;
     private ControlDao mockControlDao;
@@ -155,7 +155,7 @@ public class ZimsIlluminaRunFactoryTest {
         List<ZimsIlluminaRunFactory.SampleInstanceDto> sampleInstanceDtoList = new ArrayList<>(
                 testLabBatchTypes.length);
         String sourceTubeBarcode = "testTube";
-        testTube = new TwoDBarcodedTube(sourceTubeBarcode);
+        testTube = new BarcodedTube(sourceTubeBarcode);
         MercurySample mercurySample = new MercurySample(TEST_SAMPLE_ID);
         SampleInstance instance = new SampleInstance(mercurySample);
         testTube.addSample(mercurySample);

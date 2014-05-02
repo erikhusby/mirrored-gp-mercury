@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
@@ -49,7 +49,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
         runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
@@ -147,7 +147,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
                 new LabBatch(fctBatchName, Collections.singleton(denatureSource), LabBatch.LabBatchType.FCT);
 
         for (LabBatchStartingVessel startingVessel : fctBatch.getLabBatchStartingVessels()) {
-            startingVessel.setDilutionVessel(new TwoDBarcodedTube("PreviousDilutionTube" + runDate.getTime()));
+            startingVessel.setDilutionVessel(new BarcodedTube("PreviousDilutionTube" + runDate.getTime()));
         }
 
         HiSeq2500JaxbBuilder dilutionBuilder = new HiSeq2500JaxbBuilder(getBettaLimsMessageTestFactory(),
@@ -196,7 +196,7 @@ public class DenatureToDilutionHandlerTest extends BaseEventTest {
 
         LabBatch fctBatch2 =
                 new LabBatch(altFctTicketName,
-                        Collections.singleton((LabVessel) new TwoDBarcodedTube(denatureSource.getLabel() + "ALT")),
+                        Collections.singleton((LabVessel) new BarcodedTube(denatureSource.getLabel() + "ALT")),
                         LabBatch.LabBatchType.FCT);
         fctBatch2.getLabBatchStartingVessels().iterator().next().setDilutionVessel(
                 dilutionTransferEntity.getTargetVesselTubes().iterator().next());

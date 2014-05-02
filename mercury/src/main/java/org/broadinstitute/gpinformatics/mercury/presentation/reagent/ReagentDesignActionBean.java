@@ -25,12 +25,12 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.tokenimporters.ReagentDesignTokenInput;
 
@@ -64,7 +64,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
     private ReagentDesignDao reagentDesignDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -182,21 +182,21 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @HandlesEvent(BARCODE_REAGENT_ACTION)
     public Resolution barcodeReagent() {
-        List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<>();
+        List<BarcodedTube> barcodedTubeList = new ArrayList<>();
         String savedChanges = "";
 
         savedChanges += editReagentDesign.getBusinessKey() + " " + barcode + ")\n";
         for (String barcodeItem : barcodeAsList()) {
             DesignedReagent reagent = new DesignedReagent(editReagentDesign);
-            TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
-            twoDee.addReagent(reagent);
-            twoDBarcodedTubeList.add(twoDee);
+            BarcodedTube barcodedTube = new BarcodedTube(barcodeItem);
+            barcodedTube.addReagent(reagent);
+            barcodedTubeList.add(barcodedTube);
         }
 
 
-        twoDBarcodedTubeDao.persistAll(twoDBarcodedTubeList);
+        barcodedTubeDao.persistAll(barcodedTubeList);
         addMessage(
-                String.format("%s tubes initialized with reagents: %s.", twoDBarcodedTubeList.size(), savedChanges));
+                String.format("%s tubes initialized with reagents: %s.", barcodedTubeList.size(), savedChanges));
 
         return new RedirectResolution(ReagentDesignActionBean.class, LIST_ACTION)
                 .addParameter("reagentDesign", reagentDesign);
