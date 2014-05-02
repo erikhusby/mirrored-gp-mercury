@@ -53,6 +53,7 @@ public class BarcodedTubeDaoTest extends ContainerTest {
             barcodes.add(barcode);
         }
         barcodedTubeDao.persistAll(barcodedTubes);
+        barcodedTubeDao.flush();
 
         Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(barcodes);
         Assert.assertEquals(barcodes.size(), mapBarcodeToTube.size(), "Wrong number of tubes");
