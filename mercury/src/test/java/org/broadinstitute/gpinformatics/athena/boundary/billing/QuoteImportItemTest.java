@@ -19,9 +19,11 @@ import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.DATABASE_FREE, enabled = true)
 public class QuoteImportItemTest {
@@ -110,5 +112,27 @@ public class QuoteImportItemTest {
         assertThat("Total precision is not high enough for this test.",Double.toString(totalQuantity).length(),greaterThan(10));
         assertThat("Rounding/formatting of quantity seems to have changed.",quoteImportItem.getRoundedQuantity().toString().length(), lessThan(
                 5));
+    }
+
+    public void testSingleWorkItemFailsWhenThereAreMultipleWorkItems() {
+        try {
+            quoteImportItem.getSingleWorkItem();
+            Assert.fail("If there are multiple work items, this method should explode.");
+        }
+        catch(RuntimeException e) {}
+    }
+
+    public void testNoWorkItems() {
+        QuoteImportItem item = new QuoteImportItem(null,null,null,null,null);
+        assertThat(item.getSingleWorkItem(),is(nullValue()));
+    }
+
+    public void testSingleWorkItem() {
+        LedgerEntry ledgerEntry = new LedgerEntry(new ProductOrderSample("blah"),new PriceItem(),new Date(),2);
+        ledgerEntry.setWorkItem(WORK_ITEM2);
+        List<LedgerEntry> ledgerEntries = new ArrayList<>();
+        ledgerEntries.add(ledgerEntry);
+        QuoteImportItem item = new QuoteImportItem(null,null,null,ledgerEntries,null);
+        assertThat(item.getSingleWorkItem(),equalTo(WORK_ITEM2));
     }
 }
