@@ -56,6 +56,10 @@
         <stripes:label for="alias" class="control-label">Protocol Title</stripes:label>
         <div class="controls">
             <d-stripes:text id="titleInput" name="regulatoryInfoAlias" required="required"/>
+            <span class="help-inline">
+                <i class="icon-question-sign" title="Examples" rel="popover" data-trigger="hover" data-placement="right" data-html="true"
+                   data-content="<ul><li>NHGRI Medical Sequencing Program</li><li>Exome Sequencing of Vienna Colorectal Cancer Cohort</li><li>Genetics of Epilepsy and Related Disorders</li></ul>"></i>
+            </span>
             <p id="titleValidationError"></p>
         </div>
     </div>
@@ -80,6 +84,8 @@
 </stripes:form>
 
 <script type="text/javascript">
+    $j('i.icon-question-sign').popover();
+
     function validateTitle(event) {
         event.preventDefault();
         var form = this;
@@ -93,7 +99,7 @@
             dataType: 'text',
             success: function handleTitleValidation(result) {
                 if (result) {
-                    $j('#titleValidationError').text('Title is already in use by ' + result + '.');
+                    $j('#titleValidationError').text(result);
                 } else {
                     /*
                      * When submitting the form this way, the submit button's name does not get submitted with the rest

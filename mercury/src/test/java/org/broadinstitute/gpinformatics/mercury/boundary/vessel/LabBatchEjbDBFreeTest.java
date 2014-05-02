@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -173,7 +172,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getBatchDescription(),
                             "null" +
                             "\n" +
-                            "\n" + AthenaClientServiceStub.rpSynopsis);
+                            "\n" + ProductOrderTestFactory.rpSynopsis);
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(testBatch.getLabBatchType(), LabBatch.LabBatchType.FCT);
@@ -197,7 +196,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getBatchDescription(),
                             extractDescriptionPrefix(testBatch) +
                             "\n" +
-                            "\n" + AthenaClientServiceStub.rpSynopsis);
+                            "\n" + ProductOrderTestFactory.rpSynopsis);
         Assert.assertNull(testBatch.getDueDate());
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
@@ -221,7 +220,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getBatchDescription(),
                             extractDescriptionPrefix(testBatch) +
                             "\n" +
-                            "\n" + AthenaClientServiceStub.rpSynopsis);
+                            "\n" + ProductOrderTestFactory.rpSynopsis);
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
     }

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -80,7 +79,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         Map<String, BarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
-                LabBatch.LabBatchType.WORKFLOW);
+                                            LabBatch.LabBatchType.WORKFLOW);
 
         reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
@@ -135,15 +134,15 @@ public class ReworkDbFreeTest extends BaseEventTest {
         // Checks the lab batch composition of the non-rework and rework containers.
         Assert.assertEquals(origContainer.getAllLabBatches().size(), 1);
         validateLabBatchComposition(origContainer.getLabBatchCompositions(),
-                startingSampleSize,
-                new int[]{startingSampleSize},
-                new String[]{origLcsetSuffix, reworkLcsetSuffix});
+                                    startingSampleSize,
+                                    new int[]{startingSampleSize},
+                                    new String[]{origLcsetSuffix, reworkLcsetSuffix});
 
         Assert.assertEquals(reworkContainer.getAllLabBatches().size(), 2);
         validateLabBatchComposition(reworkContainer.getLabBatchCompositions(),
-                startingSampleSize + numberOfReworks,
-                new int[]{startingSampleSize + numberOfReworks, numberOfReworks},
-                new String[]{reworkLcsetSuffix, origLcsetSuffix});
+                                    startingSampleSize + numberOfReworks,
+                                    new int[]{startingSampleSize + numberOfReworks, numberOfReworks},
+                                    new String[]{reworkLcsetSuffix, origLcsetSuffix});
 
         // Rework tube should be in two lcsets.
         Assert.assertEquals(tube1.getAllLabBatches().size(), 2);
@@ -205,7 +204,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         reworkRackMap.put(reworkTube.getLabel(), reworkTube);
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
-                LabBatch.LabBatchType.WORKFLOW);
+                                            LabBatch.LabBatchType.WORKFLOW);
         reworkBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         reworkBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
@@ -243,15 +242,15 @@ public class ReworkDbFreeTest extends BaseEventTest {
         // Checks the lab batch composition of the non-rework and rework containers.
         Assert.assertEquals(origContainer.getAllLabBatches().size(), 2);
         validateLabBatchComposition(origContainer.getLabBatchCompositions(),
-                NUM_POSITIONS_IN_RACK,
-                new int[]{NUM_POSITIONS_IN_RACK, 1},
-                new String[]{origLcsetSuffix, reworkLcsetSuffix});
+                                    NUM_POSITIONS_IN_RACK,
+                                    new int[]{NUM_POSITIONS_IN_RACK, 1},
+                                    new String[]{origLcsetSuffix, reworkLcsetSuffix});
 
         Assert.assertEquals(reworkContainer.getAllLabBatches().size(), 2);
         validateLabBatchComposition(reworkContainer.getLabBatchCompositions(),
-                NUM_POSITIONS_IN_RACK,
-                new int[]{NUM_POSITIONS_IN_RACK, 1},
-                new String[]{reworkLcsetSuffix, origLcsetSuffix});
+                                    NUM_POSITIONS_IN_RACK,
+                                    new int[]{NUM_POSITIONS_IN_RACK, 1},
+                                    new String[]{reworkLcsetSuffix, origLcsetSuffix});
 
         // Rework tube should be in two lcsets.
         Assert.assertEquals(reworkTube.getAllLabBatches().size(), 2);
@@ -266,9 +265,13 @@ public class ReworkDbFreeTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.MERCURY;
 
         ProductOrder productOrder1 = ProductOrderTestFactory.createDummyProductOrder(4, "PDO-8",
-                Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 1", "Test 1", false, "ExEx-001", "A", "ExExQuoteId");
+                                                                                     Workflow.AGILENT_EXOME_EXPRESS, 1L,
+                                                                                     "Test 1", "Test 1", false,
+                                                                                     "ExEx-001", "A", "ExExQuoteId");
         ProductOrder productOrder2 = ProductOrderTestFactory.createDummyProductOrder(3, "PDO-9",
-                Workflow.AGILENT_EXOME_EXPRESS, 1L, "Test 2", "Test 2", false, "ExEx-001", "B", "ExExQuoteId");
+                                                                                     Workflow.AGILENT_EXOME_EXPRESS, 1L,
+                                                                                     "Test 2", "Test 2", false,
+                                                                                     "ExEx-001", "B", "ExExQuoteId");
         final Date runDate = new Date();
 
         Map<String, BarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1");
@@ -278,33 +281,39 @@ public class ReworkDbFreeTest extends BaseEventTest {
         mapBarcodeToTube2.put(stringBarcodedTubeEntry.getKey(), stringBarcodedTubeEntry.getValue());
 
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
-                new HashSet<LabVessel>(mapBarcodeToTube1.values()), LabBatch.LabBatchType.WORKFLOW);
+                                               new HashSet<LabVessel>(mapBarcodeToTube1.values()),
+                                               LabBatch.LabBatchType.WORKFLOW);
         workflowBatch1.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch1.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
-                new HashSet<LabVessel>(mapBarcodeToTube2.values()), LabBatch.LabBatchType.WORKFLOW);
+                                               new HashSet<LabVessel>(mapBarcodeToTube2.values()),
+                                               LabBatch.LabBatchType.WORKFLOW);
         workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube1, productOrder1, workflowBatch1, "1");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder1 = runPicoPlatingProcess(mapBarcodeToTube1,
-                String.valueOf(runDate.getTime()), "1", true);
+                                                                                   String.valueOf(runDate.getTime()),
+                                                                                   "1", true);
         bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
         PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
-                String.valueOf(runDate.getTime()), "2", true);
+                                                                                   String.valueOf(runDate.getTime()),
+                                                                                   "2", true);
 
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder1 = runExomeExpressShearingProcess(
                 picoPlatingEntityBuilder1.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder1.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "1");
+                picoPlatingEntityBuilder1.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(),
+                "1");
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 = runExomeExpressShearingProcess(
                 picoPlatingEntityBuilder2.getNormBarcodeToTubeMap(),
-                picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(), "2");
+                picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(),
+                "2");
 
         runTransferVisualizer(stringBarcodedTubeEntry.getValue());
 
         for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
-                .getSampleInstances()) {
+                                                                               .getSampleInstances()) {
             Assert.assertEquals(sampleInstance.getLabBatch(), workflowBatch2);
         }
     }
@@ -317,8 +326,8 @@ public class ReworkDbFreeTest extends BaseEventTest {
             Assert.assertEquals(origComposition.getDenominator(), denominator);
             Assert.assertEquals(origComposition.getCount(), counts[idx]);
             Assert.assertTrue(origComposition.getLabBatch().getBatchName().endsWith(lcsetSuffixes[idx]),
-                    "Expected suffix " + lcsetSuffixes[idx] + " but got " + origComposition.getLabBatch()
-                            .getBatchName());
+                              "Expected suffix " + lcsetSuffixes[idx] + " but got " + origComposition.getLabBatch()
+                                                                                                     .getBatchName());
         }
     }
 }

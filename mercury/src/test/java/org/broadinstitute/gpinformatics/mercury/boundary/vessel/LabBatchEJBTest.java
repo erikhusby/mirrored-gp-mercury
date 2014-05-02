@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -32,11 +35,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-/**
- * @author Scott Matthews
- *         Date: 12/7/12
- *         Time: 4:31 PM
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class LabBatchEJBTest extends ContainerTest {
 
@@ -58,7 +56,14 @@ public class LabBatchEJBTest extends ContainerTest {
     @Inject
     private BucketDao bucketDao;
 
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
     private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+
     private ArrayList<String> pdoNames;
     private String scottmat;
     private Bucket bucket;
@@ -233,8 +238,12 @@ public class LabBatchEJBTest extends ContainerTest {
 
     private void putTubesInBucket() {
         bucket = bucketDao.findByName(BUCKET_NAME);
-        ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder();
-        stubTestPDO.setJiraTicketKey(STUB_TEST_PDO_KEY);
+
+        ProductOrder stubTestPDO = ProductOrderTestFactory.createDummyProductOrder(STUB_TEST_PDO_KEY);
+        stubTestPDO.setTitle(stubTestPDO.getTitle() + ((new Date()).getTime()));
+        stubTestPDO.updateAddOnProducts(Collections.<Product>emptyList());
+        stubTestPDO.setProduct(productDao.findByBusinessKey(Product.EXOME_EXPRESS_V2_PART_NUMBER));
+        stubTestPDO .setResearchProject(researchProjectDao.findByTitle("ADHD"));
         for (LabVessel vessel : mapBarcodeToTube.values()) {
             bucket.addEntry(stubTestPDO, vessel,
                             org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
