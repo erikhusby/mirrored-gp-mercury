@@ -704,11 +704,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_TITLE_ACTION)
     public Resolution validateTitle() {
         String result = "";
-        List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
-        for (RegulatoryInfo info : infos) {
-            if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                result = String.format("%s: %s", info.getType().getName(), info.getIdentifier());
-                break;
+        if (StringUtils.isBlank(regulatoryInfoAlias)) {
+            result = "Protocol Title is required.";
+        } else {
+            List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
+            for (RegulatoryInfo info : infos) {
+                if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
+                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(), info.getIdentifier());
+                    break;
+                }
             }
         }
         return createTextResolution(result);
