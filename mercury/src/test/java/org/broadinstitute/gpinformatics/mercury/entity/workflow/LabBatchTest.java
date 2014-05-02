@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -38,7 +38,7 @@ public class LabBatchTest {
     private String pdoBusinessName;
     private List<String> pdoNames;
     private Workflow workflow;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private Map<String, BarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
     public void setUp() {
@@ -72,7 +72,7 @@ public class LabBatchTest {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
             productOrderSamples.add(new ProductOrderSample(bspStock));
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }

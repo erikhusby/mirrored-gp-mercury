@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -480,7 +479,7 @@ public interface TransferTraverserCriteria {
 
     /**
      * NearestTubeAncestorsCriteria is a Traverser Criteria object intended to capture the closest (in number of hops)
-     * TwoDBarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
+     * BarcodedTube(s) that can be found in a target vessel's event history.  When found, not only will the the tube
      * be saved for access, but also an object that relates the tube to its position at its found location will be
      * returned.
      */
@@ -491,7 +490,7 @@ public interface TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), BarcodedTube.class)) {
                 tubes.add(context.getLabVessel());
                 vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
                 return TraversalControl.StopTraversing;
@@ -519,7 +518,7 @@ public interface TransferTraverserCriteria {
 
     /**
      * Similar to NearestTubeAncestorsCriteria, this criteria object is intended to capture the closest (in number of
-     * hops) TwoDBarcodedTube(s) that can be found in a target vessels history.  The user of this method has no need
+     * hops) BarcodedTube(s) that can be found in a target vessels history.  The user of this method has no need
      * of the tubes position in the container that it is found, and sometimes creating the VesselAndPosition object
      * breaks so this is being used in its place.
      */
@@ -529,7 +528,7 @@ public interface TransferTraverserCriteria {
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), BarcodedTube.class)) {
                 if (tube == null) {
                     tube = context.getLabVessel();
                 }

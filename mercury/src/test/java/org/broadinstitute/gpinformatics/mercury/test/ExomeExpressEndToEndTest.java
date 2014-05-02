@@ -54,7 +54,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -358,11 +358,11 @@ public class ExomeExpressEndToEndTest {
             LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader()
             );
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory = new BettaLimsMessageTestFactory(true);
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<>();
+            Map<String, BarcodedTube> mapBarcodeToTube = new HashMap<>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
                 mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
-                                     (TwoDBarcodedTube) stockToAliquotEntry.getValue());
+                                     (BarcodedTube) stockToAliquotEntry.getValue());
             }
 
             PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
@@ -435,7 +435,7 @@ public class ExomeExpressEndToEndTest {
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
-            TwoDBarcodedTube denatureTube =
+            BarcodedTube denatureTube =
                     qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
@@ -455,7 +455,7 @@ public class ExomeExpressEndToEndTest {
             // Post "work done" to Quote Server
             // MockQuoteService.registerNewWork
 
-            final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
+            final BarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
 
             int numStartersFromSampleInstances = 0;
@@ -536,7 +536,7 @@ public class ExomeExpressEndToEndTest {
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves
             //            for (Starter starter : projectPlan.getStarters()) {
-            //                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
+            //                BSPSampleAuthorityTube aliquot = (BSPSampleAuthorityTube) projectPlan.getAliquotForStarter(starter);
             //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
             //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
             //                        "", "", "","", "", "", "",""));

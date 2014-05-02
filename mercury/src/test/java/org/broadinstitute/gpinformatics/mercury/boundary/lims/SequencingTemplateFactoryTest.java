@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -56,8 +56,8 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
     public static final String BARCODE_SUFFIX = "1";
     public static final String FLOWCELL_2500_TICKET = "FCT-3";
     private SequencingTemplateFactory factory = null;
-    private TwoDBarcodedTube denatureTube = null;
-    private TwoDBarcodedTube dilutionTube = null;
+    private BarcodedTube denatureTube = null;
+    private BarcodedTube dilutionTube = null;
     private IlluminaFlowcell flowcell = null;
     private MiSeqReagentKit reagentKit = null;
     private static final String PRODUCTION_CIGAR = "76T8B8B76T";
@@ -82,7 +82,7 @@ public class SequencingTemplateFactoryTest extends BaseEventTest {
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);

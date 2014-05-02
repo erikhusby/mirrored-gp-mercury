@@ -14,9 +14,9 @@ import org.broadinstitute.gpinformatics.infrastructure.parsers.poi.PoiSpreadshee
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -35,7 +35,7 @@ import java.util.Date;
 public class LabMetricParserTest extends ContainerTest {
 
     @Inject
-    private TwoDBarcodedTubeDao vesselDao;
+    private BarcodedTubeDao vesselDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -80,7 +80,7 @@ public class LabMetricParserTest extends ContainerTest {
         utx.begin();
 
         for (String barcode : barcodes) {
-            vesselDao.persist(new TwoDBarcodedTube(barcode));
+            vesselDao.persist(new BarcodedTube(barcode));
         }
         vesselDao.flush();
         vesselDao.clear();

@@ -34,7 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -45,7 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -130,7 +130,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private VesselTransferEjb vesselTransferEjb;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private AppConfig appConfig;
@@ -223,16 +223,16 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         }
         pdo1JiraKey = exexOrder.getJiraTicketKey();
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
-                                                                                                       BaseEventTest.NUM_POSITIONS_IN_RACK,
-                                                                                                       twoDBarcodedTubeDao);
+        Map<String, BarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao);
+
         bucketAndBatch(testPrefix, exexOrder, mapBarcodeToTube);
         // message
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest.sendMessagesUptoCatch(
                 testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
-                reagentDesignDao, twoDBarcodedTubeDao,
+                reagentDesignDao, barcodedTubeDao,
                 appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         final QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
@@ -313,7 +313,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         Map<String, VesselPosition> denatureRackMap = new HashMap<>();
         denatureRackMap.put(denatureBarcode, VesselPosition.A01);
-        TwoDBarcodedTube tube = new TwoDBarcodedTube(denatureBarcode);
+        BarcodedTube tube = new BarcodedTube(denatureBarcode);
         labVesselDao.persist(tube);
         labVesselDao.flush();
 
@@ -547,7 +547,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * @param mapBarcodeToTube tubes
      */
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
-                                Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                Map<String, BarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
         bucketEjb.addSamplesToBucket(productOrder);
 

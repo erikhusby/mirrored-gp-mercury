@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -54,7 +54,7 @@ public class LabVesselFixupTest extends Arquillian {
     private StaticPlateDao staticPlateDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -157,15 +157,15 @@ public class LabVesselFixupTest extends Arquillian {
      */
     @Test(enabled = false)
     public void insertWaterControls() {
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new EnumMap<>(VesselPosition.class);
 
-        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("0114382737");
-        twoDBarcodedTube.addSample(new MercurySample("SM-2AY8L"));
-        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube);
+        BarcodedTube barcodedTube = new BarcodedTube("0114382737");
+        barcodedTube.addSample(new MercurySample("SM-2AY8L"));
+        mapPositionToTube.put(VesselPosition.A01, barcodedTube);
 
-        TwoDBarcodedTube twoDBarcodedTube1 = new TwoDBarcodedTube("SM-22GXJ");
-        twoDBarcodedTube.addSample(new MercurySample("SM-22GXJ"));
-        mapPositionToTube.put(VesselPosition.A02, twoDBarcodedTube1);
+        BarcodedTube barcodedTube1 = new BarcodedTube("SM-22GXJ");
+        barcodedTube.addSample(new MercurySample("SM-22GXJ"));
+        mapPositionToTube.put(VesselPosition.A02, barcodedTube1);
 
         TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.addRackOfTubes(new RackOfTubes("CO-5971666", RackOfTubes.RackType.Matrix96));
@@ -173,9 +173,9 @@ public class LabVesselFixupTest extends Arquillian {
         labVesselDao.persist(tubeFormation);
 
         mapPositionToTube.clear();
-        TwoDBarcodedTube twoDBarcodedTube2 = new TwoDBarcodedTube("SM-29FPE");
-        twoDBarcodedTube2.addSample(new MercurySample("SM-29FPE"));
-        mapPositionToTube.put(VesselPosition.A01, twoDBarcodedTube2);
+        BarcodedTube barcodedTube2 = new BarcodedTube("SM-29FPE");
+        barcodedTube2.addSample(new MercurySample("SM-29FPE"));
+        mapPositionToTube.put(VesselPosition.A01, barcodedTube2);
 
         tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
         tubeFormation.addRackOfTubes(new RackOfTubes("CO-3468604", RackOfTubes.RackType.Matrix96));
@@ -365,15 +365,15 @@ public class LabVesselFixupTest extends Arquillian {
     public void fixupGplim2367() {
         // the source tubeformation for the ShearingTransfer doesn't seem to have been used in any other transfer,
         // so it can be altered
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0159873624");
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0159873624");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersFrom()) {
                 if (labEvent.getLabEventType() == LabEventType.SHEARING_TRANSFER) {
                     found = true;
                     TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
-                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
-                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
                     changePosition(mapPositionToVessel, VesselPosition.A01, VesselPosition.A10);
                     changePosition(mapPositionToVessel, VesselPosition.A02, VesselPosition.A11);
                     changePosition(mapPositionToVessel, VesselPosition.A03, VesselPosition.A12);
@@ -401,37 +401,37 @@ public class LabVesselFixupTest extends Arquillian {
         if (!found) {
             throw new RuntimeException("Failed to find tube formation for shearing transfer");
         }
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
     }
 
-    private void changePosition(Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel, VesselPosition oldPosition,
+    private void changePosition(Map<VesselPosition, BarcodedTube> mapPositionToVessel, VesselPosition oldPosition,
             VesselPosition newPosition) {
-        TwoDBarcodedTube twoDBarcodedTube1 = mapPositionToVessel.get(oldPosition);
-        mapPositionToVessel.put(newPosition, twoDBarcodedTube1);
+        BarcodedTube barcodedTube1 = mapPositionToVessel.get(oldPosition);
+        mapPositionToVessel.put(newPosition, barcodedTube1);
         mapPositionToVessel.remove(oldPosition);
     }
 
     @Test(enabled = false)
     public void fixupGplim2375() {
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0116400440");
-        LabMetric labMetric = twoDBarcodedTube.getMetrics().iterator().next();
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0116400440");
+        LabMetric labMetric = barcodedTube.getMetrics().iterator().next();
         labMetric.setValue(new BigDecimal("21.75"));
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
     }
 
     @Test(enabled = false)
     public void fixupGplim2367Part2() {
-        TwoDBarcodedTube twoDBarcodedTube = twoDBarcodedTubeDao.findByBarcode("0156349661");
+        BarcodedTube barcodedTube = barcodedTubeDao.findByBarcode("0156349661");
         boolean found = false;
-        for (VesselContainer<?> vesselContainer : twoDBarcodedTube.getContainers()) {
+        for (VesselContainer<?> vesselContainer : barcodedTube.getContainers()) {
             for (LabEvent labEvent : vesselContainer.getTransfersTo()) {
                 if (labEvent.getLabEventType() == LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION) {
                     found = true;
                     // Intended to change position of two tubes, but discovered that the changed tube formation already
                     // exists.
 //                    TubeFormation tubeFormation = (TubeFormation) vesselContainer.getEmbedder();
-//                    Map<VesselPosition, TwoDBarcodedTube> mapPositionToVessel =
-//                            (Map<VesselPosition, TwoDBarcodedTube>) vesselContainer.getMapPositionToVessel();
+//                    Map<VesselPosition, BarcodedTube> mapPositionToVessel =
+//                            (Map<VesselPosition, BarcodedTube>) vesselContainer.getMapPositionToVessel();
 //                    changePosition(mapPositionToVessel, VesselPosition.F02, VesselPosition.B01);
 //                    changePosition(mapPositionToVessel, VesselPosition.E02, VesselPosition.F01);
 //                    tubeFormation.setLabel(TubeFormation.makeDigest(mapPositionToVessel));
@@ -444,13 +444,13 @@ public class LabVesselFixupTest extends Arquillian {
         if (!found) {
             throw new RuntimeException("Failed to find tube formation for daughter plate transfer");
         }
-        twoDBarcodedTubeDao.flush();
+        barcodedTubeDao.flush();
     }
 
     @Test(enabled = false)
     public void fixupGplim2449() {
         // SM-4VFD1 is in the Pico bucket twice: 0150466237, 0156371090
-        TwoDBarcodedTube oldTube = twoDBarcodedTubeDao.findByBarcode("0156371090");
-        twoDBarcodedTubeDao.remove(oldTube);
+        BarcodedTube oldTube = barcodedTubeDao.findByBarcode("0156371090");
+        barcodedTubeDao.remove(oldTube);
     }
 }

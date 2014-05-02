@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -96,11 +96,11 @@ public class BatchToJiraTest extends Arquillian {
         String tube1Label = "Starter01";
         String tube2Label = "Rework01";
 
-        LabVessel tube1 = new TwoDBarcodedTube(tube1Label);
+        LabVessel tube1 = new BarcodedTube(tube1Label);
         tube1.addSample(new MercurySample("SM-01"));
         startingVessels.add(tube1);
         Set<LabVessel> reworkVessels = new HashSet<>();
-        LabVessel tube2 = new TwoDBarcodedTube(tube2Label);
+        LabVessel tube2 = new BarcodedTube(tube2Label);
         tube2.addSample(new MercurySample("SM-02"));
         labVesselDao.persistAll(Arrays.asList(tube1, tube2));
 

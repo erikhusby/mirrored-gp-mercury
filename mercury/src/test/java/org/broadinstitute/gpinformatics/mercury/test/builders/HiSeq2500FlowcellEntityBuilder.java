@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
@@ -64,12 +64,12 @@ public class HiSeq2500FlowcellEntityBuilder {
     }
 
     public HiSeq2500FlowcellEntityBuilder invoke() {
-        TwoDBarcodedTube denatureTube =
+        BarcodedTube denatureTube =
                 TestUtils.getFirst(denatureRack.getContainerRole().getContainedVessels());
         Assert.assertNotNull(denatureTube);
         List<String> denatureTubeBarcodes = new ArrayList<>();
         for (VesselPosition vesselPosition : denatureRack.getRackType().getVesselGeometry().getVesselPositions()) {
-            TwoDBarcodedTube vesselAtPosition = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
+            BarcodedTube vesselAtPosition = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
             if (vesselAtPosition != null) {
                 denatureTubeBarcodes.add(vesselAtPosition.getLabel());
             }
@@ -111,7 +111,7 @@ public class HiSeq2500FlowcellEntityBuilder {
 
             // DilutionToFlowcellTransfer
             LabEventTest.validateWorkflow("DilutionToFlowcellTransfer", dilutionRack);
-            TwoDBarcodedTube dilutionTube =
+            BarcodedTube dilutionTube =
                     TestUtils.getFirst(dilutionRack.getContainerRole().getContainedVessels());
             Assert.assertNotNull(dilutionTube);
 
@@ -141,7 +141,7 @@ public class HiSeq2500FlowcellEntityBuilder {
                     (IlluminaFlowcell) TestUtils.getFirst(flowcellTransferEntity.getTargetLabVessels());
             break;
         case STRIPTUBE_TO_FLOWCELL:
-            Map<String, TwoDBarcodedTube> mapBarcodeToDenatureTube = new HashMap<>();
+            Map<String, BarcodedTube> mapBarcodeToDenatureTube = new HashMap<>();
 
             LabEventTest.validateWorkflow("StripTubeBTransfer", denatureRack);
 

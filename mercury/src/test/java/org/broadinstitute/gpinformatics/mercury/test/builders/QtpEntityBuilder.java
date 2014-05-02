@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
@@ -32,7 +32,7 @@ public class QtpEntityBuilder {
     private final List<TubeFormation> normCatchRacks;
     private final List<String> normCatchRackBarcodes;
     private final List<List<String>> listLcsetListNormCatchBarcodes;
-    private final Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes;
+    private final Map<String, BarcodedTube> mapBarcodeToNormCatchTubes;
     private String testPrefix;
 
     private TubeFormation denatureRack;
@@ -44,7 +44,7 @@ public class QtpEntityBuilder {
             List<TubeFormation> normCatchRacks,
             List<String> normCatchRackBarcodes,
             List<List<String>> listLcsetListNormCatchBarcodes,
-            Map<String, TwoDBarcodedTube> mapBarcodeToNormCatchTubes,
+            Map<String, BarcodedTube> mapBarcodeToNormCatchTubes,
             String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -68,7 +68,7 @@ public class QtpEntityBuilder {
         String normalizationRackBarcode = qtpJaxbBuilder.getNormalizationRackBarcode();
         PlateCherryPickEvent normalizationJaxb = qtpJaxbBuilder.getNormalizationJaxb();
 
-        List<TwoDBarcodedTube> poolTubes = new ArrayList<>();
+        List<BarcodedTube> poolTubes = new ArrayList<>();
         List<TubeFormation> poolingRacks = new ArrayList<>();
         if (doPoolingTransfer) {
             for (TubeFormation normCatchRack : normCatchRacks) {
@@ -92,7 +92,7 @@ public class QtpEntityBuilder {
             for (TubeFormation normCatchRack : normCatchRacks) {
                 for (VesselPosition vesselPosition : normCatchRack.getRacksOfTubes().iterator().next().getRackType()
                         .getVesselGeometry().getVesselPositions()) {
-                    TwoDBarcodedTube vesselAtPosition =
+                    BarcodedTube vesselAtPosition =
                             normCatchRack.getContainerRole().getVesselAtPosition(vesselPosition);
                     if (vesselAtPosition != null) {
                         poolTubes.add(vesselAtPosition);
@@ -105,7 +105,7 @@ public class QtpEntityBuilder {
         // Pre-EcoTransfer/DenatureTransfer rearray
         TubeFormation rearrayedPoolingRack;
         if (poolTubes.size() > 1) {
-            Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+            Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
             for (int j = 0; j < poolTubes.size(); j++) {
                 mapPositionToTube.put(VesselPosition.getByName(bettaLimsMessageTestFactory.buildWellName(j + 1,
                         BettaLimsMessageTestFactory.WellNameType.SHORT)),
@@ -132,8 +132,8 @@ public class QtpEntityBuilder {
         LabEventTest.validateWorkflow(ecoViia7Step, rearrayedPoolingRack);
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : rearrayedPoolingRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : rearrayedPoolingRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent ecoViia7TransferEventEntity = labEventFactory.buildFromBettaLims(ecoViia7Event, mapBarcodeToVessel);
         labEventHandler.processEvent(ecoViia7TransferEventEntity);
@@ -146,7 +146,7 @@ public class QtpEntityBuilder {
         LabEventTest.validateWorkflow("NormalizationTransfer", rearrayedPoolingRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(rearrayedPoolingRack.getLabel(), rearrayedPoolingRack);
-        for (TwoDBarcodedTube poolTube : poolTubes) {
+        for (BarcodedTube poolTube : poolTubes) {
             mapBarcodeToVessel.put(poolTube.getLabel(), poolTube);
         }
         LabEvent normalizationEntity = labEventFactory.buildFromBettaLims(normalizationJaxb, mapBarcodeToVessel);
@@ -167,8 +167,8 @@ public class QtpEntityBuilder {
         LabEventTest.validateWorkflow("DenatureTransfer", rearrayedPoolingRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(normalizationRack.getLabel(), normalizationRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : normalizationRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : normalizationRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         mapBarcodeToVessel.put(normalizationRackBarcode, normalizationRack.getRacksOfTubes().iterator().next());
 

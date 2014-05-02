@@ -25,7 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -172,7 +172,7 @@ public class BucketEjbDbFreeTest {
             bspDto.addPlastic(makeTubeBarcode(rackPosition));
             bspDtoMap.put(pdoSample.getName(), bspDto);
 
-            LabVessel labVessel = new TwoDBarcodedTube(makeTubeBarcode(rackPosition));
+            LabVessel labVessel = new BarcodedTube(makeTubeBarcode(rackPosition));
             labVessel.addSample(new MercurySample(pdoSample.getName(), bspDto));
             labVessels.add(labVessel);
 

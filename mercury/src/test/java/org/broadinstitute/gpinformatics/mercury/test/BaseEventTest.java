@@ -50,7 +50,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -189,12 +189,12 @@ public class BaseEventTest {
      *
      * @return Returns a map of String barcodes to their tube objects.
      */
-    public Map<String, TwoDBarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+    public Map<String, BarcodedTube> createInitialRack(ProductOrder productOrder, String tubeBarcodePrefix) {
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         int rackPosition = 1;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = tubeBarcodePrefix + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(poSample.getName()));
             mapBarcodeToTube.put(barcode, bspAliquot);
             Map<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
@@ -220,11 +220,11 @@ public class BaseEventTest {
      *
      * @return Returns a bucket populated with tubes.
      */
-    protected Bucket createAndPopulateBucket(Map<String, TwoDBarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
+    protected Bucket createAndPopulateBucket(Map<String, BarcodedTube> mapBarcodeToTube, ProductOrder productOrder,
                                              String bucketName) {
         Bucket workingBucket = new Bucket(bucketName);
 
-        for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
             workingBucket.addEntry(productOrder, tube, BucketEntry.BucketEntryType.PDO_ENTRY);
         }
         return workingBucket;
@@ -244,7 +244,7 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public Bucket bucketBatchAndDrain(Map<String, TwoDBarcodedTube> mapBarcodeToTube, final ProductOrder productOrder,
+    public Bucket bucketBatchAndDrain(Map<String, BarcodedTube> mapBarcodeToTube, final ProductOrder productOrder,
                                       LabBatch workflowBatch, String lcsetSuffix) {
         Bucket workingBucket = createAndPopulateBucket(mapBarcodeToTube, productOrder, "Pico/Plating Bucket");
 
@@ -297,7 +297,7 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+    public PicoPlatingEntityBuilder runPicoPlatingProcess(Map<String, BarcodedTube> mapBarcodeToTube,
                                                           String rackBarcodeSuffix, String barcodeSuffix,
                                                           boolean archiveBucketEntries) {
         String rackBarcode = "REXEX" + rackBarcodeSuffix;
@@ -318,7 +318,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public ExomeExpressShearingEntityBuilder runExomeExpressShearingProcess(
-            Map<String, TwoDBarcodedTube> normBarcodeToTubeMap,
+            Map<String, BarcodedTube> normBarcodeToTubeMap,
             TubeFormation normTubeFormation,
             String normBarcode, String barcodeSuffix) {
 
@@ -335,7 +335,7 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public PreFlightEntityBuilder runPreflightProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+    public PreFlightEntityBuilder runPreflightProcess(Map<String, BarcodedTube> mapBarcodeToTube,
                                                       String barcodeSuffix) {
         return new PreFlightEntityBuilder(bettaLimsMessageTestFactory,
                                           labEventFactory, getLabEventHandler(),
@@ -352,7 +352,7 @@ public class BaseEventTest {
      *
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
-    public ShearingEntityBuilder runShearingProcess(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+    public ShearingEntityBuilder runShearingProcess(Map<String, BarcodedTube> mapBarcodeToTube,
                                                     TubeFormation tubeFormation,
                                                     String rackBarcode, String barcodeSuffix) {
 
@@ -428,7 +428,7 @@ public class BaseEventTest {
      * @return Returns the entity builder that contains the entities after this process has been invoked.
      */
     public QtpEntityBuilder runQtpProcess(TubeFormation rack, List<String> tubeBarcodes,
-                                          Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                          Map<String, BarcodedTube> mapBarcodeToTube,
                                           String barcodeSuffix) {
 
         return new QtpEntityBuilder(
@@ -507,7 +507,7 @@ public class BaseEventTest {
      *
      * @return destination tube formation
      */
-    public TubeFormation daughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+    public TubeFormation daughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
         return getDaughterTubeFormation(mapBarcodeToTube, daughterTubeBarcodes);
     }
@@ -521,8 +521,8 @@ public class BaseEventTest {
      *
      * @return destination tube formation
      */
-    public TubeFormation mismatchedDaughterPlateTransfer(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                         Map<String, TwoDBarcodedTube> mapBarcodeToTube2,
+    public TubeFormation mismatchedDaughterPlateTransfer(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                         Map<String, BarcodedTube> mapBarcodeToTube2,
                                                          List<Integer> wellsToReplace) {
         List<String> daughterTubeBarcodes = generateDaughterTubeBarcodes(mapBarcodeToTube);
         return getDaughterTubeFormationCherryPick(mapBarcodeToTube, mapBarcodeToTube2, daughterTubeBarcodes,
@@ -536,7 +536,7 @@ public class BaseEventTest {
      *
      * @return list of daughter tube barcodes
      */
-    private List<String> generateDaughterTubeBarcodes(Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+    private List<String> generateDaughterTubeBarcodes(Map<String, BarcodedTube> mapBarcodeToTube) {
         // Daughter plate transfer that doesn't include controls
         List<String> daughterTubeBarcodes = new ArrayList<>();
         for (int i = 0; i < mapBarcodeToTube.size(); i++) {
@@ -553,7 +553,7 @@ public class BaseEventTest {
      *
      * @return destination tube formation
      */
-    private TubeFormation getDaughterTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+    private TubeFormation getDaughterTubeFormation(Map<String, BarcodedTube> mapBarcodeToTube,
                                                    List<String> daughterTubeBarcodes) {
         PlateTransferEventType daughterPlateTransferJaxb =
                 bettaLimsMessageTestFactory.buildRackToRack("SamplesDaughterPlateCreation", "MotherRack",
@@ -565,14 +565,14 @@ public class BaseEventTest {
         TubeFormation daughterPlate =
                 (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
 
-        Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
-                                         twoDBarcodedTube);
+        Map<VesselPosition, BarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (BarcodedTube barcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(barcodedTube),
+                                         barcodedTube);
         }
 
         // Controls are added in a re-array
-        TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
+        BarcodedTube posControlTube = new BarcodedTube("C1");
         BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
@@ -581,7 +581,7 @@ public class BaseEventTest {
         mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
-        TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
+        BarcodedTube negControlTube = new BarcodedTube("C2");
         BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
@@ -603,8 +603,8 @@ public class BaseEventTest {
      *
      * @return destination tube formation
      */
-    private TubeFormation getDaughterTubeFormationCherryPick(Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-                                                             Map<String, TwoDBarcodedTube> mapBarcodeToTube2,
+    private TubeFormation getDaughterTubeFormationCherryPick(Map<String, BarcodedTube> mapBarcodeToTube,
+                                                             Map<String, BarcodedTube> mapBarcodeToTube2,
                                                              List<String> daughterTubeBarcodes,
                                                              List<Integer> wellsToReplace) {
 
@@ -653,14 +653,14 @@ public class BaseEventTest {
         TubeFormation daughterPlate =
                 (TubeFormation) daughterPlateTransferEntity.getTargetLabVessels().iterator().next();
 
-        Map<VesselPosition, TwoDBarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(twoDBarcodedTube),
-                                         twoDBarcodedTube);
+        Map<VesselPosition, BarcodedTube> mapBarcodeToDaughterTube = new EnumMap<>(VesselPosition.class);
+        for (BarcodedTube barcodedTube : daughterPlate.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(daughterPlate.getContainerRole().getPositionOfVessel(barcodedTube),
+                                         barcodedTube);
         }
 
         // Controls are added in a re-array
-        TwoDBarcodedTube posControlTube = new TwoDBarcodedTube("C1");
+        BarcodedTube posControlTube = new BarcodedTube("C1");
         BSPSampleDTO bspSampleDtoPos = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, POSITIVE_CONTROL);
@@ -669,7 +669,7 @@ public class BaseEventTest {
         mapSampleNameToDto.put(POSITIVE_CONTROL, bspSampleDtoPos);
         mapBarcodeToDaughterTube.put(VesselPosition.H11, posControlTube);
 
-        TwoDBarcodedTube negControlTube = new TwoDBarcodedTube("C2");
+        BarcodedTube negControlTube = new BarcodedTube("C2");
         BSPSampleDTO bspSampleDtoNeg = new BSPSampleDTO(
                 new EnumMap<BSPSampleSearchColumn, String>(BSPSampleSearchColumn.class) {{
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, NEGATIVE_CONTROL);
@@ -707,7 +707,7 @@ public class BaseEventTest {
                 alternativeIds.add(TransferVisualizer.AlternativeId.SAMPLE_ID);
                 alternativeIds.add(TransferVisualizer.AlternativeId.LCSET);
             }
-            transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, alternativeIds);
+            transferEntityGrapher.startWithTube((BarcodedTube) labVessel, graph, alternativeIds);
 
             TransferVisualizerClient transferVisualizerClient = new TransferVisualizerClient(
                     labVessel.getLabel(), alternativeIds);

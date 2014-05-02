@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -88,7 +88,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                         //lookup the vessel... if it doesn't exist create one
                         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
                         if (vessel == null) {
-                            vessel = new TwoDBarcodedTube(tubeBarcode);
+                            vessel = new BarcodedTube(tubeBarcode);
                         }
                         vessel.addSample(mercurySample);
                         // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {

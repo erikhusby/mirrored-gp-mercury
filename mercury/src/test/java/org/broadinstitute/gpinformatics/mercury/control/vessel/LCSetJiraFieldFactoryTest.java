@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -49,7 +49,7 @@ public class LCSetJiraFieldFactoryTest {
 
     private List<String> pdoNames;
     private Workflow workflow;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private Map<String, BarcodedTube> mapBarcodeToTube;
     private String rpSynopsis;
     private Map<String, CustomFieldDefinition> jiraFieldDefs;
     private ProductOrder testProductOrder;
@@ -96,7 +96,7 @@ public class LCSetJiraFieldFactoryTest {
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             bspAliquot.addBucketEntry(new BucketEntry(bspAliquot,
                                                       sampleIndex == 1 ? singleSampleOrder : testProductOrder,
@@ -121,8 +121,8 @@ public class LCSetJiraFieldFactoryTest {
         testBatch.setBatchDescription("Batch Test Description");
 
         Set<LabVessel> reworks = new HashSet<>();
-        reworks.add(new TwoDBarcodedTube("Rework1"));
-        reworks.add(new TwoDBarcodedTube("Rework2"));
+        reworks.add(new BarcodedTube("Rework1"));
+        reworks.add(new BarcodedTube("Rework2"));
         testBatch.addReworks(reworks);
 
         int numSamples = testBatch.getStartingBatchLabVessels().size();
@@ -187,9 +187,9 @@ public class LCSetJiraFieldFactoryTest {
 
         Set<LabVessel> newTubes = new HashSet<>();
         Set<LabVessel> reworks = new HashSet<>();
-        LabVessel tube1 = new TwoDBarcodedTube("000012");
+        LabVessel tube1 = new BarcodedTube("000012");
         tube1.addSample(new MercurySample("SM-1"));
-        LabVessel tube2 = new TwoDBarcodedTube("000033");
+        LabVessel tube2 = new BarcodedTube("000033");
         tube2.addSample(new MercurySample("SM-2"));
         newTubes.add(tube1);
         reworks.add(tube2);
@@ -208,7 +208,7 @@ public class LCSetJiraFieldFactoryTest {
         String sampleKey = "SM-123";
 
         Set<LabVessel> newTubes = new HashSet<>();
-        LabVessel tube = new TwoDBarcodedTube("000012");
+        LabVessel tube = new BarcodedTube("000012");
         tube.addSample(new MercurySample(sampleKey));
         newTubes.add(tube);
 

@@ -29,7 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.builders.SamplesPicoJaxbBuilder;
@@ -63,7 +63,7 @@ public class SamplesPicoEndToEndTest {
             tubeBeans.add(new TubeBean(barcode, null));
         }
         String batchId = "BP-1";
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         Map<MercurySample, MercurySample> mapSampleToSample = new LinkedHashMap<>();
         LabBatch labBatch = labBatchResource.buildLabBatch(new LabBatchBean(batchId, "HybSel", tubeBeans),
                                                            mapBarcodeToTube, mapSampleToSample/*, null*/);
@@ -146,10 +146,10 @@ public class SamplesPicoEndToEndTest {
 
         private final SamplesPicoJaxbBuilder samplesPicoJaxbBuilder;
         private final LabBatch labBatch;
-        private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private final Map<String, BarcodedTube> mapBarcodeToTube;
 
         public SamplesPicoEntityBuilder(SamplesPicoJaxbBuilder samplesPicoJaxbBuilder, LabBatch labBatch,
-                                        Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                        Map<String, BarcodedTube> mapBarcodeToTube) {
             this.samplesPicoJaxbBuilder = samplesPicoJaxbBuilder;
             this.labBatch = labBatch;
             this.mapBarcodeToTube = mapBarcodeToTube;

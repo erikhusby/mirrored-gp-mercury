@@ -10,13 +10,13 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
@@ -48,7 +48,7 @@ public class LabBatchEJBTest extends ContainerTest {
     private UserTransaction utx;
 
     @Inject
-    private TwoDBarcodedTubeDao tubeDao;
+    private BarcodedTubeDao tubeDao;
 
     @Inject
     private LabBatchDao labBatchDao;
@@ -62,7 +62,8 @@ public class LabBatchEJBTest extends ContainerTest {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
-    private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+    private LinkedHashMap<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+
     private ArrayList<String> pdoNames;
     private String scottmat;
     private Bucket bucket;
@@ -96,7 +97,7 @@ public class LabBatchEJBTest extends ContainerTest {
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
             String bspStock = vesselSampleList.get(sampleIndex - 1);
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             tubeDao.persist(bspAliquot);
             mapBarcodeToTube.put(barcode, bspAliquot);
@@ -206,7 +207,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
-        for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
     }
@@ -230,7 +231,7 @@ public class LabBatchEJBTest extends ContainerTest {
 
         Assert.assertEquals(expectedTicketId, savedBatch.getJiraTicket().getTicketName());
         Assert.assertEquals(6, savedBatch.getStartingBatchLabVessels().size());
-        for (TwoDBarcodedTube tube : mapBarcodeToTube.values()) {
+        for (BarcodedTube tube : mapBarcodeToTube.values()) {
             Assert.assertTrue(bucket.findEntry(tube) == null);
         }
     }

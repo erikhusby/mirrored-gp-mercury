@@ -17,7 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransfer
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -42,7 +42,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @Validate(required = true, on = SAVE_ACTION)
     public String denatureTubeBarcode;
-    private TwoDBarcodedTube denatureTube;
+    private BarcodedTube denatureTube;
     protected String workflowName;
 
     public String getReagentBlockBarcode() {
@@ -76,7 +76,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
 
     @ValidationMethod(on = SAVE_ACTION)
     public void validateData() {
-        setDenatureTube((TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode));
+        setDenatureTube((BarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode));
         if (getDenatureTube() == null) {
             addValidationError("denatureTubeBarcode", "Could not find denature tube {0}", denatureTubeBarcode);
         }
@@ -89,7 +89,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
         return denatureTube;
     }
 
-    public void setDenatureTube(TwoDBarcodedTube denatureTube) {
+    public void setDenatureTube(BarcodedTube denatureTube) {
         this.denatureTube = denatureTube;
     }
 
@@ -112,7 +112,7 @@ public class LinkDenatureTubeToReagentBlockActionBean extends CoreActionBean {
     }
 
     private void loadDenatureTubeAndWorkflow() {
-        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
+        denatureTube = (BarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube != null) {
             for (SampleInstance sample : denatureTube.getAllSamplesOfType(LabVessel.SampleType.WITH_PDO)) {
                 String productOrderKey = sample.getProductOrderKey();
