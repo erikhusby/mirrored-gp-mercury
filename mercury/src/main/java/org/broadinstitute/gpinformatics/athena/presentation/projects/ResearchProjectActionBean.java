@@ -141,12 +141,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private Long regulatoryInfoId;
 
-    @Validate(maxvalue = 255, required = true, label = "Protocol Title", on = ADD_NEW_REGULATORY_INFO_ACTION)
     private String regulatoryInfoIdentifier;
 
     private RegulatoryInfo.Type regulatoryInfoType;
 
-    @Validate(maxvalue = 255, required = true, label = "Protocol Alias", on = ADD_NEW_REGULATORY_INFO_ACTION)
     private String regulatoryInfoAlias;
 
     /**
