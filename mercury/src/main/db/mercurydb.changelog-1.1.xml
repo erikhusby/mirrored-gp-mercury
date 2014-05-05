@@ -603,4 +603,15 @@
         </sql>
     </changeSet>
 
+    <changeSet author="epolk" id="GPLIM-2683-4a">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+	        SELECT distinct 1 FROM lab_vessel_aud WHERE dtype = 'TwoDBarcodedTube';
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE lab_vessel_aud SET dtype = 'BarcodedTube', tube_type = 'MatrixTube' WHERE dtype = 'TwoDBarcodedTube';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
