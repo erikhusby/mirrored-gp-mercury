@@ -32,7 +32,7 @@ import java.util.List;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BucketDaoTest extends ContainerTest {
 
-    public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket TEST";
+    public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket";
     @Inject
     BucketDao bucketDao;
 
@@ -45,6 +45,8 @@ public class BucketDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
     private Bucket testBucket;
+    private String tempBucketSuffix;
+    private String extractionTestBucketName;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -55,15 +57,16 @@ public class BucketDaoTest extends ContainerTest {
 
         utx.begin();
 
-        WorkflowBucketDef bucketDef = new WorkflowBucketDef(EXTRACTION_BUCKET_NAME);
+        tempBucketSuffix = " Test temp Bucket";
+        extractionTestBucketName = EXTRACTION_BUCKET_NAME + tempBucketSuffix;
+        WorkflowBucketDef bucketDef = new WorkflowBucketDef(extractionTestBucketName);
 
-        testBucket = bucketDao.findByName(BucketDaoTest.EXTRACTION_BUCKET_NAME);
+        testBucket = bucketDao.findByName(extractionTestBucketName);
         if (testBucket == null) {
 
             testBucket = new Bucket(bucketDef);
             bucketDao.persist(testBucket);
             bucketDao.flush();
-//            bucketDao.clear();
         }
 
     }
@@ -83,7 +86,7 @@ public class BucketDaoTest extends ContainerTest {
 
         Assert.assertNotNull(testBucket.getBucketId(), "Bucket not Persisted to the Database");
 
-        Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        Bucket retrievedBucket = bucketDao.findByName(extractionTestBucketName);
 
         Assert.assertNotNull(retrievedBucket);
 
@@ -92,7 +95,7 @@ public class BucketDaoTest extends ContainerTest {
     @Test
     public void testUpdateBucket() {
 
-        Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        Bucket retrievedBucket = bucketDao.findByName(extractionTestBucketName);
         ProductOrder testOrder = ProductOrderTestFactory.createDummyProductOrder();
         testOrder.setTitle(testOrder.getTitle() + ((new Date()).getTime()));
         testOrder.updateAddOnProducts(Collections.<Product>emptyList());
@@ -106,34 +109,32 @@ public class BucketDaoTest extends ContainerTest {
         bucketDao.flush();
         bucketDao.clear();
 
-        retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        retrievedBucket = bucketDao.findByName(extractionTestBucketName);
 
         Assert.assertNotNull(retrievedBucket);
 
-        Assert.assertEquals(1, retrievedBucket.getBucketEntries().size());
+        Assert.assertEquals(retrievedBucket.getBucketEntries().size(),1);
 
         List<BucketEntry> entries = new LinkedList<>(retrievedBucket.getBucketEntries());
         Collections.sort(entries, BucketEntry.byDate);
 
-//        Assert.assertNotNull(entries.get(0).getLabVessel().getLabVesselId());
-
         Assert.assertNotNull(entries.get(0).getBucket());
 
-        Assert.assertEquals(retrievedBucket, entries.get(0).getBucket());
+        Assert.assertEquals(entries.get(0).getBucket(),retrievedBucket);
 
-        Assert.assertEquals(1, entries.get(0).getLabVessel().getBucketEntries().size());
+        Assert.assertEquals( entries.get(0).getLabVessel().getBucketEntries().size(),1);
     }
 
     @Test
     public void testRemoveBucket() {
 
-        Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        Bucket retrievedBucket = bucketDao.findByName(extractionTestBucketName);
 
         bucketDao.remove(retrievedBucket);
         bucketDao.flush();
         bucketDao.clear();
 
-        retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
+        retrievedBucket = bucketDao.findByName(extractionTestBucketName);
 
         Assert.assertNull(retrievedBucket);
 
