@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -101,7 +101,7 @@ public class BucketDaoTest extends ContainerTest {
 
         testOrder.setJiraTicketKey(ProductOrderTest.PDO_JIRA_KEY);
 
-        retrievedBucket.addEntry(testOrder, new TwoDBarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
+        retrievedBucket.addEntry(testOrder, new BarcodedTube("SM-1321"), BucketEntry.BucketEntryType.PDO_ENTRY);
 
         bucketDao.flush();
         bucketDao.clear();

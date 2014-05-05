@@ -36,7 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -156,7 +156,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         Map<String, String> barcodesByRackPositions = new HashMap<>();
 
         // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             shearingTubeBarcodes.add(barcode);
@@ -175,7 +175,7 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
             barcodesByRackPositions.put(row + column, barcode);
 
             productOrderSamples.add(new ProductOrderSample(bspStock));
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -242,8 +242,8 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         TubeFormation normTubeFormation = picoPlatingEntityBuilder.getNormTubeFormation();
         mapBarcodeToVessel.put(normTubeFormation.getLabel(), normTubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : normTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : normTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         LabEvent shearEvent = labEventFactory.buildFromBettaLims(plateToShearXfer, mapBarcodeToVessel);
@@ -339,16 +339,16 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
         // MiSeq reagent block transfer message
         String miSeqReagentKitBarcode = "MiSeqReagentKit" + new Date().getTime();
 
-        Map<String, TwoDBarcodedTube> tubeMap = new HashMap<>();
+        Map<String, BarcodedTube> tubeMap = new HashMap<>();
         final String denatureBarcode = qtpEntityBuilder.getDenatureRack().getLabel();
-        tubeMap.put(denatureBarcode, new TwoDBarcodedTube(denatureBarcode));
+        tubeMap.put(denatureBarcode, new BarcodedTube(denatureBarcode));
         Map<String, String> tubePositionMap = new HashMap<>();
         tubePositionMap.put(denatureBarcode, "A01");
         TubeFormation denatureRack = buildTubeFormation(tubeMap, denatureBarcode, tubePositionMap);
 
         Map<String, VesselPosition> denatureRackMap = new HashMap<>();
         for (VesselPosition vesselPosition : denatureRack.getVesselGeometry().getVesselPositions()) {
-            TwoDBarcodedTube tube = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
+            BarcodedTube tube = denatureRack.getContainerRole().getVesselAtPosition(vesselPosition);
             if (tube != null) {
                 denatureRackMap.put(denatureBarcode, vesselPosition);
             }
@@ -389,18 +389,18 @@ public class ExomeExpressV2EndToEndTest extends BaseEventTest {
      *
      * @return entity
      */
-    private TubeFormation buildTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, String barcode,
+    private TubeFormation buildTubeFormation(Map<String, BarcodedTube> mapBarcodeToTubes, String barcode,
                                              Map<String, String> barcodeByPositionMap) {
 
-        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<>();
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
 
         for (Map.Entry<String, String> tubeEntry : barcodeByPositionMap.entrySet()) {
-            TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get(tubeEntry.getValue());
-            if (twoDBarcodedTube == null) {
-                twoDBarcodedTube = new TwoDBarcodedTube(tubeEntry.getValue());
-                mapBarcodeToTubes.put(tubeEntry.getValue(), twoDBarcodedTube);
+            BarcodedTube barcodedTube = mapBarcodeToTubes.get(tubeEntry.getValue());
+            if (barcodedTube == null) {
+                barcodedTube = new BarcodedTube(tubeEntry.getValue());
+                mapBarcodeToTubes.put(tubeEntry.getValue(), barcodedTube);
             }
-            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), twoDBarcodedTube);
+            mapPositionToTube.put(VesselPosition.getByName(tubeEntry.getValue()), barcodedTube);
         }
         TubeFormation formation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 

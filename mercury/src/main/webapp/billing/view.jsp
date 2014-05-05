@@ -26,6 +26,14 @@
                         {"bSortable": false}]                  // Billed Message
                 })
             });
+
+            $j(window).load(function() {
+                var idToHighlight = '#'.concat(${actionBean.workItemIdToHighlight});
+                // if the url contains a quote server work item, highlight the corresponding row
+                $j(idToHighlight).attr('class','highlighted');
+                $('html, body').scrollTop($(idToHighlight).offset().top);
+            });
+
         </script>
     </stripes:layout-component>
 
@@ -103,7 +111,7 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
-                <tr>
+                <tr id="${actionBean.getWorkItemId(item)}">
                     <td>
                         <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
                             ${item.quoteId}

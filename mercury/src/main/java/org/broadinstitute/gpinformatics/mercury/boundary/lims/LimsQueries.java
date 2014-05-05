@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -38,14 +38,14 @@ public class LimsQueries {
 
     private StaticPlateDao staticPlateDao;
     private LabVesselDao labVesselDao;
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     public LimsQueries(StaticPlateDao staticPlateDao, LabVesselDao labVesselDao,
-                       TwoDBarcodedTubeDao twoDBarcodedTubeDao) {
+                       BarcodedTubeDao barcodedTubeDao) {
         this.staticPlateDao = staticPlateDao;
         this.labVesselDao = labVesselDao;
-        this.twoDBarcodedTubeDao = twoDBarcodedTubeDao;
+        this.barcodedTubeDao = barcodedTubeDao;
     }
 
     /**
@@ -101,9 +101,9 @@ public class LimsQueries {
      * @return true if all tube barcodes are in the database
      */
     public boolean doesLimsRecognizeAllTubes(List<String> barcodes) {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(barcodes);
-        for (Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
-            if (stringTwoDBarcodedTubeEntry.getValue() == null) {
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(barcodes);
+        for (Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry : mapBarcodeToTube.entrySet()) {
+            if (stringBarcodedTubeEntry.getValue() == null) {
                 return false;
             }
         }
@@ -233,11 +233,11 @@ public class LimsQueries {
         if (OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
             TubeFormation tubeFormation = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(),
                     TubeFormation.class);
-            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : tubeFormation
+            for (Map.Entry<VesselPosition, BarcodedTube> vesselPositionBarcodedTubeEntry : tubeFormation
                     .getContainerRole().getMapPositionToVessel().entrySet()) {
                 WellAndSourceTubeType wellAndSourceTubeType = new WellAndSourceTubeType();
-                wellAndSourceTubeType.setTubeBarcode(vesselPositionTwoDBarcodedTubeEntry.getValue().getLabel());
-                wellAndSourceTubeType.setWellName(vesselPositionTwoDBarcodedTubeEntry.getKey().name());
+                wellAndSourceTubeType.setTubeBarcode(vesselPositionBarcodedTubeEntry.getValue().getLabel());
+                wellAndSourceTubeType.setWellName(vesselPositionBarcodedTubeEntry.getKey().name());
                 wellAndSourceTubeTypes.add(wellAndSourceTubeType);
             }
         }

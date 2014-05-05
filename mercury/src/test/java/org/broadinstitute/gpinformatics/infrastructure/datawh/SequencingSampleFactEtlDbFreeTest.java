@@ -28,7 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -102,7 +102,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
     private SampleInstance sampleInstance = EasyMock.createMock(SampleInstance.class);
     private SampleInstance sampleInstance2 = EasyMock.createMock(SampleInstance.class);
-    private LabVessel denatureSource = EasyMock.createMock(TwoDBarcodedTube.class);
+    private LabVessel denatureSource = EasyMock.createMock(BarcodedTube.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, pdoDao, runCartridge, researchProject, pdo,
             sampleInstance, sampleInstance2, vesselContainer, denatureSource};
@@ -382,7 +382,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
         Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);

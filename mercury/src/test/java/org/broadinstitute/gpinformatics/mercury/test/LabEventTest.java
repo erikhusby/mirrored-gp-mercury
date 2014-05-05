@@ -65,7 +65,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
@@ -251,7 +251,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                              "A");
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
@@ -261,9 +261,9 @@ public class LabEventTest extends BaseEventTest {
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         PreFlightEntityBuilder preFlightEntityBuilder = runPreflightProcess(mapBarcodeToDaughterTube,
@@ -342,7 +342,7 @@ public class LabEventTest extends BaseEventTest {
         }
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
+        BarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
         startingTube.evaluateCriteria(transferTraverserCriteria,
                                       TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
@@ -397,7 +397,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                              "A");
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
@@ -408,9 +408,9 @@ public class LabEventTest extends BaseEventTest {
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
@@ -497,9 +497,9 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                                                                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
 
@@ -555,7 +555,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                              "A");
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
@@ -635,9 +635,9 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertNull(zimsIlluminaRun.getLanesSequenced());
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                                                                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
 
@@ -692,7 +692,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                                   "A");
             Date runDate = new Date();
 
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
+            Map<String, BarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
             LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                                                    new HashSet<LabVessel>(mapBarcodeToTube1.values()),
                                                    LabBatch.LabBatchType.WORKFLOW);
@@ -711,8 +711,8 @@ public class LabEventTest extends BaseEventTest {
             ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(
                     NUM_POSITIONS_IN_RACK - 1, "B");
 
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
-            TwoDBarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
+            Map<String, BarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
+            BarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                                                    new HashSet<LabVessel>(mapBarcodeToTube2.values()),
@@ -820,7 +820,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                                   "A");
             Date runDate = new Date();
 
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
+            Map<String, BarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1_");
             LabBatch workflowBatch1 = new LabBatch("Exome Express Pico Batch 1",
                                                    new HashSet<LabVessel>(mapBarcodeToTube1.values()),
                                                    LabBatch.LabBatchType.WORKFLOW);
@@ -842,7 +842,7 @@ public class LabEventTest extends BaseEventTest {
 
             ProductOrder productOrder2 = ProductOrderTestFactory.buildHybridSelectionProductOrder(95, "B");
 
-            Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
+            Map<String, BarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
             LabBatch workflowBatch2 = new LabBatch("Exome Express Pico Batch 2",
                                                    new HashSet<LabVessel>(mapBarcodeToTube2.values()),
                                                    LabBatch.LabBatchType.WORKFLOW);
@@ -859,15 +859,15 @@ public class LabEventTest extends BaseEventTest {
                                                  LabBatch.LabBatchType.SAMPLES_IMPORT);
 
             // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
-            final TwoDBarcodedTube reworkTube =
+            final BarcodedTube reworkTube =
                     picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
 //            workflowBatch2.addLabVessel(reworkTube);
-            Map<String, TwoDBarcodedTube> mapBarcodeToTubesPlusRework =
+            Map<String, BarcodedTube> mapBarcodeToTubesPlusRework =
                     new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());
             mapBarcodeToTubesPlusRework.put(reworkTube.getLabel(), reworkTube);
 
             Bucket shearingBucket = createAndPopulateBucket(
-                    new HashMap<String, TwoDBarcodedTube>() {{
+                    new HashMap<String, BarcodedTube>() {{
                         put(reworkTube.getLabel(), reworkTube);
                     }}, productOrder2, "Shearing");
             workflowBatch2.addLabVessel(reworkTube);
@@ -970,7 +970,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                              "A");
         Date runDate = new Date();
         // todo jmt create bucket, then batch, rather than rack then batch then bucket
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
@@ -981,9 +981,9 @@ public class LabEventTest extends BaseEventTest {
 
         TubeFormation daughterTubeFormation = daughterPlateTransfer(mapBarcodeToTube);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
@@ -1073,9 +1073,9 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(zimsIlluminaRun.getLanesSequenced(), "3,6");
         Assert.assertEquals(zimsIlluminaRun.getSystemOfRecord(), SystemRouter.System.MERCURY);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                                                                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
 
@@ -1165,7 +1165,7 @@ public class LabEventTest extends BaseEventTest {
                 ProductOrderTestFactory.buildWholeGenomeProductOrder(NUM_POSITIONS_IN_RACK);
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
@@ -1206,9 +1206,9 @@ public class LabEventTest extends BaseEventTest {
         Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
                             "Wrong number of reagents");
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                                                                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getAllEventNamesPerHop();
         String[] expectedEventNames = {
@@ -1239,12 +1239,12 @@ public class LabEventTest extends BaseEventTest {
 
     @Test(groups = TestGroups.DATABASE_FREE)
     public void testPlateCherryPick() {
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -1290,12 +1290,12 @@ public class LabEventTest extends BaseEventTest {
         Date runDate = new Date();
 
         // Create 2 racks of tubes
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube2 = new LinkedHashMap<>();
         int rackPosition = 0;
         for (ProductOrderSample poSample : productOrder.getSamples()) {
             String barcode = "R" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(poSample.getName()));
 
             if (rackPosition >= 94) {
@@ -1322,13 +1322,13 @@ public class LabEventTest extends BaseEventTest {
 
         Set<String> keys = new LinkedHashSet<>();
         keys.addAll(mapBarcodeToTube.keySet());
-        Set<Map.Entry<String, TwoDBarcodedTube>> entries = mapBarcodeToTube2.entrySet();
+        Set<Map.Entry<String, BarcodedTube>> entries = mapBarcodeToTube2.entrySet();
         for (Integer well : wellsToReplace) {
             String key = keys.toArray(new String[keys.size()])[well];
             Map.Entry entry = entries.toArray(new Map.Entry[entries.size()])[well];
 
             mapBarcodeToTube.remove(key);
-            mapBarcodeToTube.put((String) entry.getKey(), (TwoDBarcodedTube) entry.getValue());
+            mapBarcodeToTube.put((String) entry.getKey(), (BarcodedTube) entry.getValue());
         }
 
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
@@ -1339,9 +1339,9 @@ public class LabEventTest extends BaseEventTest {
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
-        for (TwoDBarcodedTube twoDBarcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToDaughterTube.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        Map<String, BarcodedTube> mapBarcodeToDaughterTube = new HashMap<>();
+        for (BarcodedTube barcodedTube : daughterTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToDaughterTube.put(barcodedTube.getLabel(), barcodedTube);
         }
 
         // Now run the pico process to make sure that routing works.
@@ -1358,12 +1358,12 @@ public class LabEventTest extends BaseEventTest {
         expectedRouting = SystemRouter.System.SQUID;
 
         // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
         for (int rackPosition = 1; rackPosition <= SBSSection.P96COLS1_6BYROW.getWells().size(); rackPosition++) {
             String barcode = "R" + rackPosition;
 
             String bspStock = "SM-" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            BarcodedTube bspAliquot = new BarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
@@ -1442,7 +1442,7 @@ public class LabEventTest extends BaseEventTest {
         private final LabEventFactory labEventFactory;
         private final LabEventHandler labEventHandler;
         private final String testPrefix;
-        private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+        private final Map<String, BarcodedTube> mapBarcodeToTube;
         private final StaticPlate indexPlate;
 
         private String rackBarcode;
@@ -1455,7 +1455,7 @@ public class LabEventTest extends BaseEventTest {
 
         private FluidigmMessagesBuilder(String testPrefix, BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                         LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                        Map<String, TwoDBarcodedTube> mapBarcodeToTube, StaticPlate indexPlate) {
+                                        Map<String, BarcodedTube> mapBarcodeToTube, StaticPlate indexPlate) {
             this.testPrefix = testPrefix;
             this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
             this.labEventFactory = labEventFactory;
@@ -1687,8 +1687,8 @@ public class LabEventTest extends BaseEventTest {
         return indexPlates;
     }
 
-    public static TwoDBarcodedTube buildBaitTube(String tubeBarcode, ReagentDesign reagent) {
-        TwoDBarcodedTube baitTube = new TwoDBarcodedTube(tubeBarcode);
+    public static BarcodedTube buildBaitTube(String tubeBarcode, ReagentDesign reagent) {
+        BarcodedTube baitTube = new BarcodedTube(tubeBarcode);
         if (reagent == null) {
             reagent = new ReagentDesign("cancer_2000gene_shift170_undercovered",
                                         ReagentDesign.ReagentType.BAIT);

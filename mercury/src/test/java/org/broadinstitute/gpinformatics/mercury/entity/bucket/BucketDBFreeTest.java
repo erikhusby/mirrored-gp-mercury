@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.annotations.Test;
 
 /**
@@ -35,13 +35,13 @@ public class BucketDBFreeTest {
         pdo2.setJiraTicketKey("PDO-9");
         pdo3.setJiraTicketKey("PDO-10");
 
-        final String twoDBarcode1 = "SM-321";
-        final String twoDBarcode2 = "SM-322";
-        final String twoDBarcode3 = "SM-323";
-        final String twoDBarcode4 = "SM-324";
+        final String barcode1 = "SM-321";
+        final String barcode2 = "SM-322";
+        final String barcode3 = "SM-323";
+        final String barcode4 = "SM-324";
 
-        TwoDBarcodedTube tube1 = new TwoDBarcodedTube(twoDBarcode1);
-        TwoDBarcodedTube tube2 = new TwoDBarcodedTube(twoDBarcode2);
+        BarcodedTube tube1 = new BarcodedTube(barcode1);
+        BarcodedTube tube2 = new BarcodedTube(barcode2);
 
         BucketEntry testEntry1 = bucket.addEntry(pdo1, tube1, BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry1.getBucket());
@@ -51,12 +51,12 @@ public class BucketDBFreeTest {
         Assert.assertNotNull(testEntry2.getBucket());
         Assert.assertEquals(bucket, testEntry2.getBucket());
 
-        BucketEntry testEntry3 = bucket.addEntry(pdo2, new TwoDBarcodedTube(twoDBarcode3),
+        BucketEntry testEntry3 = bucket.addEntry(pdo2, new BarcodedTube(barcode3),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry3.getBucket());
         Assert.assertEquals(bucket, testEntry3.getBucket());
 
-        BucketEntry testEntry4 = bucket.addEntry(pdo3, new TwoDBarcodedTube(twoDBarcode4),
+        BucketEntry testEntry4 = bucket.addEntry(pdo3, new BarcodedTube(barcode4),
                 BucketEntry.BucketEntryType.PDO_ENTRY);
         Assert.assertNotNull(testEntry4.getBucket());
         Assert.assertEquals(bucket, testEntry4.getBucket());

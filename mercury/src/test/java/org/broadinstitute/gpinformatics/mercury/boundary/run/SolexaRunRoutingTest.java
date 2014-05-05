@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.test.BaseEventTest;
@@ -41,6 +41,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.HEAD;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -83,7 +84,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
@@ -117,10 +118,12 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
                                             Workflow.WHOLE_GENOME);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
-                                                                TransferTraverserCriteria.TraversalDirection.Descendants);
+
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
@@ -196,7 +199,7 @@ public class SolexaRunRoutingTest extends BaseEventTest {
         productOrder.getResearchProject().setJiraTicketKey("RP-123");
 
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
 
         LabBatch workflowBatch = new LabBatch("Whole Genome Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
@@ -260,10 +263,11 @@ public class SolexaRunRoutingTest extends BaseEventTest {
                                             ProductionFlowcellPath.STRIPTUBE_TO_FLOWCELL, "designation",
                                             Workflow.WHOLE_GENOME);
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         LabEventTest.ListTransfersFromStart transferTraverserCriteria = new LabEventTest.ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
-                                                                TransferTraverserCriteria.TraversalDirection.Descendants);
+        stringBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+
         @SuppressWarnings("UnusedDeclaration")
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 

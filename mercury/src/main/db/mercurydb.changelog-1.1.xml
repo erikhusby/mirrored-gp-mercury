@@ -570,4 +570,37 @@
                                  <!--referencedTableSchemaName="athena" />-->
     <!--</changeSet>-->
 
+    <changeSet author="epolk" id="GPLIM-2683-1a">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="tube_type" tableName="lab_vessel" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_vessel" schemaName="mercury">
+            <column name="tube_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-2683-2a">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="tube_type" tableName="lab_vessel_aud" schemaName="mercury" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_vessel_aud" schemaName="mercury">
+            <column name="tube_type" type="varchar2(255)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="epolk" id="GPLIM-2683-3c">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+	        SELECT distinct 1 FROM lab_vessel WHERE dtype = 'TwoDBarcodedTube';
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE lab_vessel SET dtype = 'BarcodedTube', tube_type = 'MatrixTube' WHERE dtype = 'TwoDBarcodedTube';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

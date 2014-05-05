@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabBatchCompositio
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -51,7 +51,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         int startingSampleSize = 15;
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(startingSampleSize);
-        Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
+        Map<String, BarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -76,7 +76,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 shearingEntityBuilder1.getShearingPlate(),
                 "1");
 
-        Map<String, TwoDBarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
+        Map<String, BarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
 
         LabBatch reworkBatch = new LabBatch("reworkBatch", new HashSet<LabVessel>(reworkRackMap.values()),
                                             LabBatch.LabBatchType.WORKFLOW);
@@ -117,10 +117,10 @@ public class ReworkDbFreeTest extends BaseEventTest {
 
         TubeFormation normTubeFormation = pplatingEntityBuilder2.getNormTubeFormation();
         TubeFormation reworkTubeFormation = LabEventTestFactory
-                .makeTubeFormation(normTubeFormation, (TwoDBarcodedTube) tube1, (TwoDBarcodedTube) tube2);
-        Map<String, TwoDBarcodedTube> reworkBarcodedTubeMap = new HashMap<>();
+                .makeTubeFormation(normTubeFormation, (BarcodedTube) tube1, (BarcodedTube) tube2);
+        Map<String, BarcodedTube> reworkBarcodedTubeMap = new HashMap<>();
 
-        for (TwoDBarcodedTube currTube : reworkTubeFormation.getContainerRole().getContainedVessels()) {
+        for (BarcodedTube currTube : reworkTubeFormation.getContainerRole().getContainedVessels()) {
             reworkBarcodedTubeMap.put(currTube.getLabel(), currTube);
         }
 
@@ -169,7 +169,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         int reworkIdx = NUM_POSITIONS_IN_RACK - 1; // arbitrary choice
 
         ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(NUM_POSITIONS_IN_RACK);
-        Map<String, TwoDBarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
+        Map<String, BarcodedTube> origRackMap = createInitialRack(productOrder, origTubePrefix);
 
         LabBatch origBatch =
                 new LabBatch("origBatch", new HashSet<LabVessel>(origRackMap.values()), LabBatch.LabBatchType.WORKFLOW);
@@ -190,7 +190,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         VesselContainer<PlateWell> origContainer = shearingEntityBuilder1.getShearingPlate().getContainerRole();
 
         // Selects the rework tube and verifies its lcset.
-        TwoDBarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
+        BarcodedTube reworkTube = origRackMap.get(origTubePrefix + reworkIdx);
         Assert.assertNotNull(reworkTube);
         Assert.assertEquals(reworkTube.getLabBatches().size(), 1);
         Assert.assertEquals(reworkTube.getLabBatches().iterator().next().getBatchName(), "LCSET" + origLcsetSuffix);
@@ -198,7 +198,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
         String reworkSampleKey = reworkTube.getMercurySamples().iterator().next().getSampleKey();
 
         // Starts the rework with a new rack of tubes and includes the rework tube.
-        Map<String, TwoDBarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
+        Map<String, BarcodedTube> reworkRackMap = createInitialRack(productOrder, reworkTubePrefix);
         Assert.assertTrue(reworkRackMap.containsKey(reworkTubePrefix + reworkIdx));
         reworkRackMap.remove(reworkTubePrefix + reworkIdx);
         reworkRackMap.put(reworkTube.getLabel(), reworkTube);
@@ -226,7 +226,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 shearingEntityBuilder2.getShearingPlate(),
                 "2");
 
-        VesselContainer<TwoDBarcodedTube> reworkContainer = lcEntityBuilder2.getPondRegRack().getContainerRole();
+        VesselContainer<BarcodedTube> reworkContainer = lcEntityBuilder2.getPondRegRack().getContainerRole();
 
         /* shows the vessel transfers, for debug
             TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
@@ -274,11 +274,11 @@ public class ReworkDbFreeTest extends BaseEventTest {
                                                                                      "ExEx-001", "B", "ExExQuoteId");
         final Date runDate = new Date();
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1");
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2");
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry =
+        Map<String, BarcodedTube> mapBarcodeToTube1 = createInitialRack(productOrder1, "R1");
+        Map<String, BarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2");
+        Map.Entry<String, BarcodedTube> stringBarcodedTubeEntry =
                 mapBarcodeToTube1.entrySet().iterator().next();
-        mapBarcodeToTube2.put(stringTwoDBarcodedTubeEntry.getKey(), stringTwoDBarcodedTubeEntry.getValue());
+        mapBarcodeToTube2.put(stringBarcodedTubeEntry.getKey(), stringBarcodedTubeEntry.getValue());
 
         LabBatch workflowBatch1 = new LabBatch("Exome Express Batch 1",
                                                new HashSet<LabVessel>(mapBarcodeToTube1.values()),
@@ -310,7 +310,7 @@ public class ReworkDbFreeTest extends BaseEventTest {
                 picoPlatingEntityBuilder2.getNormTubeFormation(), picoPlatingEntityBuilder1.getNormalizationBarcode(),
                 "2");
 
-        runTransferVisualizer(stringTwoDBarcodedTubeEntry.getValue());
+        runTransferVisualizer(stringBarcodedTubeEntry.getValue());
 
         for (SampleInstance sampleInstance : exomeExpressShearingEntityBuilder2.getShearingCleanupPlate()
                                                                                .getSampleInstances()) {

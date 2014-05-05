@@ -100,7 +100,12 @@ public class BillingSessionActionBean extends CoreActionBean {
     // parameter from quote server
     private String billingSession;
 
+    // parameter from quote server
+    private String workItemId;
+
     private BillingSession editSession;
+
+    public static final String WORK_ITEM_URL_PARAMETER = "workId";
 
     /**
      * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
@@ -111,6 +116,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public void init() {
         log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
+        workItemId = getContext().getRequest().getParameter(WORK_ITEM_URL_PARAMETER);
         if (sessionKey != null) {
             editSession = billingSessionDao.findByBusinessKey(sessionKey);
         }
@@ -312,5 +318,22 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public String getQuoteWorkItemUrl(String quote,String workItem) {
         return quoteLink.workUrl(quote, workItem);
+    }
+
+    public String getWorkItemId(QuoteImportItem quoteImportItem) {
+        String workItemId = null;
+        if (quoteImportItem != null) {
+            workItemId = quoteImportItem.getSingleWorkItem();
+        }
+        return workItemId;
+    }
+
+    /**
+     * Returns the work item id that should be highlighted.
+     * Javascript uses this to perform the actual
+     * styling.
+     */
+    public String getWorkItemIdToHighlight() {
+        return workItemId;
     }
 }

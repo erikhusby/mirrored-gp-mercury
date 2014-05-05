@@ -31,7 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -125,10 +125,10 @@ public class SystemRouterTest extends BaseEventTest {
     private BSPExportsService mockBspExportService;
     private int productOrderSequence = 1;
 
-    private TwoDBarcodedTube tube1;
-    private TwoDBarcodedTube tube2;
-    private TwoDBarcodedTube tube3;
-    private TwoDBarcodedTube controlTube;
+    private BarcodedTube tube1;
+    private BarcodedTube tube2;
+    private BarcodedTube tube3;
+    private BarcodedTube controlTube;
     private StaticPlate plate;
     private ResearchProject testProject;
     private Product testProduct;
@@ -166,9 +166,9 @@ public class SystemRouterTest extends BaseEventTest {
                     }
                 });
 
-//        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
+//        when(mockBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
-        tube1 = new TwoDBarcodedTube(MERCURY_TUBE_1);
+        tube1 = new BarcodedTube(MERCURY_TUBE_1);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_1);
         }})).thenReturn(
@@ -178,7 +178,7 @@ public class SystemRouterTest extends BaseEventTest {
         when(mockBspSampleDataFetcher.fetchSamplesFromBSP(Arrays.asList("SM-1")))
                 .thenReturn(Collections.singletonMap("SM-1", makeBspSampleDTO("Sample1")));
 
-        tube2 = new TwoDBarcodedTube(MERCURY_TUBE_2);
+        tube2 = new BarcodedTube(MERCURY_TUBE_2);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_2);
         }})).thenReturn(
@@ -186,7 +186,7 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_TUBE_2, tube2);
                 }});
 
-        tube3 = new TwoDBarcodedTube(MERCURY_TUBE_3);
+        tube3 = new BarcodedTube(MERCURY_TUBE_3);
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
             add(MERCURY_TUBE_3);
         }})).thenReturn(
@@ -194,7 +194,7 @@ public class SystemRouterTest extends BaseEventTest {
                     put(MERCURY_TUBE_3, tube3);
                 }});
 
-        controlTube = new TwoDBarcodedTube(CONTROL_TUBE);
+        controlTube = new BarcodedTube(CONTROL_TUBE);
         controlTube.addSample(new MercurySample(CONTROL_SAMPLE_ID));
         when(mockLabVesselDao.findByBarcodes(new ArrayList<String>() {{
             add(CONTROL_TUBE);
@@ -387,9 +387,9 @@ public class SystemRouterTest extends BaseEventTest {
     @Test(groups = DATABASE_FREE, dataProvider = "deploymentContext")
     public void testRouteForTubesAllInMercuryWithExomeExpressOrdersWithControlsAfterTransfer(
             ApplicationInstance instance) {
-        final TwoDBarcodedTube target1 = new TwoDBarcodedTube("target1");
-        final TwoDBarcodedTube target2 = new TwoDBarcodedTube("target2");
-        final TwoDBarcodedTube target3 = new TwoDBarcodedTube("target3");
+        final BarcodedTube target1 = new BarcodedTube("target1");
+        final BarcodedTube target2 = new BarcodedTube("target2");
+        final BarcodedTube target3 = new BarcodedTube("target3");
         final List<String> testBarcodes = Arrays.asList("target1", "target2", "target3");
         when(mockLabVesselDao.findByBarcodes(testBarcodes))
                 .thenReturn(new HashMap<String, LabVessel>() {{
@@ -704,7 +704,7 @@ public class SystemRouterTest extends BaseEventTest {
             assertThat(mercuryEvent, equalTo(MercuryEvent.NONE));
             return null;
         case YES:
-            final TwoDBarcodedTube tube = new TwoDBarcodedTube(tubeBarcode);
+            final BarcodedTube tube = new BarcodedTube(tubeBarcode);
             when(mockLabVesselDao.findByBarcodes(Arrays.asList(tubeBarcode)))
                     .thenReturn(new HashMap<String, LabVessel>() {{
                         put(tubeBarcode, tube);
@@ -842,7 +842,7 @@ public class SystemRouterTest extends BaseEventTest {
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
@@ -929,7 +929,7 @@ public class SystemRouterTest extends BaseEventTest {
                                                           hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                                                           "1");
 
-        TwoDBarcodedTube denatureTube =
+        BarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (denatureTube)),
@@ -959,7 +959,7 @@ public class SystemRouterTest extends BaseEventTest {
                                             FLOWCELL_2500_TICKET,
                                             ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                                             Workflow.AGILENT_EXOME_EXPRESS);
-        TwoDBarcodedTube dilutionTube =
+        BarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (dilutionTube)),
@@ -986,7 +986,7 @@ public class SystemRouterTest extends BaseEventTest {
         final ProductOrder
                 productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
@@ -1075,7 +1075,7 @@ public class SystemRouterTest extends BaseEventTest {
                                                           hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
                                                           "1");
 
-        TwoDBarcodedTube denatureTube =
+        BarcodedTube denatureTube =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (denatureTube)),
@@ -1104,7 +1104,7 @@ public class SystemRouterTest extends BaseEventTest {
                                             FLOWCELL_2500_TICKET,
                                             ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
                                             Workflow.AGILENT_EXOME_EXPRESS);
-        TwoDBarcodedTube dilutionTube =
+        BarcodedTube dilutionTube =
                 flowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
         assertThat(systemRouter.routeForVessels(Collections.<LabVessel>singleton
                 (dilutionTube)),

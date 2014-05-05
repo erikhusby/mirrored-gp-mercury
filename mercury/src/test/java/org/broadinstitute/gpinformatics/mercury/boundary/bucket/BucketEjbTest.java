@@ -13,14 +13,14 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.ExomeExpressV2EndToEndTest;
@@ -64,7 +64,7 @@ public class BucketEjbTest extends ContainerTest {
     ResearchProjectDao researchProjectDao;
 
     @Inject
-    TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    BarcodedTubeDao barcodedTubeDao;
 
     private final static Log logger = LogFactory.getLog(BucketEjbTest.class);
 
@@ -76,18 +76,18 @@ public class BucketEjbTest extends ContainerTest {
     private String poBusinessKey1;
     private String poBusinessKey2;
     private String poBusinessKey3;
-    private String twoDBarcode1;
-    private String twoDBarcode2;
-    private String twoDBarcode3;
-    private String twoDBarcode4;
+    private String barcode1;
+    private String barcode2;
+    private String barcode3;
+    private String barcode4;
     private String hrafalUserName;
     private ProductOrder productOrder1;
     private ProductOrder productOrder2;
     private ProductOrder productOrder3;
-    private TwoDBarcodedTube bspAliquot4;
-    private TwoDBarcodedTube bspAliquot3;
-    private TwoDBarcodedTube bspAliquot2;
-    private TwoDBarcodedTube bspAliquot1;
+    private BarcodedTube bspAliquot4;
+    private BarcodedTube bspAliquot3;
+    private BarcodedTube bspAliquot2;
+    private BarcodedTube bspAliquot1;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -128,81 +128,81 @@ public class BucketEjbTest extends ContainerTest {
         productOrder3.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
 
-        twoDBarcode1 = "5234623632";
-        twoDBarcode2 = "6727357836";
-        twoDBarcode3 = "6625345234";
-        twoDBarcode4 = "9202340293";
+        barcode1 = "5234623632";
+        barcode2 = "6727357836";
+        barcode3 = "6625345234";
+        barcode4 = "9202340293";
 
         List<String> shearingTubeBarcodes = new ArrayList<>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
         Map<String, String> barcodesByRackPositions = new HashMap<>();
 
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
+        Map<String, BarcodedTube> mapBarcodeToTube = new LinkedHashMap<>();
 
 
-        shearingTubeBarcodes.add(twoDBarcode1);
+        shearingTubeBarcodes.add(barcode1);
 
         String column = ExomeExpressV2EndToEndTest.RACK_COLUMNS.get((0) / ExomeExpressV2EndToEndTest.RACK_ROWS.size());
         String row = ExomeExpressV2EndToEndTest.RACK_ROWS.get((0) % ExomeExpressV2EndToEndTest.RACK_ROWS.size());
 
         //
-        String bspStock = "SM-" + twoDBarcode1;
+        String bspStock = "SM-" + barcode1;
 
-        barcodesByRackPositions.put(row + column, twoDBarcode1);
+        barcodesByRackPositions.put(row + column, barcode1);
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
-        bspAliquot1 = new TwoDBarcodedTube(twoDBarcode1);
+        bspAliquot1 = new BarcodedTube(barcode1);
         bspAliquot1.addSample(new MercurySample(bspStock));
         bspAliquot1.addBucketEntry(new BucketEntry(bspAliquot1, productOrder1, BucketEntry.BucketEntryType.PDO_ENTRY));
-        mapBarcodeToTube.put(twoDBarcode1, bspAliquot1);
+        mapBarcodeToTube.put(barcode1, bspAliquot1);
 
 
-        shearingTubeBarcodes.add(twoDBarcode2);
+        shearingTubeBarcodes.add(barcode2);
 
         column = ExomeExpressV2EndToEndTest.RACK_COLUMNS.get((0) / ExomeExpressV2EndToEndTest.RACK_ROWS.size());
         row = ExomeExpressV2EndToEndTest.RACK_ROWS.get((0) % ExomeExpressV2EndToEndTest.RACK_ROWS.size());
 
-        bspStock = "SM-" + twoDBarcode2;
+        bspStock = "SM-" + barcode2;
 
-        barcodesByRackPositions.put(row + column, twoDBarcode2);
+        barcodesByRackPositions.put(row + column, barcode2);
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
-        bspAliquot2 = new TwoDBarcodedTube(twoDBarcode2);
+        bspAliquot2 = new BarcodedTube(barcode2);
         bspAliquot2.addSample(new MercurySample(bspStock));
         bspAliquot2.addBucketEntry(new BucketEntry(bspAliquot2, productOrder2, BucketEntry.BucketEntryType.PDO_ENTRY));
-        mapBarcodeToTube.put(twoDBarcode2, bspAliquot2);
+        mapBarcodeToTube.put(barcode2, bspAliquot2);
 
 
-        shearingTubeBarcodes.add(twoDBarcode3);
+        shearingTubeBarcodes.add(barcode3);
 
         column = ExomeExpressV2EndToEndTest.RACK_COLUMNS.get((0) / ExomeExpressV2EndToEndTest.RACK_ROWS.size());
         row = ExomeExpressV2EndToEndTest.RACK_ROWS.get((0) % ExomeExpressV2EndToEndTest.RACK_ROWS.size());
 
-        bspStock = "SM-" + twoDBarcode3;
+        bspStock = "SM-" + barcode3;
 
-        barcodesByRackPositions.put(row + column, twoDBarcode3);
+        barcodesByRackPositions.put(row + column, barcode3);
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
-        bspAliquot3 = new TwoDBarcodedTube(twoDBarcode3);
+        bspAliquot3 = new BarcodedTube(barcode3);
         bspAliquot3.addSample(new MercurySample(bspStock));
         bspAliquot3.addBucketEntry(new BucketEntry(bspAliquot3, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
-        mapBarcodeToTube.put(twoDBarcode3, bspAliquot3);
+        mapBarcodeToTube.put(barcode3, bspAliquot3);
 
 
-        shearingTubeBarcodes.add(twoDBarcode4);
+        shearingTubeBarcodes.add(barcode4);
 
         column = ExomeExpressV2EndToEndTest.RACK_COLUMNS.get((0) / ExomeExpressV2EndToEndTest.RACK_ROWS.size());
         row = ExomeExpressV2EndToEndTest.RACK_ROWS.get((0) % ExomeExpressV2EndToEndTest.RACK_ROWS.size());
 
-        bspStock = "SM-" + twoDBarcode4;
+        bspStock = "SM-" + barcode4;
 
-        barcodesByRackPositions.put(row + column, twoDBarcode4);
+        barcodesByRackPositions.put(row + column, barcode4);
 
         productOrderSamples.add(new ProductOrderSample(bspStock));
-        bspAliquot4 = new TwoDBarcodedTube(twoDBarcode4);
+        bspAliquot4 = new BarcodedTube(barcode4);
         bspAliquot4.addSample(new MercurySample(bspStock));
         bspAliquot4.addBucketEntry(new BucketEntry(bspAliquot4, productOrder3, BucketEntry.BucketEntryType.PDO_ENTRY));
-        mapBarcodeToTube.put(twoDBarcode4, bspAliquot4);
+        mapBarcodeToTube.put(barcode4, bspAliquot4);
 
 
         bucketCreationName = "Pico Bucket";
@@ -339,10 +339,10 @@ public class BucketEjbTest extends ContainerTest {
         bucket = bucketDao.findByName(bucketCreationName);
 
 
-        LabVessel vessel1 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode1);
-        LabVessel vessel2 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode2);
-        LabVessel vessel3 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode3);
-        LabVessel vessel4 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode4);
+        LabVessel vessel1 = barcodedTubeDao.findByBarcode(barcode1);
+        LabVessel vessel2 = barcodedTubeDao.findByBarcode(barcode2);
+        LabVessel vessel3 = barcodedTubeDao.findByBarcode(barcode3);
+        LabVessel vessel4 = barcodedTubeDao.findByBarcode(barcode4);
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
@@ -375,10 +375,10 @@ public class BucketEjbTest extends ContainerTest {
         bucketDao.flush();
         bucketDao.clear();
         bucket = bucketDao.findByName(bucketCreationName);
-        vessel1 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode1);
-        vessel2 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode2);
-        vessel3 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode3);
-        vessel4 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode4);
+        vessel1 = barcodedTubeDao.findByBarcode(barcode1);
+        vessel2 = barcodedTubeDao.findByBarcode(barcode2);
+        vessel3 = barcodedTubeDao.findByBarcode(barcode3);
+        vessel4 = barcodedTubeDao.findByBarcode(barcode4);
 
         Assert.assertFalse(vessel1.getInPlaceEvents().isEmpty());
         Assert.assertFalse(vessel2.getInPlaceEvents().isEmpty());
@@ -448,10 +448,10 @@ public class BucketEjbTest extends ContainerTest {
         bucket = bucketDao.findByName(bucketCreationName);
 
 
-        LabVessel vessel1 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode1);
-        LabVessel vessel2 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode2);
-        LabVessel vessel3 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode3);
-        LabVessel vessel4 = twoDBarcodedTubeDao.findByBarcode(twoDBarcode4);
+        LabVessel vessel1 = barcodedTubeDao.findByBarcode(barcode1);
+        LabVessel vessel2 = barcodedTubeDao.findByBarcode(barcode2);
+        LabVessel vessel3 = barcodedTubeDao.findByBarcode(barcode3);
+        LabVessel vessel4 = barcodedTubeDao.findByBarcode(barcode4);
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
