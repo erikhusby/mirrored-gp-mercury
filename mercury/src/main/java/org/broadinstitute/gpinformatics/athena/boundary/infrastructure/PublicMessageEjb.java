@@ -37,7 +37,7 @@ public class PublicMessageEjb {
 
     @Inject
     public PublicMessageEjb(PublicMessageDao publicMessageDao) {
-        this.publicMessageDao=publicMessageDao;
+        this.publicMessageDao = publicMessageDao;
     }
 
     private PublicMessage message;
@@ -66,15 +66,13 @@ public class PublicMessageEjb {
         setPublicMessage(new PublicMessage(publicMessageText));
     }
 
-
     public void clearPublicMessage() {
         if (message != null) {
+            message = null;
             try {
                 publicMessageDao.clearMessage();
             } catch (Exception e) {
                 log.error("Could not clear public message", e);
-            } finally {
-                message = null;
             }
         }
     }

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.mock;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class PublicMessageDbFreeEjbTest {
+public class PublicMessageErrorHandlingTest {
     private static final String TEST_MESSAGE = "this is my message";
 
     private PublicMessageEjb publicMessageEjb;

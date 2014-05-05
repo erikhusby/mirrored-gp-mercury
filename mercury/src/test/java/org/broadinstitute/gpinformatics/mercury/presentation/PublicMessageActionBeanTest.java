@@ -32,8 +32,7 @@ public class PublicMessageActionBeanTest {
     @BeforeMethod
     private void setUp() {
         publicMessageEjb = mock(PublicMessageEjb.class);
-        PublicMessage publicMessage = new PublicMessage();
-        publicMessage.setMessage(TEST_MESSAGE_TEXT);
+        PublicMessage publicMessage = new PublicMessage(TEST_MESSAGE_TEXT);
         when(publicMessageEjb.getPublicMessage()).thenReturn(publicMessage);
     }
 
