@@ -853,7 +853,13 @@ public abstract class LabVessel implements Serializable {
         case WITH_PDO:
         case PREFER_PDO:
             if (!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
-                continueTraversing = false;
+                // Ignore bucket entries that don't have an LCSET yet
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        continueTraversing = false;
+                        break;
+                    }
+                }
             }
             break;
         case ANY:
