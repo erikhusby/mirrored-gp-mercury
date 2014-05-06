@@ -16,6 +16,8 @@ public class SquidComponentDto implements Serializable {
     private String referenceSequence;
     private String pairedSequence;
 
+    private String executionType;
+
     public SquidComponentDto() {
     }
 
@@ -74,5 +76,13 @@ public class SquidComponentDto implements Serializable {
 
     public void setPairedSequence(String pairedSequence) {
         this.pairedSequence = pairedSequence;
+    }
+
+    public String getExecutionType() {
+        return executionType;
+    }
+
+    public void setExecutionType(String executionType) {
+        this.executionType = executionType;
     }
 }

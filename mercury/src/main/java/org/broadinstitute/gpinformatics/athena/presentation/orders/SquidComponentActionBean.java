@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
+import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -39,6 +40,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/orders/squid_component.action";
     public static final String CREATE_SQUID_COMPONENT_PAGE = "/orders/create_squid_components.jsp";
     public static final String SQUID_PROJECT_OPTIONS_INSERT = "/orders/squid_project_options.jsp";
+    public static final String SQUID_PROJECT_EXECUTION_TYPE_INSERT = "/orders/squid_execution_types.jsp";
     public static final String SQUID_WORK_REQUEST_OPTIONS_INSERT = "/orders/squid_work_request_options.jsp";
 
     @Inject
@@ -65,6 +67,7 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     private CreateProjectOptions squidProjectOptions;
     private CreateWorkRequestOptions workRequestOptions;
+    private ExecutionTypes squidProjectExecutionTypes;
 
     public SquidComponentActionBean() {
         super("", "", ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
@@ -80,7 +83,7 @@ public class SquidComponentActionBean extends CoreActionBean {
                         sourceOrder.getProductOrderId()));
             }
         } else {
-            addGlobalValidationError("Cannot create ");
+            addGlobalValidationError("Cannot create squid components without a Product Order to reference");
         }
     }
 
@@ -99,10 +102,17 @@ public class SquidComponentActionBean extends CoreActionBean {
         return new ForwardResolution(SQUID_PROJECT_OPTIONS_INSERT);
     }
 
+    @HandlesEvent("ajaxSquidExecutionTypes")
+    public Resolution ajaxSquidExecutionTypes() throws Exception {
+
+        squidProjectExecutionTypes = squidConnector.getProjectExecutionTypes();
+        return new ForwardResolution(SQUID_PROJECT_EXECUTION_TYPE_INSERT);
+    }
+
     @HandlesEvent("ajaxSquidWorkRequestOptions")
     public Resolution ajaxSquidWorkRequestOptions() throws Exception {
 
-        workRequestOptions = squidConnector.getWorkRequestOptions();
+        workRequestOptions = squidConnector.getWorkRequestOptions(autoSquidDto.getExecutionType());
         return new ForwardResolution(SQUID_WORK_REQUEST_OPTIONS_INSERT);
     }
 
@@ -140,5 +150,9 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     public CreateProjectOptions getSquidProjectOptions() {
         return squidProjectOptions;
+    }
+
+    public ExecutionTypes getSquidProjectExecutionTypes() {
+        return squidProjectExecutionTypes;
     }
 }

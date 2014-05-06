@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.squid;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
+import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
@@ -14,6 +15,8 @@ import java.io.Serializable;
  * Defines a set of Methods that provide a access to Squid JAX-RS Services
  */
 public interface SquidConnector extends Serializable {
+
+    ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException;
 
     @XmlRootElement
     public static class SquidResponse implements Serializable {
@@ -64,6 +67,6 @@ public interface SquidConnector extends Serializable {
 
     CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException;
 
-    CreateWorkRequestOptions getWorkRequestOptions() throws UniformInterfaceException;
+    CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException;
 
 }

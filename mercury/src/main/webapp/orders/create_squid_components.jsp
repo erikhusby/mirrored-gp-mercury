@@ -1,5 +1,4 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -16,8 +15,8 @@
                     [1, 'asc']
                 ],
                 "aoColumns": [
-                    {"bSortable": false},                           // Checkbox
-                    {"bSortable": true, "sType": "html"}           // ID
+                    {"bSortable": false},                 // Checkbox
+                    {"bSortable": true, "sType": "html"}  // ID
                 ]
             });
 
@@ -27,19 +26,25 @@
                         $j.ajax({
                             url: "${ctxpath}/orders/squid_component.action?ajaxSquidProjectOptions=&",
                             dataType: 'html',
-                            success: function(html) {
+                            success: function (html) {
                                 $j("#squidProjectOptions").html(html);
                             }
                         });
-                        $j.ajax({
-                            url: "${ctxpath}/orders/squid_component.action?ajaxSquidWorkRequestOptions=&",
-                            dataType: 'html',
-                            success: function(html) {
-                                $j("#squidWorkRequestOptions").html(html);
-                            }
+                        $j("autoSquidDto.executionType").change(function() {
+                            var executionType = $j("autoSquidDto.executionType").val();
+                            pullWorkRequestOptions(executionType);
                         });
                     }
             );
+            function pullWorkRequestOptions(executionType) {
+                $j.ajax({
+                    url: "${ctxpath}/orders/squid_component.action?ajaxSquidWorkRequestOptions=&autoSquidDto.executionType=" + executionType,
+                    dataType: 'html',
+                    success: function (html) {
+                        $j("#squidWorkRequestOptions").html(html);
+                    }
+                });
+            }
 
         </script>
     </stripes:layout-component>
@@ -50,14 +55,23 @@
                 <stripes:hidden name="<%= ProductOrderActionBean.PRODUCT_ORDER_PARAMETER%>"/>
                 <stripes:hidden name="submitString"/>
 
-                <div id="squidProjectOptions" ></div>
+                <div class="control-group">
+                    <stripes:label for="autoSquidDto.executionType" class="control-label">
+                        Project execution types
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:radio value="Development" name="autoSquidDto.executionType"/>Development
+                        <stripes:radio value="Production" name="autoSquidDto.executionType"/>Production
+                    </div>
+                </div>
+                <div id="squidProjectOptions"></div>
                 <p/>
 
                 <p/>
 
                 <p/>
 
-                <div id="squidWorkRequestOptions"></div>
+                <div id="squidWorkRequestOptions">Select a Project Execution Type to drive work request options</div>
 
                 <c:if test="${not empty actionBean.sourceOrder.samples}">
                     <table id="sampleList" class="table simple">
@@ -74,10 +88,11 @@
                         <c:forEach items="${actionBean.sourceOrder.samples}" var="sample">
                             <tr>
                                 <td>
-                                    <stripes:checkbox name="selectedProductOrderSampleIds" title="${sample.samplePosition}"
+                                    <stripes:checkbox name="selectedProductOrderSampleIds"
+                                                      title="${sample.samplePosition}"
                                                       class="shiftCheckbox" value="${sample.productOrderSampleId}"/>
                                 </td>
-                                <td id=""sampleId-${sample.productOrderSampleId} class="sampleName">
+                                <td id="" sampleId-${sample.productOrderSampleId} class="sampleName">
                                         <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                                     <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
 

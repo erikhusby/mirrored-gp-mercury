@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
-import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.core.header.InBoundHeaders;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
@@ -37,7 +35,7 @@ public class SquidConnectorFailureStub implements SquidConnector {
     }
 
     @Override
-    public CreateWorkRequestOptions getWorkRequestOptions() throws UniformInterfaceException {
+    public CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException {
         return null;
     }
 }
