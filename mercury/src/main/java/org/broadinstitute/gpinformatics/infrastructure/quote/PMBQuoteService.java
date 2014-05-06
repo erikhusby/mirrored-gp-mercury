@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.util.Set;
 
 /**
@@ -26,7 +25,7 @@ public interface PMBQuoteService {
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */
-    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException, ParserConfigurationException;
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException;
 
     /**
      * Method to return a list of PriceItems per Platform.

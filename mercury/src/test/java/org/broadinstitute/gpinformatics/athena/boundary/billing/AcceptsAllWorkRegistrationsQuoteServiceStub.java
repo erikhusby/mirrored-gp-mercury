@@ -27,12 +27,12 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-        throw new NotImplementedException();
+        return new PriceList();
     }
 
     @Override
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-        throw new NotImplementedException();
+        return new Quotes();
     }
 
     @Override
@@ -44,6 +44,6 @@ class AcceptsAllWorkRegistrationsQuoteServiceStub implements QuoteService {
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        throw new NotImplementedException();
+        return new Quote();
     }
 }
