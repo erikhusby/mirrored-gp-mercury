@@ -8,6 +8,7 @@ import java.util.Set;
  * Service to talk to the quote server.
  */
 
+// todo: merge this into QuoteService and delete (GPLIM-2719)
 public interface PMBQuoteService {
 
     /**
