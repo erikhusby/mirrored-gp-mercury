@@ -51,7 +51,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class BillingEjbJiraDelayedTest extends Arquillian {
-
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;
     @Inject
@@ -110,12 +109,12 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
 
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new PriceList();
         }
 
         @Override
         public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quotes();
         }
 
         @Override
@@ -126,7 +125,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
             // Simulate failure only for one particular PriceItem.
-            System.out.println("In register New work");
+            log.debug("In register New work");
             String workId = "workItemId\t1000";
             try {
                 failureTime.getAndAdd(failureIncrement.get());

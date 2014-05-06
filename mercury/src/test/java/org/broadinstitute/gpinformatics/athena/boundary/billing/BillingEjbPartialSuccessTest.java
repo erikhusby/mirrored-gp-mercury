@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -14,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -85,17 +85,16 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      */
     @Alternative
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
-
         private static final long serialVersionUID = 6093273925949722169L;
-
+        private Log log = LogFactory.getLog(QuoteFundingList.class);
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new PriceList();
         }
 
         @Override
         public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quotes();
         }
 
         @Override
@@ -106,7 +105,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
             // Simulate failure only for one particular PriceItem.
-            System.out.println("In register New work");
+            log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
@@ -127,7 +126,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             synchronized (lockBox) {
                 quoteCount++;
                 /*log.debug*/
-                System.out.println("Quote count is now " + quoteCount);
+                log.debug("Quote count is now " + quoteCount);
                 assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
             }
             return workId;
@@ -135,13 +134,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quote();
         }
     }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -337,7 +336,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testNoForcedFailures() {
 
-        System.out.println("Running no forced failures threaded");
+        log.debug("Running no forced failures threaded");
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};

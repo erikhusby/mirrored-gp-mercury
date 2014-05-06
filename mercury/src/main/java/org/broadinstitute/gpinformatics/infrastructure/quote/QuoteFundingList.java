@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
@@ -24,8 +25,7 @@ public class QuoteFundingList extends AbstractCache {
 
     private PMBQuoteService quoteService;
 
-    @Inject
-    private Log logger;
+    private Log logger = LogFactory.getLog(QuoteFundingList.class);
 
     @Inject
     private Deployment deployment;
@@ -128,8 +128,6 @@ public class QuoteFundingList extends AbstractCache {
             fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (QuoteServerException | QuoteNotFoundException ex) {
             logger.error("Could not refresh the funding list.");
-        } catch (Exception e) {
-            logger.error("Could not refresh the funding list.", e);
         }
     }
 }
