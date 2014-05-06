@@ -180,18 +180,18 @@
             <c:if test="${sectionTitle ne null}">
                 <div class="page-header">
                     <h3 style="display:inline;">${sectionTitle}</h3>
-                    <c:if test="${showCreate && bean.createAllowed}">
-                        <stripes:link beanclass="${bean.class.name}" event="${bean.createAction}" title="Click to ${bean.createTitle}" class="pull-right">
+                    <c:if test="${showCreate && actionBean.createAllowed}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.createAction}" title="Click to ${actionBean.createTitle}" class="pull-right">
                             <span class="icon-plus"></span>
-                            ${bean.createTitle}
+                            ${actionBean.createTitle}
                         </stripes:link>
                     </c:if>
 
-                    <c:if test="${not empty businessKeyValue && bean.editAllowed}">
-                        <stripes:link beanclass="${bean.class.name}" event="${bean.editAction}" title="Click to ${bean.editTitle}" class="pull-right">
-                            <stripes:param name="${bean.editBusinessKeyName}" value="${businessKeyValue}"/>
+                    <c:if test="${not empty businessKeyValue && actionBean.editAllowed}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="${actionBean.editAction}" title="Click to ${actionBean.editTitle}" class="pull-right">
+                            <stripes:param name="${actionBean.editBusinessKeyName}" value="${businessKeyValue}"/>
                             <span class="icon-pencil"></span>
-                            ${bean.editTitle}
+                            ${actionBean.editTitle}
                         </stripes:link>
                     </c:if>
                 </div>
