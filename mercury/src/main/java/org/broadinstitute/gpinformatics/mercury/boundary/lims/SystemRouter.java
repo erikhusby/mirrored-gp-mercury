@@ -316,7 +316,7 @@ public class SystemRouter implements Serializable {
                         if (sampleInstance.isReagentOnly()) {
                             continue;
                         }
-                        if (sampleInstance.getAllBucketEntries().isEmpty()) {
+                        if (sampleInstance.getAllBatchVessels(LabBatchType.WORKFLOW).isEmpty()) {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
