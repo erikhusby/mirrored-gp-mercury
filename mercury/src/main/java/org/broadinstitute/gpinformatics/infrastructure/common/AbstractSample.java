@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nonnull;
 import javax.persistence.Transient;
-import java.util.regex.Pattern;
 
 /**
  * This abstraction describes a sample in both project management and LIMS in Mercury. Put code in here that will be

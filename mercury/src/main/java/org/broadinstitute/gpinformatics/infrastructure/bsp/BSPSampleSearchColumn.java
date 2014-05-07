@@ -29,41 +29,54 @@ public enum BSPSampleSearchColumn {
     RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
     RIN("RIN Number"),
     PICO_RUN_DATE("Pico Run Date"),
-    RECEIPT_DATE("Receipt Date");
+    RECEIPT_DATE("Receipt Date"),
+    FINGERPRINT_PANEL_NAME("FP Panel Name"),
+    FINGERPRINT_GENDER("Fingerprint Gender"),
+    FINGERPRINT_DATE_ASSIGNED("FP Date Assigned"),
+    FINGERPRINT_PASS_FAIL("FP Pass / Fail"),
+    FINGERPRINT_PLATFORM("FP Platform");
 
     private final String columnName;
-    public String columnName() { return columnName; }
+
+    public String columnName() {
+        return columnName;
+    }
 
     BSPSampleSearchColumn(String name) {
         this.columnName = name;
     }
 
     public static final BSPSampleSearchColumn[] PDO_SEARCH_COLUMNS = {
-        BSPSampleSearchColumn.PARTICIPANT_ID,
-        BSPSampleSearchColumn.ROOT_SAMPLE,
-        BSPSampleSearchColumn.STOCK_SAMPLE,
-        BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-        BSPSampleSearchColumn.COLLECTION,
-        BSPSampleSearchColumn.VOLUME,
-        BSPSampleSearchColumn.CONCENTRATION,
-        BSPSampleSearchColumn.SPECIES,
-        BSPSampleSearchColumn.LSID,
-        BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-        BSPSampleSearchColumn.MATERIAL_TYPE,
-        BSPSampleSearchColumn.TOTAL_DNA,
-        BSPSampleSearchColumn.SAMPLE_TYPE,
-        BSPSampleSearchColumn.PRIMARY_DISEASE,
-        BSPSampleSearchColumn.GENDER,
-        BSPSampleSearchColumn.STOCK_TYPE,
-        BSPSampleSearchColumn.FINGERPRINT,
-        BSPSampleSearchColumn.CONTAINER_ID,
-        BSPSampleSearchColumn.SAMPLE_ID,
-        BSPSampleSearchColumn.COLLABORATOR_NAME,
-        BSPSampleSearchColumn.ETHNICITY,
-        BSPSampleSearchColumn.RACE,
-        BSPSampleSearchColumn.RACKSCAN_MISMATCH,
-        BSPSampleSearchColumn.RIN,
-        BSPSampleSearchColumn.PICO_RUN_DATE,
-        BSPSampleSearchColumn.RECEIPT_DATE
+            BSPSampleSearchColumn.PARTICIPANT_ID,
+            BSPSampleSearchColumn.ROOT_SAMPLE,
+            BSPSampleSearchColumn.STOCK_SAMPLE,
+            BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
+            BSPSampleSearchColumn.COLLECTION,
+            BSPSampleSearchColumn.VOLUME,
+            BSPSampleSearchColumn.CONCENTRATION,
+            BSPSampleSearchColumn.SPECIES,
+            BSPSampleSearchColumn.LSID,
+            BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+            BSPSampleSearchColumn.MATERIAL_TYPE,
+            BSPSampleSearchColumn.TOTAL_DNA,
+            BSPSampleSearchColumn.SAMPLE_TYPE,
+            BSPSampleSearchColumn.PRIMARY_DISEASE,
+            BSPSampleSearchColumn.GENDER,
+            BSPSampleSearchColumn.STOCK_TYPE,
+            BSPSampleSearchColumn.FINGERPRINT,
+            BSPSampleSearchColumn.FINGERPRINT_DATE_ASSIGNED,
+            BSPSampleSearchColumn.FINGERPRINT_GENDER,
+            BSPSampleSearchColumn.FINGERPRINT_PANEL_NAME,
+            BSPSampleSearchColumn.FINGERPRINT_PASS_FAIL,
+            BSPSampleSearchColumn.FINGERPRINT_PLATFORM,
+            BSPSampleSearchColumn.CONTAINER_ID,
+            BSPSampleSearchColumn.SAMPLE_ID,
+            BSPSampleSearchColumn.COLLABORATOR_NAME,
+            BSPSampleSearchColumn.ETHNICITY,
+            BSPSampleSearchColumn.RACE,
+            BSPSampleSearchColumn.RACKSCAN_MISMATCH,
+            BSPSampleSearchColumn.RIN,
+            BSPSampleSearchColumn.PICO_RUN_DATE,
+            BSPSampleSearchColumn.RECEIPT_DATE
     };
 }
