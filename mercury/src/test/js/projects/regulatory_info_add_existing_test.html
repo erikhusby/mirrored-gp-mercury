@@ -3,15 +3,15 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Regulatory Information Tests</title>
-    <link rel="stylesheet" href="../qunit-1.14.0.css">
+    <link rel="stylesheet" href="/Mercury/src/test/js/qunit-1.14.0.css">
 
-    <script src="../../../main/webapp/resources/scripts/jquery-1.10.1.min.js"></script>
+    <script src="/Mercury/src/main/webapp/resources/scripts/jquery-1.10.1.min.js"></script>
     <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
-    <script src="../qunit-1.14.0.js"></script>
+    <script src="/Mercury/src/test/js/qunit-1.14.0.js"></script>
 
     <!-- Code Under Test -->
-    <script src="../../../main/webapp/projects/regulatory_info_dialog_sheet_2.js"></script>
+    <script src="/Mercury/src/main/webapp/projects/regulatory_info_dialog_sheet_2.js"></script>
 </head>
 <body>
 
@@ -32,7 +32,7 @@
     </div>
 
     <!-- Tests -->
-    <script>
+    <script type="text/javascript">
         test('Test clicking "Add" button', function() {
             addClickHandlerToRegInfoQueryResultsTable();
             $j('#button1').click();
