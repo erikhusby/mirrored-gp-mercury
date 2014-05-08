@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
@@ -709,7 +710,7 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
-            bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
+            Bucket bucket = bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
                     String.valueOf(runDate.getTime()), "2", true);
             ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder2 =
@@ -742,6 +743,15 @@ public class LabEventTest extends BaseEventTest {
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                     hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), Workflow.AGILENT_EXOME_EXPRESS, "1");
+            // Rework in pooling bucket should not change LCSET in pipeline
+            TwoDBarcodedTube catchTube = hybridSelectionEntityBuilder.getNormCatchRack().getContainerRole().
+                    getVesselAtPosition(VesselPosition.A01);
+            catchTube.clearCaches();
+            BucketEntry bucketEntry = new BucketEntry(catchTube, "PO-1", bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+            LabBatch poolReworkBatch = new LabBatch("LCSET-pool", Collections.<LabVessel>singleton(catchTube),
+                    LabBatch.LabBatchType.WORKFLOW);
+            bucketEntry.setLabBatch(poolReworkBatch);
+            catchTube.addBucketEntry(bucketEntry);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);

@@ -320,6 +320,7 @@ public class SystemRouter implements Serializable {
                             possibleControls.add(sampleInstance);
                         } else {
                             String workflowName = sampleInstance.getWorkflowName();
+                            // todo jmt if multiple batches, see if they resolve to the same system
                             LabBatch batch = sampleInstance.getSingleBatch();
                             if (workflowName != null && batch != null) {
                                 ProductWorkflowDefVersion productWorkflowDef = getWorkflowVersion(workflowName,

@@ -664,7 +664,10 @@ public class VesselContainer<T extends LabVessel> {
         for (VesselPosition vesselPosition : section.getWells()) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
             if (vesselAtPosition != null) {
-                Set<BucketEntry> bucketEntries = vesselAtPosition.getBucketEntries();
+                Set<BucketEntry> bucketEntries = new HashSet<>();
+                for (SampleInstanceV2 sampleInstanceV2 : vesselAtPosition.getSampleInstancesV2()) {
+                    bucketEntries.addAll(sampleInstanceV2.getAllBucketEntries());
+                }
                 if (!bucketEntries.isEmpty()) {
                     numVesselsWithBucketEntries++;
                 }

@@ -281,7 +281,7 @@ todo jmt not sure if this applies.
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
-            if (LabVessel.DIAGNOSTICS) { // todo jmt a rework bucket entry will revise history
+            if (LabVessel.DIAGNOSTICS) {
                 log.info("Setting singleBucketEntry to " + singleBucketEntry.getLabBatch().getBatchName() +
                         " in " + labVessel.getLabel());
             }

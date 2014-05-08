@@ -228,8 +228,12 @@ public class ZimsIlluminaRunFactory {
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
             String lcSet = null;
-            if (sampleInstance.getSingleBatch() != null) {
-                lcSet = sampleInstance.getSingleBatch().getBatchName();
+            if (sampleInstance.getSingleInferredBucketedBatch() == null) {
+                if (sampleInstance.getSingleBatch() != null) {
+                    lcSet = sampleInstance.getSingleBatch().getBatchName();
+                }
+            } else {
+                lcSet = sampleInstance.getSingleInferredBucketedBatch().getBatchName();
             }
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
