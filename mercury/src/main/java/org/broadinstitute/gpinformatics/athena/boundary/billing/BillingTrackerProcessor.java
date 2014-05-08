@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,11 @@ import java.util.Map;
  * This class takes columns from a table of data and pulls out the billing tracker information.
  */
 public class BillingTrackerProcessor extends TableProcessor {
+
+    public static final String FUTURE_WORK_COMPLETE_DATE_MESSAGE =
+            "Sample %s cannot have a completed date of %s because it is in the future.";
+    public static final String OLD_WORK_COMPLETE_DATE_MESSAGE =
+            "Sample %s cannot have a completed date of %s because it is more than 3 months in the past.";
 
     private static final long serialVersionUID = 2769150801705141335L;
 
@@ -420,9 +426,14 @@ public class BillingTrackerProcessor extends TableProcessor {
                 }
                 Date now = new Date();
                 if (now.before(workCompleteDate)) {
-                    addDataMessage(
-                            String.format("Sample %s cannot have a completed date of %s because it is in the future.",
-                                    productOrderSample.getSampleKey(), workCompleteDateString), dataRowIndex);
+                    addDataMessage(String.format(FUTURE_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
+                            workCompleteDateString), dataRowIndex);
+                }
+                Calendar calendar = Calendar.getInstance();
+                calendar.add(Calendar.MONTH, -3);
+                if (workCompleteDate.before(calendar.getTime())) {
+                    addDataMessage(String.format(OLD_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
+                            workCompleteDateString), dataRowIndex);
                 }
 
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
