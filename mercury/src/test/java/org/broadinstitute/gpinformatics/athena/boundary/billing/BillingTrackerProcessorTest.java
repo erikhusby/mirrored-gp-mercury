@@ -72,6 +72,7 @@ public class BillingTrackerProcessorTest {
         assertThat(processor.getMessages(), hasItem(makeCompletedDateFutureErrorMessage(tomorrowString)));
     }
 
+    @Test(enabled = false)
     public void testProcessRowDetailsWorkCompleteMoreThanThreeMonthsAgo() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -3);
