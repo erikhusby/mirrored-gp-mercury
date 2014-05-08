@@ -104,4 +104,8 @@ public class BarcodedTube extends LabVessel {
     public BarcodedTubeType getTubeType() {
         return tubeType;
     }
+
+    public void setTubeType(BarcodedTubeType type) {
+        tubeType = type;
+    }
 }
