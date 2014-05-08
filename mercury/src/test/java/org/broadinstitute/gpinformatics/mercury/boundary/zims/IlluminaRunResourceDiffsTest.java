@@ -32,31 +32,42 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
-    public void testMercury() {
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    public void testCompareAll() {
         List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
                 IlluminaSequencingRun.class);
         for (IlluminaSequencingRun illuminaSequencingRun : illuminaSequencingRuns) {
             // Exclude runs created by tests
             if (!illuminaSequencingRun.getRunName().contains("Flowcell") &&
                     !illuminaSequencingRun.getRunName().toLowerCase().contains("test")) {
-                System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
-                try {
-                    String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
-                            new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
-                            illuminaSequencingRun.getRunName());
-                    String referenceRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
-                            new URL("http://mercurydev:8080/Mercury/"),
-                            illuminaSequencingRun.getRunName());
-                    JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, localRun,
-                            JSONCompareMode.LENIENT);
-                    if (jsonCompareResult.failed()) {
-                        System.out.println(jsonCompareResult.getMessage());
-                    }
-                } catch (Throwable e) {
-                    System.out.println(e);
-                }
+                compareRun(illuminaSequencingRun);
             }
+        }
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    public void testCompareOne() {
+        IlluminaSequencingRun illuminaSequencingRun = illuminaSequencingRunDao.findByRunName(
+                "140122_SL-HBV_0297_AFCH79B6ADXX");
+        compareRun(illuminaSequencingRun);
+    }
+
+    private void compareRun(IlluminaSequencingRun illuminaSequencingRun) {
+        System.out.println("Comparing run " + illuminaSequencingRun.getRunName());
+        try {
+            String localRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
+                    new URL(ImportFromSquidTest.TEST_MERCURY_URL + "/"),
+                    illuminaSequencingRun.getRunName());
+            String referenceRun = IlluminaRunResourceLiveTest.getZimsIlluminaRunString(
+                    new URL("http://mercurydev:8080/Mercury/"),
+                    illuminaSequencingRun.getRunName());
+            JSONCompareResult jsonCompareResult = JSONCompare.compareJSON(referenceRun, localRun,
+                    JSONCompareMode.LENIENT);
+            if (jsonCompareResult.failed()) {
+                System.out.println(jsonCompareResult.getMessage());
+            }
+        } catch (Throwable e) {
+            System.out.println(e);
         }
     }
 }

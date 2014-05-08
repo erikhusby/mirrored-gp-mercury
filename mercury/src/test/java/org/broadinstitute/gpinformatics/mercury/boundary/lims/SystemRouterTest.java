@@ -990,6 +990,7 @@ public class SystemRouterTest extends BaseEventTest {
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                                               new HashSet<LabVessel>(mapBarcodeToTube.values()),
                                               LabBatch.LabBatchType.WORKFLOW);
+        // todo jmt should these tests create bucket entries?
 
         Calendar july25CalendarDate = new GregorianCalendar(2013, 6, 25);
         Calendar preJuly25CalendarDate = new GregorianCalendar(2013, 6, 24);
