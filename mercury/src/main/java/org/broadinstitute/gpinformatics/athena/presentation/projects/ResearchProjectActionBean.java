@@ -114,7 +114,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
-    /** The research project business key */
+    /**
+     * The research project business key
+     */
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
@@ -257,7 +259,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed.
         if ((editResearchProject.getOriginalTitle() == null) ||
-                (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
+            (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
 
             // Check if there is an existing research project and error out if it already exists.
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
@@ -321,7 +323,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private void validateUser(String validatingFor) {
         if (!userBean.ensureUserValid()) {
-            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
+            addGlobalValidationError(
+                    MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
         }
     }
 
@@ -391,7 +394,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             throw e;
         }
 
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {
@@ -407,7 +411,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
 
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
-        editResearchProject.setParentResearchProject(tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
+        editResearchProject.setParentResearchProject(
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
     }
 
     @HandlesEvent(VIEW_ACTION)
@@ -550,7 +555,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Determines whether or not the given regulatory information is already associated with the current research
      * project. This is used to determine whether an existing regulatory information can be added to a project.
      *
-     * @param regulatoryInfo    the regulatory info to check
+     * @param regulatoryInfo the regulatory info to check
+     *
      * @return true if the regulatory info is associated with the research project; false otherwise
      */
     public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
@@ -562,7 +568,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * research project. This is used to determine whether regulatory information can be safely disassociated with the
      * project.
      *
-     * @param regulatoryInfo    the regulatory info to check
+     * @param regulatoryInfo the regulatory info to check
+     *
      * @return true if the regulatory info is in use for an order; false otherwise
      */
     public boolean isRegulatoryInfoInProductOrdersForThisResearchProject(RegulatoryInfo regulatoryInfo) {
@@ -621,7 +628,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Determines whether or not a regulatory information of the given type already exists with the queried identifier.
      *
-     * @param type    the type to check
+     * @param type the type to check
+     *
      * @return true if the type is already in use for the identifier; false otherwise
      */
     public boolean isTypeInUseForIdentifier(RegulatoryInfo.Type type) {
@@ -674,6 +682,17 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
+    //    @ValidationMethod(on = ADD_NEW_REGULATORY_INFO_ACTION)
+    public void validateNewRegulatoryInfo() {
+        if (regulatoryInfoType == null) {
+            addValidationError("regulatoryInfoType", "Type is a required field");
+        }
+        if (regulatoryInfoAlias.length() > 255) {
+            addValidationError("regulatoryInfoAlias", "Protocol title must be less than 255 characters long.");
+        }
+
+    }
+
     /**
      * Creates a new regulatory information record and adds it to the research project currently being viewed.
      *
@@ -706,11 +725,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         String result = "";
         if (StringUtils.isBlank(regulatoryInfoAlias)) {
             result = "Protocol Title is required.";
+        } else if (regulatoryInfoAlias.length() > 255) {
+            result = "Protocol title can contain no more than 255 characters.";
         } else {
             List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
             for (RegulatoryInfo info : infos) {
                 if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(), info.getIdentifier());
+                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(),
+                            info.getIdentifier());
                     break;
                 }
             }
@@ -874,6 +896,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the sequence aligner.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the sequence aligner
      */
     public DisplayableItem getSequenceAligner(String businessKey) {
@@ -884,6 +907,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the reference sequence.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the reference sequence
      */
     public DisplayableItem getReferenceSequence(String businessKey) {

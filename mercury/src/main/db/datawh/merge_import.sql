@@ -1256,7 +1256,8 @@ IS
         billing_session_id = new.billing_session_id,
         billing_message = new.billing_message,
         work_complete_date = new.work_complete_date,
-        etl_date = new.etl_date
+        etl_date = new.etl_date,
+        quote_server_work_item = new.quote_server_work_item
       WHERE ledger_id = new.ledger_id;
 
       INSERT INTO ledger_entry (
@@ -1269,7 +1270,8 @@ IS
         billing_session_id,
         billing_message,
         work_complete_date,
-        etl_date
+        etl_date,
+        quote_server_work_item
       )
       SELECT
         new.ledger_id,
@@ -1281,7 +1283,8 @@ IS
         new.billing_session_id,
         new.billing_message,
         new.work_complete_date,
-        new.etl_date
+        new.etl_date,
+        new.quote_server_work_item
       FROM DUAL
       WHERE NOT EXISTS(
             SELECT

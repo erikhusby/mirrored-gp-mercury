@@ -4,14 +4,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 
 /**
@@ -24,9 +27,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
     private Collection<QuotePriceItem> quotePriceItems = new ArrayList<>();
 
     private PMBQuoteService quoteService;
-
-    @Inject
-    private Deployment deployment;
 
     private static final Log logger = LogFactory.getLog(PriceListCache.class);
 
@@ -57,8 +57,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
             }
         } catch (QuoteServerException | QuoteNotFoundException e) {
             logger.error("Could not refresh the price item list.");
-        } catch (Exception ex) {
-            logger.error("Could not refresh the price item list.", ex);
         }
     }
 
