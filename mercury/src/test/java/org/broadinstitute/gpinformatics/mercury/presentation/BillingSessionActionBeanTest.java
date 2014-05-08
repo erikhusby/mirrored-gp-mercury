@@ -52,9 +52,4 @@ public class BillingSessionActionBeanTest {
         assertThat(roundTrip.getActionBean(BillingSessionActionBean.class).getWorkItemIdToHighlight(), is(nullValue()));
     }
 
-    public void testGetNullWorkItemId2() {
-        BillingSessionActionBean bean = new BillingSessionActionBean();
-        assertThat(bean.getWorkItemId(null), is(nullValue()));
-    }
-
 }

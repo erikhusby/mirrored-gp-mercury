@@ -53,7 +53,7 @@ import java.util.Map;
  *
  * Converted this from abstract because the report.jsp needs to instantiate to get context info
  */
-public class CoreActionBean implements ActionBean, MessageReporter {
+public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     public static final String DATE_PATTERN = "MM/dd/yyyy";

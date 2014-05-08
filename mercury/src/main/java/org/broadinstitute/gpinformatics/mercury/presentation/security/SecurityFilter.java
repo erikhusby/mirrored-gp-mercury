@@ -15,8 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * SecurityFilter is a Servlet filter whose intentions are to assist the Mercury application with the job of forcing
- * all unsecured traffic to the applications secure (ssl) port.
+ * This filter forces all unsecured traffic to the application's secure (ssl) port.
  */
 public class SecurityFilter implements Filter {
 

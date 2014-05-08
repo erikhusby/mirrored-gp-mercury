@@ -111,7 +111,7 @@
             </thead>
             <tbody>
             <c:forEach items="${actionBean.quoteImportItems}" var="item">
-                <tr id="${actionBean.getWorkItemId(item)}">
+                <tr id="${item.singleWorkItem}">
                     <td>
                         <a href="${actionBean.getQuoteUrl(item.quoteId)}" class="external" target="QUOTE">
                             ${item.quoteId}

@@ -1,5 +1,5 @@
 -------------------------------------------------------
--- For release 1.46
+-- For release 1.49
 -------------------------------------------------------
-alter table product add aggregation_data_type  VARCHAR2(255);
-alter table im_product add aggregation_data_type  VARCHAR2(255);
+alter table ledger_entry add quote_server_work_item varchar2(255);
+alter table im_ledger_entry add quote_server_work_item varchar2(255);
