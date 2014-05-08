@@ -762,7 +762,8 @@ public class LabEventTest extends BaseEventTest {
             BarcodedTube catchTube = hybridSelectionEntityBuilder.getNormCatchRack().getContainerRole().
                     getVesselAtPosition(VesselPosition.A01);
             catchTube.clearCaches();
-            BucketEntry bucketEntry = new BucketEntry(catchTube, "PO-1", bucket, BucketEntry.BucketEntryType.PDO_ENTRY);
+            BucketEntry bucketEntry = new BucketEntry(catchTube, productOrder1, bucket,
+                    BucketEntry.BucketEntryType.PDO_ENTRY);
             LabBatch poolReworkBatch = new LabBatch("LCSET-pool", Collections.<LabVessel>singleton(catchTube),
                     LabBatch.LabBatchType.WORKFLOW);
             bucketEntry.setLabBatch(poolReworkBatch);

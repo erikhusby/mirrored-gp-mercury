@@ -246,7 +246,7 @@ public class BaseEventTest {
      */
     public Bucket bucketBatchAndDrain(Map<String, BarcodedTube> mapBarcodeToTube, final ProductOrder productOrder,
                                       LabBatch workflowBatch, String lcsetSuffix) {
-        for (TwoDBarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
+        for (BarcodedTube twoDBarcodedTube : mapBarcodeToTube.values()) {
             twoDBarcodedTube.clearCaches();
         }
 
