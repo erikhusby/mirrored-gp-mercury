@@ -1090,7 +1090,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(SQUID_COMPONENTS_ACTION)
     public Resolution squidComponent() {
-        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.CREATE_ACTION);
+        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.ENTER_COMPONENTS_ACTION);
     }
 
     @HandlesEvent(VALIDATE_ORDER)

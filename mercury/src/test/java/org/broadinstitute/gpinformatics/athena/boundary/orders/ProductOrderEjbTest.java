@@ -65,9 +65,7 @@ public class ProductOrderEjbTest {
                         }};
                     }
                 }
-            }),
-            null
-    );
+            }), null, null);
 
     public void testMapAliquotIdToSampleInvalid() {
         ProductOrder order = ProductOrderDBTestFactory.createTestProductOrder(STOCK_ID);

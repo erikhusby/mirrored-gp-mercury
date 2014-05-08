@@ -1038,4 +1038,26 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="SQU-1299-add-work-request-id" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order" columnName="squid_work_request" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="squid_work_request" type="varchar2(255 char)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="SQU-1299-add-work-request-id_aud" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_order_aud" columnName="squid_work_request" schemaName="athena" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud" schemaName="athena">
+            <column name="squid_work_request" type="varchar2(255 char)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

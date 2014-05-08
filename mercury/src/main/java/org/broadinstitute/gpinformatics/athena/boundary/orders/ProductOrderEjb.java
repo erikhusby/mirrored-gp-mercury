@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -36,6 +38,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -72,23 +75,25 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
  */
 public class ProductOrderEjb {
 
-    private final ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
-    private final ProductDao productDao;
+    private ProductDao productDao;
 
-    private final QuoteService quoteService;
+    private QuoteService quoteService;
 
-    private final JiraService jiraService;
+    private JiraService jiraService;
 
-    private final UserBean userBean;
+    private UserBean userBean;
 
-    private final BSPUserList userList;
+    private BSPUserList userList;
 
-    private final LedgerEntryDao ledgerEntryDao;
+    private LedgerEntryDao ledgerEntryDao;
 
-    private final BSPSampleDataFetcher sampleDataFetcher;
+    private BSPSampleDataFetcher sampleDataFetcher;
 
-    private final BucketEjb bucketEjb;
+    private BucketEjb bucketEjb;
+
+    private SquidConnector squidConnector;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
@@ -97,7 +102,6 @@ public class ProductOrderEjb {
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
-        this(null, null, null, null, null, null, null, null, null);
     }
 
     // Intellij thinks that BSPSampleDataFetcher is ambiguous in this context.
@@ -111,7 +115,7 @@ public class ProductOrderEjb {
                            BSPUserList userList,
                            LedgerEntryDao ledgerEntryDao,
                            BSPSampleDataFetcher sampleDataFetcher,
-                           BucketEjb bucketEjb) {
+                           BucketEjb bucketEjb, SquidConnector squidConnector) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -121,6 +125,7 @@ public class ProductOrderEjb {
         this.ledgerEntryDao = ledgerEntryDao;
         this.sampleDataFetcher = sampleDataFetcher;
         this.bucketEjb = bucketEjb;
+        this.squidConnector = squidConnector;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
@@ -1067,5 +1072,19 @@ public class ProductOrderEjb {
         if (messageCollection != null) {
             messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
         }
+    }
+
+    public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey, @Nonnull AutoWorkRequestInput squidInput) {
+
+        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+
+        if(order == null) {
+            throw new RuntimeException("Unable to find a product order with a key of " + productOrderKey);
+        }
+
+        AutoWorkRequestOutput workRequestOutput = squidConnector.createSquidWorkRequest(squidInput);
+
+        order.setSquidWorkRequest(workRequestOutput.getWorkRequestId());
+        return workRequestOutput;
     }
 }
