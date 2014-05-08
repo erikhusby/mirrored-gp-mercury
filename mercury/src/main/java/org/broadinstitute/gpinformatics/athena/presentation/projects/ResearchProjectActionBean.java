@@ -682,17 +682,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
-    //    @ValidationMethod(on = ADD_NEW_REGULATORY_INFO_ACTION)
-    public void validateNewRegulatoryInfo() {
-        if (regulatoryInfoType == null) {
-            addValidationError("regulatoryInfoType", "Type is a required field");
-        }
-        if (regulatoryInfoAlias.length() > 255) {
-            addValidationError("regulatoryInfoAlias", "Protocol title must be less than 255 characters long.");
-        }
-
-    }
-
     /**
      * Creates a new regulatory information record and adds it to the research project currently being viewed.
      *
@@ -725,8 +714,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         String result = "";
         if (StringUtils.isBlank(regulatoryInfoAlias)) {
             result = "Protocol Title is required.";
-        } else if (regulatoryInfoAlias.length() > 255) {
-            result = "Protocol title can contain no more than 255 characters.";
+        } else if (regulatoryInfoAlias.length() > RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH) {
+            result = String.format("Protocol title exceeds maximum length of %d with %d.",
+                    RegulatoryInfo.PROTOCOL_TITLE_MAX_LENGTH, regulatoryInfoAlias.length());
         } else {
             List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
             for (RegulatoryInfo info : infos) {
