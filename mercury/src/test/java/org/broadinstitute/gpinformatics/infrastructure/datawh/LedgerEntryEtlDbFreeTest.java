@@ -35,6 +35,7 @@ public class LedgerEntryEtlDbFreeTest {
     private static final String BILLING_SESSION_MESSAGE = "Quote server returned:\nERROR";
     private static final String FORMATTED_BILLING_SESSION_MESSAGE = BILLING_SESSION_MESSAGE.replace('\n', ' ');
     private static final Date WORK_COMPLETE_DATE = new Date();
+    private static final String WORK_ITEM_ID = "2201";
     private String datafileDir;
     private LedgerEntryEtl ledgerEntryEtl;
 
@@ -99,6 +100,7 @@ public class LedgerEntryEtlDbFreeTest {
         EasyMock.expect(billingSession.getBillingSessionId()).andReturn(BILLING_SESSION_ID);
         EasyMock.expect(ledgerEntry.getBillingMessage()).andReturn(BILLING_SESSION_MESSAGE);
         EasyMock.expect(ledgerEntry.getWorkCompleteDate()).andReturn(WORK_COMPLETE_DATE);
+        EasyMock.expect(ledgerEntry.getWorkItem()).andReturn(WORK_ITEM_ID);
         EasyMock.replay(mocks);
 
         Collection<String> records = ledgerEntryEtl.dataRecords(etlDateStr, false, LEDGER_ID);
@@ -123,6 +125,7 @@ public class LedgerEntryEtlDbFreeTest {
         Assert.assertEquals(parts[i++], String.valueOf(BILLING_SESSION_ID));
         Assert.assertEquals(parts[i++], FORMATTED_BILLING_SESSION_MESSAGE);
         Assert.assertEquals(parts[i++], EtlTestUtilities.format(WORK_COMPLETE_DATE));
+        Assert.assertEquals(parts[i++], WORK_ITEM_ID);
         Assert.assertEquals(parts.length, i);
     }
 }
