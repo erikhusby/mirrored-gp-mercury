@@ -72,6 +72,18 @@ public class BillingTrackerProcessorTest {
         assertThat(processor.getMessages(), hasItem(makeCompletedDateFutureErrorMessage(tomorrowString)));
     }
 
+    public void testProcessRowDetailsWorkCompleteMoreThanThreeMonthsAgo() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MONTH, -3);
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+        String oldDateString = new SimpleDateFormat("MM/dd/yyyy").format(calendar.getTime());
+
+        Map<String, String> dataRow = makeDataRow(oldDateString);
+
+        processor.processRowDetails(dataRow, 0);
+        assertThat(processor.getMessages(), hasItem(makeCompletedDateTooOldErrorMessage(oldDateString)));
+    }
+
     private Map<String, String> makeDataRow(String workCompleteDate) {
         Map<String, String> dataRow = new HashMap<>();
         dataRow.put(BillingTrackerHeader.WORK_COMPLETE_DATE.getText(), workCompleteDate);
@@ -83,6 +95,12 @@ public class BillingTrackerProcessorTest {
     }
 
     private String makeCompletedDateFutureErrorMessage(String nowString) {
-        return String.format("Sheet test, Row #0 Sample SM-1 cannot have a completed date of %s because it is in the future.", nowString);
+        return String.format("Sheet test, Row #0 " + BillingTrackerProcessor.FUTURE_WORK_COMPLETE_DATE_MESSAGE, "SM-1",
+                nowString);
+    }
+
+    private String makeCompletedDateTooOldErrorMessage(String nowString) {
+        return String.format("Sheet test, Row #0 " + BillingTrackerProcessor.OLD_WORK_COMPLETE_DATE_MESSAGE, "SM-1",
+                nowString);
     }
 }
