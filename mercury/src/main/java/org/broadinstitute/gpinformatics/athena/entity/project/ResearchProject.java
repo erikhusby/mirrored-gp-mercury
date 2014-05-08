@@ -15,6 +15,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -55,6 +56,8 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
+
+    private static final long serialVersionUID = 937268527371239980L;
 
     /**
      * Compare by modified date.
@@ -115,7 +118,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     @Column(name = "SYNOPSIS", nullable = false, length = 4000)
     private String synopsis;
 
-    @Column(name = "IRB_NOT_ENGAGED", nullable = false)
+    @Column(name = "IRB_NOT_ENGAGED")
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
@@ -396,12 +399,20 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         associatedPeople.clear();
     }
 
-    public void addPeople(RoleType role, List<BspUser> people) {
-        if (people != null) {
-            for (BspUser user : people) {
-                associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
-            }
+    /**
+     * Add to the list of people associated with this project.
+     * @param role the role of the people being added
+     * @param people the people to add
+     * @return true if any people were added
+     */
+    public boolean addPeople(@Nonnull RoleType role, @Nonnull Collection<BspUser> people) {
+        int peopleSize = associatedPeople.size();
+
+        for (BspUser user : people) {
+            associatedPeople.add(new ProjectPerson(this, role, user.getUserId()));
         }
+
+        return peopleSize != associatedPeople.size();
     }
 
     /**
@@ -521,6 +532,13 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return productOrders;
     }
 
+    public void addProductOrder(ProductOrder productOrder) {
+        productOrders.add(productOrder);
+    }
+
+    public void removeProductOrder(ProductOrder productOrder) {
+        productOrders.remove(productOrder);
+    }
 
     public String getOriginalTitle() {
         return originalTitle;
@@ -561,6 +579,11 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return collectChildResearchProjects(collectedProjects);
     }
 
+    /**
+     * Recursively Find all Research Projects which are parents of this one.
+     *
+     * @return Collection of ResearchProjects sorted by ascending depth.
+     */
     public Collection<ResearchProject> getAllParents() {
         Collection<ResearchProject> collectedProjects = new TreeSet<>();
         if (getParentResearchProject()!=null) {
@@ -745,5 +768,5 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             return name();
         }
     }
-
 }
+

@@ -79,7 +79,7 @@ public class ProductOrderDao extends GenericDao {
 
     private static class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
 
-        private Set<FetchSpec> fetchSpecs;
+        private final Set<FetchSpec> fetchSpecs;
 
         ProductOrderDaoCallback(FetchSpec... fs) {
             if (fs.length != 0) {
@@ -101,7 +101,7 @@ public class ProductOrderDao extends GenericDao {
                 if (fetchSpecs.contains(FetchSpec.RISK_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.riskItems, JoinType.LEFT);
                 }
-                if (fetchSpecs.contains(FetchSpec.PRODUCT.LEDGER_ITEMS)) {
+                if (fetchSpecs.contains(FetchSpec.LEDGER_ITEMS)) {
                     pdoSampleFetch.fetch(ProductOrderSample_.ledgerItems, JoinType.LEFT);
                 }
             }
@@ -148,16 +148,13 @@ public class ProductOrderDao extends GenericDao {
 
                 criteriaQuery.where(predicate);
             }
-        },lockModeType);
+        }, lockModeType);
     }
 
     /**
      * Wraps a call to the main findByBusinessKey with a lock mode of NONE for generic calls
-     * @param key
-     * @param fetchSpecs
-     * @return
      */
-    public ProductOrder findByBusinessKey(@Nonnull final String key, FetchSpec... fetchSpecs) {
+    public ProductOrder findByBusinessKey(@Nonnull String key, FetchSpec... fetchSpecs) {
         return findByBusinessKey(key, LockModeType.NONE, fetchSpecs);
     }
 
@@ -182,7 +179,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListByBusinessKeys(Collection<String> businessKeys, FetchSpec... fetchSpecs) {
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys,
-                new ProductOrderDaoCallback(fetchSpecs));
+                              new ProductOrderDaoCallback(fetchSpecs));
     }
 
     /**
@@ -191,7 +188,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListForBilling(Collection<String> businessKeys) {
         return findListByBusinessKeys(businessKeys, FetchSpec.PRODUCT, FetchSpec.RESEARCH_PROJECT, FetchSpec.SAMPLES,
-                FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
+                                      FetchSpec.RISK_ITEMS, FetchSpec.LEDGER_ITEMS);
     }
 
 
@@ -311,9 +308,9 @@ public class ProductOrderDao extends GenericDao {
 
         Query query = getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class).addScalar("name", StandardBasicTypes.STRING)
-                .addScalar("id", StandardBasicTypes.LONG)
-                .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
-                .addScalar("total", StandardBasicTypes.INTEGER);
+             .addScalar("id", StandardBasicTypes.LONG)
+             .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
+             .addScalar("total", StandardBasicTypes.INTEGER);
 
         List<Object> results;
         if (productOrderIds != null) {
@@ -329,7 +326,8 @@ public class ProductOrderDao extends GenericDao {
             Object[] result = (Object[]) resultObject;
             String businessKey = ProductOrder.createBusinessKey((Long) result[1], (String) result[0]);
             progressCounterMap.put(businessKey,
-                    new ProductOrderCompletionStatus((Integer) result[3], (Integer) result[2], (Integer) result[4]));
+                                   new ProductOrderCompletionStatus((Integer) result[3], (Integer) result[2],
+                                                                    (Integer) result[4]));
         }
 
         return progressCounterMap;
@@ -403,7 +401,7 @@ public class ProductOrderDao extends GenericDao {
                 ProductOrderKit_.kitOrderDetails, JoinType.LEFT);
 
         predicates.add(criteriaBuilder
-                .equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
+                               .equal(productJoin.get(Product_.partNumber), Product.SAMPLE_INITIATION_PART_NUMBER));
         predicates.add(criteriaBuilder.isNull(kitDetailJoin.get(ProductOrderKitDetail_.numberOfSamples)));
 
         productOrderCriteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));

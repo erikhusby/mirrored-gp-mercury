@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -23,25 +24,18 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import java.net.URL;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
@@ -58,29 +52,32 @@ import static org.hamcrest.Matchers.nullValue;
 public class BillingEjbPartialSuccessTest extends Arquillian {
 
     @Inject
-    private BillingSessionDao billingSessionDao;
+    ProductOrderDao productOrderDao;
 
     @Inject
-    private BillingEjb billingEjb;
+    private BillingSessionDao billingSessionDao;
 
     @Inject
     private PriceListCache priceListCache;
 
+    public static final String GOOD_WORK_ID = "workItemId\t1000";
     public static final String SM_1234 = "SM-1234";
     public static final String SM_5678 = "SM-5678";
     private static String FAILING_PRICE_ITEM_NAME = "";
     private static String FAILING_PRICE_ITEM_SAMPLE = "";
 
-    private static int quoteCount;
-    private static int totalItems;
+    protected static int quoteCount;
+    protected static int totalItems;
 
-    private static boolean cycleFails = true;
-    private static Result lastResult = Result.FAIL;
+    protected static boolean cycleFails = true;
+    protected static Result lastResult = Result.FAIL;
+    @Inject
+    private BillingAdaptor billingAdaptor;
 
     public enum Result {FAIL, SUCCESS}
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
-    private static final Object lockBox = new Object();
+    protected static final Object lockBox = new Object();
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -88,17 +85,16 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      */
     @Alternative
     protected static class PartiallySuccessfulQuoteServiceStub implements QuoteService {
-
         private static final long serialVersionUID = 6093273925949722169L;
-
+        private Log log = LogFactory.getLog(QuoteFundingList.class);
         @Override
         public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new PriceList();
         }
 
         @Override
         public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quotes();
         }
 
         @Override
@@ -109,11 +105,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                                       double numWorkUnits,
                                       String callbackUrl, String callbackParameterName, String callbackParameterValue) {
             // Simulate failure only for one particular PriceItem.
-            System.out.println("In register New work");
+            log.debug("In register New work");
             if (FAILING_PRICE_ITEM_NAME.equals(quotePriceItem.getName())) {
                 throw new RuntimeException("Intentional Work Registration Failure!");
             }
-            String workId = "workItemId\t1000";
+            String workId = GOOD_WORK_ID;
 
             if (cycleFails) {
                 switch (lastResult) {
@@ -129,7 +125,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             }
             synchronized (lockBox) {
                 quoteCount++;
-                /*log.debug*/System.out.println("Quote count is now " + quoteCount);
+                /*log.debug*/
+                log.debug("Quote count is now " + quoteCount);
                 assertThat(quoteCount, is(lessThanOrEqualTo(totalItems)));
             }
             return workId;
@@ -137,15 +134,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            throw new NotImplementedException();
+            return new Quote();
         }
     }
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(
-                org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV,
-                PartiallySuccessfulQuoteServiceStub.class);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DummyPMBQuoteService.class, PartiallySuccessfulQuoteServiceStub.class);
     }
 
     /**
@@ -163,7 +158,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      */
     private BillingSession writeFixtureData(String... orderSamples) {
 
-        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(billingSessionDao, orderSamples);
+        ProductOrder productOrder = ProductOrderDBTestFactory.createProductOrder(productOrderDao, orderSamples);
         quoteCount = 0;
         totalItems = 1;
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(productOrder.getSamples().size());
@@ -177,14 +172,15 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
-                                    "Replacement PriceItem Name " + uuid);
+                                          "Replacement PriceItem Name " + uuid);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
                     billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                            productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                                                              productOrder.getProduct().getPrimaryPriceItem(),
+                                                              new Date(), 3));
                 }
             }
         }
@@ -211,7 +207,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      *
      * @param orderSamples
      */
-    private BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
+    protected BillingSession writeFixtureDataOneSamplePerProductOrder(String... orderSamples) {
 
         Set<LedgerEntry> billingSessionEntries = new HashSet<>(orderSamples.length);
         for (String sample : orderSamples) {
@@ -225,14 +221,15 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
                     UUID uuid = UUID.randomUUID();
                     PriceItem replacementPriceItem =
                             new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category",
-                                    "Replacement PriceItem Name " + uuid);
+                                          "Replacement PriceItem Name " + uuid);
                     FAILING_PRICE_ITEM_NAME = replacementPriceItem.getName();
                     billingSessionDao.persist(replacementPriceItem);
 
                     billingSessionEntries.add(new LedgerEntry(ledgerSample, replacementPriceItem, new Date(), 5));
                 } else {
                     billingSessionEntries.add(new LedgerEntry(ledgerSample,
-                            productOrder.getProduct().getPrimaryPriceItem(), new Date(), 3));
+                                                              productOrder.getProduct().getPrimaryPriceItem(),
+                                                              new Date(), 3));
                 }
             }
         }
@@ -247,7 +244,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     /**
      * <ul>
-     * <li>Create the fixture data per {@link #writeFixtureData()}.</li>
+     * <li>Create the fixture data per {@link #writeFixtureData(String...)}.</li>
      * <li>Load the BillingSession and call a version of the BillingEjb method that <b>does</b> call DAO methods
      * inside a transactionally demarcated method, which should cause the EntityManager to be enrolled in the
      * transaction.</li>
@@ -264,7 +261,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureData(new String[]{SM_1234, SM_5678});
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        billingAdaptor.billSessionItems("http://www.broadinstitute.org", billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         // Re-fetch the updated BillingSession from the database.
@@ -280,9 +277,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
+                assertThat(ledgerEntry.getWorkItem(), is(GOOD_WORK_ID));
             }
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
+                assertThat(ledgerEntry.getWorkItem(), is(nullValue()));
             }
         }
     }
@@ -300,7 +299,8 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
+                                                                        billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -308,8 +308,9 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should equal half the size of the total items to be billed",
-                quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+                   quoteImportItems.size(), is(equalTo(sampleNameList.length / 2)));
+        Collection<BillingEjb.BillingResult> billingResults1 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
+                                                                               billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -317,10 +318,11 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should equal half the size of the total items to be billed",
-                quoteImportItems.size(), is(equalTo(sampleNameList.length / 4)));
+                   quoteImportItems.size(), is(equalTo(sampleNameList.length / 4)));
 
         cycleFails = false;
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults3 = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
+                                                                         billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
@@ -328,13 +330,13 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
 
         assertThat("the size of the unBilled items should be zero",
-                quoteImportItems.size(), is(equalTo(0)));
+                   quoteImportItems.size(), is(equalTo(0)));
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
     public void testNoForcedFailures() {
 
-        System.out.println("Running no forced failures threaded");
+        log.debug("Running no forced failures threaded");
 
         String[] sampleNameList = {"SM-2342", "SM-9291", "SM-2349", "SM-9944", "SM-4444", "SM-4441", "SM-1112",
                 "SM-4488"};
@@ -347,12 +349,12 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         BillingSession billingSession = writeFixtureDataOneSamplePerProductOrder(sampleNameList);
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
-        billingEjb.bill("http://www.broadinstitute.org", billingSession.getBusinessKey());
+        Collection<BillingEjb.BillingResult> billingResults = billingAdaptor.billSessionItems("http://www.broadinstitute.org",
+                                                                        billingSession.getBusinessKey());
 
         billingSessionDao.clear();
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
-
     }
 }

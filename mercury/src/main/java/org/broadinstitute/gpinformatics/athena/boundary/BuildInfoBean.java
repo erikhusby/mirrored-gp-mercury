@@ -3,15 +3,13 @@ package org.broadinstitute.gpinformatics.athena.boundary;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 
-import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 /**
  * Get the build and version information.  Also get the deployment type (DEV,QA,PROD,STUBBY).
- *
- * @author Michael Dinsmore
  */
-@RequestScoped
+@ApplicationScoped
 public class BuildInfoBean {
     @Inject
     private Deployment deployment;

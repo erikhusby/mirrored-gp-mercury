@@ -27,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -218,7 +217,6 @@ public class UploadTrackerActionBean extends CoreActionBean {
     }
 
     private void processBillingOnTempFile() {
-        InputStream inputStream = null;
         PoiSpreadsheetParser parser = null;
 
         try {
@@ -228,8 +226,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, true);
             parser = new PoiSpreadsheetParser(processors);
 
-            inputStream = new FileInputStream(previewFile);
-            parser.processUploadFile(inputStream);
+            parser.processUploadFile(previewFile);
             if (hasErrors(processors.values())) {
                 return;
             }
@@ -250,10 +247,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         } catch (Exception e) {
             e.printStackTrace();
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
-           } finally {
-            // No matter what, close the file but it will be ignored if everything was closed and deleted.
-            IOUtils.closeQuietly(inputStream);
-
+        } finally {
             if (parser != null) {
                 parser.close();
             }

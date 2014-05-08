@@ -79,15 +79,6 @@
                             }
                         );
 
-                        $j("#irbs").tokenInput(
-                            "${ctxpath}/projects/project.action?irbAutocomplete=", {
-                                hintText: "Type an IRB Number",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
-                                tokenDelimiter: "<%=TokenInput.TOKEN_INPUT_SEPARATOR%>",
-                                preventDuplicates: true
-                            }
-                        );
-
                         $j("#parentResearchProject").tokenInput(
                                 "${ctxpath}/projects/project.action?projectHierarchyAwareAutocomplete=&researchProject=${actionBean.editResearchProject.businessKey}", {
                                     hintText: "Type a project name",
@@ -202,24 +193,42 @@
 
 
                     <div class="control-group">
-                        <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
+                        <label class="control-label">Irb Numbers</label>
 
                         <div class="controls">
-                            <stripes:text id="irbs" name="irbList" title="Enter the IRB Number" class="defaultText"/>
-                            <p>
-                                <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
-                            </p>
+                            <div class="form-value">
+                                <c:forEach items="${actionBean.editResearchProject.irbNumbers}" var="irb">
+                                        ${irb}
+                                </c:forEach>
+                            </div>
                         </div>
                     </div>
 
                     <div class="control-group">
-                        <label class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
+                        <label class="control-label">IRB Not Engaged</label>
                         <div class="controls">
-                            <stripes:text id="irbNotes" class="defaultText input-create-form" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                            <div class="form-value">
+                                <c:choose>
+                                    <c:when test="${actionBean.editResearchProject.irbNotEngaged}">
+                                        <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        No
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
                         </div>
                     </div>
 
+                    <div class="control-group">
+                        <label class="control-label">IRB Notes</label>
+
+                        <div class="controls">
+                            <div class="form-value">${actionBean.editResearchProject.irbNotes}</div>
+                        </div>
+                    </div>
                 </div>
+
 
                 <div class="form-horizontal span5">
                     <fieldset>

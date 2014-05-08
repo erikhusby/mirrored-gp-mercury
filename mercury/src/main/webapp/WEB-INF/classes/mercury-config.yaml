@@ -76,6 +76,18 @@ jira:
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
 
+collaborate:
+
+    DEV:
+      urlBase:      http://localhost:8080/portal/collaborate
+
+    RC:
+      urlBase:      http://gapdev:8080/portal/collaborate
+
+    PROD:
+      urlBase:      http://gap:8080/portal/collaborate
+
+
 portal:
     TEST:
       urlBase:      http://gapdev:8111/portal
@@ -227,6 +239,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: DEV
       hipchat: DEV
+      collaborate: DEV
 
 
     AUTO_BUILD:
@@ -242,6 +255,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: DEV
       hipchat: DEV
+      collaborate: DEV
 
 
     TEST:
@@ -257,6 +271,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: TEST
       hipchat: DEV
+      collaborate: DEV
 
 
     QA:
@@ -272,6 +287,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       hipchat: DEV
+      collaborate: RC
 
 
     RC:
@@ -287,6 +303,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       hipchat: DEV
+      collaborate: RC
 
 
     PROD:
@@ -302,3 +319,4 @@ mercury:
       datawhEtl: PROD
       bettaLimsServer: PROD
       hipchat: PROD
+      collaborate: PROD

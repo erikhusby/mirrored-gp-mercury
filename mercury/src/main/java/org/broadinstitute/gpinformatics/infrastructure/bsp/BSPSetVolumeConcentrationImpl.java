@@ -104,11 +104,12 @@ public class BSPSetVolumeConcentrationImpl extends BSPJerseyClient implements BS
             rdr = new BufferedReader(new InputStreamReader(is));
 
             // Check for OK status.
+            String firstLine = rdr.readLine();
             if (clientResponse.getStatus() == ClientResponse.Status.OK.getStatusCode() &&
-                rdr.readLine().startsWith(VALID_COMMUNICATION_PREFIX)) {
+                firstLine.startsWith(VALID_COMMUNICATION_PREFIX)) {
                 result = RESULT_OK;
             } else {
-                result = "Cannot set volume and concentration: " + clientResponse.getStatus();
+                result = "Cannot set volume and concentration: " + firstLine + "(" + clientResponse.getStatus() + ")";
             }
         } catch (Exception exp) {
             result = "Cannot set volume and concentration: " + exp.getMessage();

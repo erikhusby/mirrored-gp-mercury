@@ -18,8 +18,9 @@ CREATE TABLE product (
   is_top_level_product      CHAR(1) CHECK (is_top_level_product IN ('T', 'F')),
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
-  etl_date                  DATE                    NOT NULL,
-  primary_price_item_id     NUMERIC(19, 0)
+  primary_price_item_id     NUMERIC(19, 0),
+  aggregation_data_type     VARCHAR2(255),
+  etl_date                  DATE                    NOT NULL
 );
 
 CREATE TABLE price_item (
@@ -214,7 +215,8 @@ CREATE TABLE ledger_entry (
   billing_session_id      NUMERIC(19),
   billing_message         VARCHAR2(500),
   work_complete_date      DATE,
-  etl_date                DATE        NOT NULL
+  etl_date                DATE        NOT NULL,
+  quote_server_work_item  VARCHAR2(255)
 );
 
 CREATE TABLE billing_session (
@@ -256,7 +258,8 @@ CREATE TABLE im_product (
   is_top_level_product      CHAR(1),
   workflow_name             VARCHAR2(255),
   product_family_name       VARCHAR2(255),
-  primary_price_item_id     NUMERIC(19, 0)
+  primary_price_item_id     NUMERIC(19, 0),
+  aggregation_data_type	    VARCHAR2(255)
 );
 
 CREATE TABLE im_price_item (
@@ -469,7 +472,8 @@ CREATE TABLE im_ledger_entry (
   quantity                NUMBER(15,4),
   billing_session_id      NUMERIC(19),
   billing_message         VARCHAR2(500),
-  work_complete_date      DATE
+  work_complete_date      DATE,
+  quote_server_work_item varchar2(255)
 );
 
 CREATE TABLE im_billing_session (

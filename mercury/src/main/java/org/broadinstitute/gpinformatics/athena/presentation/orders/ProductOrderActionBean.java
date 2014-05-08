@@ -87,6 +87,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -411,19 +412,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {SAVE_ACTION, VALIDATE_ORDER})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
+
         String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
         List<Long> selectedIds = new ArrayList<>();
-        if (regulatoryIds != null) {
-            for (String regulatoryId : regulatoryIds) {
-                selectedIds.add(Long.parseLong(regulatoryId));
+        if (editOrder.isDraft()) {
+            if (regulatoryIds != null) {
+                for (String regulatoryId : regulatoryIds) {
+                    selectedIds.add(Long.parseLong(regulatoryId));
+                }
+                List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
+                        .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+                editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
+            } else {
+                editOrder.getRegulatoryInfos().clear();
             }
-            List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                    .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
-            editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
-        } else {
-            editOrder.getRegulatoryInfos().clear();
         }
     }
 
@@ -469,7 +473,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
 
                 kitDetails.get(kitDetailIndex)
-                        .setPostReceiveOptions(selectedOptions);
+                          .setPostReceiveOptions(selectedOptions);
             }
         }
 
@@ -489,7 +493,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             addValidationError("productOrderKit.comments", "Product order kit comments cannot exceed 255 characters");
         }
 //                @Validate(field = "count", on = {SAVE_ACTION}, label = "Number of Lanes"),
-        validateRegulatoryInformation(SAVE_ACTION);
 
         // If this is not a draft, some fields are required.
         if (!editOrder.isDraft()) {
@@ -500,6 +503,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             // since its value isn't set until updateTokenInputFields() has been called.
             requireField(editOrder.getCreatedBy(), "an owner", "save");
             validateQuoteOptions(SAVE_ACTION);
+            validateRegulatoryInformation(SAVE_ACTION);
         }
     }
 
@@ -522,10 +526,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                    org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
-                            .splitCamelCase(action),
-                    editOrder.getName(),
-                    name);
+                                     org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
+                                             .splitCamelCase(action),
+                                     editOrder.getName(),
+                                     name);
         }
     }
 
@@ -579,7 +583,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 for (ProductOrderKitDetail kitDetail : kitDetails) {
                     Long numberOfSamples = kitDetail.getNumberOfSamples();
                     requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples",
-                            action);
+                                 action);
                     requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
                     requireField(kitDetail.getBspMaterialName(), "a material information", action);
                     requireField(kitDetail.getOrganismId(), "an organism", action);
@@ -590,9 +594,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // Avoid NPE if Research Project isn't set yet.
                 if (researchProject != null) {
                     requireField(researchProject.getBroadPIs().length > 0,
-                            "a Research Project with a primary investigator", action);
+                                 "a Research Project with a primary investigator", action);
                     requireField(researchProject.getExternalCollaborators().length > 0,
-                            "a Research Project with an external collaborator", action);
+                                 "a Research Project with an external collaborator", action);
                 }
                 validateTransferMethod(editOrder);
             }
@@ -622,7 +626,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validateTransferMethod(@Nonnull ProductOrder pdo) {
         if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
             String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
-                    SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+                                                     SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
             requireField(pdo.getProductOrderKit().getNotificationIds().length > 0, validationMessage, SAVE_ACTION);
         }
 
@@ -641,8 +645,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addMessage("None of the samples for this order are on risk");
             } else {
                 addMessage("{0} {1} for this order {2} on risk",
-                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                        numSamplesOnRisk == 1 ? "is" : "are");
+                           numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                           numSamplesOnRisk == 1 ? "is" : "are");
             }
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
@@ -792,7 +796,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
 
         progressFetcher.loadProgress(productOrderDao,
-                ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
+                                     ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
@@ -853,8 +857,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-            on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                    DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER})
+           on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
+                   DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1022,26 +1026,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution placeOrder() {
         String originalBusinessKey = editOrder.getBusinessKey();
 
-        MessageCollection messageCollection = new MessageCollection();
+        MessageCollection placeOrderMessageCollection = new MessageCollection();
         try {
 
-            productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey, messageCollection);
+            productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
+                                              placeOrderMessageCollection);
 
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
 
-            if (messageCollection.hasInfos()) {
-                for (String info : messageCollection.getInfos()) {
-                    addMessage(info);
-                }
-            }
-            if (messageCollection.hasErrors()) {
-                for (String error : messageCollection.getErrors()) {
-                    addGlobalValidationError(error);
-                }
-            }
+            addMessages(placeOrderMessageCollection);
 
-            // FIXME:  TEAR. DOWN. THIS. WALL!!!!
             productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
             productOrderDao.persist(editOrder);
 
@@ -1055,7 +1050,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             updateFromInitiationTokenInputs();
 
-            addGlobalValidationError(e.toString());
+            addGlobalValidationError(e.getMessage());
+            logger.error("Error while placing an order for " + editOrder.getBusinessKey(), e);
             // Make sure ProductOrderListEntry is initialized if returning source page resolution.
             entryInit();
             return getSourcePageResolution();
@@ -1087,7 +1083,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Resolution createViewResolution(String businessKey) {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
-                businessKey);
+                                                                                              businessKey);
     }
 
     @HandlesEvent(VALIDATE_ORDER)
@@ -1113,7 +1109,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             saveType = ProductOrder.SaveType.CREATING;
         }
 
-        updateRegulatoryInformation();
+        if (editOrder.isDraft()) {
+            updateRegulatoryInformation();
+        }
         Set<String> deletedIdsConverted = new HashSet<>(Arrays.asList(deletedKits));
         productOrderEjb.persistProductOrder(saveType, editOrder, deletedIdsConverted, kitDetails);
 
@@ -1354,7 +1352,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
-                bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
+                 bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
         item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
 
         LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
@@ -1455,7 +1453,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample sample : selectedProductOrderSamples) {
             if (!sample.getLedgerItems().isEmpty()) {
                 addGlobalValidationError("Cannot delete sample {2} because billing has started.",
-                        sample.getName());
+                                         sample.getName());
             }
         }
     }
@@ -1463,14 +1461,18 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
-                selectedProductOrderSamples, this);
+                                      selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
 
     @HandlesEvent(ADD_SAMPLES_TO_BUCKET)
     public Resolution addSamplesToBucket() {
-        productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+        try {
+            productOrderEjb.handleSamplesAdded(editOrder.getBusinessKey(), editOrder.getSamples(), this);
+        } catch (BucketException e) {
+            addGlobalValidationError(e.getMessage());
+        }
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
@@ -1484,7 +1486,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         addMessage("Set manual on risk to {1} for {0} samples.", selectedProductOrderSampleIds.size(), riskStatus);
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} set manual on risk to {2} for {1} samples.",
-                userBean.getLoginUserName(), selectedProductOrderSampleIds.size(), riskStatus));
+                                              userBean.getLoginUserName(), selectedProductOrderSampleIds.size(),
+                                              riskStatus));
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1551,7 +1554,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment);
             addMessage("Abandoned samples: {0}.",
-                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
+                       StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1560,7 +1563,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
-        productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+        try {
+            productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+        } catch (BucketException e) {
+            addGlobalValidationError(e.getMessage());
+        }
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1669,7 +1676,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
-                        kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex)).getOrganismId());
+                                               kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex))
+                                                         .getOrganismId());
             }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
@@ -2125,34 +2133,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public void validateRegulatoryInformation(String action) {
-        boolean regulatoryRequirementsMet = editOrder.regulatoryRequirementsMet();
-        boolean canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
 
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
-
-            if (!regulatoryRequirementsMet) {
-                requireField(canSkipRegulatoryRequirements, "its regulatory requirements met or a reason for bypassing the regulatory requirements", action);
-            } else {
-                requireField(regulatoryRequirementsMet, "its regulatory requirements met", action);
+            requireField(editOrder.regulatoryRequirementsMet(),
+                         "its regulatory requirements met or a reason for bypassing the regulatory requirements",
+                         action);
+            if (!editOrder.orderPredatesRegulatoryRequirement()) {
+                requireField(editOrder.getAttestationConfirmed().booleanValue(),
+                             "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                             action);
             }
         }
 
         if (action.equals(SAVE_ACTION)) {
             if (skipRegulatoryInfo) {
-                canSkipRegulatoryRequirements = editOrder.canSkipRegulatoryRequirements();
-            } else {
-                canSkipRegulatoryRequirements = true;
+                requireField(editOrder.canSkipRegulatoryRequirements(),
+                             "a reason for bypassing the regulatory requirements", action);
             }
-            requireField(canSkipRegulatoryRequirements,
-                    "a reason for bypassing the regulatory requirements", action);
-
         }
-        if (editOrder.isSubmitted() && !editOrder.orderPredatesRegulatoryRequirement()) {
-            requireField((boolean)editOrder.getAttestationConfirmed(),
-                    "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
-                    action);
-        }
-
     }
 
     public KitType getChosenKitType() {

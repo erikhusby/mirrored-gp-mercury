@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.projects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -37,6 +38,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +54,34 @@ public class ResearchProjectEjb {
     private final BSPUserList userList;
     private final BSPCohortList cohortList;
     private final AppConfig appConfig;
+    private final ResearchProjectDao researchProjectDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
     }
 
     @Inject
-    public ResearchProjectEjb(JiraService jiraService,
-                              UserBean userBean, BSPUserList userList, BSPCohortList cohortList, AppConfig appConfig) {
+    public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
+                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
         this.cohortList = cohortList;
         this.appConfig = appConfig;
+        this.researchProjectDao = researchProjectDao;
+    }
+
+    /**
+     * Add a list of users to a research project under the specified role. If a user is already assigned that role
+     * in the research project, nothing is changed.
+     */
+    public void addPeople(String researchProjectKey, RoleType roleType, Collection<BspUser> people) {
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey(researchProjectKey);
+        if (researchProject != null) {
+            researchProject.addPeople(roleType, people);
+        }
     }
 
     public void submitToJira(@Nonnull ResearchProject researchProject) throws IOException {
@@ -87,12 +102,6 @@ public class ResearchProjectEjb {
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
                     StringUtils.join(fundingSources, ',')));
-
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                    StringUtils.join(researchProject.getIrbNumbers(), ',')));
-
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                    researchProject.getIrbNotEngaged()));
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
@@ -143,14 +152,6 @@ public class ResearchProjectEjb {
                 .add(new ResearchProjectUpdateField(RequiredSubmissionFields.FUNDING_SOURCE,
                         StringUtils.join(fundingSources, ",")));
 
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                        StringUtils.join(researchProject.getIrbNumbers(), ',')));
-
-        researchProjectUpdateFields
-                .add(new ResearchProjectUpdateField(RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
-                        researchProject.getIrbNotEngaged()));
-
         String piNames = buildProjectPiJiraString(researchProject);
         if (!StringUtils.isBlank(piNames)) {
             researchProjectUpdateFields.add(new ResearchProjectUpdateField(RequiredSubmissionFields.BROAD_PIS, piNames));
@@ -176,12 +177,7 @@ public class ResearchProjectEjb {
         for (ResearchProjectUpdateField field : researchProjectUpdateFields) {
             String message = field.getUpdateMessage(researchProject, customFieldDefinitions, issueFieldsResponse);
             if (!message.isEmpty()) {
-                if (field.getField() == RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD) {
-                    customFields.add(new CustomField(customFieldDefinitions, field.getField(),
-                            (boolean) field.getNewValue()));
-                } else {
-                    customFields.add(new CustomField(customFieldDefinitions, field.getField(), field.getNewValue()));
-                }
+                customFields.add(field.createCustomField(customFieldDefinitions));
                 updateCommentBuilder.append(message);
             }
         }
@@ -218,21 +214,31 @@ public class ResearchProjectEjb {
         //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
-        IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL"),
         DESCRIPTION("Description"),
-        BROAD_PIS("Broad PI(s)"),;
-        private final String fieldName;
+        BROAD_PIS("Broad PI(s)");
 
-        private RequiredSubmissionFields(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        private final String fieldName;
+        private final boolean nullable;
+
+        private RequiredSubmissionFields(String fieldName, boolean nullable) {
+            this.fieldName = fieldName;
+            this.nullable = nullable;
+        }
+
+        RequiredSubmissionFields(String fieldName) {
+            this(fieldName, false);
         }
 
         @Nonnull
         @Override
         public String getName() {
             return fieldName;
+        }
+
+        @Override
+        public boolean isNullable() {
+            return nullable;
         }
     }
 

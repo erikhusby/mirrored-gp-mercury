@@ -10,20 +10,19 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatMessageSender;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransferEjb;
@@ -35,7 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.MiSeqReagentKitDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -46,7 +45,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MiSeqReagentKit;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
@@ -110,9 +109,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private BSPUserList bspUserList;
 
     @Inject
-    private MercuryClientEjb mercuryClientEjb;
-
-    @Inject
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -134,7 +130,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     private VesselTransferEjb vesselTransferEjb;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private AppConfig appConfig;
@@ -144,6 +140,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private BucketEjb bucketEjb;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -167,7 +166,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public static final String LANES_SEQUENCED = "2,3";
     public static final String ACTUAL_READ_STRUCTURE = "101T8B8B101T";
     public static final String SETUP_READ_STRUCTURE = "71T8B8B101T";
-    
+
     @Inject
     private BettaLimsMessageResource bettaLimsMessageResource;
 
@@ -178,8 +177,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public static WebArchive buildMercuryWar() {
 
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(DEV, AthenaClientServiceStub.class,
-                        EverythingYouAskForYouGetAndItsHuman.class);
+                .buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -213,36 +211,39 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         exexOrder =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
-                        "Solexa RunResource No Rest Test" + runDate.getTime(),
-                        bucketReadySamples1, "GSP-123", exExProduct, researchProject);
+                                 "Solexa RunResource No Rest Test" + runDate.getTime(),
+                                 bucketReadySamples1, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         productOrderDao.persist(exexOrder);
         try {
-            ProductOrderJiraUtil.placeOrder(exexOrder,jiraService);
+            ProductOrderJiraUtil.placeOrder(exexOrder, jiraService);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         pdo1JiraKey = exexOrder.getJiraTicketKey();
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, twoDBarcodedTubeDao);
+        Map<String, BarcodedTube> mapBarcodeToTube = BettaLimsMessageResourceTest.buildSampleTubes(testPrefix,
+                BaseEventTest.NUM_POSITIONS_IN_RACK, barcodedTubeDao);
+
         bucketAndBatch(testPrefix, exexOrder, mapBarcodeToTube);
         // message
         BettaLimsMessageTestFactory bettaLimsMessageFactory = new BettaLimsMessageTestFactory(true);
         HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = BettaLimsMessageResourceTest.sendMessagesUptoCatch(
                 testPrefix,
                 mapBarcodeToTube, bettaLimsMessageFactory, Workflow.AGILENT_EXOME_EXPRESS, bettaLimsMessageResource,
-                reagentDesignDao, twoDBarcodedTubeDao,
+                reagentDesignDao, barcodedTubeDao,
                 appConfig.getUrl(), BaseEventTest.NUM_POSITIONS_IN_RACK);
 
         final QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchBarcodes()),
-                Collections.singletonList(hybridSelectionJaxbBuilder.getNormCatchRackBarcode()),
-                false).invoke();
+                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
+                                                                                                   .getNormCatchBarcodes()),
+                                                                 Collections.singletonList(hybridSelectionJaxbBuilder
+                                                                                                   .getNormCatchRackBarcode()),
+                                                                 true, false).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource,
-                    appConfig.getUrl());
+                                                     appConfig.getUrl());
         }
 
         MiSeqReagentKitJaxbBuilder miseqJaxbBuilder =
@@ -252,16 +253,20 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         for (BettaLIMSMessage bettaLIMSMessage : miseqJaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource,
-                    appConfig.getUrl());
+                                                     appConfig.getUrl());
         }
 
         HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testPrefix,
-                qtpJaxbBuilder.getDenatureTubeBarcode(), qtpJaxbBuilder.getDenatureRackBarcode(), "FCT-1",
-                ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
-                BaseEventTest.NUM_POSITIONS_IN_RACK, null, 2).invoke();
+                                                                             Collections.singletonList(qtpJaxbBuilder
+                                                                                                               .getDenatureTubeBarcode()),
+                                                                             qtpJaxbBuilder.getDenatureRackBarcode(),
+                                                                             "FCT-1",
+                                                                             ProductionFlowcellPath.DENATURE_TO_FLOWCELL,
+                                                                             BaseEventTest.NUM_POSITIONS_IN_RACK, null,
+                                                                             2).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
             BettaLimsMessageResourceTest.sendMessage(bettaLIMSMessage, bettaLimsMessageResource,
-                    appConfig.getUrl());
+                                                     appConfig.getUrl());
         }
 
         flowcellBarcode = hiSeq2500JaxbBuilder.getFlowcellBarcode();
@@ -303,23 +308,23 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testRunResource() {
 
         Map<String, VesselPosition> denatureRackMap = new HashMap<>();
         denatureRackMap.put(denatureBarcode, VesselPosition.A01);
-        TwoDBarcodedTube tube = new TwoDBarcodedTube(denatureBarcode);
+        BarcodedTube tube = new BarcodedTube(denatureBarcode);
         labVesselDao.persist(tube);
         labVesselDao.flush();
 
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
-                        reagentKitBarcode);
+                                  reagentKitBarcode);
         runResource.registerRun(runBean, miSeqFlowcell);
 
         run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
@@ -335,7 +340,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         Assert.assertEquals(cherryPickTransfersTo.size(), 1);
         CherryPickTransfer cherryPickTransfer = cherryPickTransfersTo.toArray(new CherryPickTransfer[1])[0];
         Assert.assertEquals(cherryPickTransfer.getLabEvent().getLabEventType(),
-                LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER);
+                            LabEventType.REAGENT_KIT_TO_FLOWCELL_TRANSFER);
         MiSeqReagentKit reagentKit = (MiSeqReagentKit) cherryPickTransfer.getSourceVesselContainer().getEmbedder();
         Assert.assertEquals(reagentKit.getLabel(), reagentKitBarcode);
         Assert.assertEquals(cherryPickTransfer.getSourcePosition(), VesselPosition.D04);
@@ -355,16 +360,16 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
-                        reagentKitBarcode);
+                                  reagentKitBarcode);
         runResource.registerRun(runBean, miSeqFlowcell);
         IlluminaSequencingRun run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
 
         ReadStructureRequest readStructureWithRunName = LimsQueryObjectFactory
                 .createReadStructureRequest(run.getRunName(), null, SETUP_READ_STRUCTURE, ACTUAL_READ_STRUCTURE,
-                        IMAGED_AREA, LANES_SEQUENCED, null);
+                                            IMAGED_AREA, LANES_SEQUENCED, null);
 
         Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructureWithRunName);
 
@@ -383,16 +388,16 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
     public void testLaneReadStructure() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
         SolexaRunBean runBean =
                 new SolexaRunBean(miSeqBarcode, miSeqRunBarcode, runDate, machineName, runFileDirectory,
-                        reagentKitBarcode);
+                                  reagentKitBarcode);
         runResource.registerRun(runBean, miSeqFlowcell);
         IlluminaSequencingRun run = TestUtils.getFirst(runDao.findByBarcode(miSeqRunBarcode));
 
         ReadStructureRequest readStructureWithRunName = LimsQueryObjectFactory
                 .createReadStructureRequest(run.getRunName(), null, SETUP_READ_STRUCTURE, ACTUAL_READ_STRUCTURE,
-                        IMAGED_AREA, LANES_SEQUENCED, null);
+                                            IMAGED_AREA, LANES_SEQUENCED, null);
         LaneReadStructure laneReadStructure = new LaneReadStructure();
         laneReadStructure.setLaneNumber(1);
         laneReadStructure.setActualReadStructure("STRUC1");
@@ -422,11 +427,11 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         IlluminaSequencingRun run;
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.stubInstance(), messageSender, squidConfig, reagentKitDao);
 
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcellBarcode, runBarcode, runDate, machineName, runFileDirectory,
-                        null);
+                                  null);
         runResource.registerRun(runBean, newFlowcell);
 
         Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
@@ -481,7 +486,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * method will also create a run to associate the read structures.
      */
     @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testFailSetReadStructureInSquid() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
         final String squidRunBarcode = "squid" + runBarcode;
@@ -490,7 +495,8 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
-                        SquidConnectorProducer.failureStubInstance(), messageSender, squidConfig, reagentKitDao);
+                                      SquidConnectorProducer.failureStubInstance(), messageSender, squidConfig,
+                                      reagentKitDao);
 
         Response readStructureStoreResponse = runResource.storeRunReadStructure(readStructure);
 
@@ -541,9 +547,9 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * @param mapBarcodeToTube tubes
      */
     private void bucketAndBatch(String testPrefix, ProductOrder productOrder,
-                                Map<String, TwoDBarcodedTube> mapBarcodeToTube) {
+                                Map<String, BarcodedTube> mapBarcodeToTube) {
         HashSet<LabVessel> starters = new HashSet<LabVessel>(mapBarcodeToTube.values());
-        mercuryClientEjb.addFromProductOrder(productOrder);
+        bucketEjb.addSamplesToBucket(productOrder);
 
         String batchName = "LCSET-MsgTest-" + testPrefix;
         LabBatch labBatch = new LabBatch(batchName, starters, LabBatch.LabBatchType.WORKFLOW);
@@ -551,6 +557,6 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         labBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         labBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), batchName));
         labBatchEjb.createLabBatchAndRemoveFromBucket(labBatch, "jowalsh", "Pico/Plating Bucket",
-                LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
+                                                      LabEvent.UI_EVENT_LOCATION, CreateFields.IssueType.EXOME_EXPRESS);
     }
 }

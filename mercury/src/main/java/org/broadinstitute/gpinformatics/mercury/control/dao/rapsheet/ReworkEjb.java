@@ -13,15 +13,15 @@ package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationWithRollbackException;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -75,22 +75,16 @@ public class ReworkEjb {
     private static final Log logger = LogFactory.getLog(ReworkEjb.class);
 
     @Inject
-    MercurySampleDao mercurySampleDao;
+    private MercurySampleDao mercurySampleDao;
 
     @Inject
-    ReworkEntryDao reworkEntryDao;
+    private ReworkEntryDao reworkEntryDao;
 
     @Inject
-    LabVesselDao labVesselDao;
-
-    @Inject
-    private AthenaClientService athenaClientService;
+    private LabVesselDao labVesselDao;
 
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
-
-    @Inject
-    private MercuryClientEjb mercuryClientEjb;
 
     @Inject
     private BucketEjb bucketEjb;
@@ -106,6 +100,9 @@ public class ReworkEjb {
 
     @Inject
     private ReworkReasonDao reworkReasonDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
 
     /**
      * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at
@@ -132,7 +129,7 @@ public class ReworkEjb {
             String label = entry.getLabVessel().getLabel();
             Collection<BucketCandidate> bucketCandidates = findBucketCandidates(label);
             for (BucketCandidate bucketCandidate : bucketCandidates) {
-                productOrderKeys.add(bucketCandidate.getProductOrderKey());
+                productOrderKeys.add(bucketCandidate.getProductOrder().getBusinessKey());
             }
         }
 
@@ -169,8 +166,8 @@ public class ReworkEjb {
                 sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
 
-            for (Map.Entry<String, Set<ProductOrderSample>> entryMap : athenaClientService
-                    .findMapSampleNameToPoSample(sampleIds).entrySet()) {
+            for (Map.Entry<String, Set<ProductOrderSample>> entryMap : productOrderSampleDao.findMapBySamples(sampleIds)
+                                                                                            .entrySet()) {
                 // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
                 Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
                 // make sure we have a matching product order sample
@@ -187,12 +184,11 @@ public class ReworkEjb {
                             eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
                         }
 
-                        BucketCandidate candidate = new BucketCandidate(entryMap.getKey(),
-                                sample.getProductOrder().getBusinessKey(), vessel.getLabel(),
-                                sample.getProductOrder(), vessel, eventName);
+                        BucketCandidate candidate = new BucketCandidate(entryMap.getKey(), vessel.getLabel(),
+                                                                        sample.getProductOrder(), vessel, eventName);
 
                         if (!sample.getProductOrder().getProduct()
-                                .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                                   .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
                             candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
                                                            " for Sample " + entryMap.getKey() +
                                                            " is not part of the Exome family");
@@ -207,7 +203,7 @@ public class ReworkEjb {
         // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (bucketCandidates.isEmpty()) {
             Map<String, Set<ProductOrderSample>> samplesById =
-                    athenaClientService.findMapSampleNameToPoSample(query);
+                    productOrderSampleDao.findMapBySamples(query);
             for (Set<ProductOrderSample> samples : samplesById.values()) {
                 Collection<String> sampleIDs = new ArrayList<>();
                 for (ProductOrderSample sample : samples) {
@@ -223,8 +219,10 @@ public class ReworkEjb {
                         String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
 
 
-                        BucketCandidate candidate = new BucketCandidate(sampleKey, sample.getProductOrder().getBusinessKey(),tubeBarcode, sample.getProductOrder(), null, "");
-                        if (!sample.getProductOrder().getProduct().isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
+                        BucketCandidate candidate = new BucketCandidate(sampleKey, tubeBarcode,
+                                                                        sample.getProductOrder(), null, "");
+                        if (!sample.getProductOrder().getProduct().isSameProductFamily(
+                                ProductFamily.ProductFamilyName.EXOME)) {
                             candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
                                                            " for Sample " + sampleKey +
                                                            " is not part of the Exome family");
@@ -245,7 +243,7 @@ public class ReworkEjb {
      * TODO: make this @DaoFree; can't right now because of an eventual call to persist from LabEventFactory
      *
      * @param candidateVessel the vessel being added to the bucket
-     * @param productOrderKey the product order that the vessel is being added to the bucket for
+     * @param productOrder    the product order that the vessel is being added to the bucket for
      * @param reworkReason    If this is a rework, why the rework is being done
      * @param reworkFromStep  If this is a rework, where the rework should be reworked from
      * @param bucket          the bucket to which the sample is to be added
@@ -258,24 +256,24 @@ public class ReworkEjb {
      *
      * @throws ValidationException
      */
-    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull String productOrderKey,
+    private LabVessel addCandidate(@Nonnull LabVessel candidateVessel, @Nonnull ProductOrder productOrder,
                                    ReworkReason reworkReason, LabEventType reworkFromStep,
                                    @Nonnull Bucket bucket, String comment, @Nonnull String userName,
                                    boolean reworkCandidate)
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(candidateVessel), bucket,
-                        reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
-                                BucketEntry.BucketEntryType.PDO_ENTRY,
-                        userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
-                        reworkFromStep, productOrderKey);
+                     reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
+                             BucketEntry.BucketEntryType.PDO_ENTRY,
+                     userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
+                     reworkFromStep, productOrder);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
             for (BucketEntry bucketEntry : bucketEntries) {
                 ReworkDetail reworkDetail =
                         new ReworkDetail(reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                                reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
+                                         reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
                 bucketEntry.setReworkDetail(reworkDetail);
             }
         }
@@ -287,8 +285,8 @@ public class ReworkEjb {
         LabVessel reworkVessel = labVesselDao.findByIdentifier(tubeBarcode);
 
         if (reworkVessel == null) {
-            reworkVessel = mercuryClientEjb.createInitialVessels(Collections.singleton(sampleKey),
-                    userName).iterator().next();
+            reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
+                                                          userName).iterator().next();
         }
         return reworkVessel;
     }
@@ -301,7 +299,6 @@ public class ReworkEjb {
      * @param reworkReason     predefined text describing why the given vessels need to be reworked
      * @param comment          brief user comment to associate with these reworks
      * @param userName         the user adding the reworks, in case vessels/samples need to be created on-the-fly
-     * @param workflow         name of the workflow in which these vessels are to be reworked
      * @param bucketName       the name of the bucket to add reworks to
      *
      * @return Collection of validation messages
@@ -310,9 +307,9 @@ public class ReworkEjb {
      *                             method to continue
      */
     public Collection<String> addAndValidateCandidates(@Nonnull Collection<BucketCandidate> bucketCandidates,
-                                                       @Nonnull String reworkReason,
-                                                       @Nonnull String comment, @Nonnull String userName,
-                                                       @Nonnull Workflow workflow, @Nonnull String bucketName)
+                                                       @Nonnull String reworkReason, @Nonnull String comment,
+                                                       @Nonnull String userName,
+                                                       @Nonnull String bucketName)
             throws ValidationWithRollbackException {
         Bucket bucket = bucketEjb.findOrCreateBucket(bucketName);
         ReworkReason reason = reworkReasonDao.findByReason(reworkReason);
@@ -322,9 +319,8 @@ public class ReworkEjb {
         Collection<String> validationMessages = new ArrayList<>();
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
-                validationMessages.addAll(
-                        addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment, workflow,
-                                userName));
+                validationMessages.addAll(addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment,
+                                                                        userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -339,7 +335,6 @@ public class ReworkEjb {
      * @param reworkReason    predefined Text describing why the given vessel needs to be reworked
      * @param bucket          the bucket to add rework to
      * @param comment         brief user comment to associate with this rework
-     * @param workflow        name of the workflow in which this vessel is to be reworked
      * @param userName        the user adding the rework, in case vessels/samples need to be created on-the-fly
      *
      * @return Collection of validation messages
@@ -347,14 +342,15 @@ public class ReworkEjb {
      * @throws ValidationException Thrown in the case that some checked state of the Lab Vessel will not allow the
      *                             method to continue
      */
-    private Collection<String> addAndValidateBucketCandidate(@Nonnull BucketCandidate bucketCandidate,
-                                                             @Nonnull ReworkReason reworkReason,
-                                                             @Nonnull Bucket bucket,
-                                                             @Nonnull String comment,
-                                                             @Nonnull Workflow workflow,
-                                                             @Nonnull String userName)
+    private Collection<String> addAndValidateBucketCandidate(
+            @Nonnull BucketCandidate bucketCandidate,
+            @Nonnull ReworkReason reworkReason,
+            @Nonnull Bucket bucket,
+            @Nonnull String comment,
+            @Nonnull String userName)
             throws ValidationException {
 
+        Workflow workflow = bucketCandidate.getProductOrder().getProduct().getWorkflow();
         WorkflowBucketDef bucketDef = findWorkflowBucketDef(workflow, bucket.getBucketDefinitionName());
         LabEventType reworkFromStep = bucketDef.getBucketEventType();
 
@@ -363,11 +359,11 @@ public class ReworkEjb {
 
         Collection<String> validationMessages =
                 validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                        bucketCandidate.getProductOrderKey(), bucketCandidate.getSampleKey(),
-                        bucketCandidate.isReworkItem());
+                                   bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
+                                   bucketCandidate.isReworkItem());
 
-        addCandidate(reworkVessel, bucketCandidate.getProductOrderKey(), reworkReason, reworkFromStep, bucket, comment,
-                userName, bucketCandidate.isReworkItem());
+        addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
+                     bucket, comment, userName, bucketCandidate.isReworkItem());
 
         return validationMessages;
     }
@@ -375,7 +371,7 @@ public class ReworkEjb {
     private WorkflowBucketDef findWorkflowBucketDef(@Nonnull Workflow workflow, String bucketName) {
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDefVersion workflowDefVersion = workflowConfig.getWorkflow(workflow)
-                .getEffectiveVersion();
+                                                                     .getEffectiveVersion();
         WorkflowBucketDef bucketDef = workflowDefVersion.findBucketDefByName(bucketName);
         if (bucketDef == null) {
             throw new RuntimeException("Could not find bucket definition for: " + bucketName);
@@ -387,9 +383,10 @@ public class ReworkEjb {
      * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
      *
+     *
      * @param candidateVessel a LabVessel instance being submitted to a bucket
      * @param bucketDef       the bucket that the samples will be added to
-     * @param productOrderKey the product order for which the vessel is being added to a bucket
+     * @param productOrder the product order for which the vessel is being added to a bucket
      * @param sampleKey       the sample being for which the vessel represents
      * @param reworkItem      Indicates whether the sample being added is for rework
      *
@@ -397,17 +394,17 @@ public class ReworkEjb {
      */
     public Collection<String> validateBucketItem(@Nonnull LabVessel candidateVessel,
                                                  @Nonnull WorkflowBucketDef bucketDef,
-                                                 @Nonnull String productOrderKey, @Nonnull String sampleKey,
+                                                 @Nonnull ProductOrder productOrder, @Nonnull String sampleKey,
                                                  boolean reworkItem)
             throws ValidationException {
 
         List<String> validationMessages = new ArrayList<>();
 
-        if (candidateVessel.checkCurrentBucketStatus(productOrderKey, bucketDef.getName(),
-                BucketEntry.Status.Active)) {
+        if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(),
+                                                     BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                            candidateVessel.getLabel(), sampleKey, productOrderKey, bucketDef.getName());
+                                  candidateVessel.getLabel(), sampleKey, productOrder, bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }
@@ -432,7 +429,7 @@ public class ReworkEjb {
             throws ValidationException {
         BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode);
         LabVessel reworkVessel = getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(),
-                userName
+                                              userName
         );
         batch.addReworks(Arrays.asList(reworkVessel));
     }
@@ -466,7 +463,6 @@ public class ReworkEjb {
         public static final String REWORK_INDICATOR = "Rework";
         private final String tubeBarcode;
         private String sampleKey;
-        private String productOrderKey;
         private ProductOrder productOrder;
         private LabVessel labVessel;
         private List<String> validationMessages = new ArrayList<>();
@@ -484,20 +480,20 @@ public class ReworkEjb {
             this.tubeBarcode = tubeBarcode;
         }
 
-        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String productOrderKey) {
+        public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull ProductOrder productOrder) {
             this.tubeBarcode = tubeBarcode;
-            this.productOrderKey = productOrderKey;
+            this.productOrder = productOrder;
         }
 
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
-                               @Nonnull String productOrderKey) {
-            this(tubeBarcode, productOrderKey);
+                               @Nonnull ProductOrder productOrder) {
+            this(tubeBarcode, productOrder);
             this.sampleKey = sampleKey;
         }
 
-        public BucketCandidate(@Nonnull String sampleKey, @Nonnull String productOrderKey, @Nonnull String tubeBarcode,
+        public BucketCandidate(@Nonnull String sampleKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel, String lastEventStep) {
-            this(tubeBarcode, sampleKey, productOrderKey);
+            this(tubeBarcode, sampleKey, productOrder);
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
@@ -505,10 +501,6 @@ public class ReworkEjb {
 
         public String getSampleKey() {
             return sampleKey;
-        }
-
-        public String getProductOrderKey() {
-            return productOrderKey;
         }
 
         public String getTubeBarcode() {
@@ -545,15 +537,15 @@ public class ReworkEjb {
 
         @Override
         public String toString() {
-            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrderKey);
+            return String.format("%s|%s|%s", tubeBarcode, sampleKey, productOrder.getBusinessKey());
         }
 
-        public static BucketCandidate fromString(String s) {
+        public static BucketCandidate fromString(String s, ProductOrderDao productOrderDao) {
             String[] parts = s.split("\\|");
             String tubeBarcode = parts[0];
             String sampleKey = parts[1];
             String productOrderKey = parts[2];
-            return new BucketCandidate(tubeBarcode, sampleKey, productOrderKey);
+            return new BucketCandidate(tubeBarcode, sampleKey, productOrderDao.findByBusinessKey(productOrderKey));
         }
     }
 }

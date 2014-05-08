@@ -23,6 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -150,6 +151,17 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     }
 
     /**
+     * Allows subclass to query related _AUD tables to pick up changes to ETL_DATA_SOURCE_CLASS objects.
+     * Use this when there is no entity class for the related _AUD table; cross-entity etl can be used
+     * when there is an entity class.
+     * @param revIds audit revs
+     * @return ETL_DATA_SOURCE_CLASS entity ids
+     */
+    protected Collection<Long> fetchAdditionalModifies(Collection<Long>revIds) {
+        return Collections.emptySet();
+    }
+
+    /**
      * Iterates on the Mercury entities having changes, generates and writes sqlLoader records.
      *
      * @param revIds     list of audit revision ids
@@ -160,8 +172,9 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
         try {
             // Retrieves the Envers-formatted list of entity changes in the given revision range.
+            // Subclass may add additional entity ids based on custom rev query.
             List<Object[]> auditEntities = auditReaderDao.fetchDataChanges(revIds, entityClass);
-            AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities);
+            AuditLists<AUDITED_ENTITY_CLASS> auditLists = fetchAuditIds(auditEntities, fetchAdditionalModifies(revIds));
 
             // The convert calls optionally convert entity types for cross-entity etl classes.
             Collection<Long> deletedEntityIds = convertAuditedEntityIdToDataSourceEntityId(auditLists.deletedEntityIds);
@@ -277,16 +290,17 @@ public abstract class GenericEntityEtl<AUDITED_ENTITY_CLASS, ETL_DATA_SOURCE_CLA
      *
      * @param auditEntities is collection of Envers triples (elements are entity, RevInfo, RevisionType)
      *                      already sorted by increasing rev date.
-     *
+     * @param additionalModifies is a collection of entity ids to be added to the modified entities.
      * @return lists of entity ids for deleted, added, and modified entities; and maybe a list of RevInfoPairs.
      */
     //
     // Object[] is an array of heterogeneous datatypes and must not be made into a generic.
     //
     @DaoFree
-    protected AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(Collection<Object[]> auditEntities) {
+    private AuditLists<AUDITED_ENTITY_CLASS> fetchAuditIds(Collection<Object[]> auditEntities,
+                                                           Collection<Long> additionalModifies) {
         Set<Long> deletedEntityIds = new HashSet<>();
-        Set<Long> modifiedEntityIds = new HashSet<>();
+        Set<Long> modifiedEntityIds = new HashSet<>(additionalModifies);
         Set<Long> addedEntityIds = new HashSet<>();
         List<RevInfoPair<AUDITED_ENTITY_CLASS>> revInfoPairs = new ArrayList<>();
 

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.presentation.PublicMessageActionBean;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -89,7 +90,8 @@ public class AuthorizationFilter implements Filter {
                 path.startsWith(SecurityActionBean.LOGIN_ACTION) ||
                 path.endsWith(SecurityActionBean.LOGIN_PAGE) ||
                 path.endsWith("Mercury/") ||
-                path.startsWith("/tableau/");
+                path.startsWith("/tableau/") ||
+                path.startsWith(PublicMessageActionBean.URL_BINDING);
     }
 
     @Override

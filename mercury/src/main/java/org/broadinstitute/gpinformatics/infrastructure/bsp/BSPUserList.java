@@ -29,6 +29,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPUserList.class);
     private static final long serialVersionUID = -8290793988380748612L;
 
+    // See BSPAuthenticationManager in BSP code base.
+    private static final String PERSONNEL_PREFIX = "inactive_user_";
+
     @Inject
     private Deployment deployment;
 
@@ -147,6 +150,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
         this.bspManagerFactory = bspManagerFactory;
     }
 
+    // Reload the BSP user list from the remove server. If the server is down, we return the previously retrieved
+    // list, if present, or an empty list if not. When we're not running in production, the 'QADude' users are
+    // also added.
     @Override
     public synchronized void refreshCache() {
         try {
@@ -166,31 +172,35 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 addQADudeUsers(rawUsers);
             }
 
-            Collections.sort(rawUsers, new Comparator<BspUser>() {
-                @Override
-                public int compare(BspUser o1, BspUser o2) {
-                    // FIXME: need to figure out what the correct sort criteria are.
-                    CompareToBuilder builder = new CompareToBuilder();
-                    builder.append(o1.getLastName(), o2.getLastName());
-                    builder.append(o1.getFirstName(), o2.getFirstName());
-                    builder.append(o1.getUsername(), o2.getUsername());
-                    builder.append(o1.getEmail(), o2.getEmail());
-                    return builder.build();
-                }
-            });
-
-            // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
-            // our entries stay sorted and (2) it has lower overhead than a TreeMap.
-            Map<Long, BspUser> userMap = new LinkedHashMap<>(rawUsers.size());
-            for (BspUser user : rawUsers) {
-                userMap.put(user.getUserId(), user);
-            }
-
-            users = ImmutableMap.copyOf(userMap);
+            users = rebuildUsers(rawUsers);
 
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }
+    }
+
+    private static Map<Long, BspUser> rebuildUsers(List<BspUser> rawUsers) {
+        Collections.sort(rawUsers, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser o1, BspUser o2) {
+                // FIXME: need to figure out what the correct sort criteria are.
+                CompareToBuilder builder = new CompareToBuilder();
+                builder.append(o1.getLastName(), o2.getLastName());
+                builder.append(o1.getFirstName(), o2.getFirstName());
+                builder.append(o1.getUsername(), o2.getUsername());
+                builder.append(o1.getEmail(), o2.getEmail());
+                return builder.build();
+            }
+        });
+
+        // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
+        // our entries stay sorted and (2) it has lower overhead than a TreeMap.
+        Map<Long, BspUser> userMap = new LinkedHashMap<>(rawUsers.size());
+        for (BspUser user : rawUsers) {
+            userMap.put(user.getUserId(), user);
+        }
+
+        return ImmutableMap.copyOf(userMap);
     }
 
     public String getUserFullName(long userId) {
@@ -202,6 +212,51 @@ public class BSPUserList extends AbstractCache implements Serializable {
         return bspUser.getFullName();
     }
 
+    /**
+     * Find a user by an email address. If more than one user is found, prefer the user that is active over an
+     * inactive user.<br/>
+     * Finding a user by email address is not very accurate since email addresses are not unique across users.
+     *
+     * @param email The string to match
+     *
+     * @return The matching user, null if not found
+     */
+    public BspUser getByEmail(String email) {
+        BspUser inactiveUser = null;
+        for (BspUser user : getUsers().values()) {
+            if (user.getEmail().equalsIgnoreCase(email)) {
+                if (isActiveUser(user)) {
+                    return user;
+                }
+                inactiveUser = user;
+            }
+        }
+
+        return inactiveUser;
+    }
+
+    /**
+     * Determine if a BspUser is an active user. Inactive user accounts are created for 'external' users who are
+     * have accounts in BSP but will never log in to BSP, such as for external collaborators.
+     *
+     * @param user the user to check
+     * @return true if the user is active
+     */
+    public static boolean isActiveUser(BspUser user) {
+        return !user.getUsername().startsWith(PERSONNEL_PREFIX);
+    }
+
+    /**
+     * Add a user to the list of known BSP users. This should only be called when creating a new user, to avoid
+     * making a round trip to BSP to refresh the user list.
+     * @param bspUser the user to add
+     */
+    public synchronized void addUser(BspUser bspUser) {
+        List<BspUser> userList = new ArrayList<>(users.values());
+        userList.add(bspUser);
+        users = rebuildUsers(userList);
+    }
+
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
             setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org",
@@ -211,6 +266,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         private void setFields(long userId, String username, String firstName, String lastName, String email,
                                String badgeId) {
             setUserId(userId);
+            setDomainUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
@@ -223,7 +279,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
         // FIXME: should instead generate this dynamically based on current users.properties settings on the server.
         // Could also create QADude entries on demand during login.
         String[] types = {"Test", "PM", "PDM", "LU", "LM", "BM"};
-        long userIdSeq = 101010101L;
+        long userIdSeq = 101010101;
         for (String type : types) {
             users.add(new QADudeUser(type, userIdSeq++));
         }

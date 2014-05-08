@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -11,7 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -34,9 +34,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 public class AddEntriesToPicoBucketTest extends Arquillian {
 
     @Inject
-    private AthenaClientService athenaClientService;
-
-    @Inject
     private BucketDao bucketDao;
     @Inject
     private LabVesselDao labVesselDao;
@@ -44,6 +41,8 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
     private UserTransaction utx;
     @Inject
     private WorkflowLoader workflowLoader;
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -64,7 +63,7 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
 
     @Test(enabled = false)
     public void addExomeExpressPicoBucketEntries() {
-        ProductOrder order = athenaClientService.retrieveProductOrderDetails("PDO-107");   //183
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-107");   //183
 
         if (order != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
@@ -89,12 +88,12 @@ public class AddEntriesToPicoBucketTest extends Arquillian {
                         //lookup the vessel... if it doesn't exist create one
                         LabVessel vessel = labVesselDao.findByIdentifier(tubeBarcode);
                         if (vessel == null) {
-                            vessel = new TwoDBarcodedTube(tubeBarcode);
+                            vessel = new BarcodedTube(tubeBarcode);
                         }
                         vessel.addSample(mercurySample);
                         // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
-                        workingBucket.addEntry(sample.getProductOrder().getBusinessKey(), vessel,
-                                BucketEntry.BucketEntryType.PDO_ENTRY);
+                        workingBucket.addEntry(sample.getProductOrder(), vessel,
+                                               BucketEntry.BucketEntryType.PDO_ENTRY);
                         // }
                     }
                 }

@@ -2,48 +2,57 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.MessageFormat;
+import java.util.Date;
+import java.util.Map;
 
 @Stateful
 @RequestScoped
 public class BillingEjb {
-
     private static final Log log = LogFactory.getLog(BillingEjb.class);
 
-    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT = "There are no items available to bill in this billing session";
+    public static final String NO_ITEMS_TO_BILL_ERROR_TEXT =
+            "There are no items available to bill in this billing session";
+    public static final String LOCKED_SESSION_TEXT =
+            "This billing session is currently in the process of being processed for billing.  If you believe this " +
+            "is in error, please contact the informatics group for assistance";
 
     /**
      * Encapsulates the results of a billing attempt on a {@link QuoteImportItem}, successful or otherwise.
      */
     public static class BillingResult {
 
-        private QuoteImportItem quoteImportItem;
+        private final QuoteImportItem quoteImportItem;
 
         private String workId;
 
         private String errorMessage;
 
-        public QuoteImportItem getQuoteImportItem() {
-            return quoteImportItem;
+        public BillingResult(@Nonnull QuoteImportItem quoteImportItem) {
+            this.quoteImportItem = quoteImportItem;
         }
 
-        void setQuoteImportItem(QuoteImportItem quoteImportItem) {
-            this.quoteImportItem = quoteImportItem;
+        public QuoteImportItem getQuoteImportItem() {
+            return quoteImportItem;
         }
 
         public String getWorkId() {
@@ -67,18 +76,33 @@ public class BillingEjb {
         }
     }
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
-
-    @Inject
     private PriceListCache priceListCache;
 
-    @Inject
     private BillingSessionDao billingSessionDao;
 
+    private ProductOrderDao productOrderDao;
+
+    private LedgerEntryDao ledgerEntryDao;
+
+    BSPSampleDataFetcher sampleDataFetcher;
+
+    public BillingEjb() {
+        this(null, null, null, null, null);
+    }
+
     @Inject
-    private ProductOrderEjb productOrderEjb;
+    public BillingEjb(PriceListCache priceListCache,
+                      BillingSessionDao billingSessionDao,
+                      ProductOrderDao productOrderDao,
+                      LedgerEntryDao ledgerEntryDao,
+                      BSPSampleDataFetcher sampleDataFetcher) {
+
+        this.priceListCache = priceListCache;
+        this.billingSessionDao = billingSessionDao;
+        this.productOrderDao = productOrderDao;
+        this.ledgerEntryDao = ledgerEntryDao;
+        this.sampleDataFetcher = sampleDataFetcher;
+    }
 
     /**
      * Transactional method to end a billing session with appropriate handling for complete or partial failure.
@@ -95,7 +119,7 @@ public class BillingEjb {
      *
      * @param billingSession BillingSession to be ended.
      */
-    private void endSession(@Nonnull BillingSession billingSession) {
+    public void endSession(@Nonnull BillingSession billingSession) {
 
         // Remove all the sessions from the non-billed items.
         boolean allFailed = billingSession.cancelSession();
@@ -109,101 +133,149 @@ public class BillingEjb {
         }
     }
 
+    /**
+     * Separation of the action of calling the quote server and updating the associated ledger entries.  This is to
+     * separate the steps of billing a session into smaller finite transactions so we can record more to the database
+     * sooner
+     *
+     * @param item                Representation of the quote and its ledger entries that are to be billed
+     * @param quoteIsReplacing    Set if the price item is replacing a previously defined item.
+     * @param quoteServerWorkItem the pointer back to the quote server transaction
+     */
+    public void updateLedgerEntries(QuoteImportItem item, QuotePriceItem quoteIsReplacing, String quoteServerWorkItem) {
+
+        // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
+        // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
+        item.updateLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS, quoteServerWorkItem);
+        billingSessionDao.flush();
+    }
 
     /**
-     * Transactional method to bill each previously unbilled {@link QuoteImportItem} on the BillingSession to the quote
-     * server and update billing entities as appropriate to the results of the billing attempt.  Results
-     * for each billing attempt correspond to a returned BillingResult.  If there was an exception billing a QuoteImportItem,
-     * the {@link BillingResult#isError()} will return
-     * true and {@link BillingResult#getErrorMessage()}
-     * will describe the cause of the problem.  On successful billing
-     * {@link BillingResult#getWorkId()} will contain
-     * the work id result.
+     * If the order's product supports automated billing, and it's not currently locked out,
+     * generate a list of billing ledger items for the sample and add them to the billing ledger.
      *
+     * @param orderKey          business key of order to bill for
+     * @param aliquotId         the sample aliquot ID
+     * @param completedDate     the date completed to use when billing
+     * @param data              used to check and see if billing can occur
+     * @param orderLockoutCache The cache by keys whether the order is locked out or not
      *
-     * @param pageUrl        URL to be included in the call to the quote server.
-     * @param sessionKey     Key to be included in the call to the quote server.
-     *
-     * @return List of BillingResults describing the success or failure of billing for each previously unbilled QuoteImportItem
-     *         associated with the BillingSession.
+     * @return true if the auto-bill request was processed.  It will return false if PDO supports automated billing but
+     * is currently locked out of billing.
      */
-    public List<BillingResult> bill(@Nonnull String pageUrl, @Nonnull String sessionKey) {
-
-        BillingSession billingSession = billingSessionDao.findByBusinessKeyWithLock(sessionKey);
-
-        boolean errorsInBilling = false;
-
-        List<BillingResult> results = new ArrayList<>();
-        Set<String> updatedPDOs = new HashSet<>();
-
-        List<QuoteImportItem> unBilledQuoteImportItems =
-                billingSession.getUnBilledQuoteImportItems(priceListCache);
-
-        if(unBilledQuoteImportItems.isEmpty()) {
-            endSession(billingSession);
-            throw new BillingException(NO_ITEMS_TO_BILL_ERROR_TEXT);
+    public boolean autoBillSample(String orderKey, String aliquotId, Date completedDate,
+                                  Map<String, MessageDataValue> data, Map<String, Boolean> orderLockoutCache)
+            throws Exception {
+        ProductOrder order = productOrderDao.findByBusinessKey(orderKey);
+        if (order == null) {
+            log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", orderKey));
+            return true;
         }
 
-        for (QuoteImportItem item : unBilledQuoteImportItems) {
+        Product product = order.getProduct();
+        if (!product.isUseAutomatedBilling()) {
+            log.debug(
+                    MessageFormat.format("Product {0} does not support automated billing.", product.getProductName()));
+            return true;
+        }
 
-            BillingResult result = new BillingResult();
-            results.add(result);
-            result.setQuoteImportItem(item);
+        // Get the order's lock out state from the cache, if not there, query it and put into the cache for later.
+        Boolean isOrderLockedOut = orderLockoutCache.get(order.getBusinessKey());
+        if (isOrderLockedOut == null) {
+            isOrderLockedOut = isAutomatedBillingLockedOut(order);
+            orderLockoutCache.put(order.getBusinessKey(), isOrderLockedOut);
+        }
 
-            Quote quote = new Quote();
-            quote.setAlphanumericId(item.getQuoteId());
+        // Now can use the lockout boolean to decide whether to ignore the order for auto ledger entry.
+        if (isOrderLockedOut) {
+            log.error(MessageFormat.format("Cannot auto-bill order {0} because it is currently locked out.",
+                    order.getJiraTicketKey()));
 
-            QuotePriceItem quotePriceItem = QuotePriceItem.convertMercuryPriceItem(item.getPriceItem());
+            // Return false to indicate we did not process the message.
+            return false;
+        }
 
-            // Get the quote PriceItem that this is replacing, if it is a replacement.
-            QuotePriceItem quoteIsReplacing = item.getPrimaryForReplacement(priceListCache);
-
-            try {
-                String workId = quoteService.registerNewWork(
-                        quote, quotePriceItem, quoteIsReplacing, item.getWorkCompleteDate(), item.getQuantity(),
-                        pageUrl, "billingSession", sessionKey);
-
-                result.setWorkId(workId);
-
-                // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
-                // with the quote for the QuoteImportItem, add the priceItemType, and the success message.
-                item.updateQuoteIntoLedgerEntries(quoteIsReplacing, BillingSession.SUCCESS);
-
-                updatedPDOs.addAll(item.getOrderKeys());
-
-            } catch (Exception ex) {
-                log.error("Failed to complete billing for " + quotePriceItem.getName() + " in session " + sessionKey,
-                          ex);
-                // Any exceptions in sending to the quote server will just be reported and will continue
-                // on to the next one.
-                item.setBillingMessages(ex.getMessage());
-                result.setErrorMessage(ex.getMessage());
-                errorsInBilling = true;
+        ProductOrderSample sample = mapAliquotIdToSample(order, aliquotId);
+        if (sample == null) {
+            log.info(MessageFormat.format(
+                    "Could not bill PDO {0}, Aliquot {1}, all samples have been assigned aliquots already. This is likely rework or added coverage",
+                    order.getBusinessKey(), aliquotId));
+        } else {
+            // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
+            if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
+                sample.autoBillSample(completedDate, 1);
             }
         }
 
-        // If there were no errors in billing, then end the session, which will add the billed date and remove
-        // all sessions from the ledger.
-        if (!errorsInBilling) {
-            endSession(billingSession);
+        return true;
+    }
+
+    /**
+     * Check and see if a given order is locked out, e.g. currently in a billing session or waiting for a billing
+     * session because of the confirmation upload (and manual update) of the tracker spreadsheet.
+     *
+     * @param order the order to check
+     *
+     * @return true if the order is locked out.
+     */
+    private boolean isAutomatedBillingLockedOut(ProductOrder order) {
+        ProductOrder[] orders = new ProductOrder[]{order};
+        return !ledgerEntryDao.findUploadedUnbilledOrderList(orders).isEmpty() ||
+               !ledgerEntryDao.findLockedOutByOrderList(orders).isEmpty();
+    }
+
+    /**
+     * Convert a PDO aliquot into a PDO sample.  To do this:
+     * <ol>
+     * <li>Check & see if the aliquot is already set on a PDO sample. If so, we're done.</li>
+     * <li>Convert aliquot ID to stock sample ID</li>
+     * <li>Find sample with stock sample ID in PDO list with no aliquot set</li>
+     * <li>set aliquot to passed in aliquot, persist data, and return the sample found</li>
+     * </ol>
+     */
+    @DaoFree
+    protected ProductOrderSample mapAliquotIdToSample(@Nonnull ProductOrder order, @Nonnull String aliquotId)
+            throws Exception {
+
+        // Convert aliquotId to BSP ID, if it's an LSID.
+        if (!BSPUtil.isInBspFormat(aliquotId)) {
+            aliquotId = BSPLSIDUtil.lsidToBareId(aliquotId);
         }
 
-        // Update the state of all PDOs affected by this billing session.
-        for (String key : updatedPDOs) {
-            try {
-                // Update the order status using the ProductOrderEjb with a version of the order status update
-                // method that does not mark transactions for rollback in the event that JIRA-related RuntimeExceptions
-                // are thrown.  It is still possible that this method will throw a checked exception,
-                // but these will not mark the transaction for rollback.
-                productOrderEjb.updateOrderStatusNoRollback(key);
-            } catch (Exception e) {
-                // Errors are just logged here because the current user doesn't work with PDOs, and wouldn't
-                // be able to resolve these issues.  Exceptions should only occur if a required resource,
-                // such as JIRA, is missing.
-                log.error("Failed to update PDO status after billing: " + key, e);
+        for (ProductOrderSample sample : order.getSamples()) {
+            if (aliquotId.equals(sample.getAliquotId())) {
+                return sample;
             }
         }
 
-        return results;
+        String sampleName = sampleDataFetcher.getStockIdForAliquotId(aliquotId);
+        if (sampleName == null) {
+            throw new Exception("Couldn't find a sample for aliquot: " + aliquotId);
+        }
+
+        boolean foundStock = false;
+        for (ProductOrderSample sample : order.getSamples()) {
+            if (sample.getName().equals(sampleName)) {
+                foundStock = true;
+                if (sample.getAliquotId() == null) {
+                    sample.setAliquotId(aliquotId);
+                    return sample;
+                }
+            }
+        }
+
+            /*
+             * As long as a stock sample was found, then this is likely just rework or adding coverage. In this case, we can
+             * actually ignore this aliquot because Picard will send Mercury identical metrics for each aliquot for the
+             * aggregated sample, including one that matches the aliquot already saved on the PDO sample.
+             */
+        if (foundStock) {
+            return null;
+        }
+
+        throw new Exception(
+                MessageFormat.format("Could not bill PDO {0}, Sample {1}, Aliquot {2}, no matching sample in PDO.",
+                        order.getBusinessKey(), sampleName, aliquotId)
+        );
     }
 }

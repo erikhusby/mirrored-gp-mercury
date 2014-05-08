@@ -30,7 +30,7 @@ public class IrbConverter {
     }
 
     public static List<Irb> getIrbs(String irbList) {
-        if (irbList == null) {
+        if (StringUtils.isBlank(irbList)) {
             return Collections.emptyList();
         }
 

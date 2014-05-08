@@ -368,8 +368,9 @@ IS
         is_top_level_product = new.is_top_level_product,
         workflow_name = new.workflow_name,
         product_family_name = new.product_family_name,
-        etl_date = new.etl_date,
-        primary_price_item_id = new.primary_price_item_id
+        primary_price_item_id = new.primary_price_item_id,
+        aggregation_data_type = new.aggregation_data_type,
+        etl_date = new.etl_date
       WHERE product_id = new.product_id;
 
       INSERT INTO product (
@@ -384,8 +385,9 @@ IS
         is_top_level_product,
         workflow_name,
         product_family_name,
-        etl_date,
-        primary_price_item_id
+        primary_price_item_id,
+        aggregation_data_type,
+        etl_date
       )
         SELECT
           new.product_id,
@@ -399,8 +401,9 @@ IS
           new.is_top_level_product,
           new.workflow_name,
           new.product_family_name,
-          new.etl_date,
-          new.primary_price_item_id
+          new.primary_price_item_id,
+          new.aggregation_data_type,
+          new.etl_date
         FROM DUAL
         WHERE NOT EXISTS(
             SELECT
@@ -470,7 +473,7 @@ IS
         quant_value = new.quant_value,
         run_name = new.run_name,
         run_date = new.run_date,
-	vessel_position = new.vessel_position,
+        vessel_position = new.vessel_position,
         etl_date = new.etl_date
       WHERE lab_metric_id = new.lab_metric_id;
 
@@ -485,7 +488,7 @@ IS
         quant_value,
         run_name,
         run_date,
-	vessel_position,
+        vessel_position,
         etl_date
       )
       SELECT
@@ -499,7 +502,7 @@ IS
         new.quant_value,
         new.run_name,
         new.run_date,
-	new.vessel_position,
+        new.vessel_position,
         new.etl_date
       FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM lab_metric WHERE lab_metric_id = new.lab_metric_id);
 
@@ -1253,7 +1256,8 @@ IS
         billing_session_id = new.billing_session_id,
         billing_message = new.billing_message,
         work_complete_date = new.work_complete_date,
-        etl_date = new.etl_date
+        etl_date = new.etl_date,
+        quote_server_work_item = new.quote_server_work_item
       WHERE ledger_id = new.ledger_id;
 
       INSERT INTO ledger_entry (
@@ -1266,7 +1270,8 @@ IS
         billing_session_id,
         billing_message,
         work_complete_date,
-        etl_date
+        etl_date,
+        quote_server_work_item
       )
       SELECT
         new.ledger_id,
@@ -1278,7 +1283,8 @@ IS
         new.billing_session_id,
         new.billing_message,
         new.work_complete_date,
-        new.etl_date
+        new.etl_date,
+        new.quote_server_work_item
       FROM DUAL
       WHERE NOT EXISTS(
             SELECT

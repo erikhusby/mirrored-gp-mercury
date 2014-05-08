@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -224,6 +225,7 @@ public class ResearchProjectTest {
         UserBean userBean = EasyMock.createMock(UserBean.class);
         BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);
+        ResearchProjectDao researchProjectDao = EasyMock.createMock(ResearchProjectDao.class);
 
         researchProject = EasyMock.createMock(ResearchProject.class);
 
@@ -234,7 +236,7 @@ public class ResearchProjectTest {
 
         EasyMock.replay(userBean, bspCohortList, bspUserList, researchProject);
         return new ResearchProjectEjb(jiraService, userBean, bspUserList,
-                bspCohortList, AppConfig.produce(Deployment.STUBBY));
+                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao);
 
     }
 }

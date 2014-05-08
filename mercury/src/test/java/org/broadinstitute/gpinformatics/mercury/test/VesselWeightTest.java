@@ -10,9 +10,9 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -47,7 +47,7 @@ public class VesselWeightTest extends Arquillian {
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -76,7 +76,7 @@ public class VesselWeightTest extends Arquillian {
         initialTareMessage.getPlateEvent().add(initialTareEvent);
         bettaLimsMessageResource.processMessage(initialTareMessage);
 
-        TwoDBarcodedTube tube1 = twoDBarcodedTubeDao.findByBarcode(tubeBarcodes.get(0));
+        BarcodedTube tube1 = barcodedTubeDao.findByBarcode(tubeBarcodes.get(0));
         Assert.assertEquals(tube1.getReceptacleWeight(), tube1Tare);
 
         // Verify that BSP Tare Weight annotation is set

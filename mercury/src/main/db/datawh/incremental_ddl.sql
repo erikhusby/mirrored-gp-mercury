@@ -1,7 +1,5 @@
 -------------------------------------------------------
--- For release 1.31
+-- For release 1.49
 -------------------------------------------------------
-alter table event_fact add program_name  VARCHAR2(255);
-alter table im_event_fact add program_name  VARCHAR2(255);
-
-
+alter table ledger_entry add quote_server_work_item varchar2(255);
+alter table im_ledger_entry add quote_server_work_item varchar2(255);

@@ -140,7 +140,28 @@ public enum VesselGeometry {
     RUN_CHAMBER(
                 "1x1",
                 new String[]{""},
-                new String[]{""});
+                new String[]{""}),
+
+    G32x1(
+            "32x1",
+            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"},
+            new String[]{"A"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06, VesselPosition.A07, VesselPosition.A08,
+                    VesselPosition.A09, VesselPosition.A10, VesselPosition.A11, VesselPosition.A12, VesselPosition.A13, VesselPosition.A14, VesselPosition.A15, VesselPosition.A16,
+                    VesselPosition.A17, VesselPosition.A18, VesselPosition.A19, VesselPosition.A20, VesselPosition.A21, VesselPosition.A22, VesselPosition.A23, VesselPosition.A24,
+                    VesselPosition.A25, VesselPosition.A26, VesselPosition.A27, VesselPosition.A28, VesselPosition.A29, VesselPosition.A30, VesselPosition.A31, VesselPosition.A32,
+    }),
+
+    G24x1(
+            "24x1",
+            new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"},
+            new String[]{"A"},
+            new VesselPosition[]{
+                    VesselPosition.A01, VesselPosition.A02, VesselPosition.A03, VesselPosition.A04, VesselPosition.A05, VesselPosition.A06, VesselPosition.A07, VesselPosition.A08,
+                    VesselPosition.A09, VesselPosition.A10, VesselPosition.A11, VesselPosition.A12, VesselPosition.A13, VesselPosition.A14, VesselPosition.A15, VesselPosition.A16,
+                    VesselPosition.A17, VesselPosition.A18, VesselPosition.A19, VesselPosition.A20, VesselPosition.A21, VesselPosition.A22, VesselPosition.A23, VesselPosition.A24
+            });
 
     private final String name;
     private final String[] columnNames;

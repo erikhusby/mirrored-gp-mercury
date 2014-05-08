@@ -21,10 +21,10 @@ public class SequencingRunFixupTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void fixupGplim2628() {
         // storeRunReadStructure is supplying run barcode, but there are two runs with same barcode, so change
         // the unwanted one

@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
+import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
@@ -60,7 +61,8 @@ public class ProductOrderResource {
     private static final Log log = LogFactory.getLog(ProductOrderResource.class);
 
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
-    public static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
+
+    private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -87,7 +89,7 @@ public class ProductOrderResource {
     private ProductOrderSampleDao pdoSampleDao;
 
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
     /**
      * Should be used only by test code
@@ -150,7 +152,7 @@ public class ProductOrderResource {
                  + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
                  + productOrder.getSamples().size() + " samples");
 
-        return new ProductOrderData(productOrder);
+        return new ProductOrderData(productOrder, true);
     }
 
     /**
@@ -290,7 +292,7 @@ public class ProductOrderResource {
         try {
             // Add the samples.
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
-        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException e) {
+        } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException | BucketException e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
         }
 
@@ -352,33 +354,7 @@ public class ProductOrderResource {
         List<ProductOrderData> productOrderDataList = new ArrayList<>(productOrderList.size());
 
         for (ProductOrder productOrder : productOrderList) {
-            ProductOrderData productOrderData = new ProductOrderData();
-            productOrderData.setTitle(productOrder.getTitle());
-            productOrderData.setId(productOrder.getBusinessKey());
-            productOrderData.setComments(productOrder.getComments());
-            productOrderData.setPlacedDate(productOrder.getPlacedDate());
-            productOrderData.setModifiedDate(productOrder.getModifiedDate());
-            productOrderData.setProduct(productOrder.getProduct().getPartNumber());
-            productOrderData.setProductName(productOrder.getProduct().getName());
-            productOrderData.setStatus(productOrder.getOrderStatus().name());
-            productOrderData.setAggregationDataType(productOrder.getProduct().getAggregationDataType());
-            productOrderData.setResearchProjectId(productOrder.getResearchProject().getBusinessKey());
-            productOrderData.setRequisitionName(productOrder.getRequisitionName());
-            productOrderData.setQuoteId(productOrder.getQuoteId());
-
-            if (includeSamples) {
-                List<String> sampleNames = new ArrayList<>(productOrder.getSamples().size());
-                for (ProductOrderSample sample : productOrder.getSamples()) {
-                    sampleNames.add(sample.getName());
-                }
-                productOrderData.setSamples(sampleNames);
-            } else {
-                // Explicit set of null into a List<String> field, this duplicates what the existing code was doing when
-                // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
-                productOrderData.setSamples(null);
-            }
-
-            productOrderDataList.add(productOrderData);
+            productOrderDataList.add(new ProductOrderData(productOrder, includeSamples));
         }
 
         return new ProductOrders(productOrderDataList);
@@ -391,8 +367,8 @@ public class ProductOrderResource {
      * Manhattan to determine whether data generation is complete for a given PDO sample.  Put another way, Manhattan
      * polls this service to see which PDO samples it should start assembling and analyzing.
      *
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSamples
-     * @see org.broadinstitute.gpinformatics.athena.boundary.orders.PDOSample
+     * @see PDOSamples
+     * @see PDOSample
      */
     @POST
     @Path(PDO_SAMPLE_STATUS)
@@ -407,7 +383,8 @@ public class ProductOrderResource {
                 for (Map.Entry<String, Set<String>> pdoKeyToSamplesList : pdoToSamples.entrySet()) {
                     String pdoKey = pdoKeyToSamplesList.getKey();
                     Set<String> sampleNames = pdoKeyToSamplesList.getValue();
-                    List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey, sampleNames);
+                    List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,
+                                                                                                    sampleNames);
                     allPdoSamples.addAll(pdoSamples);
                 }
                 pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);

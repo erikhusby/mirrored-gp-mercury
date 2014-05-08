@@ -6,57 +6,30 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.deltaspike.cdise.api.ContextControl;
 import org.apache.deltaspike.core.api.provider.BeanProvider;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PMBQuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePlatformType;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quotes;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Resource;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
-import javax.enterprise.inject.New;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.transaction.UserTransaction;
-import javax.xml.parsers.ParserConfigurationException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Regression test to verify that it's not possible to double bill.
@@ -71,16 +44,16 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     private static final String BILLING_SESSION_ID = "BILL-2489";
 
     @Inject
-    BeanManager beanManager;
+    BillingSessionDao billingSessionDao;
 
     @Inject
-    BillingSessionDao billingSessionDao;
+    BillingSessionAccessEjb billingSessionAccessEjb;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
-    private static int numBillingThreadsRun = 0;
+    private static AtomicInteger numBillingThreadsRun = new AtomicInteger();
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -107,7 +80,6 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
                     "If ledger entry is considered billed, this test will not try to bill it, which means we may be at risk of double billing.");
         }
         billingSessionDao.persist(billingSession);
-        billingSessionDao.flush();
         utx.commit();
     }
 
@@ -143,6 +115,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         Assert.assertNotEquals(numErrors,2,"Only one of the two billing sessions should have errored out.  Is the jndi lookup not working?  Check the server side logs.");
         Assert.assertEquals(numErrors, 1, "Only one of the two billing session should have completed without error.  We may have re-introduced a double billing bug.");
         Assert.assertEquals(RegisterWorkAlwaysWorks.workItemNumber,1,"Only one session should have hit the quote server.  We are at risk of double billing in the quote server.");
+        Assert.assertFalse(billingSessionAccessEjb.isSessionLocked(BILLING_SESSION_ID));
 
         utx.begin();
         billingSessionDao.clear();
@@ -156,8 +129,8 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
             utx.rollback();
         }
         Assert.assertTrue(billingError.getClass().equals(BillingException.class),"The session that error'd out should have thrown a BillingException");
-        Assert.assertEquals(billingError.getMessage(),BillingEjb.NO_ITEMS_TO_BILL_ERROR_TEXT);
-        Assert.assertEquals(numBillingThreadsRun,2,"Both billing threads should be run to verify the fix for double billing.  We are at risk for double billing.");
+        Assert.assertEquals(billingError.getMessage(),BillingEjb.LOCKED_SESSION_TEXT);
+        Assert.assertEquals(numBillingThreadsRun.get(), 2, "Both billing threads should be run to verify the fix for double billing.  We are at risk for double billing.");
 
     }
 
@@ -167,20 +140,20 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
 
         @Override
         public void run() {
-            BillingEjb billingEjb = null;
+            BillingAdaptor billingAdaptor = null;
             ContextControl ctxCtrl = BeanProvider.getContextualReference(ContextControl.class);
             ctxCtrl.startContext(RequestScoped.class);
+            ctxCtrl.startContext(SessionScoped.class);
             try {
-                billingEjb = getBeanFromJNDI(BillingEjb.class);
-                numBillingThreadsRun++;
-                billingEjb.bill("whatever", BILLING_SESSION_ID);
-            }
-            catch(RuntimeException e) {
+                billingAdaptor = getBeanFromJNDI(BillingAdaptor.class);
+                numBillingThreadsRun.incrementAndGet();
+                billingAdaptor.billSessionItems("whatever", BILLING_SESSION_ID);
+            } catch(RuntimeException e) {
                 error = e;
                 throw e;
-            }
-            finally {
+            } finally {
                 try {
+                    ctxCtrl.stopContext(SessionScoped.class);
                     ctxCtrl.stopContext(RequestScoped.class);
                 }
                 catch(Throwable t) {
@@ -226,36 +199,6 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
         @Override
         public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
             return null;
-        }
-    }
-
-    @Alternative
-    private static class DummyPMBQuoteService implements PMBQuoteService {
-        @Override
-        public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-            return new Quote();
-        }
-
-        @Override
-        public Set<Funding> getAllFundingSources()
-                throws QuoteServerException, QuoteNotFoundException, ParserConfigurationException {
-            return new HashSet<>();
-        }
-
-        @Override
-        public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType)
-                throws QuoteServerException, QuoteNotFoundException {
-            return new PriceList();
-        }
-
-        @Override
-        public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-            return new PriceList();
-        }
-
-        @Override
-        public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
-            return new Quotes();
         }
     }
 

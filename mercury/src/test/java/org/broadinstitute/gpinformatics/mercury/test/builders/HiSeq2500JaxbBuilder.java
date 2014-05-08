@@ -24,7 +24,7 @@ import java.util.List;
 public class HiSeq2500JaxbBuilder {
     private final BettaLimsMessageTestFactory bettaLimsMessageTestFactory;
     private String testPrefix;
-    private final String denatureTubeBarcode;
+    private final List<String> denatureTubeBarcodes;
     private String flowcellBarcode;
     private String squidDesignationName;
     private int flowcellLanes;
@@ -50,12 +50,12 @@ public class HiSeq2500JaxbBuilder {
 
 
     public HiSeq2500JaxbBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
-                                String testPrefix, String denatureTubeBarcode, String denatureRackBarcode,
+                                String testPrefix, List<String> denatureTubeBarcodes, String denatureRackBarcode,
                                 String fctTicket, ProductionFlowcellPath productionFlowcellPath,
                                 int poolSize, String designationName, int flowcellLanes) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.testPrefix = testPrefix;
-        this.denatureTubeBarcode = denatureTubeBarcode;
+        this.denatureTubeBarcodes = denatureTubeBarcodes;
         this.denatureRackBarcode = denatureRackBarcode;
         this.fctTicket = fctTicket;
         this.productionFlowcellPath = productionFlowcellPath;
@@ -80,7 +80,7 @@ public class HiSeq2500JaxbBuilder {
 
             dilutionTransferJaxb = bettaLimsMessageTestFactory.buildCherryPick("DenatureToDilutionTransfer",
                     Collections.singletonList(denatureRackBarcode),
-                    Collections.singletonList(Collections.singletonList(denatureTubeBarcode)),
+                    Collections.singletonList(denatureTubeBarcodes),
                     Collections.singletonList(dilutionRackBarcode),
                     Collections.singletonList(Collections.singletonList(dilutionTubeBarcode)), dilutionCherrypicks);
             MetadataType dilutionMetadata = new MetadataType();
@@ -102,7 +102,7 @@ public class HiSeq2500JaxbBuilder {
 
             flowcellTransferJaxb =
                     bettaLimsMessageTestFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
-                            denatureTubeBarcode, flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
+                            denatureTubeBarcodes.get(0), flowcellBarcode, LabEventTest.PHYS_TYPE_FLOWCELL_2_LANE,
                             LabEventTest.SECTION_ALL_2, "tube");
             if (StringUtils.isNotBlank(squidDesignationName)) {
                 MetadataType denatureMetaData = new MetadataType();
@@ -130,7 +130,7 @@ public class HiSeq2500JaxbBuilder {
 
             stripTubeTransferJaxb = bettaLimsMessageTestFactory.buildCherryPickToStripTube("StripTubeBTransfer",
                     Collections.singletonList(denatureRackBarcode),
-                    Collections.singletonList(Collections.singletonList(denatureTubeBarcode)),
+                    Collections.singletonList(denatureTubeBarcodes),
                     stripTubeHolderBarcode,
                     Collections.singletonList(stripTubeBarcode),
                     stripTubeCherryPicks);

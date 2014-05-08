@@ -15,8 +15,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingAdaptor;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingException;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionAccessEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -44,8 +46,10 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements.
@@ -80,6 +84,12 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingEjb billingEjb;
 
     @Inject
+    private BillingAdaptor billingAdaptor;
+
+    @Inject
+    private BillingSessionAccessEjb billingSessionAccessEjb;
+
+    @Inject
     private SampleLedgerExporterFactory sampleLedgerExporterFactory;
 
     private List<BillingSession> billingSessions;
@@ -90,7 +100,12 @@ public class BillingSessionActionBean extends CoreActionBean {
     // parameter from quote server
     private String billingSession;
 
+    // parameter from quote server
+    private String workItemId;
+
     private BillingSession editSession;
+
+    public static final String WORK_ITEM_URL_PARAMETER = "workId";
 
     /**
      * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
@@ -101,6 +116,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     public void init() {
         log.debug("In validation for billing");
         sessionKey = getContext().getRequest().getParameter("sessionKey");
+        workItemId = getContext().getRequest().getParameter(WORK_ITEM_URL_PARAMETER);
         if (sessionKey != null) {
             editSession = billingSessionDao.findByBusinessKey(sessionKey);
         }
@@ -205,7 +221,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         List<BillingEjb.BillingResult> billingResults = null;
         try {
-            billingResults = billingEjb.bill(pageUrl, sessionKey);
+            billingResults = billingAdaptor.billSessionItems(pageUrl, sessionKey);
 
             for (BillingEjb.BillingResult billingResult : billingResults) {
 
@@ -290,5 +306,34 @@ public class BillingSessionActionBean extends CoreActionBean {
     @SuppressWarnings("UnusedDeclaration")
     public void setBillingSession(String billingSession) {
         this.billingSession = billingSession;
+    }
+
+    public boolean isBillingSessionLocked() {
+        return billingSessionAccessEjb.isSessionLocked(editSession.getBusinessKey());
+    }
+
+    public String getQuoteUrl(String quote) {
+        return quoteLink.quoteUrl(quote);
+    }
+
+    public String getQuoteWorkItemUrl(String quote,String workItem) {
+        return quoteLink.workUrl(quote, workItem);
+    }
+
+    public String getWorkItemId(QuoteImportItem quoteImportItem) {
+        String workItemId = null;
+        if (quoteImportItem != null) {
+            workItemId = quoteImportItem.getSingleWorkItem();
+        }
+        return workItemId;
+    }
+
+    /**
+     * Returns the work item id that should be highlighted.
+     * Javascript uses this to perform the actual
+     * styling.
+     */
+    public String getWorkItemIdToHighlight() {
+        return workItemId;
     }
 }

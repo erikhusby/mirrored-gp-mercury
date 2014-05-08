@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -811,7 +812,7 @@ public abstract class LabVessel implements Serializable {
                             if (EVENT_DIAGNOSTICS) {
                                 System.out.println("SampleInstance " +
                                                    sampleInstance.getStartingSample().getSampleKey() + " gets " +
-                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getPoBusinessKey() +
+                                                   bucketEntry.getLabBatch() + " " + bucketEntry.getProductOrder().getBusinessKey() +
                                                    " from " + bucketEntry.getBucket().getBucketDefinitionName() +
                                                    (bucketEntry.getReworkDetail() != null ? " (rework)" : ""));
                             }
@@ -852,7 +853,13 @@ public abstract class LabVessel implements Serializable {
         case WITH_PDO:
         case PREFER_PDO:
             if (!bucketEntries.isEmpty() && !mercurySamples.isEmpty()) {
-                continueTraversing = false;
+                // Ignore bucket entries that don't have an LCSET yet
+                for (BucketEntry bucketEntry : bucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        continueTraversing = false;
+                        break;
+                    }
+                }
             }
             break;
         case ANY:
@@ -929,7 +936,7 @@ public abstract class LabVessel implements Serializable {
              */
             Set<String> productOrderKeys = new HashSet<>();
             for (BucketEntry bucketEntry : bucketEntries) {
-                productOrderKeys.add(bucketEntry.getPoBusinessKey());
+                productOrderKeys.add(bucketEntry.getProductOrder().getBusinessKey());
             }
             if (productOrderKeys.size() == 1) {
                 traversalResults.setProductOrderKey(productOrderKeys.iterator().next());
@@ -1656,7 +1663,7 @@ public abstract class LabVessel implements Serializable {
 
         for (LabVessel currentAncestor : vesselHierarchy) {
             for (BucketEntry currentEntry : currentAncestor.getBucketEntries()) {
-                if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+                if (pdoKey.equals(currentEntry.getProductOrder().getBusinessKey()) &&
                     bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                     BucketEntry.Status.Active == currentEntry.getStatus()) {
                     return true;
@@ -1670,17 +1677,18 @@ public abstract class LabVessel implements Serializable {
     /**
      * Helper method to determine if a given vessel is in a bucket.
      *
-     * @param pdoKey     PDO Key with which a vessel may be associated in a bucket
+     *
+     * @param productOrder
      * @param bucketName Name of the bucket to search for associations
      * @param compareStatus Status to compare each entry to
      *
      * @return true if the entry is in the bucket with the specified status
      */
     public boolean checkCurrentBucketStatus(
-            @Nonnull String pdoKey, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
+            @Nonnull ProductOrder productOrder, @Nonnull String bucketName, BucketEntry.Status compareStatus) {
 
         for (BucketEntry currentEntry : getBucketEntries()) {
-            if (pdoKey.equals(currentEntry.getPoBusinessKey()) &&
+            if (productOrder.equals(currentEntry.getProductOrder()) &&
                 bucketName.equals(currentEntry.getBucket().getBucketDefinitionName()) &&
                 compareStatus == currentEntry.getStatus()) {
                 return true;

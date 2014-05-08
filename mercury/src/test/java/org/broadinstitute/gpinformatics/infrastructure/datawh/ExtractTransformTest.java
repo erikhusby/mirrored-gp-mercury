@@ -27,7 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.hibernate.SQLQuery;
 import org.hibernate.type.LongType;
@@ -118,7 +118,7 @@ public class ExtractTransformTest extends Arquillian {
 
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testEtl() throws Exception {
-        final TwoDBarcodedTube labVessel = new TwoDBarcodedTube(barcode);
+        final BarcodedTube labVessel = new BarcodedTube(barcode);
         final String datFileEnding = "_lab_vessel.dat";
 
         // Writes and commits an entity to the db.  Envers requires the transaction to commit.

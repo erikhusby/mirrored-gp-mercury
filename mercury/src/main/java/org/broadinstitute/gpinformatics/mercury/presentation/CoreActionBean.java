@@ -40,10 +40,12 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -51,7 +53,7 @@ import java.util.List;
  *
  * Converted this from abstract because the report.jsp needs to instantiate to get context info
  */
-public class CoreActionBean implements ActionBean, MessageReporter {
+public abstract class CoreActionBean implements ActionBean, MessageReporter {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     public static final String DATE_PATTERN = "MM/dd/yyyy";
@@ -127,12 +129,10 @@ public class CoreActionBean implements ActionBean, MessageReporter {
         return context;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getCreateAction() {
         return CREATE_ACTION;
     }
 
-    @SuppressWarnings("unused")  // This is used by layout.jsp which does not know about the bean it is using.
     public String getEditAction() {
         return EDIT_ACTION;
     }
@@ -371,6 +371,14 @@ public class CoreActionBean implements ActionBean, MessageReporter {
      */
     public BuildInfoBean getBuildInfoBean() {
         return buildInfoBean;
+    }
+
+    public String getError(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getMessage();
+    }
+
+    public StackTraceElement[] getStackTrace(Map<String, Object> requestScope) {
+        return ((Throwable)requestScope.get(RequestDispatcher.ERROR_EXCEPTION)).getStackTrace();
     }
 
     /**

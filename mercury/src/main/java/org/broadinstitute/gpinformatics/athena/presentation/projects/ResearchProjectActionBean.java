@@ -17,7 +17,9 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.CollaborationService;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.RegulatoryInfoEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -25,6 +27,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryIn
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
@@ -49,15 +52,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
  */
+@SuppressWarnings("unused")
 @UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
-    private static Log logger = LogFactory.getLog(ResearchProjectActionBean.class);
+    private static final Log log = LogFactory.getLog(ResearchProjectActionBean.class);
 
     public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
@@ -68,8 +73,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public static final String REGULATORY_INFO_QUERY_ACTION = "regulatoryInfoQuery";
     public static final String ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION = "addRegulatoryInfoToResearchProject";
-    public static final String ADD_NEW_REGULATORY_INFO = "addNewRegulatoryInfo";
+    public static final String ADD_NEW_REGULATORY_INFO_ACTION = "addNewRegulatoryInfo";
     public static final String REMOVE_REGULATORY_INFO_ACTION = "removeRegulatoryInfo";
+    public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
 
@@ -77,8 +83,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
 
+    private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
+
+    private static final String RESEND_INVITATION_ACTION = "resendInvitation";
+
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
+
+    private static final boolean COLLABORATION_ENABLED = false;
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -95,14 +107,22 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     @Inject
     private RegulatoryInfoDao regulatoryInfoDao;
 
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
+    /**
+     * The research project business key
+     */
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
+
+    private Long selectedCollaborator;
+    private String specifiedCollaborator;
+    private String collaborationMessage;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -116,6 +136,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * The search query.
      */
     private String q;
+
+    private List<RegulatoryInfo> searchResults;
 
     private Long regulatoryInfoId;
 
@@ -163,11 +185,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    ResearchProjectEjb researchProjectEjb;
+    private ResearchProjectEjb researchProjectEjb;
 
-    private String irbList = "";
+    @Inject
+    private CollaborationService collaborationService;
 
-    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+    private String irbList;
+
+    private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
+    private CollaborationData collaborationData;
 
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
@@ -189,12 +216,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
-                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO,
-                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION})
-    public void init() {
+                    ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
+                    REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
+                    RESEND_INVITATION_ACTION})
+    public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
+            if (COLLABORATION_ENABLED) {
+                collaborationData = collaborationService.getCollaboration(researchProject);
+            }
         } else {
             if (getUserBean().isValidBspUser()) {
                 editResearchProject = new ResearchProject(getUserBean().getBspUser());
@@ -202,6 +233,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 editResearchProject = new ResearchProject();
             }
         }
+
+        populateTokenListsFromObjectData();
+
         if (StringUtils.isBlank(editResearchProject.getReferenceSequenceKey())) {
             editResearchProject.setReferenceSequenceKey(DEFAULT_REFERENCE_SEQUENCE);
         }
@@ -225,13 +259,42 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed.
         if ((editResearchProject.getOriginalTitle() == null) ||
-                (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
+            (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
 
             // Check if there is an existing research project and error out if it already exists.
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
             if (existingProject != null) {
                 errors.add("title", new SimpleError("A research project already exists with this name."));
             }
+        }
+    }
+
+    /**
+     * Validation of project name.
+     *
+     * @param errors The errors object
+     */
+    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
+    public void validateCollaborationInformation(ValidationErrors errors) {
+        // Cannot start a collaboration with an outside user if there is no PM specified.
+        if (editResearchProject.getProjectManagers().length < 1) {
+            errors.add("title", new SimpleError(
+                    "The research project must have a Project Manager before starting a collaboration."));
+        }
+    }
+
+    /**
+     * Validation for beginning a collaboration.
+     *
+     * @param errors The errors object
+     */
+    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
+    public void validateCollaboration(ValidationErrors errors) {
+        if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
+            errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
+        }
+        if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
+            errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
         }
     }
 
@@ -260,7 +323,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private void validateUser(String validatingFor) {
         if (!userBean.ensureUserValid()) {
-            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
+            addGlobalValidationError(
+                    MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
         }
     }
 
@@ -268,7 +332,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution create() {
         validateUser("create");
         setSubmitString(CREATE_PROJECT);
-        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -276,7 +339,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution edit() {
         validateUser("edit");
         setSubmitString(EDIT_PROJECT);
-        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -308,7 +370,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             researchProjectEjb.submitToJira(editResearchProject);
         } catch (Exception ex) {
             String errorMessage = "Error " + createOrUpdate + " JIRA ticket for research project: " + ex.getMessage();
-            logger.error(errorMessage, ex);
+            log.error(errorMessage, ex);
             addGlobalValidationError(errorMessage);
             return new ForwardResolution(getContext().getSourcePage());
         }
@@ -332,7 +394,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
             throw e;
         }
 
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {
@@ -348,12 +411,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
 
         ResearchProject tokenProject = projectTokenInput.getTokenObject();
-        editResearchProject.setParentResearchProject(tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
+        editResearchProject.setParentResearchProject(
+                tokenProject != null ? researchProjectDao.findByBusinessKey(tokenProject.getBusinessKey()) : null);
     }
 
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
+    }
+
+    @HandlesEvent(BEGIN_COLLABORATION_ACTION)
+    public Resolution beginCollaboration() throws Exception {
+        try {
+            collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
+                    collaborationMessage);
+            addMessage("Collaboration created successfully");
+        } catch (Exception e) {
+            addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
+        }
+
+        // Call init again so that the updated project is retrieved.
+        init();
+        return view();
     }
 
     public List<ResearchProject> getAllResearchProjects() {
@@ -369,6 +448,30 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setResearchProject(String researchProject) {
         this.researchProject = researchProject;
+    }
+
+    public String getCollaborationMessage() {
+        return collaborationMessage;
+    }
+
+    public void setCollaborationMessage(String collaborationMessage) {
+        this.collaborationMessage = collaborationMessage;
+    }
+
+    public String getSpecifiedCollaborator() {
+        return specifiedCollaborator;
+    }
+
+    public void setSpecifiedCollaborator(String specifiedCollaborator) {
+        this.specifiedCollaborator = specifiedCollaborator;
+    }
+
+    public Long getSelectedCollaborator() {
+        return selectedCollaborator;
+    }
+
+    public void setSelectedCollaborator(Long selectedCollaborator) {
+        this.selectedCollaborator = selectedCollaborator;
     }
 
     public ResearchProject getEditResearchProject() {
@@ -440,33 +543,122 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     /**
      * Handles an AJAX action event to search for regulatory information, case-insensitively, from the value in this.q.
-     * The JSONObjects in the returned array will have the following properties:
-     *
-     * <dl>
-     *     <dt>id</dt>
-     *     <dd>the RegulatoryInfo's primary key</dd>
-     *     <dt>identifier</dt>
-     *     <dd>the externally assigned identifier, such as IRB Protocol #</dd>
-     *     <dt>type</dt>
-     *     <dd>the type of regulatory information, such as IRB Protocol</dd>
-     *     <dt>alias</dt>
-     *     <dd>the name given to this information for the benefit of Mercury users</dd>
-     * </dl>
-     *
-     * @return the regulatory information search results
-     * @throws Exception
      */
     @HandlesEvent(REGULATORY_INFO_QUERY_ACTION)
-    public Resolution queryRegulatoryInfo() throws JSONException {
-        List<RegulatoryInfo> infos = regulatoryInfoDao.findByIdentifier(q);
-        JSONArray results = new JSONArray();
-        for (RegulatoryInfo info : infos) {
-            results.put(regulatoryInfoToJSONObject(info, editResearchProject.getRegulatoryInfos().contains(info)));
-        }
-        return createTextResolution(results.toString());
+    public Resolution queryRegulatoryInfoReturnHtmlSnippet() {
+        searchResults = regulatoryInfoDao.findByIdentifier(q);
+        regulatoryInfoIdentifier = q;
+        return new ForwardResolution("regulatory_info_dialog_sheet_2.jsp");
     }
 
-    private JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
+    /**
+     * Determines whether or not the given regulatory information is already associated with the current research
+     * project. This is used to determine whether an existing regulatory information can be added to a project.
+     *
+     * @param regulatoryInfo the regulatory info to check
+     *
+     * @return true if the regulatory info is associated with the research project; false otherwise
+     */
+    public boolean isRegulatoryInfoInResearchProject(RegulatoryInfo regulatoryInfo) {
+        return editResearchProject.getRegulatoryInfos().contains(regulatoryInfo);
+    }
+
+    /**
+     * Determines whether or not the given regulatory information is being used for a product order for the current
+     * research project. This is used to determine whether regulatory information can be safely disassociated with the
+     * project.
+     *
+     * @param regulatoryInfo the regulatory info to check
+     *
+     * @return true if the regulatory info is in use for an order; false otherwise
+     */
+    public boolean isRegulatoryInfoInProductOrdersForThisResearchProject(RegulatoryInfo regulatoryInfo) {
+        for (ProductOrder productOrder : editResearchProject.getProductOrders()) {
+            if (productOrder.getRegulatoryInfos().contains(regulatoryInfo)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determines whether or not the regulatory information form represents a new record.
+     *
+     * @return true if creating a new regulatory information; false otherwise
+     */
+    @Override
+    public boolean isCreating() {
+        return regulatoryInfoId == null;
+    }
+
+    /**
+     * Determines whether or not the regulatory information form represents an existing record.
+     *
+     * @return true if editing an existing regulatory information; false otherwise
+     */
+    public boolean isEditing() {
+        return !isCreating();
+    }
+
+    /**
+     * Returns all of the possible regulatory information types. This is used to access the enumeration values because
+     * stripes:options-enumeration does not support a "disabled" attribute.
+     *
+     * @return a collection of all values from the {@link RegulatoryInfo.Type} enum
+     */
+    public RegulatoryInfo.Type[] getAllTypes() {
+        return RegulatoryInfo.Type.values();
+    }
+
+    /**
+     * Determines whether or not there are any regulatory information types that can be added for the queried
+     * identifier. If there is already regulatory information for every type for the queried identifier, the UI should
+     * not prompt to create a new record.
+     *
+     * @return true if the user should be allowed to create new regulatory info; false otherwise
+     */
+    public boolean isAddRegulatoryInfoAllowed() {
+        EnumSet<RegulatoryInfo.Type> types = EnumSet.allOf(RegulatoryInfo.Type.class);
+        for (RegulatoryInfo regulatoryInfo : searchResults) {
+            types.remove(regulatoryInfo.getType());
+        }
+        return !types.isEmpty();
+    }
+
+    /**
+     * Determines whether or not a regulatory information of the given type already exists with the queried identifier.
+     *
+     * @param type the type to check
+     *
+     * @return true if the type is already in use for the identifier; false otherwise
+     */
+    public boolean isTypeInUseForIdentifier(RegulatoryInfo.Type type) {
+        for (RegulatoryInfo searchResult : searchResults) {
+            if (searchResult.getType() == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Loads an existing regulatory information and pre-populates the regulatory information form.
+     *
+     * @return a resolution to the regulatory information form
+     */
+    @HandlesEvent(VIEW_REGULATORY_INFO_ACTION)
+    public Resolution viewRegulatoryInfo() {
+        RegulatoryInfo regulatoryInfo = regulatoryInfoDao.findById(RegulatoryInfo.class, regulatoryInfoId);
+        if (regulatoryInfo != null) {
+            regulatoryInfoIdentifier = regulatoryInfo.getIdentifier();
+            searchResults = regulatoryInfoDao.findByIdentifier(regulatoryInfoIdentifier);
+            regulatoryInfoType = regulatoryInfo.getType();
+            regulatoryInfoAlias = regulatoryInfo.getName();
+        }
+        return new ForwardResolution("regulatory_info_form.jsp");
+    }
+
+    private static JSONObject regulatoryInfoToJSONObject(RegulatoryInfo regulatoryInfo, boolean alreadyAdded)
             throws JSONException {
         JSONObject object = new JSONObject();
         object.put("id", regulatoryInfo.getRegulatoryInfoId());
@@ -490,12 +682,23 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
+    //    @ValidationMethod(on = ADD_NEW_REGULATORY_INFO_ACTION)
+    public void validateNewRegulatoryInfo() {
+        if (regulatoryInfoType == null) {
+            addValidationError("regulatoryInfoType", "Type is a required field");
+        }
+        if (regulatoryInfoAlias.length() > 255) {
+            addValidationError("regulatoryInfoAlias", "Protocol title must be less than 255 characters long.");
+        }
+
+    }
+
     /**
      * Creates a new regulatory information record and adds it to the research project currently being viewed.
      *
      * @return a redirect to the research project view page
      */
-    @HandlesEvent(ADD_NEW_REGULATORY_INFO)
+    @HandlesEvent(ADD_NEW_REGULATORY_INFO_ACTION)
     public Resolution addNewRegulatoryInfo() {
         RegulatoryInfo regulatoryInfo = regulatoryInfoEjb
                 .createRegulatoryInfo(regulatoryInfoIdentifier, regulatoryInfoType, regulatoryInfoAlias);
@@ -520,11 +723,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(VALIDATE_TITLE_ACTION)
     public Resolution validateTitle() {
         String result = "";
-        List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
-        for (RegulatoryInfo info : infos) {
-            if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
-                result = String.format("%s: %s", info.getType().getName(), info.getIdentifier());
-                break;
+        if (StringUtils.isBlank(regulatoryInfoAlias)) {
+            result = "Protocol Title is required.";
+        } else if (regulatoryInfoAlias.length() > 255) {
+            result = "Protocol title can contain no more than 255 characters.";
+        } else {
+            List<RegulatoryInfo> infos = regulatoryInfoDao.findByName(regulatoryInfoAlias);
+            for (RegulatoryInfo info : infos) {
+                if (!info.getRegulatoryInfoId().equals(regulatoryInfoId)) {
+                    result = String.format("Title is already in use by %s: %s.", info.getType().getName(),
+                            info.getIdentifier());
+                    break;
+                }
             }
         }
         return createTextResolution(result);
@@ -621,6 +831,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.q = q;
     }
 
+    public List<RegulatoryInfo> getSearchResults() {
+        return searchResults;
+    }
+
     public Long getRegulatoryInfoId() {
         return regulatoryInfoId;
     }
@@ -682,6 +896,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the sequence aligner.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the sequence aligner
      */
     public DisplayableItem getSequenceAligner(String businessKey) {
@@ -692,6 +907,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * Get the reference sequence.
      *
      * @param businessKey the businessKey
+     *
      * @return UI helper object {@link DisplayableItem} representing the reference sequence
      */
     public DisplayableItem getReferenceSequence(String businessKey) {
@@ -721,5 +937,33 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Override
     public boolean isEditAllowed() {
         return getUserBean().isDeveloperUser() || getUserBean().isPMUser() || getUserBean().isPDMUser();
+    }
+
+    public CollaborationData getCollaborationData() {
+        return collaborationData;
+    }
+
+    /**
+     * This checks whether there is an invitation pending.
+     *
+     * @return If the invitation is exists and is pending, this will be true.
+     */
+    public boolean isInvitationPending() {
+        // Invitation pending means that an email is attached to this and there is no collaborating user.
+        return collaborationData != null && collaborationData.getExpirationDate() != null;
+    }
+
+    @HandlesEvent(RESEND_INVITATION_ACTION)
+    public Resolution resendInvitation() throws Exception {
+        try {
+            collaborationService.resendInvitation(researchProject);
+            addMessage("Invitation resent successfully");
+        } catch (Exception e) {
+            addGlobalValidationError("Could not resend invitation due to an error: {2}", e.getMessage());
+        }
+
+        // Call init again so that the updated project is retrieved.
+        init();
+        return view();
     }
 }

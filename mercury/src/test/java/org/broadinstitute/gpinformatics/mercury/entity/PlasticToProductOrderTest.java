@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -36,7 +36,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
     private BucketEjb bucketResource;
 
     @Inject
-    private TwoDBarcodedTubeDao tubeDao;
+    private BarcodedTubeDao tubeDao;
 
     @Inject
     private TubeFormationDao rackDao;

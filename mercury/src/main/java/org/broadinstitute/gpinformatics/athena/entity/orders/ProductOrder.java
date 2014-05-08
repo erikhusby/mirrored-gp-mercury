@@ -76,7 +76,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     private static final String REQUISITION_PREFIX = "REQ-";
 
-    // Date needs to be validated (could be 4/7/2014).
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
     public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
@@ -84,7 +83,8 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
-        this.regulatoryInfos = regulatoryInfos;
+        this.regulatoryInfos.clear();
+        getRegulatoryInfos().addAll(regulatoryInfos);
     }
 
     public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
@@ -102,10 +102,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Transient
     public boolean regulatoryRequirementsMet() {
-        if (orderPredatesRegulatoryRequirement()){
+        if (orderPredatesRegulatoryRequirement()) {
             return true;
         }
-        return !getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements() || getAttestationConfirmed();
+        if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
+            return true;
+        }
+        return false;
     }
 
     @Transient
@@ -199,9 +202,9 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private ProductOrderKit productOrderKit;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST})
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(schema = "athena", name = "PDO_REGULATORY_INFOS", joinColumns = {@JoinColumn(name = "PRODUCT_ORDER")})
-    private Collection<RegulatoryInfo> regulatoryInfos =new ArrayList<>();
+    private Collection<RegulatoryInfo> regulatoryInfos = new ArrayList<>();
 
     // This is used for edit to keep track of changes to the object.
     @Transient
@@ -214,13 +217,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     private String skipQuoteReason;
 
     @Version
-    private Long version;
+    private long version;
 
     @Column(name = "SKIP_REGULATORY_REASON")
     private String skipRegulatoryReason;
 
     @Column(name = "attestation_confirmed")
-    private Boolean attestationConfirmed=false;
+    private Boolean attestationConfirmed = false;
 
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
@@ -257,7 +260,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
 
         // Do stuff that needs to happen after serialization and here.
         readResolve();
@@ -325,7 +328,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Multimap<String, LabVessel> vesselMap = labDataFetcher.findMapBySampleKeys(samples);
         for (ProductOrderSample sample : samples) {
             Collection<LabVessel> labVessels = vesselMap.get(sample.getSampleKey());
-            if (labVessels != null) {
+            if (CollectionUtils.isNotEmpty(labVessels)) {
                 sample.setLabEventSampleDTO(new LabEventSampleDTO(labVessels, sample.getSampleKey()));
             }
         }
@@ -413,7 +416,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
                            List<ProductOrderSample> samples) {
         updateAddOnProducts(addOnProducts);
         this.product = product;
-        this.researchProject = researchProject;
+        setResearchProject(researchProject);
         setSamples(samples);
     }
 
@@ -532,7 +535,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     public void setResearchProject(ResearchProject researchProject) {
+        if (this.researchProject != null) {
+            this.researchProject.removeProductOrder(this);
+        }
         this.researchProject = researchProject;
+        if (researchProject != null) {
+            researchProject.addProductOrder(this);
+        }
     }
 
     public Product getProduct() {
@@ -1065,26 +1074,39 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         MERCURY_URL("Mercury URL"),
         SAMPLE_IDS("Sample IDs"),
         REPORTER("Reporter"),
-        FUNDING_DEADLINE("Funding Deadline"),
-        PUBLICATION_DEADLINE("Publication Deadline"),
+        FUNDING_DEADLINE("Funding Deadline", true),
+        PUBLICATION_DEADLINE("Publication Deadline", true),
         DESCRIPTION("Description"),
         STATUS("Status"),
         REQUISITION_ID("Requisition ID"),
         LANES_PER_SAMPLE("Lanes Per Sample"),
         REQUISITION_NAME("Requisition Name"),
         NUMBER_OF_SAMPLES("Number of Samples"),
-        ADD_ONS("Add-ons");
+        ADD_ONS("Add-ons"),
+        SUMMARY("Summary");
 
         private final String fieldName;
+        private boolean nullable;
 
-        private JiraField(String fieldNameIn) {
-            fieldName = fieldNameIn;
+        JiraField(String fieldName) {
+            this(fieldName, false);
+        }
+
+        private JiraField(String fieldName, boolean nullable) {
+            this.fieldName = fieldName;
+            this.nullable = nullable;
         }
 
         @Nonnull
         @Override
         public String getName() {
             return fieldName;
+        }
+
+
+        @Override
+        public boolean isNullable() {
+            return nullable;
         }
     }
 
@@ -1475,12 +1497,12 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
             if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",
-                        lastPicoCount);
+                                    lastPicoCount);
             }
 
             if (hasSampleKitUploadRackscanMismatch != 0) {
                 formatSummaryNumber(output, "<div class=\"text-error\">Rackscan Mismatch: {0}</div>",
-                        hasSampleKitUploadRackscanMismatch, totalSampleCount);
+                                    hasSampleKitUploadRackscanMismatch, totalSampleCount);
             }
 
             return output;
@@ -1531,12 +1553,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         Date irbRequiredStartDate;
         Date date;
         try {
-            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(IRB_REQUIRED_START_DATE_STRING);
+            date = org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.parseDate(
+                    IRB_REQUIRED_START_DATE_STRING);
         } catch (ParseException e) {
             date = new Date();
         }
         irbRequiredStartDate =
-                            org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
+                org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils.getStartOfDay(date);
         return irbRequiredStartDate;
     }
 

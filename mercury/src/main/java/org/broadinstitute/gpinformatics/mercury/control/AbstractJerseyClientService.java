@@ -47,6 +47,8 @@ import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.OK;
 
 public abstract class AbstractJerseyClientService implements Serializable {
+    private static final long serialVersionUID = 460875882310020779L;
+
     private transient Client jerseyClient;
 
     private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
