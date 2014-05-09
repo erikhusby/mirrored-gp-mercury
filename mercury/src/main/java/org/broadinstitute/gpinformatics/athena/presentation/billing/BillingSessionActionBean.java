@@ -320,14 +320,6 @@ public class BillingSessionActionBean extends CoreActionBean {
         return quoteLink.workUrl(quote, workItem);
     }
 
-    public String getWorkItemId(QuoteImportItem quoteImportItem) {
-        String workItemId = null;
-        if (quoteImportItem != null) {
-            workItemId = quoteImportItem.getSingleWorkItem();
-        }
-        return workItemId;
-    }
-
     /**
      * Returns the work item id that should be highlighted.
      * Javascript uses this to perform the actual

@@ -225,16 +225,12 @@ public class QuoteImportItem {
     }
 
     /**
-     * If there is a single work item, it is returned.  If there
-     * are multiple, an exception is thrown.  If there are none,
+     * If there is a single work item, it is returned.  Otherwise,
      * null is returned.
      */
     public String getSingleWorkItem() {
         String workItem = null;
-        if (workItems.size() > 1) {
-            throw new RuntimeException("There are " + workItems.size() + " work items.");
-        }
-        if (!workItems.isEmpty()) {
+        if (workItems.size() == 1) {
             workItem = workItems.iterator().next();
         }
         return workItem;

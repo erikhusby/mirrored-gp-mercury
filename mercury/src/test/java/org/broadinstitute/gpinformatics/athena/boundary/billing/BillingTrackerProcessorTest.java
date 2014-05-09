@@ -72,7 +72,6 @@ public class BillingTrackerProcessorTest {
         assertThat(processor.getMessages(), hasItem(makeCompletedDateFutureErrorMessage(tomorrowString)));
     }
 
-    @Test(enabled = false)
     public void testProcessRowDetailsWorkCompleteMoreThanThreeMonthsAgo() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -3);
@@ -82,7 +81,7 @@ public class BillingTrackerProcessorTest {
         Map<String, String> dataRow = makeDataRow(oldDateString);
 
         processor.processRowDetails(dataRow, 0);
-        assertThat(processor.getMessages(), hasItem(makeCompletedDateTooOldErrorMessage(oldDateString)));
+        assertThat(processor.getWarnings(), hasItem(makeCompletedDateTooOldErrorMessage(oldDateString)));
     }
 
     private Map<String, String> makeDataRow(String workCompleteDate) {

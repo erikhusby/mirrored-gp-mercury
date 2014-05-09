@@ -36,10 +36,10 @@ import java.util.HashSet;
 
 @Entity
 @Audited
-
 @Table(name = "REGULATORY_INFO", schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"identifier", "type"}))
 public class RegulatoryInfo implements Serializable, BusinessObject {
+    public static final int PROTOCOL_TITLE_MAX_LENGTH=255;
     public enum Type {
         IRB("IRB Protocol"),
         ORSP_NOT_ENGAGED("ORSP Not Engaged"),

@@ -93,7 +93,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         }
     }
 
-    private void previewUploadedFile() {
+    private boolean previewUploadedFile() {
         InputStream inputStream = null;
         PoiSpreadsheetParser parser = null;
 
@@ -105,7 +105,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             // process and if there were parsing errors, just return.
             parser.processUploadFile(trackerFile.getInputStream());
             if (hasErrors(processors.values())) {
-                return;
+                return true;
             }
 
             previewData = new ArrayList<>();
@@ -137,6 +137,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
                 // If cannot delete, oh well.
             }
         }
+        return false;
     }
 
     private boolean hasErrors(Collection<BillingTrackerProcessor> processors) {
@@ -146,7 +147,15 @@ public class UploadTrackerActionBean extends CoreActionBean {
             }
         }
 
-        return hasErrors();
+        boolean hasErrors = hasErrors();
+
+        for (BillingTrackerProcessor processor : processors) {
+            for (String warning : processor.getWarnings()) {
+                addGlobalValidationError(warning);
+            }
+        }
+        
+        return hasErrors;
     }
 
     /**
@@ -293,10 +302,10 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     @HandlesEvent(PREVIEW)
     public Resolution preview() {
-        previewUploadedFile();
+        boolean hasErrors = previewUploadedFile();
 
         // If there are no errors, show the preview!
-        if (!hasErrors()) {
+        if (!hasErrors) {
             isPreview = true;
         }
 

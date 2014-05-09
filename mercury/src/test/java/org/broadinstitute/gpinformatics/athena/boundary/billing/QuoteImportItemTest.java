@@ -114,10 +114,9 @@ public class QuoteImportItemTest {
                 5));
     }
 
-    public void testSingleWorkItemFailsWhenThereAreMultipleWorkItems() {
+    public void testSingleWorkItemReturnsNullWhenThereAreMultipleWorkItems() {
         try {
-            quoteImportItem.getSingleWorkItem();
-            Assert.fail("If there are multiple work items, this method should explode.");
+            assertThat(quoteImportItem.getSingleWorkItem(),is(nullValue()));
         }
         catch(RuntimeException e) {}
     }

@@ -127,7 +127,7 @@ public class QuoteFundingList extends AbstractCache {
 
             fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (QuoteServerException | QuoteNotFoundException ex) {
-            logger.error("Could not refresh the funding list.");
+            logger.error("Could not refresh the funding list.", ex);
         }
     }
 }
