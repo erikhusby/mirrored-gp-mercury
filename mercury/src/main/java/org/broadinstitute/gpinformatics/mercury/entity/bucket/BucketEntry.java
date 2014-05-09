@@ -78,7 +78,9 @@ public class BucketEntry {
     @Column(name = "bucket_entry_id")
     private Long bucketEntryId;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    // FetchType.EAGER is a temporary fix for org.hibernate.PropertyNotFoundException: field [tubeType] not found on
+    // ... LabVessel_$$_javassist_33 in LabBatchEjb.addToLabBatch
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_vessel_id")
     private LabVessel labVessel;
 
