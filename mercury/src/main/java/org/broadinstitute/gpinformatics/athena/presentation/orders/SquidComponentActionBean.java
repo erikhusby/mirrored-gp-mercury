@@ -6,6 +6,7 @@ import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import edu.mit.broad.prodinfo.bean.generated.SelectionOption;
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -13,16 +14,16 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SquidComponentDto;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -66,8 +67,26 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     private List<String> selectedProductOrderSampleIds;
 
+    @ValidateNestedProperties({
+            @Validate(field = "projectType", required = true,
+                    label = "A project type is required", expression = "this != '-1'", on = BUILD_SQUID_COMPONENT_ACTION),
+            @Validate(field = "initiative", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "An initiative is required"),
+            @Validate(field = "fundSource", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "A funding source is required"),
+            @Validate(field = "executionType", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "A project execution type is required"),
+            @Validate(field = "workRequestType", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "A work request type is required"),
+            @Validate(field = "analysisType", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "An analysis type is required"),
+            @Validate(field = "referenceSequence", required = true, expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION, label = "A reference sequence is required")
+    })
     private AutoWorkRequestInput autoSquidDto = new AutoWorkRequestInput();
 
+    @Validate(required = true, on = BUILD_SQUID_COMPONENT_ACTION, label = "A value for paired sequencing is required")
+    private String pairedSequence;
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     private CreateProjectOptions squidProjectOptions;
@@ -81,9 +100,6 @@ public class SquidComponentActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION})
     public void init() {
 
-//        if(autoSquidDto == null) {
-//            autoSquidDto = new AutoWorkRequestInput();
-//        }
         productOrderKey = getContext().getRequest().getParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
         if (StringUtils.isNotBlank(productOrderKey)) {
             sourceOrder = productOrderDao.findByBusinessKey(productOrderKey);
@@ -93,7 +109,7 @@ public class SquidComponentActionBean extends CoreActionBean {
             }
             autoSquidDto.setProductOrderKey(productOrderKey);
 
-            for(ProductOrderSample sample:sourceOrder.getSamples()) {
+            for (ProductOrderSample sample : sourceOrder.getSamples()) {
                 SelectionOption sampleDto = new SelectionOption();
                 sampleDto.setId(sample.getSampleKey());
                 sampleDto.setName(sample.getSampleKey());
@@ -103,11 +119,16 @@ public class SquidComponentActionBean extends CoreActionBean {
             autoSquidDto.setUserName(getUserBean().getBspUser().getUsername());
         } else {
             addGlobalValidationError("Cannot create squid components without a Product Order to reference");
-//            return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
     }
 
-    @HandlesEvent(ENTER_COMPONENTS_ACTION )
+    @After(stages = LifecycleStage.BindingAndValidation, on = {BUILD_SQUID_COMPONENT_ACTION})
+    public void postInit() {
+        squidProjectOptions = squidConnector.getProjectCreationOptions();
+        workRequestOptions = squidConnector.getWorkRequestOptions(autoSquidDto.getExecutionType());
+    }
+
+    @HandlesEvent(ENTER_COMPONENTS_ACTION)
     public Resolution enterComponents() {
 
         setSubmitString(BUILD_SQUID_COMPONENTS);
@@ -116,6 +137,8 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @HandlesEvent(BUILD_SQUID_COMPONENT_ACTION)
     public Resolution buildSquidComponents() {
+
+        autoSquidDto.setPairedSequencing((pairedSequence.equals("YES")) ? true : false);
 
         AutoWorkRequestOutput output = productOrderEjb.createSquidWorkRequest(productOrderKey, autoSquidDto);
 
@@ -186,5 +209,25 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     public ExecutionTypes getSquidProjectExecutionTypes() {
         return squidProjectExecutionTypes;
+    }
+
+    public String getPairedSequence() {
+        return pairedSequence;
+    }
+
+    public void setPairedSequence(String pairedSequence) {
+        this.pairedSequence = pairedSequence;
+    }
+
+    public boolean isProjectOptionsRetrieved() {
+        return squidProjectOptions != null && (!squidProjectOptions.getFundingSources().isEmpty() ||
+                                               !squidProjectOptions.getInitiatives().isEmpty() ||
+                                               !squidProjectOptions.getProjectTypes().isEmpty());
+    }
+
+    public boolean isWorkRequestOptionsRetrieved() {
+        return workRequestOptions != null && (!workRequestOptions.getAnalysisTypes().isEmpty() ||
+                                              !workRequestOptions.getReferenceSequences().isEmpty() ||
+                                              !workRequestOptions.getWorkRequestTypes().isEmpty());
     }
 }

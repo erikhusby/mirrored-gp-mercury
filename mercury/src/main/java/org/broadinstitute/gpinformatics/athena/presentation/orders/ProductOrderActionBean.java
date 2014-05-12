@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -205,6 +206,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SquidLink squidLink;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -1612,6 +1616,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
+    }
+
+    public String getSquidWorkRequestUrl(String workRequestId) {
+        return squidLink.workRequestUrl(workRequestId);
+    }
+
+    public String getSquidWorkRequestUrl() {
+        return getSquidWorkRequestUrl(editOrder.getSquidWorkRequest());
     }
 
     public String getProductOrder() {

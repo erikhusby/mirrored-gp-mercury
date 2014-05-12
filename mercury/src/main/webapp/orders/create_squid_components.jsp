@@ -13,18 +13,16 @@
             $j('#sampleList').dataTable({
                 "oTableTools": ttExportDefines,
                 "aaSorting": [
-//                    [1, 'asc']
                     [0, 'asc']
                 ],
                 "aoColumns": [
-//                    {"bSortable": false},                 // Checkbox
                     {"bSortable": true, "sType": "html"}  // ID
                 ]
             });
 
             $j(document).ready(
-
                     function () {
+                        <c:if test="${!actionBean.projectOptionsRetrieved}">
                         $j('#squidProjectOptions').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
                         $j('#squidProjectOptions').show();
                         $j.ajax({
@@ -34,10 +32,11 @@
                                 $j("#squidProjectOptions").html(html);
                             }
                         });
-                        $j("#executionTypeSelect").change(function() {
+                        $j("#executionTypeSelect").change(function () {
                             var executionType = $j(this).val();
                             pullWorkRequestOptions(executionType);
                         });
+                        </c:if>
                     }
             );
             function pullWorkRequestOptions(executionType) {
@@ -68,46 +67,60 @@
                         Project execution type
                     </stripes:label>
                     <div class="controls">
-                        <stripes:select name="autoSquidDto.executionType" id="executionTypeSelect" >
+                        <stripes:select name="autoSquidDto.executionType" id="executionTypeSelect">
 
-                            <stripes:option value="-1" label="Select a project execution type" disabled="true" selected="selected"/>
+                            <stripes:option value="-1" label="Select a project execution type" disabled="true"
+                                            selected="selected"/>
                             <stripes:option value="Development" label="Development"/>
                             <stripes:option value="Production" label="Production"/>
                         </stripes:select>
-                        <%--<stripes:radio value="Development" name="autoSquidDto.executionType"/>Development--%>
-                        <%--<stripes:radio value="Production" name="autoSquidDto.executionType"/>Production--%>
                     </div>
                 </div>
-                <div id="squidProjectOptions"></div>
+                    <%--<fieldset>--%>
+                    <%--<legend><h4>Squid Project Information</h4></legend>--%>
+                <div id="squidProjectOptions">
+                    <c:if test="${actionBean.projectOptionsRetrieved}">
+                        <%--<stripes:layout-render name="/orders/squid_project_options.jsp"/>--%>
+                        <jsp:include page="/orders/squid_project_options.jsp"/>
+                    </c:if>
+                </div>
+                    <%--</fieldset>--%>
                 <p/>
 
                 <p/>
 
                 <p/>
 
-                <div id="squidWorkRequestOptions">Select a Project Execution Type to drive work request options</div>
+                    <%--<fieldset>--%>
+                    <%--<legend><h4>Squid Work Request Information</h4></legend>--%>
+                <div id="squidWorkRequestOptions">
+                    <c:choose>
+                        <c:when test="${actionBean.workRequestOptionsRetrieved}">
+                            <%--<stripes:layout-render name="/orders/squid_work_request_options.jsp"/>--%>
+                            <jsp:include page="/orders/squid_work_request_options.jsp"/>
+                        </c:when>
+                        <c:otherwise>
+                            Select a Project Execution Type to drive work request options
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                    <%--</fieldset>--%>
 
                 <c:if test="${not empty actionBean.sourceOrder.samples}">
+                    <div class="borderHeader">
+                        <h4 style="display:inline">Samples</h4>
+                    </div>
                     <table id="sampleList" class="table simple">
                         <thead>
                         <tr>
-                            <%--<th width="20">--%>
-                                <%--<input type="checkbox" class="checkAll" for="count" id="checkAllSamples"/>--%>
-                                <%--<span id="count" class="checkedCount"></span>--%>
-                            <%--</th>--%>
                             <th width="90">ID</th>
                         </tr>
                         </thead>
                         <tbody>
                         <c:forEach items="${actionBean.sourceOrder.samples}" var="sample">
                             <tr>
-                                <%--<td>--%>
-                                    <%--<stripes:checkbox name="selectedProductOrderSampleIds"--%>
-                                                      <%--title="${sample.samplePosition}"--%>
-                                                      <%--class="shiftCheckbox" value="${sample.productOrderSampleId}"/>--%>
-                                <%--</td>--%>
                                 <td id="" sampleId-${sample.productOrderSampleId} class="sampleName">
-                                        <%--@elvariable id="sampleLink" type="org.broadinstitute.gpinformatics.infrastructure.presentation.SampleLink"--%>
                                     <c:set var="sampleLink" value="${actionBean.getSampleLink(sample)}"/>
 
                                     <c:choose>

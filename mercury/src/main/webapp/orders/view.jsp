@@ -684,6 +684,20 @@ function formatInput(item) {
     </div>
 </div>
 
+<c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+    <div>
+        <div class="control-group view-control-group">
+            <label class="control-label label-form">Squid Work Request</label>
+
+            <div class="controls">
+                <div class="form-value">
+                    <a target="SQUID" href="${actionBean.squidWorkRequestUrl}"
+                       class="external">${actionBean.editOrder.squidWorkRequest}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Product Family</label>
@@ -738,11 +752,11 @@ function formatInput(item) {
     <div class="controls">
         <div class="form-value">
             <c:choose>
-            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
+                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
                         ${regulatoryInfo.displayText}<br/>
-                </c:forEach>
-            </c:when>
+                    </c:forEach>
+                </c:when>
 
                 <c:otherwise>
                     <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
@@ -888,7 +902,6 @@ function formatInput(item) {
         </div>
     </div>
 </div>
-
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
