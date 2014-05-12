@@ -74,8 +74,6 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertEquals(testOrder.getFemaleCount(), 3);
         Assert.assertEquals(testOrder.getMaleCount(), 0);
 
-        Assert.assertEquals(testOrder.getFingerprintCount(), 3);
-
         Assert.assertTrue(testOrder.getCountsByStockType().containsKey(ProductOrderSample.ACTIVE_IND));
         Assert.assertEquals(testOrder.getCountsByStockType().get(ProductOrderSample.ACTIVE_IND).intValue(), 3);
 
