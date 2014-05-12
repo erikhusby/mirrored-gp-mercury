@@ -81,8 +81,6 @@ public class ReworkEjbTest extends Arquillian {
     public static final String SM_SGM_Test_Somatic_1_CONC = "0.293";
     public static final String SM_SGM_Test_Somatic_1_COLLAB_PID = "CHTN_SEW";
     public static final String SM_SGM_Test_Somatic_1_DNA = "3.765242738037109374";
-    public static final String SM_SGM_Test_Somatic_1_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_SGM_Test_Somatic_1_DISEASE = "Carcinoid Tumor";
     public static final String SM_SGM_Test_Somatic_2_PATIENT_ID = "PT-1TS1";
     public static final String SM_SGM_Test_Somatic_2_STOCK_SAMP = "SM-SGM_Test_Somatic2";
@@ -93,8 +91,6 @@ public class ReworkEjbTest extends Arquillian {
     public static final String SM_SGM_Test_Somatic_2_CONC = "0.293";
     public static final String SM_SGM_Test_Somatic_2_COLLAB_PID = "CHTN_SEW";
     public static final String SM_SGM_Test_Somatic_2_DNA = "3.765242738037109374";
-    public static final String SM_SGM_Test_Somatic_2_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_SGM_Test_Somatic_2_DISEASE = "Carcinoid Tumor";
     public static final String SM_SGM_Test_Genomic_1_PATIENT_ID = "PT-1TS1";
     public static final String SM_SGM_Test_Genomic_1_STOCK_SAMP = "SM-SGM_Test_Genomic1";
@@ -104,8 +100,6 @@ public class ReworkEjbTest extends Arquillian {
     public static final String SM_SGM_Test_Genomic_1_CONC = "0.293";
     public static final String SM_SGM_Test_Genomic_1_COLLAB_PID = "CHTN_SEW";
     public static final String SM_SGM_Test_Genomic_1_DNA = "3.765242738037109374";
-    public static final String SM_SGM_Test_Genomic_1_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_SGM_Test_Genomic_1_DISEASE = "Carcinoid Tumor";
     public static final String SM_SGM_Test_Genomic_2_PATIENT_ID = "PT-1TS1";
     public static final String SM_SGM_Test_Genomic_2_STOCK_SAMP = "SM-SGM_Test_Genomic2";
@@ -116,8 +110,6 @@ public class ReworkEjbTest extends Arquillian {
     public static final String SM_SGM_Test_Genomic_2_CONC = "0.293";
     public static final String SM_SGM_Test_Genomic_2_COLLAB_PID = "CHTN_SEW";
     public static final String SM_SGM_Test_Genomic_2_DNA = "3.765242738037109374";
-    public static final String SM_SGM_Test_Genomic_2_FP =
-            "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_SGM_Test_Genomic_2_DISEASE = "Carcinoid Tumor";
 
     @Inject
@@ -251,7 +243,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_2_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Somatic_2_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample2);
                 }});
@@ -274,7 +265,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Somatic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample1);
                 }});
@@ -296,7 +286,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Somatic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Somatic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Somatic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, somaticSample3);
                 }});
@@ -318,7 +307,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_2_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_2_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_2_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample2);
                 }});
@@ -341,7 +329,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
                 }});
@@ -363,7 +350,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample3);
                 }});
@@ -385,7 +371,6 @@ public class ReworkEjbTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, SM_SGM_Test_Genomic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, SM_SGM_Test_Genomic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_3_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSampleDraft);
                 }});
