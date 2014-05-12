@@ -278,7 +278,6 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
                 </c:if>
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
-                {"bSortable": true, "sType": "title-string"},   // FP Status
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": true},                            // Status
