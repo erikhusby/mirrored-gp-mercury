@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -37,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
@@ -449,6 +451,8 @@ public class LabEventFactory implements Serializable {
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
         addReagents(labEvent, plateCherryPickEvent.getReagent());
+        addMetadatas(labEvent, plateCherryPickEvent.getMetadata());
+
         return labEvent;
     }
 
@@ -850,6 +854,7 @@ public class LabEventFactory implements Serializable {
                     rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
         }
         addReagents(labEvent, plateEventType.getReagent());
+        addMetadatas(labEvent, plateEventType.getMetadata());
         return labEvent;
     }
 
@@ -870,6 +875,7 @@ public class LabEventFactory implements Serializable {
                     plateTransferEvent.getPlate().getBarcode());
             LabEvent labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
             addReagents(labEvent, plateTransferEvent.getReagent());
+            addMetadatas(labEvent, plateTransferEvent.getMetadata());
             return labEvent;
         }
         List<String> barcodes = new ArrayList<>();
@@ -884,6 +890,7 @@ public class LabEventFactory implements Serializable {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         addReagents(labEvent, plateTransferEvent.getReagent());
+        addMetadatas(labEvent, plateTransferEvent.getMetadata());
         return labEvent;
     }
 
@@ -1013,6 +1020,18 @@ public class LabEventFactory implements Serializable {
                 genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode());
             }
             labEvent.addReagent(genericReagent);
+        }
+    }
+
+    private void addMetadatas( LabEvent labEvent, List<MetadataType> metadataTypes) {
+        for(MetadataType metadataType: metadataTypes){
+            LabEventMetadata.LabEventMetadataType labEventMetadataType =
+                    LabEventMetadata.LabEventMetadataType.getByName(metadataType.getName());
+            if(labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
+                LabEventMetadata labEventMetadata =
+                        new LabEventMetadata(labEventMetadataType, metadataType.getValue());
+                labEvent.addMetadata(labEventMetadata);
+            }
         }
     }
 
