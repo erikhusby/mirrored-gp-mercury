@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.rapsheet.ReworkEntry;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
@@ -29,7 +28,7 @@ import java.util.Set;
 @Table(schema = "mercury", name = "rework_detail")
 public class ReworkDetail {
 
-    @SequenceGenerator(name = "SEQ_REWORK_DETAIL", schema = "mercury",  sequenceName = "SEQ_REWORK_DETAIL")
+    @SequenceGenerator(name = "SEQ_REWORK_DETAIL", schema = "mercury", sequenceName = "SEQ_REWORK_DETAIL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REWORK_DETAIL")
     @Id
     @Column(name = "rework_detail_id")
@@ -39,7 +38,7 @@ public class ReworkDetail {
     private Set<BucketEntry> bucketEntries = new HashSet<>();
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name="user_defined_reason")
+    @JoinColumn(name = "user_defined_reason")
     private ReworkReason reason;
 
     @Enumerated(EnumType.STRING)
@@ -57,8 +56,11 @@ public class ReworkDetail {
     @JoinColumn(name = "add_to_rework_bucket_event_id")
     private LabEvent addToReworkBucketEvent;
 
-    /** For JPA. */
-    protected ReworkDetail() {}
+    /**
+     * For JPA.
+     */
+    protected ReworkDetail() {
+    }
 
     public ReworkDetail(ReworkReason reason, ReworkLevel reworkLevel,
                         LabEventType reworkStep, String comment, LabEvent addToReworkBucketEvent) {

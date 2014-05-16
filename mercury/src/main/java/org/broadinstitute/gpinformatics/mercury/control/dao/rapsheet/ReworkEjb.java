@@ -166,75 +166,119 @@ public class ReworkEjb {
                 sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
 
-            for (Map.Entry<String, Set<ProductOrderSample>> entryMap : productOrderSampleDao.findMapBySamples(sampleIds)
-                                                                                            .entrySet()) {
-                // TODO: fetch for all vessels in a single call and make looping over labVessels a @DaoFree method
-                Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
-                // make sure we have a matching product order sample
-                for (ProductOrderSample sample : productOrderSamples) {
-                    Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-                    if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
-
-                        List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
-                        Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
-
-                        String eventName = "";
-                        if (!eventList.isEmpty()) {
-                            eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
-                        }
-
-                        BucketCandidate candidate = new BucketCandidate(entryMap.getKey(), vessel.getLabel(),
-                                                                        sample.getProductOrder(), vessel, eventName);
-
-                        if (!sample.getProductOrder().getProduct()
-                                   .isSameProductFamily(ProductFamily.ProductFamilyName.EXOME)) {
-                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                           " for Sample " + entryMap.getKey() +
-                                                           " is not part of the Exome family");
-                        }
-
-                        bucketCandidates.add(candidate);
-                    }
-                }
-            }
+            Map<String, Set<ProductOrderSample>> mapBySamples = productOrderSampleDao.findMapBySamples(sampleIds);
+            bucketCandidates.addAll(addBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
         }
 
         // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (bucketCandidates.isEmpty()) {
-            Map<String, Set<ProductOrderSample>> samplesById =
-                    productOrderSampleDao.findMapBySamples(query);
-            for (Set<ProductOrderSample> samples : samplesById.values()) {
-                Collection<String> sampleIDs = new ArrayList<>();
-                for (ProductOrderSample sample : samples) {
-                    sampleIDs.add(sample.getName());
-                }
-                Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
-                bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
-                for (ProductOrderSample sample : samples) {
-                    Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
-
-                    if (Workflow.isWorkflowSupportedByMercury(workflow)) {
-                        String sampleKey = sample.getName();
-                        String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
-
-
-                        BucketCandidate candidate = new BucketCandidate(sampleKey, tubeBarcode,
-                                                                        sample.getProductOrder(), null, "");
-                        if (!sample.getProductOrder().getProduct().isSameProductFamily(
-                                ProductFamily.ProductFamilyName.EXOME)) {
-                            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
-                                                           " for Sample " + sampleKey +
-                                                           " is not part of the Exome family");
-                        }
-
-                        bucketCandidates.add(candidate);
-                    }
-                }
-            }
+            Map<String, Set<ProductOrderSample>> samplesById = productOrderSampleDao.findMapBySamples(query);
+            bucketCandidates.addAll(addBucketCandidatesThatHaveBSPVessels(samplesById));
         }
 
         return bucketCandidates;
+    }
+
+    /**
+     * addBucketCandidatesThatHaveBSPVessels will, given a collection of ProductOrderSamples, create BucketCandidates
+     * for the samples that have a Vessel that is represented in BSP.
+     *
+     * @param samplesById Map of ProductOrderSamples indexed by Sample Name
+     *
+     * @return  A collection of Bucket Candidates to add to the collection of found Bucket Candidates
+     */
+    public Collection<BucketCandidate> addBucketCandidatesThatHaveBSPVessels(
+            Map<String, Set<ProductOrderSample>> samplesById) {
+
+        Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
+        for (Set<ProductOrderSample> samples : samplesById.values()) {
+            Collection<String> sampleIDs = new ArrayList<>();
+            for (ProductOrderSample sample : samples) {
+                sampleIDs.add(sample.getName());
+            }
+            Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+            bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+            for (ProductOrderSample sample : samples) {
+                Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+
+                if (Workflow.isWorkflowSupportedByMercury(workflow)) {
+                    String sampleKey = sample.getName();
+                    String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
+
+                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
+                            tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
+                }
+            }
+        }
+        return bucketCandidates;
+    }
+
+    /**
+     * addBucketCandidatesForAMercuryVessel will extract bucket candidates from a collection of productOrderSamples
+     * that are associated with a given Vessel.
+     *
+     * @param vessel       lab Vessel for which the samples are associated
+     * @param mapBySamples Collection of ProductOrderSamples that are associated with the Samples in the Vessels
+     *                     hierarchy
+     *
+     * @return A collection of Bucket Candidates to add to the collection of found Bucket Candidates
+     */
+    public Collection<BucketCandidate> addBucketCandidatesForAMercuryVessel(LabVessel vessel,
+                                                                            Map<String, Set<ProductOrderSample>> mapBySamples) {
+
+        Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
+        for (Map.Entry<String, Set<ProductOrderSample>> entryMap : mapBySamples.entrySet()) {
+            Set<ProductOrderSample> productOrderSamples = entryMap.getValue();
+            // make sure we have a matching product order sample
+            for (ProductOrderSample sample : productOrderSamples) {
+                Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+
+                if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
+
+                    List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
+                    Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
+
+                    String eventName = "";
+                    if (!eventList.isEmpty()) {
+                        eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
+                    }
+
+                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, entryMap.getKey(),
+                            vessel.getLabel(),
+                            ProductFamily.ProductFamilyName.EXOME, vessel, eventName));
+                }
+            }
+        }
+        return bucketCandidates;
+    }
+
+    /**
+     * getBucketCandidateConsideringProductFamily will construct a bucket candidate based on given key information
+     * and add a validation message if the candidate does not match the desired product family
+     *
+     * @param sample            ProductOrderSample that is associated with the desired bucket candidate
+     * @param sampleKey         name of the sample to which the BucketCandidate will be associated
+     * @param tubeBarcode       2d Manufacturers Barcode of the labvessel to which this candidate is to be associated
+     * @param productFamily     Product family for which this bucket Candidate is valid
+     * @param labVessel         Entity representation of the Lab Vessle to which this candidate is to be associated
+     * @param lastEventStep     step in the workflow for which the vessel for this candidate originated.  Typically
+     *                          used for Reworks.
+     *
+     * @return  A new instance of a Bucket Candidate
+     */
+    public BucketCandidate getBucketCandidateConsideringProductFamily(@Nonnull ProductOrderSample sample,
+                                                                      @Nonnull String sampleKey,
+                                                                      @Nonnull String tubeBarcode,
+                                                                      @Nonnull ProductFamily.ProductFamilyName productFamily,
+                                                                      LabVessel labVessel, String lastEventStep) {
+        BucketCandidate candidate = new BucketCandidate(sampleKey, tubeBarcode,
+                sample.getProductOrder(), labVessel, lastEventStep);
+        if (!sample.getProductOrder().getProduct().isSameProductFamily(productFamily)) {
+            candidate.addValidationMessage("The PDO " + sample.getProductOrder().getBusinessKey() +
+                                           " for Sample " + sampleKey +
+                                           " is not part of the Exome family");
+        }
+        return candidate;
     }
 
     /**
@@ -263,17 +307,17 @@ public class ReworkEjb {
             throws ValidationException {
         Collection<BucketEntry> bucketEntries = bucketEjb
                 .add(Collections.singleton(candidateVessel), bucket,
-                     reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
-                             BucketEntry.BucketEntryType.PDO_ENTRY,
-                     userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
-                     reworkFromStep, productOrder);
+                        reworkCandidate ? BucketEntry.BucketEntryType.REWORK_ENTRY :
+                                BucketEntry.BucketEntryType.PDO_ENTRY,
+                        userName, LabEvent.UI_EVENT_LOCATION, LabEvent.UI_PROGRAM_NAME,
+                        reworkFromStep, productOrder);
 
         // TODO: create the event in this scope instead of getting the "latest" event
         if (reworkCandidate) {
             for (BucketEntry bucketEntry : bucketEntries) {
                 ReworkDetail reworkDetail =
                         new ReworkDetail(reworkReason, ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH,
-                                         reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
+                                reworkFromStep, comment, bucketEntry.getLabVessel().getLatestEvent());
                 bucketEntry.setReworkDetail(reworkDetail);
             }
         }
@@ -286,7 +330,7 @@ public class ReworkEjb {
 
         if (reworkVessel == null) {
             reworkVessel = bucketEjb.createInitialVessels(Collections.singleton(sampleKey),
-                                                          userName).iterator().next();
+                    userName).iterator().next();
         }
         return reworkVessel;
     }
@@ -320,7 +364,7 @@ public class ReworkEjb {
         for (BucketCandidate bucketCandidate : bucketCandidates) {
             try {
                 validationMessages.addAll(addAndValidateBucketCandidate(bucketCandidate, reason, bucket, comment,
-                                                                        userName));
+                        userName));
             } catch (ValidationException e) {
                 throw new ValidationWithRollbackException(e);
             }
@@ -359,11 +403,11 @@ public class ReworkEjb {
 
         Collection<String> validationMessages =
                 validateBucketItem(reworkVessel, ProductWorkflowDefVersion.findBucketDef(workflow, reworkFromStep),
-                                   bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
-                                   bucketCandidate.isReworkItem());
+                        bucketCandidate.getProductOrder(), bucketCandidate.getSampleKey(),
+                        bucketCandidate.isReworkItem());
 
         addCandidate(reworkVessel, bucketCandidate.getProductOrder(), reworkReason, reworkFromStep,
-                     bucket, comment, userName, bucketCandidate.isReworkItem());
+                bucket, comment, userName, bucketCandidate.isReworkItem());
 
         return validationMessages;
     }
@@ -383,10 +427,9 @@ public class ReworkEjb {
      * validateBucketItem will execute certain validation rules on a rework sample in order to inform a submitter of
      * any issues with the state of the LabVessel with regards to using it for Rework.
      *
-     *
      * @param candidateVessel a LabVessel instance being submitted to a bucket
      * @param bucketDef       the bucket that the samples will be added to
-     * @param productOrder the product order for which the vessel is being added to a bucket
+     * @param productOrder    the product order for which the vessel is being added to a bucket
      * @param sampleKey       the sample being for which the vessel represents
      * @param reworkItem      Indicates whether the sample being added is for rework
      *
@@ -401,10 +444,10 @@ public class ReworkEjb {
         List<String> validationMessages = new ArrayList<>();
 
         if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(),
-                                                     BucketEntry.Status.Active)) {
+                BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                                  candidateVessel.getLabel(), sampleKey, productOrder, bucketDef.getName());
+                            candidateVessel.getLabel(), sampleKey, productOrder, bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }
@@ -429,14 +472,9 @@ public class ReworkEjb {
             throws ValidationException {
         BucketCandidate bucketCandidate = new BucketCandidate(labVesselBarcode);
         LabVessel reworkVessel = getLabVessel(bucketCandidate.getTubeBarcode(), bucketCandidate.getSampleKey(),
-                                              userName
+                userName
         );
         batch.addReworks(Arrays.asList(reworkVessel));
-    }
-
-
-    public void setMercurySampleDao(MercurySampleDao mercurySampleDao) {
-        this.mercurySampleDao = mercurySampleDao;
     }
 
     public Collection<LabVessel> getVesselsForRework(String bucketName) {
