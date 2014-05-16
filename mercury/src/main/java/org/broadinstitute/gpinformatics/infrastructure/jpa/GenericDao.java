@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.GenericDaoCallback;
+
 /**
  * Superclass for Data Access Objects. Makes use of a request-scoped extended persistence context. Scoped session beans
  * can't be parameterized types (JSR-299 3.2), so this DAO can't be type-safe.
@@ -307,12 +309,8 @@ public class GenericDao {
 
     /**
      * Wraps a call to find single with a lockmode type set to NONE
-     * @see #findSingle(Class, org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao.GenericDaoCallback, javax.persistence.LockModeType)
+     * @see #findSingle(Class, GenericDaoCallback, javax.persistence.LockModeType)
      *
-     * @param entity
-     * @param genericDaoCallback
-     * @param <METADATA_TYPE>
-     * @param <ENTITY_TYPE>
      * @return
      *
      */

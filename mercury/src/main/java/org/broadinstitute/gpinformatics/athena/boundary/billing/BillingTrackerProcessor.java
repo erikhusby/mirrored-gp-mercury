@@ -416,6 +416,22 @@ public class BillingTrackerProcessor extends TableProcessor {
                 Date workCompleteDate = null;
                 try {
                     workCompleteDate = DateUtils.parseDate(workCompleteDateString);
+                    Date now = new Date();
+                    if (now.before(workCompleteDate)) {
+                        addDataMessage(
+                                String.format(FUTURE_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
+                                        workCompleteDateString), dataRowIndex);
+                    }
+
+                    // only perform this warning level check if not persisting (i.e., only previewing)
+                    if (!doPersist) {
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.add(Calendar.MONTH, -3);
+                        if (workCompleteDate.before(calendar.getTime())) {
+                            addWarning(String.format(OLD_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
+                                    workCompleteDateString), dataRowIndex);
+                        }
+                    }
                 } catch (ParseException e) {
                     addDataMessage(
                             MessageFormat.format(
@@ -423,21 +439,6 @@ public class BillingTrackerProcessor extends TableProcessor {
                                     "in PDO ''{2}'' ", workCompleteDateString, productOrderSample.getSampleKey(),
                                     currentProductOrder.getBusinessKey()),
                             dataRowIndex);
-                }
-                Date now = new Date();
-                if (now.before(workCompleteDate)) {
-                    addDataMessage(String.format(FUTURE_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
-                            workCompleteDateString), dataRowIndex);
-                }
-
-                // only perform this warning level check if not persisting (i.e., only previewing)
-                if (!doPersist) {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.add(Calendar.MONTH, -3);
-                    if (workCompleteDate.before(calendar.getTime())) {
-                        addWarning(String.format(OLD_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
-                                workCompleteDateString), dataRowIndex);
-                    }
                 }
 
                 // If there are no messages AND we are persisting, then update the ledger Item, which will

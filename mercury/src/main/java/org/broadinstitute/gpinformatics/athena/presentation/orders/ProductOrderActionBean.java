@@ -1564,6 +1564,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
+            logger.error("Problem adding samples to bucket",e);
             addGlobalValidationError(e.getMessage());
         }
         return createViewResolution(editOrder.getBusinessKey());

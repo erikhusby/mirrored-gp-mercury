@@ -165,7 +165,6 @@ public class SolexaRunRestResourceTest extends Arquillian {
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, ReworkEjbTest.SM_SGM_Test_Genomic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, ReworkEjbTest.SM_SGM_Test_Genomic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
                 }});
