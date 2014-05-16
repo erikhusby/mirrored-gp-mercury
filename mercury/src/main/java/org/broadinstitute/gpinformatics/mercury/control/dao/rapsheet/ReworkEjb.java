@@ -167,27 +167,27 @@ public class ReworkEjb {
             }
 
             Map<String, Set<ProductOrderSample>> mapBySamples = productOrderSampleDao.findMapBySamples(sampleIds);
-            bucketCandidates.addAll(addBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
+            bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
         }
 
         // TODO: be smarter about which inputs produced results and query BSP for any that had no results from Mercury
         if (bucketCandidates.isEmpty()) {
             Map<String, Set<ProductOrderSample>> samplesById = productOrderSampleDao.findMapBySamples(query);
-            bucketCandidates.addAll(addBucketCandidatesThatHaveBSPVessels(samplesById));
+            bucketCandidates.addAll(collectBucketCandidatesThatHaveBSPVessels(samplesById));
         }
 
         return bucketCandidates;
     }
 
     /**
-     * addBucketCandidatesThatHaveBSPVessels will, given a collection of ProductOrderSamples, create BucketCandidates
+     * collectBucketCandidatesThatHaveBSPVessels will, given a collection of ProductOrderSamples, create BucketCandidates
      * for the samples that have a Vessel that is represented in BSP.
      *
      * @param samplesById Map of ProductOrderSamples indexed by Sample Name
      *
      * @return  A collection of Bucket Candidates to add to the collection of found Bucket Candidates
      */
-    public Collection<BucketCandidate> addBucketCandidatesThatHaveBSPVessels(
+    public Collection<BucketCandidate> collectBucketCandidatesThatHaveBSPVessels(
             Map<String, Set<ProductOrderSample>> samplesById) {
 
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
@@ -214,7 +214,7 @@ public class ReworkEjb {
     }
 
     /**
-     * addBucketCandidatesForAMercuryVessel will extract bucket candidates from a collection of productOrderSamples
+     * collectBucketCandidatesForAMercuryVessel will extract bucket candidates from a collection of productOrderSamples
      * that are associated with a given Vessel.
      *
      * @param vessel       lab Vessel for which the samples are associated
@@ -223,8 +223,8 @@ public class ReworkEjb {
      *
      * @return A collection of Bucket Candidates to add to the collection of found Bucket Candidates
      */
-    public Collection<BucketCandidate> addBucketCandidatesForAMercuryVessel(LabVessel vessel,
-                                                                            Map<String, Set<ProductOrderSample>> mapBySamples) {
+    public Collection<BucketCandidate> collectBucketCandidatesForAMercuryVessel(LabVessel vessel,
+                                                                                Map<String, Set<ProductOrderSample>> mapBySamples) {
 
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
         for (Map.Entry<String, Set<ProductOrderSample>> entryMap : mapBySamples.entrySet()) {
