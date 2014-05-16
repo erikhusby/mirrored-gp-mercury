@@ -143,7 +143,7 @@
                 <stripes:submit name="<%= SquidComponentActionBean.BUILD_SQUID_COMPONENT_ACTION %>"
                                 value="Submit work request" style="margin-right: 10px;" class="btn btn-primary"/>
                 <stripes:link beanclass="${actionBean.class.name}"
-                              event="<%= SquidComponentActionBean.ENTER_COMPONENTS_ACTION %>">
+                              event="<%= SquidComponentActionBean.CANCEL_ACTION %>">
                     <stripes:param name="<%= ProductOrderActionBean.PRODUCT_ORDER_PARAMETER%>"
                                    value="${actionBean.sourceOrder}"/>
                     Cancel

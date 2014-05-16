@@ -42,6 +42,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     public static final String BUILD_SQUID_COMPONENT_ACTION = "buildSquidComponents";
     public static final String BUILD_SQUID_COMPONENTS = "Build Squid Components";
     public static final String ENTER_COMPONENTS_ACTION = "enterComponents";
+    public static final String CANCEL_ACTION = "cancelComponents";
 
 
     private static Log logger = LogFactory.getLog(SquidComponentActionBean.class);
@@ -97,6 +98,11 @@ public class SquidComponentActionBean extends CoreActionBean {
         super("", "", ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
     }
 
+    @HandlesEvent(CANCEL_ACTION)
+    public Resolution cancelComponents() {
+        return new ForwardResolution(ProductOrderActionBean.ORDER_VIEW_PAGE);
+    }
+
     @Before(stages = LifecycleStage.BindingAndValidation, on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION})
     public void init() {
 
@@ -138,7 +144,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     @HandlesEvent(BUILD_SQUID_COMPONENT_ACTION)
     public Resolution buildSquidComponents() {
 
-        autoSquidDto.setPairedSequencing((pairedSequence.equals("YES")) ? true : false);
+        autoSquidDto.setPairedSequencing((pairedSequence.equals("YES")));
 
         AutoWorkRequestOutput output = productOrderEjb.createSquidWorkRequest(productOrderKey, autoSquidDto);
 

@@ -136,7 +136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
-    private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    public static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
 
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
