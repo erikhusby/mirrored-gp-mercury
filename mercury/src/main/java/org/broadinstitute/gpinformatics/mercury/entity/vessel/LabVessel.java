@@ -549,6 +549,17 @@ public abstract class LabVessel implements Serializable {
         labBatches.add(labBatchStartingVessel);
     }
 
+    public String getLastEventName() {
+        String eventName = "";
+        List<LabEvent> eventList = new ArrayList<>(getInPlaceAndTransferToEvents());
+        Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
+
+        if (!eventList.isEmpty()) {
+            eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
+        }
+        return eventName;
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),

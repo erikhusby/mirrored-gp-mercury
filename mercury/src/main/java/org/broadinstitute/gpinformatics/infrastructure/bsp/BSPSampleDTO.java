@@ -127,7 +127,7 @@ public class BSPSampleDTO {
      * @return value at column, or empty string if missing
      */
     @Nonnull
-    private String getValue(BSPSampleSearchColumn column) {
+    protected String getValue(BSPSampleSearchColumn column) {
         String value = columnToValue.get(column);
         if (value != null) {
             return value;

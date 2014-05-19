@@ -83,7 +83,6 @@ public class ReworkEjb {
     @Inject
     private LabVesselDao labVesselDao;
 
-    @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
     @Inject
@@ -104,6 +103,9 @@ public class ReworkEjb {
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
+    public ReworkEjb() {
+    }
+
     /**
      * Searches for and returns candidate vessels and samples that can be used for "rework". All candidates must at
      * least have a single sample, a tube barcode, and a PDO. Multiple results for the same sample may be returned if
@@ -112,6 +114,9 @@ public class ReworkEjb {
      * @param query tube barcode or sample ID to search for
      *
      * @return tube/sample/PDO selections that are valid for rework
+     *
+     * TODO Remove.  Only called from test cases.
+     *
      */
     public Collection<BucketCandidate> findBucketCandidates(String query) {
         return findBucketCandidates(Collections.singletonList(query));
@@ -192,7 +197,7 @@ public class ReworkEjb {
 
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
         for (Set<ProductOrderSample> samples : samplesById.values()) {
-            Collection<String> sampleIDs = new ArrayList<>();
+            Collection<String> sampleIDs = new HashSet<>();
             for (ProductOrderSample sample : samples) {
                 sampleIDs.add(sample.getName());
             }
@@ -235,13 +240,7 @@ public class ReworkEjb {
 
                 if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
 
-                    List<LabEvent> eventList = new ArrayList<>(vessel.getInPlaceAndTransferToEvents());
-                    Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
-
-                    String eventName = "";
-                    if (!eventList.isEmpty()) {
-                        eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
-                    }
+                    String eventName = vessel.getLastEventName();
 
                     bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, entryMap.getKey(),
                             vessel.getLabel(),
@@ -484,6 +483,11 @@ public class ReworkEjb {
             vessels.add(bucketEntry.getLabVessel());
         }
         return vessels;
+    }
+
+    @Inject
+    public void setBspSampleDataFetcher(BSPSampleDataFetcher bspSampleDataFetcher) {
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
     /**
