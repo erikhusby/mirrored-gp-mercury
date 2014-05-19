@@ -55,7 +55,6 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.PRIMARY_DISEASE,
         BSPSampleSearchColumn.GENDER,
         BSPSampleSearchColumn.STOCK_TYPE,
-        BSPSampleSearchColumn.FINGERPRINT,
         BSPSampleSearchColumn.CONTAINER_ID,
         BSPSampleSearchColumn.SAMPLE_ID,
         BSPSampleSearchColumn.COLLABORATOR_NAME,

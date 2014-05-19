@@ -240,9 +240,6 @@ function showSamples(sampleData) {
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
 
-        if (sampleData[x].hasFingerprint) {
-            $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
-        }
 
         if (sampleData[x].hasSampleKitUploadRackscanMismatch) {
             $j('#sampleKitUploadRackscanMismatch-' + sampleId).html('<img src="${ctxpath}/images/error.png" title="Yes"/>');
@@ -281,7 +278,6 @@ function showSamples(sampleData) {
                 {"bSortable": true, "sType": "title-us-date"},  // Pico Run Date
                 </c:if>
                 {"bSortable": true, "sType": "numeric"},        // Yield Amount
-                {"bSortable": true, "sType": "title-string"},   // FP Status
                 {"bSortable": true},                            // sample kit upload/rackscan mismatch
                 {"bSortable": true},                            // On Risk
                 {"bSortable": true},                            // Status
@@ -1056,7 +1052,6 @@ function formatInput(item) {
                     <th width="70">Last Pico Run Date</th>
                 </c:if>
                 <th width="40">Yield Amount</th>
-                <th width="60">FP Status</th>
                 <th width="60"><abbr title="Sample Kit Upload/Rackscan Mismatch">Rackscan Mismatch</abbr></th>
                 <th>On Risk</th>
                 <th width="40">Status</th>
@@ -1118,7 +1113,6 @@ function formatInput(item) {
                     </c:if>
 
                     <td id="total-${sample.productOrderSampleId}"></td>
-                    <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center"></td>
                     <td id="sampleKitUploadRackscanMismatch-${sample.productOrderSampleId}" style="text-align: center">
                     </td>
                     <td style="text-align: center">

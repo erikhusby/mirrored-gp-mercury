@@ -132,7 +132,6 @@ public class ZimsIlluminaRunFactoryTest {
             put(BSPSampleSearchColumn.PRIMARY_DISEASE, "Test failure");
             put(BSPSampleSearchColumn.GENDER, "M");
             put(BSPSampleSearchColumn.STOCK_TYPE, "Stock Type");
-            put(BSPSampleSearchColumn.FINGERPRINT, "fingerprint");
             put(BSPSampleSearchColumn.SAMPLE_ID, TEST_SAMPLE_ID);
             put(BSPSampleSearchColumn.SAMPLE_TYPE, "ZimsIlluminaRunFactoryTest");
             put(BSPSampleSearchColumn.RACE, "N/A");

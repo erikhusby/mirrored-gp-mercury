@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -39,7 +38,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,10 +96,10 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
     public void testMultithreaded() throws Exception {
         Throwable pdoJiraError = null;
         startingKey = "PDO-" + basePdoKey;
-        PDOLookupThread pdoLookupThread = new PDOLookupThread();
-        PDOLookupThread pdoLookupThread2 = new PDOLookupThread();
-        Thread thread1 = new Thread(pdoLookupThread);
-        Thread thread2 = new Thread(pdoLookupThread2);
+        PlacePDOThread placePdoThread = new PlacePDOThread();
+        PlacePDOThread placePdoThread2 = new PlacePDOThread();
+        Thread thread1 = new Thread(placePdoThread);
+        Thread thread2 = new Thread(placePdoThread2);
 
         thread1.start();
         thread2.start();
@@ -110,14 +108,14 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         thread2.join();
 
         int numErrors = 0;
-        if (pdoLookupThread.getError() != null) {
-            pdoJiraError = pdoLookupThread.getError();
+        if (placePdoThread.getError() != null) {
+            pdoJiraError = placePdoThread.getError();
             Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
             logger.info("Error found in Thread 1: " + pdoJiraError.getMessage());
             numErrors++;
         }
-        if (pdoLookupThread2.getError() != null) {
-            pdoJiraError = pdoLookupThread2.getError();
+        if (placePdoThread2.getError() != null) {
+            pdoJiraError = placePdoThread2.getError();
             Assert.assertTrue(pdoJiraError instanceof InformaticsServiceException);
             logger.info("Error found in Thread 2: " + pdoJiraError.getMessage());
             numErrors++;
@@ -129,17 +127,13 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         Assert.assertEquals(numErrors, 1,
                 "At least one of the calls to place order called to Jira and created a new ticket when it wasn't expected");
 
-        // Removing these lines (For now) because it seems that a query for the Product order does not yield the
-        // updated product order state.  Maybe because this test case is wrapped in a transaction that it is not able
-        // to see the change within the thread
-
         productOrderDao.clear();
         ProductOrder alteredOrder = productOrderDao.findById(productOrderId);
         Assert.assertEquals(alteredOrder.getBusinessKey(), startingKey,
                 "The Product order key was reset by a Second thread after being submitted.");
     }
 
-    public class PDOLookupThread implements Runnable {
+    public class PlacePDOThread implements Runnable {
 
         private Throwable error;
 

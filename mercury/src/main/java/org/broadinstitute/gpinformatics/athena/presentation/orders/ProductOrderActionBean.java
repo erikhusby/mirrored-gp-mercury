@@ -1350,7 +1350,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
         item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
-        item.put(BSPSampleDTO.HAS_FINGERPRINT, bspSampleDTO.getHasFingerprint());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
                  bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
         item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
@@ -1386,7 +1385,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put(BSPSampleDTO.JSON_RIN_KEY, "");
         item.put(BSPSampleDTO.PICO_DATE, "");
         item.put(BSPSampleDTO.TOTAL, "");
-        item.put(BSPSampleDTO.HAS_FINGERPRINT, "");
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
         item.put(BSPSampleDTO.PACKAGE_DATE, "");
         item.put(BSPSampleDTO.RECEIPT_DATE, "");
@@ -1566,6 +1564,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
+            logger.error("Problem adding samples to bucket",e);
             addGlobalValidationError(e.getMessage());
         }
         return createViewResolution(editOrder.getBusinessKey());

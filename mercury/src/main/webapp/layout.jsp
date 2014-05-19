@@ -153,7 +153,7 @@
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
                               title="Click here to send a bug report or feedback">Feedback</span>
 
-                <c:if test="${userBean.validUser}">
+                <c:if test="${userBean.loginUserName ne null}">
                     |
                          <span id="userBadge" class="badge ${userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
@@ -174,7 +174,7 @@
 
     <nav class="row-fluid">
         <stripes:layout-component name="menu">
-            <c:if test="${userBean.validUser}">
+            <c:if test="${userBean.loginUserName ne null}">
                 <jsp:include page="/navigation.jsp"/>
             </c:if>
         </stripes:layout-component>
