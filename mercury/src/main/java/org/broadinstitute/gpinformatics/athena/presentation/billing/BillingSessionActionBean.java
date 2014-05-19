@@ -46,10 +46,8 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements.
@@ -97,15 +95,20 @@ public class BillingSessionActionBean extends CoreActionBean {
     @Validate(required = true, on = {"bill", "endSession"})
     private String sessionKey;
 
-    // parameter from quote server
+    public static final String SESSION_KEY_PARAMETER_NAME = "sessionKey";
+
+    // parameter from quote server, comes over as &billingSession= in the url and will be
+    // passed through to sessionKey on view
     private String billingSession;
 
-    // parameter from quote server
-    private String workItemId;
+    public static final String BILLING_SESSION_FROM_QUOTE_SERVER_URL_PARAMETER = "billingSession";
+
+    // parameter from quote server, comes over as &workId= in the url
+    private String workId;
+
+    public static final String WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER = "workId";
 
     private BillingSession editSession;
-
-    public static final String WORK_ITEM_URL_PARAMETER = "workId";
 
     /**
      * Initialize the session with the passed in key for display in the form.  Creation happens from a gesture in the
@@ -114,9 +117,8 @@ public class BillingSessionActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation,
             on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
     public void init() {
-        log.debug("In validation for billing");
-        sessionKey = getContext().getRequest().getParameter("sessionKey");
-        workItemId = getContext().getRequest().getParameter(WORK_ITEM_URL_PARAMETER);
+        sessionKey = getContext().getRequest().getParameter(SESSION_KEY_PARAMETER_NAME);
+        workId = getContext().getRequest().getParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER);
         if (sessionKey != null) {
             editSession = billingSessionDao.findByBusinessKey(sessionKey);
         }
@@ -131,9 +133,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view.
-        if (!StringUtils.isBlank(billingSession)) {
+        if (StringUtils.isNotBlank(billingSession)) {
             return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
-                    .addParameter("sessionKey", billingSession);
+                    .addParameter(SESSION_KEY_PARAMETER_NAME, billingSession)
+                    .addParameter(WORK_ITEM_FROM_QUOTE_SERVER_URL_PARAMETER, workId);
         }
 
         return new ForwardResolution(SESSION_LIST_PAGE);
@@ -249,7 +252,7 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
 
         return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
-                .addParameter("sessionKey", editSession.getBusinessKey());
+                .addParameter(SESSION_KEY_PARAMETER_NAME, editSession.getBusinessKey());
     }
 
 
@@ -308,6 +311,12 @@ public class BillingSessionActionBean extends CoreActionBean {
         this.billingSession = billingSession;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    public void setWorkId(String workId) {
+        this.workId = workId;
+    }
+
+
     public boolean isBillingSessionLocked() {
         return billingSessionAccessEjb.isSessionLocked(editSession.getBusinessKey());
     }
@@ -326,6 +335,6 @@ public class BillingSessionActionBean extends CoreActionBean {
      * styling.
      */
     public String getWorkItemIdToHighlight() {
-        return workItemId;
+        return workId;
     }
 }
