@@ -448,8 +448,8 @@ public class BillingTrackerProcessor extends TableProcessor {
     }
 
     public static String makeCompletedDateTooOldErrorMessage(String sampleKey, String workCompleteDateString) {
-        return String.format("Sample %s has a completed date of %s, which is more than 3 months ago.", sampleKey,
-                workCompleteDateString);
+        return String.format("Warning: sample %s has a completed date of %s, which is more than 3 months ago.",
+                sampleKey, workCompleteDateString);
     }
 
     public static String makeCompletedDateInvalidMessage(String workCompleteDateString, String sampleKey,
