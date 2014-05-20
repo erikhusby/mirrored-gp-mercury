@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
@@ -246,7 +247,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
         BarcodedTube receptacle = barcodedTubeDao.findByBarcode(tubeBarcode);
-        return getAlternativeIds(receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
+        return getAlternativeIds(receptacle, receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
     }
 
     /**
@@ -467,7 +468,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     LabVessel receptacle = vesselContainer.getVesselAtPosition(vesselPosition);
                     String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
                     Vertex tubeVertex = new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(),
-                            barcode, rackVertex, getAlternativeIds(receptacle == null ?
+                            barcode, rackVertex, getAlternativeIds(receptacle, receptacle == null ?
                             Collections.<SampleInstance>emptySet() : receptacle.getSampleInstances(), alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
@@ -544,7 +545,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             if (vertex == null) {
                 newVertex = true;
                 vertex = new Vertex(receptacle.getLabel(), IdType.RECEPTACLE_ID_TYPE.toString(),
-                        buildReceptacleLabel(), getAlternativeIds(receptacle.getSampleInstances(), alternativeIds));
+                        buildReceptacleLabel(), getAlternativeIds(receptacle, receptacle.getSampleInstances(), alternativeIds));
                 graph.getMapIdToVertex().put(vertex.getId(), vertex);
                 vertex.setHasMoreEdges(true);
             }
@@ -725,13 +726,15 @@ public class TransferEntityGrapher implements TransferVisualizer {
     /**
      * The user can select one more ID types to be rendered into each vertex
      *
+     *
+     * @param labVessel
      * @param sampleInstances   sample details
      * @param alternativeIdList list of ID types specified by user
      *
      * @return list of Ids for the given receptacle
      */
     private Map<String, List<String>> getAlternativeIds(
-            Set<SampleInstance> sampleInstances, List<AlternativeId> alternativeIdList) {
+            LabVessel labVessel, Set<SampleInstance> sampleInstances, List<AlternativeId> alternativeIdList) {
         Map<String, List<String>> alternativeIdValues = new HashMap<>();
         for (SampleInstance sampleInstance : sampleInstances) {
             if (alternativeIdList.contains(AlternativeId.SAMPLE_ID)) {
@@ -746,6 +749,14 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 if (labBatch != null) {
                     Vertex.addAlternativeId(alternativeIdValues, AlternativeId.LCSET.getDisplayName(),
                             labBatch.getBatchName());
+                }
+            }
+            if (alternativeIdList.contains(AlternativeId.BUCKET_ENTRY)) {
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        Vertex.addAlternativeId(alternativeIdValues, AlternativeId.LCSET.getDisplayName(),
+                                bucketEntry.getLabBatch().getBatchName());
+                    }
                 }
             }
         }
