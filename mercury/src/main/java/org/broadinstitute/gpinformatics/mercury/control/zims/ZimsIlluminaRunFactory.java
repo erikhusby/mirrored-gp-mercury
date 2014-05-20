@@ -98,7 +98,6 @@ public class ZimsIlluminaRunFactory {
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
         Set<String> productOrderKeys = new HashSet<>();
-
         // Makes DTOs for aliquot samples and product orders, per lane.
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 0;
@@ -110,19 +109,30 @@ public class ZimsIlluminaRunFactory {
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
             PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+            for (SampleInstanceV2 sampleInstanceV2 : flowcell.getContainerRole()
+                    .getSampleInstancesAtPositionV2(vesselPosition)) {
+                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
+            }
+
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
                 List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-
-                    BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
+                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
+                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
+                    if (laneSampleInstance == null) {
+                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
+                                " in lane " + laneNum);
+                    }
+                    BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
                     String productOrderKey = null;
                     if (singleBucketEntry != null) {
                         productOrderKey = singleBucketEntry.getPoBusinessKey();
                         productOrderKeys.add(productOrderKey);
                     }
-                    String pdoSampleName = sampleInstance.getMercuryRootSampleName();
+                    String pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
                     String sampleId = pdoSampleName;
-                    LabBatchStartingVessel importLbsv = sampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+                    LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
                     if (importLbsv != null) {
                         Set<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
                         if (!mercurySamples.isEmpty()) {
@@ -133,7 +143,7 @@ public class ZimsIlluminaRunFactory {
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                     String libraryName = libraryVessel.getLabel();
                     sampleInstanceDtos
-                            .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey,
+                            .add(new SampleInstanceDto(laneNum, labVessel, laneSampleInstance, sampleId, productOrderKey,
                                                        libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
                 }
             }
@@ -235,7 +245,7 @@ public class ZimsIlluminaRunFactory {
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
             String lcSet = null;
-            if (sampleInstance.getSingleInferredBucketedBatch() == null) {
+            if (sampleInstance.getSingleInferredBucketedBatch() == null) { // todo jmt for 140321_SL-HEF_0178_AFCC3C06ACXX, getSingleBatch is more accurate than getSingleInferredBucketedBatch
                 if (sampleInstance.getSingleBatch() != null) {
                     lcSet = sampleInstance.getSingleBatch().getBatchName();
                 }

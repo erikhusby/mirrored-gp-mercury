@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -35,6 +36,7 @@ public class SampleInstanceV2 {
     private List<LabBatchStartingVessel> allLabBatchStartingVessels = new ArrayList<>();
     private LabVessel labVessel;
     private boolean examinedContainers;
+    private MolecularIndexingScheme molecularIndexingScheme;
 
     /**
      * For a reagent-only sample instance.
@@ -269,7 +271,10 @@ todo jmt not sure if this applies.
         if (LabVessel.DIAGNOSTICS) {
             log.info("Adding reagent " + newReagent);
         }
-        SampleInstance.addReagent(newReagent, reagents);
+        MolecularIndexingScheme molecularIndexingSchemeLocal = SampleInstance.addReagent(newReagent, reagents);
+        if (molecularIndexingSchemeLocal != null) {
+            molecularIndexingScheme = molecularIndexingSchemeLocal;
+        }
     }
 
     /**
@@ -322,4 +327,33 @@ todo jmt not sure if this applies.
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        SampleInstanceV2 sampleInstanceV2 = (SampleInstanceV2) obj;
+
+        if (molecularIndexingScheme != null ? !molecularIndexingScheme.equals(sampleInstanceV2.molecularIndexingScheme) :
+                sampleInstanceV2.molecularIndexingScheme != null) {
+            return false;
+        }
+        if (rootMercurySamples != null ? !rootMercurySamples.equals(sampleInstanceV2.rootMercurySamples) :
+                sampleInstanceV2.rootMercurySamples != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = rootMercurySamples != null ? rootMercurySamples.hashCode() : 0;
+        result = 31 * result + (molecularIndexingScheme != null ? molecularIndexingScheme.hashCode() : 0);
+        return result;
+    }
 }

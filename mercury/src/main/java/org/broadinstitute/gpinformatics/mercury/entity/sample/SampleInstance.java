@@ -104,7 +104,8 @@ public class SampleInstance {
         addReagent(newReagent, reagents);
     }
 
-    static void addReagent(Reagent newReagent, List<Reagent> reagents) {
+    static MolecularIndexingScheme addReagent(Reagent newReagent, List<Reagent> reagents) {
+        MolecularIndexingScheme returnMolecularIndexingScheme = null;
         // If we're adding a molecular index
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =
@@ -136,6 +137,7 @@ public class SampleInstance {
                                 foundMergedScheme = true;
                                 iterator.remove();
                                 reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+                                returnMolecularIndexingScheme = molecularIndexingScheme;
                                 break;
                             }
                         }
@@ -145,12 +147,14 @@ public class SampleInstance {
             }
             if (!foundExistingIndex) {
                 reagents.add(newReagent);
+                returnMolecularIndexingScheme = newMolecularIndexReagent.getMolecularIndexingScheme();
             } else if (!foundMergedScheme) {
                 throw new RuntimeException("Failed to find merged molecular index scheme");
             }
         } else {
             reagents.add(newReagent);
         }
+        return returnMolecularIndexingScheme;
     }
 
     public List<Reagent> getReagents() {
