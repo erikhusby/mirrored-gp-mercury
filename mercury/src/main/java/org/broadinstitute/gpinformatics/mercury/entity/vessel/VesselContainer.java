@@ -657,46 +657,71 @@ public class VesselContainer<T extends LabVessel> {
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
-        Set<LabBatch> computedLcSets = new HashSet<>();
-        // find lab batch that is used by every vessel in section
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-        int numVesselsWithBucketEntries = 0;
+        int numSampleInstanceWithBucketEntries = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
-            if (vesselAtPosition != null) {
-                Set<BucketEntry> bucketEntries = new HashSet<>();
-                for (SampleInstanceV2 sampleInstanceV2 : vesselAtPosition.getSampleInstancesV2()) {
-                    bucketEntries.addAll(sampleInstanceV2.getAllBucketEntries());
+            numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
+                    vesselAtPosition);
+        }
+        return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
+    }
+
+    /**
+     * Calculates the number of bucket entries for each LCSET.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
+     * @param labVessel vessel to evaluate
+     * @return changed numSampleInstanceWithBucketEntries
+     */
+    public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
+            LabVessel labVessel) {
+        if (labVessel != null) {
+            Set<BucketEntry> bucketEntries = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
+                if (!allBucketEntries.isEmpty()) {
+                    numSampleInstanceWithBucketEntries++;
                 }
-                if (!bucketEntries.isEmpty()) {
-                    numVesselsWithBucketEntries++;
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
+                bucketEntries.addAll(allBucketEntries);
+            }
+            for (BucketEntry bucketEntry : bucketEntries) {
+                if (bucketEntry.getLabBatch() != null) {
+                    LabBatch labBatch = bucketEntry.getLabBatch();
+                    if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
+                        Integer count = mapLabBatchToCount.get(labBatch);
+                        if (count == null) {
+                            count = 1;
+                        } else {
+                            count = count + 1;
                         }
+                        mapLabBatchToCount.put(labBatch, count);
                     }
                 }
             }
         }
+        return numSampleInstanceWithBucketEntries;
+    }
+
+    /**
+     * Determine the common LCSET between sample instances.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries    number of sample instances that have at least one bucket entry
+     * @return LCSET that all sample instances have in common
+     */
+    public static Set<LabBatch> computeLcSets(Map<LabBatch, Integer> mapLabBatchToCount,
+            int numSampleInstanceWithBucketEntries) {
+        Set<LabBatch> computedLcSets = new HashSet<>();
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("numVesselsWithBucketEntries " + numVesselsWithBucketEntries);
+            System.out.println("numSampleInstanceWithBucketEntries " + numSampleInstanceWithBucketEntries);
         }
         for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+            if (labBatchIntegerEntry.getValue() == numSampleInstanceWithBucketEntries) {
                 computedLcSets.add(labBatchIntegerEntry.getKey());
             }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getBatchName() + " count " +
-                        labBatchIntegerEntry.getValue());
+                                   labBatchIntegerEntry.getValue());
             }
         }
         return computedLcSets;

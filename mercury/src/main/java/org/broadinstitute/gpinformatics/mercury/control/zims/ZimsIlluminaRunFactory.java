@@ -245,7 +245,7 @@ public class ZimsIlluminaRunFactory {
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
             String lcSet = null;
-            if (sampleInstance.getSingleInferredBucketedBatch() == null) { // todo jmt for 140321_SL-HEF_0178_AFCC3C06ACXX, getSingleBatch is more accurate than getSingleInferredBucketedBatch
+            if (sampleInstance.getSingleInferredBucketedBatch() == null) {
                 if (sampleInstance.getSingleBatch() != null) {
                     lcSet = sampleInstance.getSingleBatch().getBatchName();
                 }
