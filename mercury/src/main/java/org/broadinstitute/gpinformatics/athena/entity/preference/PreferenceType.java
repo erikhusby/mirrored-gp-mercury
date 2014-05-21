@@ -14,7 +14,13 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
  */
 public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
-            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator());
+            new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
+    COLUMN_SETS("Column Sets", PreferenceScope.USER, 1, new PreferenceDefinitionCreator() {
+        @Override
+        public PreferenceDefinitionValue create(String xml) throws Exception {
+            return null;
+        }
+    });
 
     private final String preferenceTypeName;
     private final PreferenceScope preferenceScope;
