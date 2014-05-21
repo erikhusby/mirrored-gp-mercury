@@ -100,7 +100,7 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @HandlesEvent(CANCEL_ACTION)
     public Resolution cancelComponents() {
-        return new ForwardResolution(ProductOrderActionBean.ORDER_VIEW_PAGE);
+        return new ForwardResolution(ProductOrderActionBean.ORDER_VIEW_PAGE).addParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER,productOrderKey);
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation, on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION})
