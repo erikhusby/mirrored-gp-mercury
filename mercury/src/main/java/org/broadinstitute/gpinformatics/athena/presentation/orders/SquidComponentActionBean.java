@@ -70,7 +70,8 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @ValidateNestedProperties({
             @Validate(field = "projectType", required = true,
-                    label = "A project type is required", expression = "this != '-1'", on = BUILD_SQUID_COMPONENT_ACTION),
+                    label = "A project type is required", expression = "this != '-1'",
+                    on = BUILD_SQUID_COMPONENT_ACTION),
             @Validate(field = "initiative", required = true, expression = "this != '-1'",
                     on = BUILD_SQUID_COMPONENT_ACTION, label = "An initiative is required"),
             @Validate(field = "fundSource", required = true, expression = "this != '-1'",
@@ -100,10 +101,12 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     @HandlesEvent(CANCEL_ACTION)
     public Resolution cancelComponents() {
-        return new ForwardResolution(ProductOrderActionBean.ORDER_VIEW_PAGE).addParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER,productOrderKey);
+        return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
+                ProductOrderActionBean.PRODUCT_ORDER_PARAMETER, productOrderKey);
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION})
+    @Before(stages = LifecycleStage.BindingAndValidation,
+            on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION,CANCEL_ACTION})
     public void init() {
 
         productOrderKey = getContext().getRequest().getParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);

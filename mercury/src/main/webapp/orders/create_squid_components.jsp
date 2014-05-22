@@ -145,7 +145,7 @@
                 <stripes:link beanclass="${actionBean.class.name}"
                               event="<%= SquidComponentActionBean.CANCEL_ACTION %>">
                     <stripes:param name="<%= ProductOrderActionBean.PRODUCT_ORDER_PARAMETER%>"
-                                   value="${actionBean.sourceOrder}"/>
+                                   value="${actionBean.productOrderKey}"/>
                     Cancel
                 </stripes:link>
             </div>
