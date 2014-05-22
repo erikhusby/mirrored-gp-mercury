@@ -219,7 +219,8 @@ public class RiskCriterion implements Serializable {
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspSampleDTO().getRinDefaultToZero());
             }
-        });
+        }),
+        RQS("RQS", Operator.OperatorType.NUMERIC, null);
 
         private final Operator.OperatorType operatorType;
         private final String label;

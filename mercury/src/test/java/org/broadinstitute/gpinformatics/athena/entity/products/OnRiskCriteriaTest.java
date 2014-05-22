@@ -96,6 +96,17 @@ public class OnRiskCriteriaTest {
 
     }
 
+    @Test
+    public void testOnRiskWhenRQSNotSet() {
+        HashMap<BSPSampleSearchColumn, String> data = new HashMap<>();
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1");
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        ProductOrderSample productOrderSample = new ProductOrderSample("SM-1", bspSampleDTO);
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.RQS, Operator.LESS_THAN, "5.5");
+
+        Assert.assertTrue(riskCriterion.onRisk(productOrderSample));
+    }
+
     /**
      * test Total DNA On risk.
      */
