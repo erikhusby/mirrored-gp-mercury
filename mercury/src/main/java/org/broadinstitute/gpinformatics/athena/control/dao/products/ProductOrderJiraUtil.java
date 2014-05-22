@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -104,5 +105,16 @@ public class ProductOrderJiraUtil {
 
         issue.addComment(StringUtils.join(pdo.getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(pdo.getSampleValidationComments(), "\n"));
+    }
+
+    public static void addWorkRequestNotification(@Nonnull ProductOrder pdo, @Nonnull JiraService jiraService,
+                                                  @Nonnull AutoWorkRequestOutput createdWorkRequestResults)
+            throws IOException {
+
+        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
+
+        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
+                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
+
     }
 }
