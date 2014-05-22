@@ -143,6 +143,14 @@ public class BSPSampleDTO {
         return 0.0;
     }
 
+    private Double getDoubleOrNull(BSPSampleSearchColumn column) {
+        String value = getValue(column);
+        if (StringUtils.isNotBlank(value)) {
+            return Double.parseDouble(value);
+        }
+        return null;
+    }
+
     /**
      * Returns an array of one double if this is a regular non-range (e.g. "3.14159") or an array of two doubles if
      * this is a range ("2.71828 - 3.14159").
@@ -243,6 +251,10 @@ public class BSPSampleDTO {
             rin = getRinDefaultToZero();
         }
         return rin;
+    }
+
+    public Double getRqs() {
+        return getDoubleOrNull(BSPSampleSearchColumn.RQS);
     }
 
     public double getVolume() {

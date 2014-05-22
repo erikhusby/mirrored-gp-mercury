@@ -97,14 +97,34 @@ public class OnRiskCriteriaTest {
     }
 
     @Test
-    public void testOnRiskWhenRQSNotSet() {
-        HashMap<BSPSampleSearchColumn, String> data = new HashMap<>();
-        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1");
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
-        ProductOrderSample productOrderSample = new ProductOrderSample("SM-1", bspSampleDTO);
+    public void testOnRiskWhenRqsIsNotSet() {
+        ProductOrderSample productOrderSample = makeProductOrderSampleWithRQS(null);
         RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.RQS, Operator.LESS_THAN, "5.5");
-
         Assert.assertTrue(riskCriterion.onRisk(productOrderSample));
+    }
+
+    @Test
+    public void testOnRiskWhenRQSIsTooLow() {
+        ProductOrderSample productOrderSample = makeProductOrderSampleWithRQS("5");
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.RQS, Operator.LESS_THAN, "5.5");
+        Assert.assertTrue(riskCriterion.onRisk(productOrderSample));
+    }
+
+    @Test
+    public void testNotOnRiskWhenRQSIsHighEnough() {
+        ProductOrderSample productOrderSample = makeProductOrderSampleWithRQS("6");
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.RQS, Operator.LESS_THAN, "5.5");
+        Assert.assertFalse(riskCriterion.onRisk(productOrderSample));
+    }
+
+    private ProductOrderSample makeProductOrderSampleWithRQS(String rqs) {
+        HashMap<BSPSampleSearchColumn, String> data = new HashMap<>();
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        if (rqs != null) {
+            data.put(BSPSampleSearchColumn.RQS, rqs);
+        }
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        return new ProductOrderSample("SM-1234", bspSampleDTO);
     }
 
     /**
@@ -268,11 +288,22 @@ public class OnRiskCriteriaTest {
         ProductOrderSample lowNumberPOSample = new ProductOrderSample(lowNumSample.getSampleId(), lowNumSample);
         ProductOrderSample highNumberPOSample = new ProductOrderSample(highNumSample.getSampleId(), highNumSample);
 
+        Map<BSPSampleSearchColumn, String> data = new HashMap<>();
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        BSPSampleDTO missingNumSample = new BSPSampleDTO(data);
+        ProductOrderSample missingNumberPOSample = new ProductOrderSample("SM-1234", missingNumSample);
+
         //  EXPECT TO BE ON RISK START.
 
+        // Test where the value being tested is missing.
+        RiskCriterion numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, "1");
+        boolean actual = numericRiskCriterion.onRisk(missingNumberPOSample);
+        Assert.assertTrue(actual,
+                "Sample should have been on risk due to having no data for the criteria being checked.");
+
         // Test less than with a high test value and the value being tested is low.
-        RiskCriterion numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, HIGH_NUMBER);
-        boolean actual = numericRiskCriterion.onRisk(lowNumberPOSample);
+        numericRiskCriterion = new RiskCriterion(riskCriteriaType, Operator.LESS_THAN, HIGH_NUMBER);
+        actual = numericRiskCriterion.onRisk(lowNumberPOSample);
         Assert.assertEquals(actual, true, "Sample should have been on risk due to a low sample conc.");
 
         // Test greater than with a low test value and the value being tested is high.

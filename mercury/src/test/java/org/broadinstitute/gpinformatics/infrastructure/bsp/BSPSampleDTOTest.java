@@ -53,4 +53,24 @@ public class BSPSampleDTOTest {
         BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
         Assert.assertEquals(bspSampleDTO.getRin(), 1.2, 0.001);
     }
+
+    public void testGetRqsReturnsNullWhenNotSet() {
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
+        Assert.assertNull(bspSampleDTO.getRqs());
+    }
+
+    public void testGetRqsWhenSetWithNumber() {
+        Map<BSPSampleSearchColumn, String> data = new HashMap<>();
+        data.put(BSPSampleSearchColumn.RQS, "1.0");
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        Assert.assertEquals(bspSampleDTO.getRqs(), 1.0, 0.001);
+    }
+
+    @Test(expectedExceptions = NumberFormatException.class)
+    public void testGetRqsWhenNotANumber() {
+        Map<BSPSampleSearchColumn, String> data = new HashMap<>();
+        data.put(BSPSampleSearchColumn.RQS, "1,0");
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+        bspSampleDTO.getRqs();
+    }
 }

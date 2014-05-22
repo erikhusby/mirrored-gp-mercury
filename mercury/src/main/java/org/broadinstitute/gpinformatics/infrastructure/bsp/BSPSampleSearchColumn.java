@@ -29,7 +29,8 @@ public enum BSPSampleSearchColumn {
     RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
     RIN("RIN Number"),
     PICO_RUN_DATE("Pico Run Date"),
-    RECEIPT_DATE("Receipt Date");
+    RECEIPT_DATE("Receipt Date"),
+    RQS("RNA Quality Score (RQS)");
 
     private final String columnName;
     public String columnName() { return columnName; }

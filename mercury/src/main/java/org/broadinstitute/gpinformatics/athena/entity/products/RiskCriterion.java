@@ -220,7 +220,17 @@ public class RiskCriterion implements Serializable {
                 return String.valueOf(sample.getBspSampleDTO().getRinDefaultToZero());
             }
         }),
-        RQS("RQS", Operator.OperatorType.NUMERIC, null);
+        RQS("RQS", Operator.OperatorType.NUMERIC, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                Double rqs = sample.getBspSampleDTO().getRqs();
+                if (rqs == null) {
+                    return null;
+                } else {
+                    return String.valueOf(rqs);
+                }
+            }
+        });
 
         private final Operator.OperatorType operatorType;
         private final String label;
@@ -245,7 +255,13 @@ public class RiskCriterion implements Serializable {
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
-            return operator.apply(valueProvider.getValue(sample), value);
+            String valueFromSample = valueProvider.getValue(sample);
+            if (valueFromSample == null) {
+                // Sample is on risk if it has no data to apply the comparison to.
+                return true;
+            } else {
+                return operator.apply(valueFromSample, value);
+            }
         }
 
         public List<Operator> getOperators() {
