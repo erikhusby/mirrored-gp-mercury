@@ -110,6 +110,10 @@ public class SampleInstance {
         if (OrmUtil.proxySafeIsInstance(newReagent, MolecularIndexReagent.class)) {
             MolecularIndexReagent newMolecularIndexReagent =
                     OrmUtil.proxySafeCast(newReagent, MolecularIndexReagent.class);
+            // Avoid adding the same index twice
+            if (reagents.contains(newMolecularIndexReagent)) {
+                return returnMolecularIndexingScheme;
+            }
             boolean foundExistingIndex = false;
             boolean foundMergedScheme = false;
             // The new index has to be merged with other indexes encountered, if any.
