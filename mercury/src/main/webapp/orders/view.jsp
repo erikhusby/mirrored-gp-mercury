@@ -1000,42 +1000,45 @@ function formatInput(item) {
         <h4 style="display:inline">Samples</h4>
 
         <c:if test="${!actionBean.editOrder.draft}">
+            <span class="actionButtons">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                    style="margin-left:30px;"
+                                    onclick="showConfirm('deleteSamples', 'delete')"/>
+
+                    <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                    style="margin-left:15px;"
+                                    onclick="showAbandonDialog()"/>
+
+                    <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                    style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+
+                    <stripes:button name="setRisk" value="Set Risk" class="btn"
+                                    style="margin-left:5px;" onclick="showRiskDialog()"/>
+
+                    <security:authorizeBlock roles="<%= roles(All) %>"
+                                             context="<%= ApplicationInstance.CRSP %>">
+                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
+                                        style="margin-left:5px;" id="addToBucketButton"
+                                        onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
+                    </security:authorizeBlock>
+                </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, LabUser, LabManager) %>">
+                    <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                            Build Squid Components
+                        </stripes:link>
+                    </c:if>
+                </security:authorizeBlock>
+            </span>
+
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                            <span class="actionButtons">
-                                <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                                style="margin-left:30px;"
-                                                onclick="showConfirm('deleteSamples', 'delete')"/>
-
-                                <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                                style="margin-left:15px;"
-                                                onclick="showAbandonDialog()"/>
-
-                                <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                                style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
-
-                                <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                                style="margin-left:5px;" onclick="showRiskDialog()"/>
-
-                                <security:authorizeBlock roles="<%= roles(All) %>"
-                                                         context="<%= ApplicationInstance.CRSP %>">
-                                    <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                                    style="margin-left:5px;" id="addToBucketButton"
-                                                    onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                                </security:authorizeBlock>
-
-                            </span>
-
                 <div class="pull-right">
                     <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
                     <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
                 </div>
             </security:authorizeBlock>
-            <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
-                <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
-                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                    Build Squid Components
-                </stripes:link>
-            </c:if>
 
         </c:if>
     </div>
