@@ -706,11 +706,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
-        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
-        if (sampleInstanceCount == null) {
-            sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
-        }
-        return sampleInstanceCount;
+        return getSampleInstances(sampleType, batchType).size();
     }
 
     /**
