@@ -34,7 +34,7 @@ public class ProductOrderEjbTest {
     private UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null, null, mockUserBean, null,
-            null
+            null, null
     );
 
 

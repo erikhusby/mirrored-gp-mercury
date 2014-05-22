@@ -68,19 +68,19 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
  */
 public class ProductOrderEjb {
 
-    private final ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
-    private final ProductDao productDao;
+    private ProductDao productDao;
 
-    private final QuoteService quoteService;
+    private QuoteService quoteService;
 
-    private final JiraService jiraService;
+    private JiraService jiraService;
 
-    private final UserBean userBean;
+    private UserBean userBean;
 
-    private final BSPUserList userList;
+    private BSPUserList userList;
 
-    private final BucketEjb bucketEjb;
+    private BucketEjb bucketEjb;
 
     private SquidConnector squidConnector;
 
@@ -100,7 +100,7 @@ public class ProductOrderEjb {
                            JiraService jiraService,
                            UserBean userBean,
                            BSPUserList userList,
-                           BucketEjb bucketEjb) {
+                           BucketEjb bucketEjb, SquidConnector squidConnector) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;

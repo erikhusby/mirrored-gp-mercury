@@ -103,6 +103,7 @@ public class ProductOrderTest {
                 .ignoreProperty("skipRegulatoryReason")
                 .ignoreProperty("attestationConfirmed")
                 .ignoreProperty("regulatoryInfos")
+                .ignoreProperty("squidWorkRequest")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 
