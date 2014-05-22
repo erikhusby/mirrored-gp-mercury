@@ -12,22 +12,27 @@
 package org.broadinstitute.gpinformatics.athena.boundary.infrastructure;
 
 import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.AbstractContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class PublicMessageEjbTest extends ContainerTest {
+public class PublicMessageEjbTest extends AbstractContainerTest {
     private static final String TEST_MESSAGE = "this is my message";
     @Inject
     private PublicMessageEjb publicMessageEjb;
 
     public void testPublicMessage() throws Exception {
-        publicMessageEjb.clearPublicMessage();
-
         PublicMessage publicMessage = new PublicMessage(TEST_MESSAGE);
         publicMessageEjb.setPublicMessage(publicMessage);
 
@@ -36,13 +41,18 @@ public class PublicMessageEjbTest extends ContainerTest {
         Assert.assertEquals(anotherPublicMessage.getMessage(), TEST_MESSAGE);
     }
 
-    public void testSetPublicMessage() {
+
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(DEV);
+    }
+
+    @AfterMethod
+    @BeforeMethod
+    public void clearMessage() {
+        if (!isRunningInContainer()) {
+            return;
+        }
         publicMessageEjb.clearPublicMessage();
-
-        PublicMessage publicMessage = new PublicMessage();
-        publicMessage.setMessage(TEST_MESSAGE);
-
-        publicMessageEjb.setPublicMessage(publicMessage);
-
     }
 }

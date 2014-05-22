@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class IceEntityBuilder {
     private String testPrefix;
     private TubeFormation catchEnrichRack;
     private List<String> catchEnrichBarcodes;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToCatchEnrichTubes;
+    private Map<String, BarcodedTube> mapBarcodeToCatchEnrichTubes;
 
     public IceEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
             LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -54,8 +54,8 @@ public class IceEntityBuilder {
 
         LabEventTest.validateWorkflow("IcePoolingTransfer", pondRegRack);
         mapBarcodeToVessel.put(pondRegRack.getLabel(), pondRegRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : pondRegRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent icePoolingTransfer = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolingTransfer(),
                 mapBarcodeToVessel);
@@ -65,8 +65,8 @@ public class IceEntityBuilder {
         LabEventTest.validateWorkflow("IceSPRIConcentration", poolRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(poolRack.getLabel(), poolRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : poolRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : poolRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent iceSpriConcentration = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIceSPRIConcentration(),
                 mapBarcodeToVessel);
@@ -76,8 +76,8 @@ public class IceEntityBuilder {
         LabEventTest.validateWorkflow("IcePoolTest", spriRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : spriRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : spriRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent icePoolTest = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIcePoolTest(), mapBarcodeToVessel);
         labEventHandler.processEvent(icePoolTest);
@@ -85,8 +85,8 @@ public class IceEntityBuilder {
         LabEventTest.validateWorkflow("Ice1stHybridization", spriRack);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(spriRack.getLabel(), spriRack);
-        for (TwoDBarcodedTube twoDBarcodedTube : spriRack.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : spriRack.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent ice1stHybridization = labEventFactory.buildFromBettaLims(iceJaxbBuilder.getIce1stHybridization(),
                 mapBarcodeToVessel);
@@ -95,7 +95,7 @@ public class IceEntityBuilder {
 
         LabEventTest.validateWorkflow("Ice1stBaitAddition", firstHybPlate);
         ReagentDesign baitDesign1 = new ReagentDesign("Ice Bait 1", ReagentDesign.ReagentType.BAIT);
-        TwoDBarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
+        BarcodedTube baitTube1 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube1Barcode(), baitDesign1);
         LabEvent ice1stBaitAddition = labEventFactory.buildVesselToSectionDbFree(
                 iceJaxbBuilder.getIce1stBaitAddition(), baitTube1, firstHybPlate, SBSSection.ALL96.getSectionName());
         labEventHandler.processEvent(ice1stBaitAddition);
@@ -115,7 +115,7 @@ public class IceEntityBuilder {
 
         LabEventTest.validateWorkflow("Ice2ndBaitAddition", firstCapturePlate);
         ReagentDesign baitDesign2 = new ReagentDesign("Ice Bait 2", ReagentDesign.ReagentType.BAIT);
-        TwoDBarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
+        BarcodedTube baitTube2 = LabEventTest.buildBaitTube(iceJaxbBuilder.getBaitTube2Barcode(), baitDesign2);
         LabEvent ice2ndBaitAddition = labEventFactory.buildVesselToSectionDbFree(
                 iceJaxbBuilder.getIce2ndBaitAddition(), baitTube2, firstCapturePlate, SBSSection.ALL96.getSectionName());
         labEventHandler.processEvent(ice2ndBaitAddition);
@@ -160,11 +160,11 @@ public class IceEntityBuilder {
         return catchEnrichBarcodes;
     }
 
-    public Map<String, TwoDBarcodedTube> getMapBarcodeToCatchEnrichTubes() {
+    public Map<String, BarcodedTube> getMapBarcodeToCatchEnrichTubes() {
         if (mapBarcodeToCatchEnrichTubes == null) {
             mapBarcodeToCatchEnrichTubes = new HashMap<>();
-            for (TwoDBarcodedTube twoDBarcodedTube : catchEnrichRack.getContainerRole().getContainedVessels()) {
-                mapBarcodeToCatchEnrichTubes.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+            for (BarcodedTube barcodedTube : catchEnrichRack.getContainerRole().getContainedVessels()) {
+                mapBarcodeToCatchEnrichTubes.put(barcodedTube.getLabel(), barcodedTube);
             }
         }
         return mapBarcodeToCatchEnrichTubes;

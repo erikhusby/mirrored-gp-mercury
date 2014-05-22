@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -164,7 +164,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         testExExOrder = poDao.findByBusinessKey(exExJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(testExExOrder, vesselDao, "Shearing Bucket", bucketDao);
 
         String rackBarcode = "REXEX" + (new Date()).toString();
@@ -178,7 +178,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
         vesselDao.persist(shearingSourceRack);
@@ -242,7 +242,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -255,7 +255,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -302,7 +302,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -315,7 +315,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -382,7 +382,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -395,7 +395,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -468,7 +468,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -481,7 +481,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -593,7 +593,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -606,7 +606,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -736,7 +736,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
@@ -749,7 +749,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         TubeFormation shearingSourceRack =
                 makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
                         new ArrayList<>(mapBarcodeToTube.values())
-                                .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+                                .toArray(new BarcodedTube[mapBarcodeToTube.size()]));
 
         shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
 
@@ -895,7 +895,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
      *
      * @return
      */
-    private Map<String, TwoDBarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
+    private Map<String, BarcodedTube> buildVesselsForPdo(@Nonnull ProductOrder productOrder,
                                                              @Nonnull LabVesselDao vesselDao1,
                                                              @Nullable String bucketName,
                                                              @Nullable BucketDao bucketDao1) {
@@ -915,15 +915,15 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         for (ProductOrderSample currSample : productOrder.getSamples()) {
 
-            TwoDBarcodedTube newTube = (TwoDBarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getName());
+            BarcodedTube newTube = (BarcodedTube) vesselDao1.findByIdentifier("R" + currSample.getName());
             if (newTube == null) {
-                newTube = new TwoDBarcodedTube("R" + currSample.getName());
+                newTube = new BarcodedTube("R" + currSample.getName());
             }
             newTube.addSample(new MercurySample(currSample.getName()));
             tubes.add(newTube);
             barcodes.add(newTube.getLabel());
             if (bucketName != null && bucket.findEntry(newTube) == null) {
-                bucket.addEntry(productOrder.getBusinessKey(), newTube,
+                bucket.addEntry(productOrder, newTube,
                         org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry.BucketEntryType.PDO_ENTRY);
             }
         }
@@ -941,7 +941,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
             }
         }
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+        Map<String, BarcodedTube> mapBarcodeToTube =
                 new LinkedHashMap<>(productOrder.getTotalSampleCount());
 
         if (bucketName != null) {
@@ -956,7 +956,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
         for (String barcode : barcodes) {
             LabVessel foundTube = vesselDao1.findByIdentifier(barcode);
-            mapBarcodeToTube.put(barcode, (TwoDBarcodedTube) foundTube);
+            mapBarcodeToTube.put(barcode, (BarcodedTube) foundTube);
         }
         return mapBarcodeToTube;
     }

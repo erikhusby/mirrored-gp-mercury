@@ -3,11 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
+import com.google.common.base.Preconditions;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
@@ -25,6 +27,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Comparator;
 import java.util.Date;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An entry into a lab {@link Bucket}.  An entry is
@@ -54,7 +58,7 @@ public class BucketEntry {
     public static final Comparator<BucketEntry> byPdo = new Comparator<BucketEntry>() {
         @Override
         public int compare(BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond) {
-            int result = bucketEntryPrime.getPoBusinessKey().compareTo(bucketEntrySecond.getPoBusinessKey());
+            int result = bucketEntryPrime.getProductOrder().getBusinessKey().compareTo(bucketEntrySecond.getProductOrder().getBusinessKey());
 
             if (result == 0) {
                 result = bucketEntryPrime.getLabVessel().compareTo(bucketEntrySecond.getLabVessel());
@@ -74,12 +78,18 @@ public class BucketEntry {
     @Column(name = "bucket_entry_id")
     private Long bucketEntryId;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    // FetchType.EAGER is a temporary fix for org.hibernate.PropertyNotFoundException: field [tubeType] not found on
+    // ... LabVessel_$$_javassist_33 in LabBatchEjb.addToLabBatch
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_vessel_id")
     private LabVessel labVessel;
 
     @Column(name = "po_business_key")
     private String poBusinessKey;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_order_id")
+    private ProductOrder productOrder;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "bucket_existence_id")
@@ -116,18 +126,19 @@ public class BucketEntry {
     protected BucketEntry() {
     }
 
-    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket,
+    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder, @Nonnull Bucket bucket,
                        BucketEntryType entryType) {
 
-        this(labVesselIn, poBusinessKey, entryType);
+        this(labVesselIn, productOrder, entryType);
         this.bucket = bucket;
     }
 
-    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey,
+    public BucketEntry(@Nonnull LabVessel labVesselIn, @Nonnull ProductOrder productOrder,
                        BucketEntryType entryType) {
         this.labVessel = labVesselIn;
-        this.poBusinessKey = poBusinessKey;
         this.entryType = entryType;
+
+        setProductOrder(productOrder);
 
         createdDate = new Date();
     }
@@ -151,12 +162,20 @@ public class BucketEntry {
      *
      * @return a representation of a product order associated with an item in a bucket waiting to be processed
      */
+    @Deprecated
     public String getPoBusinessKey() {
         return poBusinessKey;
     }
 
-    public void setPoBusinessKey(String poBusinessKey) {
-        this.poBusinessKey = poBusinessKey;
+    public ProductOrder getProductOrder() {
+        return productOrder;
+    }
+
+    public void setProductOrder(@Nonnull ProductOrder productOrder) {
+        this.productOrder = checkNotNull(productOrder);
+
+        //TODO SGM-- Temporary add until GPLIM-2710 is implemented
+        this.poBusinessKey = productOrder.getBusinessKey();
     }
 
     /**
@@ -259,7 +278,7 @@ public class BucketEntry {
     public String toString() {
         return String.format("Bucket: %s, %s, Vessel %s, Batch %s",
                 bucket != null ? bucket.getBucketDefinitionName() : "(no bucket)",
-                poBusinessKey,
+                productOrder != null?productOrder.getBusinessKey():"(no product order)",
                 labVessel != null ? labVessel.getLabel() : "(no vessel)",
                 labBatch != null ? labBatch.getBatchName() : "(not batched)");
     }
@@ -268,7 +287,7 @@ public class BucketEntry {
         CompareToBuilder builder = new CompareToBuilder();
         builder.append(getStatus(), other.getStatus());
         builder.append(getLabVessel(), other.getLabVessel());
-        builder.append(getPoBusinessKey(), other.getPoBusinessKey());
+        builder.append(getProductOrder(), other.getProductOrder());
         builder.append(getEntryType(), other.getEntryType());
 
         return builder.toComparison();

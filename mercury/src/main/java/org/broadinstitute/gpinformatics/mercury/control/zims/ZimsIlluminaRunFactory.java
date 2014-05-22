@@ -10,10 +10,10 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
@@ -67,25 +67,27 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
 
 /**
  * This class constructs a pipeline API bean from a Mercury chain of custody.
+ *
  * @author breilly
  */
 @SuppressWarnings("FeatureEnvy")
 public class ZimsIlluminaRunFactory {
 
-    private AthenaClientService athenaClientService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
     private ControlDao controlDao;
     private SequencingTemplateFactory sequencingTemplateFactory;
+    private ProductOrderDao productOrderDao;
 
     private static final Log log = LogFactory.getLog(ZimsIlluminaRunFactory.class);
 
     @Inject
-    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher, AthenaClientService athenaClientService,
-                                  ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory) {
+    public ZimsIlluminaRunFactory(BSPSampleDataFetcher bspSampleDataFetcher,
+                                  ControlDao controlDao, SequencingTemplateFactory sequencingTemplateFactory,
+                                  ProductOrderDao productOrderDao) {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
-        this.athenaClientService = athenaClientService;
         this.controlDao = controlDao;
         this.sequencingTemplateFactory = sequencingTemplateFactory;
+        this.productOrderDao = productOrderDao;
     }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(IlluminaSequencingRun illuminaRun) {
@@ -123,7 +125,7 @@ public class ZimsIlluminaRunFactory {
                     String libraryName = libraryVessel.getLabel();
                     sampleInstanceDtos
                             .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey,
-                                    libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
+                                                       libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
                 }
             }
         }
@@ -132,7 +134,7 @@ public class ZimsIlluminaRunFactory {
         Map<String, BSPSampleDTO> mapSampleIdToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIds);
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<>();
         for (String productOrderKey : productOrderKeys) {
-            mapKeyToProductOrder.put(productOrderKey, athenaClientService.retrieveProductOrderDetails(productOrderKey));
+            mapKeyToProductOrder.put(productOrderKey, productOrderDao.findByBusinessKey(productOrderKey));
         }
 
         List<Control> activeControls = controlDao.findAllActive();
@@ -151,9 +153,12 @@ public class ZimsIlluminaRunFactory {
         }
 
         ZimsIlluminaRun run = new ZimsIlluminaRun(illuminaRun.getRunName(), illuminaRun.getRunBarcode(),
-                flowcell.getLabel(), illuminaRun.getMachineName(), flowcell.getSequencerModel(), dateFormat.format(illuminaRun.getRunDate()),
-                false, illuminaRun.getActualReadStructure(), imagedArea, illuminaRun.getSetupReadStructure(),illuminaRun.getLanesSequenced(),
-                illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
+                                                  flowcell.getLabel(), illuminaRun.getMachineName(),
+                                                  flowcell.getSequencerModel(), dateFormat.format(
+                illuminaRun.getRunDate()),
+                                                  false, illuminaRun.getActualReadStructure(), imagedArea,
+                                                  illuminaRun.getSetupReadStructure(), illuminaRun.getLanesSequenced(),
+                                                  illuminaRun.getRunDirectory(), SystemRouter.System.MERCURY);
 
         IlluminaFlowcell illuminaFlowcell = (IlluminaFlowcell) flowcell;
         Set<VesselAndPosition> loadedVesselsAndPositions = illuminaFlowcell.getLoadingVessels();
@@ -173,7 +178,7 @@ public class ZimsIlluminaRunFactory {
                 short laneNumber = sampleInstanceDto.getLaneNumber();
                 libraryBeans.addAll(
                         makeLibraryBeans(sampleInstanceDtos, mapSampleIdToDto, mapKeyToProductOrder, mapNameToControl));
-                String sequencedLibraryName= sampleInstanceDto.getSequencedLibraryName();
+                String sequencedLibraryName = sampleInstanceDto.getSequencedLibraryName();
                 Date sequencedLibraryDate = sampleInstanceDto.getSequencedLibraryDate();
 
                 BigDecimal loadingConcentration = null;
@@ -186,8 +191,10 @@ public class ZimsIlluminaRunFactory {
                     actualReadStructure = sequencingRunChamber.getActualReadStructure();
                 }
                 ZimsIlluminaChamber lane = new ZimsIlluminaChamber(laneNumber, libraryBeans, null, sequencedLibraryName,
-                        sequencedLibraryDate, loadingConcentration == null ? null : loadingConcentration.doubleValue(),
-                        actualReadStructure);
+                                                                   sequencedLibraryDate,
+                                                                   loadingConcentration == null ? null :
+                                                                           loadingConcentration.doubleValue(),
+                                                                   actualReadStructure);
                 run.addLane(lane);
             }
         }
@@ -226,7 +233,7 @@ public class ZimsIlluminaRunFactory {
                 if (jiraTicket != null) {
                     lcSet = jiraTicket.getTicketId();
                 }
-            // else it is probably a control.
+                // else it is probably a control.
             } else {
                 if (sampleInstance.getLabBatch() != null) {
                     lcSet = sampleInstance.getLabBatch().getBatchName();
@@ -274,9 +281,10 @@ public class ZimsIlluminaRunFactory {
             BSPSampleDTO bspSampleDTO = mapSampleIdToDto.get(sampleInstanceDto.getSampleId());
 
             libraryBeans.add(
-                createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
-                        indexingSchemeEntity, catNames, sampleInstanceDto.getSampleInstance().getWorkflowName(),
-                        indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName()));
+                    createLibraryBean(sampleInstanceDto.getLabVessel(), productOrder, bspSampleDTO, lcSet, baitName,
+                                      indexingSchemeEntity, catNames,
+                                      sampleInstanceDto.getSampleInstance().getWorkflowName(),
+                                      indexingSchemeDto, mapNameToControl, sampleInstanceDto.getPdoSampleName()));
         }
 
         // Make order predictable
@@ -292,7 +300,8 @@ public class ZimsIlluminaRunFactory {
 
         Format dateFormat = FastDateFormat.getInstance(ZimsIlluminaRun.DATE_FORMAT);
 
-        String library = labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
+        String library =
+                labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName());
         String initiative = null;
         Long workRequest = null;
         Boolean hasIndexingRead = null;     // todo jmt hasIndexingRead, designation?
@@ -374,16 +383,17 @@ public class ZimsIlluminaRunFactory {
         private Map<Integer, Set<LabVessel>> mapHopToLabVessels = LazyMap.lazyMap(
                 new TreeMap<Integer, Set<LabVessel>>(),
                 new Factory<Set<LabVessel>>() {
-            @Override
-            public Set<LabVessel> create() {
-                return new HashSet<>();
-            }
-        });
+                    @Override
+                    public Set<LabVessel> create() {
+                        return new HashSet<>();
+                    }
+                });
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             LabEvent event = context.getEvent();
-            if (event == null || event.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.NONE) {
+            if (event == null
+                || event.getLabEventType().getPipelineTransformation() == LabEventType.PipelineTransformation.NONE) {
                 return TraversalControl.ContinueTraversing;
             }
             // todo jmt in place events?
@@ -392,7 +402,8 @@ public class ZimsIlluminaRunFactory {
                 if (containerRole == null) {
                     mapHopToLabVessels.get(context.getHopCount()).add(labVessel);
                 } else {
-                    mapHopToLabVessels.get(context.getHopCount()).add(containerRole.getVesselAtPosition(context.getVesselPosition()));
+                    mapHopToLabVessels.get(context.getHopCount()).add(containerRole.getVesselAtPosition(
+                            context.getVesselPosition()));
                 }
             }
             return TraversalControl.StopTraversing;
@@ -401,17 +412,19 @@ public class ZimsIlluminaRunFactory {
         Set<LabVessel> getNearestLabVessels() {
             Set<Map.Entry<Integer, Set<LabVessel>>> entries = mapHopToLabVessels.entrySet();
             Iterator<Map.Entry<Integer, Set<LabVessel>>> iterator = entries.iterator();
-            if(iterator.hasNext()) {
+            if (iterator.hasNext()) {
                 return iterator.next().getValue();
             }
             return Collections.emptySet();
         }
 
         @Override
-        public void evaluateVesselInOrder(Context context) {}
+        public void evaluateVesselInOrder(Context context) {
+        }
 
         @Override
-        public void evaluateVesselPostOrder(Context context) {}
+        public void evaluateVesselPostOrder(Context context) {
+        }
     }
 
     /**

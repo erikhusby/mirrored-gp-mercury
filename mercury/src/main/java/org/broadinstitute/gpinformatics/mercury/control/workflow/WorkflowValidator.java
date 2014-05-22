@@ -2,10 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.control.workflow;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.template.EmailSender;
@@ -60,9 +60,7 @@ public class WorkflowValidator {
     @Inject
     private EmailSender emailSender;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private AthenaClientService athenaClientService;
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private AppConfig appConfig;
@@ -190,16 +188,17 @@ public class WorkflowValidator {
             Map<String, Object> rootMap = new HashMap<>();
             String linkToPlastic = appConfig.getUrl() + VesselSearchActionBean.ACTIONBEAN_URL_BINDING + "?" +
                                    VesselSearchActionBean.VESSEL_SEARCH + "=&searchKey=" + labVessels.iterator().next()
-                    .getLabel();
+                                                                                                     .getLabel();
             rootMap.put("linkToPlastic", linkToPlastic);
             rootMap.put("stationEvent", stationEventType);
             rootMap.put("bspUser", bspUserList.getByUsername(stationEventType.getOperator()));
             rootMap.put("validationErrors", validationErrors);
             StringWriter stringWriter = new StringWriter();
             templateEngine.processTemplate("WorkflowValidation.ftl", rootMap, stringWriter);
-            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(), "Workflow validation failure for " +
-                                                                              stationEventType.getEventType(),
-                    stringWriter.toString());
+            emailSender.sendHtmlEmail(appConfig, appConfig.getWorkflowValidationEmail(),
+                                      "Workflow validation failure for " +
+                                      stationEventType.getEventType(),
+                                      stringWriter.toString());
         }
     }
 
@@ -216,7 +215,7 @@ public class WorkflowValidator {
 
         for (LabVessel labVessel : labVessels) { // todo jmt can this be null?
             Set<SampleInstance> sampleInstances = labVessel.getSampleInstances(LabVessel.SampleType.PREFER_PDO,
-                    LabBatch.LabBatchType.WORKFLOW);
+                                                                               LabBatch.LabBatchType.WORKFLOW);
             for (SampleInstance sampleInstance : sampleInstances) {
                 String workflowName = sampleInstance.getWorkflowName();
                 LabBatch effectiveBatch = sampleInstance.getLabBatch();
@@ -234,8 +233,7 @@ public class WorkflowValidator {
                         if (!errors.isEmpty()) {
                             ProductOrder productOrder = null;
                             if (sampleInstance.getProductOrderKey() != null) {
-                                productOrder = athenaClientService.retrieveProductOrderDetails(
-                                        sampleInstance.getProductOrderKey());
+                                productOrder = productOrderDao.findByBusinessKey(sampleInstance.getProductOrderKey());
                             }
                             //if this is a rework and we are at the first step of the process it was reworked from ignore the error
                             boolean ignoreErrors = false;
@@ -246,7 +244,7 @@ public class WorkflowValidator {
                             }
                             if (!ignoreErrors) {
                                 validationErrors.add(new WorkflowValidationError(sampleInstance, errors, productOrder,
-                                        appConfig));
+                                                                                 appConfig));
                             }
 
                         }
@@ -270,7 +268,8 @@ public class WorkflowValidator {
         return validationErrors;
     }
 
-    public void setAthenaClientService(AthenaClientService athenaClientService) {
-        this.athenaClientService = athenaClientService;
+    @Inject
+    public void setProductOrderDao(ProductOrderDao productOrderDao) {
+        this.productOrderDao = productOrderDao;
     }
 }

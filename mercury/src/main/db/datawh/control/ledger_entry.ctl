@@ -15,5 +15,6 @@ TRAILING NULLCOLS
  quantity,
  billing_session_id,
  billing_message char(500),
- work_complete_date DATE "YYYYMMDDHH24MISS"
+ work_complete_date DATE "YYYYMMDDHH24MISS",
+ quote_server_work_item
 )

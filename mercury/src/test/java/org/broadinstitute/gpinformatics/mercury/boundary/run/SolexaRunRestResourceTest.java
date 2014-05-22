@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
@@ -18,7 +17,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResourceTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.rapsheet.ReworkEjbTest;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
@@ -114,8 +112,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
          *
          */
         return DeploymentBuilder
-                .buildMercuryWarWithAlternatives(TEST, AthenaClientServiceStub.class,
-                        BSPSampleSearchServiceStub.class);
+                .buildMercuryWarWithAlternatives(TEST, BSPSampleSearchServiceStub.class);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -132,7 +129,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         String rpJiraTicketKey = "RP-" + testPrefix + runDate.getTime() + "RP";
         researchProject = new ResearchProject(bspUserList.getByUsername("scottmat").getUserId(),
-                "Rework Integration Test RP " + runDate.getTime() + "RP", "Rework Integration Test RP", false);
+                                              "Rework Integration Test RP " + runDate.getTime() + "RP",
+                                              "Rework Integration Test RP", false);
         researchProject.setJiraTicketKey(rpJiraTicketKey);
         researchProjectDao.persist(researchProject);
 
@@ -153,21 +151,20 @@ public class SolexaRunRestResourceTest extends Arquillian {
                     put(BSPSampleSearchColumn.ROOT_SAMPLE, BSPSampleSearchServiceStub.ROOT);
                     put(BSPSampleSearchColumn.STOCK_SAMPLE, ReworkEjbTest.SM_SGM_Test_Genomic_1_STOCK_SAMP);
                     put(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-                            ReworkEjbTest.SM_SGM_Test_Genomic_1_COLLAB_SAMP_ID);
+                        ReworkEjbTest.SM_SGM_Test_Genomic_1_COLLAB_SAMP_ID);
                     put(BSPSampleSearchColumn.COLLECTION, ReworkEjbTest.SM_SGM_Test_Genomic_1_COLL);
                     put(BSPSampleSearchColumn.VOLUME, ReworkEjbTest.SM_SGM_Test_Genomic_1_VOLUME);
                     put(BSPSampleSearchColumn.CONCENTRATION, ReworkEjbTest.SM_SGM_Test_Genomic_1_CONC);
                     put(BSPSampleSearchColumn.SPECIES, BSPSampleSearchServiceStub.CANINE_SPECIES);
                     put(BSPSampleSearchColumn.LSID, BSPSampleSearchServiceStub.LSID_PREFIX + genomicSample1);
                     put(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
-                            ReworkEjbTest.SM_SGM_Test_Genomic_1_COLLAB_PID);
+                        ReworkEjbTest.SM_SGM_Test_Genomic_1_COLLAB_PID);
                     put(BSPSampleSearchColumn.MATERIAL_TYPE, BSPSampleSearchServiceStub.GENOMIC_MAT_TYPE);
                     put(BSPSampleSearchColumn.TOTAL_DNA, ReworkEjbTest.SM_SGM_Test_Genomic_1_DNA);
                     put(BSPSampleSearchColumn.SAMPLE_TYPE, BSPSampleDTO.NORMAL_IND);
                     put(BSPSampleSearchColumn.PRIMARY_DISEASE, ReworkEjbTest.SM_SGM_Test_Genomic_1_DISEASE);
                     put(BSPSampleSearchColumn.GENDER, BSPSampleDTO.FEMALE_IND);
                     put(BSPSampleSearchColumn.STOCK_TYPE, BSPSampleDTO.ACTIVE_IND);
-                    put(BSPSampleSearchColumn.FINGERPRINT, ReworkEjbTest.SM_SGM_Test_Genomic_1_FP);
                     put(BSPSampleSearchColumn.CONTAINER_ID, SM_SGM_Test_Genomic_1_CONTAINER_ID);
                     put(BSPSampleSearchColumn.SAMPLE_ID, genomicSample1);
                 }});
@@ -178,8 +175,8 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         exexOrder =
                 new ProductOrder(bspUserList.getByUsername("scottmat").getUserId(),
-                        "Rework Integration TestOrder 1" + runDate.getTime(),
-                        bucketReadySamples, "GSP-123", exExProduct, researchProject);
+                                 "Rework Integration TestOrder 1" + runDate.getTime(),
+                                 bucketReadySamples, "GSP-123", exExProduct, researchProject);
         exexOrder.setProduct(exExProduct);
         exexOrder.prepareToSave(bspUserList.getByUsername("scottmat"));
         pdo1JiraKey = "PDO-" + testPrefix + runDate.getTime() + 1;
@@ -190,7 +187,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         flowcellBarcode = testPrefix + "Flowcell" + runDate.getTime();
 
         newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
-                flowcellBarcode);
+                                           flowcellBarcode);
 
         for (ProductOrderSample currSample : exexOrder.getSamples()) {
             newFlowcell.addSample(new MercurySample(currSample.getBspSampleName()));
@@ -226,10 +223,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
 
         Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                        runFileDirectory, null)).post(Response.class);
+                                  .type(MediaType.APPLICATION_XML_TYPE)
+                                  .accept(MediaType.APPLICATION_XML)
+                                  .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                                                            runFileDirectory, null)).post(Response.class);
 
 
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
@@ -254,10 +251,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
 
         Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                        runFileDirectory, reagentKitBarcode)).post(Response.class);
+                                  .type(MediaType.APPLICATION_XML_TYPE)
+                                  .accept(MediaType.APPLICATION_XML)
+                                  .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                                                            runFileDirectory, reagentKitBarcode)).post(Response.class);
 
 
         Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
@@ -276,7 +273,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION,
-            dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+          dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
@@ -295,17 +292,17 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         Response readStructureResult =
                 Client.create(clientConfig).resource(wsUrl)
-                        .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                        .entity(readStructureData).post(Response.class);
+                      .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                      .entity(readStructureData).post(Response.class);
 
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getSetupReadStructure(),
-                readStructureData.getSetupReadStructure());
+                            readStructureData.getSetupReadStructure());
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getActualReadStructure(),
-                readStructureData.getActualReadStructure());
+                            readStructureData.getActualReadStructure());
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getLanesSequenced(),
-                readStructureData.getLanesSequenced());
+                            readStructureData.getLanesSequenced());
         Assert.assertEquals(((ReadStructureRequest) readStructureResult.getEntity()).getImagedArea(),
-                readStructureData.getImagedArea());
+                            readStructureData.getImagedArea());
 
     }
 
@@ -332,10 +329,10 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
         ReadStructureRequest returnedReadStructureRequest = Client.create(clientConfig).resource(wsUrl).
                 type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(readStructureData).
-                post(ReadStructureRequest.class);
+                                                                          post(ReadStructureRequest.class);
 
         ZimsIlluminaRun zimsIlluminaRun = IlluminaRunResourceLiveTest.getZimsIlluminaRun(baseUrl,
-                "140225_SL-HDJ_0314_AFCH7HBEADXX");
+                                                                                         "140225_SL-HDJ_0314_AFCH7HBEADXX");
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
             Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(), "STRUC" + zimsIlluminaChamber.getName());
         }

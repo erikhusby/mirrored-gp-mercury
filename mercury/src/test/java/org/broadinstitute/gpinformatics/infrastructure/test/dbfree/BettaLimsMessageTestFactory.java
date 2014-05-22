@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.labevent.VesselTransfer
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 
@@ -288,7 +288,7 @@ public class BettaLimsMessageTestFactory {
         VesselTransferEjb transferBean = new VesselTransferEjb();
 
         for (TubeFormation tubeFormation : rackOfTubes.getTubeFormations()) {
-            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPosition : tubeFormation.getContainerRole()
+            for (Map.Entry<VesselPosition, BarcodedTube> vesselPosition : tubeFormation.getContainerRole()
                     .getMapPositionToVessel().entrySet()) {
                 denatureBarcodeMap.put(vesselPosition.getValue().getLabel(), vesselPosition.getKey());
             }

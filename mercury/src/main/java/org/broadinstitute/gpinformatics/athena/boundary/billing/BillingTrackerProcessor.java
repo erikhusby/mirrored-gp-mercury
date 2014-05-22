@@ -21,9 +21,9 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtil
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -107,9 +107,7 @@ public class BillingTrackerProcessor extends TableProcessor {
         // Only the product headers contain square brackets, so if those exist add two items for billed and updated.
         headerValues = new ArrayList<> ();
 
-        Iterator<String> headerIterator = originalHeaders.iterator();
-        while (headerIterator.hasNext()) {
-            String originalHeader = headerIterator.next();
+        for (String originalHeader : originalHeaders) {
             if (originalHeader.contains("[")) {
 
                 // Remove the previous header which was for the "Billed" column and did not have the part number.
@@ -413,13 +411,26 @@ public class BillingTrackerProcessor extends TableProcessor {
                 Date workCompleteDate = null;
                 try {
                     workCompleteDate = DateUtils.parseDate(workCompleteDateString);
+
+                    Date now = new Date();
+                    if (now.before(workCompleteDate)) {
+                        addDataMessage(makeCompletedDateFutureErrorMessage(productOrderSample.getSampleKey(),
+                                workCompleteDateString), dataRowIndex);
+                    }
+
+                    // only perform this warning level check if not persisting (i.e., only previewing)
+                    if (!doPersist) {
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.add(Calendar.MONTH, -3);
+                        if (workCompleteDate.before(calendar.getTime())) {
+                            addWarning(makeCompletedDateTooOldErrorMessage(productOrderSample.getSampleKey(),
+                                    workCompleteDateString), dataRowIndex);
+                        }
+                    }
                 } catch (ParseException e) {
-                    addDataMessage(
-                            MessageFormat.format(
-                                    "Invalid work complete date: {0} for sample ''{1}'' " +
-                                    "in PDO ''{2}'' ", workCompleteDateString, productOrderSample.getSampleKey(),
-                                    currentProductOrder.getBusinessKey()),
-                            dataRowIndex);
+                    String productOrderKey = currentProductOrder.getBusinessKey();
+                    addDataMessage(makeCompletedDateInvalidMessage(workCompleteDateString,
+                                    productOrderSample.getSampleKey(), productOrderKey), dataRowIndex);
                 }
 
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
@@ -429,6 +440,22 @@ public class BillingTrackerProcessor extends TableProcessor {
                 }
             }
         }
+    }
+
+    public static String makeCompletedDateFutureErrorMessage(String sampleKey, String workCompleteDateString) {
+        return String.format("Sample %s cannot have a completed date of %s because it is in the future.", sampleKey,
+                workCompleteDateString);
+    }
+
+    public static String makeCompletedDateTooOldErrorMessage(String sampleKey, String workCompleteDateString) {
+        return String.format("Warning: sample %s has a completed date of %s, which is more than 3 months ago.",
+                sampleKey, workCompleteDateString);
+    }
+
+    public static String makeCompletedDateInvalidMessage(String workCompleteDateString, String sampleKey,
+                                                         String productOrderKey) {
+        return MessageFormat.format("Invalid work complete date: {0} for sample ''{1}'' in PDO ''{2}'' ",
+                workCompleteDateString, sampleKey, productOrderKey);
     }
 
     public List<ProductOrder> getUpdatedProductOrders() {

@@ -248,14 +248,14 @@
                             <c:if test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
-                    <td class="editable"><span class="ellipsis">${entry.poBusinessKey}</span><span style="display: none;"
+                    <td class="editable"><span class="ellipsis">${entry.productOrder.businessKey}</span><span style="display: none;"
                                                                                            class="icon-pencil"></span>
                     </td>
                     <td>
-                        <div class="ellipsis" style="width: 300px">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
+                        <div class="ellipsis" style="width: 300px">${entry.productOrder.title}</div>
                     </td>
                     <td class="ellipsis">
-                            ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
+                            ${actionBean.getUserFullName(entry.productOrder.createdBy)}
                     </td>
                     <td>
                         <c:forEach items="${entry.labVessel.nearestWorkflowLabBatches}" var="batch"

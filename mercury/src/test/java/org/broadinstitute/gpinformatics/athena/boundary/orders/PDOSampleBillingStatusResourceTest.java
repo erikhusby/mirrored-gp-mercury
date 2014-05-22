@@ -20,6 +20,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 
 public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest {
 
+    private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -46,7 +47,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
         PDOSamples pdoSamples = new PDOSamples();
         pdoSamples.setPdoSamples(pdoSamplesList);
 
-        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, ProductOrderResource.PDO_SAMPLE_STATUS)
+        PDOSamples returnedPdoSamples = makeWebResource(baseUrl, PDO_SAMPLE_STATUS)
                 .type(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .entity(pdoSamples)

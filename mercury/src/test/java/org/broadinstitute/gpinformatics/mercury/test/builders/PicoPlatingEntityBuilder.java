@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
@@ -28,18 +28,18 @@ public class PicoPlatingEntityBuilder {
     private final LabEventFactory             labEventFactory;
     private final LabEventHandler             labEventHandler;
 
-    private final Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private final Map<String, BarcodedTube> mapBarcodeToTube;
     private       TubeFormation                 normTubeFormation;
     private String rackBarcode;
     private String normalizationBarcode;
-    private Map<String,TwoDBarcodedTube> normBarcodedTubeMap;
+    private Map<String,BarcodedTube> normBarcodedTubeMap;
     private String testPrefix;
 
     public TubeFormation getNormTubeFormation() {
         return normTubeFormation;
     }
 
-    public Map<String, TwoDBarcodedTube> getNormBarcodeToTubeMap() {
+    public Map<String, BarcodedTube> getNormBarcodeToTubeMap() {
         return normBarcodedTubeMap;
     }
 
@@ -49,7 +49,7 @@ public class PicoPlatingEntityBuilder {
 
     public PicoPlatingEntityBuilder(BettaLimsMessageTestFactory bettaLimsMessageTestFactory,
                                     LabEventFactory labEventFactory,
-                                    LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                    LabEventHandler labEventHandler, Map<String, BarcodedTube> mapBarcodeToTube,
                                     String rackBarcode, String testPrefix) {
         this.bettaLimsMessageTestFactory = bettaLimsMessageTestFactory;
         this.labEventFactory = labEventFactory;
@@ -120,8 +120,8 @@ public class PicoPlatingEntityBuilder {
         LabEventTest.validateWorkflow(LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName(), picoPlatingSetup4Plate);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(initialTubeFormation.getLabel(), initialTubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : initialTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : initialTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent picoPlatingNormEntity = labEventFactory.buildFromBettaLims(jaxbBuilder.getPicoPlatingNormalization(),
                 mapBarcodeToVessel);
@@ -134,7 +134,7 @@ public class PicoPlatingEntityBuilder {
                 new LinkedHashMap<>(normTubeFormation.getContainerRole().getContainedVessels().size());
 
         for (VesselPosition vesselPosition : normTubeFormation.getVesselGeometry().getVesselPositions()) {
-            TwoDBarcodedTube vesselAtPosition =
+            BarcodedTube vesselAtPosition =
                     normTubeFormation.getContainerRole().getVesselAtPosition(vesselPosition);
             if (vesselAtPosition != null) {
                 normBarcodedTubeMap.put(vesselAtPosition.getLabel(), vesselAtPosition);
@@ -144,8 +144,8 @@ public class PicoPlatingEntityBuilder {
         LabEventTest.validateWorkflow(LabEventType.PICO_PLATING_POST_NORM_PICO.getName(), normTubeFormation);
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(normTubeFormation.getLabel(), normTubeFormation);
-        for (TwoDBarcodedTube twoDBarcodedTube : normTubeFormation.getContainerRole().getContainedVessels()) {
-            mapBarcodeToVessel.put(twoDBarcodedTube.getLabel(), twoDBarcodedTube);
+        for (BarcodedTube barcodedTube : normTubeFormation.getContainerRole().getContainedVessels()) {
+            mapBarcodeToVessel.put(barcodedTube.getLabel(), barcodedTube);
         }
         LabEvent picoPlatingPostNormEntity = labEventFactory.buildFromBettaLims(
                 jaxbBuilder.getPicoPlatingPostNormSetup(), mapBarcodeToVessel);

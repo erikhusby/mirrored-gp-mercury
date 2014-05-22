@@ -40,10 +40,12 @@ public class QuoteImportItem {
         this.ledgerItems = ledgerItems;
         this.billToDate = billToDate;
 
-        for (LedgerEntry ledger : ledgerItems) {
-            updateDateRange(ledger.getWorkCompleteDate());
-            if (StringUtils.isNotBlank(ledger.getWorkItem())) {
-                workItems.add(ledger.getWorkItem());
+        if (ledgerItems != null) {
+            for (LedgerEntry ledger : ledgerItems) {
+                updateDateRange(ledger.getWorkCompleteDate());
+                if (StringUtils.isNotBlank(ledger.getWorkItem())) {
+                    workItems.add(ledger.getWorkItem());
+                }
             }
         }
     }
@@ -220,5 +222,17 @@ public class QuoteImportItem {
             keys.add(entry.getProductOrderSample().getProductOrder().getJiraTicketKey());
         }
         return keys;
+    }
+
+    /**
+     * If there is a single work item, it is returned.  Otherwise,
+     * null is returned.
+     */
+    public String getSingleWorkItem() {
+        String workItem = null;
+        if (workItems.size() == 1) {
+            workItem = workItems.iterator().next();
+        }
+        return workItem;
     }
 }

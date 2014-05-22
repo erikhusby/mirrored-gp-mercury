@@ -810,16 +810,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     }
 
     /**
-     * Calculates how many samples registered to this product order have a fingerprint associated
-     * with it.
-     *
-     * @return a count of the samples that have a fingerprint
-     */
-    public int getFingerprintCount() {
-        return updateSampleCounts().hasFPCount;
-    }
-
-    /**
      * Exposes the summation of each unique stock type found in the list of samples registered to
      * this product order.
      *
@@ -1342,7 +1332,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         private int lastPicoCount;
         private int receivedSampleCount;
         private int activeSampleCount;
-        private int hasFPCount;
         private int hasSampleKitUploadRackscanMismatch;
         private int missingBspMetaDataCount;
         private int uniqueSampleCount;
@@ -1400,7 +1389,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             bspSampleCount = 0;
             receivedSampleCount = 0;
             activeSampleCount = 0;
-            hasFPCount = 0;
             hasSampleKitUploadRackscanMismatch = 0;
             missingBspMetaDataCount = 0;
             onRiskCount = 0;
@@ -1439,9 +1427,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
             primaryDiseaseCounter.increment(bspDTO.getPrimaryDisease());
             genderCounter.increment(bspDTO.getGender());
-            if (bspDTO.getHasFingerprint()) {
-                hasFPCount++;
-            }
 
             if (bspDTO.getHasSampleKitUploadRackscanMismatch()) {
                 hasSampleKitUploadRackscanMismatch++;
@@ -1501,10 +1486,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
             primaryDiseaseCounter.output(output, "Disease", totalSampleCount);
             genderCounter.output(output, "Gender", totalSampleCount);
             sampleTypeCounter.output(output, "Sample Type", totalSampleCount);
-
-            if (hasFPCount != 0) {
-                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
-            }
 
             if (product != null && product.isSupportsPico()) {
                 formatSummaryNumber(output, "Last Pico over a year ago: {0}",

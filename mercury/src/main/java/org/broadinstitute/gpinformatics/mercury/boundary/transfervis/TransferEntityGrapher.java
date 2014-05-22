@@ -7,7 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Vertex;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -16,7 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
@@ -56,7 +56,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     private StaticPlateDao staticPlateDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -88,7 +88,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             @Override
             public void expandVertex(String vertexId, Graph graph,
                                      TransferEntityGrapher transferEntityGrapher, List<AlternativeId> alternativeIds) {
-                TwoDBarcodedTube receptacle = twoDBarcodedTubeDao.findByBarcode(vertexId);
+                BarcodedTube receptacle = barcodedTubeDao.findByBarcode(vertexId);
                 transferEntityGrapher.startWithTube(receptacle, graph, alternativeIds);
             }
         });
@@ -126,7 +126,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
     @Override
     public Graph forTube(String tubeBarcode, List<AlternativeId> alternativeIds) {
         Graph graph = new Graph();
-        TwoDBarcodedTube receptacle = twoDBarcodedTubeDao.findByBarcode(tubeBarcode);
+        BarcodedTube receptacle = barcodedTubeDao.findByBarcode(tubeBarcode);
         startWithTube(receptacle, graph, alternativeIds);
         return graph;
     }
@@ -138,7 +138,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * @param receptacle     starting point for filling graph
      * @param alternativeIds IDs to display
      */
-    public void startWithTube(TwoDBarcodedTube receptacle, Graph graph, List<AlternativeId> alternativeIds) {
+    public void startWithTube(BarcodedTube receptacle, Graph graph, List<AlternativeId> alternativeIds) {
         if (receptacle == null) {
             graph.setMessage("No tube was found with that barcode");
         } else {
@@ -245,7 +245,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      */
     @Override
     public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
-        TwoDBarcodedTube receptacle = twoDBarcodedTubeDao.findByBarcode(tubeBarcode);
+        BarcodedTube receptacle = barcodedTubeDao.findByBarcode(tubeBarcode);
         return getAlternativeIds(receptacle.getSampleInstances(), Arrays.asList(AlternativeId.values()));
     }
 
@@ -499,15 +499,15 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
             // Render any transfers from the rack tubes
             for (Object o : vesselContainer.getMapPositionToVessel().entrySet()) {
-                Map.Entry<VesselPosition, LabVessel> vesselPositionTwoDBarcodedTubeEntry =
+                Map.Entry<VesselPosition, LabVessel> vesselPositionBarcodedTubeEntry =
                         (Map.Entry<VesselPosition, LabVessel>) o;
-                numVesselsAdded += renderReceptacleEdges(vesselPositionTwoDBarcodedTubeEntry.getValue(),
+                numVesselsAdded += renderReceptacleEdges(vesselPositionBarcodedTubeEntry.getValue(),
                         graph, vesselVertexQueue, alternativeIds);
             }
             for (Object o : vesselContainer.getVesselToSectionTransfersTo()) {
                 VesselToSectionTransfer vesselToSectionTransfer = (VesselToSectionTransfer) o;
                 ReceptacleVesselVertex receptacleVessel = new ReceptacleVesselVertex(
-                        OrmUtil.proxySafeCast(vesselToSectionTransfer.getSourceVessel(), TwoDBarcodedTube.class));
+                        OrmUtil.proxySafeCast(vesselToSectionTransfer.getSourceVessel(), BarcodedTube.class));
                 if (receptacleVessel.render(graph, alternativeIds)) {
                     vesselVertexQueue.add(receptacleVessel);
                     numVesselsAdded++;
@@ -530,9 +530,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
     private class ReceptacleVesselVertex extends VesselVertex {
 
-        private TwoDBarcodedTube receptacle;
+        private BarcodedTube receptacle;
 
-        private ReceptacleVesselVertex(TwoDBarcodedTube receptacle) {
+        private ReceptacleVesselVertex(BarcodedTube receptacle) {
             this.receptacle = receptacle;
         }
 

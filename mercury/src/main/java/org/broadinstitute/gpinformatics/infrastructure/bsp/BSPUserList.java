@@ -29,6 +29,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPUserList.class);
     private static final long serialVersionUID = -8290793988380748612L;
 
+    // See BSPAuthenticationManager in BSP code base.
+    private static final String PERSONNEL_PREFIX = "inactive_user_";
+
     @Inject
     private Deployment deployment;
 
@@ -147,6 +150,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
         this.bspManagerFactory = bspManagerFactory;
     }
 
+    // Reload the BSP user list from the remove server. If the server is down, we return the previously retrieved
+    // list, if present, or an empty list if not. When we're not running in production, the 'QADude' users are
+    // also added.
     @Override
     public synchronized void refreshCache() {
         try {
@@ -207,20 +213,37 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
-     * Find the user by an email address.
+     * Find a user by an email address. If more than one user is found, prefer the user that is active over an
+     * inactive user.<br/>
+     * Finding a user by email address is not very accurate since email addresses are not unique across users.
      *
      * @param email The string to match
      *
      * @return The matching user, null if not found
      */
     public BspUser getByEmail(String email) {
+        BspUser inactiveUser = null;
         for (BspUser user : getUsers().values()) {
             if (user.getEmail().equalsIgnoreCase(email)) {
-                return user;
+                if (isActiveUser(user)) {
+                    return user;
+                }
+                inactiveUser = user;
             }
         }
 
-        return null;
+        return inactiveUser;
+    }
+
+    /**
+     * Determine if a BspUser is an active user. Inactive user accounts are created for 'external' users who are
+     * have accounts in BSP but will never log in to BSP, such as for external collaborators.
+     *
+     * @param user the user to check
+     * @return true if the user is active
+     */
+    public static boolean isActiveUser(BspUser user) {
+        return !user.getUsername().startsWith(PERSONNEL_PREFIX);
     }
 
     /**

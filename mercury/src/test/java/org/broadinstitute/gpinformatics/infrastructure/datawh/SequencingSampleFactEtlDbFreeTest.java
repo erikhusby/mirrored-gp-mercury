@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.template.TemplateEngine;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
@@ -29,7 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -103,7 +102,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private ProductOrder pdo = EasyMock.createMock(ProductOrder.class);
     private SampleInstance sampleInstance = EasyMock.createMock(SampleInstance.class);
     private SampleInstance sampleInstance2 = EasyMock.createMock(SampleInstance.class);
-    private LabVessel denatureSource = EasyMock.createMock(TwoDBarcodedTube.class);
+    private LabVessel denatureSource = EasyMock.createMock(BarcodedTube.class);
 
     private Object[] mocks = new Object[]{auditReader, dao, pdoDao, runCartridge, researchProject, pdo,
             sampleInstance, sampleInstance2, vesselContainer, denatureSource};
@@ -180,7 +179,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(denatureSource.getCreatedOn()).andReturn(tubeCreateDate).anyTimes();
 
         EasyMock.expect(denatureSource.getSampleInstances(EasyMock.anyObject(SampleType.class),
-                EasyMock.anyObject(LabBatch.LabBatchType.class)))
+                                                          EasyMock.anyObject(LabBatch.LabBatchType.class)))
                 .andReturn(sampleInstances).anyTimes();
 
         for (SampleInstance sampleInstance1 : sampleInstances) {
@@ -221,10 +220,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 2, tubeBarcode,
-                        tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
+                             tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 1, tubeBarcode,
-                        tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
+                             tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
             }
         }
         // Tests the pdo cache.  Should just skip some of the expects.
@@ -266,12 +265,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                        researchProjectId, workflowBatch.getBatchName());
+                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                             researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                        researchProjectId, workflowBatch.getBatchName());
+                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                             researchProjectId, workflowBatch.getBatchName());
             }
         }
 
@@ -315,12 +314,12 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         for (String record : records) {
             if (record.contains(",2,")) {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 2, denatureSource.getLabel(),
-                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                        researchProjectId, workflowBatch.getBatchName());
+                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                             researchProjectId, workflowBatch.getBatchName());
             } else {
                 verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 1, denatureSource.getLabel(),
-                        ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                        researchProjectId, workflowBatch.getBatchName());
+                             ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                             researchProjectId, workflowBatch.getBatchName());
             }
         }
 
@@ -370,8 +369,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
                 foundLane2 = true;
             }
             verifyRecord(record, "NONE", pdoId, sampleKey, laneNumber, denatureSource.getLabel(),
-                    ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
-                    researchProjectId, workflowBatch.getBatchName());
+                         ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
+                         researchProjectId, workflowBatch.getBatchName());
         }
         Assert.assertTrue(foundLane1);
         Assert.assertTrue(foundLane2);
@@ -382,33 +381,35 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         final ProductOrder productOrder = ProductOrderTestFactory.buildExExProductOrder(96);
         Long pdoId = 9202938094820L;
-        AthenaClientServiceStub.addProductOrder(productOrder);
         Date runDate = new Date();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
+        Map<String, BarcodedTube> mapBarcodeToTube = createInitialRack(productOrder, "R");
         LabBatch workflowBatch = new LabBatch("Exome Express Batch",
-                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
+                                              new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                                              LabBatch.LabBatchType.WORKFLOW);
         workflowBatch.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
         workflowBatch.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
 
         bucketBatchAndDrain(mapBarcodeToTube, productOrder, workflowBatch, "1");
         //Build Event History
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToTube,
-                String.valueOf(runDate.getTime()), "1", true);
+                                                                                  String.valueOf(runDate.getTime()),
+                                                                                  "1", true);
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
-                        picoPlatingEntityBuilder.getNormTubeFormation(),
-                        picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+                                               picoPlatingEntityBuilder.getNormTubeFormation(),
+                                               picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
                 runLibraryConstructionProcess(exomeExpressShearingEntityBuilder.getShearingCleanupPlate(),
-                        exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
-                        exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
+                                              exomeExpressShearingEntityBuilder.getShearCleanPlateBarcode(),
+                                              exomeExpressShearingEntityBuilder.getShearingPlate(), "1");
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
                 runHybridSelectionProcess(libraryConstructionEntityBuilder.getPondRegRack(),
-                        libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                        libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
+                                          libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                                          libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
         QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
+                                                          hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                                                          hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),
+                                                          "1");
 
         LabVessel denatureSource =
                 qtpEntityBuilder.getDenatureRack().getContainerRole().getVesselAtPosition(VesselPosition.A01);
@@ -417,8 +418,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
         HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder =
                 runHiSeq2500FlowcellProcess(qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", FCT_TICKET,
-                        ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
-                        Workflow.AGILENT_EXOME_EXPRESS);
+                                            ProductionFlowcellPath.DILUTION_TO_FLOWCELL, null,
+                                            Workflow.AGILENT_EXOME_EXPRESS);
         LabVessel dilutionSource =
                 hiSeq2500FlowcellEntityBuilder.getDilutionRack().getContainerRole().getVesselAtPosition(
                         VesselPosition.A01);
@@ -434,7 +435,7 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         String flowcellBarcode = illuminaFlowcell.getCartridgeBarcode();
 
         SolexaRunBean runBean = new SolexaRunBean(flowcellBarcode, flowcellBarcode + dateFormat.format(runDate),
-                runDate, machineName, runPath.getAbsolutePath(), null);
+                                                  runDate, machineName, runPath.getAbsolutePath(), null);
 
         IlluminaSequencingRunFactory runFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createMock(JiraCommentUtil.class));
@@ -489,14 +490,14 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
             for (String record : mapSampleToRecord.get(testInstance.getStartingSample().getSampleKey())) {
                 if (record.contains(",2,")) {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                            testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
-                            ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
-                            illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
+                                 testInstance.getStartingSample().getSampleKey(), 2, denatureSource.getLabel(),
+                                 ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
+                                 illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 } else {
                     verifyRecord(record, molecularIndexingSchemeName, pdoId,
-                            testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
-                            ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
-                            illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
+                                 testInstance.getStartingSample().getSampleKey(), 1, denatureSource.getLabel(),
+                                 ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()),
+                                 illuminaFlowcell.getLabel(), researchProjectId, workflowBatch.getBatchName());
                 }
             }
         }

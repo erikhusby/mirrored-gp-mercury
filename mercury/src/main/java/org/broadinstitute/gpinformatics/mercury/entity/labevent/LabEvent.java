@@ -150,13 +150,6 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabVessel inPlaceLabVessel;
 
-    // todo jmt delete productOrderId?
-    /**
-     * Business Key of a product order to which this event is associated
-     */
-    @Column(name = "PRODUCT_ORDER_ID")
-    private String productOrderId;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "LAB_EVENT_TYPE")
     private LabEventType labEventType;
@@ -366,26 +359,6 @@ todo jmt adder methods
 
     public void setInPlaceLabVessel(LabVessel inPlaceLabVessel) {
         this.inPlaceLabVessel = inPlaceLabVessel;
-    }
-
-    /**
-     * When vessels are placed in a bucket, an association is made
-     * between the vessel and the PO that is driving the work.  When
-     * vessels are pulled out of a bucket, we record an event.  That
-     * event associates zero or one {@link String product orders}.
-     * <p/>
-     * This method is the way to mark the transfer graph such that all
-     * downstream nodes are considered to be "for" the product order
-     * returned here.
-     * <p/>
-     * Most events will return null.
-     */
-    public String getProductOrderId() {
-        return productOrderId;
-    }
-
-    public void setProductOrderId(String productOrder) {
-        productOrderId = productOrder;
     }
 
     public LabEventType getLabEventType() {

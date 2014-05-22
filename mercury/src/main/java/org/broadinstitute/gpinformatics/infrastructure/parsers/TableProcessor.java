@@ -4,8 +4,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -17,7 +20,9 @@ public abstract class TableProcessor implements Serializable {
 
     private static final long serialVersionUID = 8122298462727182883L;
 
-    private List<String> validationMessages = new ArrayList<>();
+    private final List<String> validationMessages = new ArrayList<>();
+
+    private final Set<String> warnings = new LinkedHashSet<>();
 
     private final String sheetName;
 
@@ -121,10 +126,21 @@ public abstract class TableProcessor implements Serializable {
         return validationMessages;
     }
 
-    protected void addDataMessage(String message, int dataRowIndex) {
-        String prefix = (sheetName == null) ? "" : "Sheet " + sheetName + ", ";
+    public Collection<String> getWarnings() {
+        return warnings;
+    }
 
-        validationMessages.add(prefix + "Row #" + (dataRowIndex) + " " + message);
+    private String getPrefixedMessage(String message, int dataRowIndex) {
+        String prefix = (sheetName == null) ? "" : "Sheet " + sheetName + ", ";
+        return prefix + "Row #" + (dataRowIndex) + " " + message;
+    }
+
+    protected void addDataMessage(String message, int dataRowIndex) {
+        validationMessages.add(getPrefixedMessage(message, dataRowIndex));
+    }
+
+    protected void addWarning(String message, int dataRowIndex) {
+        warnings.add(getPrefixedMessage(message, dataRowIndex));
     }
 
     public boolean isDateColumn(int columnIndex) {

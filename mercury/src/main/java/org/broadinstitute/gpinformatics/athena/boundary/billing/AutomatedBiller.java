@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtility;
@@ -30,17 +29,17 @@ public class AutomatedBiller {
     public static final int PROCESSING_END_HOUR = 5;
 
     private final WorkCompleteMessageDao workCompleteMessageDao;
-    private final ProductOrderEjb productOrderEjb;
+    private final BillingEjb billingEjb;
     private final SessionContextUtility sessionContextUtility;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
     @Inject
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
-                    ProductOrderEjb productOrderEjb,
+                    BillingEjb billingEjb,
                     SessionContextUtility sessionContextUtility) {
         this.workCompleteMessageDao = workCompleteMessageDao;
-        this.productOrderEjb = productOrderEjb;
+        this.billingEjb = billingEjb;
         this.sessionContextUtility = sessionContextUtility;
     }
 
@@ -51,12 +50,10 @@ public class AutomatedBiller {
     }
 
     /**
-     * The schedule is every 30 minutes from Midnight through 4:30 (before 5AM). This annotation MUST BE IN SYNC WITH THE
-     * TIME RANGE that is in ProductOrderEjb. I chose that ejb because it is used by this class and I don't
-     * want to have to construct on automated biller just to use the method AND because making a static
-     * method is a no-no for EJBs.
+     * The schedule is every 30 minutes from 2 minutes after Midnight through 4:30 (before 5AM). It is offset
+     * by 2 minutes because the Quote server reboots at midnight (prod) and 3AM (dev).
      */
-    @Schedule(minute = "*/30", hour = "0,1,2,3,4", persistent = false)
+    @Schedule(minute = "2/30", hour = "0,1,2,3,4", persistent = false)
     public void processMessages() {
         // Use SessionContextUtility here because ProductOrderEjb depends on session scoped beans.
         sessionContextUtility.executeInContext(new SessionContextUtility.Function() {
@@ -73,12 +70,13 @@ public class AutomatedBiller {
                     boolean processed = true;
                     try {
                         // For each message, request auto billing of the sample in the order.
-                        processed = productOrderEjb.autoBillSample(message.getPdoName(), message.getAliquotId(),
+                        processed = billingEjb.autoBillSample(message.getPdoName(), message.getAliquotId(),
                                 message.getCompletedDate(), message.getData(), orderLockoutCache);
                     } catch (Exception e) {
                         log.error(MessageFormat.format(
-                                "Error while processing work complete message. PDO: {0}, Sample: {1}",
-                                message.getPdoName(), message.getAliquotId()), e);
+                                "Error while processing work complete message. PDO: {0}, Sample: {1} {2}",
+                                message.getPdoName(), message.getAliquotId() + e.getLocalizedMessage()
+                                ));
                     }
                     if (processed) {
                         // Once a message is processed, mark it to avoid processing it again.

@@ -55,7 +55,6 @@ public class BSPSampleDTO {
     public static final String CONCENTRATION = "concentration";
     public static final String PICO_DATE = "picoDate";
     public static final String TOTAL = "total";
-    public static final String HAS_FINGERPRINT = "hasFingerprint";
     public static final String HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH = "hasSampleKitUploadRackscanMismatch";
     public static final String COMPLETELY_BILLED = "completelyBilled";
     public static final String PACKAGE_DATE = "packageDate";
@@ -302,10 +301,6 @@ public class BSPSampleDTO {
         return getValue(BSPSampleSearchColumn.STOCK_TYPE);
     }
 
-    public String getFingerprint() {
-        return getValue(BSPSampleSearchColumn.FINGERPRINT);
-    }
-
     /**
      * This method returns true when the sample is received using the following logic:
      * <ol>
@@ -335,10 +330,6 @@ public class BSPSampleDTO {
     public boolean isActiveStock() {
         String stockType = getStockType();
         return (stockType != null) && (stockType.equals(ACTIVE_IND));
-    }
-
-    public boolean getHasFingerprint() {
-        return !StringUtils.isBlank(getFingerprint());
     }
 
     public String getSampleId() {

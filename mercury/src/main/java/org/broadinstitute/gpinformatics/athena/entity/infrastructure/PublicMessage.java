@@ -25,7 +25,7 @@ import javax.persistence.Table;
 @Entity
 @Table(schema = "athena")
 public class PublicMessage {
-    public PublicMessage() {
+    private PublicMessage() {
     }
 
     public PublicMessage(String message) {

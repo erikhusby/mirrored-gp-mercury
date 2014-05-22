@@ -421,7 +421,7 @@ public class VesselContainer<T extends LabVessel> {
      * If this is a plate, this method could return
      * the {@link PlateWell wells}.  If this thing
      * is a {@link TubeFormation}, this method could
-     * return the {@link TwoDBarcodedTube} tubes in
+     * return the {@link BarcodedTube} tubes in
      * the rack.
      *
      * @return contained vessels

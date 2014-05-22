@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -28,7 +28,7 @@ public class VesselMetricResourceTest {
         VesselMetricRunBean vesselMetricRunBean = new VesselMetricRunBean("TestRun", new Date(),  "BSP Pico", vesselMetricBeans);
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
-        mapBarcodeToVessel.put(barcode, new TwoDBarcodedTube(barcode));
+        mapBarcodeToVessel.put(barcode, new BarcodedTube(barcode));
         LabMetricRun labMetricRun = vesselMetricResource.buildLabMetricRun(vesselMetricRunBean, mapBarcodeToVessel);
 
         Assert.assertEquals(labMetricRun.getLabMetrics().size(), 1, "Wrong number of metrics");

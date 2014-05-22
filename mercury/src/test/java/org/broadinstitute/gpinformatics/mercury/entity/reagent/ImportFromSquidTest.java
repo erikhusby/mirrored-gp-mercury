@@ -12,11 +12,11 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularInd
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -61,7 +61,7 @@ public class ImportFromSquidTest extends Arquillian {
     private LabVesselDao labVesselDao;
 
     @Inject
-    private TwoDBarcodedTubeDao twoDBarcodedTubeDao;
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -276,7 +276,7 @@ public class ImportFromSquidTest extends Arquillian {
             Object[] columns = (Object[]) o;
             tubeBarcodes.add((String) columns[0]);
         }
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
 
@@ -294,13 +294,13 @@ public class ImportFromSquidTest extends Arquillian {
                 }
                 previousDesignName = designName;
             }
-            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
+            BarcodedTube barcodedTube = new BarcodedTube(barcode);
+            barcodedTube.addReagent(new DesignedReagent(reagentDesign));
             if (mapBarcodeToTube.get(barcode) == null) {
-                twoDBarcodedTubeDao.persist(twoDBarcodedTube);
+                barcodedTubeDao.persist(barcodedTube);
             }
         }
-        twoDBarcodedTubeDao.clear();
+        barcodedTubeDao.clear();
     }
 
     /**
@@ -355,7 +355,7 @@ public class ImportFromSquidTest extends Arquillian {
             Object[] columns = (Object[]) o;
             tubeBarcodes.add((String) columns[2]);
         }
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDao.findByBarcodes(tubeBarcodes);
+        Map<String, BarcodedTube> mapBarcodeToTube = barcodedTubeDao.findByBarcodes(tubeBarcodes);
 
         Map<String, ReagentDesign> mapNameToReagentDesign = getMapNameToMercuryReagentDesign();
 
@@ -375,13 +375,13 @@ public class ImportFromSquidTest extends Arquillian {
                 }
                 previousDesignName = designName;
             }
-            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
+            BarcodedTube barcodedTube = new BarcodedTube(barcode);
+            barcodedTube.addReagent(new DesignedReagent(reagentDesign));
             if (mapBarcodeToTube.get(barcode) == null) {
-                twoDBarcodedTubeDao.persist(twoDBarcodedTube);
+                barcodedTubeDao.persist(barcodedTube);
             }
         }
-        twoDBarcodedTubeDao.clear();
+        barcodedTubeDao.clear();
     }
 
     /**

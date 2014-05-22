@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 
@@ -30,6 +29,10 @@ public class ProductOrderTestFactory {
     public static final String JIRA_KEY = "PD0-2WGS";
     public static final String SAMPLE_SUFFIX = "A";
     public static final String TEST_SKIP_QUOTE_REASON = "I am skipping the quote because I can.";
+    public static final Long TEST_CREATOR = 1111L;
+    public static final String pdoTitle= "Test synopsis";
+    public static final String rpSynopsis = "Test synopsis";
+    public static final String otherRpSynopsis = "To Study Stuff";
 
     public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey,
                                                        Workflow workflow, long creatorId, String rpTitle,
@@ -81,7 +84,7 @@ public class ProductOrderTestFactory {
 
     public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
         return createDummyProductOrder(1, jiraTicketKey, Workflow.AGILENT_EXOME_EXPRESS, 10950, "MyResearchProject",
-                AthenaClientServiceStub.otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", SAMPLE_SUFFIX, "ExExQuoteId"
+                otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", SAMPLE_SUFFIX, "ExExQuoteId"
         );
     }
 
@@ -106,34 +109,34 @@ public class ProductOrderTestFactory {
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-1EE", Workflow.AGILENT_EXOME_EXPRESS, 101, "Test RP",
-                AthenaClientServiceStub.rpSynopsis,
+                rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildIceProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, "PD0-1IC", Workflow.ICE, 101, "Test RP",
-                AthenaClientServiceStub.rpSynopsis,
+                rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-ICEtest-1232", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples, String sampleSuffix) {
         return createDummyProductOrder(maxSamples, "PD0-1HS",
                 Workflow.HYBRID_SELECTION, 101,
-                "Test RP", AthenaClientServiceStub.rpSynopsis,
+                "Test RP", rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-HSEL-9293", sampleSuffix, "ExExQuoteId");
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
         return createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.WHOLE_GENOME,
-                301, "Test RP", AthenaClientServiceStub.rpSynopsis,
+                301, "Test RP", rpSynopsis,
                 ResearchProject.IRB_ENGAGED, "P-WGS-9294", SAMPLE_SUFFIX, "ExExQuoteId");
     }
 
     public static ProductOrder buildSampleInitiationProductOrder(int maxSamples) {
 
         ProductOrder sampleInitiationProductOrder = createDummyProductOrder(maxSamples, JIRA_KEY, Workflow.NONE,
-                AthenaClientServiceStub.TEST_CREATOR, AthenaClientServiceStub.pdoTitle,
-                AthenaClientServiceStub.rpSynopsis,
+                TEST_CREATOR, pdoTitle,
+                rpSynopsis,
                 ResearchProject.IRB_ENGAGED, Product.SAMPLE_INITIATION_PART_NUMBER, SAMPLE_SUFFIX, null);
         sampleInitiationProductOrder.setProductOrderKit(ProdOrderKitTestFactory.createDummyProductOrderKit(maxSamples));
         sampleInitiationProductOrder.getProduct().setPartNumber(Product.SAMPLE_INITIATION_PART_NUMBER);

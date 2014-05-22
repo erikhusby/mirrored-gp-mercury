@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.parsers.poi;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -11,13 +10,12 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.broadinstitute.gpinformatics.infrastructure.ValidationException;
 import org.broadinstitute.gpinformatics.infrastructure.parsers.TableProcessor;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.LabMetricProcessor;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,30 +27,17 @@ import java.util.Map;
 /**
  * Handle the processing of a stream of table data using POI to parse an excel file.
  */
-public final class PoiSpreadsheetParser implements Serializable {
+public final class PoiSpreadsheetParser {
 
-    private static final String DATE_PATTERN = "MM/dd/yyyy";
+    private static final Format DATE_FORMATTER = FastDateFormat.getInstance("MM/dd/yyyy");
 
-    private final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
-
-    private static final long serialVersionUID = 1294878041185823009L;
     protected List<String> validationMessages = new ArrayList<>();
-    private Workbook workbook;
 
     // This maps table processors by sheet name.
     private final Map<String, ? extends TableProcessor> processorMap;
-    private final LabMetricProcessor firstSheetOnlyProcessor;
 
-    int numberOfSheets;
-
-    public PoiSpreadsheetParser(Map<String, ? extends TableProcessor> processorMap) {
+    public PoiSpreadsheetParser(@Nonnull Map<String, ? extends TableProcessor> processorMap) {
         this.processorMap = processorMap;
-        firstSheetOnlyProcessor = null;
-    }
-
-    public PoiSpreadsheetParser(LabMetricProcessor processor) {
-        processorMap = null;
-        firstSheetOnlyProcessor = processor;
     }
 
     /**
@@ -62,18 +47,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @throws ValidationException
      */
-    protected void processWorkSheet(String sheetName, TableProcessor processor) throws ValidationException {
-
-        Sheet workSheet;
-        if (sheetName == null) {
-            workSheet = workbook.getSheetAt(0);
-        } else {
-            workSheet = workbook.getSheet(sheetName);
-            if (workSheet == null) {
-                throw new ValidationException("No worksheet named " + sheetName + " found");
-            }
-        }
-
+    private void processRows(Sheet workSheet, TableProcessor processor) throws ValidationException {
         Iterator<Row> rows = workSheet.rowIterator();
         processHeaders(processor, rows);
         processData(processor, rows);
@@ -86,29 +60,19 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @param rows The iterator on the excel rows.
      */
     private void processData(TableProcessor processor, Iterator<Row> rows) {
-        // The data row index starts at 1 in the excel spreadsheet and then we must skip the header rows.
-        int dataRowIndex = processor.getNumHeaderRows() + 1;
-
         while (rows.hasNext()) {
             Row row = rows.next();
 
-            // The column index for grabbing cell data is 0 based.
-            int columnIndex = 0;
-
             // Create a mapping of the headers to the cell values. There are never date values for the header.
             Map<String, String> dataByHeader = new HashMap<>();
-            for (String headerName : processor.getHeaderNames()) {
+            for (int i = 0; i < processor.getHeaderNames().size(); i++) {
+                String headerName = processor.getHeaderNames().get(i);
                 dataByHeader.put(headerName,
-                        extractCellContent(row, headerName, columnIndex,
-                                processor.isDateColumn(columnIndex), processor.isStringColumn(columnIndex)));
-                columnIndex++;
+                        extractCellContent(row, headerName, i, processor.isDateColumn(i), processor.isStringColumn(i)));
             }
 
             // Take the map and turn it into objects and process the data appropriately.
-            processor.processRow(dataByHeader, dataRowIndex);
-
-            // Go on to the next row.
-            dataRowIndex++;
+            processor.processRow(dataByHeader, row.getRowNum());
         }
     }
 
@@ -118,7 +82,7 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @param processor The Table Processor that will be turning rows of data into objects based on headers.
      * @param rows The row iterator.
      */
-    private void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
+    private static void processHeaders(TableProcessor processor, Iterator<Row> rows) throws ValidationException {
         int headerRowIndex = 0;
         int numHeaderRows = processor.getNumHeaderRows();
         while (rows.hasNext() && headerRowIndex < numHeaderRows) {
@@ -140,10 +104,7 @@ public final class PoiSpreadsheetParser implements Serializable {
             }
 
             // Turn the header strings for this row into whatever objects are needed to continue on.
-            processor.processHeader(headers, headerRowIndex);
-
-            // Go on to the next row.
-            headerRowIndex++;
+            processor.processHeader(headers, headerRowIndex++);
         }
     }
 
@@ -158,17 +119,22 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @throws ValidationException
      */
     public void processUploadFile(InputStream fileStream) throws IOException, InvalidFormatException, ValidationException {
+        processWorkSheets(WorkbookFactory.create(fileStream));
+    }
 
-        workbook = WorkbookFactory.create(fileStream);
-        numberOfSheets = workbook.getNumberOfSheets();
+    public void processUploadFile(File file) throws IOException, InvalidFormatException, ValidationException {
+        processWorkSheets(WorkbookFactory.create(file));
+    }
 
-        if (processorMap == null) {
-            processWorkSheet(null, firstSheetOnlyProcessor);
-        } else {
-            // Go through each processor and process the sheet specified.
-            for (String sheetName : processorMap.keySet()) {
-                processWorkSheet(sheetName, processorMap.get(sheetName));
+    private void processWorkSheets(Workbook workbook) throws ValidationException {
+        // Go through each processor and process the sheet specified.
+        for (String sheetName : processorMap.keySet()) {
+            Sheet workSheet = workbook.getSheet(sheetName);
+            if (workSheet == null) {
+                throw new ValidationException("No worksheet named " + sheetName + " found");
             }
+
+            processRows(workSheet, processorMap.get(sheetName));
         }
     }
 
@@ -190,8 +156,7 @@ public final class PoiSpreadsheetParser implements Serializable {
 
         String result = getCellValues(cell, isDate, isString);
         if (StringUtils.isBlank(result)) {
-            validationMessages.add(
-                    "Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
+            validationMessages.add("Row # " + row.getRowNum() + ": Unable to determine cell type for " + headerName);
         }
 
         return result;
@@ -206,33 +171,26 @@ public final class PoiSpreadsheetParser implements Serializable {
      *
      * @return A string representation of the cell.
      */
-    private String getCellValues(Cell cell, boolean isDate, boolean isString) {
-        String result = "";
-
+    private static String getCellValues(Cell cell, boolean isDate, boolean isString) {
         if (cell != null) {
             switch (cell.getCellType()) {
             case Cell.CELL_TYPE_BOOLEAN:
-                result = String.valueOf(cell.getBooleanCellValue());
-                break;
+                return String.valueOf(cell.getBooleanCellValue());
             case Cell.CELL_TYPE_NUMERIC:
                 if (isDate) {
-                    result = dateFormatter.format(cell.getDateCellValue());
-                } else if (isString) {
-                    cell.setCellType(Cell.CELL_TYPE_STRING);
-                    result = cell.getStringCellValue();
-                } else {
-                    result = String.valueOf(cell.getNumericCellValue());
+                    return DATE_FORMATTER.format(cell.getDateCellValue());
                 }
-                break;
+                if (isString) {
+                    cell.setCellType(Cell.CELL_TYPE_STRING);
+                    return cell.getStringCellValue();
+                }
+                return String.valueOf(cell.getNumericCellValue());
             case Cell.CELL_TYPE_STRING:
-                result = cell.getStringCellValue();
-                break;
-            default:
-                break;
+                return cell.getStringCellValue();
             }
         }
 
-        return result;
+        return "";
     }
 
     /**
@@ -243,14 +201,8 @@ public final class PoiSpreadsheetParser implements Serializable {
      * @return The names.
      */
     public static List<String> getWorksheetNames(File trackerFile) throws IOException, InvalidFormatException {
-
-        InputStream inputStream = null;
-
-        try {
-            inputStream = new FileInputStream(trackerFile);
+        try (InputStream inputStream = new FileInputStream(trackerFile)) {
             return getWorksheetNames(inputStream);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
     }
 
@@ -275,31 +227,29 @@ public final class PoiSpreadsheetParser implements Serializable {
     }
 
     /**
-     * This is a convenience function for processing a single worksheet from a spreadsheet file.
+     * Process a single worksheet from a spreadsheet. Only the first sheet is processed, and the sheet name isn't
+     * verified.
      *
      * @param spreadsheet The spreadsheet stream of data.
-     * @param worksheetName The name of the worksheet to process.
      * @param processor The table processor.
+     *
+     * @return the list of validation messages, if any
      *
      * @throws InvalidFormatException Formatting issues
      * @throws IOException File issues
      * @throws ValidationException Any problems with the data in the spreadsheet
      */
-    public static void processSingleWorksheet(
-            InputStream spreadsheet, String worksheetName, TableProcessor processor)
+    public static List<String> processSingleWorksheet(InputStream spreadsheet, TableProcessor processor)
             throws InvalidFormatException, IOException, ValidationException {
 
-        PoiSpreadsheetParser parser = null;
+        PoiSpreadsheetParser parser = new PoiSpreadsheetParser(Collections.<String, TableProcessor>emptyMap());
 
         try {
-            Map<String, ? extends TableProcessor> processorsByName =
-                    Collections.singletonMap(worksheetName, processor);
-            parser = new PoiSpreadsheetParser(processorsByName);
-            parser.processUploadFile(spreadsheet);
+            parser.processRows(WorkbookFactory.create(spreadsheet).getSheetAt(0), processor);
         } finally {
-            if (parser != null) {
-                parser.close();
-            }
+            processor.close();
         }
+
+        return parser.validationMessages;
     }
 }

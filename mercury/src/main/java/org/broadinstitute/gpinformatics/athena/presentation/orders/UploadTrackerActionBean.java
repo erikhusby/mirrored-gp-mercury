@@ -27,7 +27,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,7 +93,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         }
     }
 
-    private void previewUploadedFile() {
+    private boolean previewUploadedFile() {
         InputStream inputStream = null;
         PoiSpreadsheetParser parser = null;
 
@@ -106,7 +105,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             // process and if there were parsing errors, just return.
             parser.processUploadFile(trackerFile.getInputStream());
             if (hasErrors(processors.values())) {
-                return;
+                return true;
             }
 
             previewData = new ArrayList<>();
@@ -138,6 +137,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
                 // If cannot delete, oh well.
             }
         }
+        return false;
     }
 
     private boolean hasErrors(Collection<BillingTrackerProcessor> processors) {
@@ -147,7 +147,15 @@ public class UploadTrackerActionBean extends CoreActionBean {
             }
         }
 
-        return hasErrors();
+        boolean hasErrors = hasErrors();
+
+        for (BillingTrackerProcessor processor : processors) {
+            for (String warning : processor.getWarnings()) {
+                addGlobalValidationError(warning);
+            }
+        }
+        
+        return hasErrors;
     }
 
     /**
@@ -218,7 +226,6 @@ public class UploadTrackerActionBean extends CoreActionBean {
     }
 
     private void processBillingOnTempFile() {
-        InputStream inputStream = null;
         PoiSpreadsheetParser parser = null;
 
         try {
@@ -228,8 +235,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             Map<String, BillingTrackerProcessor> processors = getProcessors(sheetNames, true);
             parser = new PoiSpreadsheetParser(processors);
 
-            inputStream = new FileInputStream(previewFile);
-            parser.processUploadFile(inputStream);
+            parser.processUploadFile(previewFile);
             if (hasErrors(processors.values())) {
                 return;
             }
@@ -250,10 +256,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         } catch (Exception e) {
             e.printStackTrace();
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
-           } finally {
-            // No matter what, close the file but it will be ignored if everything was closed and deleted.
-            IOUtils.closeQuietly(inputStream);
-
+        } finally {
             if (parser != null) {
                 parser.close();
             }
@@ -299,10 +302,10 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     @HandlesEvent(PREVIEW)
     public Resolution preview() {
-        previewUploadedFile();
+        boolean hasErrors = previewUploadedFile();
 
         // If there are no errors, show the preview!
-        if (!hasErrors()) {
+        if (!hasErrors) {
             isPreview = true;
         }
 
