@@ -217,7 +217,7 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getRin());
+                return String.valueOf(sample.getBspSampleDTO().getRinDefaultToZero());
             }
         });
 

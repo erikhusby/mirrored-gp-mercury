@@ -206,20 +206,19 @@ public class BSPSampleDTO {
      * Returns the unmodified value of the "RIN Number"
      * annotation from BSP.
      * @see #getRin()
+     * @see #getRinDefaultToZero()
      */
     public String getRawRin() {
         return getValue(BSPSampleSearchColumn.RIN);
     }
 
     /**
-     * If BSP's "RIN Number" is a range, this returns
-     * the lower of the two numbers.  If it's a single numeric value,
-     * that value is returned.  Otherwise, this blows
-     * up trying to convert to a number.
-     * @see #getRawRin() to get the unmodified rin value
-     * as a string.
+     * If BSP's "RIN Number" is empty, this returns 0. If it is a range, this returns the lower of the two numbers. If
+     * it's a single numeric value, that value is returned. Otherwise, this blows up trying to convert to a number.
+     *
+     * @see #getRawRin() to get the unmodified rin value as a string.
      */
-    public double getRin() {
+    public double getRinDefaultToZero() {
         double[] doubles = getDoubleOrRangeOfDoubles(BSPSampleSearchColumn.RIN);
         if (doubles.length == 1) {
             return doubles[0];
@@ -227,6 +226,23 @@ public class BSPSampleDTO {
             // The logic for RIN is to take the lower of the two numbers.
             return Math.min(doubles[0], doubles[1]);
         }
+    }
+
+    /**
+     * Get the RIN value for the sample. Returns null if no RIN value is set. If the RIN value is expressed as a range,
+     * the lower value is returned. Throws NumberFormatException if the value cannot be parsed as a single value or as a
+     * range.
+     *
+     * @return the (lowest) RIN value from BSP; null if no value is set
+     * @throws NumberFormatException if the value cannot be parsed as a single value or a range
+     */
+    public Double getRin() {
+        Double rin = null;
+        String rawRin = getRawRin();
+        if (StringUtils.isNotBlank(rawRin)) {
+            rin = getRinDefaultToZero();
+        }
+        return rin;
     }
 
     public double getVolume() {
@@ -415,23 +431,4 @@ public class BSPSampleDTO {
             return bspLabelBarcode;
         }
     }
-
-    /**
-     * Adds the rin score from the sample dto to the item.
-     */
-    public String getRinScore() {
-        // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
-        // in which case we'll just display the raw rin value.
-        String rinScore = getRawRin();
-        if (!StringUtils.isBlank(rinScore)) {
-            try {
-                rinScore = String.valueOf(getRin());
-            } catch(NumberFormatException e) {
-                // sometimes RIN scores in BSP are not actually numbers (ranges are a common cases)
-            }
-        }
-
-        return rinScore;
-    }
-
 }
