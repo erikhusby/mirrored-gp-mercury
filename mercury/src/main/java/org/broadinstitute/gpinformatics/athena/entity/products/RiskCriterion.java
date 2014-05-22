@@ -217,20 +217,23 @@ public class RiskCriterion implements Serializable {
 
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspSampleDTO().getRinDefaultToZero());
+                return getStringValueOfOrNull(sample.getBspSampleDTO().getRin());
             }
         }),
         RQS("RQS", Operator.OperatorType.NUMERIC, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
-                Double rqs = sample.getBspSampleDTO().getRqs();
-                if (rqs == null) {
-                    return null;
-                } else {
-                    return String.valueOf(rqs);
-                }
+                return getStringValueOfOrNull(sample.getBspSampleDTO().getRqs());
             }
         });
+
+        private static String getStringValueOfOrNull(Double value) {
+            if (value == null) {
+                return null;
+            } else {
+                return String.valueOf(value);
+            }
+        }
 
         private final Operator.OperatorType operatorType;
         private final String label;

@@ -22,11 +22,6 @@ public class BSPSampleDTOTest {
         Assert.assertEquals(bspSampleDTO.getVolume(), 1.0, 0.001);
     }
 
-    public void testGetRinDefaultToZeroWhenNotSet() {
-        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
-        Assert.assertEquals(bspSampleDTO.getRinDefaultToZero(), 0.0, 0.001);
-    }
-
     public void testGetRinReturnsNullWhenNotSet() {
         BSPSampleDTO bspSampleDTO = new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>());
         Assert.assertNull(bspSampleDTO.getRin());
