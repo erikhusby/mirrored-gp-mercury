@@ -150,4 +150,8 @@ public class ProductOrderSampleDao extends GenericDao {
         return getEntityManager().createQuery(cq).getSingleResult();
     }
 
+    public List<ProductOrderSample> findBySamples(Collection<String> sampleNames) {
+        return findListByList(ProductOrderSample.class,ProductOrderSample_.sampleName,sampleNames);
+    }
+
 }

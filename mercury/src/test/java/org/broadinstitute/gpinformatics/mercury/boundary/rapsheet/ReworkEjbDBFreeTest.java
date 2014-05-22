@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,22 +83,22 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void vesselTestRetrieveThreeCandidatesOf4() {
 
-        Map<String, Set<ProductOrderSample>> mapBySamples = new HashMap<>();
+        Collection<ProductOrderSample> samples = new HashSet<>();
 
         ProductOrderSample poSample1 = testPdo1.getSamples().get(0);
-        mapBySamples.put(poSample1.getSampleKey(), Collections.singleton(poSample1));
+        samples.add(poSample1);
 
         ProductOrderSample poSample2 = testPdo2.getSamples().get(0);
-        mapBySamples.put(poSample2.getSampleKey(), Collections.singleton(poSample2));
+        samples.add(poSample2);
 
         ProductOrderSample poSample3 = testPdo3.getSamples().get(0);
-        mapBySamples.put(poSample3.getSampleKey(), Collections.singleton(poSample3));
+        samples.add(poSample3);
 
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
-        mapBySamples.put(poSample4.getSampleKey(), Collections.singleton(poSample4));
+        samples.add(poSample4);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.collectBucketCandidatesForAMercuryVessel(labVessel, mapBySamples);
+                reworkEjb.collectBucketCandidatesForAMercuryVessel(labVessel, samples);
 
         Assert.assertEquals(candidates.size(), 3);
         Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[0]).isValid());
@@ -108,19 +109,19 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void vesselTestRetrieveThreeValidOneInvalidOf5() {
 
-        Map<String, Set<ProductOrderSample>> mapBySamples = new HashMap<>();
+        Set<ProductOrderSample> sampleSet = new HashSet<>();
 
         ProductOrderSample poSample1 = testPdo1.getSamples().get(0);
-        mapBySamples.put(poSample1.getSampleKey(), Collections.singleton(poSample1));
+        sampleSet.add(poSample1);
 
         ProductOrderSample poSample2 = testPdo2.getSamples().get(0);
-        mapBySamples.put(poSample2.getSampleKey(), Collections.singleton(poSample2));
+        sampleSet.add(poSample2);
 
         ProductOrderSample poSample3 = testPdo3.getSamples().get(0);
-        mapBySamples.put(poSample3.getSampleKey(), Collections.singleton(poSample3));
+        sampleSet.add(poSample3);
 
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
-        mapBySamples.put(poSample4.getSampleKey(), Collections.singleton(poSample4));
+        sampleSet.add(poSample4);
 
         List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
@@ -132,10 +133,10 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
-        mapBySamples.put(nonExomeExpressSample5.getSampleKey(), Collections.singleton(nonExomeExpressSample5));
+        sampleSet.add(nonExomeExpressSample5);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.collectBucketCandidatesForAMercuryVessel(labVessel, mapBySamples);
+                reworkEjb.collectBucketCandidatesForAMercuryVessel(labVessel, sampleSet);
 
         Assert.assertEquals(candidates.size(), 4);
 //        Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[0]).isValid());
@@ -148,19 +149,19 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void nonVesselTestRetrieveThreeCandidatesOf4() {
 
-        Map<String, Set<ProductOrderSample>> mapBySamples = new HashMap<>();
+        Set<ProductOrderSample> productOrderSampleSet = new HashSet<>();
 
         ProductOrderSample poSample1 = testPdo1.getSamples().get(0);
-        mapBySamples.put(poSample1.getSampleKey(), Collections.singleton(poSample1));
+        productOrderSampleSet.add(poSample1);
 
         ProductOrderSample poSample2 = testPdo2.getSamples().get(0);
-        mapBySamples.put(poSample2.getSampleKey(), Collections.singleton(poSample2));
+        productOrderSampleSet.add(poSample2);
 
         ProductOrderSample poSample3 = testPdo3.getSamples().get(0);
-        mapBySamples.put(poSample3.getSampleKey(), Collections.singleton(poSample3));
+        productOrderSampleSet.add(poSample3);
 
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
-        mapBySamples.put(poSample4.getSampleKey(), Collections.singleton(poSample4));
+        productOrderSampleSet.add(poSample4);
 
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
@@ -185,7 +186,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
 
 
         Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.collectBucketCandidatesThatHaveBSPVessels(mapBySamples);
+                reworkEjb.collectBucketCandidatesThatHaveBSPVessels(productOrderSampleSet);
 
         Assert.assertEquals(candidates.size(), 3);
         Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[0]).isValid());
@@ -196,19 +197,19 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
     @Test
     public void nonVesselTestRetrieveThreeValidOneInvalidOf5() {
 
-        Map<String, Set<ProductOrderSample>> mapBySamples = new HashMap<>();
+        Set<ProductOrderSample> productOrderSampleSet = new HashSet<>();
 
         ProductOrderSample poSample1 = testPdo1.getSamples().get(0);
-        mapBySamples.put(poSample1.getSampleKey(), Collections.singleton(poSample1));
+        productOrderSampleSet.add(poSample1);
 
         ProductOrderSample poSample2 = testPdo2.getSamples().get(0);
-        mapBySamples.put(poSample2.getSampleKey(), Collections.singleton(poSample2));
+        productOrderSampleSet.add(poSample2);
 
         ProductOrderSample poSample3 = testPdo3.getSamples().get(0);
-        mapBySamples.put(poSample3.getSampleKey(), Collections.singleton(poSample3));
+        productOrderSampleSet.add(poSample3);
 
         ProductOrderSample poSample4 = draftPDO.getSamples().get(0);
-        mapBySamples.put(poSample4.getSampleKey(), Collections.singleton(poSample4));
+        productOrderSampleSet.add(poSample4);
 
         List<ProductOrderSample> sampleList5 = ProductOrderSampleTestFactory.createDBFreeSampleList("SM-test5");
         ProductOrder nonExomeExpressPdo = ProductOrderTestFactory.buildHybridSelectionProductOrder(1, "PDO-18");
@@ -222,7 +223,7 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         nonExomeExpressPdo.getProduct().setProductFamily(new ProductFamily(
                 ProductFamily.ProductFamilyName.EXOME.getFamilyName()));
 
-        mapBySamples.put(nonExomesample.getSampleKey(),Collections.singleton(nonExomesample));
+        productOrderSampleSet.add(nonExomesample);
 
 
         BSPSampleDataFetcher mockFetcher = Mockito.mock(BSPSampleDataFetcher.class);
@@ -246,13 +247,9 @@ public class ReworkEjbDBFreeTest extends BaseEventTest {
         reworkEjb.setBspSampleDataFetcher(mockFetcher);
 
         Collection<ReworkEjb.BucketCandidate> candidates =
-                reworkEjb.collectBucketCandidatesThatHaveBSPVessels(mapBySamples);
+                reworkEjb.collectBucketCandidatesThatHaveBSPVessels(productOrderSampleSet);
 
         Assert.assertEquals(candidates.size(), 4);
-//        Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[0]).isValid());
-//        Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[1]).isValid());
-//        Assert.assertTrue(((ReworkEjb.BucketCandidate) candidates.toArray()[2]).isValid());
-//        Assert.assertFalse(((ReworkEjb.BucketCandidate) candidates.toArray()[3]).isValid());
     }
 
     @Test
