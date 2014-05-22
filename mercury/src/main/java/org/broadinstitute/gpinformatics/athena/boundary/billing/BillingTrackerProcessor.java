@@ -32,11 +32,6 @@ import java.util.Map;
  */
 public class BillingTrackerProcessor extends TableProcessor {
 
-    public static final String FUTURE_WORK_COMPLETE_DATE_MESSAGE =
-            "Sample %s cannot have a completed date of %s because it is in the future.";
-    public static final String OLD_WORK_COMPLETE_DATE_MESSAGE =
-            "Sample %s has a completed date of %s, which is more than 3 months ago.";
-
     private static final long serialVersionUID = 2769150801705141335L;
 
     private final ProductOrderDao productOrderDao;
@@ -416,11 +411,11 @@ public class BillingTrackerProcessor extends TableProcessor {
                 Date workCompleteDate = null;
                 try {
                     workCompleteDate = DateUtils.parseDate(workCompleteDateString);
+
                     Date now = new Date();
                     if (now.before(workCompleteDate)) {
-                        addDataMessage(
-                                String.format(FUTURE_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
-                                        workCompleteDateString), dataRowIndex);
+                        addDataMessage(makeCompletedDateFutureErrorMessage(productOrderSample.getSampleKey(),
+                                workCompleteDateString), dataRowIndex);
                     }
 
                     // only perform this warning level check if not persisting (i.e., only previewing)
@@ -428,17 +423,14 @@ public class BillingTrackerProcessor extends TableProcessor {
                         Calendar calendar = Calendar.getInstance();
                         calendar.add(Calendar.MONTH, -3);
                         if (workCompleteDate.before(calendar.getTime())) {
-                            addWarning(String.format(OLD_WORK_COMPLETE_DATE_MESSAGE, productOrderSample.getSampleKey(),
+                            addWarning(makeCompletedDateTooOldErrorMessage(productOrderSample.getSampleKey(),
                                     workCompleteDateString), dataRowIndex);
                         }
                     }
                 } catch (ParseException e) {
-                    addDataMessage(
-                            MessageFormat.format(
-                                    "Invalid work complete date: {0} for sample ''{1}'' " +
-                                    "in PDO ''{2}'' ", workCompleteDateString, productOrderSample.getSampleKey(),
-                                    currentProductOrder.getBusinessKey()),
-                            dataRowIndex);
+                    String productOrderKey = currentProductOrder.getBusinessKey();
+                    addDataMessage(makeCompletedDateInvalidMessage(workCompleteDateString,
+                                    productOrderSample.getSampleKey(), productOrderKey), dataRowIndex);
                 }
 
                 // If there are no messages AND we are persisting, then update the ledger Item, which will
@@ -448,6 +440,22 @@ public class BillingTrackerProcessor extends TableProcessor {
                 }
             }
         }
+    }
+
+    public static String makeCompletedDateFutureErrorMessage(String sampleKey, String workCompleteDateString) {
+        return String.format("Sample %s cannot have a completed date of %s because it is in the future.", sampleKey,
+                workCompleteDateString);
+    }
+
+    public static String makeCompletedDateTooOldErrorMessage(String sampleKey, String workCompleteDateString) {
+        return String.format("Warning: sample %s has a completed date of %s, which is more than 3 months ago.",
+                sampleKey, workCompleteDateString);
+    }
+
+    public static String makeCompletedDateInvalidMessage(String workCompleteDateString, String sampleKey,
+                                                         String productOrderKey) {
+        return MessageFormat.format("Invalid work complete date: {0} for sample ''{1}'' in PDO ''{2}'' ",
+                workCompleteDateString, sampleKey, productOrderKey);
     }
 
     public List<ProductOrder> getUpdatedProductOrders() {

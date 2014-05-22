@@ -66,6 +66,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -78,6 +79,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -134,11 +136,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
-    private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    public static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
 
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
+    private static final String SQUID_COMPONENTS_ACTION = "squidComponent";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     protected static final String PLACE_ORDER = "placeOrder";
@@ -203,6 +206,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private SquidLink squidLink;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -526,10 +532,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                                     org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
-                                             .splitCamelCase(action),
-                                     editOrder.getName(),
-                                     name);
+                    MercuryStringUtils
+                            .splitCamelCase(action),
+                    editOrder.getName(),
+                    name);
         }
     }
 
@@ -1083,7 +1089,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Resolution createViewResolution(String businessKey) {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
-                                                                                              businessKey);
+                businessKey);
+    }
+
+    @HandlesEvent(SQUID_COMPONENTS_ACTION)
+    public Resolution squidComponent() {
+        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.ENTER_COMPONENTS_ACTION);
     }
 
     @HandlesEvent(VALIDATE_ORDER)
@@ -1604,6 +1615,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
+    }
+
+    public String getSquidWorkRequestUrl(String workRequestId) {
+        return squidLink.workRequestUrl(workRequestId);
+    }
+
+    public String getSquidWorkRequestUrl() {
+        return getSquidWorkRequestUrl(editOrder.getSquidWorkRequest());
     }
 
     public String getProductOrder() {

@@ -16,7 +16,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-public class StringUtilsTest {
+public class MercuryStringUtilsTest {
 
     @DataProvider(name = "camelCaseDataProvider")
     public Object[][] camelCaseDataProvider(){
@@ -38,6 +38,6 @@ public class StringUtilsTest {
 
     @Test(groups = TestGroups.DATABASE_FREE, dataProvider = "camelCaseDataProvider")
     public void testSplitCamelCase(String inputString, String resultString){
-           Assert.assertEquals(StringUtils.splitCamelCase(inputString), resultString);
+           Assert.assertEquals(MercuryStringUtils.splitCamelCase(inputString), resultString);
     }
 }

@@ -1963,6 +1963,23 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>ProjectResourceBeans</id>
+                        <goals>
+                            <goal>xjc</goal>
+                        </goals>
+                        <configuration>
+                            <!-- each execution needs to specify the schemaFile(s) to use -->
+                            <schemaFiles>WorkRequest.xsd</schemaFiles>
+                            <schemaDirectory>${project.basedir}/target/xsd-includes/XSD</schemaDirectory>
+                            <packageName>edu.mit.broad.prodinfo.bean.generated</packageName>
+                            <!-- each execution must have a unique staleFile -->
+                            <staleFile>${project.build.directory}/jaxb2/.ProjectResourceXjcStaleFlag</staleFile>
+                            <!-- all executions, except the first, need clearOutputDir set to false -->
+                            <clearOutputDir>false</clearOutputDir>
+                        </configuration>
+                    </execution>
+
+                    <execution>
 
                         <id>CrspTypes</id>
                         <goals>

@@ -1,6 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.squid;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
+import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
+import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
+import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
@@ -60,5 +65,11 @@ public interface SquidConnector extends Serializable {
     SquidResponse saveReadStructure(@Nonnull ReadStructureRequest readStructureData,
                            @Nonnull String squidWSUrl) throws UniformInterfaceException;
 
+    CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException;
 
+    CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException;
+
+    ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException;
+
+    AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException;
 }

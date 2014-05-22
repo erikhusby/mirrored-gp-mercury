@@ -24,9 +24,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
+ * Tests for {@link BillingTrackerProcessor}.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingTrackerProcessorTest {
+
+    public static final String TEST_SAMPLE_ID = "SM-1";
+    public static final String MESSAGE_PREFIX = "Sheet test, Row #0 ";
 
     private BillingTrackerProcessor processor;
 
@@ -37,7 +41,7 @@ public class BillingTrackerProcessorTest {
         product.setPrimaryPriceItem(new PriceItem());
 
         ProductOrder order = new ProductOrder();
-        order.addSample(new ProductOrderSample("SM-1"));
+        order.addSample(new ProductOrderSample(TEST_SAMPLE_ID));
 
         // Set up mocks.
         ProductDao mockProductDao = mock(ProductDao.class);
@@ -58,7 +62,9 @@ public class BillingTrackerProcessorTest {
         Map<String, String> dataRow = makeDataRow(nowString);
 
         processor.processRowDetails(dataRow, 0);
-        assertThat(processor.getMessages(), not(hasItem(makeCompletedDateFutureErrorMessage(nowString))));
+        assertThat(processor.getMessages(),
+                not(hasItem(MESSAGE_PREFIX + BillingTrackerProcessor.makeCompletedDateFutureErrorMessage(
+                        TEST_SAMPLE_ID, nowString))));
     }
 
     public void testProcessRowDetailsFutureDate() {
@@ -69,7 +75,9 @@ public class BillingTrackerProcessorTest {
         Map<String, String> dataRow = makeDataRow(tomorrowString);
 
         processor.processRowDetails(dataRow, 0);
-        assertThat(processor.getMessages(), hasItem(makeCompletedDateFutureErrorMessage(tomorrowString)));
+        assertThat(processor.getMessages(),
+                hasItem(MESSAGE_PREFIX + BillingTrackerProcessor.makeCompletedDateFutureErrorMessage(
+                        TEST_SAMPLE_ID, tomorrowString)));
     }
 
     public void testProcessRowDetailsWorkCompleteMoreThanThreeMonthsAgo() {
@@ -81,26 +89,27 @@ public class BillingTrackerProcessorTest {
         Map<String, String> dataRow = makeDataRow(oldDateString);
 
         processor.processRowDetails(dataRow, 0);
-        assertThat(processor.getWarnings(), hasItem(makeCompletedDateTooOldErrorMessage(oldDateString)));
+        assertThat(processor.getWarnings(), hasItem(MESSAGE_PREFIX +
+                                                    BillingTrackerProcessor.makeCompletedDateTooOldErrorMessage(
+                                                            TEST_SAMPLE_ID, oldDateString)));
+    }
+
+    public void testProcessRowDetailsInvalidDate() {
+        Map<String, String> dataRow = makeDataRow("Feb 31");
+
+        processor.processRowDetails(dataRow, 0);
+        assertThat(processor.getMessages(), hasItem(MESSAGE_PREFIX +
+                                                    BillingTrackerProcessor.makeCompletedDateInvalidMessage("Feb 31",
+                                                            TEST_SAMPLE_ID, "Draft-null")));
     }
 
     private Map<String, String> makeDataRow(String workCompleteDate) {
         Map<String, String> dataRow = new HashMap<>();
         dataRow.put(BillingTrackerHeader.WORK_COMPLETE_DATE.getText(), workCompleteDate);
-        dataRow.put(BillingTrackerHeader.SAMPLE_ID.getText(), "SM-1");
+        dataRow.put(BillingTrackerHeader.SAMPLE_ID.getText(), TEST_SAMPLE_ID);
         dataRow.put("null\n"
                     + "Billed [null]\n"
                     + "Update Quantity To Update Quantity To", "1");
         return dataRow;
-    }
-
-    private String makeCompletedDateFutureErrorMessage(String nowString) {
-        return String.format("Sheet test, Row #0 " + BillingTrackerProcessor.FUTURE_WORK_COMPLETE_DATE_MESSAGE, "SM-1",
-                nowString);
-    }
-
-    private String makeCompletedDateTooOldErrorMessage(String nowString) {
-        return String.format("Sheet test, Row #0 " + BillingTrackerProcessor.OLD_WORK_COMPLETE_DATE_MESSAGE, "SM-1",
-                nowString);
     }
 }
