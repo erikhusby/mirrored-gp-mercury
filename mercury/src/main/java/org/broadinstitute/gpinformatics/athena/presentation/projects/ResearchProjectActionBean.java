@@ -430,7 +430,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
         }
 
-        // Call init again so that the updated project is retrieved.
+        // Call init again so that any changed data due to calling beginCollaboration is retrieved.
         init();
         return view();
     }
