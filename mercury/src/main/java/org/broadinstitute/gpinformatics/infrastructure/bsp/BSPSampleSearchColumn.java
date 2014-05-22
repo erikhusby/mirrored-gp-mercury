@@ -30,8 +30,7 @@ public enum BSPSampleSearchColumn {
     RIN("RIN Number"),
     RQS("RNA Quality Score (RQS)"),
     PICO_RUN_DATE("Pico Run Date"),
-    RECEIPT_DATE("Receipt Date"),
-    RQS("RNA Quality Score (RQS)");
+    RECEIPT_DATE("Receipt Date");
 
     private final String columnName;
     public String columnName() { return columnName; }
