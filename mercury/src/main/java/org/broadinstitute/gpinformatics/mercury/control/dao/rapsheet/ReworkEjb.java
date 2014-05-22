@@ -206,7 +206,7 @@ public class ReworkEjb {
             for (ProductOrderSample sample : samples) {
                 Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
 
-                if (Workflow.isWorkflowSupportedByMercury(workflow)) {
+                if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
                     String sampleKey = sample.getName();
                     String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
 
