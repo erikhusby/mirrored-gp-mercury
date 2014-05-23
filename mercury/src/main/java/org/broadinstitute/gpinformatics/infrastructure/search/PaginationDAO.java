@@ -36,7 +36,7 @@ import java.util.Map;
  * the entity out of the criteria, to get a list of IDs. The page method then retrieves
  * entities for a subset of the list of IDs.
  */
-public class PaginationDAO extends GenericDao {
+public class PaginationDao extends GenericDao {
     /**
      * Holds the current location in a pagination sequence, intended to be placed in HTTP
      * session.
@@ -127,7 +127,7 @@ public class PaginationDAO extends GenericDao {
      * @param pageNumber number of requested page, starting at zero
      * @return list of entities for requested page, in same order as IDs
      */
-    public <T> List<T> getPage(PaginationDAO.Pagination pagination, int pageNumber) {
+    public <T> List<T> getPage(PaginationDao.Pagination pagination, int pageNumber) {
         if (pagination.getIdList().isEmpty()) {
             return Collections.emptyList();
         }
@@ -210,7 +210,7 @@ public class PaginationDAO extends GenericDao {
      * @param idList     ids the user wants to access
      * @return list of entities, in same order as idList
      */
-    public <T> List<T> getByIds(PaginationDAO.Pagination pagination, List<?> idList) {
+    public <T> List<T> getByIds(PaginationDao.Pagination pagination, List<?> idList) {
         @SuppressWarnings("unchecked")
         List<T> entityList = buildCriteria(pagination, idList).list();
         return reorderList(pagination, idList, entityList);

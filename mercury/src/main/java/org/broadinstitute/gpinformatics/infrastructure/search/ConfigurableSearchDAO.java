@@ -33,7 +33,7 @@ import java.util.Map;
  * dao.getPage(1,...<br/>
  * ...
  */
-public class ConfigurableSearchDAO extends GenericDao {
+public class ConfigurableSearchDao extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
      * <p/>
@@ -283,12 +283,12 @@ public class ConfigurableSearchDAO extends GenericDao {
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
      */
-    public void startPagination(PaginationDAO.Pagination pagination, Criteria criteria) {
+    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria) {
         pagination.setResultEntity(configurableSearchDefinition.getResultEntity());
         pagination.setResultEntityId(configurableSearchDefinition.getResultEntityId());
         // TODO set join fetch paths? would require access to column defs
-        PaginationDAO paginationDAO = new PaginationDAO();
-        paginationDAO.startPagination(criteria, pagination);
+        PaginationDao paginationDao = new PaginationDao();
+        paginationDao.startPagination(criteria, pagination);
     }
 
     /**
