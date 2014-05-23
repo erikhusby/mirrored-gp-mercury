@@ -677,27 +677,27 @@ public class VesselContainer<T extends LabVessel> {
     public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
             LabVessel labVessel) {
         if (labVessel != null) {
-            Set<BucketEntry> bucketEntries = new HashSet<>();
+            Set<LabBatch> labBatches = new HashSet<>();
             for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
                 List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
-                if (!allBucketEntries.isEmpty()) {
-                    numSampleInstanceWithBucketEntries++;
-                }
-                bucketEntries.addAll(allBucketEntries);
-            }
-            for (BucketEntry bucketEntry : bucketEntries) {
-                if (bucketEntry.getLabBatch() != null) {
-                    LabBatch labBatch = bucketEntry.getLabBatch();
-                    if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                        Integer count = mapLabBatchToCount.get(labBatch);
-                        if (count == null) {
-                            count = 1;
-                        } else {
-                            count = count + 1;
-                        }
-                        mapLabBatchToCount.put(labBatch, count);
+                for (BucketEntry bucketEntry : allBucketEntries) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        labBatches.add(bucketEntry.getLabBatch());
                     }
                 }
+
+                if (!labBatches.isEmpty()) {
+                    numSampleInstanceWithBucketEntries++;
+                }
+            }
+            for (LabBatch labBatch : labBatches) {
+                Integer count = mapLabBatchToCount.get(labBatch);
+                if (count == null) {
+                    count = 1;
+                } else {
+                    count = count + 1;
+                }
+                mapLabBatchToCount.put(labBatch, count);
             }
         }
         return numSampleInstanceWithBucketEntries;
