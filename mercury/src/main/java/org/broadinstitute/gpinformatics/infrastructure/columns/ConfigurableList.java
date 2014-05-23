@@ -21,19 +21,23 @@ import java.util.TreeMap;
 //import org.apache.poi.ss.usermodel.Workbook;
 
 /**
+ * <p>
  * This class supports lists with configurable column sets. This feature is used for
  * search results. The column sets are configured using preferences. A global column
  * definition preference holds a list of column definitions; each column has a sortable
  * expression (plain text) and a renderable expression (an HTML link to a detail page, for
- * example). <br/>
- *
+ * example).
+ * </p>
+ * <p>
  * There are column set Preferences at global, group, project and user level, that hold
  * named sets of columns, with each set holding a visibility expression (determines
  * whether the user can see the set) and a list of column names from the global definition
  * preference. The lists are sortable on any column, in ascending or descending order. <br/>
- *
+ * </p>
+ * <p>
  * To support downloads of paged search results, this class allows you to accumulate list
- * rows, as follows: <br/>
+ * rows, as follows:
+ * </p>
  *
  * configurableListUtils = ConfigurableList(<br/>
  * <i>get first page</i><br/>
