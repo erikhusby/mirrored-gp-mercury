@@ -283,12 +283,12 @@ public class ConfigurableSearchDao extends GenericDao {
      * @param pagination to hold results IDs
      * @param criteria   from buildCriteria
      */
-    public void startPagination(PaginationDao.Pagination pagination, Criteria criteria) {
+    public void startPagination(PaginationDaoX.Pagination pagination, Criteria criteria) {
         pagination.setResultEntity(configurableSearchDefinition.getResultEntity());
         pagination.setResultEntityId(configurableSearchDefinition.getResultEntityId());
         // TODO set join fetch paths? would require access to column defs
-        PaginationDao paginationDao = new PaginationDao();
-        paginationDao.startPagination(criteria, pagination);
+        PaginationDaoX paginationDaoX = new PaginationDaoX();
+        paginationDaoX.startPagination(criteria, pagination);
     }
 
     /**
