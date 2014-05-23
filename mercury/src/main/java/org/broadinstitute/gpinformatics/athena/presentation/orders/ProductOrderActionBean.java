@@ -18,7 +18,6 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -74,7 +73,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -93,7 +91,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
@@ -101,7 +98,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -248,8 +244,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<Long> sampleIdsForGetBspData;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
-
-    private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
     private boolean skipRegulatoryInfo;
 
@@ -1328,66 +1322,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 if (sample.isInBspFormat()) {
-                    setupSampleDTOItems(sample, item);
+                    ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
                 } else {
-                    setupEmptyItems(sample, item);
+                    ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
                 }
                 itemList.put(item);
             }
         }
         return createTextResolution(itemList.toString());
-    }
-
-    private static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
-
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
-        item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, bspSampleDTO.getCollaboratorParticipantId());
-        item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
-        item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
-        item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
-        item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
-                 bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
-        item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
-
-        LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
-
-        if (labEventSampleDTO != null) {
-            item.put(BSPSampleDTO.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
-            item.put(BSPSampleDTO.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
-        } else {
-            item.put(BSPSampleDTO.PACKAGE_DATE, "");
-            item.put(BSPSampleDTO.RECEIPT_DATE, "");
-        }
-    }
-
-    private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {
-
-        String returnValue = defaultReturn;
-        if (picoRunDate != null) {
-            returnValue = dateFormatter.format(picoRunDate);
-        }
-
-        return returnValue;
-    }
-
-    private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, "");
-        item.put(BSPSampleDTO.PATIENT_ID, "");
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, "");
-        item.put(BSPSampleDTO.VOLUME, "");
-        item.put(BSPSampleDTO.CONCENTRATION, "");
-        item.put(BSPSampleDTO.JSON_RIN_KEY, "");
-        item.put(BSPSampleDTO.PICO_DATE, "");
-        item.put(BSPSampleDTO.TOTAL, "");
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
-        item.put(BSPSampleDTO.PACKAGE_DATE, "");
-        item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
     @HandlesEvent("getSupportsSkippingQuote")

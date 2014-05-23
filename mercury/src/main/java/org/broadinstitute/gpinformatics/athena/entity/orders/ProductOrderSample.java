@@ -228,12 +228,39 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName    the sample ID
+     * @param primaryKey    the primary key
+     *
+     * @see #ProductOrderSample(String)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, Long primaryKey) {
+        this(sampleName);
+        this.productOrderSampleId = primaryKey;
+    }
+
+    /**
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
                               @Nonnull BSPSampleDTO bspSampleDTO) {
         super(bspSampleDTO);
         this.sampleName = sampleName;
+    }
+
+    /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName      the sample ID
+     * @param bspSampleDTO    the sample data from BSP
+     * @param primaryKey      the primary key
+     *
+     * @see #ProductOrderSample(String, BSPSampleDTO)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspSampleDTO, Long primaryKey) {
+        this(sampleName, bspSampleDTO);
+        this.productOrderSampleId = primaryKey;
     }
 
     @Override
