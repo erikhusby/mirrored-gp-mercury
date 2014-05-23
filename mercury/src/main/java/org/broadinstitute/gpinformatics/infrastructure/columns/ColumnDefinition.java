@@ -1,24 +1,33 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-// todo jmt need different sets of columns for different starting entities.
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Created by thompson on 5/21/2014.
+ * Enumeration of column definitions
  */
 public enum ColumnDefinition implements ColumnTabulation {
-    LABEL(ColumnEntity.LAB_VESSEL);
 
-    interface Evaluator {
-        public Object evaluate(Object entity, Map<String, Object> context);
+    LABEL(ColumnEntity.LAB_VESSEL, "Label",
+            new Evaluator() {
+                @Override
+                public Object evaluate(Object entity, Map<String, Object> context) {
+                    return ((LabVessel) entity).getLabel();
+                }
+            }, null, null, null, null
+    );
+
+    public interface Evaluator {
+        Object evaluate(Object entity, Map<String, Object> context);
     }
 
-    private String name;
-    private Evaluator plainText;
-    private Evaluator formatted;
+    private final ColumnEntity columnEntity;
+    private final String name;
+    private final Evaluator plainText;
+    private final Evaluator formatted;
     /**
      * To improve performance, the path to join fetch when retrieving from database.
      */
@@ -36,10 +45,16 @@ public enum ColumnDefinition implements ColumnTabulation {
 
     // Many properties can be Strings, expressions can be replaced with two implementations of an interface
 
-    private ColumnEntity columnEntity;
 
-    ColumnDefinition(ColumnEntity columnEntity) {
+    ColumnDefinition(ColumnEntity columnEntity, String name, Evaluator plainText,
+            Evaluator formatted, String joinFetchPath, String dbSortPath, String pluginClass) {
+        this.name = name;
         this.columnEntity = columnEntity;
+        this.plainText = plainText;
+        this.formatted = formatted;
+        this.joinFetchPath = joinFetchPath;
+        this.dbSortPath = dbSortPath;
+        this.pluginClass = pluginClass;
     }
 
     public ColumnEntity getColumnEntity() {
@@ -58,7 +73,7 @@ public enum ColumnDefinition implements ColumnTabulation {
 
     @Override
     public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
-        return null;
+        return formatted.evaluate(entity, context);
     }
 
     @Override
@@ -79,12 +94,12 @@ public enum ColumnDefinition implements ColumnTabulation {
 
     @Override
     public String getPluginClass() {
-        return null;
+        return pluginClass;
     }
 
     @Override
     public String getDbSortPath() {
-        return null;
+        return dbSortPath;
     }
 
     @Override

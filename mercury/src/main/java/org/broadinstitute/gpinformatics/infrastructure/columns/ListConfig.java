@@ -3,12 +3,11 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// todo jmt convert to enum, or list of static classes.
+// todo jmt delete
 /**
  * Configurable lists create a table of information from a list of object graphs.
  */
@@ -100,6 +99,7 @@ public class ListConfig /*extends PreferenceDefinition*/ {
 
         @Override
         public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
+/*
             // Skip the expression if it is null because these will be post processed (or ignored)
             if (plainTextExpression == null) {
                 return "";
@@ -130,10 +130,13 @@ public class ListConfig /*extends PreferenceDefinition*/ {
                 throw new RuntimeException("Getting plain text value " + name + " for entity " + entity.toString(),
                         e);
             }
+*/
+            return null;
         }
 
         @Override
         public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
+/*
             // Skip the expression if it is null because these will be post processed (or ignored)
             if (plainTextExpression == null) {
                 return "";
@@ -169,6 +172,8 @@ public class ListConfig /*extends PreferenceDefinition*/ {
                 throw new RuntimeException(
                         "Getting formatted value " + name + " for entity " + entity.toString(), e);
             }
+*/
+            return null;
         }
 
         @Override

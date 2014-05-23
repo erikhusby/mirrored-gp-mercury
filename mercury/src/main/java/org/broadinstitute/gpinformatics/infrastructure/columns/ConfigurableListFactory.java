@@ -88,10 +88,6 @@ public class ConfigurableListFactory {
         ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
                 ConfigurableList.ColumnSetType.DOWNLOAD, /*domainUser, sampleCollection.getGroup(), */columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
-        List<ColumnTabulation> columnTabulations = new ArrayList<>();
-        for (ColumnDefinition columnDefinition : columnSet.getColumnDefinitions()) {
-            columnTabulations.add(columnDefinition.getColumnTabulation());
-        }
-        return columnTabulations;
+        return new ArrayList<ColumnTabulation>(columnSet.getColumnDefinitions());
     }
 }
