@@ -33,7 +33,7 @@ import java.util.Map;
  * dao.getPage(1,...<br/>
  * ...
  */
-public class ConfigurableSearchDao extends GenericDao {
+public class ConfigurableSearchDaoX extends GenericDao {
     /**
      * The maximum allowed length for all {@code IN} queries in a single SQL statement.
      * <p/>
