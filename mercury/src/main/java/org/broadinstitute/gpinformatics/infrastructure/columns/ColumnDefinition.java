@@ -6,22 +6,25 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+// todo jmt columns for samples
+// todo jmt groups of columns
+
 /**
  * Enumeration of column definitions
  */
 public enum ColumnDefinition implements ColumnTabulation {
 
     LABEL(ColumnEntity.LAB_VESSEL, "Label",
-            new Evaluator() {
+            new Evaluator<String>() {
                 @Override
-                public Object evaluate(Object entity, Map<String, Object> context) {
+                public String evaluate(Object entity, Map<String, Object> context) {
                     return ((LabVessel) entity).getLabel();
                 }
             }, null, null, null, null
     );
 
-    public interface Evaluator {
-        Object evaluate(Object entity, Map<String, Object> context);
+    public interface Evaluator <T> {
+        T evaluate(Object entity, Map<String, Object> context);
     }
 
     private final ColumnEntity columnEntity;
