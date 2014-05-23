@@ -17,5 +17,5 @@ public interface ListPlugin {
      *                    new ones
      * @return list of rows of cells, with each cell having a reference to a header
      */
-    public List<ConfigurableListUtils.Row> getData(List<?> entityList, ConfigurableListUtils.HeaderGroup headerGroup);
+    public List<ConfigurableList.Row> getData(List<?> entityList, ConfigurableList.HeaderGroup headerGroup);
 }

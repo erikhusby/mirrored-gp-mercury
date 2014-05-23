@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.testng.annotations.Test;
 
-public class ConfigurableListUtilsDbFreeTest {
+public class ConfigurableListDbFreeTest {
 
     @Test
     public void testX() {

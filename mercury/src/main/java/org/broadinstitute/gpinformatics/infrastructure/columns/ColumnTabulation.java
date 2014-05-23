@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * This interface abstracts the behavior necessary to convert a list of entities to a
  * table of values, with variable columns. This interface allows SearchTerm and
- * ColumnConfig objects to be used interchangeably by ConfigurableListUtils.
+ * ColumnConfig objects to be used interchangeably by ConfigurableList.
  */
 public interface ColumnTabulation {
     /**

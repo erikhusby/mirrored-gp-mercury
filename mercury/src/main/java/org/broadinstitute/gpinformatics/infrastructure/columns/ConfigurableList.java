@@ -2,18 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-//import org.apache.poi.ss.usermodel.Workbook;
-import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
-import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
-import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+//import org.apache.poi.ss.usermodel.Workbook;
 
 /**
  * This class supports lists with configurable column sets. This feature is used for
@@ -40,19 +35,14 @@ import java.util.TreeMap;
  * To support downloads of paged search results, this class allows you to accumulate list
  * rows, as follows: <br/>
  *
- * configurableListUtils = ConfigurableListUtils(<br/>
+ * configurableListUtils = ConfigurableList(<br/>
  * <i>get first page</i><br/>
  * configurableListUtils.addRows(<br/>
  * <i>get second page</i><br/>
  * configurableListUtils.addRows(<br/>
  * resultList = configurableListUtils.getResultList(
  */
-public class ConfigurableListUtils {
-
-    @Inject
-    private PreferenceDao preferenceDao;
-
-    private static final Log log = LogFactory.getLog(ConfigurableListUtils.class);
+public class ConfigurableList {
 
     private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
 
@@ -86,9 +76,9 @@ public class ConfigurableListUtils {
     private final List<Row> rows = new ArrayList<>();
 
     /**
-     * The name of the ID field in the entity we're listing.
+     * A means to access the ID field in the entity we're listing.
      */
-    private final String idFieldName;
+    private final ColumnEntity columnEntity;
 
     private static final Format mdyFormat = FastDateFormat.getInstance("MM/dd/yyyy");
 
@@ -106,11 +96,10 @@ public class ConfigurableListUtils {
      * @param columnSets    holds column sets
      * @return list of column names
      */
-    public static List<String> getColumnNameList(String columnSetName, ColumnSetType columnSetType,
+    public static ColumnSetsPreference.ColumnSet getColumnNameList(String columnSetName, ColumnSetType columnSetType,
             /*BspDomainUser bspDomainUser, Group group,*/
             ColumnSetsPreference columnSets) {
 
-        List<String> columnNameList = null;
         Map<String, Object> context = new HashMap<>();
         context.put("columnSetType", columnSetType);
 /*
@@ -119,9 +108,10 @@ public class ConfigurableListUtils {
 */
 
         // Find the set the user wanted.
-        for (ColumnSet columnSet : columnSets.getColumnSets()) {
+        ColumnSetsPreference.ColumnSet columnSet1 = null;
+        for (ColumnSetsPreference.ColumnSet columnSet : columnSets.getColumnSets()) {
             if (columnSet.getName().equals(columnSetName)) {
-                Boolean useSet;
+                Boolean useSet = true;
 /*
                 try {
                     useSet = (Boolean) MVEL.eval(columnSet.getList().get(0), context);
@@ -131,17 +121,17 @@ public class ConfigurableListUtils {
 */
                 if (useSet) {
                     // Remove the visibility expression entry
-//                    columnNameList = columnSet.getList().subList(1, columnSet.getList().size());
-                    columnNameList = columnSet.
+//                    columnSet1 = columnSet.getList().subList(1, columnSet.getList().size());
+                    columnSet1 = columnSet;
                     break;
                 }
             }
         }
 
-        if (columnNameList == null) {
+        if (columnSet1 == null) {
             throw new RuntimeException("Failed to find column list preference for " + columnSetName);
         }
-        return columnNameList;
+        return columnSet1;
     }
 
     public enum ColumnSetType {
@@ -155,9 +145,9 @@ public class ConfigurableListUtils {
         DOWNLOAD
     }
 
-    public ConfigurableListUtils(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */String idFieldName) {
-        this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */idFieldName,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
+            String sortDirection, /*Boolean admin, */ColumnEntity columnEntity) {
+        this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */columnEntity,
                 DEFAULT_MULTI_VALUE_DELIMITER, DEFAULT_MULTI_VALUE_ADD_TRAILING_DELIMITER);
     }
 
@@ -168,14 +158,14 @@ public class ConfigurableListUtils {
      * @param sortColumnIndex The column to sort.
      * @param sortDirection Ascending or descending.
      * @param admin Is this admin?
-     * @param idFieldName The field id.
+     * @param columnEntity The field id.
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      * @param multiValueAddTrailingDelimiter Whether to include a trailing delimiter in multi-valued fields.
      */
-    public ConfigurableListUtils(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */String idFieldName, String multiValueDelimiter,
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
+            String sortDirection, /*Boolean admin, */ColumnEntity columnEntity, String multiValueDelimiter,
             boolean multiValueAddTrailingDelimiter) {
-        this.idFieldName = idFieldName;
+        this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
         this.multiValueAddTrailingDelimiter = multiValueAddTrailingDelimiter;
         for (ColumnTabulation columnTabulation : columnTabulations) {
@@ -200,14 +190,14 @@ public class ConfigurableListUtils {
      * Constructor without sort direction.
      *
      * @param columnTabulations The tabulations used.
-     * @param sortColumnIndex The column to sort.
+     * @param sortColumnIndexes The columns to sort by.
      * @param admin Is this admin?
-     * @param idFieldName The field id.
+     * @param columnEntity The field id.
      */
-    public ConfigurableListUtils(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            /*Boolean admin, */String idFieldName) {
+    public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
+            /*Boolean admin, */ColumnEntity columnEntity) {
 
-        this(columnTabulations, null, null, /*admin, */idFieldName);
+        this(columnTabulations, null, null, /*admin, */columnEntity);
         if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
             this.sortColumnIndexes = new ArrayList<>(sortColumnIndexes);
         }
@@ -350,7 +340,7 @@ public class ConfigurableListUtils {
 
         private String sortableValue;
 
-        private String formattedValue = null;
+        private String formattedValue;
 
         Cell(Header header, String sortableValue, String formattedValue) {
             this.header = header;
@@ -444,7 +434,7 @@ public class ConfigurableListUtils {
 
         for (Object entity : entityList) {
             // evaluate expression to get ID
-            Row row = new Row(MVEL.eval(idFieldName, entity).toString());
+            Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
             for (ColumnTabulation columnTabulation : nonPluginTabulations) {
                 recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
@@ -454,7 +444,8 @@ public class ConfigurableListUtils {
         try {
             // Call the plugins, and add their data to the accumulated rows.
             for (ColumnTabulation columnTabulation : pluginTabulations) {
-                ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).newInstance();
+                ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).getConstructor().
+                        newInstance();
                 List<Row> pluginRows = listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
                 int rowIndex = pageStartingRow;
                 for (Row row : pluginRows) {
@@ -469,7 +460,8 @@ public class ConfigurableListUtils {
             }
 
             pageStartingRow = rows.size();
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException |
+                InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -492,20 +484,20 @@ public class ConfigurableListUtils {
 
         // The result could be a list, e.g. there could be multiple trait values for multiple intervals.
         List<Object> plainTextValues;
-        List<Object> formattedValues;
-        List<String> viewHeaders;
         if (plainTextValue instanceof List) {
             plainTextValues = (List<Object>) plainTextValue;
         } else {
             plainTextValues = new ArrayList<>();
             plainTextValues.add(plainTextValue);
         }
+        List<Object> formattedValues;
         if (formattedValue instanceof List) {
             formattedValues = (List<Object>) formattedValue;
         } else {
             formattedValues = new ArrayList<>();
             formattedValues.add(formattedValue);
         }
+        List<String> viewHeaders;
         if (viewHeaderResult instanceof List) {
             viewHeaders = (List<String>) viewHeaderResult;
             // If the headers are all the same (e.g. multiple values for a trait), prefix a
@@ -648,6 +640,7 @@ public class ConfigurableListUtils {
     // return result;
     // }
 
+/*
     public static class ColumnSet {
         private final PreferenceType.PreferenceScope level;
 
@@ -673,6 +666,7 @@ public class ConfigurableListUtils {
             return columns;
         }
     }
+*/
 
     /**
      * Gets a list of all column sets that apply to the current user, project and group,
@@ -810,7 +804,8 @@ public class ConfigurableListUtils {
      * @param stringBuilder    accumulated string
      * @param separator        string to use to separate list entries
      */
-    private static void convertResultToString(Object expressionResult, StringBuilder stringBuilder, String separator, boolean multiValueAddTrailingDelimiter) {
+    private static void convertResultToString(Object expressionResult, StringBuilder stringBuilder, String separator,
+            boolean multiValueAddTrailingDelimiter) {
         // Do nothing if the expression is null.
         if (expressionResult != null) {
             if (expressionResult instanceof List) {
@@ -878,7 +873,7 @@ public class ConfigurableListUtils {
             int columnNumber;
             boolean headerRow2Present = false;
             for (columnNumber = 0; columnNumber < getHeaders().size(); columnNumber++) {
-                ConfigurableListUtils.Header header = getHeaders().get(columnNumber);
+                ConfigurableList.Header header = getHeaders().get(columnNumber);
                 rowObjects[0][columnNumber] = header.getDownloadHeader1();
                 String header2Name = header.getDownloadHeader2();
                 if (header2Name != null && header2Name.length() > 0) {
@@ -888,7 +883,7 @@ public class ConfigurableListUtils {
             }
             // Set the data
             int rowNumber = headerRow2Present ? 2 : 1;
-            for (ConfigurableListUtils.ResultRow resultRow : getResultRows()) {
+            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 columnNumber = 0;
                 for (Comparable<?> comparable : resultRow.getSortableCells()) {
                     rowObjects[rowNumber][columnNumber] = comparable;
@@ -920,7 +915,7 @@ public class ConfigurableListUtils {
 /*
         public List<String> getSampleIds(int index) {
             List<String> resultIds = new ArrayList<> ();
-            for (ConfigurableListUtils.ResultRow resultRow : getResultRows()) {
+            for (ConfigurableList.ResultRow resultRow : getResultRows()) {
                 try {
                     resultIds.add(Sample.extractId(resultRow.getSortableCells().get(index).toString()));
                 } catch (LSIDIdConversionException | MPGException e) {
@@ -1105,81 +1100,6 @@ public class ConfigurableListUtils {
         }
     }
 
-    /**
-     * Create a ConfigurableListUtils instance.
-     *
-     * @param entityList  Entities for which to display data
-     * @param downloadColumnSetName Name of the column set to display
-     * @param entityName Name of the entity
-     * @param entityId ID of the entity
-     * @param domainUser BSPDomainUser object for the current user
-     * @param sampleCollection Sample Collection for this data
-     *
-     * @return ConfigurableListUtils instance
-     */
-    public static ConfigurableListUtils create(@Nonnull List<?> entityList,
-            @Nonnull String downloadColumnSetName,
-            @Nonnull String entityName,
-            @Nonnull String entityId/*,
-            @Nonnull BspDomainUser domainUser,
-            @Nonnull SampleCollection sampleCollection*/) {
-
-        List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName/*, domainUser, sampleCollection*/);
-        ConfigurableListUtils configurableListUtils = new ConfigurableListUtils(columnTabulations, 0, "ASC",
-                /*domainUser.isAdmin(), */entityId);
-        configurableListUtils.addRows(entityList);
-        return configurableListUtils;
-    }
-
-    /**
-     * Build Column definitions for a column set name
-     *
-     * @param downloadColumnSetName name of column set that the user wants to download
-     * @param entityName            e.g. "Sample"
-     * @param domainUser            BSP Domain User
-     * @param sampleCollection      Sample Collection for which to build the column definitions
-     * @return list of column definitions
-     */
-    public List<ColumnTabulation> buildColumnSetTabulations(@Nonnull String downloadColumnSetName,
-            @Nonnull String entityName/*,
-            @Nonnull BspDomainUser domainUser,
-            @Nonnull SampleCollection sampleCollection*/) {
-        // Determine which set of columns to use
-/*
-        PreferenceDomain.domain columnSetDomain = null;
-        for (PreferenceDomain.domain domain : PreferenceDomain.domain.values()) {
-            if (downloadColumnSetName.startsWith(domain.toString())) {
-                columnSetDomain = domain;
-                break;
-            }
-        }
-        if (columnSetDomain == null) {
-            throw new RuntimeException("Failed to extract domain preference from " + downloadColumnSetName);
-        }
-*/
-        String columnSetNameSuffix = downloadColumnSetName.substring(downloadColumnSetName.indexOf('|') + 1);
-
-        List<String> columnNameList;
-//        EntityPreferenceFactory entityPreferenceFactory = new EntityPreferenceFactory();
-//        PreferenceDefinitionListNameListString columnSets = entityPreferenceFactory.getColumnSets(columnSetDomain,
-//                domainUser, sampleCollection.getGroup(), sampleCollection, entityName);
-        Preference globalPreference = preferenceDao.getGlobalPreference(PreferenceType.COLUMN_SETS);
-        ColumnSetsPreference columnSetsPreference;
-        try {
-            columnSetsPreference =
-                    (ColumnSetsPreference) globalPreference.getPreferenceDefinition().getDefinitionValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        columnNameList = ConfigurableListUtils.getColumnNameList(columnSetNameSuffix,
-                ConfigurableListUtils.ColumnSetType.DOWNLOAD, /*domainUser, sampleCollection.getGroup(), */columnSetsPreference);
-        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
-        List<ColumnTabulation> columnTabulations = new ArrayList<>();
-        for (String columnName : columnNameList) {
-            columnTabulations.add(listConfig.getColumnConfig(columnName));
-        }
-        return columnTabulations;
-    }
 
     /**
      * Add the data from this instance as a sheet with the specified name to the workbook.
