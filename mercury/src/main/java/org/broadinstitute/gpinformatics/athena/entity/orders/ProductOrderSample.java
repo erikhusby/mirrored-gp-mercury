@@ -128,13 +128,41 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         riskItems.clear();
 
         boolean isOnRisk = false;
+        RiskCriterion rinRisk = null;
+        RiskCriterion rqsRisk = null;
 
         // Go through each risk check on the product
         for (RiskCriterion criterion : productOrder.getProduct().getRiskCriteria()) {
-            // If this is on risk, then create a risk item for it and add it in
-            if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
-                isOnRisk = true;
+            switch (criterion.getType()) {
+            case RIN:
+                rinRisk = criterion;
+                break;
+            case RQS:
+                rqsRisk = criterion;
+                break;
+            default:
+                isOnRisk = evaluateCriterion(criterion, isOnRisk);
+            }
+        }
+
+        // Special handling for the combination of RIN and RQS risk criteria.
+        if (rinRisk != null && rqsRisk != null) {
+            if (hasRin() == hasRqs()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            } else if (hasRin()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                // suppress RQS risk criterion
+            } else if (hasRqs()) {
+                // suppress RIN risk criterion
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            }
+        } else {
+            if (rinRisk != null) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+            }
+            if (rqsRisk != null) {
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
             }
         }
 
@@ -145,6 +173,23 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
 
         return isOnRisk;
+    }
+
+    private boolean evaluateCriterion(RiskCriterion criterion, boolean isOnRisk) {
+        // If this is on risk, then create a risk item for it and add it in
+        if (criterion.onRisk(this)) {
+            riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
+            isOnRisk = true;
+        }
+        return isOnRisk;
+    }
+
+    private boolean hasRin() {
+        return isInBspFormat() && getBspSampleDTO().getRin() != null;
+    }
+
+    private boolean hasRqs() {
+        return isInBspFormat() && getBspSampleDTO().getRqs() != null;
     }
 
     public void setManualOnRisk(RiskCriterion criterion, String comment) {
@@ -518,7 +563,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public boolean isOnRisk() {
         for (RiskItem item : riskItems) {
-            if (item.getRiskCriterion() != null) {
+            if (item.isOnRisk()) {
                 return true;
             }
         }
