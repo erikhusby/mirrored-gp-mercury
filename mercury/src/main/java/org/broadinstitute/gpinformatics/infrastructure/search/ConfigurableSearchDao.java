@@ -206,16 +206,14 @@ public class ConfigurableSearchDao extends GenericDao {
             // Only include terms for which the user specified a value, include SQL
             // because it never has a value. Some terms are used only to narrow down the
             // constrained values for a child term, e.g. group narrows down the list of
-            // projects,
-            // but group is not included in the criteria
+            // projects, but group is not included in the criteria
 
             if ((searchValue.getAddToCriteria() || searchValue.getSearchTerm().getSqlRestriction() != null)
                 && searchValue.getSearchTerm().getCriteriaPaths() != null) {
 
                 int criteriaPathsIndex = 0;
                 Disjunction disjunction = Restrictions.disjunction();
-                // If there are multiple criteria paths, OR them together, and use the
-                // same
+                // If there are multiple criteria paths, OR them together, and use the same
                 // values for each, e.g. search across all aliases ORs together a search
                 // of individual aliases with a search of sample aliases
                 for (SearchTerm.CriteriaPath criteriaPath : searchValue.getSearchTerm().getCriteriaPaths()) {
@@ -230,8 +228,7 @@ public class ConfigurableSearchDao extends GenericDao {
                             if (criteriaPathsIndex == 0) {
                                 resultCriteria.add(disjunction);
                             }
-                            // Create a detached criteria for the top level criteria, and
-                            // find
+                            // Create a detached criteria for the top level criteria, and find
                             // the definition of which property will be projected out of
                             // the criteria
                             String firstCriteriaName = criteriaPath.getCriteria().get(0);

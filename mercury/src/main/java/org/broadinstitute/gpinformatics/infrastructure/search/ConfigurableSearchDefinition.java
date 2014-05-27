@@ -53,7 +53,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
     /**
      * Map from criteriaName to criteriaProjection
      */
-    transient private Map<String, CriteriaProjection> mapCriteriaToProjection = new HashMap<>();
+    transient private Map<String, CriteriaProjection> mapCriteriaToProjection;
 
     /**
      * Map from group name to list of (top-level) search terms
