@@ -188,9 +188,6 @@ public abstract class LabVessel implements Serializable {
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
-    private Integer sampleInstanceCount;
-
-    @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
     /**
