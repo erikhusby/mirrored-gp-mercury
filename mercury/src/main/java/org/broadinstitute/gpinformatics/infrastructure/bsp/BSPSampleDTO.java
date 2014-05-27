@@ -143,6 +143,14 @@ public class BSPSampleDTO {
         return 0.0;
     }
 
+    private Double getDoubleOrNull(BSPSampleSearchColumn column) {
+        String value = getValue(column);
+        if (StringUtils.isNotBlank(value)) {
+            return Double.parseDouble(value);
+        }
+        return null;
+    }
+
     /**
      * Returns an array of one double if this is a regular non-range (e.g. "3.14159") or an array of two doubles if
      * this is a range ("2.71828 - 3.14159").
@@ -212,21 +220,32 @@ public class BSPSampleDTO {
     }
 
     /**
-     * If BSP's "RIN Number" is a range, this returns
-     * the lower of the two numbers.  If it's a single numeric value,
-     * that value is returned.  Otherwise, this blows
-     * up trying to convert to a number.
-     * @see #getRawRin() to get the unmodified rin value
-     * as a string.
+     * Get the RIN value for the sample. Returns null if no RIN value is set. If the RIN value is expressed as a range,
+     * the lower value is returned. Throws NumberFormatException if the value cannot be parsed as a single value or as a
+     * range.
+     *
+     * @return the (lowest) RIN value from BSP; null if no value is set
+     * @throws NumberFormatException if the value cannot be parsed as a single value or a range
+     *
+     * @see #getRawRin() to get the unmodified rin value as a string.
      */
-    public double getRin() {
-        double[] doubles = getDoubleOrRangeOfDoubles(BSPSampleSearchColumn.RIN);
-        if (doubles.length == 1) {
-            return doubles[0];
-        } else {
-            // The logic for RIN is to take the lower of the two numbers.
-            return Math.min(doubles[0], doubles[1]);
+    public Double getRin() {
+        Double rin = null;
+        String rawRin = getRawRin();
+        if (StringUtils.isNotBlank(rawRin)) {
+            double[] doubles = getDoubleOrRangeOfDoubles(BSPSampleSearchColumn.RIN);
+            if (doubles.length == 1) {
+                rin = doubles[0];
+            } else {
+                // The logic for RIN is to take the lower of the two numbers.
+                rin = Math.min(doubles[0], doubles[1]);
+            }
         }
+        return rin;
+    }
+
+    public Double getRqs() {
+        return getDoubleOrNull(BSPSampleSearchColumn.RQS);
     }
 
     public double getVolume() {
@@ -415,23 +434,4 @@ public class BSPSampleDTO {
             return bspLabelBarcode;
         }
     }
-
-    /**
-     * Adds the rin score from the sample dto to the item.
-     */
-    public String getRinScore() {
-        // ideally the rin score is available, and can be converted to a number.  sometimes that's not true,
-        // in which case we'll just display the raw rin value.
-        String rinScore = getRawRin();
-        if (!StringUtils.isBlank(rinScore)) {
-            try {
-                rinScore = String.valueOf(getRin());
-            } catch(NumberFormatException e) {
-                // sometimes RIN scores in BSP are not actually numbers (ranges are a common cases)
-            }
-        }
-
-        return rinScore;
-    }
-
 }
