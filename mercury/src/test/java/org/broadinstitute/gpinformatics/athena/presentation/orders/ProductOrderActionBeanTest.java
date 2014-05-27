@@ -169,7 +169,7 @@ public class ProductOrderActionBeanTest {
 
     public void testNoRinScore() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
-        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1");
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
 
         jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
@@ -179,7 +179,7 @@ public class ProductOrderActionBeanTest {
 
     public void testRinRange() throws JSONException {
         Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
-        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1");
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
         data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
         BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
 
