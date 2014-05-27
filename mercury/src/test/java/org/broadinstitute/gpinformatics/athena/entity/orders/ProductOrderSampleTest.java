@@ -3,10 +3,8 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntryTest;
-import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
@@ -19,7 +17,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -30,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.InBspFormat.inBspFormat;
-import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyString.nullOrEmptyString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -181,37 +177,5 @@ public class ProductOrderSampleTest {
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
         assertThat(sample.getBillableLedgerItems(), is(equalTo(ledgerEntries)));
-    }
-
-    @DataProvider(name = "riskSample")
-    public static Object[][] makeRiskSample() {
-        TestPDOData data = new TestPDOData("GSP-123");
-
-        // sample 1 has risk items and sample 2 does not
-        RiskCriterion riskCriterion =
-                new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
-        riskItem.setRemark("Bad Concentration found");
-
-        data.sample1.setRiskItems(Collections.singletonList(riskItem));
-        return new Object[][]{
-                new Object[]{data.sample1},
-                new Object[]{data.sample2}
-        };
-    }
-
-    @Test(dataProvider = "riskSample")
-    public void testRisk(ProductOrderSample sample) {
-        if (sample.isOnRisk()) {
-            String message =
-                    MessageFormat.format("Sample {0} is on risk but has no risk string.", sample.getName());
-
-            assertThat(message, sample.getRiskString(), is(not(nullOrEmptyString())));
-        } else {
-            String message =
-                    MessageFormat.format("Sample {0} is not on risk but has a risk string.", sample.getName());
-
-            assertThat(message, sample.getRiskString(), is(nullOrEmptyString()));
-        }
     }
 }

@@ -236,6 +236,7 @@ function showSamples(sampleData) {
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
+        $j('#rqs-' + sampleId).text(sampleData[x].rqs);
         $j('#total-' + sampleId).text(sampleData[x].total);
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
@@ -272,6 +273,7 @@ function showSamples(sampleData) {
 
                 <c:if test="${actionBean.supportsRin}">
                 {"bSortable": true, "sType": "numeric"},        // RIN
+                {"bSortable": true, "sType": "numeric"},        // RQS
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -1071,6 +1073,7 @@ function formatInput(item) {
 
                 <c:if test="${actionBean.supportsRin}">
                     <th width="40">RIN</th>
+                    <th width="40">RQS</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -1128,6 +1131,7 @@ function formatInput(item) {
 
                     <c:if test="${actionBean.supportsRin}">
                         <td id="rin-${sample.productOrderSampleId}"></td>
+                        <td id="rqs-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">

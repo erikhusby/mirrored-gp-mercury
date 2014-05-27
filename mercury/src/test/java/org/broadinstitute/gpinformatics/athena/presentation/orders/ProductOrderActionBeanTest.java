@@ -152,7 +152,7 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNonNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRinScore());
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSamplDTOWithBadRinScore().getRawRin());
         Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), expectedNonNumericRinScore);
     }
 
@@ -162,9 +162,30 @@ public class ProductOrderActionBeanTest {
      * @throws JSONException
      */
     public void testNumericRinScore() throws JSONException {
-        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRinScore());
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, getSampleDTOWithGoodRinScore().getRawRin());
         Assert.assertEquals(Double.parseDouble((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY)),
                 expectedNumericValue);
+    }
+
+    public void testNoRinScore() throws JSONException {
+        Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+
+        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "");
+    }
+
+    public void testRinRange() throws JSONException {
+        Map<BSPSampleSearchColumn, String> data = new EnumMap<>(BSPSampleSearchColumn.class);
+        data.put(BSPSampleSearchColumn.SAMPLE_ID, "SM-1234");
+        data.put(BSPSampleSearchColumn.RIN, "1.2-3.4");
+        BSPSampleDTO bspSampleDTO = new BSPSampleDTO(data);
+
+        jsonObject.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+
+        Assert.assertEquals(jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), "1.2-3.4");
     }
 
     public void testValidateRinScoresWhenProductHasRinRisk() {
