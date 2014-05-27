@@ -9,7 +9,7 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
-import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -20,9 +20,13 @@ import java.util.Map;
 /**
  * Represents the definition of a term in a user-defined search. Intended to be XStreamed.
  */
-public class SearchTerm implements Serializable {
+public class SearchTerm implements Serializable, ColumnTabulation {
 
     private static final long serialVersionUID = -7452519036319121392L;
+
+    public interface Evaluator <T> {
+        T evaluate(Object entity, Map<String, Object> context);
+    }
 
     /**
      * Defines Hibernate path from search result entity to the property being searched.
@@ -48,7 +52,7 @@ public class SearchTerm implements Serializable {
          */
         private String propertyName;
 
-        private ColumnDefinition.Evaluator<String> propertyNameExpression;
+        private Evaluator<String> propertyNameExpression;
 
         public List<String> getCriteria() {
             return criteria;
@@ -74,11 +78,11 @@ public class SearchTerm implements Serializable {
             this.propertyName = propertyName;
         }
 
-        public ColumnDefinition.Evaluator<String> getPropertyNameExpression() {
+        public Evaluator<String> getPropertyNameExpression() {
             return propertyNameExpression;
         }
 
-        public void setPropertyNameExpression(ColumnDefinition.Evaluator<String> propertyNameExpression) {
+        public void setPropertyNameExpression(Evaluator<String> propertyNameExpression) {
             this.propertyNameExpression = propertyNameExpression;
         }
     }
@@ -108,12 +112,12 @@ public class SearchTerm implements Serializable {
     /**
      * Expression that fetches list of constrained values
      */
-    private ColumnDefinition.Evaluator<List<ConstrainedValue>> valuesExpression;
+    private Evaluator<List<ConstrainedValue>> valuesExpression;
 
     /**
      * Expression that determines data type
      */
-    private ColumnDefinition.Evaluator<String> typeExpression;
+    private Evaluator<String> typeExpression;
 
     /**
      * Value that isn't supplied by the user, referenced by dependent search terms, null
@@ -125,13 +129,13 @@ public class SearchTerm implements Serializable {
      * Expression to navigate to the property, for displaying search results, null if not
      * displayed
      */
-    private ColumnDefinition.Evaluator<Object> displayExpression;
+    private Evaluator<Object> displayExpression;
 
     /**
      * Header text (or expression to derive it) for displaying search results, null if
      * same as name.
      */
-    private ColumnDefinition.Evaluator<Object> viewHeader;
+    private Evaluator<Object> viewHeader;
 
     /**
      * First header text (or expression to derive it) for downloading search results, null
@@ -153,7 +157,7 @@ public class SearchTerm implements Serializable {
     /**
      * Expression to convert HTML form value from String to property data type
      */
-    private ColumnDefinition.Evaluator<Object> valueConversionExpression;
+    private Evaluator<Object> valueConversionExpression;
 
     /**
      * Hibernate SQL restriction (currently constant, i.e. doesn't reference values)
@@ -181,7 +185,7 @@ public class SearchTerm implements Serializable {
      * otherwise assume that there are more than 101, so the user will have to type the
      * value, rather than choosing it from the list.
      */
-    private ColumnDefinition.Evaluator<Integer> constrainedValuesSizeLimitExpression;
+    private Evaluator<Integer> constrainedValuesSizeLimitExpression;
 
     /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
@@ -235,19 +239,19 @@ public class SearchTerm implements Serializable {
         this.newDetachedCriteria = newDetachedCriteria;
     }
 
-    public ColumnDefinition.Evaluator<List<ConstrainedValue>> getValuesExpression() {
+    public Evaluator<List<ConstrainedValue>> getValuesExpression() {
         return valuesExpression;
     }
 
-    public void setValuesExpression(ColumnDefinition.Evaluator<List<ConstrainedValue>> valuesExpression) {
+    public void setValuesExpression(Evaluator<List<ConstrainedValue>> valuesExpression) {
         this.valuesExpression = valuesExpression;
     }
 
-    public ColumnDefinition.Evaluator<String> getTypeExpression() {
+    public Evaluator<String> getTypeExpression() {
         return typeExpression;
     }
 
-    public void setTypeExpression(ColumnDefinition.Evaluator<String> typeExpression) {
+    public void setTypeExpression(Evaluator<String> typeExpression) {
         this.typeExpression = typeExpression;
     }
 
@@ -259,19 +263,19 @@ public class SearchTerm implements Serializable {
         this.constantValue = constantValue;
     }
 
-    public ColumnDefinition.Evaluator<Object> getDisplayExpression() {
+    public Evaluator<Object> getDisplayExpression() {
         return displayExpression;
     }
 
-    public void setDisplayExpression(ColumnDefinition.Evaluator<Object> displayExpression) {
+    public void setDisplayExpression(Evaluator<Object> displayExpression) {
         this.displayExpression = displayExpression;
     }
 
-    public ColumnDefinition.Evaluator<Object> getViewHeader() {
+    public Evaluator<Object> getViewHeader() {
         return viewHeader;
     }
 
-    public void setViewHeader(ColumnDefinition.Evaluator<Object> viewHeader) {
+    public void setViewHeader(Evaluator<Object> viewHeader) {
         this.viewHeader = viewHeader;
     }
 
@@ -299,11 +303,11 @@ public class SearchTerm implements Serializable {
         this.dependentSearchTerms = dependentSearchTerms;
     }
 
-    public ColumnDefinition.Evaluator<Object> getValueConversionExpression() {
+    public Evaluator<Object> getValueConversionExpression() {
         return valueConversionExpression;
     }
 
-    public void setValueConversionExpression(ColumnDefinition.Evaluator<Object> valueConversionExpression) {
+    public void setValueConversionExpression(Evaluator<Object> valueConversionExpression) {
         this.valueConversionExpression = valueConversionExpression;
     }
 
@@ -340,11 +344,60 @@ public class SearchTerm implements Serializable {
     }
 
     public void setConstrainedValuesSizeLimitExpression(
-            ColumnDefinition.Evaluator<Integer> constrainedValuesSizeLimitExpression) {
+            Evaluator<Integer> constrainedValuesSizeLimitExpression) {
         this.constrainedValuesSizeLimitExpression = constrainedValuesSizeLimitExpression;
     }
 
-    public ColumnDefinition.Evaluator<Integer> getConstrainedValuesSizeLimitExpression() {
+    public Evaluator<Integer> getConstrainedValuesSizeLimitExpression() {
         return constrainedValuesSizeLimitExpression;
     }
+
+    @Override
+    public Object evalPlainTextExpression(Object entity, Map<String, Object> context) {
+        return getDisplayExpression().evaluate(entity, context);
+    }
+
+    @Override
+    public Object evalFormattedExpression(Object entity, Map<String, Object> context) {
+        return getDisplayExpression().evaluate(entity, context);
+    }
+
+    @Override
+    public Object evalViewHeaderExpression(Object entity, Map<String, Object> context) {
+        if (getViewHeader() == null) {
+            return getName();
+        }
+        return getViewHeader().evaluate(entity, context);
+    }
+
+    @Override
+    public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
+        return null;
+    }
+
+    @Override
+    public Object evalDownloadHeader2Expression(Object entity, Map<String, Object> context) {
+        return null;
+    }
+
+    @Override
+    public String getPluginClass() {
+        return null;
+    }
+
+    @Override
+    public String getDbSortPath() {
+        return null;
+    }
+
+    @Override
+    public List<ColumnTabulation> getChildColumnTabulations() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isOnlyPlainText() {
+        return true;
+    }
+
 }

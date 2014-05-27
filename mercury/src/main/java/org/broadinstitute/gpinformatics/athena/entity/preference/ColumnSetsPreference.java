@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.preference;
 
-import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public class ColumnSetsPreference implements PreferenceDefinitionValue {
         private String name;
         private ColumnEntity columnEntity;
 //        private ? visibility;
-        private List<ColumnDefinition> columnDefinitions;
+        private List<String> columnDefinitions;
 
         public String getName() {
             return name;
@@ -34,7 +33,7 @@ public class ColumnSetsPreference implements PreferenceDefinitionValue {
             return columnEntity;
         }
 
-        public List<ColumnDefinition> getColumnDefinitions() {
+        public List<String> getColumnDefinitions() {
             return columnDefinitions;
         }
     }

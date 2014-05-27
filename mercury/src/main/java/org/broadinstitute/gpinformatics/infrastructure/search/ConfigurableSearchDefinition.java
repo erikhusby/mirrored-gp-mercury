@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  * This class defines search terms, from which search instances can be built. This class
- * is primarily concerned with storing information neccessary to create Hibernate Detached
+ * is primarily concerned with storing information necessary to create Hibernate Detached
  * Criteria.
  */
 public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {

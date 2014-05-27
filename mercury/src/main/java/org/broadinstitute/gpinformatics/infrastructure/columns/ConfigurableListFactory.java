@@ -4,6 +4,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -88,6 +91,17 @@ public class ConfigurableListFactory {
         ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
                 ConfigurableList.ColumnSetType.DOWNLOAD, /*domainUser, sampleCollection.getGroup(), */columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
-        return new ArrayList<ColumnTabulation>(columnSet.getColumnDefinitions());
+        ConfigurableSearchDefinition configurableSearchDefinition = new SearchDefinitionFactory().getForEntity(
+                entityName);
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        for (String columnName : columnSet.getColumnDefinitions()) {
+            SearchTerm searchTerm = configurableSearchDefinition.getSearchTerm(columnName);
+            if (searchTerm == null) {
+                throw new RuntimeException("searchTerm not found " + columnName);
+            }
+            columnTabulations.add(searchTerm);
+        }
+
+        return columnTabulations;
     }
 }

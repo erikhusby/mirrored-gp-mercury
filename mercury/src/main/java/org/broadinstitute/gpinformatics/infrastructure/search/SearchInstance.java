@@ -10,7 +10,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 
 import java.io.Serializable;
@@ -231,7 +230,7 @@ public class SearchInstance implements Serializable {
          */
         public String getPropertyName() {
             String propertyName = searchTerm.getCriteriaPaths().get(0).getPropertyName();
-            ColumnDefinition.Evaluator<String> propertyNameExpression =
+            SearchTerm.Evaluator<String> propertyNameExpression =
                     searchTerm.getCriteriaPaths().get(0).getPropertyNameExpression();
             if (propertyNameExpression != null) {
                 Map<String, Object> context = new HashMap<>();
@@ -624,7 +623,7 @@ public class SearchInstance implements Serializable {
 
         @Override
         public boolean isOnlyPlainText() {
-            return false;
+            return true;
         }
 
         public Boolean getCaseInsensitive() {
