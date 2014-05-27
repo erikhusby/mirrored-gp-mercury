@@ -30,7 +30,6 @@ import java.util.regex.Pattern;
  */
 public class BSPSampleDTO {
 
-    public static final String JSON_RIN_KEY = "rin";
     private static final Log logger = LogFactory.getLog(BSPSampleDTO.class);
 
     public static final String TUMOR_IND = "Tumor";
@@ -60,6 +59,8 @@ public class BSPSampleDTO {
     public static final String PACKAGE_DATE = "packageDate";
     public static final String RECEIPT_DATE = "receiptDate";
     public static final String SUPPORTS_NUMBER_OF_LANES = "supportsNumberOfLanes";
+    public static final String JSON_RIN_KEY = "rin";
+    public static final String JSON_RQS_KEY = "rqs";
 
     private final Map<BSPSampleSearchColumn, String> columnToValue;
 

@@ -47,6 +47,7 @@ public class ProductOrderSampleJsonFactoryTest {
         assertThat((String) jsonObject.get(BSPSampleDTO.VOLUME), equalTo(""));
         assertThat((String) jsonObject.get(BSPSampleDTO.CONCENTRATION), equalTo(""));
         assertThat((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), equalTo(""));
+        assertThat((String) jsonObject.get(BSPSampleDTO.JSON_RQS_KEY), equalTo(""));
         assertThat((String) jsonObject.get(BSPSampleDTO.PICO_DATE), equalTo(""));
         assertThat((String) jsonObject.get(BSPSampleDTO.TOTAL), equalTo(""));
         assertThat((String) jsonObject.get(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH), equalTo(""));
@@ -62,6 +63,7 @@ public class ProductOrderSampleJsonFactoryTest {
         data.put(BSPSampleSearchColumn.VOLUME, "3");
         data.put(BSPSampleSearchColumn.CONCENTRATION, "1.2");
         data.put(BSPSampleSearchColumn.RIN, "1.2-3");
+        data.put(BSPSampleSearchColumn.RQS, "5.0");
         data.put(BSPSampleSearchColumn.PICO_RUN_DATE, "05/23/2014");
         data.put(BSPSampleSearchColumn.TOTAL_DNA, "2.3");
         data.put(BSPSampleSearchColumn.RACKSCAN_MISMATCH, "true");
@@ -82,6 +84,7 @@ public class ProductOrderSampleJsonFactoryTest {
         assertThat((Double) jsonObject.get(BSPSampleDTO.VOLUME), equalTo(3.0));
         assertThat((Double) jsonObject.get(BSPSampleDTO.CONCENTRATION), equalTo(1.2));
         assertThat((String) jsonObject.get(BSPSampleDTO.JSON_RIN_KEY), equalTo("1.2-3"));
+        assertThat((Double) jsonObject.get(BSPSampleDTO.JSON_RQS_KEY), equalTo(5.0));
         assertThat((String) jsonObject.get(BSPSampleDTO.PICO_DATE), equalTo("05/23/2014"));
         assertThat((Double) jsonObject.get(BSPSampleDTO.TOTAL), equalTo(2.3));
         assertThat((Boolean) jsonObject.get(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH), equalTo(true));

@@ -55,6 +55,7 @@ public class ProductOrderSampleJsonFactory {
         item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
         item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
         item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRawRin());
+        item.put(BSPSampleDTO.JSON_RQS_KEY, bspSampleDTO.getRqs());
         item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
         item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
@@ -90,6 +91,7 @@ public class ProductOrderSampleJsonFactory {
         item.put(BSPSampleDTO.VOLUME, "");
         item.put(BSPSampleDTO.CONCENTRATION, "");
         item.put(BSPSampleDTO.JSON_RIN_KEY, "");
+        item.put(BSPSampleDTO.JSON_RQS_KEY, "");
         item.put(BSPSampleDTO.PICO_DATE, "");
         item.put(BSPSampleDTO.TOTAL, "");
         item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
