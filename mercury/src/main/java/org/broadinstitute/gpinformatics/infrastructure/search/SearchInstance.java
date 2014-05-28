@@ -193,14 +193,6 @@ public class SearchInstance implements Serializable {
             if (constrainedValuesSizeLimit == null) {
                 if (searchTerm.getConstrainedValuesSizeLimitExpression() == null) {
                     constrainedValuesSizeLimit = 1000;
-/*
-                } else if (searchTerm.getConstrainedValuesSizeLimitExpression().startsWith("MVEL:")) {
-                    Map<String, Object> context = new HashMap<>();
-                    context.put("searchValue", this);
-                    OptimizerFactory.setDefaultOptimizer("reflective");
-                    constrainedValuesSizeLimit = (Integer) MVEL.eval(searchTerm
-                            .getConstrainedValuesSizeLimitExpression().substring("MVEL:".length()), context);
-*/
                 } else {
                     Map<String, Object> context = new HashMap<>();
                     context.put("searchValue", this);
@@ -235,14 +227,6 @@ public class SearchInstance implements Serializable {
             if (propertyNameExpression != null) {
                 Map<String, Object> context = new HashMap<>();
                 context.put("searchValue", this);
-                // Compile, even though we're using it only once, because MVEL sometimes has
-                // problems with Hibernate proxies in eval method. Use reflective optimizer, to
-                // avoid creating classes at runtime, and increasing permgen size.
-/*
-                OptimizerFactory.setDefaultOptimizer("reflective");
-                Serializable compiled = MVEL.compileExpression(propertyName.substring("MVEL:".length()));
-                return (String) MVEL.executeExpression(compiled, context);
-*/
                 propertyName = propertyNameExpression.evaluate(null, context);
             }
 
@@ -261,13 +245,6 @@ public class SearchInstance implements Serializable {
             if (dataType == null) {
                 Map<String, Object> context = new HashMap<>();
                 context.put("searchValue", this);
-                // Compile, even though we're using it only once, because MVEL sometimes has
-                // problems with Hibernate proxies in eval method.
-/*
-                OptimizerFactory.setDefaultOptimizer("reflective");
-                Serializable compiled = MVEL.compileExpression(searchTerm.getTypeExpression());
-                dataType = (String) MVEL.executeExpression(compiled, context);
-*/
                 dataType = searchTerm.getTypeExpression().evaluate(null, context);
             }
             return dataType;
@@ -375,13 +352,6 @@ public class SearchInstance implements Serializable {
                         localContext.putAll(searchInstance.getEvalContext());
                         localContext.put("searchValue", this);
                         localContext.put("searchString", value);
-                        // Compile, even though we're using it only once, because MVEL sometimes has
-                        // problems with Hibernate proxies in eval method.
-/*
-                        OptimizerFactory.setDefaultOptimizer("reflective");
-                        Serializable compiled = MVEL.compileExpression(searchTerm.getValueConversionExpression());
-                        propertyValues.add(MVEL.executeExpression(compiled, localContext));
-*/
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
                     } else {
                         if (getDataType().equals("String")) {

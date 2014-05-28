@@ -197,14 +197,7 @@ public class SearchTerm implements Serializable, ColumnTabulation {
         if (this.getValuesExpression() == null) {
             return Collections.emptyList();
         }
-        // Compile, even though we're using it only once, because MVEL sometimes has
-        // problems with Hibernate proxies in eval method.
-        // Use reflection, rather than byte code generation, to avoid using permgen
-//        OptimizerFactory.setDefaultOptimizer("reflective");
-//        Serializable compiled = MVEL.compileExpression(this.getValuesExpression());
         List<ConstrainedValue> constrainedValues = valuesExpression.evaluate(null, context);
-        //(List<ConstrainedValue>) MVEL.executeExpression(compiled, context);
-        // MVEL sometimes returns an array with a single null, ignore it
         if (constrainedValues != null && constrainedValues.size() == 1 && constrainedValues.get(0).getCode() == null) {
             constrainedValues = null;
         }

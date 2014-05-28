@@ -179,14 +179,10 @@ public class PaginationDao extends GenericDao {
      */
     private static <T> List<T> reorderList(Pagination pagination, List<?> idList, List<T> entityList) {
         // re-order results to match order of input IDs list
-//        Object parsed;
         try {
-//            parsed = Ognl.parseExpression(pagination.getResultEntityId());
-
             Map<Object, T> criteriaIdMap = new HashMap<>();
             List<T> returnList = new ArrayList<>();
             for (T entity : entityList) {
-//                Object id = Ognl.getValue(parsed, entity);
                 Object id = PropertyUtils.getProperty(entity, pagination.getResultEntityId());
                 criteriaIdMap.put(id, entity);
             }

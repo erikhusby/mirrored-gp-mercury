@@ -22,7 +22,7 @@ public class ColumnSetsPreference implements PreferenceDefinitionValue {
     public static class ColumnSet {
         private String name;
         private ColumnEntity columnEntity;
-//        private ? visibility;
+        // todo jmt visibility expression?
         private List<String> columnDefinitions;
 
         public String getName() {
