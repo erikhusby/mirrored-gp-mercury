@@ -283,8 +283,8 @@ public class ProductOrderEjb {
     }
 
     public void setManualOnRisk(
-            BspUser user, String productOrderKey,
-            List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
+            @Nonnull BspUser user, @Nonnull String productOrderKey,
+            List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment) throws IOException {
 
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
 
@@ -305,6 +305,13 @@ public class ProductOrderEjb {
 
         // Set the create and modified information.
         editOrder.prepareToSave(user);
+
+        // Add comment about the risk status to jira.
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        String issueComment = String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
+                userBean.getLoginUserName(), riskStatus, orderSamples.size(), riskComment);
+
+        issue.addComment(issueComment);
     }
 
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,

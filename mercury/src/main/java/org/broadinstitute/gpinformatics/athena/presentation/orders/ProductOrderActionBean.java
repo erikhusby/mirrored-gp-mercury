@@ -1434,11 +1434,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples, riskStatus,
                 riskComment);
 
-        addMessage("Set manual on risk to {1} for {0} samples.", selectedProductOrderSampleIds.size(), riskStatus);
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} set manual on risk to {2} for {1} samples.",
-                                              userBean.getLoginUserName(), selectedProductOrderSampleIds.size(),
-                                              riskStatus));
+        addMessage("Set manual on risk to {0} for {1} samples.", riskStatus, selectedProductOrderSampleIds.size());
+
         return createViewResolution(editOrder.getBusinessKey());
     }
 
