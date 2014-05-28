@@ -38,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -386,7 +387,14 @@ public class BucketViewActionBean extends CoreActionBean {
         List<BucketEntry> bucketEntries = bucketEntryDao.findByIds(selectedEntryIds);
         bucketEjb.updateEntryPdo(bucketEntries, newPdoValue);
 
-        return new StreamingResolution("text", newPdoValue);
+        ProductOrder newPdo = productOrderDao.findByBusinessKey(newPdoValue);
+        JSONObject newPdoValues = new JSONObject();
+
+        newPdoValues.put("jiraKey", newPdoValue);
+        newPdoValues.put("pdoOwner", getUserFullName(newPdo.getCreatedBy()));
+        newPdoValues.put("pdoTitle", newPdo.getTitle());
+
+        return new StreamingResolution("text", new StringReader(newPdoValues.toString()));
     }
 
     public String getSelectedBucket() {
