@@ -820,7 +820,6 @@ public class ProductOrderEjb {
         order.prepareToSave(bspUser);
         productOrderDao.persist(order);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
-        reporter.addMessage("Added samples: {0}.", nameList);
 
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
@@ -832,6 +831,7 @@ public class ProductOrderEjb {
                 ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(jiraTicketKey, samples, reporter);
+        reporter.addMessage("Added samples: {0}.", nameList);
 
         updateOrderStatus(jiraTicketKey, reporter);
     }
