@@ -91,52 +91,52 @@ public class SearchInstance implements Serializable {
         /**
          * The search term definition on which this SearchValue is based.
          */
-        transient private SearchTerm searchTerm;
+        private transient SearchTerm searchTerm;
 
         /**
          * Map from value to value, allows testing of presence in JSP EL.
          */
-        transient private Map<String, String> mappedValues = new HashMap<>();
+        private transient Map<String, String> mappedValues = new HashMap<>();
 
         /**
          * Whether the constrained values expression has been evaluated, avoid doing it multiple times.
          */
-        transient private boolean evaluatedConstrainedValues = false;
+        private transient boolean evaluatedConstrainedValues = false;
 
         /**
          * Unique ID for HTML divs.
          */
-        transient static private long uniqueId = System.currentTimeMillis();
+        private static transient long uniqueId = System.currentTimeMillis();
 
         /**
          * To improve performance, compiled version of expression to display results.
          */
-        transient private Serializable compiledDisplayExpression;
+        private transient Serializable compiledDisplayExpression;
 
         /**
          * To improve performance, compiled version of expression to create header for viewing results.
          */
-        transient private Serializable compiledViewHeaderExpression;
+        private transient Serializable compiledViewHeaderExpression;
 
         /**
          * True if the value was set when the instance was loaded from persistence, useful in read-only views.
          */
-        transient private Boolean valueSetWhenLoaded;
+        private transient Boolean valueSetWhenLoaded;
 
         /**
          * Holder of search values.
          */
-        transient private SearchInstance searchInstance;
+        private transient SearchInstance searchInstance;
 
         /**
          * False if the term has no value, for example.
          */
-        transient private Boolean addToCriteria;
+        private transient Boolean addToCriteria;
 
         /**
          * Result of searchTerm.constrainedValuesSizeLimitExpression.
          */
-        transient private Integer constrainedValuesSizeLimit;
+        private transient Integer constrainedValuesSizeLimit;
 
         /**
          * Default constructor for Stripes.
@@ -148,8 +148,8 @@ public class SearchInstance implements Serializable {
             List<String> joinFetchPaths = new ArrayList<>();
             for (SearchTerm.CriteriaPath criteriaPath : getSearchTerm().getCriteriaPaths()) {
                 if (criteriaPath.isJoinFetch() != null && criteriaPath.isJoinFetch()) {
-                    String associationPath = null;
-                    if (criteriaPath.getCriteria() != null && criteriaPath.getCriteria().size() > 0) {
+                    if (criteriaPath.getCriteria() != null && !criteriaPath.getCriteria().isEmpty()) {
+                        String associationPath = null;
                         for (String criteriaName : criteriaPath.getCriteria()) {
                             if (associationPath == null) {
                                 associationPath = criteriaName;
@@ -218,7 +218,7 @@ public class SearchInstance implements Serializable {
          *         text box should be displayed.
          */
         public Boolean getConstrainedValuesListDisplayed() {
-            return (getConstrainedValues() != null && getConstrainedValues().size() > 0 &&
+            return (getConstrainedValues() != null && !getConstrainedValues().isEmpty() &&
                     getConstrainedValues().size() < getConstrainedValuesSizeLimit());
         }
 
@@ -297,7 +297,7 @@ public class SearchInstance implements Serializable {
             if (mappedValues == null) {
                 mappedValues = new HashMap<>();
             }
-            if (mappedValues.size() == 0 && values != null && values.size() > 0) {
+            if (mappedValues.isEmpty() && values != null && !values.isEmpty()) {
                 for (String value : values) {
                     mappedValues.put(value, value);
                 }
@@ -314,7 +314,7 @@ public class SearchInstance implements Serializable {
             // Add dependent values / terms.
             List<SearchValue> newSearchValues = new ArrayList<>();
             for (SearchTerm searchTerm : getSearchTerm().getDependentSearchTerms()) {
-                SearchInstance.SearchValue childSearchValue = new SearchInstance.SearchValue();
+                SearchValue childSearchValue = new SearchValue();
                 // If the value is a constant, set it and add dependent terms.
                 if (searchTerm.getConstantValue() != null) {
                     List<String> values = new ArrayList<>();
@@ -322,8 +322,8 @@ public class SearchInstance implements Serializable {
                     childSearchValue.setValues(values);
                     childSearchValue.setOperator(Operator.EQUALS);
                     for (SearchTerm dependentSearchTerm : searchTerm.getDependentSearchTerms()) {
-                        SearchInstance.SearchValue dependentSearchValue = new SearchInstance.SearchValue();
-                        dependentSearchValue.setSearchInstance(this.getSearchInstance());
+                        SearchValue dependentSearchValue = new SearchValue();
+                        dependentSearchValue.setSearchInstance(getSearchInstance());
                         dependentSearchValue.setTermName(dependentSearchTerm.getName());
                         dependentSearchValue.setSearchTerm(dependentSearchTerm);
                         dependentSearchValue.setIncludeInResults(true);
@@ -339,7 +339,7 @@ public class SearchInstance implements Serializable {
                 childSearchValue.setParent(this);
                 childSearchValue.setSearchInstance(getSearchInstance());
                 childSearchValue.setIncludeInResults(true);
-                this.getChildren().add(childSearchValue);
+                getChildren().add(childSearchValue);
                 newSearchValues.add(childSearchValue);
             }
             return newSearchValues;
@@ -384,15 +384,15 @@ public class SearchInstance implements Serializable {
 */
                         propertyValues.add(searchTerm.getValueConversionExpression().evaluate(null, localContext));
                     } else {
-                        if (this.getDataType().equals("String")) {
+                        if (getDataType().equals("String")) {
                             propertyValues.add(value);
-                        } else if (this.getDataType().equals("Float")) {
+                        } else if (getDataType().equals("Float")) {
                             propertyValues.add(new Float(value));
-                        } else if (this.getDataType().equals("Double")) {
+                        } else if (getDataType().equals("Double")) {
                             propertyValues.add(new Double(value));
-                        } else if (this.getDataType().equals("Long")) {
+                        } else if (getDataType().equals("Long")) {
                             propertyValues.add(new Long(value));
-                        } else if (this.getDataType().equals("Date")) {
+                        } else if (getDataType().equals("Date")) {
                             try {
                                 propertyValues.add(mdyDateFormat.parse(value));
                             } catch (ParseException e) {
@@ -411,16 +411,7 @@ public class SearchInstance implements Serializable {
             // Evaluate the display value expression for the search term.
             Map<String, Object> context = new HashMap<>();
             context.put("searchValue", this);
-/*
-            if (compiledDisplayExpression == null) {
-                OptimizerFactory.setDefaultOptimizer("reflective");
-                compiledDisplayExpression = MVEL.compileExpression(getSearchTerm().getDisplayExpression());
-            }
-*/
             try {
-/*
-                return MVEL.executeExpression(compiledDisplayExpression, root, context);
-*/
                 return getSearchTerm().getDisplayExpression().evaluate(root, context);
             } catch (Exception e) {
                 throw new RuntimeException("Exception evaluating display expression for term "
@@ -429,27 +420,14 @@ public class SearchInstance implements Serializable {
         }
 
         public Object evalHeaderExpression(Object root) {
-//            String viewHeader = getSearchTerm().getViewHeader();
-
             // If the header is an expression, evaluate it.
             if (getSearchTerm().getViewHeader() == null) {
                 return getSearchTerm().getName();
-            } else /*if (viewHeader.startsWith("MVEL:")) */{
+            } else {
                 Map<String, Object> context = new HashMap<>();
                 context.put("searchValue", this);
-/*
-                if (compiledViewHeaderExpression == null) {
-                    OptimizerFactory.setDefaultOptimizer("reflective");
-                    compiledViewHeaderExpression = MVEL.compileExpression(getSearchTerm().getViewHeader().substring(
-                            "MVEL:".length()));
-                }
-
-                return MVEL.executeExpression(compiledViewHeaderExpression, root, context);
-*/
                 return getSearchTerm().getViewHeader().evaluate(root, context);
-            } /*else {
-                return viewHeader;
-            }*/
+            }
         }
 
         public List<SearchValue> getChildren() {
@@ -643,7 +621,7 @@ public class SearchInstance implements Serializable {
             // Don't display the value if it has a constrained list expression, but the list is empty.
             // it confuses the user to see an empty text box which has no meaningful options.
             return searchTerm.getValuesExpression() == null
-                   || (getConstrainedValues() != null && getConstrainedValues().size() > 0);
+                   || (getConstrainedValues() != null && !getConstrainedValues().isEmpty());
         }
     }
 
@@ -737,12 +715,12 @@ public class SearchInstance implements Serializable {
     /**
      * List of columns in the column set that the user chose to view
      */
-    transient private List<String> columnSetColumnNameList;
+    private transient List<String> columnSetColumnNameList;
 
     /**
      * Context for evaluation of expressions.
      */
-    transient private Map<String, Object> evalContext;
+    private transient Map<String, Object> evalContext;
 
     /**
      * Default constructor for Stripes.
@@ -757,7 +735,7 @@ public class SearchInstance implements Serializable {
      */
     public void addRequired(ConfigurableSearchDefinition configurableSearchDef) {
         for (SearchTerm searchTerm : configurableSearchDef.getRequiredSearchTerms()) {
-            SearchInstance.SearchValue searchValue = new SearchInstance.SearchValue();
+            SearchValue searchValue = new SearchValue();
             searchValue.setTermName(searchTerm.getName());
             searchValue.setSearchTerm(searchTerm);
             searchValue.setSearchInstance(this);
@@ -778,7 +756,7 @@ public class SearchInstance implements Serializable {
         if (searchTerm == null) {
             throw new RuntimeException("Failed to find search term " + searchTermName);
         }
-        SearchInstance.SearchValue searchValue = new SearchInstance.SearchValue();
+        SearchValue searchValue = new SearchValue();
         searchValue.setTermName(searchTermName);
         searchValue.setSearchTerm(searchTerm);
         searchValue.setSearchInstance(this);
@@ -791,7 +769,7 @@ public class SearchInstance implements Serializable {
             searchValue.setValues(values);
             searchValue.setOperator(Operator.EQUALS);
             for (SearchTerm dependentSearchTerm : searchTerm.getDependentSearchTerms()) {
-                SearchInstance.SearchValue dependentSearchValue = new SearchInstance.SearchValue();
+                SearchValue dependentSearchValue = new SearchValue();
                 dependentSearchValue.setSearchInstance(this);
                 dependentSearchValue.setTermName(dependentSearchTerm.getName());
                 dependentSearchValue.setSearchTerm(dependentSearchTerm);
@@ -849,7 +827,7 @@ public class SearchInstance implements Serializable {
     private void recursePostLoad(List<SearchValue> valuesToSearch) {
         for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getSearchTerm().getConstantValue() != null
-                || (searchValue.getValues() != null && searchValue.getValues().size() > 0)) {
+                || (searchValue.getValues() != null && !searchValue.getValues().isEmpty())) {
                 searchValue.setValueSetWhenLoaded(true);
             }
             recursePostLoad(searchValue.getChildren());
@@ -869,11 +847,11 @@ public class SearchInstance implements Serializable {
         boolean atLeastOneAdd = false;
         for (SearchValue searchValue : valuesToSearch) {
             boolean atLeastOneChildAdd = recurseCheckValues(searchValue.getChildren());
-            if (searchValue.getChildren().size() > 0 && !atLeastOneChildAdd) {
+            if (!searchValue.getChildren().isEmpty() && !atLeastOneChildAdd) {
                 searchValue.setAddToCriteria(false);
-            } else if (searchValue.getValues() == null || searchValue.getValues().size() == 0
-                       || searchValue.getValues().get(0).length() == 0
-                       || searchValue.getValues().get(0).equals(SearchInstance.CHOOSE_VALUE)) {
+            } else if (searchValue.getValues() == null || searchValue.getValues().isEmpty() ||
+                    searchValue.getValues().get(0).isEmpty() ||
+                    searchValue.getValues().get(0).equals(CHOOSE_VALUE)) {
                 searchValue.setAddToCriteria(false);
             } else {
                 searchValue.setAddToCriteria(true);
@@ -904,7 +882,7 @@ public class SearchInstance implements Serializable {
      */
     private void recurseForDisplaySearchValues(List<SearchValue> valuesToSearch,
                                                List<SearchValue> displaySearchValues) {
-        for (SearchInstance.SearchValue searchValue : valuesToSearch) {
+        for (SearchValue searchValue : valuesToSearch) {
             if (searchValue.getIncludeInResults() != null && searchValue.getIncludeInResults()
                 && searchValue.getSearchTerm().getDisplayExpression() != null) {
                 displaySearchValues.add(searchValue);
