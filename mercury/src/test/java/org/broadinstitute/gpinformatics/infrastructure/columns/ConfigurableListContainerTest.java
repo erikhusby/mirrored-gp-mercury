@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
@@ -58,12 +57,16 @@ public class ConfigurableListContainerTest extends Arquillian {
         }
 
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 1, "ASC", ColumnEntity.LAB_VESSEL);
-        configurableList.addListener(new BspSampleSearchAddRowsListener(
-                new BSPSampleSearchColumn[]{BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID}, bspSampleSearchService));
+        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
 
         configurableList.addRows(labVessels);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
         Assert.assertEquals(resultList.getResultRows().size(), 92);
+        // todo jmt why does 1090466540 return nothing for stock sample?  Search in Mercury shows SM-4NFIJ, BSP shows terminated, material type doesn't include "active stock"
+        ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(1);
+        Assert.assertEquals(resultRow.getResultId(), "1090469488");
+        Assert.assertEquals(resultRow.getRenderableCells().get(1), "SM-4NFGH");
+
     }
 }

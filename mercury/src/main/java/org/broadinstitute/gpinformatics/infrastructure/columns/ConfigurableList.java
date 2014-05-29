@@ -49,7 +49,7 @@ import java.util.TreeMap;
 public class ConfigurableList {
 
     public interface AddRowsListener {
-        void addRows(List<?> entityList, Map<String, Object> context);
+        void addRows(List<?> entityList, Map<String, Object> context, List<ColumnTabulation> nonPluginTabulations);
     }
 
     private final List<AddRowsListener> addRowsListeners = new ArrayList<>();
@@ -443,7 +443,7 @@ public class ConfigurableList {
 //        context.put("isAdmin", isAdmin);
 
         for (AddRowsListener addRowsListener : addRowsListeners) {
-            addRowsListener.addRows(entityList, context);
+            addRowsListener.addRows(entityList, context, nonPluginTabulations);
         }
         for (Object entity : entityList) {
             // evaluate expression to get ID

@@ -93,6 +93,12 @@ public class SearchDefinitionFactory {
                 return bspColumns.getColumn(mercurySample.getSampleKey(), BSPSampleSearchColumn.STOCK_SAMPLE);
             }
         });
+        searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return BSPSampleSearchColumn.STOCK_SAMPLE;
+            }
+        });
         searchTerms.add(searchTerm);
 
         // Raising volume to 65ul - sample annotation?

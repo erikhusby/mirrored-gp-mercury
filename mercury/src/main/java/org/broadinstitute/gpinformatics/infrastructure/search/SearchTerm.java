@@ -188,6 +188,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
     private Evaluator<Integer> constrainedValuesSizeLimitExpression;
 
     /**
+     * The name of the AddRowsListener implementation.
+     * Ideally, need an abstract way to include reference to BSPSampleSearchColumn, so the set of columns can be gathered in one request.
+     * The Listener needs to be constructed and added to ConfigurableList, but construction probably can't be generic.
+     * Could add an evaluator called by the listener
+     */
+    private Evaluator<Object> addRowsListenerHelper;
+
+    /**
      * Evaluate the expression that returns constrained values, e.g. list of phenotypes
      *
      * @param context any additional entities referred to by the expression
@@ -343,6 +351,14 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public Evaluator<Integer> getConstrainedValuesSizeLimitExpression() {
         return constrainedValuesSizeLimitExpression;
+    }
+
+    public Evaluator<Object> getAddRowsListenerHelper() {
+        return addRowsListenerHelper;
+    }
+
+    public void setAddRowsListenerHelper(Evaluator<Object> addRowsListenerHelper) {
+        this.addRowsListenerHelper = addRowsListenerHelper;
     }
 
     @Override
