@@ -48,6 +48,12 @@ import java.util.TreeMap;
  */
 public class ConfigurableList {
 
+    public interface AddRowsListener {
+        void addRows(List<?> entityList, Map<String, Object> context);
+    }
+
+    private final List<AddRowsListener> addRowsListeners = new ArrayList<>();
+
     private final List<ColumnTabulation> pluginTabulations = new ArrayList<>();
 
     private final List<ColumnTabulation> nonPluginTabulations = new ArrayList<>();
@@ -436,6 +442,9 @@ public class ConfigurableList {
         Map<String, Object> context = new HashMap<>();
 //        context.put("isAdmin", isAdmin);
 
+        for (AddRowsListener addRowsListener : addRowsListeners) {
+            addRowsListener.addRows(entityList, context);
+        }
         for (Object entity : entityList) {
             // evaluate expression to get ID
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
@@ -1141,5 +1150,9 @@ public class ConfigurableList {
             }
         } while (!currentString.isEmpty());
         return finalString.toString();
+    }
+
+    public void addListener(AddRowsListener addRowsListener) {
+        addRowsListeners.add(addRowsListener);
     }
 }
