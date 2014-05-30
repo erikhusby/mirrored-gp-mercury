@@ -65,8 +65,8 @@ public class ConfigurableListContainerTest extends Arquillian {
         Assert.assertEquals(resultList.getResultRows().size(), 92);
         // todo jmt why does 1090466540 return nothing for stock sample?  Search in Mercury shows SM-4NFIJ, BSP shows terminated, material type doesn't include "active stock"
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(1);
-        Assert.assertEquals(resultRow.getResultId(), "1090469488");
-        Assert.assertEquals(resultRow.getRenderableCells().get(1), "SM-4NFGH");
+        Assert.assertEquals(resultRow.getResultId(), "0162998809");
+        Assert.assertEquals(resultRow.getRenderableCells().get(2), "SM-5CQ9Y");
 
     }
 }

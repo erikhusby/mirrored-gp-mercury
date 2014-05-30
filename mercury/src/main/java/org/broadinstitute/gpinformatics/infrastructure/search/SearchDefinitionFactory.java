@@ -29,77 +29,18 @@ public class SearchDefinitionFactory {
 
     @SuppressWarnings("FeatureEnvy")
     public ConfigurableSearchDefinition buildLabVesselSearchDef() {
-        List<SearchTerm> searchTerms = new ArrayList<>();
-
-        SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("LCSET");
-        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
-        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "labBatch"));
-        criteriaPath.setPropertyName("batchName");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                List<String> results = new ArrayList<>();
-                LabVessel labVessel = (LabVessel) entity;
-                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        results.add(bucketEntry.getLabBatch().getBatchName());
-                    }
-                }
-                return results;
-            }
-        });
-        searchTerms.add(searchTerm);
-
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Label");
-        criteriaPaths = new ArrayList<>();
-        criteriaPath = new SearchTerm.CriteriaPath();
-        criteriaPath.setPropertyName("label");
-        criteriaPaths.add(criteriaPath);
-        searchTerm.setCriteriaPaths(criteriaPaths);
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                LabVessel labVessel = (LabVessel) entity;
-                return labVessel.getLabel();
-            }
-        });
-        searchTerms.add(searchTerm);
-
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new HashMap<>();
+
+        List<SearchTerm> searchTerms = buildLabVesselIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
         // Are there alternatives to search terms that aren't searchable?  Should they be in a different structure, then merged with search terms for display?
 
-        // How to batch BSP access?  Need a pre-process phase: if there are any BSP columns then gather sample IDs and all columns; make web service call and cache results.
-
         // XX version - from workflow? 3.2 doesn't seem to be in XML
         // Start date - LabBatch.createdOn? usually 1 day before "scheduled to start"
         // Due date - LabBatch.dueDate is transient!
-        // Stock sample ID - from BSP, not searchable
-        searchTerm = new SearchTerm();
-        searchTerm.setName("Label");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                LabVessel labVessel = (LabVessel) entity;
-                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
-                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
-                        BspSampleSearchAddRowsListener.BSP_LISTENER);
-                return bspColumns.getColumn(mercurySample.getSampleKey(), BSPSampleSearchColumn.STOCK_SAMPLE);
-            }
-        });
-        searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                return BSPSampleSearchColumn.STOCK_SAMPLE;
-            }
-        });
-        searchTerms.add(searchTerm);
+        searchTerms = buildLabVesselBsp();
+        mapGroupSearchTerms.put("BSP", searchTerms);
 
         // Raising volume to 65ul - sample annotation?
         // Sample History (1st Plating, Rework from Shearing, Rework from LC, Rework from Pooling, 2nd Plating) - from bucket entries?
@@ -163,5 +104,74 @@ public class SearchDefinitionFactory {
                 "LabVessel", LabVessel.class.getName(), "label", 50, criteriaProjections, mapGroupSearchTerms);
         mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
         return configurableSearchDefinition;
+    }
+
+    private List<SearchTerm> buildLabVesselBsp() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+        // Stock sample ID - from BSP, not searchable
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Stock Sample ID");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
+                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
+                        BspSampleSearchAddRowsListener.BSP_LISTENER);
+                return bspColumns.getColumn(mercurySample.getSampleKey(), BSPSampleSearchColumn.STOCK_SAMPLE);
+            }
+        });
+        searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return BSPSampleSearchColumn.STOCK_SAMPLE;
+            }
+        });
+        searchTerms.add(searchTerm);
+        return searchTerms;
+    }
+
+    private List<SearchTerm> buildLabVesselIds() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("LCSET");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "labBatch"));
+        criteriaPath.setPropertyName("batchName");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> results = new ArrayList<>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        results.add(bucketEntry.getLabBatch().getBatchName());
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Label");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("label");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                return labVessel.getLabel();
+            }
+        });
+        searchTerms.add(searchTerm);
+        return searchTerms;
     }
 }
