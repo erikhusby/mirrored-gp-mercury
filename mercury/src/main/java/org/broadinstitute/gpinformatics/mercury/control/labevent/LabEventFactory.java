@@ -1031,6 +1031,8 @@ public class LabEventFactory implements Serializable {
                 LabEventMetadata labEventMetadata =
                         new LabEventMetadata(labEventMetadataType, metadataType.getValue());
                 labEvent.addMetadata(labEventMetadata);
+            } else {
+                throw new RuntimeException("Failed to find metadata " + metadataType.getName());
             }
         }
     }
