@@ -5,10 +5,14 @@ import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.net.URL;
@@ -48,8 +52,28 @@ public class CadencePicoDbTest extends ContainerTest {
 
         String batchId = "BP-" + testSuffix;
 
-
         SamplesPicoDbTest.createBatch(baseUrl, client, batchId, picoSampleTubeBarcodes);
         SamplesPicoDbTest.sendMessages(baseUrl, client, cadencePicoJaxbBuilder.getMessageList());
+
+        //fetches plate transfers for batchless
+        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/transfersToFirstAncestorRack")
+                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
+                .get(LabEventResponseBean.class);
+        List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
+        Assert.assertEquals(2, labEventBeans.size(), "Wrong number of lab events");
+        SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
+
+        LabEventBean dilutionLabEvent = labEventBeans.get(0);
+        List<MetadataBean> metadataBeans = dilutionLabEvent.getMetadatas();
+        Assert.assertEquals(1, metadataBeans.size());
+        MetadataBean metadataBean = metadataBeans.get(0);
+        Assert.assertEquals("DilutionFactor", metadataBean.getName());
+
+        //Fetch reagent addition message for batchless
+        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEventsByPlateBarcodes")
+                .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
+                .get(LabEventResponseBean.class);
+        labEventBeans = labEventResponseBean.getLabEventBeans();
+        Assert.assertEquals(1, labEventBeans.size(), "Wrong number of lab events");
     }
 }

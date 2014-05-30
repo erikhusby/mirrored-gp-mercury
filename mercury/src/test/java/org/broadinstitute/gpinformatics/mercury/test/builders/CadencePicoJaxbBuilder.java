@@ -25,6 +25,8 @@ public class CadencePicoJaxbBuilder {
     private PlateTransferEventType picoDilutionTransferJaxb;
     private PlateTransferEventType picoMicrofluorTransferJaxb;
     private PlateEventType picoBufferAdditionJaxb;
+    private String picoDilutionBarcode;
+    private String picoMicrofluorBarcode;
 
     public CadencePicoJaxbBuilder(
             BettaLimsMessageTestFactory bettaLimsMessageTestFactory, String testPrefix,
@@ -68,5 +70,25 @@ public class CadencePicoJaxbBuilder {
 
     public List<BettaLIMSMessage> getMessageList() {
         return messageList;
+    }
+
+    public PlateTransferEventType getPicoDilutionTransferJaxb() {
+        return picoDilutionTransferJaxb;
+    }
+
+    public PlateTransferEventType getPicoMicrofluorTransferJaxb() {
+        return picoMicrofluorTransferJaxb;
+    }
+
+    public PlateEventType getPicoBufferAdditionJaxb() {
+        return picoBufferAdditionJaxb;
+    }
+
+    public String getPicoDilutionBarcode() {
+        return picoDilutionBarcode;
+    }
+
+    public String getPicoMicrofluorBarcode() {
+        return picoMicrofluorBarcode;
     }
 }
