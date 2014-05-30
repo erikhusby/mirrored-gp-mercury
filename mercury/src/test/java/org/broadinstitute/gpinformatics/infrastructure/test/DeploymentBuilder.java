@@ -57,6 +57,7 @@ public class DeploymentBuilder {
                 .addAsResource(new File("src/main/resources/templates/WorkflowValidation.ftl"),
                         "templates/WorkflowValidation.ftl")
                 .addPackages(true, "org.broadinstitute.gpinformatics")
+                .addPackages(true, "edu.mit.broad.prodinfo.bean.generated")
                 .addAsWebInfResource(new StringAsset(DeploymentProducer.MERCURY_DEPLOYMENT + "=" + deployment.name()),
                         "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");

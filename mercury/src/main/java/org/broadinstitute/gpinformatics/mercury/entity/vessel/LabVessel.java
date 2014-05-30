@@ -188,9 +188,6 @@ public abstract class LabVessel implements Serializable {
     private Set<LabMetric> labMetrics = new HashSet<>();
 
     @Transient
-    private Integer sampleInstanceCount;
-
-    @Transient
     private Map<String, Set<LabMetric>> metricMap;
 
     /**
@@ -549,6 +546,17 @@ public abstract class LabVessel implements Serializable {
         labBatches.add(labBatchStartingVessel);
     }
 
+    public String getLastEventName() {
+        String eventName = "";
+        List<LabEvent> eventList = new ArrayList<>(getInPlaceAndTransferToEvents());
+        Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
+
+        if (!eventList.isEmpty()) {
+            eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
+        }
+        return eventName;
+    }
+
     public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -706,11 +714,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
-        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
-        if (sampleInstanceCount == null) {
-            sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
-        }
-        return sampleInstanceCount;
+        return getSampleInstances(sampleType, batchType).size();
     }
 
     /**

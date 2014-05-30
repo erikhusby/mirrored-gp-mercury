@@ -18,7 +18,6 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,6 +65,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingTrackerResolution;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SquidLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspGroupCollectionTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BspShippingLocationTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -74,10 +74,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.LabEventSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.BSPKitRequestService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
@@ -93,7 +93,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.jvnet.inflector.Noun;
 
@@ -101,7 +100,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.Format;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -134,11 +132,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
-    private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    public static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
 
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
+    private static final String SQUID_COMPONENTS_ACTION = "squidComponent";
     private static final String SET_RISK = "setRisk";
     private static final String RECALCULATE_RISK = "recalculateRisk";
     protected static final String PLACE_ORDER = "placeOrder";
@@ -205,6 +204,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private QuoteLink quoteLink;
 
     @Inject
+    private SquidLink squidLink;
+
+    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -248,8 +250,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<Long> sampleIdsForGetBspData;
 
     private final CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
-
-    private static final Format dateFormatter = FastDateFormat.getInstance(DATE_PATTERN);
 
     private boolean skipRegulatoryInfo;
 
@@ -526,10 +526,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private void requireField(boolean hasValue, String name, String action) {
         if (!hasValue) {
             addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
-                                     org.broadinstitute.gpinformatics.infrastructure.common.StringUtils
-                                             .splitCamelCase(action),
-                                     editOrder.getName(),
-                                     name);
+                    MercuryStringUtils
+                            .splitCamelCase(action),
+                    editOrder.getName(),
+                    name);
         }
     }
 
@@ -1083,7 +1083,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private Resolution createViewResolution(String businessKey) {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
-                                                                                              businessKey);
+                businessKey);
+    }
+
+    @HandlesEvent(SQUID_COMPONENTS_ACTION)
+    public Resolution squidComponent() {
+        return new ForwardResolution(SquidComponentActionBean.class, SquidComponentActionBean.ENTER_COMPONENTS_ACTION);
     }
 
     @HandlesEvent(VALIDATE_ORDER)
@@ -1328,66 +1333,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 if (sample.isInBspFormat()) {
-                    setupSampleDTOItems(sample, item);
+                    ProductOrderSampleJsonFactory.setupSampleDTOItems(sample, item);
                 } else {
-                    setupEmptyItems(sample, item);
+                    ProductOrderSampleJsonFactory.setupEmptyItems(sample, item);
                 }
                 itemList.put(item);
             }
         }
         return createTextResolution(itemList.toString());
-    }
-
-    private static void setupSampleDTOItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        BSPSampleDTO bspSampleDTO = sample.getBspSampleDTO();
-
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, bspSampleDTO.getCollaboratorsSampleName());
-        item.put(BSPSampleDTO.PATIENT_ID, bspSampleDTO.getPatientId());
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, bspSampleDTO.getCollaboratorParticipantId());
-        item.put(BSPSampleDTO.VOLUME, bspSampleDTO.getVolume());
-        item.put(BSPSampleDTO.CONCENTRATION, bspSampleDTO.getConcentration());
-        item.put(BSPSampleDTO.JSON_RIN_KEY, bspSampleDTO.getRinScore());
-        item.put(BSPSampleDTO.PICO_DATE, formatPicoRunDate(bspSampleDTO.getPicoRunDate(), "No Pico"));
-        item.put(BSPSampleDTO.TOTAL, bspSampleDTO.getTotal());
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH,
-                 bspSampleDTO.getHasSampleKitUploadRackscanMismatch());
-        item.put(BSPSampleDTO.COMPLETELY_BILLED, sample.isCompletelyBilled());
-
-        LabEventSampleDTO labEventSampleDTO = sample.getLabEventSampleDTO();
-
-        if (labEventSampleDTO != null) {
-            item.put(BSPSampleDTO.PACKAGE_DATE, labEventSampleDTO.getSamplePackagedDate());
-            item.put(BSPSampleDTO.RECEIPT_DATE, labEventSampleDTO.getSampleReceiptDate());
-        } else {
-            item.put(BSPSampleDTO.PACKAGE_DATE, "");
-            item.put(BSPSampleDTO.RECEIPT_DATE, "");
-        }
-    }
-
-    private static String formatPicoRunDate(Date picoRunDate, String defaultReturn) {
-
-        String returnValue = defaultReturn;
-        if (picoRunDate != null) {
-            returnValue = dateFormatter.format(picoRunDate);
-        }
-
-        return returnValue;
-    }
-
-    private static void setupEmptyItems(ProductOrderSample sample, JSONObject item) throws JSONException {
-        item.put(BSPSampleDTO.SAMPLE_ID, sample.getProductOrderSampleId());
-        item.put(BSPSampleDTO.COLLABORATOR_SAMPLE_ID, "");
-        item.put(BSPSampleDTO.PATIENT_ID, "");
-        item.put(BSPSampleDTO.COLLABORATOR_PARTICIPANT_ID, "");
-        item.put(BSPSampleDTO.VOLUME, "");
-        item.put(BSPSampleDTO.CONCENTRATION, "");
-        item.put(BSPSampleDTO.JSON_RIN_KEY, "");
-        item.put(BSPSampleDTO.PICO_DATE, "");
-        item.put(BSPSampleDTO.TOTAL, "");
-        item.put(BSPSampleDTO.HAS_SAMPLE_KIT_UPLOAD_RACKSCAN_MISMATCH, "");
-        item.put(BSPSampleDTO.PACKAGE_DATE, "");
-        item.put(BSPSampleDTO.RECEIPT_DATE, "");
     }
 
     @HandlesEvent("getSupportsSkippingQuote")
@@ -1481,11 +1434,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples, riskStatus,
                 riskComment);
 
-        addMessage("Set manual on risk to {1} for {0} samples.", selectedProductOrderSampleIds.size(), riskStatus);
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} set manual on risk to {2} for {1} samples.",
-                                              userBean.getLoginUserName(), selectedProductOrderSampleIds.size(),
-                                              riskStatus));
+        addMessage("Set manual on risk to {0} for {1} samples.", riskStatus, selectedProductOrderSampleIds.size());
+
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1604,6 +1554,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getQuoteUrl() {
         return getQuoteUrl(editOrder.getQuoteId());
+    }
+
+    public String getSquidWorkRequestUrl(String workRequestId) {
+        return squidLink.workRequestUrl(workRequestId);
+    }
+
+    public String getSquidWorkRequestUrl() {
+        return getSquidWorkRequestUrl(editOrder.getSquidWorkRequest());
     }
 
     public String getProductOrder() {
