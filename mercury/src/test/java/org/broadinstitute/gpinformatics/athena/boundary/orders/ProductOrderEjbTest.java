@@ -167,6 +167,4 @@ public class ProductOrderEjbTest {
         productOrderEjb.addManualOnRisk(bspUser, productOrder.getJiraTicketKey(), productOrderSamples, isRisk, comment);
         Assert.assertEquals(productOrder.countItemsOnRisk(), failureCount);
     }
-
-//    private void buildProductO
 }
