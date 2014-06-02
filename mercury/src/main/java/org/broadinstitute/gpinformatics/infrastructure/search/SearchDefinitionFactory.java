@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -13,8 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Configurable search definition for LabVessel.
+ * Configurable search definitions for various entities.
  */
+@SuppressWarnings("FeatureEnvy")
 public class SearchDefinitionFactory {
 
     private Map<String, ConfigurableSearchDefinition> mapNameToDef = new HashMap<>();
@@ -27,7 +29,6 @@ public class SearchDefinitionFactory {
         return mapNameToDef.get(entity);
     }
 
-    @SuppressWarnings("FeatureEnvy")
     public ConfigurableSearchDefinition buildLabVesselSearchDef() {
         Map<String, List<SearchTerm>> mapGroupSearchTerms = new HashMap<>();
 
@@ -42,17 +43,11 @@ public class SearchDefinitionFactory {
         searchTerms = buildLabVesselBsp();
         mapGroupSearchTerms.put("BSP", searchTerms);
 
+        searchTerms = buildLabVesselBuckets();
+        mapGroupSearchTerms.put("Buckets", searchTerms);
+
         // Raising volume to 65ul - sample annotation?
-        // Sample History (1st Plating, Rework from Shearing, Rework from LC, Rework from Pooling, 2nd Plating) - from bucket entries?
-        // Collaborator sample ID - from BSP
-        // Collaborator Participant ID - from BSP
-        // Tumor / Normal - from BSP
-        // Collection - from BSP
-        // PDO - from bucket entry
-        // Original Material Type - from BSP
-        // Stock Sample Initial ng - from BSP?
         // Billing Risk - from PDO
-        // Original LCSET - if rework, get non-rework bucket entry
         // Kapa QC Score - uploaded
         // Pull sample if low input and Kapa QC? - sample annotation?
         // Exported Sample Well - from export lab batch
@@ -106,34 +101,10 @@ public class SearchDefinitionFactory {
         return configurableSearchDefinition;
     }
 
-    private List<SearchTerm> buildLabVesselBsp() {
-        List<SearchTerm> searchTerms = new ArrayList<>();
-        // Stock sample ID - from BSP, not searchable
-        SearchTerm searchTerm = new SearchTerm();
-        searchTerm.setName("Stock Sample ID");
-        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                LabVessel labVessel = (LabVessel) entity;
-                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
-                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
-                        BspSampleSearchAddRowsListener.BSP_LISTENER);
-                return bspColumns.getColumn(mercurySample.getSampleKey(), BSPSampleSearchColumn.STOCK_SAMPLE);
-            }
-        });
-        searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
-            @Override
-            public Object evaluate(Object entity, Map<String, Object> context) {
-                return BSPSampleSearchColumn.STOCK_SAMPLE;
-            }
-        });
-        searchTerms.add(searchTerm);
-        return searchTerms;
-    }
-
     private List<SearchTerm> buildLabVesselIds() {
         List<SearchTerm> searchTerms = new ArrayList<>();
 
+        // todo jmt look at search inputs, to show only LCSET that was searched on?
         SearchTerm searchTerm = new SearchTerm();
         searchTerm.setName("LCSET");
         List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
@@ -172,6 +143,116 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+        return searchTerms;
+    }
+
+    private List<SearchTerm> buildLabVesselBsp() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        // Stock sample ID - from BSP, not searchable
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.STOCK_SAMPLE, "Stock Sample ID"));
+        // Collaborator sample ID - from BSP
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Collaborator Sample ID"));
+        // Collaborator Participant ID - from BSP
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLABORATOR_PARTICIPANT_ID,
+                "Collaborator Participant ID"));
+        // Tumor / Normal - from BSP
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.TUMOR_NORMAL, "Tumor / Normal"));
+        // Collection - from BSP
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.COLLECTION, "Collection"));
+        // Original Material Type - from BSP
+        searchTerms.add(buildLabVesselBspTerm(BSPSampleSearchColumn.ORIGINAL_MATERIAL_TYPE, "Original Material Type"));
+        // todo Stock Sample Initial ng - from BSP?
+        return searchTerms;
+    }
+
+    private SearchTerm buildLabVesselBspTerm(final BSPSampleSearchColumn bspSampleSearchColumn, String name) {
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName(name);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabVessel labVessel = (LabVessel) entity;
+                MercurySample mercurySample = labVessel.getMercurySamples().iterator().next();
+                BspSampleSearchAddRowsListener bspColumns = (BspSampleSearchAddRowsListener) context.get(
+                        BspSampleSearchAddRowsListener.BSP_LISTENER);
+                return bspColumns.getColumn(mercurySample.getSampleKey(), bspSampleSearchColumn);
+            }
+        });
+        searchTerm.setAddRowsListenerHelper(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return bspSampleSearchColumn;
+            }
+        });
+        return searchTerm;
+    }
+
+    private List<SearchTerm> buildLabVesselBuckets() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        // Sample History (1st Plating, Rework from Shearing, Rework from LC, Rework from Pooling, 2nd Plating)
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Sample History");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> results = new ArrayList<>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    if (bucketEntry.getLabBatch() != null) {
+                        Bucket bucket = bucketEntry.getBucket();
+                        if (bucketEntry.getReworkDetail() == null) {
+                            if ("Pico/Plating Bucket".equals(bucket.getBucketDefinitionName())) {
+                                results.add("1st Plating");
+                            }
+                        } else {
+                            switch (bucket.getBucketDefinitionName()) {
+                            case "Pico/Plating Bucket":
+                                results.add("2nd Plating");
+                                break;
+                            case "Shearing Bucket":
+                                results.add("Rework from Shearing");
+                                break;
+                            case "Hybridization Bucket":
+                                results.add("Rework from LC");
+                                break;
+                            case "Pooling Bucket":
+                                results.add("Rework from Pooling");
+                                break;
+                            }
+                        }
+                    }
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        // PDO
+        searchTerm = new SearchTerm();
+        searchTerm.setName("PDO");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setCriteria(Arrays.asList("bucketEntries", "productOrder"));
+        criteriaPath.setPropertyName("jiraTicketKey");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                List<String> results = new ArrayList<>();
+                LabVessel labVessel = (LabVessel) entity;
+                for (BucketEntry bucketEntry : labVessel.getBucketEntries()) {
+                    results.add(bucketEntry.getProductOrder().getJiraTicketKey());
+                }
+                return results;
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        // Original LCSET - if rework, get non-rework bucket entry
+
         return searchTerms;
     }
 }
