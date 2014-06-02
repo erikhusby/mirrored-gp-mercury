@@ -1430,7 +1430,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
 
-        productOrderEjb.setManualOnRisk(
+        productOrderEjb.addManualOnRisk(
                 getUserBean().getBspUser(), editOrder.getBusinessKey(), selectedProductOrderSamples, riskStatus,
                 riskComment);
 

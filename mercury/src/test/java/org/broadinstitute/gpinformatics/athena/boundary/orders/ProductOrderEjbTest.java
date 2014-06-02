@@ -1,16 +1,20 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -18,10 +22,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
@@ -33,8 +40,8 @@ public class ProductOrderEjbTest {
 
     private UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
-    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null, null, mockUserBean, null,
-            null, null
+    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
+            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null
     );
 
 
@@ -122,4 +129,44 @@ public class ProductOrderEjbTest {
         ProductOrderEjb pdoEjb = new ProductOrderEjb();
         pdoEjb.validateQuote(pdo, new QuoteServiceStub());
     }
+
+    public void testJiraCommentString(){
+        String jiraComment = productOrderEjb.buildJiraCommentForRiskString("at risk", "QADudeDEV", 2, true);
+        Assert.assertEquals(jiraComment, "QADudeDEV set manual on risk to true for 2 samples with comment:\nat risk");
+    }
+
+    @DataProvider
+    public Object[][] manualAtRiskDataProvider() {
+        String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
+        BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
+        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+        Mockito.when(productOrderDaoMock.findByBusinessKey(productOrder.getBusinessKey())).thenReturn(productOrder);
+        List<ProductOrderSample> productOrderSamples = productOrder.getSamples().subList(0, 2);
+
+        return new Object[][]{
+                new Object[]{
+                        productOrder, qaDudeUser, productOrderSamples,
+                        true, // atRisk
+                        "at risk", // Comment
+                        productOrderSamples.size() // failure count
+                },
+                new Object[]{
+                        productOrder, qaDudeUser, productOrderSamples,
+                        false, // atRisk
+                        "no risk", // Comment
+                        0 // failure count
+                }
+        };
+
+    }
+    @Test(dataProvider = "manualAtRiskDataProvider")
+    public void testManualAtRisk(ProductOrder productOrder, BspUser bspUser,
+                                 List<ProductOrderSample> productOrderSamples, boolean isRisk, String comment,
+                                 int failureCount) throws IOException {
+
+        productOrderEjb.addManualOnRisk(bspUser, productOrder.getJiraTicketKey(), productOrderSamples, isRisk, comment);
+        Assert.assertEquals(productOrder.countItemsOnRisk(), failureCount);
+    }
+
+//    private void buildProductO
 }
