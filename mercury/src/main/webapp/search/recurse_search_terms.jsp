@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%-- This JSP fragment recurses over a user-defined search instance, rendering form fields.
- The field names will be set by JavaScript in configurablesearch.jsp, when the user submits the form --%>
+ The field names will be set by JavaScript in configurable_search.jsp, when the user submits the form --%>
 
 <%--@elvariable id="searchValues" type="java.util.List<org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance.SearchValue>"--%>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
@@ -171,7 +171,7 @@
         </c:if>
         <%-- Recurse over sub-terms --%>
         <c:set var="searchValues" value="${searchValue.children}" scope="request"/>
-        <jsp:include page="recursesearchterms.jsp"/>
+        <jsp:include page="recurse_search_terms.jsp"/>
     </div>
     <c:if test="${empty searchValue.parent}">
         <br id="${uniqueId}_br"/>

@@ -4,9 +4,9 @@
 <%-- This page allows the user to construct a user-defined search.  It is also used to display
  pre-constructed, read-only searches like Cancer Phenotype Search. --%>
 
-<tiles:insert page="/tiles/layout/standard_template.jsp">
-<tiles:put name="title" value="User-Defined Search"/>
-<tiles:put name="body" type="string">
+<stripes:layout-render name="/layout.jsp" pageTitle="User-Defined Search" sectionTitle="User-Defined Search">
+<stripes:layout-component name="extraHead">
+
 <script src="${ctxpath}/scripts/searchUtils.js" type="text/javascript"></script>
 <script type="text/javascript">
     /** Disable return key, to prevent inadvertently loading saved searches */
@@ -33,13 +33,14 @@
         }
     }
 </script>
+</stripes:layout-component>
+<stripes:layout-component name="content">
 
 <c:choose>
     <c:when test="${actionBean.readOnly}">
         <h1>${actionBean.selectedSearchName}</h1>
     </c:when>
     <c:otherwise>
-        <h1>User-Defined Search</h1>
         Add search terms, then choose result columns, then click the Search button.
         Click the plus sign to expand the Saved Searches section and save your search,
         or load a saved search.
@@ -127,15 +128,15 @@ Move the mouse over the question marks to see details about each section.
         <div id="searchInstanceDiv">
             <%-- Render existing search --%>
             <c:set var="searchValues" value="${actionBean.searchInstance.searchValues}" scope="request"/>
-            <jsp:include page="recursesearchterms.jsp"/>
+            <jsp:include page="recurse_search_terms.jsp"/>
         </div>
     </fieldset>
     <fieldset>
         <legend>Result Columns <img id="resultColumnsTooltip" src="${ctxpath}/images/help.png" alt="help"></legend>
         <!-- Allow user to choose column sets -->
-        <stripes:layout-render name="/layouts/viewColumnSets.jsp"/>
+        <stripes:layout-render name="/columns/view_column_sets.jsp"/>
         <a href="#" onclick="chooseColumnSet();return false;">Choose column set</a>
-        <stripes:layout-render name="/layouts/search/viewColumns.jsp"
+        <stripes:layout-render name="/search/view_columns.jsp"
                                availableMapGroupToColumnNames="${actionBean.availableMapGroupToColumnNames}"
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
 
@@ -155,7 +156,7 @@ Move the mouse over the question marks to see details about each section.
 <!-- Show results -->
 <fieldset title="Samples">
     <legend>Samples</legend>
-    <stripes:layout-render name="/layouts/configurableList.jsp"
+    <stripes:layout-render name="/columns/configurable_list.jsp"
                            entityName="Sample"
                            sessionKey="${actionBean.sessionKey}"
                            columnSetName="${actionBean.columnSetName}"
@@ -562,5 +563,5 @@ function chooseColumnSet() {
         offset: { x: 14, y: 14 }
     });
 </script>
-</tiles:put>
-</tiles:insert>
+</stripes:layout-component>
+</stripes:layout-render>

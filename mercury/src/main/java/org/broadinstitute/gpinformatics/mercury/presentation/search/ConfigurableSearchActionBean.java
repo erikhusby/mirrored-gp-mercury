@@ -52,7 +52,7 @@ import java.util.Random;
  * searches.
  */
 @SuppressWarnings("UnusedDeclaration")
-@UrlBinding("/samplesearch/ConfigurableSearch.action")
+@UrlBinding("/search/ConfigurableSearch.action")
 public class ConfigurableSearchActionBean extends CoreActionBean {
 
     private static final Log log = LogFactory.getLog(ConfigurableSearchActionBean.class);
