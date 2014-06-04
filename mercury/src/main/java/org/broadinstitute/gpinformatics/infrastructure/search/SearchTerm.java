@@ -12,6 +12,7 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -359,6 +360,26 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public void setAddRowsListenerHelper(Evaluator<Object> addRowsListenerHelper) {
         this.addRowsListenerHelper = addRowsListenerHelper;
+    }
+
+    public List<String> getJoinFetchPaths() {
+        List<String> joinFetchPaths = new ArrayList<>();
+        for (CriteriaPath criteriaPath : getCriteriaPaths()) {
+            if (criteriaPath.isJoinFetch() != null && criteriaPath.isJoinFetch()) {
+                if (criteriaPath.getCriteria() != null && !criteriaPath.getCriteria().isEmpty()) {
+                    String associationPath = null;
+                    for (String criteriaName : criteriaPath.getCriteria()) {
+                        if (associationPath == null) {
+                            associationPath = criteriaName;
+                        } else {
+                            associationPath += "." + criteriaName;
+                        }
+                    }
+                    joinFetchPaths.add(associationPath);
+                }
+            }
+        }
+        return joinFetchPaths;
     }
 
     @Override

@@ -9,6 +9,8 @@
  */
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -79,6 +81,15 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
 
     public Map<String, List<SearchTerm>> getMapGroupSearchTerms() {
         return mapGroupSearchTerms;
+    }
+
+    public Map<String, List<ColumnTabulation>> getMapGroupToColumnTabulations() {
+        Map<String, List<ColumnTabulation>> mapGroupToColumnTabulations = new HashMap<>();
+        for (Map.Entry<String, List<SearchTerm>> groupSearchListEntry : mapGroupSearchTerms.entrySet()) {
+            mapGroupToColumnTabulations.put(groupSearchListEntry.getKey(),
+                    new ArrayList<ColumnTabulation>(groupSearchListEntry.getValue()));
+        }
+        return mapGroupToColumnTabulations;
     }
 
     public List<SearchTerm> getRequiredSearchTerms() {

@@ -145,23 +145,7 @@ public class SearchInstance implements Serializable {
         }
 
         public List<String> getJoinFetchPaths() {
-            List<String> joinFetchPaths = new ArrayList<>();
-            for (SearchTerm.CriteriaPath criteriaPath : getSearchTerm().getCriteriaPaths()) {
-                if (criteriaPath.isJoinFetch() != null && criteriaPath.isJoinFetch()) {
-                    if (criteriaPath.getCriteria() != null && !criteriaPath.getCriteria().isEmpty()) {
-                        String associationPath = null;
-                        for (String criteriaName : criteriaPath.getCriteria()) {
-                            if (associationPath == null) {
-                                associationPath = criteriaName;
-                            } else {
-                                associationPath += "." + criteriaName;
-                            }
-                        }
-                        joinFetchPaths.add(associationPath);
-                    }
-                }
-            }
-            return joinFetchPaths;
+            return searchTerm.getJoinFetchPaths();
         }
 
         /**

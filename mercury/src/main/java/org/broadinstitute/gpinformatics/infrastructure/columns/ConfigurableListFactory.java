@@ -78,7 +78,8 @@ public class ConfigurableListFactory {
 //        EntityPreferenceFactory entityPreferenceFactory = new EntityPreferenceFactory();
 //        PreferenceDefinitionListNameListString columnSets = entityPreferenceFactory.getColumnSets(columnSetDomain,
 //                domainUser, sampleCollection.getGroup(), sampleCollection, entityName);
-        Preference globalPreference = preferenceDao.getGlobalPreference(PreferenceType.COLUMN_SETS);
+        // todo jmt other entities
+        Preference globalPreference = preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_COLUMN_SETS);
         ColumnSetsPreference columnSetsPreference;
         try {
             columnSetsPreference =
@@ -104,4 +105,138 @@ public class ConfigurableListFactory {
 
         return columnTabulations;
     }
+
+    public ColumnSetsPreference getColumnSets(PreferenceType.PreferenceScope columnSetDomain, String entityName) {
+        try {
+            // todo jmt other scopes and entities
+            return (ColumnSetsPreference) preferenceDao.getGlobalPreference(
+                    PreferenceType.GLOBAL_LAB_VESSEL_COLUMN_SETS).getPreferenceDefinition().getDefinitionValue();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // todo jmt merge with ColumnSetsPreference?
+    public static class ColumnSet {
+        private final PreferenceType.PreferenceScope level;
+
+        private final String name;
+
+        private final List<String> columns;
+
+        ColumnSet(PreferenceType.PreferenceScope level, String name, List<String> columns) {
+            this.level = level;
+            this.name = name;
+            this.columns = columns;
+        }
+
+        public PreferenceType.PreferenceScope getLevel() {
+            return level;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<String> getColumns() {
+            return columns;
+        }
+    }
+
+    /**
+     * Gets a list of all column sets that apply to the current user, project and group,
+     * including the global sets.
+     *
+     * @param columnSetType     type of column set
+     * @param bspDomainUser     to retrieve preferences and evaluate visibility expression
+     * @param group             to retrieve preferences, and evaluate visibility expression
+     * @param sampleCollection  to retrieve preferences, and evaluate visibility expression
+     * @param globalColumnSets  type of columns sets for global scope
+     * @param groupColumnSets   type of columns sets for group scope
+     * @param projectColumnSets type of column sets for project scope
+     * @param userColumnSets    type of column sets for user scope
+     * @return list of all applicable column sets
+     */
+    public List<ColumnSet> getColumnSubsets(ConfigurableList.ColumnSetType columnSetType, /*BspDomainUser bspDomainUser,
+            Group group, SampleCollection sampleCollection,*/
+            PreferenceType globalColumnSets/*,
+            PreferenceType.Type groupColumnSets,
+            PreferenceType.Type projectColumnSets,
+            PreferenceType.Type userColumnSets*/) {
+
+        List<ColumnSet> columnSets = new ArrayList<>();
+        Preference preference = preferenceDao.getGlobalPreference(globalColumnSets);
+/*
+        evalVisibilityExpression(columnSetType, columnSets, preference, PreferenceDomain.domain.GLOBAL,
+                bspDomainUser, group);
+*/
+
+/*
+            // A user can have no group selected for their initial login.
+            if (group != null && groupColumnSets != null) {
+                Long groupId = group.getGroupId();
+                preference = preferenceManager.getGroupPreference(groupId, groupColumnSets);
+                evalVisibilityExpression(columnSetType, columnSets, preference, PreferenceDomain.domain.GROUP,
+                        bspDomainUser, group);
+            }
+
+            // BSP-2240 A user can have no collection selected.
+            if (sampleCollection != null && projectColumnSets != null) {
+                Long projectId = sampleCollection.getCollectionId();
+                preference = preferenceManager.getProjectPreference(projectId, projectColumnSets);
+                evalVisibilityExpression(columnSetType, columnSets, preference, PreferenceDomain.domain.PROJECT,
+                        bspDomainUser, group);
+            }
+*/
+
+/*
+        if (userColumnSets != null) {
+            preference = preferenceManager.getUserPreference(bspDomainUser, userColumnSets);
+            evalVisibilityExpression(columnSetType, columnSets, preference, PreferenceDomain.domain.USER,
+                    bspDomainUser, group);
+        }
+*/
+        return columnSets;
+    }
+
+    /**
+     * Pick the column sets that are visible to the user.
+     *
+     * @param columnSetType     view or download
+     * @param visibleColumnSets this method adds visible column sets to this list
+     * @param preference        all column sets
+     * @param domain            preference level
+     * @param bspDomainUser     used to evaluate visibility expression
+     * @param group             used to evaluate visibility expression
+     */
+/*
+    private static void evalVisibilityExpression(ColumnSetType columnSetType, List<ColumnSet> visibleColumnSets,
+            Preference preference, PreferenceDomain.domain domain,
+            BspDomainUser bspDomainUser, Group group) {
+        PreferenceDefinitionListNameListString listNameListString;
+        if (preference != null) {
+            listNameListString = (PreferenceDefinitionListNameListString) preference.getPreferenceDefinition();
+            if (listNameListString != null) {
+                Map<String, Object> context = new HashMap<>();
+                context.put("columnSetType", columnSetType);
+                context.put("bspDomainUser", bspDomainUser);
+                context.put("group", group);
+                for (PreferenceDefinitionNameListString nameListString : listNameListString.getListNamedList()) {
+                    List<String> columns = nameListString.getList();
+                    Boolean useSet = false;
+                    try {
+                        useSet = (Boolean) MVEL.eval(columns.get(0), context);
+                    } catch (Exception e) {
+                        log.error(String.format("Evaluating expression %s : %s", columns.get(0), e));
+                    }
+                    if (useSet) {
+                        // remove visibility expression.
+                        visibleColumnSets.add(new ColumnSet(domain, nameListString.getName(), columns.subList(1,
+                                columns.size())));
+                    }
+                }
+            }
+        }
+    }
+*/
 }
