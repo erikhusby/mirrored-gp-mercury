@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
@@ -108,7 +110,8 @@ public class BillingAdaptor implements Serializable {
         List<BillingEjb.BillingResult> results = new ArrayList<>();
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
-
+        FastDateFormat dateTimeInstance =
+                FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
                     billingSession.getUnBilledQuoteImportItems(priceListCache);
@@ -137,10 +140,17 @@ public class BillingAdaptor implements Serializable {
                                                                  pageUrl, "billingSession", sessionKey);
 
                     result.setWorkId(workId);
-                    log.debug("workId" + workId + " for " + item.getLedgerItems().size() + " ledger items at "
-                             + new Date());
-
-                    billingEjb.updateLedgerEntries(item, quoteIsReplacing,workId);
+                    Set<String> billedPdoKeys = getBilledPdoKeys(result);
+                    String billingLogText = String.format(
+                            "WorkItem '%s' with completion date of '%s' posted at '%s' for '%s' on behalf of %d samples in '%s'",
+                            workId,
+                            dateTimeInstance.format(item.getWorkCompleteDate()),
+                            dateTimeInstance.format(new Date()),
+                            quotePriceItem.getName(),
+                            item.getNumSamples().length(),
+                            billedPdoKeys);
+                    log.info(billingLogText);
+                    billingEjb.updateLedgerEntries(item, quoteIsReplacing, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
@@ -173,6 +183,18 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    /**
+     * @return returns a list of unique PDO keys for a list of billing results.
+     */
+    private Set<String> getBilledPdoKeys(BillingEjb.BillingResult billingResult) {
+        Set<String> pdoKeys = new HashSet<>();
+        for (LedgerEntry ledgerEntry : billingResult.getQuoteImportItem().getLedgerItems()) {
+            pdoKeys.add(ledgerEntry.getProductOrderSample().getProductOrder().getBusinessKey());
+        }
+
+        return pdoKeys;
     }
 
     /**
