@@ -134,7 +134,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * For single page results, which result set column to in-memory sort by, default to
      * first
      */
-    private int sortColumnIndex = 0;
+    private int sortColumnIndex;
 
     /**
      * For multi-page results, the Hibernate property to order by
@@ -233,8 +233,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
             @Override
             public Preference createNewPreference(CoreActionBeanContext bspActionBeanContext) {
-                Preference preference = new Preference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, "");
-                return preference;
+                return new Preference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, "");
             }
 
             @Override
@@ -326,7 +325,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstance = new SearchInstance();
         initEvalContext(searchInstance, getContext());
         searchInstance.addRequired(configurableSearchDef);
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     private void getPreferences() {
@@ -336,19 +335,19 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         try {
             configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
 
-            for (String level : preferenceAccessMap.keySet()) {
-                PreferenceAccess preferenceAccess = preferenceAccessMap.get(level);
+            for (Map.Entry<String, PreferenceAccess> stringPreferenceAccessEntry : preferenceAccessMap.entrySet()) {
+                PreferenceAccess preferenceAccess = stringPreferenceAccessEntry.getValue();
                 Preference preference = preferenceAccess.getPreference(getContext(), preferenceDao);
                 if (preference != null) {
                     SearchInstanceList searchInstanceList =
                             (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
                     for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
-                        searchInstanceNames.add(level + PREFERENCE_SEPARATOR + instance.getName());
+                        searchInstanceNames.add(stringPreferenceAccessEntry.getKey() + PREFERENCE_SEPARATOR + instance.getName());
                     }
                 }
-                preferenceMap.put(level, preference);
+                preferenceMap.put(stringPreferenceAccessEntry.getKey(), preference);
                 if (preferenceAccess.canModifyPreference(getContext())) {
-                    newSearchLevels.add(level);
+                    newSearchLevels.add(stringPreferenceAccessEntry.getKey());
                 }
             }
         } catch (Exception e) {
@@ -365,12 +364,12 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         getPreferences();
         String searchName = null;
         SearchInstanceList searchInstanceList = null;
-        for (String level : preferenceMap.keySet()) {
-            if (selectedSearchName.startsWith(level)) {
-                searchName = selectedSearchName.substring(level.length() + PREFERENCE_SEPARATOR.length());
+        for (Map.Entry<String, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
+            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey())) {
+                searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() + PREFERENCE_SEPARATOR.length());
                 try {
                     searchInstanceList =
-                            (SearchInstanceList) preferenceMap.get(level).getPreferenceDefinition().getDefinitionValue();
+                            (SearchInstanceList) stringPreferenceEntry.getValue().getPreferenceDefinition().getDefinitionValue();
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -388,7 +387,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
         searchInstance.postLoad();
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     // TODO Clear instance
@@ -405,7 +404,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
 
         searchValueList = searchInstance.getSearchValues();
-        return new ForwardResolution("/tiles/samplesearch/searchtermfragment.jsp");
+        return new ForwardResolution("/search/search_term_fragment.jsp");
     }
 
     /**
@@ -427,7 +426,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchValue.addDependentSearchValues();
 
         searchValueList = searchInstance.getSearchValues();
-        return new ForwardResolution("/tiles/samplesearch/searchtermfragment.jsp");
+        return new ForwardResolution("/search/search_term_fragment.jsp");
     }
 
     /**
@@ -440,7 +439,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
         searchValueList = recurseToLeaf(searchInstance.getSearchValues());
-        return new ForwardResolution("/tiles/samplesearch/searchtermfragment.jsp");
+        return new ForwardResolution("/search/search_term_fragment.jsp");
     }
 
     /**
@@ -468,7 +467,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     List<SearchInstance.SearchValue> recurseToLeaf(List<SearchInstance.SearchValue> searchValues) {
         SearchInstance.SearchValue searchValue = searchValues.get(0);
-        if (searchValue.getChildren() == null || searchValue.getChildren().size() == 0) {
+        if (searchValue.getChildren() == null || searchValue.getChildren().isEmpty()) {
             return searchValue.addDependentSearchValues();
         }
         return recurseToLeaf(searchValue.getChildren());
@@ -493,7 +492,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                     .getAttribute(SEARCH_INSTANCE_PREFIX + sessionKey);
         }
         if (searchInstance == null || searchInstance.getSearchValues() == null
-            || searchInstance.getSearchValues().size() == 0) {
+            || searchInstance.getSearchValues().isEmpty()) {
             addGlobalValidationError("You must add at least one search term");
         } else {
             searchInstance.establishRelationships(configurableSearchDef);
@@ -506,7 +505,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 addGlobalValidationError(e.getMessage());
             }
         }
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
 
@@ -542,7 +541,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         // TODO move join-fetch stuff into ListConfig and SearchInstance
         // If the user chose columns to view, use those, else use a pre-defined column set
         List<String> columnNameList;
-        if (searchInstance.getPredefinedViewColumns() != null && searchInstance.getPredefinedViewColumns().size() > 0) {
+        if (searchInstance.getPredefinedViewColumns() != null && !searchInstance.getPredefinedViewColumns().isEmpty()) {
             columnNameList = searchInstance.getPredefinedViewColumns();
         } else {
             // Determine which set of columns to use
@@ -616,7 +615,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 SEARCH_INSTANCE_PREFIX + sessionKey);
         configurableResultList = getSubsequentResultsPage(searchInstance, getContext(), pageNumber, sessionKey,
                 entityName);
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     // todo jmt move out of ActionBean
@@ -646,7 +645,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
         List<String> columnNameList;
-        if (searchInstance.getPredefinedViewColumns() != null && searchInstance.getPredefinedViewColumns().size() > 0) {
+        if (searchInstance.getPredefinedViewColumns() != null && !searchInstance.getPredefinedViewColumns().isEmpty()) {
             columnNameList = searchInstance.getPredefinedViewColumns();
         } else {
             columnNameList = searchInstance.getColumnSetColumnNameList();
@@ -661,11 +660,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 context.isAdmin(), listConfig.getId()*/);
         configurableListUtils.addRows(entityList);
 
-
-        ConfigurableList.ResultList generalSearchResults = configurableListUtils.getResultList();
-
-        // If there are columns that require further searching, do this now.
-        return generalSearchResults; //new SearchManager().postSearchLookup(columnNameList, generalSearchResults);
+        return configurableListUtils.getResultList();
     }
 
     /**
@@ -676,7 +671,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     public Resolution updateSearch() {
         persistSearch(false);
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     /**
@@ -687,7 +682,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     public Resolution saveNewSearch() {
         persistSearch(true);
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     /**
@@ -699,9 +694,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private void persistSearch(boolean newSearch) {
         getPreferences();
         try {
-            SearchInstanceList searchInstanceList;
-            String searchName = null;
-            Preference preference = null;
             boolean save = true;
             // For new searches, check the user's authorization
             if (newSearch) {
@@ -711,6 +703,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 }
             }
             String existingSearchLevel = null;
+            String searchName = null;
+            Preference preference = null;
             if (save) {
                 // Find the existing preference (if any) at the chosen level (each
                 // preference holds many searches)
@@ -740,6 +734,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                 }
             }
             if (save) {
+                SearchInstanceList searchInstanceList;
                 if (preference == null) {
                     // Didn't find an existing preference, so create a new one
                     preference = preferenceAccessMap.get(newSearch ? newSearchLevel : existingSearchLevel)
@@ -803,15 +798,15 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP to display confirmation
      */
     public Resolution deleteSearch() {
+        getPreferences();
         String searchName = null;
         Preference preference = null;
-        getPreferences();
-        for (String level : preferenceMap.keySet()) {
-            if (selectedSearchName.startsWith(level)) {
-                if (preferenceAccessMap.get(selectedSearchName.substring(0, level.length())).canModifyPreference(
+        for (Map.Entry<String, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
+            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey())) {
+                if (preferenceAccessMap.get(selectedSearchName.substring(0, stringPreferenceEntry.getKey().length())).canModifyPreference(
                         getContext())) {
-                    searchName = selectedSearchName.substring(level.length() + PREFERENCE_SEPARATOR.length());
-                    preference = preferenceMap.get(level);
+                    searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() + PREFERENCE_SEPARATOR.length());
+                    preference = stringPreferenceEntry.getValue();
                 } else {
                     addGlobalValidationError("You are not authorized to delete this search");
                 }
@@ -819,7 +814,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             }
         }
         if (preference != null) {
-            SearchInstanceList searchInstanceList = null;
+            SearchInstanceList searchInstanceList;
             try {
                 searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
             } catch (Exception e) {
@@ -844,7 +839,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
         getPreferences();
-        return new ForwardResolution("/tiles/samplesearch/configurablesearch.jsp");
+        return new ForwardResolution("/search/configurable_search.jsp");
     }
 
     public List<ConfigurableListFactory.ColumnSet> getViewColumnSets() {
