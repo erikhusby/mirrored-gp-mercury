@@ -3,17 +3,21 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
- * Created by thompson on 5/22/2014.
+ * Enumeration of the entities for which configurable columns have been created.
  */
 public enum ColumnEntity {
-    LAB_VESSEL(new IdGetter() {
+    LAB_VESSEL("LabVessel", new IdGetter() {
         @Override
         public String getId(Object entity) {
             return ((LabVessel) entity).getLabel();
         }
     });
 
-    ColumnEntity(IdGetter idGetter) {
+    private IdGetter idGetter;
+    private String displayName;
+
+    ColumnEntity(String displayName, IdGetter idGetter) {
+        this.displayName = displayName;
         this.idGetter = idGetter;
     }
 
@@ -21,9 +25,16 @@ public enum ColumnEntity {
         String getId(Object entity);
     }
 
-    private IdGetter idGetter;
-
     public IdGetter getIdGetter() {
         return idGetter;
+    }
+
+    public static ColumnEntity getByName(String displayName) {
+        for (ColumnEntity columnEntity : ColumnEntity.values()) {
+            if (columnEntity.displayName.equals(displayName)) {
+                return columnEntity;
+            }
+        }
+        throw new RuntimeException("ColumnEntity not found for " + displayName);
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.columns;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -42,8 +43,14 @@ public class BspSampleSearchAddRowsListener implements ConfigurableList.AddRowsL
         if (!columnsInitialized) {
             bspSampleSearchColumns.add(BSPSampleSearchColumn.SAMPLE_ID);
             for (ColumnTabulation nonPluginTabulation : nonPluginTabulations) {
-                SearchTerm.Evaluator<Object> addRowsListenerHelper =
-                        ((SearchTerm) nonPluginTabulation).getAddRowsListenerHelper();
+                // todo jmt avoid all this casting
+                SearchTerm searchTerm;
+                if (nonPluginTabulation instanceof SearchInstance.SearchValue) {
+                    searchTerm = ((SearchInstance.SearchValue) nonPluginTabulation).getSearchTerm();
+                } else  {
+                    searchTerm = ((SearchTerm) nonPluginTabulation);
+                }
+                SearchTerm.Evaluator<Object> addRowsListenerHelper = searchTerm.getAddRowsListenerHelper();
                 if (addRowsListenerHelper != null) {
                     BSPSampleSearchColumn bspSampleSearchColumn =
                             (BSPSampleSearchColumn) addRowsListenerHelper.evaluate(null, null);

@@ -7,32 +7,33 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="User-Defined Search" sectionTitle="User-Defined Search">
 <stripes:layout-component name="extraHead">
 
-<script src="${ctxpath}/scripts/searchUtils.js" type="text/javascript"></script>
-<script type="text/javascript">
-    /** Disable return key, to prevent inadvertently loading saved searches */
-    function disableReturnKey(evt) {
-        var evtLocal = (evt) ? evt : ((event) ? event : null);
-        var node = (evtLocal.target) ? evtLocal.target : ((evtLocal.srcElement) ? evtLocal.srcElement : null);
-        if (node.name == "barcode") {
-            return true;
+    <script src="${ctxpath}/resources/scripts/search_utils.js" type="text/javascript"></script>
+    <script src="${ctxpath}/resources/scripts/url-1.8.6.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        /** Disable return key, to prevent inadvertently loading saved searches */
+        function disableReturnKey(evt) {
+            var evtLocal = (evt) ? evt : ((event) ? event : null);
+            var node = (evtLocal.target) ? evtLocal.target : ((evtLocal.srcElement) ? evtLocal.srcElement : null);
+            if (node.name == "barcode") {
+                return true;
+            }
+            return !((evtLocal.keyCode == 13) && (node.type == "text"));
         }
-        return !((evtLocal.keyCode == 13) && (node.type == "text"));
-    }
 
-    document.onkeypress = disableReturnKey;
+        document.onkeypress = disableReturnKey;
 
-    /** Expand and collapse the Saved Searches section */
-    function toggleVisible(id, img) {
-        var div = document.getElementById(id);
-        if (div.style.display == 'block') {
-            img.src = "${ctxpath}/images/plus.gif";
-            div.style.display = "none";
-        } else {
-            img.src = "${ctxpath}/images/minus.gif";
-            div.style.display = "block";
+        /** Expand and collapse the Saved Searches section */
+        function toggleVisible(id, img) {
+            var div = document.getElementById(id);
+            if (div.style.display == 'block') {
+                img.src = "${ctxpath}/images/plus.gif";
+                div.style.display = "none";
+            } else {
+                img.src = "${ctxpath}/images/minus.gif";
+                div.style.display = "block";
+            }
         }
-    }
-</script>
+    </script>
 </stripes:layout-component>
 <stripes:layout-component name="content">
 
@@ -50,12 +51,11 @@ Move the mouse over the question marks to see details about each section.
 <stripes:errors/>
 <stripes:messages/>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
-<stripes:form action="/samplesearch/ConfigurableSearch.action" onsubmit="return validateAndSubmit(this)"
+<stripes:form action="/search/ConfigurableSearch.action" onsubmit="return validateAndSubmit(this)"
               id="searchForm">
     <stripes:hidden name="readOnly" id="readOnly"/>
     <stripes:hidden name="entityName" id="entityName"/>
     <stripes:hidden name="minimal" id="minimal"/>
-    <c:if test="${!empty actionBean.workRequestItemId}"><stripes:hidden name="workRequestItemId"/></c:if>
     <c:choose>
         <c:when test="${actionBean.readOnly}">
             <stripes:hidden name="selectedSearchName" id="selectedSearchName"/>
@@ -118,7 +118,7 @@ Move the mouse over the question marks to see details about each section.
                 <a href="#" id="addTerm" onclick="addTerm();return false;">Add Term</a>
                 <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
             </p>
-            Filter: <input type="text" id="filterSearchTerms" onkeyup="filterSelect($('searchTermSelect'), this);">
+            Filter: <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
 
             <hr/>
 
@@ -141,30 +141,21 @@ Move the mouse over the question marks to see details about each section.
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
 
     </fieldset>
-    <c:choose>
-        <c:when test="${!empty actionBean.workRequestItemId}">
-            <stripes:submit name="workRequestSearch" value="Search"
-                            style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 50px;"/></c:when>
-        <c:otherwise>
-            <stripes:submit name="search" value="Search"
-                            style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 50px;"/>
-        </c:otherwise>
-    </c:choose>
-
+    <stripes:submit name="search" value="Search"
+                    style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 50px;"/>
 
 </stripes:form>
 <!-- Show results -->
 <fieldset title="Samples">
     <legend>Samples</legend>
     <stripes:layout-render name="/columns/configurable_list.jsp"
-                           entityName="Sample"
+                           entityName="${actionBean.entityName}"
                            sessionKey="${actionBean.sessionKey}"
                            columnSetName="${actionBean.columnSetName}"
                            downloadColumnSets="${actionBean.downloadColumnSets}"
                            resultList="${actionBean.configurableSampleList}"
-                           action="${ctxpath}/samplesearch/ConfigurableSearch.action"
-                           downloadViewedColumns="True"
-                           workRequestItemId="${actionBean.workRequestItemId}"/>
+                           action="${ctxpath}/search/ConfigurableSearch.action"
+                           downloadViewedColumns="True"/>
 </fieldset>
 <script type="text/javascript">
 function validateNewSearch() {
@@ -187,22 +178,27 @@ function validateNewSearch() {
  Add a top level term by making an AJAX request.
  */
 function addTerm() {
-    var select = $('searchTermSelect');
+    var select = $j('#searchTermSelect')[0];
     var option = select.options[select.selectedIndex];
     var searchTerm = option.getAttribute('searchTerm');
     var searchTermName;
     var parameters;
     if (searchTerm == null) {
         searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $F('entityName');
+        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j.url('?entityName');
     } else {
         parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
-                + '&entityName=' + $F('entityName');
+                + '&entityName=' + $j.url('?entityName');
     }
-    new Ajax.Updater(
-            'searchInstanceDiv',
-            '${ctxpath}/samplesearch/ConfigurableSearch.action',
-            {method: 'get', parameters: parameters, insertion: Insertion.Bottom, evalScripts: true});
+    new $j.ajax({
+        url: '${ctxpath}/search/ConfigurableSearch.action',
+        type: 'get',
+        dataType: 'html',
+        data: parameters,
+        success: function (returnData) {
+            $("#searchInstanceDiv").append(returnData);
+        }
+    });
 }
 
 /*
@@ -260,12 +256,17 @@ function nextTerm(link) {
         parameters = parameterFragment + parameters;
         div = div.parentNode;
     }
-    parameters = 'addChildTerm&readOnly=' + $F('readOnly') + '&entityName=' + $F('entityName') + '&' + parameters;
+    parameters = 'addChildTerm&readOnly=' + $j.url('?readOnly') + '&entityName=' + $j.url('?entityName') + '&' + parameters;
     // AJAX append to current div
-    new Ajax.Updater(
-            startDiv.id,
-            '${ctxpath}/samplesearch/ConfigurableSearch.action',
-            {method: 'get', parameters: parameters, insertion: Insertion.Bottom, evalScripts: true});
+    new $j.ajax({
+        url: '${ctxpath}/search/ConfigurableSearch.action',
+        type: 'get',
+        dataType: 'html',
+        data: parameters,
+        success: function (returnData) {
+            $("#" + startDiv.id).append(returnData);
+        }
+    });
     // Remove the "Add sub-term" link, we don't want duplicate children
     link.parentNode.removeChild(link);
 }
@@ -450,8 +451,8 @@ function changeDependee(select) {
  * @param columnName
  */
 function chooseColumn(columnName) {
-    var availableSelect = $('sourceColumnDefNames');
-    var chosenSelect = $('selectedColumnDefNames');
+    var availableSelect = $j('#sourceColumnDefNames')[0];
+    var chosenSelect = $j('#selectedColumnDefNames')[0];
     var found = false;
 
     // Is the column already chosen?
@@ -480,7 +481,7 @@ function chooseColumn(columnName) {
  * Called when the user wants to add, to the Available list, all columns in a set
  */
 function chooseColumnSet() {
-    var columnSetSelect = $('columnSetName');
+    var columnSetSelect = $j('#columnSetName')[0];
 <c:forEach items="${actionBean.viewColumnSets}" var="columnSet">
     if (columnSetSelect.options[columnSetSelect.selectedIndex].text == '${columnSet.level} - ${columnSet.name}') {
     <c:forEach items="${columnSet.columns}" var="column">

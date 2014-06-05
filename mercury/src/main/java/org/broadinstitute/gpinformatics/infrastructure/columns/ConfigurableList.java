@@ -5,6 +5,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
+import javax.annotation.Nonnull;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
@@ -156,7 +157,7 @@ public class ConfigurableList {
     }
 
     public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ColumnEntity columnEntity) {
+            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
         this(columnTabulations, sortColumnIndex, sortDirection, /*admin, */columnEntity,
                 DEFAULT_MULTI_VALUE_DELIMITER, DEFAULT_MULTI_VALUE_ADD_TRAILING_DELIMITER);
     }
@@ -173,7 +174,7 @@ public class ConfigurableList {
      * @param multiValueAddTrailingDelimiter Whether to include a trailing delimiter in multi-valued fields.
      */
     public ConfigurableList(List<ColumnTabulation> columnTabulations, Integer sortColumnIndex,
-            String sortDirection, /*Boolean admin, */ColumnEntity columnEntity, String multiValueDelimiter,
+            String sortDirection, /*Boolean admin, */ @Nonnull ColumnEntity columnEntity, String multiValueDelimiter,
             boolean multiValueAddTrailingDelimiter) {
         this.columnEntity = columnEntity;
         this.multiValueDelimiter = multiValueDelimiter;
@@ -205,7 +206,7 @@ public class ConfigurableList {
      * @param columnEntity The field id.
      */
     public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            /*Boolean admin, */ColumnEntity columnEntity) {
+            /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
 
         this(columnTabulations, null, null, /*admin, */columnEntity);
         if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {

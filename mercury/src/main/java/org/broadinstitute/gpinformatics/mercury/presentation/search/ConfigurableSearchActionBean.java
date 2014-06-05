@@ -23,6 +23,8 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPrefe
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
@@ -186,20 +188,23 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     private String entityName;
 
-    /**
-     * The work request item associated with this search
-     */
-    private Long workRequestItemId;
-
     /*
      * Dependencies:
-//     */
-//    private WorkRequestManager workRequestManager;
+     */
     @Inject
     private PreferenceDao preferenceDao;
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
+
+    @Inject
+    private ConfigurableSearchDao configurableSearchDao;
+
+    @Inject
+    private PaginationDao paginationDao;
+
+    @Inject
+    private BSPSampleSearchService bspSampleSearchService;
 
 //    private WorkRequestItem<?> workRequestItem;
 
@@ -532,7 +537,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             Integer sortColumnIndex, String dbSortPath,
             String sortDirection, String sessionKey,
             String entityName) throws IllegalArgumentException {
-        ConfigurableSearchDao configurableSearchDao = new ConfigurableSearchDao();
         initEvalContext(searchInstance, context);
 
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
@@ -589,15 +593,15 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         PaginationDao.Pagination pagination = new PaginationDao.Pagination(configurableSearchDef.getPageSize());
         configurableSearchDao.startPagination(pagination, criteria);
         pagination.setJoinFetchPaths(joinFetchPaths);
-        PaginationDao paginationDAO = new PaginationDao();
-        List<?> entityList = paginationDAO.getPage(pagination, 0);
+        List<?> entityList = paginationDao.getPage(pagination, 0);
 
         // Format the results into columns
-        ConfigurableList configurableListUtils = new ConfigurableList(columnTabulations,
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations,
                 pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection/*, context.isAdmin(),
-                listConfig.getId()*/, ColumnEntity.valueOf(entityName));
-        configurableListUtils.addRows(entityList);
-        ConfigurableList.ResultList resultList = configurableListUtils.getResultList();
+                listConfig.getId()*/, ColumnEntity.getByName(entityName));
+        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        configurableList.addRows(entityList);
+        ConfigurableList.ResultList resultList = configurableList.getResultList();
 
         context.getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey, pagination);
         return resultList;
@@ -629,7 +633,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @param entityName     the name of the entity we're searching, e.g. Sample
      * @return list of results
      */
-    public static ConfigurableList.ResultList getSubsequentResultsPage(
+    public ConfigurableList.ResultList getSubsequentResultsPage(
             SearchInstance searchInstance,
             CoreActionBeanContext context,
             int pageNumber, String sessionKey,
@@ -637,8 +641,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         // Get requested page of results
         PaginationDao.Pagination pagination = (PaginationDao.Pagination) context.getRequest().getSession()
                 .getAttribute(PAGINATION_PREFIX + sessionKey);
-        PaginationDao paginationDAO = new PaginationDao();
-        List<?> entityList = paginationDAO.getPage(pagination, pageNumber);
+        List<?> entityList = paginationDao.getPage(pagination, pageNumber);
 
         // Format the results into columns
         ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
@@ -656,11 +659,12 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
             columnTabulations.add(displaySearchValue);
         }
-        ConfigurableList configurableListUtils = new ConfigurableList(columnTabulations, null, null/*,
-                context.isAdmin(), listConfig.getId()*/);
-        configurableListUtils.addRows(entityList);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
+                ColumnEntity.getByName(entityName));
+        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        configurableList.addRows(entityList);
 
-        return configurableListUtils.getResultList();
+        return configurableList.getResultList();
     }
 
     /**
@@ -988,13 +992,5 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public void setEntityName(String entityName) {
         this.entityName = entityName;
-    }
-
-    public Long getWorkRequestItemId() {
-        return workRequestItemId;
-    }
-
-    public void setWorkRequestItemId(Long workRequestItemId) {
-        this.workRequestItemId = workRequestItemId;
     }
 }

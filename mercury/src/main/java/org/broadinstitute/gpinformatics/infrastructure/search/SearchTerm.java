@@ -364,18 +364,20 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     public List<String> getJoinFetchPaths() {
         List<String> joinFetchPaths = new ArrayList<>();
-        for (CriteriaPath criteriaPath : getCriteriaPaths()) {
-            if (criteriaPath.isJoinFetch() != null && criteriaPath.isJoinFetch()) {
-                if (criteriaPath.getCriteria() != null && !criteriaPath.getCriteria().isEmpty()) {
-                    String associationPath = null;
-                    for (String criteriaName : criteriaPath.getCriteria()) {
-                        if (associationPath == null) {
-                            associationPath = criteriaName;
-                        } else {
-                            associationPath += "." + criteriaName;
+        if (getCriteriaPaths() != null) {
+            for (CriteriaPath criteriaPath : getCriteriaPaths()) {
+                if (criteriaPath.isJoinFetch() != null && criteriaPath.isJoinFetch()) {
+                    if (criteriaPath.getCriteria() != null && !criteriaPath.getCriteria().isEmpty()) {
+                        String associationPath = null;
+                        for (String criteriaName : criteriaPath.getCriteria()) {
+                            if (associationPath == null) {
+                                associationPath = criteriaName;
+                            } else {
+                                associationPath += "." + criteriaName;
+                            }
                         }
+                        joinFetchPaths.add(associationPath);
                     }
-                    joinFetchPaths.add(associationPath);
                 }
             }
         }

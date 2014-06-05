@@ -121,9 +121,9 @@ buttons to move columns from one to the other --%>
                     select.options[i].style.display = 'none';
                 }
             }
-        }
+        };
 
-        Event.observe(window, 'load', function () { syncChosenAvailable($('sourceColumnDefNames'), $('selectedColumnDefNames')); });
+        Event.observe(window, 'load', function () { syncChosenAvailable($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]); });
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
@@ -141,14 +141,14 @@ buttons to move columns from one to the other --%>
                     <c:forEach items="${availableMapGroupToColumnNames}" var="entry">
                         <optgroup label="${entry.key}">
                             <c:forEach items="${entry.value}" var="columnConfig">
-                                <option ondblclick="chooseColumns($('sourceColumnDefNames'), $('selectedColumnDefNames'));">${columnConfig.name}</option>
+                                <option ondblclick="chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">${columnConfig.name}</option>
                             </c:forEach>
                         </optgroup>
                     </c:forEach>
                 </select>
             </td>
             <td valign="bottom">
-                <a href="javascript:chooseColumns($('sourceColumnDefNames'), $('selectedColumnDefNames'));">
+                <a href="javascript:chooseColumns($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/start.png" alt="Choose Column"
                          title="Choose Column"/>
                 </a>
@@ -165,7 +165,7 @@ buttons to move columns from one to the other --%>
                 </select>
             </td>
             <td valign="bottom">
-                <a href="javascript:moveOptionsUp($('selectedColumnDefNames'));">
+                <a href="javascript:moveOptionsUp($j('#selectedColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/up.png" alt="Move Up"
                          title="Move Up"/>
                 </a>
@@ -173,20 +173,20 @@ buttons to move columns from one to the other --%>
         </tr>
         <tr>
             <td valign="top">
-                <a href="javascript:removeColumns($('selectedColumnDefNames'), $('sourceColumnDefNames'));">
+                <a href="javascript:removeColumns($j('#selectedColumnDefNames')[0], $('sourceColumnDefNames'));">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/left.png" alt="Remove Column"
                          title="Remove Column"/>
                 </a>
             </td>
             <td valign="top">
-                <a href="javascript:moveOptionsDown($('selectedColumnDefNames'));">
+                <a href="javascript:moveOptionsDown($j('#selectedColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/down.png" alt="Move Down"
                          title="Move Down"/>
                 </a>
             </td>
         </tr>
         <tr>
-            <td>Filter: <input type="text" id="filterColumns" onkeyup="filterSelect($('sourceColumnDefNames'), this);">
+            <td>Filter: <input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
             </td>
         </tr>
     </table>

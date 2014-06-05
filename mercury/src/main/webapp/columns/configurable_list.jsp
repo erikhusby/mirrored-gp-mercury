@@ -226,24 +226,6 @@
                            value="Download All Pages"/>
                 </c:if>
 
-                <c:choose>
-                    <c:when test="${!empty workRequestItemId}">
-
-                        <input type="hidden" name="workRequestItemId" value="${workRequestItemId}"/>
-                        <input type="submit" name="AddToWorkRequest" id="AddToWorkRequest"
-                               value="Add Checked To Work Request"
-                               onclick="if(atLeastOneChecked('selectedIds', this.form)) { getWorkRequestSearchFormData(); this.form.action='${ctxpath}${actionBean.workRequestItem.workRequestItemType.url}?addSamples='; } else { return false; }"/>
-                    </c:when>
-                    <c:when test="${empty entityName || entityName == 'Sample'}">
-                        <%-- Plating request for checked--%>
-                        <%-- This is in SampleActionBean, so we have to change the action --%>
-                        <input type="submit" name="PlatingRequest" id="PlatingRequest"
-                               value="Plating Request For Checked"
-                               onclick="if(atLeastOneChecked('selectedIds', this.form)) {this.form.action='${ctxpath}/sample/SampleManage.action';} else {return false;}"/>
-                    </c:when>
-                    <c:otherwise></c:otherwise>
-                </c:choose>
-
                 <c:if test="${entityName == 'Sample'}">
                     <%-- Add checked to basket--%>
                     <script type="text/javascript">
