@@ -70,7 +70,7 @@ public class CadencePicoDbTest extends ContainerTest {
         Assert.assertEquals("DilutionFactor", metadataBean.getName());
 
         //Fetch reagent addition message for batchless
-        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEventsByPlateBarcodes")
+        labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/inPlaceReagentEvents")
                 .queryParam("plateBarcodes", cadencePicoJaxbBuilder.getPicoMicrofluorBarcode())
                 .get(LabEventResponseBean.class);
         labEventBeans = labEventResponseBean.getLabEventBeans();

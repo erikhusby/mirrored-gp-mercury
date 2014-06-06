@@ -39,7 +39,7 @@ public class CadencePicoJaxbBuilder {
     }
 
     public CadencePicoJaxbBuilder invoke(){
-        String picoDilutionBarcode = "picoDilutionPlate" + testPrefix;
+        picoDilutionBarcode = "picoDilutionPlate" + testPrefix;
 
         picoDilutionTransferJaxb = bettaLimsMessageTestFactory.buildRackToPlate("PicoDilutionTransfer",
                 sampleRackBarcode,
@@ -52,7 +52,7 @@ public class CadencePicoJaxbBuilder {
 
         bettaLimsMessageTestFactory.addMessage(messageList, picoDilutionTransferJaxb);
 
-        String picoMicrofluorBarcode = "picoMicrofluorBarcode" + testPrefix;
+        picoMicrofluorBarcode = "picoMicrofluorBarcode" + testPrefix;
         picoMicrofluorTransferJaxb = bettaLimsMessageTestFactory.buildPlateToPlate("PicoMicrofluorTransfer",
                 picoDilutionBarcode, picoMicrofluorBarcode);
         bettaLimsMessageTestFactory.addMessage(messageList, picoMicrofluorTransferJaxb);
