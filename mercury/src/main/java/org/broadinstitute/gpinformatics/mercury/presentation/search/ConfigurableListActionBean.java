@@ -7,15 +7,21 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.SpreadsheetCreator;
+import org.broadinstitute.gpinformatics.infrastructure.spreadsheet.StreamCreatedSpreadsheetUtil;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
 
-import javax.activation.MimeType;
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,6 +52,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
     @Inject
     private ConfigurableListFactory configurableListFactory;
 
+    @Inject
+    private BSPSampleSearchService bspSampleSearchService;
+
     /**
      * Stream an Excel spreadsheet, from a list of IDs
      *
@@ -56,9 +65,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
         PaginationDao.Pagination pagination = (PaginationDao.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
 
-        List<?> entityList = null;
+        List<?> entityList;
         try {
-            // TODO must be a cleaner way.
+            // TODO jmt handle Longs
+/*
             Barcoded barcoded = (Barcoded) Class.forName(pagination.getResultEntity()).newInstance();
             switch (barcoded.getBarcodeDataType()) {
             case NUMERIC:
@@ -69,23 +79,27 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 entityList = paginationDao.getByIds(pagination, ids);
                 break;
             case ALPHANUMERIC:
+*/
                 entityList = paginationDao.getByIds(pagination, selectedIds);
+/*
                 break;
             }
+*/
         } catch (Exception e) {
             log.error("Search failed: ", e);
             getContext().getValidationErrors().addGlobalError(new SimpleError(
                     "Search encountered an unexpected problem. Please email bsp-support."));
-            return showError();
+            return new ForwardResolution("/error.jsp");
         }
 
         if (downloadColumnSetName.equals("Viewed Columns")) {
             List<ColumnTabulation> columnTabulations = buildViewedColumnTabulations();
 
-            ConfigurableList configurableListUtils = new ConfigurableList(columnTabulations, 0, "ASC",
-                    /*getContext().isAdmin(), pagination.getResultEntityId()*/);
-            configurableListUtils.addRows(entityList);
-            ConfigurableList.ResultList resultList = configurableListUtils.getResultList();
+            ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+                    ColumnEntity.getByName(entityName));
+            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+            configurableList.addRows(entityList);
+            ConfigurableList.ResultList resultList = configurableList.getResultList();
             return streamResultList(resultList);
         }
 
@@ -107,21 +121,21 @@ public class ConfigurableListActionBean extends CoreActionBean {
         if (downloadColumnSetName.equals("Viewed Columns")) {
             columnTabulations = buildViewedColumnTabulations();
         } else {
-            columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName, entityName,
-                    /*getContext().getUserProfile(), getContext().getSampleCollection()*/);
+            columnTabulations = configurableListFactory.buildColumnSetTabulations(downloadColumnSetName, entityName);
         }
         PaginationDao.Pagination pagination = (PaginationDao.Pagination) getContext().getRequest().getSession()
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
-        ConfigurableList configurableListUtils = new ConfigurableList(columnTabulations, 0, "ASC",
-                /*getContext().isAdmin(), pagination.getResultEntityId()*/);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
+                ColumnEntity.getByName(entityName));
+        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
 
         // Get each page and add it to the configurable list
         for (int i = 0; i < pagination.getNumberPages(); i++) {
             List resultsPage = paginationDao.getPage(pagination, i);
-            configurableListUtils.addRows(resultsPage);
+            configurableList.addRows(resultsPage);
             paginationDao.clear();
         }
-        return streamResultList(configurableListUtils.getResultList());
+        return streamResultList(configurableList.getResultList());
     }
 
     /**
@@ -139,7 +153,7 @@ public class ConfigurableListActionBean extends CoreActionBean {
     public Resolution createConfigurableDownload(List<?> entityList, String downloadColumnSetName,
             CoreActionBeanContext context, String entityName, String entityId) {
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                entityName, entityId, /*context.getUserProfile(), context.getSampleCollection()*/);
+                entityName, ColumnEntity.getByName(entityName));
 
         Object[][] data = configurableListUtils.getResultList().getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);
@@ -164,10 +178,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
         } else {
             columnNameList = searchInstance.getColumnSetColumnNameList();
         }
-        ListConfig listConfig = new EntityPreferenceFactory().loadListConfig(entityName);
+        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
         List<ColumnTabulation> columnTabulations = new ArrayList<>();
         for (String columnName : columnNameList) {
-            columnTabulations.add(listConfig.getColumnConfig(columnName));
+            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
         }
         columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
         return columnTabulations;
@@ -181,17 +195,16 @@ public class ConfigurableListActionBean extends CoreActionBean {
      * @return streamed Excel spreadsheet
      */
     private static Resolution streamResultList(ConfigurableList.ResultList resultList) {
-        resultList.getAsArray();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            SpreadsheetCreator.createSpreadsheet("Sample Info", rows, out);
+            SpreadsheetCreator.createSpreadsheet("Sample Info", resultList.getAsArray(), out);
         } catch (IOException ioEx) {
             log.error("Failed to create spreadsheet");
             throw new RuntimeException(ioEx);
         }
 
-        StreamingResolution stream = new StreamingResolution(MimeType.XLS.getMimeType(), new ByteArrayInputStream(
-                out.toByteArray()));
+        StreamingResolution stream = new StreamingResolution(StreamCreatedSpreadsheetUtil.XLS_MIME_TYPE,
+                new ByteArrayInputStream(out.toByteArray()));
         stream.setFilename(SPREADSHEET_FILENAME);
         return stream;
     }
