@@ -427,6 +427,18 @@ public class BettaLimsMessageTestFactory {
         return plateTransferEvent;
     }
 
+    public PlateTransferEventType buildPlateToPlate(String eventType, String sourcePlateBarcode,
+                                                    String targetPlateBarcode, String sourceSection,
+                                                    String targetSection) {
+        PlateTransferEventType event = buildPlateToPlate(
+                eventType, sourcePlateBarcode, targetPlateBarcode);
+
+        event.getSourcePlate().setSection(sourceSection);
+        event.getPlate().setSection(targetSection);
+
+        return event;
+    }
+
     public PlateTransferEventType buildStripTubeToFlowcell(String eventType, String stripTubeBarcode,
                                                            String flowcellBarcode) {
         PlateTransferEventType plateTransferEvent = new PlateTransferEventType();

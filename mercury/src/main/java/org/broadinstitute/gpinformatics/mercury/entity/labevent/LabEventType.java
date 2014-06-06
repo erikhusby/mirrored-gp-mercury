@@ -481,6 +481,13 @@ public enum LabEventType {
     SEQ_PLATING_NORMALIZATION("SeqPlatingNormalization", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
+    //Kapa QC
+    KAPA_QC_DILUTION_TRANSFER("KapaQCDilutionPlateTransfer", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    KAPA_QC_PLATE_SETUP("KapaQCPlateSetup", ExpectSourcesEmpty.TRUE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.FALSE,
+            PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.SQUID, CreateSources.FALSE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),

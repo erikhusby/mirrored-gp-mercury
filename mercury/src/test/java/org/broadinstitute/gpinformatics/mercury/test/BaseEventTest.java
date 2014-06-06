@@ -61,6 +61,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.KapaQCEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.MiSeqReagentKitEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
@@ -305,6 +306,26 @@ public class BaseEventTest {
         return new PicoPlatingEntityBuilder(bettaLimsMessageTestFactory,
                                             labEventFactory, getLabEventHandler(),
                                             mapBarcodeToTube, rackBarcode, barcodeSuffix).invoke();
+    }
+
+    /**
+     * This method runs the entities through the ExEx Kapa QC process.
+     *
+     * @param normBarcodeToTubeMap A map of barcodes to tubes that will be run the starting point of the ExEx kapa QC process.
+     * @param normTubeFormation    The tube formation that represents the entities coming out of pico/plating.
+     * @param normBarcode          The rack barcode of the tube formation.
+     * @param barcodeSuffix        Uniquifies the generated vessel barcodes. NOT date if test quickly invokes twice.
+     *
+     * @return Returns the entity builder that contains the entities after this process has been invoked.
+     */
+    public KapaQCEntityBuilder runKapaQCProcess(
+            Map<String, BarcodedTube> normBarcodeToTubeMap,
+            TubeFormation normTubeFormation,
+            String normBarcode, String barcodeSuffix) {
+
+        return new KapaQCEntityBuilder(normBarcodeToTubeMap, normTubeFormation,
+                bettaLimsMessageTestFactory, labEventFactory,
+                getLabEventHandler(), normBarcode, barcodeSuffix).invoke();
     }
 
     /**

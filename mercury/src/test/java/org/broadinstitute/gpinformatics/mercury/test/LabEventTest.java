@@ -78,6 +78,7 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ExomeExpressSheari
 import org.broadinstitute.gpinformatics.mercury.test.builders.HiSeq2500FlowcellEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.HybridSelectionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.IceEntityBuilder;
+import org.broadinstitute.gpinformatics.mercury.test.builders.KapaQCEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.LibraryConstructionEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PicoPlatingEntityBuilder;
 import org.broadinstitute.gpinformatics.mercury.test.builders.PreFlightEntityBuilder;
@@ -989,6 +990,12 @@ public class LabEventTest extends BaseEventTest {
         PicoPlatingEntityBuilder picoPlatingEntityBuilder = runPicoPlatingProcess(mapBarcodeToDaughterTube,
                                                                                   String.valueOf(runDate.getTime()),
                                                                                   "1", true);
+
+        KapaQCEntityBuilder kapaQCEntityBuilder = runKapaQCProcess(
+                picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
+                picoPlatingEntityBuilder.getNormTubeFormation(),
+                picoPlatingEntityBuilder.getNormalizationBarcode(), "1");
+
         ExomeExpressShearingEntityBuilder exomeExpressShearingEntityBuilder =
                 runExomeExpressShearingProcess(picoPlatingEntityBuilder.getNormBarcodeToTubeMap(),
                                                picoPlatingEntityBuilder.getNormTubeFormation(),
@@ -1083,7 +1090,9 @@ public class LabEventTest extends BaseEventTest {
                 "SamplesDaughterPlateCreation",
                 "SamplesNormalizationTransfer",
                 "PicoPlatingPostNorm",
+                "KapaQCDilutionPlateTransfer",
                 "ShearingTransfer",
+                "KapaQCPlateSetup", //TODO Why does this need to be down one?
                 "PostShearingTransferCleanup",
                 "ShearingQC",
                 "AdapterLigationCleanup",
