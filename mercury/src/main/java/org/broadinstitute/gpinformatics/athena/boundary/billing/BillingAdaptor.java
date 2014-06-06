@@ -142,10 +142,11 @@ public class BillingAdaptor implements Serializable {
                     result.setWorkId(workId);
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
                     String billingLogText = String.format(
-                            "WorkItem '%s' with completion date of '%s' posted at '%s' for '%s' on behalf of %d samples in '%s'",
+                            "WorkItem '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %d samples in '%s'",
                             workId,
                             dateTimeInstance.format(item.getWorkCompleteDate()),
                             dateTimeInstance.format(new Date()),
+                            item.getQuantity(),
                             quotePriceItem.getName(),
                             item.getNumSamples().length(),
                             billedPdoKeys);
