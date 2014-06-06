@@ -127,7 +127,7 @@ public class PaginationDao extends GenericDao {
      * @param pageNumber number of requested page, starting at zero
      * @return list of entities for requested page, in same order as IDs
      */
-    public <T> List<T> getPage(PaginationDao.Pagination pagination, int pageNumber) {
+    public <T> List<T> getPage(Pagination pagination, int pageNumber) {
         if (pagination.getIdList().isEmpty()) {
             return Collections.emptyList();
         }
@@ -190,11 +190,7 @@ public class PaginationDao extends GenericDao {
                 returnList.add(criteriaIdMap.get(id));
             }
             return returnList;
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -206,7 +202,7 @@ public class PaginationDao extends GenericDao {
      * @param idList     ids the user wants to access
      * @return list of entities, in same order as idList
      */
-    public <T> List<T> getByIds(PaginationDao.Pagination pagination, List<?> idList) {
+    public <T> List<T> getByIds(Pagination pagination, List<?> idList) {
         @SuppressWarnings("unchecked")
         List<T> entityList = buildCriteria(pagination, idList).list();
         return reorderList(pagination, idList, entityList);

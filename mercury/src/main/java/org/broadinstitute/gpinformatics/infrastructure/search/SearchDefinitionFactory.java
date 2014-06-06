@@ -98,7 +98,7 @@ public class SearchDefinitionFactory {
         criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
                 "labVessel", BucketEntry.class.getName()));
         ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
-                "LabVessel", LabVessel.class.getName(), "label", 50, criteriaProjections, mapGroupSearchTerms);
+                "LabVessel", LabVessel.class.getName(), "label", 100, criteriaProjections, mapGroupSearchTerms);
         mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
         return configurableSearchDefinition;
     }
