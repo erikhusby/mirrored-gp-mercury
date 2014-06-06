@@ -4,12 +4,14 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -184,6 +186,12 @@ public class LabEventResource {
                     labEvent.getEventDate());
             for (Reagent reagent : labEvent.getReagents()) {
                 labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
+            }
+
+            for(LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                labEventBean.getMetadatas().add(new MetadataBean(
+                        labEventMetadata.getLabEventMetadataType().getDisplayName(),
+                        labEventMetadata.getValue()));
             }
 
             LabBatch labBatch = labEvent.getLabBatch();
