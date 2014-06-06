@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -22,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -33,17 +31,13 @@ import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
-
-    public static final String ALIQUOT_ID_1 = "SM-ALQT1";
-    public static final String ALIQUOT_ID_2 = "SM-ALQT2";
-    public static final String STOCK_ID = "SM-STOCK";
-
-    private UserBean mockUserBean = Mockito.mock(UserBean.class);
+    private static final BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
+    private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
     ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
-            JiraServiceProducer.stubInstance(), mockUserBean, null, null, null
-    );
-
+                    JiraServiceProducer.stubInstance(), mockUserBean, null, null, null);
+    private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
+    ProductOrder productOrder=null;
 
     public void testUpdateKitInfo() throws Exception {
 
@@ -135,36 +129,22 @@ public class ProductOrderEjbTest {
         Assert.assertEquals(jiraComment, "QADudeDEV set manual on risk to true for 2 samples with comment:\nat risk");
     }
 
-    @DataProvider
-    public Object[][] manualAtRiskDataProvider() {
-        String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
-        BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
-        ProductOrder productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+    private List<ProductOrderSample> setupRiskTests() {
+        productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+
         Mockito.when(productOrderDaoMock.findByBusinessKey(productOrder.getBusinessKey())).thenReturn(productOrder);
-        List<ProductOrderSample> productOrderSamples = productOrder.getSamples().subList(0, 2);
-
-        return new Object[][]{
-                new Object[]{
-                        productOrder, qaDudeUser, productOrderSamples,
-                        true, // atRisk
-                        "at risk", // Comment
-                        productOrderSamples.size() // failure count
-                },
-                new Object[]{
-                        productOrder, qaDudeUser, productOrderSamples,
-                        false, // atRisk
-                        "no risk", // Comment
-                        0 // failure count
-                }
-        };
-
+        return productOrder.getSamples().subList(0, 2);
     }
-    @Test(dataProvider = "manualAtRiskDataProvider")
-    public void testManualAtRisk(ProductOrder productOrder, BspUser bspUser,
-                                 List<ProductOrderSample> productOrderSamples, boolean isRisk, String comment,
-                                 int failureCount) throws IOException {
 
-        productOrderEjb.addManualOnRisk(bspUser, productOrder.getJiraTicketKey(), productOrderSamples, isRisk, comment);
-        Assert.assertEquals(productOrder.countItemsOnRisk(), failureCount);
+    public void testManualAtRisk() throws IOException {
+        List<ProductOrderSample> productOrderSamples = setupRiskTests();
+        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, true, "is risk");
+        Assert.assertEquals(productOrder.countItemsOnRisk(), productOrderSamples.size());
+    }
+
+    public void testManualNoRisk() throws IOException {
+        List<ProductOrderSample> productOrderSamples = setupRiskTests();
+        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
+        Assert.assertEquals(productOrder.countItemsOnRisk(), 0);
     }
 }

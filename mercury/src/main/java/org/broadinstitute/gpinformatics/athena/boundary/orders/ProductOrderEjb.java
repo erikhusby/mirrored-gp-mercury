@@ -332,10 +332,8 @@ public class ProductOrderEjb {
      */
     private void updateJiraCommentForRisk(@Nonnull String jiraKey, @Nonnull BspUser bspUser, @Nonnull String comment,
                                           int sampleCount, boolean isRisk) throws IOException {
-        JiraIssue issue = jiraService.getIssue(jiraKey);
         String issueComment = buildJiraCommentForRiskString(comment, bspUser.getUsername(), sampleCount, isRisk);
-
-        issue.addComment(issueComment);
+        jiraService.addComment(jiraKey, issueComment);
     }
 
     String buildJiraCommentForRiskString(String comment, String username, int sampleCount, boolean isRisk) {
