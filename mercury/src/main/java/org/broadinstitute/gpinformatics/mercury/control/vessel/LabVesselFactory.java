@@ -226,6 +226,8 @@ public class LabVesselFactory implements Serializable {
                     TubeFormation tubeFormation = new TubeFormation(mapPositionToTube,
                                                                     RackOfTubes.RackType.Matrix96);
                     tubeFormation.addRackOfTubes(rackOfTubes);
+                    tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
+                            "BSP"));
                 } else {
                     throw new RuntimeException("Unexpected vessel type with child vessels " +
                                                parentVesselBean.getVesselType());
