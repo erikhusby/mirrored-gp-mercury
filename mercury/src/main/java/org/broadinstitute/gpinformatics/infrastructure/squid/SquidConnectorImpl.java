@@ -11,6 +11,8 @@ import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
+import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
+import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
@@ -108,6 +110,25 @@ public class SquidConnectorImpl implements SquidConnector {
                 .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(ExecutionTypes.class);
+    }
+
+    @Override
+    public OligioGroups getOligioGroups() throws UniformInterfaceException {
+        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
+                MediaType.APPLICATION_JSON_TYPE)
+                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+
+        return response.getEntity(OligioGroups.class);
+    }
+
+    @Override
+    public SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException {
+        ClientResponse response =
+                getWebResource(squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" +groupName,
+                        MediaType.APPLICATION_JSON_TYPE).type(MediaType.APPLICATION_JSON_TYPE)
+                                                        .accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+
+        return response.getEntity(SampleReceptacleGroup.class);
     }
 
     @Override

@@ -685,6 +685,7 @@ function formatInput(item) {
 </div>
 
 <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+    <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
     <div>
         <div class="control-group view-control-group">
             <label class="control-label label-form">Squid Work Request</label>
@@ -697,6 +698,7 @@ function formatInput(item) {
             </div>
         </div>
     </div>
+    </c:if>
 </c:if>
 
 <div class="view-control-group control-group">
