@@ -49,13 +49,13 @@ public class KapaQCJaxbBuilder {
             // 4 x kapaQCSetupPlatefor 48 sample transfer
             kapaQCSetupPlate = "kapaQC48SetupPlate" + testPrefix;
             kapaQCSetup48EventA1Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_48TIP_1INTERVAL_A1");
+                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_HALF96TIP_1INTERVAL_A1");
             kapaQCSetup48EventA2Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_48TIP_1INTERVAL_A2");
+                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_HALF96TIP_1INTERVAL_A2");
             kapaQCSetup48EventA13Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_48TIP_1_INTERVAL_A13");
+                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_HALF96TIP_1INTERVAL_A13");
             kapaQCSetup48EventA14Jaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
-                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_48TIP_1_INTERVAL_A14");
+                    "KapaQCPlateSetup", dilutionPlateBarcode, kapaQCSetupPlate, "P96COLS1-6BYROW", "P384_HALF96TIP_1INTERVAL_A14");
 
             bettaLimsMessageTestFactory.addMessage(messageList, kapaQCSetup48EventA1Jaxb, kapaQCSetup48EventA2Jaxb,
                     kapaQCSetup48EventA13Jaxb, kapaQCSetup48EventA14Jaxb);

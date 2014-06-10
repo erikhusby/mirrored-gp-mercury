@@ -929,7 +929,7 @@ public enum SBSSection {
             VesselPosition.N12,
             VesselPosition.P12)),
     // In a 384 well plate, use half a 96 head and stamp to A1 quadrant
-    P384_48TIP_1INTERVAL_A1("P384_48TIP_1INTERVAL_A1", Arrays.asList(
+    P384_HALF96TIP_1INTERVAL_A1("P384_HALF96TIP_1INTERVAL_A1", Arrays.asList(
             VesselPosition.A01,
             VesselPosition.A03,
             VesselPosition.A05,
@@ -979,7 +979,7 @@ public enum SBSSection {
             VesselPosition.O09,
             VesselPosition.O11)),
     // In a 384 well plate, use half a 96 head and stamp to A2 quadrant
-    P384_48TIP_1INTERVAL_A2("P384_48TIP_1INTERVAL_A2", Arrays.asList(
+    P384_HALF96TIP_1INTERVAL_A2("P384_HALF96TIP_1INTERVAL_A2", Arrays.asList(
             VesselPosition.A02,
             VesselPosition.A04,
             VesselPosition.A06,
@@ -1029,7 +1029,7 @@ public enum SBSSection {
             VesselPosition.O10,
             VesselPosition.O12)),
     // In a 384 well plate, use half a 96 head and stamp to 1st quadrant offset to 2nd half starting at A13
-    P384_48TIP_1_INTERVAL_A13("P384_48TIP_1_INTERVAL_A13", Arrays.asList(
+    P384_HALF96TIP_1INTERVAL_A13("P384_HALF96TIP_1INTERVAL_A13", Arrays.asList(
             VesselPosition.A13,
             VesselPosition.A15,
             VesselPosition.A17,
@@ -1079,7 +1079,7 @@ public enum SBSSection {
             VesselPosition.O21,
             VesselPosition.O23 )),
     // In a 384 well plate, use half a 96 head and stamp to 2nd quadrant offset starting at A14
-    P384_48TIP_1_INTERVAL_A14("P384_48TIP_1_INTERVAL_A14", Arrays.asList(
+    P384_HALF96TIP_1_INTERVAL_A14("P384_HALF96TIP_1INTERVAL_A14", Arrays.asList(
             VesselPosition.A14,
             VesselPosition.A16,
             VesselPosition.A18,

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
@@ -46,13 +47,15 @@ public class KapaQCEntityBuilder {
     }
 
     public KapaQCEntityBuilder invoke() {
-        return invoke(true);
+        return invoke(false);
     }
 
     public KapaQCEntityBuilder invoke(boolean do48Sample) {
         KapaQCJaxbBuilder kapaQCJaxbBuilder = new KapaQCJaxbBuilder(
                 bettaLimsMessageTestFactory, new ArrayList<>(mapBarcodeToTube.keySet()), rackBarcode, testPrefix
         ).invoke(do48Sample);
+
+        LabEventTest.validateWorkflow("KapaQCDilutionPlateTransfer", mapBarcodeToTube.values());
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(platingRack.getLabel(), platingRack);
@@ -69,6 +72,8 @@ public class KapaQCEntityBuilder {
         Assert.assertEquals(dilutionPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
 
+        LabEventTest.validateWorkflow("KapaQCPlateSetup", mapBarcodeToTube.values());
+
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(dilutionPlate.getLabel(), dilutionPlate);
 
@@ -79,17 +84,39 @@ public class KapaQCEntityBuilder {
             labEventHandler.processEvent(kapaQCSetup48A1Event);
             kapaQCPlate = (StaticPlate) kapaQCSetup48A1Event.getTargetLabVessels().iterator().next();
 
+            Set<SampleInstance> sampleInstancesInWell =
+                    kapaQCPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
+            Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
+
+            //shouldn't goto A02 yet
+            sampleInstancesInWell =
+                    kapaQCPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A02);
+            Assert.assertEquals(sampleInstancesInWell.size(), 0, "Wrong number of sample instances in well");
+
             LabEvent kapaQCSetup48A2Event = labEventFactory.buildFromBettaLims(
                     kapaQCJaxbBuilder.getKapaQCSetup48EventA2Jaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(kapaQCSetup48A2Event);
+
+            sampleInstancesInWell =
+                    kapaQCPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A02);
+            Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
 
             LabEvent kapaQCSetup48A13Event = labEventFactory.buildFromBettaLims(
                     kapaQCJaxbBuilder.getKapaQCSetup48EventA13Jaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(kapaQCSetup48A13Event);
 
+            sampleInstancesInWell =
+                    kapaQCPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A13);
+            Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
+
             LabEvent kapaQCSetup48A14Event = labEventFactory.buildFromBettaLims(
                     kapaQCJaxbBuilder.getKapaQCSetup48EventA14Jaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(kapaQCSetup48A14Event);
+
+            sampleInstancesInWell =
+                    kapaQCPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A14);
+            Assert.assertEquals(sampleInstancesInWell.size(), 1, "Wrong number of sample instances in well");
+
         } else {
             LabEvent kapaQCSetup96A1Event = labEventFactory.buildFromBettaLims(
                     kapaQCJaxbBuilder.getKapaQCSetup96EventA1Jaxb(), mapBarcodeToVessel);
@@ -116,5 +143,13 @@ public class KapaQCEntityBuilder {
         }
 
         return this;
+    }
+
+    public StaticPlate getKapaQCPlate() {
+        return kapaQCPlate;
+    }
+
+    public StaticPlate getDilutionPlate() {
+        return dilutionPlate;
     }
 }
