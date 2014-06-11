@@ -1,6 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean" %>
-<%--<stripes:layout-definition>--%>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean"/>
 
@@ -26,8 +25,6 @@
                 }
             }
         </script>
-    <%--</stripes:layout-component>--%>
-    <%--<stripes:layout-component name="workRequestOptions">--%>
 
         <stripes:form beanclass="${actionBean.class.name}" partial="true">
             <div class="control-group">
@@ -92,5 +89,4 @@
                 </div>
             </div>
         </stripes:form>
-    <%--</stripes:layout-component>--%>
 

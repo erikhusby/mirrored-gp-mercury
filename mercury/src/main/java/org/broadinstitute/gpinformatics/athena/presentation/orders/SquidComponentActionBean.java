@@ -19,6 +19,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,7 +62,8 @@ public class SquidComponentActionBean extends CoreActionBean {
 
     private static final String SQUID_PROJECT_OPTIONS_INSERT = "/orders/squidcomponent/squid_project_options.jsp";
     private static final String BAIT_OPTIONS_INSERT = "/orders/squidcomponent/squid_bait_options.jsp";
-    private static final String SQUID_WORK_REQUEST_OPTIONS_INSERT = "/orders/squidcomponent/squid_work_request_options.jsp";
+    private static final String SQUID_WORK_REQUEST_OPTIONS_INSERT =
+            "/orders/squidcomponent/squid_work_request_options.jsp";
     private static final String BAINT_RECEPTACLES_INSERT = "/orders/squidcomponent/squid_bait_receptacles.jsp";
 
     @Inject
@@ -107,6 +109,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     private ExecutionTypes squidProjectExecutionTypes;
 
     private Map<String, Set<SampleReceptacleInfo>> baitsByGroupName = new HashMap<>();
+
     private SampleReceptacleGroup selectedBaits;
     private String[] selectedBaitReceptacles;
 
@@ -121,7 +124,7 @@ public class SquidComponentActionBean extends CoreActionBean {
     }
 
     @Before(stages = LifecycleStage.BindingAndValidation,
-            on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION,CANCEL_ACTION})
+            on = {ENTER_COMPONENTS_ACTION, BUILD_SQUID_COMPONENT_ACTION, CANCEL_ACTION})
     public void init() {
 
         productOrderKey = getContext().getRequest().getParameter(ProductOrderActionBean.PRODUCT_ORDER_PARAMETER);
@@ -159,13 +162,31 @@ public class SquidComponentActionBean extends CoreActionBean {
         return new ForwardResolution(CREATE_SQUID_COMPONENT_PAGE);
     }
 
+    @ValidationMethod(on = BUILD_SQUID_COMPONENT_ACTION)
+    public void validateBaitInfo() throws Exception {
+        if (StringUtils.isNotBlank(autoSquidDto.getWorkRequestType()) &&
+            autoSquidDto.getWorkRequestType().equals(WORKREQUEST_TYPE_FOR_BAITS)) {
+            if (selectedBaits == null || StringUtils.isBlank(selectedBaits.getGroupName())
+                || selectedBaits.getGroupName().equals("-1")) {
+                addValidationError("oligioGroupName",
+                        "For a work request of type {2} you must select a valid bait pool name",
+                        WORKREQUEST_TYPE_FOR_BAITS);
+            }
+            if(selectedBaitReceptacles == null || selectedBaitReceptacles.length == 0) {
+                addValidationError("baitReceptacles",
+                        "For a work request of type {2} you must select at least one sample receptacle for the bait",
+                        WORKREQUEST_TYPE_FOR_BAITS);
+            }
+        }
+    }
+
     @HandlesEvent(BUILD_SQUID_COMPONENT_ACTION)
     public Resolution buildSquidComponents() {
 
         autoSquidDto.setPairedSequencing((pairedSequence.equals("YES")));
 
-        if(selectedBaits != null) {
-            for(String receptacle:selectedBaitReceptacles) {
+        if (selectedBaits != null) {
+            for (String receptacle : selectedBaitReceptacles) {
                 SampleReceptacleInfo selectedInfo = new SampleReceptacleInfo();
                 selectedInfo.setBarcode(receptacle);
                 selectedInfo.setReceptacleId(receptacle);
@@ -203,12 +224,12 @@ public class SquidComponentActionBean extends CoreActionBean {
     public Resolution ajaxSquidBaitOptions() throws Exception {
         OligioGroups oligioGroups = squidConnector.getOligioGroups();
 
-        for(SampleReceptacleGroup baitDetails:oligioGroups.getGroups()) {
-                baitsByGroupName.put(baitDetails.getGroupName(),
-                        new HashSet<>(baitDetails.getGroupReceptacles()));
+        for (SampleReceptacleGroup baitDetails : oligioGroups.getGroups()) {
+            baitsByGroupName.put(baitDetails.getGroupName(),
+                    new HashSet<>(baitDetails.getGroupReceptacles()));
         }
 
-        return  new ForwardResolution(BAIT_OPTIONS_INSERT);
+        return new ForwardResolution(BAIT_OPTIONS_INSERT);
     }
 
     @HandlesEvent("ajaxSquidBaitReceptacles")

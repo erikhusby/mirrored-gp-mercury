@@ -3,24 +3,22 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean"/>
 
-<%--<stripes:layout-component name="workRequestOptHead">--%>
-    <script type="text/javascript">
-        function pullSampleReceptacles() {
+<script type="text/javascript">
+    function pullSampleReceptacles() {
 
-                $j("#squidOligioPoolReceptacles").html("");
-                $j("#squidOligioPoolReceptacles").html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-                $j("#squidOligioPoolReceptacles").show();
-                $j.ajax({
-                    url: "${ctxpath}/orders/squid_component.action?ajaxSquidBaitReceptacles=&selectedBaits.groupName="+$j("#oligioGroupName").val(),
-                    dataType: 'html',
-                    success: function (html) {
-                        $j("#squidOligioPoolReceptacles").html(html);
-                        $j("#squidOligioPoolReceptacles").fadeIn();
-                    }
-                });
-        }
-    </script>
-<%--</stripes:layout-component>--%>
+        $j("#squidOligioPoolReceptacles").html("");
+        $j("#squidOligioPoolReceptacles").html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+        $j("#squidOligioPoolReceptacles").show();
+        $j.ajax({
+            url: "${ctxpath}/orders/squid_component.action?ajaxSquidBaitReceptacles=&selectedBaits.groupName=" + $j("#oligioGroupName").val(),
+            dataType: 'html',
+            success: function (html) {
+                $j("#squidOligioPoolReceptacles").html(html);
+                $j("#squidOligioPoolReceptacles").fadeIn();
+            }
+        });
+    }
+</script>
 <stripes:form beanclass="${actionBean.class.name}" partial="true">
     <div class="control-group">
         <stripes:label for="oligioGroupName" class="control-label">

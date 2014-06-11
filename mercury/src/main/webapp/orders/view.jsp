@@ -1027,15 +1027,13 @@ function formatInput(item) {
                                         onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
                     </security:authorizeBlock>
                 </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                        <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
-                            <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
-                                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                                Build Squid Components
-                            </stripes:link>
-                        </c:if>
-                    </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                            Build Squid Components
+                        </stripes:link>
+                    </c:if>
                 </security:authorizeBlock>
             </span>
 
