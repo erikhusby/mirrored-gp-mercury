@@ -950,16 +950,11 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
     }
 
-    @Transient
     public boolean orderPredatesRegulatoryRequirement() {
-        Date testDate = getPlacedDate();
-        if (getPlacedDate() == null) {
-            testDate = new Date();
-        }
+        Date testDate = ((getPlacedDate() == null) ?new Date():getPlacedDate());
         return testDate.before(getIrbRequiredStartDate());
     }
 
-    @Transient
     public boolean regulatoryRequirementsMet() {
         if (orderPredatesRegulatoryRequirement()) {
             return true;
@@ -970,7 +965,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return false;
     }
 
-    @Transient
     public boolean canSkipRegulatoryRequirements() {
         return !StringUtils.isBlank(skipRegulatoryReason);
     }

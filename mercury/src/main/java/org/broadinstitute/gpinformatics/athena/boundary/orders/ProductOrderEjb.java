@@ -932,9 +932,6 @@ public class ProductOrderEjb {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-        if (messageCollection != null) {
-            messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-        }
     }
 
     /**

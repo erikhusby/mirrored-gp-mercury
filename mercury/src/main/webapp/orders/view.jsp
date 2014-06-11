@@ -684,7 +684,7 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+<c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
     <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
     <div>
         <div class="control-group view-control-group">
@@ -1028,8 +1028,8 @@ function formatInput(item) {
                     </security:authorizeBlock>
                 </security:authorizeBlock>
                 <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                    <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
-                        <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
+                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
                             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
                             Build Squid Components
                         </stripes:link>
