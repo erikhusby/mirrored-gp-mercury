@@ -614,4 +614,88 @@
         </sql>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-2679-1">
+        <createTable schemaName="mercury" tableName="le_metadata">
+            <column name="lab_event_metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadata_type" type="varchar(255)" />
+            <column name="value" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_metadata" columnNames="lab_event_metadata_id"/>
+        <createSequence sequenceName="SEQ_LAB_EVENT_METADATA" schemaName="mercury" startValue="1"
+                        incrementBy="50"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-2">
+        <createTable schemaName="mercury" tableName="le_metadata_aud">
+            <column name="lab_event_metadata_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+            <column name="lab_event_metadata_type" type="varchar(255)" />
+            <column name="value" type="varchar(255)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_metadata_aud" columnNames="lab_event_metadata_id, rev"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-3">
+        <createTable schemaName="mercury" tableName="le_lab_event_metadatas">
+            <column name="lab_event" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadatas" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_lab_event_metadatas" columnNames="lab_event, lab_event_metadatas"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-4">
+        <createTable schemaName="mercury" tableName="le_lab_event_metadatas_aud">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_event_metadatas" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)" />
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="le_lab_event_metadatas_aud" columnNames="rev, lab_event, lab_event_metadatas"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-5">
+        <addForeignKeyConstraint baseTableName="le_metadata_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lem_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-6">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas" baseTableSchemaName="mercury" baseColumnNames="lab_event"
+                                 constraintName="fk_lelem_le"
+                                 referencedTableName="lab_event" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_event_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-7">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas" baseTableSchemaName="mercury" baseColumnNames="lab_event_metadatas"
+                                 constraintName="fk_lelem_lem"
+                                 referencedTableName="le_metadata" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_event_metadata_id"/>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2679-8">
+        <addForeignKeyConstraint baseTableName="le_lab_event_metadatas_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lelem_aud_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -439,11 +439,10 @@ public class ReworkEjb {
 
         List<String> validationMessages = new ArrayList<>();
 
-        if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(),
-                BucketEntry.Status.Active)) {
+        if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(), BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                            candidateVessel.getLabel(), sampleKey, productOrder, bucketDef.getName());
+                            candidateVessel.getLabel(), sampleKey, productOrder.getJiraTicketKey(), bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }

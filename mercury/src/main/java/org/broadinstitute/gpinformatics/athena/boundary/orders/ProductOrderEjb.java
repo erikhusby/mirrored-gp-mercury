@@ -282,10 +282,20 @@ public class ProductOrderEjb {
         editOrder.prepareToSave(userBean.getBspUser());
     }
 
-    public void setManualOnRisk(
-            @Nonnull BspUser user, @Nonnull String productOrderKey,
-            List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment) throws IOException {
-
+    /**
+     * Manually update risk of samples in a product order
+     *
+     * @param user            User performing action
+     * @param productOrderKey Key of project being updated.
+     * @param orderSamples    Samples who's risk is to be manually updated.
+     * @param riskStatus      New risk status
+     * @param riskComment     Comment of reason why samples' risk is being updated
+     *
+     * @throws IOException
+     */
+    public void addManualOnRisk(@Nonnull BspUser user, @Nonnull String productOrderKey,
+                                List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment)
+            throws IOException {
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse.
@@ -307,11 +317,28 @@ public class ProductOrderEjb {
         editOrder.prepareToSave(user);
 
         // Add comment about the risk status to jira.
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        String issueComment = String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
-                userBean.getLoginUserName(), riskStatus, orderSamples.size(), riskComment);
+        updateJiraCommentForRisk(productOrderKey, user, riskComment, orderSamples.size(), riskStatus);
+    }
 
-        issue.addComment(issueComment);
+    /**
+     * Post a comment in jira about risk.
+     *
+     * @param jiraKey     Key of jira issue to add comment to.
+     * @param comment     User supplied comment on change of risk for samples
+     * @param sampleCount number of effected samples
+     * @param isRisk      new risk of samples
+     *
+     * @throws IOException
+     */
+    private void updateJiraCommentForRisk(@Nonnull String jiraKey, @Nonnull BspUser bspUser, @Nonnull String comment,
+                                          int sampleCount, boolean isRisk) throws IOException {
+        String issueComment = buildJiraCommentForRiskString(comment, bspUser.getUsername(), sampleCount, isRisk);
+        jiraService.addComment(jiraKey, issueComment);
+    }
+
+    String buildJiraCommentForRiskString(String comment, String username, int sampleCount, boolean isRisk) {
+        return String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
+                    username, isRisk, sampleCount, comment);
     }
 
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,

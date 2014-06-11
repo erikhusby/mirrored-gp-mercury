@@ -198,23 +198,31 @@ public class BSPSampleDataFetcher extends BSPJerseyClient {
     }
 
     /**
-     * Return a Map of manufacturer barcodes to the SampleDetails object for each input barcode.
+     * Returns a map of barcode to SampleDetails object for each input barcode, which can be a manufacturer barcode
+     * or SM-id barcode.
      */
-    public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByMatrixBarcodes(@Nonnull Collection<String> matrixBarcodes) {
+    public Map<String, GetSampleDetails.SampleInfo> fetchSampleDetailsByBarcode(@Nonnull Collection<String> barcodes) {
         String urlString = getUrl(WS_SAMPLE_DETAILS);
 
         Map<String, GetSampleDetails.SampleInfo> map = new HashMap<>();
         WebResource resource = getJerseyClient().resource(urlString);
         // Use POST, rather than GET, to allow large number of barcodes without hitting 8K limit on URL.
         MultivaluedMap<String, String> formData = new MultivaluedMapImpl();
-        formData.add("barcodes", StringUtils.join(matrixBarcodes, ","));
+        formData.add("barcodes", StringUtils.join(barcodes, ","));
         GetSampleDetails.Details details = resource.accept(MediaType.TEXT_XML).post(
                 new GenericType<GetSampleDetails.Details>() {}, formData);
 
-        // Overwrite the map values that were found in BSP with the SampleDetails objects.
+        // Fills in the map values using SampleDetails that were found in BSP.
         if (details.getSampleDetails().getSampleInfo() != null) {
             for (GetSampleDetails.SampleInfo sampleInfo : details.getSampleDetails().getSampleInfo()) {
-                map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+                // BarcodedTube such as cryovial will not have mfg barcode but will have an SM-id barcode.
+                if (StringUtils.isNotBlank(sampleInfo.getManufacturerBarcode()) &&
+                    barcodes.contains(sampleInfo.getManufacturerBarcode())) {
+                    map.put(sampleInfo.getManufacturerBarcode(), sampleInfo);
+                } else if (StringUtils.isNotBlank(sampleInfo.getSampleId()) &&
+                           barcodes.contains(sampleInfo.getSampleId())) {
+                    map.put(sampleInfo.getSampleId(), sampleInfo);
+                }
             }
         }
 

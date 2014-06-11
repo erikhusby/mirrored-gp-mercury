@@ -67,7 +67,7 @@ public class RackScannerEjb {
 
         // Utilizes a service in BSP which takes any type of barcode and returns SampleInfo objects
         Map<String,GetSampleDetails.SampleInfo> sampleInfoMap =
-                sampleDataFetcherService.fetchSampleDetailsByMatrixBarcodes(rackScan.values());
+                sampleDataFetcherService.fetchSampleDetailsByBarcode(rackScan.values());
 
         // Just return the sample ids.
         List<String> sampleIds = new ArrayList<>();

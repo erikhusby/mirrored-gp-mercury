@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
+import com.lowagie.text.DocumentException;
 import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
@@ -7,6 +8,7 @@ import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
@@ -14,6 +16,7 @@ import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -32,6 +35,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +56,7 @@ public class ProductActionBean extends CoreActionBean {
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
+    private static final String DOWNLOAD_PRODUCT_LIST = "downloadProductDescriptions";
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -134,7 +140,8 @@ public class ProductActionBean extends CoreActionBean {
             // will tell the user that they need to select a product family
             return;
         }
-        if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(editProduct.getProductFamily().getProductFamilyId())) {
+        if ((editProduct.getProductFamily() == null) || !productFamilyId.equals(
+                editProduct.getProductFamily().getProductFamilyId())) {
             editProduct.setProductFamily(productFamilyDao.find(productFamilyId));
         }
     }
@@ -160,8 +167,8 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
-    public void listInit() {
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION, DOWNLOAD_PRODUCT_LIST})
+    public void allProductsInit() {
         allProducts = productDao.findAll(Product.class);
     }
 
@@ -312,6 +319,22 @@ public class ProductActionBean extends CoreActionBean {
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
                 editProduct.getPartNumber());
+    }
+
+    @HandlesEvent(DOWNLOAD_PRODUCT_LIST)
+    public Resolution downloadProductDescriptions() {
+        return new StreamingResolution("application/pdf") {
+            @Override
+            public void stream(final HttpServletResponse response) {
+                Collections.sort(allProducts, Product.BY_PART_NUMBER);
+                try {
+                    setAttachment(true);
+                    ProductPdfFactory.toPdf(response.getOutputStream(), allProducts.toArray(new Product[allProducts.size()]));
+                } catch (IOException | DocumentException e) {
+                    addGlobalValidationError("Error generating PDF file.");
+                }
+            }
+        }.setFilename("Product Descriptions.pdf");
     }
 
     public Product getEditProduct() {

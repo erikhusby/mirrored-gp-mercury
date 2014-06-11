@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent.eventhandlers;
 
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.inject.Inject;
 
@@ -43,31 +44,29 @@ public class EventHandlerSelector {
      *                     some extra information that may not make sense to store with the {@link LabEvent}.
      */
     public void applyEventSpecificHandling(LabEvent targetEvent, StationEventType stationEvent) {
-        AbstractEventHandler validator = null;
 
         switch (targetEvent.getLabEventType()) {
         case DENATURE_TO_DILUTION_TRANSFER:
-            validator = denatureToDilutionTubeHandler;
-
+            denatureToDilutionTubeHandler.handleEvent(targetEvent, stationEvent);
             break;
         case DILUTION_TO_FLOWCELL_TRANSFER:
         case FLOWCELL_TRANSFER:
         case DENATURE_TO_FLOWCELL_TRANSFER:
         case REAGENT_KIT_TO_FLOWCELL_TRANSFER:
-            validator =  flowcellMessageHandler;
+            flowcellMessageHandler.handleEvent(targetEvent, stationEvent);
             break;
+
         case AUTO_DAUGHTER_PLATE_CREATION:
-            validator = samplesDaughterPlateHandler;
+            stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
+        case BLOOD_CRYOVIAL_EXTRACTION:
+        case BLOOD_DEEPWELL_CHEMAGEN_TRANSFER:
+        case BLOOD_CHEMAGEN_TO_FINAL_RACK:
+        case SALIVA_CRYOVIAL_EXTRACTION:
+        case SALIVA_DEEPWELL_CHEMAGEN_TRANSFER:
+        case SALIVA_CHEMAGEN_TO_FINAL_RACK:
+            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
             break;
         }
-
-        if (validator != null) {
-            validator.handleEvent(targetEvent, stationEvent);
-        }
-    }
-
-    public void setDenatureToDilutionTubeHandler(DenatureToDilutionTubeHandler denatureToDilutionTubeHandler) {
-        this.denatureToDilutionTubeHandler = denatureToDilutionTubeHandler;
     }
 
     public FlowcellMessageHandler getFlowcellMessageHandler() {

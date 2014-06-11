@@ -128,6 +128,13 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupBsp1914() {
+        LabVessel labVessel = labVesselDao.findByIdentifier("CO-9202643");
+        labVessel.setLabel("CO-9624594");
+        labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
     public void fixupZeroRacks() {
         TubeFormation tubeFormation = tubeFormationDao.findByDigest("31003665b6e8cf20071a0f6c530da6e7");
         deleteZeroRack(tubeFormation);

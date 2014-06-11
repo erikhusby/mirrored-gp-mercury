@@ -47,14 +47,6 @@ public class IlluminaSequencingRunFactory implements Serializable {
     public ReadStructureRequest storeReadsStructureDBFree(ReadStructureRequest readStructureRequest,
                                                            IlluminaSequencingRun run) {
 
-        if (StringUtils.isBlank(readStructureRequest.getActualReadStructure()) &&
-            StringUtils.isBlank(readStructureRequest.getSetupReadStructure()) &&
-            readStructureRequest.getImagedArea() == null &&
-            readStructureRequest.getLanesSequenced() == null) {
-            throw new ResourceException("Actual read structure, setup read structure, imaged area, and lanes sequenced aren't set.",
-                    Response.Status.BAD_REQUEST);
-        }
-
         if (StringUtils.isNotBlank(readStructureRequest.getActualReadStructure())) {
             run.setActualReadStructure(readStructureRequest.getActualReadStructure());
         }

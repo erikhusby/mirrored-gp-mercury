@@ -6,11 +6,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKi
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
@@ -20,23 +23,21 @@ import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEjbTest {
-
-    public static final String ALIQUOT_ID_1 = "SM-ALQT1";
-    public static final String ALIQUOT_ID_2 = "SM-ALQT2";
-    public static final String STOCK_ID = "SM-STOCK";
-
-    private UserBean mockUserBean = Mockito.mock(UserBean.class);
+    private static final BSPUserList.QADudeUser qaDudeUser = new BSPUserList.QADudeUser("PM", 2423L);
+    private static final UserBean mockUserBean = Mockito.mock(UserBean.class);
     private ProductOrderDao productOrderDaoMock = Mockito.mock(ProductOrderDao.class);
-    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null, null, mockUserBean, null,
-            null, null
-    );
-
+    ProductOrderEjb productOrderEjb = new ProductOrderEjb(productOrderDaoMock, null, null,
+                    JiraServiceProducer.stubInstance(), mockUserBean, null, null, null);
+    private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
+    ProductOrder productOrder=null;
 
     public void testUpdateKitInfo() throws Exception {
 
@@ -121,5 +122,29 @@ public class ProductOrderEjbTest {
         pdo.setQuoteId("CASH");
         ProductOrderEjb pdoEjb = new ProductOrderEjb();
         pdoEjb.validateQuote(pdo, new QuoteServiceStub());
+    }
+
+    public void testJiraCommentString(){
+        String jiraComment = productOrderEjb.buildJiraCommentForRiskString("at risk", "QADudeDEV", 2, true);
+        Assert.assertEquals(jiraComment, "QADudeDEV set manual on risk to true for 2 samples with comment:\nat risk");
+    }
+
+    private List<ProductOrderSample> setupRiskTests() {
+        productOrder = ProductOrderTestFactory.createProductOrder(sampleNames);
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(productOrder.getBusinessKey())).thenReturn(productOrder);
+        return productOrder.getSamples().subList(0, 2);
+    }
+
+    public void testManualAtRisk() throws IOException {
+        List<ProductOrderSample> productOrderSamples = setupRiskTests();
+        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, true, "is risk");
+        Assert.assertEquals(productOrder.countItemsOnRisk(), productOrderSamples.size());
+    }
+
+    public void testManualNoRisk() throws IOException {
+        List<ProductOrderSample> productOrderSamples = setupRiskTests();
+        productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
+        Assert.assertEquals(productOrder.countItemsOnRisk(), 0);
     }
 }
