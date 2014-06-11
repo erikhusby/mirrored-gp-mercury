@@ -109,30 +109,6 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
-        <name>Kapa QC</name>
-        <workflowProcessDefVersions>
-            <version>1.0</version>
-            <effectiveDate>2014-06-09T09:03:24.085-04:00</effectiveDate>
-            <workflowStepDefs>
-                <name>Kapa QC Dilution Plate Transfer</name>
-                <labEventTypes>KAPA_QC_DILUTION_TRANSFER</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <deadEndBranch>true</deadEndBranch>
-            </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Kapa QC Dilution Plate Transfer</name>
-                <labEventTypes>KAPA_QC_PLATE_SETUP</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <numberOfRepeats>1</numberOfRepeats>
-                <deadEndBranch>true</deadEndBranch>
-            </workflowStepDefs>
-        </workflowProcessDefVersions>
-    </workflowProcessDefs>
-    <workflowProcessDefs>
         <name>Shearing</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -899,10 +875,9 @@
     <productWorkflowDefs>
       <name>ICE Exome Express</name>
         <productWorkflowDefVersions>
-            <version>5.0</version>
-            <effectiveDate>2014-03-17T00:00:00.000-04:00</effectiveDate>
+            <version>4.0</version>
+            <effectiveDate>2014-03-04T00:00:00.000-04:00</effectiveDate>
             <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
-            <workflowProcessDefs>Kapa QC</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>ICE</workflowProcessDefs>

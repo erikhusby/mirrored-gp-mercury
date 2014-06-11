@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.testng.Assert;
 
 import java.util.ArrayList;
@@ -19,8 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * User: jowalsh
- * Date: 6/2/14
+ * Builds entity graphs for the Kapa QC process.
  */
 public class KapaQCEntityBuilder {
     private final Map<String, BarcodedTube> mapBarcodeToTube;
@@ -55,7 +53,6 @@ public class KapaQCEntityBuilder {
                 bettaLimsMessageTestFactory, new ArrayList<>(mapBarcodeToTube.keySet()), rackBarcode, testPrefix
         ).invoke(do48Sample);
 
-        LabEventTest.validateWorkflow("KapaQCDilutionPlateTransfer", mapBarcodeToTube.values());
 
         Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
         mapBarcodeToVessel.put(platingRack.getLabel(), platingRack);
@@ -71,8 +68,6 @@ public class KapaQCEntityBuilder {
         dilutionPlate = (StaticPlate) kapaDilutionTransfer.getTargetLabVessels().iterator().next();
         Assert.assertEquals(dilutionPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
                 "Wrong number of sample instances");
-
-        LabEventTest.validateWorkflow("KapaQCPlateSetup", mapBarcodeToTube.values());
 
         mapBarcodeToVessel.clear();
         mapBarcodeToVessel.put(dilutionPlate.getLabel(), dilutionPlate);

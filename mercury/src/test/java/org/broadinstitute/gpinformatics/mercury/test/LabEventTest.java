@@ -1092,7 +1092,7 @@ public class LabEventTest extends BaseEventTest {
                 "PicoPlatingPostNorm",
                 "KapaQCDilutionPlateTransfer",
                 "ShearingTransfer",
-                "KapaQCPlateSetup", //TODO Why does this need to be down one?
+                "KapaQCPlateSetup",
                 "PostShearingTransferCleanup",
                 "ShearingQC",
                 "AdapterLigationCleanup",

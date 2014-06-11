@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * User: jowalsh
- * Date: 6/2/14
+ * Builds JAXB objects for Kapa QC messages.
  */
 public class KapaQCJaxbBuilder {
     private final List<String> sourceBarcodes;
