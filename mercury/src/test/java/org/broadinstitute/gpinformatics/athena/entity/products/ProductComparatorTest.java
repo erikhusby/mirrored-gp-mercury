@@ -32,10 +32,6 @@ public class ProductComparatorTest {
         };
     }
 
-    @Before
-    public void setUp() {
-    }
-
     @Test(dataProvider = "dataProvider")
     public void testCompareByPartNumber(String partNumber, String otherPartNumber, int expectedResult) {
         Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing();
