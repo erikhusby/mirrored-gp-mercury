@@ -157,6 +157,10 @@ public class LabEvent {
     @ManyToOne(cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
     private LabBatch labBatch;
 
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "mercury", name = "le_lab_event_metadatas")
+    private Set<LabEventMetadata> labEventMetadatas = new HashSet<>();
+
     /**
      * Set by transfer traversal, based on ancestor lab batches and transfers.
      */
@@ -269,6 +273,10 @@ public class LabEvent {
         reagents.add(reagent);
     }
 
+    public void addMetadata(LabEventMetadata labEventMetadata) {
+        labEventMetadatas.add(labEventMetadata);
+    }
+
     /**
      * Returns all the lab vessels involved in this
      * operation, regardless of source/destination.
@@ -351,6 +359,14 @@ todo jmt adder methods
 
     public void setDisambiguator(Long disambiguator) {
         this.disambiguator = disambiguator;
+    }
+
+    public Set<LabEventMetadata> getLabEventMetadatas() {
+        return labEventMetadatas;
+    }
+
+    public void setLabEventMetadatas(Set<LabEventMetadata> labEventMetadatas) {
+        this.labEventMetadatas = labEventMetadatas;
     }
 
     public LabVessel getInPlaceLabVessel() {
@@ -472,5 +488,4 @@ todo jmt adder methods
         }
         return null;
     }
-
 }
