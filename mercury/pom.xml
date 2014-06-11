@@ -1358,6 +1358,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.lowagie</groupId>
+            <artifactId>itext</artifactId>
+            <version>4.2.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.2.2</version>
@@ -1676,6 +1682,11 @@
             <artifactId>deltaspike-cdictrl-weld</artifactId>
             <version>${deltaspike.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.6.5</version>
         </dependency>
 
         <!--

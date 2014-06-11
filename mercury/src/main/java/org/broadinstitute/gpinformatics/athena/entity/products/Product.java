@@ -29,6 +29,7 @@ import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -667,4 +668,12 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     public boolean getSupportsSkippingQuote() {
         return getProductFamily().isSupportsSkippingQuote();
     }
+
+    @Transient
+    public static Comparator<Product> BY_PART_NUMBER = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            return product.getPartNumber().compareTo(anotherProduct.getPartNumber());
+        }
+    };
 }
