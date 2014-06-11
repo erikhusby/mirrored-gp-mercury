@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-import net.sourceforge.stripes.action.Before;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.testng.Assert;
