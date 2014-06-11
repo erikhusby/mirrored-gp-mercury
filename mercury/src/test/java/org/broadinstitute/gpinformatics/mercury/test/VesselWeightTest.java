@@ -115,7 +115,7 @@ public class VesselWeightTest extends Arquillian {
 
         // Verify that BSP volume is set
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
-                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(tubeBarcodes);
+                bspSampleDataFetcher.fetchSampleDetailsByBarcode(tubeBarcodes);
         Assert.assertEquals(mapBarcodeToSampleInfo.get(tubeBarcodes.get(0)).getVolume(), tube1Volume.floatValue());
     }
 }

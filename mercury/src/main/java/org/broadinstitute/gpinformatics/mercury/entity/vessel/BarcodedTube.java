@@ -20,7 +20,8 @@ public class BarcodedTube extends LabVessel {
         MatrixTube("Tube", "Matrix Tube"),
         OrageneTube("Oragene", "Oragene Tube"),
         VacutainerBloodTubeEDTA_4("VacutainerBloodTubeEDTA_4","Vacutainer Tube"),
-        Cryovial2018("Cryovial2018", "Cryovial Tube");
+        Cryovial2018("Cryovial2018", "Cryovial Tube"),
+        MatrixTube076("MatrixTube075","Matrix Tube 075");
 
         /**
          * The name that will be supplied by automation scripts.
