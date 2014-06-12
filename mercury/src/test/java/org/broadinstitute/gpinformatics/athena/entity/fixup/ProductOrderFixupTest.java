@@ -474,7 +474,7 @@ public class ProductOrderFixupTest extends Arquillian {
         unAbandonPDOSamples("PDO-3551", "SM-5MRVM");
     }
 
-    @Test(enabled = falseGP)
+    @Test(enabled = false)
     public void fixupGplim2627() throws ParseException {
         // Complete PDO that was not auto-completed
         ProductOrder order = productOrderDao.findByBusinessKey("PDO-2611");
