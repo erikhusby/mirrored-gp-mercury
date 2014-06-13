@@ -29,7 +29,8 @@ public class HibernateMetadataTest extends ContainerTest {
     private EntityManager entityManager;
 
     /** Add exceptions to this list; the goal is to keep this list empty. */
-    private static final String[] ignoredEntities = new String[0];
+    private static final String[] ignoredEntities =
+            {"org.broadinstitute.gpinformatics.infrastructure.metrics.Aggregation"};
 
     /**
      * Method to allow user to ignore certain classes/entities in the testEverything method.
