@@ -50,6 +50,9 @@ public class BillingAdaptor implements Serializable {
 
     BillingSessionAccessEjb billingSessionAccessEjb;
 
+    private static final FastDateFormat BILLING_DATE_FORMAT =
+            FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
+
     @Inject
     public BillingAdaptor(BillingEjb billingEjb, BillingSessionDao billingSessionDao,PriceListCache priceListCache,
                           QuoteService quoteService,BillingSessionAccessEjb billingSessionAccessEjb) {
@@ -110,8 +113,6 @@ public class BillingAdaptor implements Serializable {
         List<BillingEjb.BillingResult> results = new ArrayList<>();
 
         BillingSession billingSession = billingSessionAccessEjb.findAndLockSession(sessionKey);
-        FastDateFormat dateTimeInstance =
-                FastDateFormat.getDateTimeInstance(FastDateFormat.SHORT, FastDateFormat.SHORT);
         try {
             List<QuoteImportItem> unBilledQuoteImportItems =
                     billingSession.getUnBilledQuoteImportItems(priceListCache);
@@ -141,22 +142,13 @@ public class BillingAdaptor implements Serializable {
 
                     result.setWorkId(workId);
                     Set<String> billedPdoKeys = getBilledPdoKeys(result);
-                    String billingLogText = String.format(
-                            "WorkItem '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %d samples in '%s'",
-                            workId,
-                            dateTimeInstance.format(item.getWorkCompleteDate()),
-                            dateTimeInstance.format(new Date()),
-                            item.getQuantity(),
-                            quotePriceItem.getName(),
-                            item.getNumSamples().length(),
-                            billedPdoKeys);
-                    log.info(billingLogText);
+                    logBilling(workId, item, quotePriceItem, billedPdoKeys);
                     billingEjb.updateLedgerEntries(item, quoteIsReplacing, workId);
                 } catch (Exception ex) {
 
                     String errorMessage;
                     if (StringUtils.isBlank(result.getWorkId())) {
-                        errorMessage = "A Problem occurred attempting to post to the quote server for " +
+                        errorMessage = "A problem occurred attempting to post to the quote server for " +
                                        billingSession.getBusinessKey() + ".";
                     } else {
                         errorMessage = "A problem occurred saving the ledger entries for " +
@@ -184,6 +176,19 @@ public class BillingAdaptor implements Serializable {
         }
 
         return results;
+    }
+
+    void logBilling(String workId, QuoteImportItem quoteImportItem, QuotePriceItem quotePriceItem, Set<String> billedPdoKeys) {
+        String billingLogText = String.format(
+                "Work item '%s' with completion date of '%s' posted at '%s' for '%2.2f' units of '%s' on behalf of %s in '%s'",
+                workId,
+                BILLING_DATE_FORMAT.format(quoteImportItem.getWorkCompleteDate()),
+                BILLING_DATE_FORMAT.format(new Date()),
+                quoteImportItem.getQuantity(),
+                quotePriceItem.getName(),
+                quoteImportItem.getNumSamples(),
+                billedPdoKeys);
+        log.info(billingLogText);
     }
 
     /**
