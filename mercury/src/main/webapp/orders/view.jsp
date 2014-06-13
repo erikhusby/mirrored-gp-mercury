@@ -684,7 +684,8 @@ function formatInput(item) {
     </div>
 </div>
 
-<c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
+<c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+    <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
     <div>
         <div class="control-group view-control-group">
             <label class="control-label label-form">Squid Work Request</label>
@@ -697,6 +698,7 @@ function formatInput(item) {
             </div>
         </div>
     </div>
+    </c:if>
 </c:if>
 
 <div class="view-control-group control-group">
@@ -1025,15 +1027,13 @@ function formatInput(item) {
                                         onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
                     </security:authorizeBlock>
                 </security:authorizeBlock>
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                        <c:if test="${actionBean.editOrder.product.productFamily.isSupportsNumberOfLanes()}">
-                            <stripes:link beanclass="${actionBean.class.name}" event="squidComponent">
-                                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                                Build Squid Components
-                            </stripes:link>
-                        </c:if>
-                    </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                            Build Squid Components
+                        </stripes:link>
+                    </c:if>
                 </security:authorizeBlock>
             </span>
 

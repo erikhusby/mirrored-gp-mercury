@@ -8,7 +8,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +142,7 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
                         "0163047841", "0163047842", "0163047843", "0163047844", "0163047845", "0163047846",
                         "0163047847", "0163047848", "0163047849", "0163047850", "0163047851");
         Map<String, GetSampleDetails.SampleInfo> mapBarcodeToSampleInfo =
-                bspSampleDataFetcher.fetchSampleDetailsByMatrixBarcodes(barcodes);
+                bspSampleDataFetcher.fetchSampleDetailsByBarcode(barcodes);
         GetSampleDetails.SampleInfo sampleInfo = mapBarcodeToSampleInfo.get(barcode);
         Assert.assertEquals(mapBarcodeToSampleInfo.size(), barcodes.size());
         Assert.assertEquals(sampleInfo.getManufacturerBarcode(), barcode);

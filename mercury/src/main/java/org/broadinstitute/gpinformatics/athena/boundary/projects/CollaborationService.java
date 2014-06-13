@@ -91,7 +91,7 @@ public class CollaborationService {
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
-            throw new IllegalArgumentException("must specify a Collaborator Domain User ID or an email address");
+            throw new IllegalArgumentException("Must specify a Collaborator Domain User ID or an email address");
         }
 
         // Look up the selected id.

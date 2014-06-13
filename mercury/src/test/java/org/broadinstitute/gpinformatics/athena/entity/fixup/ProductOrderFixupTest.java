@@ -469,8 +469,18 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void unAbandonSamplesGplim2704() throws IOException, ProductOrderEjb.NoSuchPDOException {
         unAbandonPDOSamples("PDO-3551", "SM-5MRVM");
+    }
+
+    @Test(enabled = false)
+    public void fixupGplim2627() throws ParseException {
+        // Complete PDO that was not auto-completed
+        ProductOrder order = productOrderDao.findByBusinessKey("PDO-2611");
+        if (order != null) {
+            order.setOrderStatus(ProductOrder.OrderStatus.Completed);
+            productOrderDao.persist(order);
+        }
     }
 }

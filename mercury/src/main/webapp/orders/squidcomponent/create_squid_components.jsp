@@ -81,7 +81,7 @@
                 <div id="squidProjectOptions">
                     <c:if test="${actionBean.projectOptionsRetrieved}">
                         <%--<stripes:layout-render name="/orders/squid_project_options.jsp"/>--%>
-                        <jsp:include page="/orders/squid_project_options.jsp"/>
+                        <jsp:include page="/orders/squidcomponent/squid_project_options.jsp"/>
                     </c:if>
                 </div>
                     <%--</fieldset>--%>
@@ -97,7 +97,7 @@
                     <c:choose>
                         <c:when test="${actionBean.workRequestOptionsRetrieved}">
                             <%--<stripes:layout-render name="/orders/squid_work_request_options.jsp"/>--%>
-                            <jsp:include page="/orders/squid_work_request_options.jsp"/>
+                            <jsp:include page="/orders/squidcomponent/squid_work_request_options.jsp"/>
                         </c:when>
                         <c:otherwise>
                             Select a Project Execution Type to drive work request options

@@ -6,6 +6,8 @@ import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import edu.mit.broad.prodinfo.bean.generated.CreateProjectOptions;
 import edu.mit.broad.prodinfo.bean.generated.CreateWorkRequestOptions;
 import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
+import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
+import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
 
@@ -70,6 +72,10 @@ public interface SquidConnector extends Serializable {
     CreateWorkRequestOptions getWorkRequestOptions(String executionType) throws UniformInterfaceException;
 
     ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException;
+
+    OligioGroups getOligioGroups() throws UniformInterfaceException;
+
+    SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException;
 
     AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException;
 }

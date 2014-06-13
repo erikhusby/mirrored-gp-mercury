@@ -6,7 +6,7 @@
     <stripes:form beanclass="${actionBean.class.name}" partial="true">
         <div class="control-group">
             <stripes:label for="initiativeSelect" class="control-label">
-                Initiative
+                Initiative *
             </stripes:label>
             <div class="controls">
                 <stripes:select name="autoSquidDto.initiative" id="initiativeSelect">
@@ -19,7 +19,7 @@
 
         <div class="control-group">
             <stripes:label for="projectTypeSelect" class="control-label">
-                Project type
+                Project type *
             </stripes:label>
             <div class="controls">
                 <stripes:select name="autoSquidDto.projectType" id="projectTypeSelect">
@@ -32,7 +32,7 @@
 
         <div class="control-group">
             <stripes:label for="fundingSourceSelect" class="control-label">
-                Funding source
+                Funding source *
             </stripes:label>
             <div class="controls">
                 <stripes:select name="autoSquidDto.fundSource" id="fundingSourceSelect">

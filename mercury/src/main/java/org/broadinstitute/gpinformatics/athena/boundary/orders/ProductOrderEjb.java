@@ -959,9 +959,6 @@ public class ProductOrderEjb {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-        if (messageCollection != null) {
-            messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
-        }
     }
 
     /**
@@ -988,11 +985,30 @@ public class ProductOrderEjb {
         order.setSquidWorkRequest(workRequestOutput.getWorkRequestId());
 
         try {
-            ProductOrderJiraUtil.addWorkRequestNotification(order, jiraService, workRequestOutput);
+            addWorkRequestNotification(order, workRequestOutput, squidInput);
         } catch (IOException e) {
             log.info("Unable to post work request creation of " + workRequestOutput.getWorkRequestId() + " to Jira for "
                      + productOrderKey);
         }
         return workRequestOutput;
     }
+
+    private void addWorkRequestNotification(@Nonnull ProductOrder pdo,
+                                            @Nonnull AutoWorkRequestOutput createdWorkRequestResults,
+                                            AutoWorkRequestInput squidInput)
+            throws IOException {
+
+        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
+
+        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
+                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
+
+        if(StringUtils.isNotBlank(squidInput.getLcsetId())) {
+            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
+                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
+        }
+
+    }
+
+
 }

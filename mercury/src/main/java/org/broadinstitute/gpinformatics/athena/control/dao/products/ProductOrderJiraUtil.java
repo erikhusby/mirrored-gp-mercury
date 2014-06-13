@@ -107,14 +107,4 @@ public class ProductOrderJiraUtil {
         issue.addComment(StringUtils.join(pdo.getSampleValidationComments(), "\n"));
     }
 
-    public static void addWorkRequestNotification(@Nonnull ProductOrder pdo, @Nonnull JiraService jiraService,
-                                                  @Nonnull AutoWorkRequestOutput createdWorkRequestResults)
-            throws IOException {
-
-        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
-
-        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
-                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
-
-    }
 }
