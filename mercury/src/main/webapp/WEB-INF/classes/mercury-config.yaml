@@ -221,6 +221,13 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
+bass:
+    DEV:
+      login:    mercury_bass
+      password: LszkUJSGyb!
+      host:     bass.broadinstitute.org
+      port:     443
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -240,6 +247,7 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
+      bass: DEV
 
 
     AUTO_BUILD:
@@ -256,7 +264,7 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-
+      bass: DEV
 
     TEST:
 
@@ -272,10 +280,9 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-
+      bass: DEV
 
     QA:
-
       app:      QA
       bsp:      RC
       jira:     TEST
