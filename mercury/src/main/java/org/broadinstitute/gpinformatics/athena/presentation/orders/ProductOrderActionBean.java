@@ -2138,15 +2138,10 @@ public class ProductOrderActionBean extends CoreActionBean {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
                         "a reason for bypassing the regulatory requirements", action);
             }
-            String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
-            List<Long> selectedIds = new ArrayList<>();
             if (editOrder.isDraft()) {
-                if (regulatoryIds != null) {
-                    for (String regulatoryId : regulatoryIds) {
-                        selectedIds.add(Long.parseLong(regulatoryId));
-                    }
+                if (CollectionUtils.isNotEmpty(selectedRegulatoryIds)) {
                     List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
 
                     Set<String> missingRegulatoryRequirements = new HashSet<>();
 
@@ -2157,9 +2152,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                         }
                     }
 
-                    addGlobalValidationError("Regulatory info d{2} is not associated with research project {3}",
-                            StringUtils.join(missingRegulatoryRequirements, ", "),
-                            editOrder.getResearchProject().getName());
+                    if (!missingRegulatoryRequirements.isEmpty()) {
+                        addGlobalValidationError("Regulatory info {2} is not associated with research project {3}",
+                                StringUtils.join(missingRegulatoryRequirements, ", "),
+                                editOrder.getResearchProject().getName());
+                    }
 
                 }
             }
