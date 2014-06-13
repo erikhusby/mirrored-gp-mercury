@@ -37,6 +37,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWellTransient;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -402,8 +404,16 @@ public class ZimsIlluminaRunFactory {
                 if (containerRole == null) {
                     mapHopToLabVessels.get(context.getHopCount()).add(labVessel);
                 } else {
-                    mapHopToLabVessels.get(context.getHopCount()).add(containerRole.getVesselAtPosition(
-                            context.getVesselPosition()));
+                    LabVessel vesselAtPosition = containerRole.getVesselAtPosition(context.getVesselPosition());
+                    if (vesselAtPosition == null) {
+                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                            vesselAtPosition = new PlateWellTransient((StaticPlate) labVessel, context.getVesselPosition());
+                        } else {
+                            throw new RuntimeException("No vessel at position " + context.getVesselPosition() + " in " +
+                                    labVessel.getLabel());
+                        }
+                    }
+                    mapHopToLabVessels.get(context.getHopCount()).add(vesselAtPosition);
                 }
             }
             return TraversalControl.StopTraversing;
