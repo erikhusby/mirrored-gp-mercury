@@ -6,7 +6,7 @@
 <stripes:form beanclass="${actionBean.class.name}" partial="true">
     <div class="control-group">
         <stripes:label for="baitReceptacles" class="control-label">
-            Sample receptacles
+            Sample receptacles *
         </stripes:label>
         <div class="controls">
             <stripes:select name="selectedBaitReceptacles" id="baitReceptacles" multiple="true">

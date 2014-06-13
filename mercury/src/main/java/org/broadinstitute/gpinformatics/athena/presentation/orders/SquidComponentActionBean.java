@@ -47,19 +47,17 @@ import java.util.Set;
 @UrlBinding(SquidComponentActionBean.ACTIONBEAN_URL_BINDING)
 public class SquidComponentActionBean extends CoreActionBean {
 
-    private static Log logger = LogFactory.getLog(SquidComponentActionBean.class);
-    public static final String BUILD_SQUID_COMPONENT_ACTION = "buildSquidComponents";
+    public static final String WORKREQUEST_TYPE_FOR_BAITS = "SEQ ONLY HYB SEL";
+    private static final String BUILD_SQUID_COMPONENTS = "Build Squid Components";
 
+    private static Log logger = LogFactory.getLog(SquidComponentActionBean.class);
+    public static final String ACTIONBEAN_URL_BINDING = "/orders/squid_component.action";
+
+    public static final String BUILD_SQUID_COMPONENT_ACTION = "buildSquidComponents";
     public static final String ENTER_COMPONENTS_ACTION = "enterComponents";
     public static final String CANCEL_ACTION = "cancelComponents";
 
-    public static final String WORKREQUEST_TYPE_FOR_BAITS = "SEQ ONLY HYB SEL";
-
-    public static final String ACTIONBEAN_URL_BINDING = "/orders/squid_component.action";
-    private static final String BUILD_SQUID_COMPONENTS = "Build Squid Components";
-
     private static final String CREATE_SQUID_COMPONENT_PAGE = "/orders/squidcomponent/create_squid_components.jsp";
-
     private static final String SQUID_PROJECT_OPTIONS_INSERT = "/orders/squidcomponent/squid_project_options.jsp";
     private static final String BAIT_OPTIONS_INSERT = "/orders/squidcomponent/squid_bait_options.jsp";
     private static final String SQUID_WORK_REQUEST_OPTIONS_INSERT =

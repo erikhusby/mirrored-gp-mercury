@@ -28,8 +28,16 @@
 
         <stripes:form beanclass="${actionBean.class.name}" partial="true">
             <div class="control-group">
+                <stripes:label for="lcsetKey" class="control-label">
+                    Is there an LCSet to associate?
+                </stripes:label>
+                <div class="controls">
+                    <stripes:text name="autoSquidDto.lcsetId" id="lcsetKey"/>
+                </div>
+            </div>
+            <div class="control-group">
                 <stripes:label for="workRequestTypeSelect" class="control-label">
-                    Work request type
+                    Work request type *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="autoSquidDto.workRequestType" id="workRequestTypeSelect"
@@ -48,7 +56,7 @@
 
             <div class="control-group">
                 <stripes:label for="analysisTypeSelect" class="control-label">
-                    Analysis type
+                    Analysis type *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="autoSquidDto.analysisType" id="analysisTypeSelect">
@@ -63,7 +71,7 @@
 
             <div class="control-group">
                 <stripes:label for="referenceSeqSelect" class="control-label">
-                    Reference sequence
+                    Reference sequence *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="autoSquidDto.referenceSequence" id="referenceSeqSeelct">
@@ -77,7 +85,7 @@
 
             <div class="control-group">
                 <stripes:label for="pairedSequenceSelect" class="control-label">
-                    Paired sequencing
+                    Paired sequencing *
                 </stripes:label>
                 <div class="controls">
                     <stripes:select name="pairedSequence" id="pairedSequenceSelect">

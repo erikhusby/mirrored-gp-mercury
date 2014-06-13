@@ -22,7 +22,7 @@
 <stripes:form beanclass="${actionBean.class.name}" partial="true">
     <div class="control-group">
         <stripes:label for="oligioGroupName" class="control-label">
-            Oligio group names
+            Oligio group names *
         </stripes:label>
         <div class="controls">
             <stripes:select name="selectedBaits.groupName" id="oligioGroupName" onchange="pullSampleReceptacles()">
