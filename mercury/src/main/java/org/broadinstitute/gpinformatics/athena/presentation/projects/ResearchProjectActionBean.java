@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -37,7 +38,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -53,8 +57,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is for research projects action bean / web page.
@@ -955,5 +961,22 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // Call init again so that the updated project is retrieved.
         init();
         return view();
+    }
+
+    protected void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
+
+        Set<String> sampleList = new HashSet<>();
+
+        for(ProductOrderSample sample:samples) {
+            sampleList.add(sample.getName());
+        }
+
+        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+        Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
+
+        for(ProductOrderSample sample:samples) {
+            sample.setBspSampleDTO(bulkInfo.get(sample.getName()));
+        }
+
     }
 }
