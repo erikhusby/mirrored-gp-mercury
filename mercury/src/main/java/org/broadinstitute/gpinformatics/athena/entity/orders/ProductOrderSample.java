@@ -11,8 +11,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.Index;
@@ -695,4 +697,22 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void setMercurySample(MercurySample mercurySample) {
         this.mercurySample = mercurySample;
     }
+
+    public static void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
+
+        Set<String> sampleList = new HashSet<>();
+
+        for(ProductOrderSample sample:samples) {
+            sampleList.add(sample.getName());
+        }
+
+        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+        Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
+
+        for(ProductOrderSample sample:samples) {
+            sample.setBspSampleDTO(bulkInfo.get(sample.getName()));
+        }
+
+    }
+
 }

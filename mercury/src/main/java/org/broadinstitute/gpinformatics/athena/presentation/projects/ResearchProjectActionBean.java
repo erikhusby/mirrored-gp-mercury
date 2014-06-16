@@ -962,21 +962,4 @@ public class ResearchProjectActionBean extends CoreActionBean {
         init();
         return view();
     }
-
-    protected void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
-
-        Set<String> sampleList = new HashSet<>();
-
-        for(ProductOrderSample sample:samples) {
-            sampleList.add(sample.getName());
-        }
-
-        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
-
-        for(ProductOrderSample sample:samples) {
-            sample.setBspSampleDTO(bulkInfo.get(sample.getName()));
-        }
-
-    }
 }
