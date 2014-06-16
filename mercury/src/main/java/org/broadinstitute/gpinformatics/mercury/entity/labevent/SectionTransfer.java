@@ -16,6 +16,7 @@ import javax.persistence.*;
 @SuppressWarnings("rawtypes")
 public class SectionTransfer extends VesselTransfer {
 
+    // todo jmt store rack?
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
@@ -87,6 +88,7 @@ public class SectionTransfer extends VesselTransfer {
      * @return concatenation of critical fields
      */
     public String getKey() {
+        // todo jmt this hides duplicates
         return sourceVessel.getLabel() + "|" + sourceSection.getSectionName() + "|" + targetVessel.getLabel() + "|" +
                 targetSection.getSectionName();
     }

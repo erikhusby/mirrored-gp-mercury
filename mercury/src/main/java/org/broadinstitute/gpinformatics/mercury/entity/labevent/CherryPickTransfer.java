@@ -16,6 +16,7 @@ import javax.persistence.*;
 @Audited
 public class CherryPickTransfer extends VesselTransfer {
 
+    // todo jmt store rack?
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 

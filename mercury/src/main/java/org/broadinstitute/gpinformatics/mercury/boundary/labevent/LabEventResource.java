@@ -201,8 +201,10 @@ public class LabEventResource {
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("CherryPickTransfer");
+                // todo jmt reference rack in event
                 transferBean.setSourceBarcode(getLabel(cherryPickTransfer.getSourceVesselContainer().getEmbedder()));
                 transferBean.setSourcePosition(cherryPickTransfer.getSourcePosition().name());
+                // todo jmt reference rack in event
                 transferBean.setTargetBarcode(getLabel(cherryPickTransfer.getTargetVesselContainer().getEmbedder()));
                 transferBean.setTargetPosition(cherryPickTransfer.getTargetPosition().name());
                 labEventBean.getTransfers().add(transferBean);
@@ -210,8 +212,10 @@ public class LabEventResource {
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("SectionTransfer");
+                // todo jmt reference rack in event
                 transferBean.setSourceBarcode(getLabel(sectionTransfer.getSourceVesselContainer().getEmbedder()));
                 transferBean.setSourceSection(sectionTransfer.getSourceSection().getSectionName());
+                // todo jmt reference rack in event
                 transferBean.setTargetBarcode(getLabel(sectionTransfer.getTargetVesselContainer().getEmbedder()));
                 transferBean.setTargetSection(sectionTransfer.getTargetSection().getSectionName());
                 labEventBean.getTransfers().add(transferBean);
@@ -220,6 +224,7 @@ public class LabEventResource {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("VesselToSectionTransfer");
                 transferBean.setSourceBarcode(vesselToSectionTransfer.getSourceVessel().getLabel());
+                // todo jmt reference rack in event
                 transferBean
                         .setTargetBarcode(getLabel(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder()));
                 transferBean.setTargetSection(vesselToSectionTransfer.getTargetSection().getSectionName());

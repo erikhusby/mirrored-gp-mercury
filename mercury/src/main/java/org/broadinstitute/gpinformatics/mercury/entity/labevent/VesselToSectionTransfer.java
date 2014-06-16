@@ -15,6 +15,7 @@ import javax.persistence.*;
 @Audited
 public class VesselToSectionTransfer extends VesselTransfer {
 
+    // todo jmt store rack?
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
