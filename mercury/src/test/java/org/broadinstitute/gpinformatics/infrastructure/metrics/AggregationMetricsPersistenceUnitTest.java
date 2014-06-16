@@ -6,9 +6,10 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class AggregationMetricsPersistenceUnitTest extends ContainerTest {
@@ -17,6 +18,8 @@ public class AggregationMetricsPersistenceUnitTest extends ContainerTest {
     private EntityManager entityManager;
 
     public void testDatabaseConnection() {
-        assertThat(entityManager.isOpen(), is(true));
+        Query query = entityManager.createNativeQuery("select 'test' from dual");
+        String result = (String) query.getSingleResult();
+        assertThat(result, equalTo("test"));
     }
 }
