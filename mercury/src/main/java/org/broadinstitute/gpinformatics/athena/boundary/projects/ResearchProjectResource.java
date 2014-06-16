@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -46,6 +47,9 @@ public class ResearchProjectResource {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private BSPCohortList cohortList;
+
     @XmlRootElement
     public static class ResearchProjectData {
         public final String title;
@@ -57,6 +61,10 @@ public class ResearchProjectResource {
         public final Date modifiedDate;
 
         public final String username;
+
+        @XmlElementWrapper
+        @XmlElement(name = "collections")
+        public final List<String> collections;
 
         @XmlElementWrapper
         @XmlElement(name = "projectManager")
@@ -76,6 +84,7 @@ public class ResearchProjectResource {
             id = null;
             synopsis = null;
             projectManagers = null;
+            collections = null;
             broadPIs = null;
             orders = null;
             modifiedDate = null;
@@ -101,11 +110,21 @@ public class ResearchProjectResource {
             return names;
         }
 
-        public ResearchProjectData(BSPUserList bspUserList, ResearchProject researchProject) {
+        private List<String> createCollections(BSPCohortList cohortList, ResearchProject researchProject) {
+            List<String> collectionNames = new ArrayList<> (researchProject.getCohortIds().length);
+            for (String cohortId : researchProject.getCohortIds()) {
+                collectionNames.add(cohortList.getCohortName(cohortId));
+            }
+
+            return collectionNames;
+        }
+
+        public ResearchProjectData(BSPCohortList cohortList, BSPUserList bspUserList, ResearchProject researchProject) {
             title = researchProject.getTitle();
             id = researchProject.getJiraTicketKey();
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
+            collections = createCollections(cohortList, researchProject);
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
             orders = new ArrayList<>(researchProject.getProductOrders().size());
             BspUser user = bspUserList.getById(researchProject.getCreatedBy());
@@ -137,10 +156,10 @@ public class ResearchProjectResource {
             projects = null;
         }
 
-        public ResearchProjects(BSPUserList bspUserList, List<ResearchProject> projects) {
+        public ResearchProjects(BSPCohortList cohortList, BSPUserList bspUserList, List<ResearchProject> projects) {
             this.projects = new ArrayList<>(projects.size());
             for (ResearchProject project : projects) {
-                this.projects.add(new ResearchProjectData(bspUserList, project));
+                this.projects.add(new ResearchProjectData(cohortList, bspUserList, project));
             }
         }
     }
@@ -149,7 +168,7 @@ public class ResearchProjectResource {
     @Path("rp/{researchProjectIds}")
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjects findByIds(@PathParam("researchProjectIds") String researchProjectIds) {
-        return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
+        return new ResearchProjects(cohortList, bspUserList, researchProjectDao.findByJiraTicketKeys(
                 Arrays.asList(researchProjectIds.split(","))));
     }
 
@@ -185,7 +204,7 @@ public class ResearchProjectResource {
         } else {
             projects = researchProjectDao.findAllResearchProjectsWithOrders();
         }
-        return new ResearchProjects(bspUserList, projects);
+        return new ResearchProjects(cohortList, bspUserList, projects);
     }
 
     /**
@@ -220,7 +239,7 @@ public class ResearchProjectResource {
         researchProjectDao.persist(project);
         researchProjectDao.flush();
 
-        return new ResearchProjectData(bspUserList, project);
+        return new ResearchProjectData(cohortList, bspUserList, project);
     }
 
     /**
@@ -239,6 +258,6 @@ public class ResearchProjectResource {
         List<ResearchProject> foundProjects = researchProjectDao.findLikeTitle(searchTerm);
         foundProjects.addAll(researchProjectDao.findLikeJiraTicketKey(searchTerm));
 
-        return new ResearchProjects(bspUserList, foundProjects);
+        return new ResearchProjects(cohortList, bspUserList, foundProjects);
     }
 }
