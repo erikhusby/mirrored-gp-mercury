@@ -94,6 +94,11 @@ public class CollaborationService {
             throw new IllegalArgumentException("Must specify a Collaborator Domain User ID or an email address");
         }
 
+        if ((researchProject.getCohortIds().length != 1)) {
+            throw new IllegalArgumentException("A collaboration requires one and only one cohort to be defined " +
+                                               "on the research project");
+        }
+
         // Look up the selected id.
         BspUser bspUser = null;
         if (selectedCollaborator != null) {

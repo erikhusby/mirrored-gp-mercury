@@ -26,7 +26,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.RegulatoryInfoDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.CollaborationData;
 import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
@@ -38,10 +37,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Fundi
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -57,10 +55,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This class is for research projects action bean / web page.
@@ -95,8 +91,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-
-    private static final boolean COLLABORATION_ENABLED = false;
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -202,6 +196,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private CollaborationData collaborationData;
 
+    private boolean validCollaborationPortal;
+
+
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
     }
@@ -229,8 +226,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-            if (COLLABORATION_ENABLED) {
+
+            try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
+                validCollaborationPortal = true;
+            } catch (CollaborationNotFoundException | CollaborationPortalException ex) {
+                // If there is no collaboration service, for whatever reason, set the data to null so that we
+                collaborationData = null;
+                validCollaborationPortal = false;
             }
         } else {
             if (getUserBean().isValidBspUser()) {
@@ -961,5 +964,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // Call init again so that the updated project is retrieved.
         init();
         return view();
+    }
+
+    public boolean isValidCollaborationPortal() {
+        return validCollaborationPortal;
+    }
+
+    public void setValidCollaborationPortal(boolean validCollaborationPortal) {
+        this.validCollaborationPortal = validCollaborationPortal;
     }
 }
