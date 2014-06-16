@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -209,8 +210,8 @@ public class ProductOrderResource {
             productOrderSamples.add(new ProductOrderSample(sample));
         }
 
-        // Make sure the required sample(s) are present.
-        if (productOrderSamples.isEmpty()) {
+        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
+        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
             throw new NoSamplesException();
         }
 
