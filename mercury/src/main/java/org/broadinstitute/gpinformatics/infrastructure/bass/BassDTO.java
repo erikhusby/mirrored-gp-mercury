@@ -11,137 +11,262 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
-import java.util.EnumSet;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.annotation.Nonnull;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 // https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface
+//https://bass.broadinstitute.org/list?project=G25727&sample=RAP_XistTimeCourse2-77&project=G25727&sample=RAP_XistTimeCourse2-77
 public class BassDTO {
-    public static final String FILE_TYPE_BAM="bam";
-    public static final String FILE_TYPE_READ_GROUP_BAM="read_group_bam";
-    public static final String FILE_TYPE_PICARD="picard";
+    public static final String FILE_TYPE_BAM = "bam";
+    public static final String FILE_TYPE_READ_GROUP_BAM = "read_group_bam";
+    public static final String FILE_TYPE_PICARD = "picard";
+    static final String NULL = "[NULL]";
+    private final SimpleDateFormat BASS_DATE_FORMAT = new SimpleDateFormat("y_M_d_k_m_s_z");
 
-    private final Map<BassResultColumns, String> columnToValueMap;
+    private static final Log log = LogFactory.getLog(BassDTO.class);
 
-    public BassDTO(Map<BassResultColumns, String> columnToValueMap) {
-        this.columnToValueMap = columnToValueMap;
+    private final Map<BassResultColumn, String> columnToValue;
+
+    public BassDTO(Map<BassResultColumn, String> columnToValue) {
+        this.columnToValue = columnToValue;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public enum BassResultColumns {
-        id, version, hold_count, organism, location, directory, project, initiative, path, stored_by, sample, md5,
-        stored_on, software, file_name, software_provider, gssr_barcode, run_name, screened, flowcell_barcode,
-        run_barcode, lane, read_pairing_type, molecular_barcode_name, library_name, molecular_barcode_sequence,
+    public enum BassResultColumn {
+        id,
+        version,
+        hold_count,
+        organism,
+        location,
+        directory,
+        rpname,
+        rpid,
+        datatype,
+        project,
+        initiative,
+        path,
+        rg_checksum,
+        stored_by,
+        sample,
+        md5,
+        stored_on,
+        software,
+        file_name,
+        software_provider,
+        gssr_barcode,
+        run_name,
+        screened,
+        flowcell_barcode,
+        run_barcode,
+        lane,
+        read_pairing_type,
+        molecular_barcode_name,
+        library_name,
+        molecular_barcode_sequence,
         file_type
     }
 
-    public static final EnumSet<BassResultColumns> PICARD_COLUMNS = EnumSet.of(
-            BassDTO.BassResultColumns.id,
-            BassDTO.BassResultColumns.version,
-            BassDTO.BassResultColumns.hold_count,
-            BassDTO.BassResultColumns.organism,
-            BassDTO.BassResultColumns.location,
-            BassDTO.BassResultColumns.directory,
-            BassDTO.BassResultColumns.project,
-            BassDTO.BassResultColumns.initiative,
-            BassDTO.BassResultColumns.path,
-            BassDTO.BassResultColumns.stored_by,
-            BassDTO.BassResultColumns.sample,
-            BassDTO.BassResultColumns.md5,
-            BassDTO.BassResultColumns.stored_on,
-            BassDTO.BassResultColumns.software,
-            BassDTO.BassResultColumns.file_name,
-            BassDTO.BassResultColumns.software_provider,
-            BassDTO.BassResultColumns.file_type
-    );
+    private String id;
+    private String version;
+    private String holdCount;
+    //    private int version;
+//    private int holdCount;
+    private String organism;
+    private String location;
+    private String directory;
+    private String project;
+    private String initiative;
+    private String path;
+    private String storedBy;
+    private String sample;
+    private String md5;
+    private String storedOn;
+    //    private Date storedOn;
+    private String software;
+    private String fileName;
+    private String softwareProvider;
+    private String gssrBarcode;
+    private String runName;
+    private String screened;
+    private String flowcellBarcode;
+    private String runBarcode;
+    private String lane;
+    //    private int lane;
+    private String readPairingType;
+    private String molecularBarcodeName;
+    private String libraryName;
+    private String molecularBarcodeSequence;
+    private String fileType;
+    private String rpname;
+ private String rpid;
+ private String datatype;
+    private String  rgChecksum;
 
-    public static final EnumSet<BassResultColumns> BAM_COLUMNS = EnumSet.of(
-            BassDTO.BassResultColumns.id,
-            BassDTO.BassResultColumns.version,
-            BassDTO.BassResultColumns.hold_count,
-            BassDTO.BassResultColumns.organism,
-            BassDTO.BassResultColumns.location,
-            BassDTO.BassResultColumns.directory,
-            BassDTO.BassResultColumns.project,
-            BassDTO.BassResultColumns.initiative,
-            BassDTO.BassResultColumns.path,
-            BassDTO.BassResultColumns.stored_by,
-            BassDTO.BassResultColumns.sample,
-            BassDTO.BassResultColumns.md5,
-            BassDTO.BassResultColumns.stored_on,
-            BassDTO.BassResultColumns.software,
-            BassDTO.BassResultColumns.file_name,
-            BassDTO.BassResultColumns.software_provider,
-            BassDTO.BassResultColumns.file_type
-    );
+    /**
+     * Use these methods to access the data, so missing elements are returned as empty strings, which is what
+     * the clients of this API expect.
+     *
+     * @param column column to look up
+     *
+     * @return value at column, or empty string if missing
+     */
+    @Nonnull
+    public String getValue(BassResultColumn column) {
+        String value = columnToValue.get(column);
+        if (!(value == null || value.equals(NULL))) {
+            return value;
+        }
+        return "";
+    }
 
-    public static final EnumSet<BassResultColumns> READ_GROUP_BAM_COLUMNS = EnumSet.of(
-            BassDTO.BassResultColumns.id,
-            BassDTO.BassResultColumns.gssr_barcode,
-            BassDTO.BassResultColumns.run_name,
-            BassDTO.BassResultColumns.version,
-            BassDTO.BassResultColumns.organism,
-            BassDTO.BassResultColumns.hold_count,
-            BassDTO.BassResultColumns.screened,
-            BassDTO.BassResultColumns.flowcell_barcode,
-            BassDTO.BassResultColumns.location,
-            BassDTO.BassResultColumns.run_barcode,
-            BassDTO.BassResultColumns.directory,
-            BassDTO.BassResultColumns.lane,
-            BassDTO.BassResultColumns.project,
-            BassDTO.BassResultColumns.initiative,
-            BassDTO.BassResultColumns.read_pairing_type,
-            BassDTO.BassResultColumns.stored_by,
-            BassDTO.BassResultColumns.path,
-            BassDTO.BassResultColumns.sample,
-            BassDTO.BassResultColumns.molecular_barcode_name,
-            BassDTO.BassResultColumns.library_name,
-            BassDTO.BassResultColumns.md5,
-            BassDTO.BassResultColumns.stored_on,
-            BassDTO.BassResultColumns.software,
-            BassDTO.BassResultColumns.molecular_barcode_sequence,
-            BassDTO.BassResultColumns.file_name,
-            BassDTO.BassResultColumns.software_provider,
-            BassDTO.BassResultColumns.file_type
-    );
+    private Integer getInt(BassResultColumn column) {
+        String s = getValue(column);
+        if (StringUtils.isNotBlank(s)) {
+            return Integer.parseInt(s);
+        }
+        return null;
+    }
 
-private String id;
-private int version;
-private int hold_count;
-private String organism;
-private String location;
-private String directory;
-private String project;
-private String initiative;
-private String path;
-private String stored_by;
-private String sample;
-private String md5;
-private String stored_on;
-private String software;
-private String file_NAME;
-private String software_provider;
-private String file_TYPE;
-//
-//    BI6504697
-//1
-//0
-//House mouse
-//86625120
-///seq/tier3b/picard_aggregation/G25727/RAP_XistTimeCourse2-77/v1
-//G25727
-//Mouse
-//            RAP Seq_Discretionary Fund
-///seq/tier3b/picard_aggregation/G25727/RAP_XistTimeCourse2-77/v1/RAP_XistTimeCourse2-77.bam
-//[name: picard][host: node1173][IP: 69.173.75.173][OS: Linux]
-//RAP_XistTimeCourse2-77
-//8a11a9376768a8dfcd997a1d3fae3c43
-//2012_10_25_18_50_32_EDT
-//            PICARD
-//RAP_XistTimeCourse2-77.bam
-//BROAD
-//bam
+    Date getDate(BassResultColumn column) {
+        String s = getValue(column);
+        Date resultDate = null;
+        if (StringUtils.isNotBlank(s)) {
+            try {
+                resultDate = BASS_DATE_FORMAT.parse(s);
+            } catch (final ParseException e) {
+                log.error(String.format("Could not parse date '%s'", s));
+            }
+        }
+        return resultDate;
+    }
 
+    public String getId() {
+        return getValue(BassResultColumn.id);
+    }
+
+    public Integer getVersion() {
+        return getInt(BassResultColumn.version);
+    }
+
+    public Integer getHoldCount() {
+        return getInt(BassResultColumn.hold_count);
+    }
+
+    public String getOrganism() {
+        return getValue(BassResultColumn.organism);
+    }
+
+    public String getLocation() {
+        return getValue(BassResultColumn.location);
+    }
+
+    public String getDirectory() {
+        return getValue(BassResultColumn.directory);
+    }
+
+    public String getProject() {
+        return getValue(BassResultColumn.project);
+    }
+
+    public String getInitiative() {
+        return getValue(BassResultColumn.initiative);
+    }
+
+    public String getPath() {
+        return getValue(BassResultColumn.path);
+    }
+
+    public String getStoredBy() {
+        return getValue(BassResultColumn.stored_by);
+    }
+
+    public String getSample() {
+        return getValue(BassResultColumn.sample);
+    }
+
+    public String getMd5() {
+        return getValue(BassResultColumn.md5);
+    }
+
+    public Date getStoredOn() {
+        return getDate(BassResultColumn.stored_on);
+    }
+
+    public String getSoftware() {
+        return getValue(BassResultColumn.software);
+    }
+
+    public String getFileName() {
+        return getValue(BassResultColumn.file_name);
+    }
+
+    public String getSoftwareProvider() {
+        return getValue(BassResultColumn.software_provider);
+    }
+
+    public String getGssrBarcode() {
+        return getValue(BassResultColumn.gssr_barcode);
+    }
+
+    public String getRunName() {
+        return getValue(BassResultColumn.run_name);
+    }
+
+    public String getScreened() {
+        return getValue(BassResultColumn.screened);
+    }
+
+    public String getFlowcellBarcode() {
+        return getValue(BassResultColumn.flowcell_barcode);
+    }
+
+    public String getRunBarcode() {
+        return getValue(BassResultColumn.run_barcode);
+    }
+
+    public Integer getLane() {
+        return getInt(BassResultColumn.lane);
+    }
+
+    public String getReadPairingType() {
+        return getValue(BassResultColumn.read_pairing_type);
+    }
+
+    public String getMolecularBarcodeName() {
+        return getValue(BassResultColumn.molecular_barcode_name);
+    }
+
+    public String getLibraryName() {
+        return getValue(BassResultColumn.library_name);
+    }
+
+    public String getMolecularBarcodeSequence() {
+        return getValue(BassResultColumn.molecular_barcode_sequence);
+    }
+
+    public String getFileType() {
+        return getValue(BassResultColumn.file_type);
+    }
+
+    public String getRpname() {
+        return getValue(BassResultColumn.rpname);
+    }
+
+    public String getRpid() {
+        return getValue(BassResultColumn.rpid);
+    }
+
+    public String getDatatype() {
+        return getValue(BassResultColumn.datatype);
+    }
+
+    public String getRgChecksum() {
+        return getValue(BassResultColumn.rg_checksum);
+    }
 }

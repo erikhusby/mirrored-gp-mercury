@@ -15,8 +15,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class JustGiveMeSomeDataBassSearchServiceTest {
@@ -24,26 +24,14 @@ public class JustGiveMeSomeDataBassSearchServiceTest {
     @Test(enabled = true)
     public void testRunSearch() throws Exception {
         JustGiveMeSomeDataBassSearchService searchService = new JustGiveMeSomeDataBassSearchService();
-        List<Map<BassDTO.BassResultColumns, String>> maps = searchService.runSearch(null);
-        for (Map<BassDTO.BassResultColumns, String> map : maps) {
-            switch (map.get(BassDTO.BassResultColumns.file_type)) {
-            case BassDTO.FILE_TYPE_BAM:
-                for (BassDTO.BassResultColumns column : BassDTO.BAM_COLUMNS) {
-                    Assert.assertFalse(map.get(column).isEmpty());
-                }
-                break;
-            case BassDTO.FILE_TYPE_READ_GROUP_BAM:
-                for (BassDTO.BassResultColumns column : BassDTO.READ_GROUP_BAM_COLUMNS) {
-                    Assert.assertFalse(map.get(column).isEmpty());
-                }
-                break;
-            case BassDTO.FILE_TYPE_PICARD:
-                for (BassDTO.BassResultColumns column : BassDTO.PICARD_COLUMNS) {
-                    Assert.assertFalse(map.get(column).isEmpty());
-                }
-                break;
+        List<BassDTO> results = searchService.runSearch(null);
+        List<BassDTO.BassResultColumn> testColumns =
+                Arrays.asList(BassDTO.BassResultColumn.id, BassDTO.BassResultColumn.rpid,
+                        BassDTO.BassResultColumn.project, BassDTO.BassResultColumn.path);
+        for (BassDTO bassDTO : results) {
+            for (BassDTO.BassResultColumn column : testColumns) {
+                Assert.assertFalse(bassDTO.getValue(column).isEmpty(), column.name() + " should not be null.");
             }
-
         }
     }
 }

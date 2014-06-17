@@ -17,8 +17,8 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @Impl
 public class BassSearchServiceImpl extends AbstractJerseyClientService implements BassSearchService {
@@ -30,7 +30,7 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
     }
 
     @Override
-    public List<Map<BassDTO.BassResultColumns, String>> runSearch(Pair<BassDTO.BassResultColumns, String> bassResult) {
+    public List<BassDTO> runSearch(Collection<Pair<BassDTO.BassResultColumn, String>> bassResult) {
         return null;
     }
 
