@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -39,6 +40,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -749,6 +751,15 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public void removeRegulatoryInfo(RegulatoryInfo regulatoryInfo) {
         regulatoryInfos.remove(regulatoryInfo);
         regulatoryInfo.removeResearchProject(this);
+    }
+
+    public Set<ProductOrderSample> collectSamples() {
+
+        Set<ProductOrderSample> allProductOrderSamples = new HashSet<>();
+        for(ProductOrder order:productOrders) {
+            allProductOrderSamples.addAll(order.getSamples());
+        }
+        return allProductOrderSamples;
     }
 
     public enum Status implements StatusType {
