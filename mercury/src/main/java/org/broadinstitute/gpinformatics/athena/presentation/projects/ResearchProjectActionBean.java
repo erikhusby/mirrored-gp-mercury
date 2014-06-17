@@ -287,21 +287,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void validateCollaborationInformation(ValidationErrors errors) {
         // Cannot start a collaboration with an outside user if there is no PM specified.
         if (editResearchProject.getProjectManagers().length < 1) {
-            errors.add("title", new SimpleError(
-                    "The research project must have a Project Manager before starting a collaboration."));
+            addGlobalValidationError(
+                    "The research project must have a Project Manager before starting a collaboration.");
         }
-    }
 
-    /**
-     * Validation for beginning a collaboration.
-     *
-     * @param errors The errors object
-     */
-    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
-    public void validateCollaboration(ValidationErrors errors) {
+        if ((editResearchProject.getCohortIds().length != 1)) {
+            addGlobalValidationError(
+                    "A collaboration requires one and only one cohort to be defined on the research project");
+        }
+
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
             errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
         }
+
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
             errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
         }
