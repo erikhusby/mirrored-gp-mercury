@@ -109,7 +109,7 @@ public class ResearchProjectResource {
         private List<Long> createCollections(ResearchProject researchProject) {
             List<Long> collectionIds = new ArrayList<> (researchProject.getCohortIds().length);
             for (String cohortId : researchProject.getCohortIds()) {
-                collectionIds.add(Long.parseLong(cohortId));
+                collectionIds.add(Long.parseLong(cohortId.substring(3)));
             }
 
             return collectionIds;
