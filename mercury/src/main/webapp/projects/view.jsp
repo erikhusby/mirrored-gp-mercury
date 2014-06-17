@@ -466,11 +466,13 @@
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
-                    <th style="width:10em">Identifier</th>
-                    <th>Protocol Title</th>
-                    <th style="width:25em">Type</th>
-                    <th style="width:5em"></th>
-                    <th style="width:9em"></th>
+                    <tr>
+                        <th style="width:10em">Identifier</th>
+                        <th>Protocol Title</th>
+                        <th style="width:25em">Type</th>
+                        <th style="width:5em"></th>
+                        <th style="width:9em"></th>
+                    </tr>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
