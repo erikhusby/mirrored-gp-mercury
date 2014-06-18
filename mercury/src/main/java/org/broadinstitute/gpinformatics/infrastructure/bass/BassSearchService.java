@@ -11,12 +11,11 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface BassSearchService extends Serializable {
-    List<BassDTO> runSearch(Collection<Pair<BassDTO.BassResultColumn, String>> bassResult);
+    List<BassDTO> runSearch(Map<BassDTO.BassResultColumn, List<String>> parameters);
+    List<BassDTO> searchByResearchProject(String researchProjectId);
 }

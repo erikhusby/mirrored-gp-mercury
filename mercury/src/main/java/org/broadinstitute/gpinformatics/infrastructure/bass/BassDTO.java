@@ -14,20 +14,23 @@ package org.broadinstitute.gpinformatics.infrastructure.bass;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-// https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface
-//https://bass.broadinstitute.org/list?project=G25727&sample=RAP_XistTimeCourse2-77&project=G25727&sample=RAP_XistTimeCourse2-77
+/**
+ * Holds values obtained from Bass
+ *
+ * @see <a href="https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface">Bass API Documentation</a>
+ * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
+ */
 public class BassDTO {
-    public static final String FILE_TYPE_BAM = "bam";
-    public static final String FILE_TYPE_READ_GROUP_BAM = "read_group_bam";
-    public static final String FILE_TYPE_PICARD = "picard";
-    static final String NULL = "[NULL]";
+    static final String BASS_NULL_VALUE = "[NULL]";
     private final SimpleDateFormat BASS_DATE_FORMAT = new SimpleDateFormat("y_M_d_k_m_s_z");
 
     private static final Log log = LogFactory.getLog(BassDTO.class);
@@ -69,78 +72,85 @@ public class BassDTO {
         molecular_barcode_name,
         library_name,
         molecular_barcode_sequence,
-        file_type
+        file_type;
+
+        /**
+         * Check if we have specified header.
+         *
+         * @param header header to check for
+         *
+         * @return true if we have an enum value for header or false otherwise;
+         */
+        public static boolean hasHeader(String header) {
+            for (BassResultColumn bassResultColumn : BassResultColumn.values()) {
+                if (bassResultColumn.name().equals(header)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
-    private String id;
-    private String version;
-    private String holdCount;
-    //    private int version;
-//    private int holdCount;
-    private String organism;
-    private String location;
-    private String directory;
-    private String project;
-    private String initiative;
-    private String path;
-    private String storedBy;
-    private String sample;
-    private String md5;
-    private String storedOn;
-    //    private Date storedOn;
-    private String software;
-    private String fileName;
-    private String softwareProvider;
-    private String gssrBarcode;
-    private String runName;
-    private String screened;
-    private String flowcellBarcode;
-    private String runBarcode;
-    private String lane;
-    //    private int lane;
-    private String readPairingType;
-    private String molecularBarcodeName;
-    private String libraryName;
-    private String molecularBarcodeSequence;
-    private String fileType;
-    private String rpname;
- private String rpid;
- private String datatype;
-    private String  rgChecksum;
+    /**
+     * if the project starts with {@link ResearchProject#PREFIX} it is aggregated by {@link ResearchProject}
+     * @return true if this BassDTO is aggregated by ResearchProject
+     */
+    public boolean isAggregatedByResearchProject() {
+        return getProject().startsWith(ResearchProject.PREFIX);
+    }
 
     /**
-     * Use these methods to access the data, so missing elements are returned as empty strings, which is what
-     * the clients of this API expect.
+     * Get the value from supplied column.
      *
-     * @param column column to look up
+     * @param column to obtain data from,
      *
-     * @return value at column, or empty string if missing
+     * @return String representation of the value or an empty string if the field is empty.
      */
     @Nonnull
-    public String getValue(BassResultColumn column) {
+    String getValue(BassResultColumn column) {
         String value = columnToValue.get(column);
-        if (!(value == null || value.equals(NULL))) {
+        if (!(value == null || value.equals(BASS_NULL_VALUE))) {
             return value;
         }
         return "";
     }
 
-    private Integer getInt(BassResultColumn column) {
-        String s = getValue(column);
-        if (StringUtils.isNotBlank(s)) {
-            return Integer.parseInt(s);
+    /**
+     * Get the Integer value from supplied column.
+     *
+     * @param column to obtain data from,
+     *
+     * @return Integer representation of the value or null if the field is empty.
+     *
+     * @throws java.lang.NumberFormatException if the value can not be parsed.
+     */
+    @Nullable
+    private Integer getInt(@Nonnull BassResultColumn column) throws NumberFormatException {
+        String value = getValue(column);
+        if (StringUtils.isNotBlank(value)) {
+            return Integer.parseInt(value);
         }
         return null;
     }
 
-    Date getDate(BassResultColumn column) {
-        String s = getValue(column);
+    /**
+     * Get the Date value from supplied column.
+     *
+     * @param column to obtain data from,
+     *
+     * @return Date representation of the value or null if the field is empty.
+     *
+     * @see BassDTO#BASS_DATE_FORMAT
+     */
+    @Nullable
+    private Date getDate(@Nonnull BassResultColumn column) {
+        String value = getValue(column);
         Date resultDate = null;
-        if (StringUtils.isNotBlank(s)) {
+        if (StringUtils.isNotBlank(value)) {
             try {
-                resultDate = BASS_DATE_FORMAT.parse(s);
-            } catch (final ParseException e) {
-                log.error(String.format("Could not parse date '%s'", s));
+                resultDate = BASS_DATE_FORMAT.parse(value);
+            } catch (ParseException e) {
+                log.error(String.format("Could not parse date '%s'", value), e);
             }
         }
         return resultDate;

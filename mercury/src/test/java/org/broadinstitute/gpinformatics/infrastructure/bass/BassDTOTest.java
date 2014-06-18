@@ -35,7 +35,7 @@ public class BassDTOTest {
 
     public void testGetColumnWithNull() throws Exception {
         BassDTO bassDTO = new BassDTO(new HashMap<BassDTO.BassResultColumn, String>() {{
-            put(BassDTO.BassResultColumn.md5, BassDTO.NULL);
+            put(BassDTO.BassResultColumn.md5, BassDTO.BASS_NULL_VALUE);
         }});
         Assert.assertEquals(bassDTO.getValue(BassDTO.BassResultColumn.id), "");
     }

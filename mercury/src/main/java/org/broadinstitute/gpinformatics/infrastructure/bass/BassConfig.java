@@ -74,7 +74,7 @@ public class BassConfig extends AbstractConfig implements LoginAndPassword, Seri
             return "https://";
         }
     public String getUrl(String suffix) {
-        return String.format("%s%s:%d/%s", getHttpScheme(),getHost(), getPort(), suffix);
+        return getWSUrl(suffix);
     }
     public String getWSUrl(String suffix) {
         return String.format("%s%s:%d/%s", getHttpScheme(),getHost(), getPort(), suffix);

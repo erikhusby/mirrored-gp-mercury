@@ -56,6 +56,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String PREFIX = "RP-";
 
     private static final long serialVersionUID = 937268527371239980L;
 

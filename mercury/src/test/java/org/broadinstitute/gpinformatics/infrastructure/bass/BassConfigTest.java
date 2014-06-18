@@ -35,7 +35,7 @@ public class BassConfigTest {
     }
 
     public void getLogin() {
-        Assert.assertEquals(bassConfig.getLogin(), "mercury_bass");
+        Assert.assertEquals(bassConfig.getLogin(), "mercury-bass");
     }
 
     public void getHttpScheme() {

@@ -11,14 +11,16 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BassSearchFileServiceTest {
+    Map<BassDTO.BassResultColumn, List<String>> parameters=new HashMap<>();
 
     @Test(enabled = true)
     public void testReadFile() throws Exception {
@@ -31,7 +33,8 @@ public class BassSearchFileServiceTest {
     public void testRunSearch() throws Exception {
         BassSearchFileService service = new BassSearchFileService();
         String testRpId = "RP-12";
-        List<BassDTO> results = service.runSearch(Arrays.asList(Pair.of(BassDTO.BassResultColumn.rpid, testRpId)));
+        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
+        List<BassDTO> results = service.runSearch(parameters);
         for (BassDTO result : results) {
             Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.rpid), testRpId);
         }
@@ -41,7 +44,8 @@ public class BassSearchFileServiceTest {
     public void testRunSearchNoResults() throws Exception {
         BassSearchFileService service = new BassSearchFileService();
         String testRpId = "NO-SUCH-RP";
-        List<BassDTO> results = service.runSearch(Arrays.asList(Pair.of(BassDTO.BassResultColumn.rpid, testRpId)));
+        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
+        List<BassDTO> results = service.runSearch(parameters);
         Assert.assertTrue(results.isEmpty());
     }
 }

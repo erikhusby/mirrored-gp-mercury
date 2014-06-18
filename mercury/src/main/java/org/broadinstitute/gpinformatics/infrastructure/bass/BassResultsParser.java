@@ -16,6 +16,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class is responsible for parsing data obtained from Bass.
+ *
+ * @see <a href="https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface">Bass API Documentation</a>
+ * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
+ */
+
 public class BassResultsParser {
     private static final String FILETYPE_DELIMITER = "^##FILE_TYPE=\\w+##";
 
@@ -35,9 +42,13 @@ public class BassResultsParser {
                 splitLine = line.split("\t");
                 Map<BassDTO.BassResultColumn, String> resultsMap = new HashMap<>();
                 for (int i = 0; i < headers.length; i++) {
-                    BassDTO.BassResultColumn bassResultColumn = BassDTO.BassResultColumn.valueOf(headers[i]);
-                    if (splitLine[i] != null) {
-                        resultsMap.put(bassResultColumn, splitLine[i]);
+                    String header = headers[i];
+                    if (BassDTO.BassResultColumn.hasHeader(header)) {
+                        BassDTO.BassResultColumn bassResultColumn = BassDTO.BassResultColumn.valueOf(header);
+                        String value = splitLine[i];
+                        if (value != null) {
+                            resultsMap.put(bassResultColumn, value);
+                        }
                     }
                 }
                 if (!resultsMap.isEmpty()) {
