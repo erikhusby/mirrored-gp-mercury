@@ -291,6 +291,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
                     "The research project must have a Project Manager before starting a collaboration.");
         }
 
+        if (editResearchProject.getBroadPIs().length < 1) {
+            addGlobalValidationError(
+                    "The research project must have an investigator before starting a collaboration.");
+        }
+
         if ((editResearchProject.getCohortIds().length != 1)) {
             addGlobalValidationError(
                     "A collaboration requires one and only one cohort to be defined on the research project");
