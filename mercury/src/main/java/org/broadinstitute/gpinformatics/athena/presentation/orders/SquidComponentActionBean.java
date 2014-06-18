@@ -29,6 +29,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -194,7 +195,13 @@ public class SquidComponentActionBean extends CoreActionBean {
             autoSquidDto.setBaits(selectedBaits);
         }
 
-        AutoWorkRequestOutput output = productOrderEjb.createSquidWorkRequest(productOrderKey, autoSquidDto);
+        AutoWorkRequestOutput output = null;
+        try {
+            output = productOrderEjb.createSquidWorkRequest(productOrderKey, autoSquidDto);
+        } catch (InformaticsServiceException e) {
+            addGlobalValidationError(e.getMessage());
+            return getSourcePageResolution();
+        }
 
         addMessage("A project with an ID of {0} and a work request with an ID of {1} has been created in Squid for " +
                    "this product order", output.getProjectId(), output.getWorkRequestId());

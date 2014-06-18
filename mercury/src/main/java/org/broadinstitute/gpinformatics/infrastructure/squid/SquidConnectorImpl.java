@@ -14,6 +14,7 @@ import edu.mit.broad.prodinfo.bean.generated.ExecutionTypes;
 import edu.mit.broad.prodinfo.bean.generated.OligioGroups;
 import edu.mit.broad.prodinfo.bean.generated.SampleReceptacleGroup;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.ReadStructureRequest;
@@ -23,6 +24,7 @@ import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
  *
@@ -42,11 +44,10 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public SquidResponse createRun(SolexaRunBean runInformation) {
 
-        ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/solexarun",
-                MediaType.APPLICATION_XML_TYPE)
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(runInformation).post(ClientResponse.class);
+        ClientResponse response =
+                getWebResource(squidConfig.getUrl() + "/resources/solexarun",
+                        MediaType.APPLICATION_XML_TYPE).accept(MediaType.APPLICATION_XML)
+                                                       .entity(runInformation).post(ClientResponse.class);
 
         return new SquidResponse(response.getStatus(), response.getEntity(String.class));
 
@@ -71,10 +72,10 @@ public class SquidConnectorImpl implements SquidConnector {
             solexaRunSynopsis.getSolexaRunLaneSynopsisBean().add(solexaRunLaneSynopsisBean);
         }
 
-        ClientResponse response = getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE).type(
-                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
-                                                                                             .entity(solexaRunSynopsis)
-                                                                                             .post(ClientResponse.class);
+        ClientResponse response =
+                getWebResource(squidWSUrl, MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON)
+                                                                           .entity(solexaRunSynopsis)
+                                                                           .post(ClientResponse.class);
 
         return new SquidResponse(response.getStatus(), response.getEntity(String.class));
     }
@@ -83,9 +84,7 @@ public class SquidConnectorImpl implements SquidConnector {
     public CreateProjectOptions getProjectCreationOptions() throws UniformInterfaceException {
 
         ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/projectoptions",
-                MediaType.APPLICATION_JSON_TYPE)
-                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(
-                        ClientResponse.class);
+                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(CreateProjectOptions.class);
     }
@@ -95,9 +94,7 @@ public class SquidConnectorImpl implements SquidConnector {
 
         ClientResponse response = getWebResource(squidConfig.getUrl() +
                                                  "/resources/projectresource/workrequestoptions/" + executionType,
-                MediaType.APPLICATION_JSON_TYPE)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(CreateWorkRequestOptions.class);
     }
@@ -106,8 +103,7 @@ public class SquidConnectorImpl implements SquidConnector {
     public ExecutionTypes getProjectExecutionTypes() throws UniformInterfaceException {
 
         ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/executiontypes",
-                MediaType.APPLICATION_JSON_TYPE)
-                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(ExecutionTypes.class);
     }
@@ -115,8 +111,7 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public OligioGroups getOligioGroups() throws UniformInterfaceException {
         ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/oligioGroups",
-                MediaType.APPLICATION_JSON_TYPE)
-                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(OligioGroups.class);
     }
@@ -124,9 +119,8 @@ public class SquidConnectorImpl implements SquidConnector {
     @Override
     public SampleReceptacleGroup getGroupReceptacles(String groupName) throws UniformInterfaceException {
         ClientResponse response =
-                getWebResource(squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" +groupName,
-                        MediaType.APPLICATION_JSON_TYPE).type(MediaType.APPLICATION_JSON_TYPE)
-                                                        .accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+                getWebResource(squidConfig.getUrl() + "/resources/projectresource/groupReceptacles/" + groupName,
+                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
 
         return response.getEntity(SampleReceptacleGroup.class);
     }
@@ -135,14 +129,19 @@ public class SquidConnectorImpl implements SquidConnector {
     public AutoWorkRequestOutput createSquidWorkRequest(AutoWorkRequestInput input) throws UniformInterfaceException {
 
         ClientResponse response = getWebResource(squidConfig.getUrl() + "/resources/projectresource/createWorkRequest",
-                MediaType.APPLICATION_JSON_TYPE)
-                .type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(input)
+                MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(input)
                 .post(ClientResponse.class);
 
-        return response.getEntity(AutoWorkRequestOutput.class);
+        AutoWorkRequestOutput result = null;
+        if(response.getStatus() == Response.Status.OK.getStatusCode()) {
+            result = response.getEntity(AutoWorkRequestOutput.class);
+        } else {
+            throw new InformaticsServiceException(response.getEntity(String.class));
+        }
+        return result;
     }
 
-    private WebResource getWebResource(String squidWSUrl, MediaType mediaType) {
+    private WebResource.Builder getWebResource(String squidWSUrl, MediaType mediaType) {
         Client client = Client.create();
         if (mediaType == MediaType.APPLICATION_JSON_TYPE) {
             ClientConfig clientConfig = new DefaultClientConfig();
@@ -150,7 +149,7 @@ public class SquidConnectorImpl implements SquidConnector {
             client = Client.create(clientConfig);
         }
 
-        return client.resource(squidWSUrl);
+        return client.resource(squidWSUrl).type(mediaType);
     }
 }
 
