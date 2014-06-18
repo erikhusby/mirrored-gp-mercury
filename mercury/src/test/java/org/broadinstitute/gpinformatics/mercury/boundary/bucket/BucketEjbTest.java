@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProj
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -21,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.ExomeExpressV2EndToEndTest;
 import org.testng.Assert;
@@ -272,21 +269,21 @@ public class BucketEjbTest extends ContainerTest {
 
         Assert.assertTrue(Collections.addAll(bucketBatch, testEntry1, testEntry2, testEntry3));
 
-        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry2.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry3.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
+        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry2.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry3.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEventsWithContainers().size());
 
         resource.moveFromBucketToCommonBatch(bucketBatch);
 
-        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
+        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
 
         Assert.assertFalse(bucket.contains(testEntry1));
         Assert.assertFalse(bucket.contains(testEntry2));
@@ -361,14 +358,14 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(Collections.addAll(vesselBucketBatch, vessel1,
                 vessel2, vessel3));
 
-        Assert.assertFalse(vessel1.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel1.getInPlaceEvents().size());
-        Assert.assertFalse(vessel2.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel2.getInPlaceEvents().size());
-        Assert.assertFalse(vessel3.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel3.getInPlaceEvents().size());
-        Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, vessel4.getInPlaceEvents().size());
+        Assert.assertFalse(vessel1.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, vessel1.getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(vessel2.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, vessel2.getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(vessel3.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, vessel3.getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(vessel4.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, vessel4.getInPlaceEventsWithContainers().size());
 
         resource.createEntriesAndBatchThem(vesselBucketBatch, bucket);
 
@@ -380,10 +377,10 @@ public class BucketEjbTest extends ContainerTest {
         vessel3 = barcodedTubeDao.findByBarcode(barcode3);
         vessel4 = barcodedTubeDao.findByBarcode(barcode4);
 
-        Assert.assertFalse(vessel1.getInPlaceEvents().isEmpty());
-        Assert.assertFalse(vessel2.getInPlaceEvents().isEmpty());
-        Assert.assertFalse(vessel3.getInPlaceEvents().isEmpty());
-        Assert.assertFalse(vessel4.getInPlaceEvents().isEmpty());
+        Assert.assertFalse(vessel1.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(vessel2.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(vessel3.getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertFalse(vessel4.getInPlaceEventsWithContainers().isEmpty());
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
         testEntry2 = bucketEntryDao.findByVesselAndBucket(vessel2, bucket);
@@ -466,14 +463,14 @@ public class BucketEjbTest extends ContainerTest {
         Assert.assertTrue(bucket.contains(testEntry4));
 
 
-        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry2.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry3.getLabVessel().getInPlaceEvents().size());
-        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
-        Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
+        Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry1.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry2.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry2.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry3.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry3.getLabVessel().getInPlaceEventsWithContainers().size());
+        Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEventsWithContainers().isEmpty());
+        Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEventsWithContainers().size());
 
         logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
