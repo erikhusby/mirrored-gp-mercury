@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
-import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -10,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
@@ -39,14 +37,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -401,27 +396,11 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void unAbandonPDOSamples() throws Exception {
-        unAbandonPDOSamples("PDO-2670",
+        productOrderEjb.unAbandonPDOSamples("PDO-2670",
                 "SM-55WGG",
                 "SM-55WGJ",
                 "SM-55WGM",
                 "SM-55WGN");
-    }
-
-    private void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
-            throws ProductOrderEjb.NoSuchPDOException, IOException {
-        List<String> samples = Arrays.asList(samplesToUnAbandon);
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
-        List<ProductOrderSample> sampleList = productOrder.getSamples();
-
-        for (ProductOrderSample sample : sampleList) {
-            if (samples.contains(sample.getName())) {
-                sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.NOT_STARTED);
-            }
-        }
-
-        productOrderSampleDao.persistAll(sampleList);
-        productOrderEjb.updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
 
     @Test(enabled = false)
@@ -471,7 +450,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Test(enabled = false)
     public void unAbandonSamplesGplim2704() throws IOException, ProductOrderEjb.NoSuchPDOException {
-        unAbandonPDOSamples("PDO-3551", "SM-5MRVM");
+        productOrderEjb.unAbandonPDOSamples("PDO-3551");
     }
 
     @Test(enabled = false)

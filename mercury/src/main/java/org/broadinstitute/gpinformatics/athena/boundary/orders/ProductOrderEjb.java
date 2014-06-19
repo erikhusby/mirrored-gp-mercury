@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -86,6 +87,9 @@ public class ProductOrderEjb {
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
 
 
     // EJBs require a no arg constructor.
@@ -338,7 +342,7 @@ public class ProductOrderEjb {
 
     String buildJiraCommentForRiskString(String comment, String username, int sampleCount, boolean isRisk) {
         return String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
-                    username, isRisk, sampleCount, comment);
+                username, isRisk, sampleCount, comment);
     }
 
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
@@ -487,6 +491,28 @@ public class ProductOrderEjb {
 
         updatedProductOrder.setProductOrderAddOns(productOrderAddOns);
 
+    }
+
+    public void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
+            throws NoSuchPDOException, IOException {
+        List<String> samples = Arrays.asList(samplesToUnAbandon);
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList =
+                productOrderSampleDao.findByOrderKeyAndSampleNames(pdo, new HashSet(Arrays.asList(samplesToUnAbandon)));
+
+        for (ProductOrderSample sample : sampleList) {
+            if (samples.contains(sample.getName())) {
+                if (sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
+                    throw new InformaticsServiceException(String.format(
+                            "Sample %s cannot be unabandoned because it is not currently abandoned", sample.getName()));
+                }
+                sample.setDeliveryStatus(DeliveryStatus.NOT_STARTED);
+            }
+        }
+
+        productOrderSampleDao.persistAll(sampleList);
+        updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
 
     public static class NoSuchPDOException extends Exception {
@@ -1003,7 +1029,7 @@ public class ProductOrderEjb {
         pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
                 createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
 
-        if(StringUtils.isNotBlank(squidInput.getLcsetId())) {
+        if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
             pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
                     createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
