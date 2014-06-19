@@ -11,12 +11,17 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public interface BassSearchService extends Serializable {
-    List<BassDTO> runSearch(Map<BassDTO.BassResultColumn, List<String>> parameters);
-    List<BassDTO> runSearch(String researchProjectId);
-    List<BassDTO> runSearch(String researchProjectId, String ... collaboratorSampleId);
+public class BassSearchUtils {
+    public static List<BassDTO> filter(List<BassDTO> bassDTOs, String researchProjectId) {
+        List<BassDTO> filteredResults=new ArrayList<>();
+        for (BassDTO bassDTO : bassDTOs) {
+            if (bassDTO.getRpid().equals(researchProjectId)){
+                filteredResults.add(bassDTO);
+            }
+        }
+        return filteredResults;
+    }
 }

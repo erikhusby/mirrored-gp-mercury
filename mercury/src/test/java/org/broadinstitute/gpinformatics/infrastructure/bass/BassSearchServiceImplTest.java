@@ -30,7 +30,7 @@ public class BassSearchServiceImplTest {
     }
 
     public void testSearchBass() {
-        List<BassDTO> bassDTOs = bassSearchService.searchByResearchProject("RP-12");
+        List<BassDTO> bassDTOs = bassSearchService.runSearch("RP-12");
         Assert.assertFalse(bassDTOs.isEmpty());
         for (BassDTO bassDTO : bassDTOs) {
             // RP Aggregated research projects should always have a data_type column.

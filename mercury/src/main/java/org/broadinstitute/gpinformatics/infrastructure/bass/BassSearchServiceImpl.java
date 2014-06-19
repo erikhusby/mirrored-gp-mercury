@@ -73,10 +73,17 @@ public class BassSearchServiceImpl extends AbstractJerseyClientService implement
     }
 
     @Override
-    public List<BassDTO> searchByResearchProject(String researchProjectId) {
+    public List<BassDTO> runSearch(String researchProjectId) {
         Map<BassDTO.BassResultColumn, List<String>> parameters = new HashMap<>();
         parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(researchProjectId));
         return runSearch(parameters);
+    }
+
+    @Override
+    public List<BassDTO> runSearch(String researchProjectId, String ... collaboratorSampleId) {
+        Map<BassDTO.BassResultColumn, List<String>> parameters = new HashMap<>();
+        parameters.put(BassDTO.BassResultColumn.sample, Arrays.asList(collaboratorSampleId));
+        return BassSearchUtils.filter(runSearch(parameters), researchProjectId);
     }
 
     @Override

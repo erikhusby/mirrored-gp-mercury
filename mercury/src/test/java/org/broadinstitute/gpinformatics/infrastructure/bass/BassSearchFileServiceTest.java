@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 public class BassSearchFileServiceTest {
-    Map<BassDTO.BassResultColumn, List<String>> parameters=new HashMap<>();
+    Map<BassDTO.BassResultColumn, List<String>> parameters = new HashMap<>();
+    public static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
 
     @Test(enabled = true)
     public void testReadFile() throws Exception {
@@ -47,5 +48,39 @@ public class BassSearchFileServiceTest {
         parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
         List<BassDTO> results = service.runSearch(parameters);
         Assert.assertTrue(results.isEmpty());
+    }
+
+    /**
+     * Test that there is more than one sample in the result set. This test goes hand-in-hand with testFilterResults.
+     */
+    @Test(enabled = true)
+    public void testResearchProjectHasMoreThanOneSampleInIt() throws Exception {
+        BassSearchFileService service = new BassSearchFileService();
+        String testRpId = "RP-12";
+        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
+        List<BassDTO> results = service.runSearch(parameters);
+        boolean hasTestSample = false;
+        boolean hasOtherSample = false;
+        for (BassDTO result : results) {
+            if (result.getSample().equals(COLLABORATOR_SAMPLE_ID)) {
+                hasTestSample = true;
+            } else {
+                hasOtherSample = true;
+            }
+        }
+        Assert.assertTrue(hasTestSample);
+        Assert.assertTrue(hasOtherSample);
+    }
+
+    @Test(enabled = true)
+    public void testFilterResults() throws Exception {
+        BassSearchFileService service = new BassSearchFileService();
+        String researchProjectId = "RP-12";
+        String testRpId = researchProjectId;
+        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
+        List<BassDTO> results = service.runSearch(researchProjectId, COLLABORATOR_SAMPLE_ID);
+        for (BassDTO result : results) {
+            Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.sample), COLLABORATOR_SAMPLE_ID);
+        }
     }
 }
