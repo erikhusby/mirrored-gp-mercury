@@ -51,7 +51,11 @@
             </div>
 
             <div id="squidOligioPoolOptions">
-
+                <c:choose>
+                    <c:when test="${actionBean.oligioPoolsRetrieved}">
+                        <jsp:include page="<%=SquidComponentActionBean.BAIT_OPTIONS_INSERT%>"/>
+                    </c:when>
+                </c:choose>
             </div>
 
             <div class="control-group">
