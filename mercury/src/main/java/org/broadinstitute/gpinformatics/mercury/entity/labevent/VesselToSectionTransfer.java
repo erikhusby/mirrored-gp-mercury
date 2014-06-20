@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Audited
 public class VesselToSectionTransfer extends VesselTransfer {
 
-    // todo jmt store rack?
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
@@ -25,13 +24,19 @@ public class VesselToSectionTransfer extends VesselTransfer {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_vtst_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 
-    public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection, VesselContainer<?> targetVesselContainer, LabEvent labEvent) {
+    public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection,
+            VesselContainer<?> targetVesselContainer, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
         this.targetSection = targetSection;
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         this.targetVessel = targetVesselContainer.getEmbedder();
         sourceVessel.getVesselToSectionTransfersThisAsSource().add(this);
@@ -51,6 +56,10 @@ public class VesselToSectionTransfer extends VesselTransfer {
 
     public VesselContainer<?> getTargetVesselContainer() {
         return targetVessel.getContainerRole();
+    }
+
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {

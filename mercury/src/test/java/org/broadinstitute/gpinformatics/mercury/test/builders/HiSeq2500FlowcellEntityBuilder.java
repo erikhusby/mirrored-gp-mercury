@@ -75,11 +75,9 @@ public class HiSeq2500FlowcellEntityBuilder {
             }
         }
 
-        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
-                        denatureTubeBarcodes,
-                        denatureRack.getLabel(), fctTicket, productionFlowcellPath,
-                        denatureRack.getSampleInstanceCount(), designationName, flowcellLanes);
+        HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new HiSeq2500JaxbBuilder(bettaLimsMessageTestFactory, testPrefix,
+                denatureTubeBarcodes, denatureRack.getRacksOfTubes().iterator().next().getLabel(), fctTicket,
+                productionFlowcellPath, denatureRack.getSampleInstanceCount(), designationName, flowcellLanes);
         hiSeq2500JaxbBuilder.invoke();
         PlateCherryPickEvent dilutionJaxb = hiSeq2500JaxbBuilder.getDilutionJaxb();
         ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();
@@ -142,6 +140,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             break;
         case STRIPTUBE_TO_FLOWCELL:
             Map<String, BarcodedTube> mapBarcodeToDenatureTube = new HashMap<>();
+            mapBarcodeToDenatureTube.put(denatureTube.getLabel(), denatureTube);
 
             LabEventTest.validateWorkflow("StripTubeBTransfer", denatureRack);
 

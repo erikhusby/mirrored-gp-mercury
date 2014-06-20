@@ -16,12 +16,15 @@ import javax.persistence.*;
 @SuppressWarnings("rawtypes")
 public class SectionTransfer extends VesselTransfer {
 
-    // todo jmt store rack?
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel sourceVessel;
 
     @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
+
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillarySourceVessel;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
@@ -29,12 +32,18 @@ public class SectionTransfer extends VesselTransfer {
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_st_lab_event")
     @ManyToOne(fetch = FetchType.LAZY)
     private LabEvent labEvent;
 
-    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection,
-            VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
+    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection, LabVessel ancillarySourceVessel,
+            VesselContainer targetVesselContainer, SBSSection targetSection, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
+        this.ancillarySourceVessel = ancillarySourceVessel;
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         this.sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getSectionTransfersFrom().add(this);
@@ -63,6 +72,10 @@ public class SectionTransfer extends VesselTransfer {
         this.sourceSection = sourceSection;
     }
 
+    public LabVessel getAncillarySourceVessel() {
+        return ancillarySourceVessel;
+    }
+
     public VesselContainer getTargetVesselContainer() {
         return this.targetVessel.getContainerRole();
     }
@@ -77,6 +90,10 @@ public class SectionTransfer extends VesselTransfer {
 
     public void setTargetSection(SBSSection targetSection) {
         this.targetSection = targetSection;
+    }
+
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {

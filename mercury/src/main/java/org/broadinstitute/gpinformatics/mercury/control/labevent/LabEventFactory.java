@@ -507,24 +507,32 @@ public class LabEventFactory implements Serializable {
             }
 
             LabVessel sourceContainer = mapBarcodeToTubeFormation.get(cherryPickSourceType.getBarcode());
+            LabVessel ancillarySourceVessel = null;
             if (sourceContainer == null) {
                 sourceContainer = mapBarcodeToVessel.get(cherryPickSourceType.getBarcode());
                 if (sourceContainer == null) {
                     throw new RuntimeException("Failed to find source " + cherryPickSourceType.getBarcode());
                 }
+            } else {
+                ancillarySourceVessel = mapBarcodeToVessel.get(cherryPickSourceType.getBarcode());
             }
             LabVessel destinationContainer = mapBarcodeToTubeFormation.get(destinationRackBarcode);
+            LabVessel ancillaryTargetVessel = null;
             if (destinationContainer == null) {
                 destinationContainer = mapBarcodeToVessel.get(destinationRackBarcode);
                 if (destinationContainer == null) {
                     throw new RuntimeException("Failed to find destination " + destinationRackBarcode);
                 }
+            } else {
+                ancillaryTargetVessel = mapBarcodeToVessel.get(destinationRackBarcode);
             }
             labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                     sourceContainer.getContainerRole(),
                     VesselPosition.getByName(cherryPickSourceType.getWell()),
+                    ancillarySourceVessel,
                     destinationContainer.getContainerRole(),
                     VesselPosition.getByName(cherryPickSourceType.getDestinationWell()),
+                    ancillaryTargetVessel,
                     labEvent));
         }
         return labEvent;
@@ -729,9 +737,11 @@ public class LabEventFactory implements Serializable {
             labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
                     mapBarcodeToSourceTubeFormation.get(cherryPickSourceType.getBarcode()).getContainerRole(),
                     VesselPosition.getByName(cherryPickSourceType.getWell()),
+                    mapBarcodeToSourceRackOfTubes.get(cherryPickSourceType.getBarcode()),
                     mapPositionToStripTube.get(position).getContainerRole(),
                     VesselPosition.getByName("TUBE" + Integer.toString(
                             cherryPickSourceType.getDestinationWell().charAt(0) - 'A' + 1)),
+                    null,
                     labEvent));
         }
         return labEvent;
@@ -795,8 +805,10 @@ public class LabEventFactory implements Serializable {
             CherryPickTransfer cherryPickTransfer = new CherryPickTransfer(
                     mapBarcodeToSourceTubeFormation.get(cherryPickSourceType.getBarcode()).getContainerRole(),
                     VesselPosition.getByName(cherryPickSourceType.getWell()),
+                    mapBarcodeToSourceRackOfTubes.get(cherryPickSourceType.getBarcode()),
                     reagentKit.getContainerRole(),
                     MiSeqReagentKit.LOADING_WELL,
+                    null,
                     labEvent);
             labEvent.getCherryPickTransfers().add(cherryPickTransfer);
         }
@@ -923,28 +935,38 @@ public class LabEventFactory implements Serializable {
                 plateTransferEvent.getPositionMap(), createSourcesForEvent, false));
 
         LabVessel sourceContainer = mapBarcodeToTubeFormation.get(plateTransferEvent.getSourcePlate().getBarcode());
+        LabVessel ancillarySourceLabVessel = null;
         if (sourceContainer == null) {
             sourceContainer = mapBarcodeToVessel.get(plateTransferEvent.getSourcePlate().getBarcode());
             if (sourceContainer == null) {
                 throw new RuntimeException("Failed to find source " + plateTransferEvent.getSourcePlate().getBarcode());
             }
+        } else {
+            ancillarySourceLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getSourcePlate().getBarcode());
         }
+
         LabVessel destinationContainer = mapBarcodeToTubeFormation.get(plateTransferEvent.getPlate().getBarcode());
+        LabVessel ancillaryDestinationLabVessel = null;
         if (destinationContainer == null) {
             destinationContainer = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());
             if (destinationContainer == null) {
                 throw new RuntimeException("Failed to find destination " + plateTransferEvent.getPlate().getBarcode());
             }
+        } else {
+            ancillaryDestinationLabVessel = mapBarcodeToVessel.get(plateTransferEvent.getPlate().getBarcode());
         }
+
         if (sourceContainer.getLabel().equals(destinationContainer.getLabel())) {
             throw new RuntimeException("Source and destination barcodes are the same " + sourceContainer.getLabel());
         }
-        // todo jmt include racks?
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceContainer.getContainerRole(),
                 SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
+                ancillarySourceLabVessel,
                 destinationContainer.getContainerRole(),
-                SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+                SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()),
+                ancillaryDestinationLabVessel,
+                labEvent));
         return labEvent;
     }
 
@@ -1088,8 +1110,7 @@ public class LabEventFactory implements Serializable {
 
     @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree(PlateTransferEventType plateTransferEvent,
-                StripTube sourceStripTube,
-                                                         IlluminaFlowcell targetFlowcell) {
+                StripTube sourceStripTube, IlluminaFlowcell targetFlowcell) {
         if (sourceStripTube == null) {
             throw new RuntimeException("Failed to find StripTube " + plateTransferEvent.getSourcePlate().getBarcode());
         }
@@ -1115,8 +1136,8 @@ public class LabEventFactory implements Serializable {
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceStripTube.getContainerRole(), SBSSection.STRIP_TUBE8,
-                targetFlowcell.getContainerRole(), targetSection, labEvent));
+                sourceStripTube.getContainerRole(), SBSSection.STRIP_TUBE8, null,
+                targetFlowcell.getContainerRole(), targetSection, null, labEvent));
         return labEvent;
     }
 
@@ -1147,7 +1168,7 @@ public class LabEventFactory implements Serializable {
             }
         }
         labEvent.getVesselToSectionTransfers().add(new VesselToSectionTransfer(sourceTube,
-                SBSSection.getBySectionName(targetSection), targetVessel.getContainerRole(), labEvent));
+                SBSSection.getBySectionName(targetSection), targetVessel.getContainerRole(), null, labEvent));
         return labEvent;
     }
 
