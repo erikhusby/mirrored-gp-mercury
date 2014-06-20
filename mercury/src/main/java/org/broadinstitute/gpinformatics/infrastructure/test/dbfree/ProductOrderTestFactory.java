@@ -174,8 +174,10 @@ public class ProductOrderTestFactory {
         researchProject.setJiraTicketKey("RP-" + uuid);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        Long posId = 1L;
         for (String sampleName : sampleNames) {
-            productOrderSamples.add(new ProductOrderSample(sampleName));
+            productOrderSamples.add(new ProductOrderSample(sampleName, posId));
+            posId++;
         }
 
         PriceItem priceItem = new PriceItem(uuid.toString(), "Genomics Platform", "Testing Category", "PriceItem Name " + uuid);

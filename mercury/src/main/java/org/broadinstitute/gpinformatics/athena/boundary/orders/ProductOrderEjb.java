@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -88,9 +89,7 @@ public class ProductOrderEjb {
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
-    @Inject
     private ProductOrderSampleDao productOrderSampleDao;
-
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -493,28 +492,6 @@ public class ProductOrderEjb {
 
     }
 
-    public void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
-            throws NoSuchPDOException, IOException {
-        List<String> samples = Arrays.asList(samplesToUnAbandon);
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
-
-        List<ProductOrderSample> sampleList =
-                productOrderSampleDao.findByOrderKeyAndSampleNames(pdo, new HashSet(Arrays.asList(samplesToUnAbandon)));
-
-        for (ProductOrderSample sample : sampleList) {
-            if (samples.contains(sample.getName())) {
-                if (sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
-                    throw new InformaticsServiceException(String.format(
-                            "Sample %s cannot be unabandoned because it is not currently abandoned", sample.getName()));
-                }
-                sample.setDeliveryStatus(DeliveryStatus.NOT_STARTED);
-            }
-        }
-
-        productOrderSampleDao.persistAll(sampleList);
-        updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
-    }
-
     public static class NoSuchPDOException extends Exception {
         private static final long serialVersionUID = -5418019063691592665L;
 
@@ -639,6 +616,31 @@ public class ProductOrderEjb {
                 getUserName(), targetStatus.getDisplayName(),
                 StringUtils.join(ProductOrderSample.getSampleNames(samples), ","),
                 StringUtils.stripToEmpty(comment)));
+    }
+
+    public void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
+            throws NoSuchPDOException, IOException {
+        Set<String> samples = new HashSet<>(Arrays.asList(samplesToUnAbandon));
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList =
+                productOrderSampleDao.findByOrderKeyAndSampleNames(pdo, samples);
+
+        executeUnabandonPDOSamples(productOrder, sampleList);
+    }
+
+    private void executeUnabandonPDOSamples(ProductOrder productOrder, List<ProductOrderSample> sampleList)
+            throws NoSuchPDOException, IOException {
+        for (ProductOrderSample sample : sampleList) {
+            if (sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
+                throw new InformaticsServiceException(String.format(
+                        "Sample %s cannot be unabandoned because it is not currently abandoned", sample.getName()));
+            }
+            sample.setDeliveryStatus(DeliveryStatus.NOT_STARTED);
+        }
+
+        productOrderSampleDao.persistAll(sampleList);
+        updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
     }
 
     /**
@@ -865,6 +867,42 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     *
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param samples       the samples to abandon
+     * @param comment       optional user supplied comment about this action.
+     *
+     * @throws IOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws NoSuchPDOException
+     */
+    public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> samples,
+                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+
+        List<ProductOrderSample> poSamples = productOrderSampleDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.productOrderSampleId, samples);
+
+        Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
+        while (samplesIter.hasNext()) {
+            ProductOrderSample sample = samplesIter.next();
+            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
+                samplesIter.remove();
+            }
+            if (!StringUtils.isBlank(comment)) {
+                sample.setSampleComment(comment);
+            }
+        }
+
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                DeliveryStatus.NOT_STARTED, poSamples, comment);
+
+        reporter.addMessage("Un-Abandoned samples: {0}.",
+                StringUtils.join(ProductOrderSample.getSampleNames(poSamples), ", "));
+    }
+
+    /**
      * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
      * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
      * if necessary.
@@ -1033,8 +1071,10 @@ public class ProductOrderEjb {
             pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
                     createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
-
     }
 
-
+    @Inject
+    public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
+        this.productOrderSampleDao = productOrderSampleDao;
+    }
 }

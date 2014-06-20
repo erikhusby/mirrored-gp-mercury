@@ -126,6 +126,21 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return names;
     }
 
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     *
+     * @param samples the samples to convert.
+     *
+     * @return the names of the samples, in the same order as the input.
+     */
+    public static List<Long> getSampleIDs(Collection<ProductOrderSample> samples) {
+        List<Long> ids = new ArrayList<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            ids.add(productOrderSample.getProductOrderSampleId());
+        }
+        return ids;
+    }
+
     public boolean calculateRisk() {
         riskItems.clear();
 
