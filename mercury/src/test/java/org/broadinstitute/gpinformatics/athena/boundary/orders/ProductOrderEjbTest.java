@@ -154,7 +154,8 @@ public class ProductOrderEjbTest {
         List<ProductOrderSample> productOrderSamples = setupRiskTests();
         productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
         Assert.assertEquals(productOrder.countItemsOnRisk(), 0);
-    } 
+    }
+
     public void testAbandonAndUnabandonSamples() throws Exception {
         ProductOrder testOrder =
                 ProductOrderTestFactory.createProductOrder("SM-toAbandon1","SM-toAbandon2","SM-toAbandon3",
@@ -185,11 +186,12 @@ public class ProductOrderEjbTest {
 
         ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
         Mockito.when(productOrderSampleDao.findListByList(Mockito.eq(ProductOrderSample.class),
-                Mockito.eq(ProductOrderSample_.productOrderSampleId),Mockito.anyCollection())).thenReturn(testOrder.getSamples());
+                Mockito.eq(ProductOrderSample_.productOrderSampleId),Mockito.anyCollection())).thenReturn(
+                testOrder.getSamples());
         productOrderEjb.setProductOrderSampleDao(productOrderSampleDao);
 
         productOrderEjb.unAbandonSamples(testOrder.getBusinessKey(),
-                ProductOrderSample.getSampleIDs(testOrder.getSamples()),"to not be abandoned anymore",
+                ProductOrderSample.getSampleIDs(testOrder.getSamples()), "to not be abandoned anymore",
                 mockReporter);
 
         for(ProductOrderSample sample:testOrder.getSamples()) {

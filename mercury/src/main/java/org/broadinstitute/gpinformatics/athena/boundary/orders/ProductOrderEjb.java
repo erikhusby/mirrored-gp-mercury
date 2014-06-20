@@ -618,31 +618,6 @@ public class ProductOrderEjb {
                 StringUtils.stripToEmpty(comment)));
     }
 
-    public void unAbandonPDOSamples(String pdo, String... samplesToUnAbandon)
-            throws NoSuchPDOException, IOException {
-        Set<String> samples = new HashSet<>(Arrays.asList(samplesToUnAbandon));
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
-
-        List<ProductOrderSample> sampleList =
-                productOrderSampleDao.findByOrderKeyAndSampleNames(pdo, samples);
-
-        executeUnabandonPDOSamples(productOrder, sampleList);
-    }
-
-    private void executeUnabandonPDOSamples(ProductOrder productOrder, List<ProductOrderSample> sampleList)
-            throws NoSuchPDOException, IOException {
-        for (ProductOrderSample sample : sampleList) {
-            if (sample.getDeliveryStatus() != DeliveryStatus.ABANDONED) {
-                throw new InformaticsServiceException(String.format(
-                        "Sample %s cannot be unabandoned because it is not currently abandoned", sample.getName()));
-            }
-            sample.setDeliveryStatus(DeliveryStatus.NOT_STARTED);
-        }
-
-        productOrderSampleDao.persistAll(sampleList);
-        updateOrderStatus(productOrder.getJiraTicketKey(), new MessageReporter.LogReporter(log));
-    }
-
     /**
      * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
      */

@@ -395,15 +395,6 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
-    public void unAbandonPDOSamples() throws Exception {
-        productOrderEjb.unAbandonPDOSamples("PDO-2670",
-                "SM-55WGG",
-                "SM-55WGJ",
-                "SM-55WGM",
-                "SM-55WGN");
-    }
-
-    @Test(enabled = false)
     public void fixupSampleNames() throws Exception {
 
         // Renames samples that have some type of non-printable ASCII at the end (e.g. char(160)).
@@ -446,11 +437,6 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderSampleDao.remove(sample);
 
         productOrderSampleDao.flush();
-    }
-
-    @Test(enabled = false)
-    public void unAbandonSamplesGplim2704() throws IOException, ProductOrderEjb.NoSuchPDOException {
-        productOrderEjb.unAbandonPDOSamples("PDO-3551");
     }
 
     @Test(enabled = false)
