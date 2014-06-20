@@ -22,11 +22,10 @@ import java.util.Map;
  * @see <a href="https://confluence.broadinstitute.org/display/BASS/Application+Programming+Interface">Bass API Documentation</a>
  * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
  */
-
 public class BassResultsParser {
     private static final String FILETYPE_DELIMITER = "^##FILE_TYPE=\\w+##";
 
-    public List<BassDTO> parse(String bassResponse) {
+    public static List<BassDTO> parse(String bassResponse) {
         List<BassDTO> result = new ArrayList<>();
 
         String[] lines = bassResponse.split("\n");

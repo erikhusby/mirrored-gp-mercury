@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -20,8 +21,14 @@ import java.util.List;
 import java.util.Map;
 
 public class BassSearchFileServiceTest {
-    Map<BassDTO.BassResultColumn, List<String>> parameters = new HashMap<>();
-    public static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
+    private Map<BassDTO.BassResultColumn, List<String>> parameters;
+    private BassSearchFileService service;
+
+    @BeforeMethod
+    public void setUp() throws Exception {
+        service = new BassSearchFileService();
+        parameters = new HashMap<>();
+    }
 
     @Test(enabled = true)
     public void testReadFile() throws Exception {
@@ -32,21 +39,16 @@ public class BassSearchFileServiceTest {
 
     @Test(enabled = true)
     public void testRunSearch() throws Exception {
-        BassSearchFileService service = new BassSearchFileService();
-        String testRpId = "RP-12";
-        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
-        List<BassDTO> results = service.runSearch(parameters);
+        List<BassDTO> results = service.runSearch(BassSearchServiceTest.RP_12);
         for (BassDTO result : results) {
-            Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.rpid), testRpId);
+            Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.rpid), BassSearchServiceTest.RP_12);
         }
     }
 
     @Test(enabled = true)
     public void testRunSearchNoResults() throws Exception {
-        BassSearchFileService service = new BassSearchFileService();
         String testRpId = "NO-SUCH-RP";
-        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
-        List<BassDTO> results = service.runSearch(parameters);
+        List<BassDTO> results = service.runSearch(testRpId);
         Assert.assertTrue(results.isEmpty());
     }
 
@@ -55,14 +57,12 @@ public class BassSearchFileServiceTest {
      */
     @Test(enabled = true)
     public void testResearchProjectHasMoreThanOneSampleInIt() throws Exception {
-        BassSearchFileService service = new BassSearchFileService();
-        String testRpId = "RP-12";
-        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
+        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(BassSearchServiceTest.RP_12));
         List<BassDTO> results = service.runSearch(parameters);
         boolean hasTestSample = false;
         boolean hasOtherSample = false;
         for (BassDTO result : results) {
-            if (result.getSample().equals(COLLABORATOR_SAMPLE_ID)) {
+            if (result.getSample().equals(BassSearchServiceTest.COLLABORATOR_SAMPLE_ID)) {
                 hasTestSample = true;
             } else {
                 hasOtherSample = true;
@@ -73,14 +73,12 @@ public class BassSearchFileServiceTest {
     }
 
     @Test(enabled = true)
-    public void testFilterResults() throws Exception {
-        BassSearchFileService service = new BassSearchFileService();
-        String researchProjectId = "RP-12";
-        String testRpId = researchProjectId;
-        parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(testRpId));
-        List<BassDTO> results = service.runSearch(researchProjectId, COLLABORATOR_SAMPLE_ID);
+    public void testMultipleCriteria() throws Exception {
+        parameters =
+                service.buildParameterMap(BassSearchServiceTest.RP_12, BassSearchServiceTest.COLLABORATOR_SAMPLE_ID);
+        List<BassDTO> results = service.runSearch(parameters);
         for (BassDTO result : results) {
-            Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.sample), COLLABORATOR_SAMPLE_ID);
+            Assert.assertEquals(result.getSample(), BassSearchServiceTest.COLLABORATOR_SAMPLE_ID);
         }
     }
 }
