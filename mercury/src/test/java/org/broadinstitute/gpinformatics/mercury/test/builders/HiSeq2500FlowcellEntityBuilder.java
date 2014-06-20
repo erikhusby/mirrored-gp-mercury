@@ -149,7 +149,7 @@ public class HiSeq2500FlowcellEntityBuilder {
             LabEvent stripTubeTransferEntity =
                     labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeTransferJaxb,
                             new HashMap<String, TubeFormation>() {{
-                                put(denatureRack.getLabel(), denatureRack);
+                                put(denatureRack.getRacksOfTubes().iterator().next().getLabel(), denatureRack);
                             }},
                             mapBarcodeToDenatureTube,
                             new HashMap<String, TubeFormation>() {{
