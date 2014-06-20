@@ -41,7 +41,10 @@ public class BassSearchServiceTest {
         for (BassDTO bassDTO : bassDTOs) {
             // RP Aggregated research projects should always have a data_type column.
             if (bassDTO.isAggregatedByResearchProject()) {
+                Assert.assertEquals(bassDTO.getRpid(), bassDTO.getProject());
                 Assert.assertTrue(StringUtils.isNotBlank(bassDTO.getDatatype()), getDTOInfo(bassDTO));
+            } else {
+                Assert.assertNotEquals(bassDTO.getRpid(), bassDTO.getProject());
             }
         }
     }
