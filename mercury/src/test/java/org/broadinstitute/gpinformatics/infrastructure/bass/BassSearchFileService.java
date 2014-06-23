@@ -30,7 +30,7 @@ public class BassSearchFileService extends BassSearchService {
     }
 
     @Override
-    public List<BassDTO> runSearch(Map<BassDTO.BassResultColumn, List<String>> parameters) {
+    public List<BassDTO> runSearch(Map<BassDTO.BassResultColumn, List<String>> parameters, BassDTO.FileType fileType) {
         List<BassDTO> results = new ArrayList<>();
         try {
             List<BassDTO> parsedFile = BassResultsParser.parse(readFile());

@@ -30,6 +30,7 @@ import java.util.Map;
  * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
  */
 public class BassDTO {
+    public static final String FILETYPE = "file_type";
     static final String BASS_NULL_VALUE = "[NULL]";
     private final SimpleDateFormat BASS_DATE_FORMAT = new SimpleDateFormat("y_M_d_k_m_s_z");
 
@@ -39,6 +40,30 @@ public class BassDTO {
 
     public BassDTO(Map<BassResultColumn, String> columnToValue) {
         this.columnToValue = columnToValue;
+    }
+    public enum FileType {
+        BAM("bam"),
+        PICARD("picard"),
+        READ_GROUP_BAM("read_group_bam"),
+        ALL("all");
+        private String value;
+
+        FileType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static FileType byValue(String fileType) {
+            for (FileType type : FileType.values()) {
+                if (fileType.equals(type.getValue())) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("No enum constant for " + fileType);
+        }
     }
 
     public enum BassResultColumn {
