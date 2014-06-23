@@ -4,7 +4,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
@@ -38,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -197,26 +197,35 @@ public class LabEventResource {
             LabBatch labBatch = labEvent.getLabBatch();
             labEventBean.setBatchId(labBatch != null ? labBatch.getBatchName() : null);
 
+            Map<String, String> mapTubeFormationLabelToRackLabel = new HashMap<>();
             // todo jmt rationalize these?  Each side can be a vessel, or a vessel + section, or a vessel + position
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("CherryPickTransfer");
-                // todo jmt reference rack in event
-                transferBean.setSourceBarcode(getLabel(cherryPickTransfer.getSourceVesselContainer().getEmbedder()));
+                transferBean.setSourceBarcode(cherryPickTransfer.getAncillarySourceVessel().getLabel());
+                mapTubeFormationLabelToRackLabel.put(
+                        cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
+                        cherryPickTransfer.getAncillarySourceVessel().getLabel());
                 transferBean.setSourcePosition(cherryPickTransfer.getSourcePosition().name());
-                // todo jmt reference rack in event
-                transferBean.setTargetBarcode(getLabel(cherryPickTransfer.getTargetVesselContainer().getEmbedder()));
+                transferBean.setTargetBarcode(cherryPickTransfer.getAncillaryTargetVessel().getLabel());
+                mapTubeFormationLabelToRackLabel.put(
+                        cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
+                        cherryPickTransfer.getAncillaryTargetVessel().getLabel());
                 transferBean.setTargetPosition(cherryPickTransfer.getTargetPosition().name());
                 labEventBean.getTransfers().add(transferBean);
             }
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("SectionTransfer");
-                // todo jmt reference rack in event
-                transferBean.setSourceBarcode(getLabel(sectionTransfer.getSourceVesselContainer().getEmbedder()));
+                transferBean.setSourceBarcode(sectionTransfer.getAncillarySourceVessel().getLabel());
+                mapTubeFormationLabelToRackLabel.put(
+                        sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
+                        sectionTransfer.getAncillarySourceVessel().getLabel());
                 transferBean.setSourceSection(sectionTransfer.getSourceSection().getSectionName());
-                // todo jmt reference rack in event
-                transferBean.setTargetBarcode(getLabel(sectionTransfer.getTargetVesselContainer().getEmbedder()));
+                transferBean.setTargetBarcode(sectionTransfer.getAncillaryTargetVessel().getLabel());
+                mapTubeFormationLabelToRackLabel.put(
+                        sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
+                        sectionTransfer.getAncillaryTargetVessel().getLabel());
                 transferBean.setTargetSection(sectionTransfer.getTargetSection().getSectionName());
                 labEventBean.getTransfers().add(transferBean);
             }
@@ -224,9 +233,10 @@ public class LabEventResource {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("VesselToSectionTransfer");
                 transferBean.setSourceBarcode(vesselToSectionTransfer.getSourceVessel().getLabel());
-                // todo jmt reference rack in event
-                transferBean
-                        .setTargetBarcode(getLabel(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder()));
+                transferBean.setTargetBarcode(vesselToSectionTransfer.getAncillaryTargetVessel().getLabel());
+                mapTubeFormationLabelToRackLabel.put(
+                        vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
+                        vesselToSectionTransfer.getAncillaryTargetVessel().getLabel());
                 transferBean.setTargetSection(vesselToSectionTransfer.getTargetSection().getSectionName());
                 labEventBean.getTransfers().add(transferBean);
             }
@@ -239,11 +249,11 @@ public class LabEventResource {
             }
 
             for (LabVessel sourceLabVessel : labEvent.getSourceLabVessels()) {
-                labEventBean.getSources().add(buildLabVesselBean(sourceLabVessel));
+                labEventBean.getSources().add(buildLabVesselBean(sourceLabVessel, mapTubeFormationLabelToRackLabel));
             }
 
             for (LabVessel targetLabVessel : labEvent.getTargetLabVessels()) {
-                labEventBean.getTargets().add(buildLabVesselBean(targetLabVessel));
+                labEventBean.getTargets().add(buildLabVesselBean(targetLabVessel, mapTubeFormationLabelToRackLabel));
             }
 
             labEventBeans.add(labEventBean);
@@ -283,17 +293,22 @@ public class LabEventResource {
         }
     }
 
-    private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity) {
+    private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity,
+            Map<String, String> mapTubeFormationLabelToRackLabel) {
         // todo jmt need to hide on-the-fly creation of plate wells
         String type = labVesselEntity.getType().name();
+        String label = null;
         if (labVesselEntity.getType() == LabVessel.ContainerType.STATIC_PLATE) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
             type = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRackType().getDisplayName();
+            label = mapTubeFormationLabelToRackLabel.get(labVesselEntity.getLabel());
         }
-        String label = getLabel(labVesselEntity);
+        if (label == null) {
+            label = labVesselEntity.getLabel();
+        }
         LabVesselBean labVesselBean = new LabVesselBean(label, type);
         VesselContainer vesselContainer = labVesselEntity.getContainerRole();
         if (vesselContainer != null) {
@@ -313,7 +328,7 @@ public class LabEventResource {
                     LabVessel labVessel = vesselContainer.getVesselAtPosition(VesselPosition.getByName(positionName));
                     if (labVessel != null) {
                         labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
-                                positionName, buildLabVesselBean(labVessel)));
+                                positionName, buildLabVesselBean(labVessel, mapTubeFormationLabelToRackLabel)));
                     }
                 }
             } else {
@@ -322,7 +337,8 @@ public class LabEventResource {
                         vesselContainer.getMapPositionToVessel().entrySet();
                 for (Map.Entry<VesselPosition, LabVessel> positionToLabVessel : entrySet) {
                     labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
-                            positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue())));
+                            positionToLabVessel.getKey().name(), buildLabVesselBean(positionToLabVessel.getValue(),
+                            mapTubeFormationLabelToRackLabel)));
                 }
             }
             for (LabVesselPositionBean labVesselPositionBean : labVesselBean.getLabVesselPositionBeans()) {
@@ -338,25 +354,4 @@ public class LabEventResource {
         return labVesselBean;
     }
 
-    /**
-     * Returns label of vessel, including special handling for tube formations.
-     *
-     * @param labVesselEntity plastic
-     *
-     * @return label
-     */
-    private String getLabel(LabVessel labVesselEntity) {
-        String label;
-        if (labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
-            // The "label" for a tube formation is the hash of the tube barcodes and their formations, so return the
-            // label for the rack.
-            label = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRacksOfTubes().iterator().next()
-                    .getLabel();
-        } else {
-            label = labVesselEntity.getLabel();
-        }
-        return label;
-    }
-
-    // Section definitions
 }
