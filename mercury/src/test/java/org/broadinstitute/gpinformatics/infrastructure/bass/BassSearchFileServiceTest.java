@@ -39,7 +39,7 @@ public class BassSearchFileServiceTest {
 
     @Test(enabled = true)
     public void testRunSearch() throws Exception {
-        List<BassDTO> results = service.runSearch(BassSearchServiceTest.RP_12);
+        List<BassDTO> results = service.runSearch(BassSearchServiceTest.RP_12, BassDTO.FileType.BAM);
         for (BassDTO result : results) {
             Assert.assertEquals(result.getValue(BassDTO.BassResultColumn.rpid), BassSearchServiceTest.RP_12);
         }
@@ -58,7 +58,7 @@ public class BassSearchFileServiceTest {
     @Test(enabled = true)
     public void testResearchProjectHasMoreThanOneSampleInIt() throws Exception {
         parameters.put(BassDTO.BassResultColumn.rpid, Arrays.asList(BassSearchServiceTest.RP_12));
-        List<BassDTO> results = service.runSearch(parameters);
+        List<BassDTO> results = service.runSearch(parameters, BassDTO.FileType.BAM);
         boolean hasTestSample = false;
         boolean hasOtherSample = false;
         for (BassDTO result : results) {
@@ -76,7 +76,7 @@ public class BassSearchFileServiceTest {
     public void testMultipleCriteria() throws Exception {
         parameters =
                 service.buildParameterMap(BassSearchServiceTest.RP_12, BassSearchServiceTest.COLLABORATOR_SAMPLE_ID);
-        List<BassDTO> results = service.runSearch(parameters);
+        List<BassDTO> results = service.runSearch(parameters, BassDTO.FileType.BAM);
         for (BassDTO result : results) {
             Assert.assertEquals(result.getSample(), BassSearchServiceTest.COLLABORATOR_SAMPLE_ID);
         }

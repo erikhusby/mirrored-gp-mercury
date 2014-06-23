@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.BassResultColumn;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType.ALL;
+import static org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType.BAM;
 
 /**
  * This class retrieves data from Bass. Bass can be queried on any of it's {@link BassResultColumn}s except for
@@ -59,16 +62,18 @@ public class BassSearchService extends AbstractJerseyClientService {
      * Search Bass for records with values matching parameters.
      *
      * @param parameters Map of terms and values to search with.
+     * @param fileType
      *
      * @return List of {@link BassDTO} objects matching all criteria in the parameters map.
      */
-    public List<BassDTO> runSearch(Map<BassResultColumn, List<String>> parameters) {
+    public List<BassDTO> runSearch(Map<BassResultColumn, List<String>> parameters, FileType fileType) {
         String url = bassConfig.getWSUrl(ACTION_LIST);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
 
         for (Map.Entry<BassResultColumn, List<String>> queryPair : parameters.entrySet()) {
             params.put(queryPair.getKey().name(), queryPair.getValue());
         }
+        params.putAll(getFileTypeParam(fileType));
         WebResource resource = getJerseyClient().resource(url);
         resource.accept(MediaType.TEXT_PLAIN);
         resource.queryParams(params);
@@ -93,21 +98,48 @@ public class BassSearchService extends AbstractJerseyClientService {
         return results;
     }
 
+    protected MultivaluedMap<String, String> getFileTypeParam(FileType fileType) {
+        MultivaluedMap<String, String> params = new MultivaluedMapImpl();
+        if (fileType == ALL) {
+            return params;
+        }
+        params.put(BassDTO.FILETYPE, Arrays.asList(fileType.getValue()));
+        return params;
+    }
+
     /**
      * Search bass for records containing the Research Project ID
      *
      * @param researchProjectId research project to search for.
+     * @param fileType
      *
      * @return All records matching the supplied  Research Project ID.
+     */
+    public List<BassDTO> runSearch(String researchProjectId, FileType fileType) {
+        Map<BassResultColumn, List<String>> parameters = new HashMap<>();
+        parameters.put(BassResultColumn.rpid, Arrays.asList(researchProjectId));
+        return runSearch(parameters, fileType);
+    }
+
+    /**
+     * Search bass for records containing the Research Project ID.
+     * The default search restricts the results to bam files.
+     *
+     * @param researchProjectId research project to search for.
+     *
+     * @return All records matching the supplied  Research Project ID.
+     *
+     * @see org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType#BAM
      */
     public List<BassDTO> runSearch(String researchProjectId) {
         Map<BassResultColumn, List<String>> parameters = new HashMap<>();
         parameters.put(BassResultColumn.rpid, Arrays.asList(researchProjectId));
-        return runSearch(parameters);
+        return runSearch(parameters, BAM);
     }
 
     /**
      * Search bass for records containing the Research Project ID and Collaborator Sample IDs
+     * The default search restricts the results to bam files.
      *
      * @param researchProjectId    Research Project ID to search for.
      * @param collaboratorSampleId Collaborator Sample ID to search for.
@@ -116,7 +148,7 @@ public class BassSearchService extends AbstractJerseyClientService {
      */
     public List<BassDTO> runSearch(String researchProjectId, String... collaboratorSampleId) {
         Map<BassResultColumn, List<String>> parameters = buildParameterMap(researchProjectId, collaboratorSampleId);
-        return runSearch(parameters);
+        return runSearch(parameters, BAM);
     }
 
     /**
