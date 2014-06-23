@@ -506,10 +506,13 @@ public class ReworkEjb {
         private List<String> validationMessages = new ArrayList<>();
         private boolean reworkItem;
         private String lastEventStep;
+        private SampleInstance currentSampleKey;
 
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
          * specified, the tube's sample had better be in only one PDO.
+         *
+         * Only called from tests classes
          *
          * @param tubeBarcode
          */
@@ -518,11 +521,23 @@ public class ReworkEjb {
             this.tubeBarcode = tubeBarcode;
         }
 
+        /**
+         *
+         * Only called from test classes
+         *
+         */
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull ProductOrder productOrder) {
             this.tubeBarcode = tubeBarcode;
             this.productOrder = productOrder;
         }
 
+        /**
+         * Used with Main constructor and toString only
+         *
+         * @param tubeBarcode
+         * @param sampleKey
+         * @param productOrder
+         */
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
                                @Nonnull ProductOrder productOrder) {
             this(tubeBarcode, productOrder);
@@ -535,6 +550,7 @@ public class ReworkEjb {
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
+            this.currentSampleKey = this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null).iterator().next();
         }
 
         public String getSampleKey() {
@@ -571,6 +587,10 @@ public class ReworkEjb {
 
         public String getLastEventStep() {
             return lastEventStep;
+        }
+
+        public SampleInstance getCurrentSampleKey() {
+            return currentSampleKey;
         }
 
         @Override
