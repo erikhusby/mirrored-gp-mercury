@@ -136,6 +136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
+    private static final String UNABANDON_SAMPLES_ACTION = "unAbandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     public static final String SQUID_COMPONENTS_ACTION = "createSquidComponents";
     private static final String SET_RISK = "setRisk";
@@ -266,7 +267,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET})
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET,UNABANDON_SAMPLES_ACTION})
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
@@ -293,6 +294,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String riskComment;
 
     private String abandonComment;
+    private String unAbandonComment;
 
     // This is used for prompting why the abandon button is disabled.
     private String abandonDisabledReason;
@@ -858,7 +860,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
            on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                   DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER})
+                   DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1376,7 +1378,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(
-            on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET},
+            on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ADD_SAMPLES_TO_BUCKET,
+                    UNABANDON_SAMPLES_ACTION},
             priority = 0)
     public void validateSampleListOperation() {
         if (selectedProductOrderSampleIds != null) {
@@ -1391,7 +1394,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION}, priority = 1)
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, UNABANDON_SAMPLES_ACTION}, priority = 1)
     public void validateDeleteOrAbandonOperation() {
         if (selectedProductOrderSamples.isEmpty()) {
             addGlobalValidationError("You must select at least one sample.");
@@ -1506,6 +1509,24 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution(editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent(UNABANDON_SAMPLES_ACTION)
+    public Resolution unabandonSamples() throws Exception {
+
+        if (CollectionUtils.isNotEmpty(selectedProductOrderSampleIds)) {
+            try {
+                productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
+                        abandonComment, this);
+            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
+                addGlobalValidationError(e.getMessage());
+                return createViewResolution(editOrder.getBusinessKey());
+            }
+            productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
+        }
+
+        return createViewResolution(editOrder.getBusinessKey());
+
     }
 
     @HandlesEvent(ADD_SAMPLES_ACTION)
@@ -1796,6 +1817,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAbandonComment(String abandonComment) {
         this.abandonComment = abandonComment;
+    }
+
+    public String getUnAbandonComment() {
+        return unAbandonComment;
+    }
+
+    public void setUnAbandonComment(String unAbandonComment) {
+        this.unAbandonComment = unAbandonComment;
     }
 
     public CompletionStatusFetcher getProgressFetcher() {

@@ -156,6 +156,31 @@ function setupDialogs() {
         ]
     });
 
+    $j("#unAbandonDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "unAbandonOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#unAbandonOkButton").attr("disabled", "disabled");
+                    $j("#abandonStatus").attr("value", $j("#unAbandonDialogId").attr("checked") != undefined);
+                    $j("#unAbandonComment").attr("value", $j("#unAbandonSampleCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
     $j("#deleteConfirmation").dialog({
         modal: true,
         autoOpen: false,
@@ -388,6 +413,18 @@ function showAbandonDialog() {
     }
 }
 
+function showUnAbandonDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "unAbandonSamples");
+        $j("#unAbandonSelectedSamplesCountId").text(numChecked);
+        $j("#unAbandonDialog").dialog("open").dialog("option", "width", 600);
+    } else {
+        $j("#noneSelectedDialogMessage").text("Un-Abandon Samples");
+        $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
 function showDeleteConfirm(action) {
     $j("#dialogAction").attr("name", action);
     $j("#deleteConfirmation").dialog("open");
@@ -545,6 +582,16 @@ function formatInput(item) {
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
+
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
+
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
+
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
 
@@ -569,6 +616,7 @@ function formatInput(item) {
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -1013,6 +1061,10 @@ function formatInput(item) {
                     <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                     style="margin-left:15px;"
                                     onclick="showAbandonDialog()"/>
+
+                    <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                    style="margin-left:15px;"
+                                    onclick="showUnAbandonDialog()"/>
 
                     <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
                                     style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>

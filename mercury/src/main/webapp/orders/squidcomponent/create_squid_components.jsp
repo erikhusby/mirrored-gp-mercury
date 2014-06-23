@@ -32,11 +32,11 @@
                                 $j("#squidProjectOptions").html(html);
                             }
                         });
+                        </c:if>
                         $j("#executionTypeSelect").change(function () {
                             var executionType = $j(this).val();
                             pullWorkRequestOptions(executionType);
                         });
-                        </c:if>
                     }
             );
             function pullWorkRequestOptions(executionType) {
@@ -81,7 +81,7 @@
                 <div id="squidProjectOptions">
                     <c:if test="${actionBean.projectOptionsRetrieved}">
                         <%--<stripes:layout-render name="/orders/squid_project_options.jsp"/>--%>
-                        <jsp:include page="/orders/squidcomponent/squid_project_options.jsp"/>
+                        <jsp:include page="<%=SquidComponentActionBean.SQUID_PROJECT_OPTIONS_INSERT%>"/>
                     </c:if>
                 </div>
                     <%--</fieldset>--%>
@@ -97,7 +97,7 @@
                     <c:choose>
                         <c:when test="${actionBean.workRequestOptionsRetrieved}">
                             <%--<stripes:layout-render name="/orders/squid_work_request_options.jsp"/>--%>
-                            <jsp:include page="/orders/squidcomponent/squid_work_request_options.jsp"/>
+                            <jsp:include page="<%=SquidComponentActionBean.SQUID_WORK_REQUEST_OPTIONS_INSERT%>"/>
                         </c:when>
                         <c:otherwise>
                             Select a Project Execution Type to drive work request options

@@ -29,7 +29,7 @@
         <stripes:form beanclass="${actionBean.class.name}" partial="true">
             <div class="control-group">
                 <stripes:label for="lcsetKey" class="control-label">
-                    Is there an LCSet to associate?
+                    LC Set name
                 </stripes:label>
                 <div class="controls">
                     <stripes:text name="autoSquidDto.lcsetId" id="lcsetKey"/>
@@ -51,7 +51,11 @@
             </div>
 
             <div id="squidOligioPoolOptions">
-
+                <c:choose>
+                    <c:when test="${actionBean.oligioPoolsRetrieved}">
+                        <jsp:include page="<%=SquidComponentActionBean.BAIT_OPTIONS_INSERT%>"/>
+                    </c:when>
+                </c:choose>
             </div>
 
             <div class="control-group">

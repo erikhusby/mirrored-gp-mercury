@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderKitTest;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -18,8 +22,11 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFa
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderDBTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
+import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -38,6 +45,7 @@ public class ProductOrderEjbTest {
                     JiraServiceProducer.stubInstance(), mockUserBean, null, null, null);
     private static final String[] sampleNames = {"SM-1234", "SM-5678", "SM-9101", "SM-1112"};
     ProductOrder productOrder=null;
+    private Log logger = LogFactory.getLog(ProductOrderEjbTest.class);
 
     public void testUpdateKitInfo() throws Exception {
 
@@ -114,7 +122,7 @@ public class ProductOrderEjbTest {
         pdo.setQuoteId(null);
 
         updateField = PDOUpdateField.createPDOUpdateFieldForQuote(pdo);
-        Assert.assertEquals(updateField.getNewValue(),ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
+        Assert.assertEquals(updateField.getNewValue(), ProductOrder.QUOTE_TEXT_USED_IN_JIRA_WHEN_QUOTE_FIELD_IS_EMPTY);
     }
 
     public void testValidateQuote() throws Exception {
@@ -147,4 +155,49 @@ public class ProductOrderEjbTest {
         productOrderEjb.addManualOnRisk(qaDudeUser, productOrder.getJiraTicketKey(), productOrderSamples, false, "no risk");
         Assert.assertEquals(productOrder.countItemsOnRisk(), 0);
     }
+
+    public void testAbandonAndUnabandonSamples() throws Exception {
+        ProductOrder testOrder =
+                ProductOrderTestFactory.createProductOrder("SM-toAbandon1","SM-toAbandon2","SM-toAbandon3",
+                        "SM-toAbandon4","SM-toAbandon5");
+
+        for(ProductOrderSample sample:testOrder.getSamples()) {
+            Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.NOT_STARTED);
+        }
+
+        Mockito.when(productOrderDaoMock.findByBusinessKey(Mockito.anyString())).thenReturn(testOrder);
+        Mockito.when(mockUserBean.getBspUser()).thenReturn(new BSPUserList.QADudeUser("PM", 2423L));
+
+        productOrderEjb.abandonSamples(testOrder.getBusinessKey(), testOrder.getSamples(), "To be Abandoned in Test");
+
+        for(ProductOrderSample sample:testOrder.getSamples()) {
+            Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.ABANDONED);
+        }
+
+        MessageReporter mockReporter = Mockito.mock(MessageReporter.class);
+        Mockito.when(mockReporter.addMessage(Mockito.anyString())).then(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+
+                logger.info((String)invocationOnMock.getArguments()[0]);
+                return "";
+            }
+        });
+
+        ProductOrderSampleDao productOrderSampleDao = Mockito.mock(ProductOrderSampleDao.class);
+        Mockito.when(productOrderSampleDao.findListByList(Mockito.eq(ProductOrderSample.class),
+                Mockito.eq(ProductOrderSample_.productOrderSampleId),Mockito.anyCollection())).thenReturn(
+                testOrder.getSamples());
+        productOrderEjb.setProductOrderSampleDao(productOrderSampleDao);
+
+        productOrderEjb.unAbandonSamples(testOrder.getBusinessKey(),
+                ProductOrderSample.getSampleIDs(testOrder.getSamples()), "to not be abandoned anymore",
+                mockReporter);
+
+        for(ProductOrderSample sample:testOrder.getSamples()) {
+            Assert.assertEquals(sample.getDeliveryStatus(), ProductOrderSample.DeliveryStatus.NOT_STARTED);
+        }
+
+    }
+
 }

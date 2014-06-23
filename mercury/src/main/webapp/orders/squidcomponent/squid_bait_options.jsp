@@ -1,4 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.SquidComponentActionBean"/>
@@ -33,6 +34,11 @@
     </div>
 
     <div id="squidOligioPoolReceptacles">
+        <c:choose>
+            <c:when test="${actionBean.groupReceptaclesRetrieved}">
+                <jsp:include page="<%=SquidComponentActionBean.BAIT_RECEPTACLES_INSERT%>"/>
+            </c:when>
+        </c:choose>
 
     </div>
 

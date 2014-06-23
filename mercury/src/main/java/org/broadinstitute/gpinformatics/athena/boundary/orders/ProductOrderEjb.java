@@ -10,12 +10,14 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -87,6 +89,7 @@ public class ProductOrderEjb {
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
+    private ProductOrderSampleDao productOrderSampleDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
@@ -338,7 +341,7 @@ public class ProductOrderEjb {
 
     String buildJiraCommentForRiskString(String comment, String username, int sampleCount, boolean isRisk) {
         return String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
-                    username, isRisk, sampleCount, comment);
+                username, isRisk, sampleCount, comment);
     }
 
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
@@ -839,6 +842,42 @@ public class ProductOrderEjb {
     }
 
     /**
+     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     *
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param samples       the samples to abandon
+     * @param comment       optional user supplied comment about this action.
+     *
+     * @throws IOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws NoSuchPDOException
+     */
+    public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> samples,
+                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+
+        List<ProductOrderSample> poSamples = productOrderSampleDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.productOrderSampleId, samples);
+
+        Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
+        while (samplesIter.hasNext()) {
+            ProductOrderSample sample = samplesIter.next();
+            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
+                samplesIter.remove();
+            }
+            if (!StringUtils.isBlank(comment)) {
+                sample.setSampleComment(comment);
+            }
+        }
+
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                DeliveryStatus.NOT_STARTED, poSamples, comment);
+
+        reporter.addMessage("Un-Abandoned samples: {0}.",
+                StringUtils.join(ProductOrderSample.getSampleNames(poSamples), ", "));
+    }
+
+    /**
      * Given a PDO ID, add a list of samples to the PDO.  This will update the PDO's JIRA with a comment that the
      * samples have been added, and will notify LIMS that the samples are now present, and update the PDO's status
      * if necessary.
@@ -1003,12 +1042,14 @@ public class ProductOrderEjb {
         pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
                 createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
 
-        if(StringUtils.isNotBlank(squidInput.getLcsetId())) {
+        if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
             pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
                     createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
-
     }
 
-
+    @Inject
+    public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
+        this.productOrderSampleDao = productOrderSampleDao;
+    }
 }
