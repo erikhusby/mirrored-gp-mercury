@@ -447,10 +447,14 @@ public abstract class LabVessel implements Serializable {
         this.createdOn = createdOn;
     }
 
-    public Set<LabEvent> getInPlaceEvents() {
+    public Set<LabEvent> getInPlaceLabEvents() {
+        return inPlaceLabEvents;
+    }
+
+    public Set<LabEvent> getInPlaceEventsWithContainers() {
         Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
         for (LabVessel vesselContainer : containers) {
-            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEvents());
+            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEventsWithContainers());
         }
         return totalInPlaceEventsSet;
     }
@@ -1011,11 +1015,11 @@ public abstract class LabVessel implements Serializable {
      * @return in place events, transfers from, transfers to
      */
     public Set<LabEvent> getEvents() {
-        return Sets.union(getInPlaceEvents(), Sets.union(getTransfersFrom(), getTransfersTo()));
+        return Sets.union(getInPlaceEventsWithContainers(), Sets.union(getTransfersFrom(), getTransfersTo()));
     }
 
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
-        return Sets.union(getInPlaceEvents(), getTransfersTo());
+        return Sets.union(getInPlaceLabEvents(), getTransfersTo());
     }
 
     public BigDecimal getVolume() {

@@ -4,7 +4,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefDataFetcher;
@@ -118,7 +117,7 @@ public class LabEventResource {
         List<LabEvent> labEvents = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) {
-            for (LabEvent labEvent : labVessel.getInPlaceEvents()) {
+            for (LabEvent labEvent : labVessel.getInPlaceEventsWithContainers()) {
                 if (!labEvent.getReagents().isEmpty()) {
                     labEvents.add(labEvent);
                 }
