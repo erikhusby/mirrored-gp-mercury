@@ -38,7 +38,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     private String testTitle;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -81,7 +81,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         return researchProject;
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -90,7 +90,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testFindResearchProjectById() throws Exception {
         ResearchProjectResource.ResearchProjects researchProject = researchProjectResource.findByIds(testTitle);
         Assert.assertEquals(researchProject.projects.size(), 1);

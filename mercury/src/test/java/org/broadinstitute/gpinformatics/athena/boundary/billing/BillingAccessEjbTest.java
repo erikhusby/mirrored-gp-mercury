@@ -13,7 +13,7 @@ import javax.inject.Inject;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class BillingAccessEjbTest extends ContainerTest {
 
     @Inject

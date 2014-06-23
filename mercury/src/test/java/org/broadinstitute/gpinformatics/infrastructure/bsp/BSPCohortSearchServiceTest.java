@@ -8,10 +8,11 @@ import org.testng.annotations.Test;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 public class BSPCohortSearchServiceTest  extends ContainerTest {
 
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = STUBBY, enabled = false)
     public void testBasic() {
         Set<Cohort> rawCohorts = null;
         try {

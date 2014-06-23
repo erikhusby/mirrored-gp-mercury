@@ -45,7 +45,7 @@ import java.util.Set;
 
 import static org.testng.Assert.assertTrue;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class BucketEjbTest extends ContainerTest {
 
     @Inject

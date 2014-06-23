@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import java.util.Date;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class RegulatoryInfoDaoTest extends ContainerTest {
 
     @Inject

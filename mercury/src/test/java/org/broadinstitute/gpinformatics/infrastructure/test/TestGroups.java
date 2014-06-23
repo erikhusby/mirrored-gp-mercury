@@ -14,6 +14,8 @@ public class TestGroups {
      */
     public static final String EXTERNAL_INTEGRATION = "ExternalIntegration";
 
+    public static final String STUBBY = "Stubby";
+
     /**
      * This means ... ?
      */

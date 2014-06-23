@@ -3,13 +3,14 @@ package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@Test
+@Test(groups = {TestGroups.STUBBY})
 public class ProductFamilyDaoTest extends ContainerTest {
 
     @Inject

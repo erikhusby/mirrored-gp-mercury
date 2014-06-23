@@ -20,12 +20,12 @@ import java.util.Date;
 /**
  * Database test of receiving samples from BSP
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class SampleReceiptResourceDbTest extends ContainerTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled=true, groups=TestGroups.EXTERNAL_INTEGRATION, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled=true, groups=TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testReceiveTubes(@ArquillianResource URL baseUrl) {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));

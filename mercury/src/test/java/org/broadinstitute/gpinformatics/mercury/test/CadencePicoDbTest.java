@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Tests Cadence Pico messaging, including persistence
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class CadencePicoDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");

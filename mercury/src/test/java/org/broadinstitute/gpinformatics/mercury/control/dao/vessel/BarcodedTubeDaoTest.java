@@ -19,7 +19,7 @@ public class BarcodedTubeDaoTest extends ContainerTest {
     @Inject
     private BarcodedTubeDao barcodedTubeDao;
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testFindByBarcodes() {
         List<BarcodedTube> barcodedTubes = new ArrayList<>();
         List<String> barcodes = new ArrayList<>();

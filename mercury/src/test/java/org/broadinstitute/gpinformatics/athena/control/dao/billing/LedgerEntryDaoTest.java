@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LedgerEntryDaoTest extends ContainerTest {
 
     @Inject
@@ -56,7 +56,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
     private final ProductOrder[] dupeOrders = new ProductOrder[1];
 
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, it means we're not running in container.
         if (utx == null) {
@@ -107,7 +107,7 @@ public class LedgerEntryDaoTest extends ContainerTest {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, it means we're not running in container.
         if (utx == null) {

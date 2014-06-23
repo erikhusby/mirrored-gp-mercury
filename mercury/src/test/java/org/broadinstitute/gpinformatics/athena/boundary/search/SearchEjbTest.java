@@ -11,7 +11,7 @@ import javax.inject.Inject;
 /**
  * This class is for testing the {@link SearchEjb} class.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class SearchEjbTest extends ContainerTest {
     @Inject
     SearchEjb searchEjb;

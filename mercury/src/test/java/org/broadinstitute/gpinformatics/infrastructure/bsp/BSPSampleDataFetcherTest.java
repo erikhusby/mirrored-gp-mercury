@@ -8,11 +8,12 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = STUBBY)
 public class BSPSampleDataFetcherTest extends ContainerTest {
 
     BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
