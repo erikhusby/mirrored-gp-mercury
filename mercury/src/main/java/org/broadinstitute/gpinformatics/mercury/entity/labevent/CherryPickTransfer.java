@@ -83,6 +83,7 @@ public class CherryPickTransfer extends VesselTransfer {
         return sourcePosition;
     }
 
+    @Nullable
     public LabVessel getAncillarySourceVessel() {
         return ancillarySourceVessel;
     }
@@ -95,6 +96,7 @@ public class CherryPickTransfer extends VesselTransfer {
         return targetPosition;
     }
 
+    @Nullable
     public LabVessel getAncillaryTargetVessel() {
         return ancillaryTargetVessel;
     }

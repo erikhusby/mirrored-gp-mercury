@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -58,6 +59,7 @@ public class VesselToSectionTransfer extends VesselTransfer {
         return targetVessel.getContainerRole();
     }
 
+    @Nullable
     public LabVessel getAncillaryTargetVessel() {
         return ancillaryTargetVessel;
     }

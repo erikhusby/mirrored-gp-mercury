@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -72,6 +73,7 @@ public class SectionTransfer extends VesselTransfer {
         this.sourceSection = sourceSection;
     }
 
+    @Nullable
     public LabVessel getAncillarySourceVessel() {
         return ancillarySourceVessel;
     }
@@ -92,6 +94,7 @@ public class SectionTransfer extends VesselTransfer {
         this.targetSection = targetSection;
     }
 
+    @Nullable
     public LabVessel getAncillaryTargetVessel() {
         return ancillaryTargetVessel;
     }
