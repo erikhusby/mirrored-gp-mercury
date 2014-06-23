@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -506,7 +507,7 @@ public class ReworkEjb {
         private List<String> validationMessages = new ArrayList<>();
         private boolean reworkItem;
         private String lastEventStep;
-        private SampleInstance currentSampleKey;
+        private String currentSampleKey;
 
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
@@ -550,7 +551,7 @@ public class ReworkEjb {
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
-            this.currentSampleKey = this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null).iterator().next();
+            this.currentSampleKey = StringUtils.join(this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null), ", ");
         }
 
         public String getSampleKey() {
@@ -589,7 +590,7 @@ public class ReworkEjb {
             return lastEventStep;
         }
 
-        public SampleInstance getCurrentSampleKey() {
+        public String getCurrentSampleKey() {
             return currentSampleKey;
         }
 

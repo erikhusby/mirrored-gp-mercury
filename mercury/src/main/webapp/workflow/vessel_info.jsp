@@ -107,7 +107,7 @@
                                     <stripes:checkbox class="rework-checkbox" name="selectedReworkVessels"
                                                       value="${candidate}"/>
                                 </td>
-                                <td>${candidate.currentSampleKey.startingSample.sampleKey}</td>
+                                <td>${candidate.currentSampleKey}</td>
                                 <td>${candidate.productOrder.businessKey}</td>
                                 <td>${candidate.productOrder.product.productName}</td>
                                 <td>
