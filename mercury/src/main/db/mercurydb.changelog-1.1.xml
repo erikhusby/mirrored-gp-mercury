@@ -698,4 +698,30 @@
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2803-1">
+        <addColumn schemaName="mercury" tableName="vessel_transfer">
+            <column name="ancillary_source_vessel" type="number(19,0)"/>
+            <column name="ancillary_target_vessel" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-2">
+        <addColumn schemaName="mercury" tableName="vessel_transfer_aud">
+            <column name="ancillary_source_vessel" type="number(19,0)"/>
+            <column name="ancillary_target_vessel" type="number(19,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-3">
+        <addForeignKeyConstraint constraintName="FK_VT_ANCILLARY_SOURCE_VESSEL"
+                baseTableSchemaName="mercury" baseTableName="vessel_transfer" baseColumnNames="ancillary_source_vessel"
+                referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2803-4">
+        <addForeignKeyConstraint constraintName="FK_VT_ANCILLARY_TARGET_VESSEL"
+                baseTableSchemaName="mercury" baseTableName="vessel_transfer" baseColumnNames="ancillary_target_vessel"
+                referencedTableSchemaName="mercury" referencedTableName="lab_Vessel" referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+
 </databaseChangeLog>
