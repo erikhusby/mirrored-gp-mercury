@@ -19,7 +19,7 @@ public class TransferEntityGrapherTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STANDARD)
     public void testRun() {
         try {
             // Put the test to sleep, to keep the EJB deployed

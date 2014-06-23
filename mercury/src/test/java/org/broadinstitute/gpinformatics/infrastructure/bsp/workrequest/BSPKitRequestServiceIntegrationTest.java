@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Integration tests for {@link BSPKitRequestService}.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class BSPKitRequestServiceIntegrationTest extends Arquillian {
 
     private static final Log log = LogFactory.getLog(BSPKitRequestServiceIntegrationTest.class);

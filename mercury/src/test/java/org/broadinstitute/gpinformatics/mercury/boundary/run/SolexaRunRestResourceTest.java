@@ -52,12 +52,12 @@ import java.util.Date;
 import java.util.EnumMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 /**
  * Test run registration web service
  */
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = ALTERNATIVES)
 public class SolexaRunRestResourceTest extends Arquillian {
 
     @Inject
@@ -115,7 +115,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
                 .buildMercuryWarWithAlternatives(TEST, BSPSampleSearchServiceStub.class);
     }
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = ALTERNATIVES)
     public void setUp() throws Exception {
         runBarcode = "RunBarcode" + System.currentTimeMillis();
 
@@ -206,7 +206,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         result = runFile.mkdirs();
     }
 
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = ALTERNATIVES)
     public void tearDown() throws Exception {
         if (flowcellDao == null) {
             return;
@@ -216,7 +216,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
         productOrderDao.persist(exexOrder);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void testCreateRun() {
 
         Assert.assertTrue(result);
@@ -244,7 +244,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void testCreate2500Run() {
 
         Assert.assertTrue(result);
@@ -272,7 +272,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION,
+    @Test(groups = ALTERNATIVES,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = false)
     @RunAsClient
     public void testReadStructureOverHttp(@ArquillianResource URL baseUrl) {
@@ -306,7 +306,7 @@ public class SolexaRunRestResourceTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testMercuryLanes(@ArquillianResource URL baseUrl) {
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";

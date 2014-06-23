@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 /**
  * Test against a full deployment of the pipeline API (no mocks).
@@ -31,7 +31,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
     public void testMercury(@ArquillianResource URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "130903_SL-HDG_0177_BFCH16FBADXX");
@@ -46,7 +46,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/29/2013 11:51");
     }
 
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
     public void testThrift(@ArquillianResource URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120910_SL-HBL_0218_BFCD15B6ACXX");
@@ -61,7 +61,7 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
         Assert.assertEquals(libraryBean.getLibraryCreationDate(), "08/22/2012 12:40");
     }
 
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = EXTERNAL_INTEGRATION)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, groups = STANDARD)
     @RunAsClient
     public void testThriftNullConc(@ArquillianResource URL baseUrl) {
         ZimsIlluminaRun run = getZimsIlluminaRun(baseUrl, "120830_SL-MAK_0035_AFC000000000-A1ETN");

@@ -26,7 +26,7 @@ public class PriceListCacheContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testSanity() {
 
         Assert.assertNotNull(priceListCache);

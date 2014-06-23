@@ -538,7 +538,43 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
                         <configuration>
+                            <systemProperties>
+                                <property>
+                                    <name>ArqSuiteGroup</name>
+                                    <value>Stubby</value>
+                                </property>
+                            </systemProperties>
                             <groups>arquillian, Stubby</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Tests.ArqSuite.Standard</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.eu.ingwar.tools</groupId>
+                    <artifactId>arquillian-suite-extension</artifactId>
+                    <version>1.1.1</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
+                        <configuration>
+                            <systemProperties>
+                                <property>
+                                    <name>ArqSuiteGroup</name>
+                                    <value>Standard</value>
+                                </property>
+                            </systemProperties>
+                            <groups>arquillian, Standard</groups>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1330,6 +1366,16 @@
             <artifactId>arquillian-drone-selenium-server</artifactId>
             <scope>test</scope>
         </dependency>
+
+<!--
+        <dependency>
+            <groupId>org.eu.ingwar.tools</groupId>
+            <artifactId>arquillian-suite-extension</artifactId>
+            <version>1.1.1</version>
+            &lt;!&ndash; Using provided scope, because only the ArqSuite profiles include this at runtime. &ndash;&gt;
+            <scope>provided</scope>
+        </dependency>
+-->
 
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>

@@ -12,10 +12,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 
-@Test(groups = EXTERNAL_INTEGRATION)
+@Test(groups = STANDARD)
 public class BSPSetVolumeConcentrationTest extends Arquillian {
     private static final double ERROR_BAND = 0.00001;
 

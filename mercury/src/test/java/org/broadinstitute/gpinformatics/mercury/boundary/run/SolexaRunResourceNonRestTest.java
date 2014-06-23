@@ -80,7 +80,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 /**
  * Tests the methods in the SolexaRunResource without any rest calls
@@ -180,7 +180,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
                 .buildMercuryWarWithAlternatives(DEV, EverythingYouAskForYouGetAndItsHuman.class);
     }
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = ALTERNATIVES)
     public void setUp() throws Exception {
 //        Controller.startCPURecording(true);
 //        Controller.startProbeRecording(Controller.PROBE_NAME_JDBC, true);
@@ -295,7 +295,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
 //        Controller.stopCPURecording();
     }
 
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = ALTERNATIVES)
     public void tearDown() throws Exception {
         if (flowcellDao == null) {
             return;
@@ -307,7 +307,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
         productOrderDao.persist(exexOrder);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION,
+    @Test(groups = ALTERNATIVES,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testRunResource() {
 
@@ -356,7 +356,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = ALTERNATIVES)
     public void testGetReadStructureByName() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -384,7 +384,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls storeRunReadStructure with a ReadStructureRequest that has a runName but no runBarcode. This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = ALTERNATIVES)
     public void testLaneReadStructure() {
         SolexaRunResource runResource =
                 new SolexaRunResource(runDao, illuminaSequencingRunFactory, flowcellDao, vesselTransferEjb, router,
@@ -418,7 +418,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = ALTERNATIVES)
     public void testGetReadStructureByBarcode() {
         ReadStructureRequest readStructure = new ReadStructureRequest();
         readStructure.setRunBarcode(runBarcode);
@@ -485,7 +485,7 @@ public class SolexaRunResourceNonRestTest extends Arquillian {
      * Calls the run resource methods that will apply the setup and actual read structures to a sequencing run.  This
      * method will also create a run to associate the read structures.
      */
-    @Test(groups = EXTERNAL_INTEGRATION,
+    @Test(groups = ALTERNATIVES,
           dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testFailSetReadStructureInSquid() {
         ReadStructureRequest readStructure = new ReadStructureRequest();

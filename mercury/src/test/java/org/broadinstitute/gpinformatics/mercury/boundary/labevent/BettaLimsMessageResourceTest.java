@@ -91,7 +91,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 /**
  * Test the web service
@@ -167,7 +167,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Sends messages for one PDO, then reworks two of those samples along with a second PDO.
      */
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = ALTERNATIVES)
     public void testRework() throws ValidationException {
         // Set up one PDO / bucket / batch
         String testPrefix = testPrefixDateFormat.format(new Date());
@@ -262,7 +262,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
     /**
      * Message one LCSET, and register run.
      */
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = true, groups = ALTERNATIVES)
     public void testProcessMessage() {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
@@ -611,7 +611,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @param baseUrl URL of arquillian server
      */
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testHttp(@ArquillianResource URL baseUrl) {
         File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
@@ -639,7 +639,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
      *
      * @param baseUrl URL of deployed server
      */
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testSingleFile(@ArquillianResource URL baseUrl) {
         File file = new File(
@@ -647,7 +647,7 @@ public class BettaLimsMessageResourceTest extends Arquillian {
         sendFile(baseUrl, file);
     }
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = ALTERNATIVES, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFileList(@ArquillianResource URL baseUrl) {
         try {

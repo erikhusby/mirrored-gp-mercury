@@ -64,7 +64,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
     /**
      * Take the hardcoded billing session and make it look like it's ready for billing
      */
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
@@ -88,7 +88,7 @@ public class ConcurrentBillingSessionDoubleBillingTest extends ConcurrentBaseTes
      * using two threads.  One thread should succeed, the other should
      * fail.
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testMultithreaded() throws Exception {
         Throwable billingError = null;
         PDOLookupThread pdoLookupThread = new PDOLookupThread();

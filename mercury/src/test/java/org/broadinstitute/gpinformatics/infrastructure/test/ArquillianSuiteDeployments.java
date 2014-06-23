@@ -4,14 +4,30 @@ import org.eu.ingwar.tools.arquillian.extension.suite.annotations.ArquillianSuit
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+
 /**
  * Allows many tests to be run in a single deployment, reducing test time.
  */
 @ArquillianSuiteDeployment
 public class ArquillianSuiteDeployments {
 
+    public static final String ARQ_SUITE_GROUP = "ArqSuiteGroup";
+
     @Deployment
     public static WebArchive deploy() {
-        return DeploymentBuilder.buildMercuryWar();
+        String property = System.getProperty(ARQ_SUITE_GROUP);
+        if (property == null) {
+            throw new RuntimeException("No ArqSuiteGroup system property.");
+        }
+        switch (property) {
+        case TestGroups.STUBBY:
+            return DeploymentBuilder.buildMercuryWar();
+        case TestGroups.STANDARD:
+            return DeploymentBuilder.buildMercuryWar(DEV);
+        default:
+            throw new RuntimeException("Unexpected test group " + ARQ_SUITE_GROUP);
+        }
     }
+
 }

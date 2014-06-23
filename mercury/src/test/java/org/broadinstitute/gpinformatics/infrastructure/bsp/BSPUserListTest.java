@@ -14,7 +14,7 @@ import java.util.Collection;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class BSPUserListTest extends Arquillian {
     private static final String TEST_BADGE_ID = "bsptestuser_badge_id_1234";
     private static final String BSP_TEST_USER = "tester";

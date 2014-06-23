@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 public class HipChatMessageSenderTest extends Arquillian {
 
@@ -22,7 +22,7 @@ public class HipChatMessageSenderTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(Deployment.DEV);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = STANDARD)
     public void test_send_message() {
         messageSender.postMessageToGpLims("test message from " + getClass().getCanonicalName());
     }

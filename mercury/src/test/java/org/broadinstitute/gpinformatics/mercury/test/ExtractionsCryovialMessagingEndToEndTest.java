@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettaLimsMessageResource;
@@ -23,6 +24,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Tests ExtractionsCryovial Workflow.
  * HamiltonSampleCarrier32 to deepwell to deepwell to rack
  */
+@Test(groups = TestGroups.STANDARD)
 public class ExtractionsCryovialMessagingEndToEndTest  extends Arquillian {
 
 

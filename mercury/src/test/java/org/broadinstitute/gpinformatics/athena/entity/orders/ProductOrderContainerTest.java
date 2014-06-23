@@ -28,7 +28,7 @@ import java.util.Collection;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class ProductOrderContainerTest extends Arquillian {
     @Inject
     private BSPUserList userList;

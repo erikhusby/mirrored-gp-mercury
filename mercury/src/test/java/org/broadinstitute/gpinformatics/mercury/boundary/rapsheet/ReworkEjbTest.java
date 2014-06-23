@@ -70,7 +70,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  *
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.ALTERNATIVES)
 public class ReworkEjbTest extends Arquillian {
 
     public static final String SM_SGM_Test_Somatic_1_PATIENT_ID = "PT-1TS1";
@@ -197,7 +197,7 @@ public class ReworkEjbTest extends Arquillian {
                 .buildMercuryWarWithAlternatives(DEV, BSPSampleSearchServiceStub.class, JiraServiceStub.class);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
         if (reworkEjb == null) {
             return;
@@ -472,7 +472,7 @@ public class ReworkEjbTest extends Arquillian {
         resetExExProductWorkflow();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.ALTERNATIVES)
     public void tearDown() throws Exception {
         if (reworkEjb == null) {
             return;
@@ -565,7 +565,7 @@ public class ReworkEjbTest extends Arquillian {
         return product;
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testHappyPath() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst1");
@@ -591,7 +591,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathFindCandidatesByBarcode() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
@@ -617,7 +617,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testCannotReworkDraftPdoSamples() throws Exception {
         createInitialTubes(bucketSamplesDraft, String.valueOf((new Date()).getTime()) + "tst2draft");
         for (String barcode : mapBarcodeToTube.keySet()) {
@@ -630,7 +630,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathFindCandidatesByBarcodes() throws Exception {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
@@ -651,7 +651,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testWorkflowSensitivityOfBucketCandidates() throws Exception {
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
 
@@ -666,7 +666,7 @@ public class ReworkEjbTest extends Arquillian {
                             "Unsupported workflows may be added incorrectly to the bucket, resulting in general ExEx panic and support burden.");
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathFindCandidatesBySampleId() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
@@ -693,7 +693,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathFindCandidatesBySampleIds() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf(new Date().getTime()) + "tst2");
@@ -720,7 +720,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testSingleSampleTwoPDOs() throws Exception {
 
         Collection<ReworkEjb.BucketCandidate> candidates = reworkEjb.findBucketCandidates(genomicSample3);
@@ -745,7 +745,7 @@ public class ReworkEjbTest extends Arquillian {
         Assert.assertTrue(expectedPDOs.isEmpty());
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathFindCandidatesWithAncestors() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst3");
@@ -795,7 +795,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testNonExomePathFindCandidates() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime()) + "tst4");
@@ -817,7 +817,7 @@ public class ReworkEjbTest extends Arquillian {
                                     .getProduct().getName() + " now?");
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testNonExomePathFindCandidatesWithAncestors() throws Exception {
 
         createInitialTubes(bucketSamples1, String.valueOf((new Date()).getTime()) + "tst5");
@@ -862,7 +862,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -893,7 +893,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testAddAndValidateReworksHappyPathWithValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst6");
@@ -918,7 +918,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testHappyPathWithValidationPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -955,7 +955,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testHappyPathWithValidationCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -993,7 +993,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testHappyPathWithAncestorValidation() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst9");
@@ -1042,7 +1042,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMixedDNAWithValidation() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1072,7 +1072,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMixedDNAWithValidationAndAncestors() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1120,7 +1120,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsPreviouslyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1178,7 +1178,7 @@ public class ReworkEjbTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.ALTERNATIVES, enabled = true)
     public void testMixedDNAWithValidationAndAncestorsCurrentlyInBucket() throws Exception {
 
         List<String> validationMessages = new ArrayList<>();
@@ -1240,7 +1240,7 @@ public class ReworkEjbTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testFindCandidatesMultiplePdosNoBuckets() throws Exception {
 
         createInitialTubes(bucketReadySamples1, String.valueOf((new Date()).getTime()) + "tst2");
@@ -1277,7 +1277,7 @@ public class ReworkEjbTest extends Arquillian {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testFindCandidatesMultiplePdosWithBuckets() throws Exception {
 
         createInitialTubes(bucketReadySamples2, String.valueOf((new Date()).getTime()) + "tst2");

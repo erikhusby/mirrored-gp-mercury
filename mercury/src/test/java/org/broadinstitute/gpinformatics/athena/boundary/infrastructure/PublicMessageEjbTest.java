@@ -26,7 +26,7 @@ import javax.inject.Inject;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class PublicMessageEjbTest extends AbstractContainerTest {
     private static final String TEST_MESSAGE = "this is my message";
     @Inject

@@ -32,7 +32,7 @@ import java.util.Set;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
+@Test(groups = TestGroups.STANDARD, enabled=true)
 public class BillingTrackerImporterContainerTest extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";

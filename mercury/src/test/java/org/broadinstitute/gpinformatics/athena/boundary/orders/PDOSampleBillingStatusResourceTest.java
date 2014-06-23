@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest {
 
@@ -33,7 +33,7 @@ public class PDOSampleBillingStatusResourceTest extends RestServiceContainerTest
     }
 
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testPDOSampleBilling(@ArquillianResource URL baseUrl) throws Exception {
         List<PDOSample> pdoSamplesList = new ArrayList<>();

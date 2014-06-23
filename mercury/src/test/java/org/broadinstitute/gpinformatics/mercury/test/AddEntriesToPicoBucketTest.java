@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -31,6 +32,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * This test fakes adding tubes to a pico bucket
  */
+@Test(groups = TestGroups.STANDARD)
 public class AddEntriesToPicoBucketTest extends Arquillian {
 
     @Inject
