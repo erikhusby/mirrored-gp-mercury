@@ -278,6 +278,13 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupFct18386() {
+        // Delete BSP UI daughter plate transfer, which duplicates earlier deck automation transfer.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 524316L);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
     public void fixupFct18237() {
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 516658L);
         labEvent.getReagents().clear();
