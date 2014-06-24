@@ -417,15 +417,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.EventHandling, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
 
-        String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
-        List<Long> selectedIds = new ArrayList<>();
         if (editOrder.isDraft()) {
-            if (regulatoryIds != null) {
-                for (String regulatoryId : regulatoryIds) {
-                    selectedIds.add(Long.parseLong(regulatoryId));
-                }
+            if (selectedRegulatoryIds != null) {
                 List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
-                        .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+                        .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedRegulatoryIds);
 
                 editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
             } else {

@@ -586,7 +586,7 @@ public class ProductOrderActionBeanTest {
         if (regulatoryInfo != null) {
             regulatoryInfo.getResearchProjects().add(actionBean.getEditOrder().getResearchProject());
             actionBean.getEditOrder().getResearchProject().getRegulatoryInfos().add(regulatoryInfo);
-            actionBean.getEditOrder().getRegulatoryInfos().add(regulatoryInfo);
+//            actionBean.getEditOrder().getRegulatoryInfos().add(regulatoryInfo);
         }
 
         List<Long> regInfoIds = new ArrayList<>();
@@ -599,9 +599,11 @@ public class ProductOrderActionBeanTest {
 
         Mockito.when(regulatoryInfoDao.findListByList(Mockito.eq(RegulatoryInfo.class),
                 Mockito.eq(RegulatoryInfo_.regulatoryInfoId), Mockito.anyCollection())).thenReturn(
-                regulatoryInfo != null ? Collections.singletonList(regulatoryInfo) : null);
+                (regulatoryInfo != null) ? Collections.singletonList(regulatoryInfo) : Collections.<RegulatoryInfo>emptyList());
         actionBean.setRegulatoryInfoDao(regulatoryInfoDao);
         actionBean.setSelectedRegulatoryIds(regInfoIds);
+
+        actionBean.initRegulatoryParameter();
 
         actionBean.validateRegulatoryInformation(action);
         Assert.assertEquals(actionBean.getValidationErrors().isEmpty(), expectedToPass);
