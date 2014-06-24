@@ -335,7 +335,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
 
-    @Inject
     private RegulatoryInfoDao regulatoryInfoDao;
 
     private Map<String, Date> productOrderSampleReceiptDates;
@@ -2234,5 +2233,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSkipRegulatoryInfo(boolean skipRegulatoryInfo) {
         this.skipRegulatoryInfo = skipRegulatoryInfo;
+    }
+
+    @Inject
+    public void setRegulatoryInfoDao(RegulatoryInfoDao regulatoryInfoDao) {
+        this.regulatoryInfoDao = regulatoryInfoDao;
     }
 }
