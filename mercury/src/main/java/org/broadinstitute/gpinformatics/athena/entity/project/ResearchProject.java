@@ -369,6 +369,19 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
         return cohorts;
     }
 
+    /**
+     * @return a full list of cohorts in the same way cohort Ids are retrieved.
+     */
+
+    public ResearchProjectCohort[] getCohorts() {
+        int i = 0;
+        ResearchProjectCohort[] cohorts = new ResearchProjectCohort[sampleCohorts.size()];
+        for (ResearchProjectCohort cohort : sampleCohorts) {
+            cohorts[i++] = cohort;
+        }
+        return cohorts;
+    }
+
     public void addCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.add(sampleCohort);
     }
