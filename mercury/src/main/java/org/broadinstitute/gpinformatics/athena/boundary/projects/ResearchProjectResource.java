@@ -48,6 +48,7 @@ public class ResearchProjectResource {
 
     @XmlRootElement
     public static class ResearchProjectData {
+        public static final int COHORT_PREFIX_LENGTH = 3;
         public final String title;
 
         public final String id;
@@ -109,7 +110,7 @@ public class ResearchProjectResource {
         private List<Long> createCollections(ResearchProject researchProject) {
             List<Long> collectionIds = new ArrayList<> (researchProject.getCohortIds().length);
             for (String cohortId : researchProject.getCohortIds()) {
-                collectionIds.add(Long.parseLong(cohortId.substring(3)));
+                collectionIds.add(Long.parseLong(cohortId.substring(COHORT_PREFIX_LENGTH)));
             }
 
             return collectionIds;
