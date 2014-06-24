@@ -551,7 +551,11 @@ public class ReworkEjb {
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
-            this.currentSampleKey = StringUtils.join(this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null), ", ");
+            Set<String> sampleNames = new HashSet<>();
+            for(SampleInstance instance:this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
+                sampleNames.add(instance.getStartingSample().getSampleKey());
+            };
+            this.currentSampleKey = StringUtils.join(sampleNames, ", ");
         }
 
         public String getSampleKey() {
