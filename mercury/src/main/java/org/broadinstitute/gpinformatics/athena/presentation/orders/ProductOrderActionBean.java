@@ -267,7 +267,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET,UNABANDON_SAMPLES_ACTION})
+    @Validate(required = true,
+            on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION, ADD_SAMPLES_TO_BUCKET, UNABANDON_SAMPLES_ACTION})
     private List<Long> selectedProductOrderSampleIds;
     private List<ProductOrderSample> selectedProductOrderSamples;
 
@@ -387,7 +388,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
+    protected Map<String, Collection<RegulatoryInfo>> setupRegulatoryInformation(ResearchProject researchProject) {
         Map<String, Collection<RegulatoryInfo>> projectRegulatoryMap = new HashMap<>();
         projectRegulatoryMap.put(researchProject.getTitle(), researchProject.getRegulatoryInfos());
         for (ResearchProject project : researchProject.getAllParents()) {
@@ -414,7 +415,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = SAVE_ACTION)
+    @Before(stages = LifecycleStage.EventHandling, on = SAVE_ACTION)
     public void initRegulatoryParameter() {
 
         String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
@@ -426,6 +427,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
                 List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
                         .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+
                 editOrder.setRegulatoryInfos(selectedRegulatoryInfos);
             } else {
                 editOrder.getRegulatoryInfos().clear();
@@ -585,7 +587,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 for (ProductOrderKitDetail kitDetail : kitDetails) {
                     Long numberOfSamples = kitDetail.getNumberOfSamples();
                     requireField(numberOfSamples != null && numberOfSamples > 0, "a specified number of samples",
-                                 action);
+                            action);
                     requireField(kitDetail.getKitType().getKitName(), "a kit type", action);
                     requireField(kitDetail.getBspMaterialName(), "a material information", action);
                     requireField(kitDetail.getOrganismId(), "an organism", action);
@@ -596,9 +598,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 // Avoid NPE if Research Project isn't set yet.
                 if (researchProject != null) {
                     requireField(researchProject.getBroadPIs().length > 0,
-                                 "a Research Project with a primary investigator", action);
+                            "a Research Project with a primary investigator", action);
                     requireField(researchProject.getExternalCollaborators().length > 0,
-                                 "a Research Project with an external collaborator", action);
+                            "a Research Project with an external collaborator", action);
                 }
                 validateTransferMethod(editOrder);
             }
@@ -628,7 +630,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validateTransferMethod(@Nonnull ProductOrder pdo) {
         if (pdo.getProductOrderKit().getTransferMethod() == SampleKitWorkRequest.TransferMethod.PICK_UP) {
             String validationMessage = String.format("a notification list, which required when \"%s\" is selected.",
-                                                     SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
+                    SampleKitWorkRequest.TransferMethod.PICK_UP.getValue());
             requireField(pdo.getProductOrderKit().getNotificationIds().length > 0, validationMessage, SAVE_ACTION);
         }
 
@@ -647,8 +649,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addMessage("None of the samples for this order are on risk");
             } else {
                 addMessage("{0} {1} for this order {2} on risk",
-                           numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                           numSamplesOnRisk == 1 ? "is" : "are");
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                        numSamplesOnRisk == 1 ? "is" : "are");
             }
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
@@ -798,7 +800,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
 
         progressFetcher.loadProgress(productOrderDao,
-                                     ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
+                ProductOrderListEntry.getProductOrderIDs(displayedProductOrderListEntries));
 
         // Get the sorted family list.
         productFamilies = productFamilyDao.findAll();
@@ -859,8 +861,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // All actions that can result in the view page loading (either by a validation error or view itself)
     @After(stages = LifecycleStage.BindingAndValidation,
-           on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
-                   DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
+            on = {EDIT_ACTION, VIEW_ACTION, ADD_SAMPLES_ACTION, SET_RISK, RECALCULATE_RISK, ABANDON_SAMPLES_ACTION,
+                    DELETE_SAMPLES_ACTION, PLACE_ORDER, VALIDATE_ORDER, UNABANDON_SAMPLES_ACTION})
     public void entryInit() {
         if (editOrder != null) {
             productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
@@ -1032,7 +1034,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
 
             productOrderEjb.placeProductOrder(editOrder.getProductOrderId(), originalBusinessKey,
-                                              placeOrderMessageCollection);
+                    placeOrderMessageCollection);
 
             addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
             originalBusinessKey = null;
@@ -1407,7 +1409,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample sample : selectedProductOrderSamples) {
             if (!sample.getLedgerItems().isEmpty()) {
                 addGlobalValidationError("Cannot delete sample {2} because billing has started.",
-                                         sample.getName());
+                        sample.getName());
             }
         }
     }
@@ -1415,7 +1417,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
-                                      selectedProductOrderSamples, this);
+                selectedProductOrderSamples, this);
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1505,7 +1507,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!selectedProductOrderSamples.isEmpty()) {
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples, abandonComment);
             addMessage("Abandoned samples: {0}.",
-                       StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
+                    StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ", "));
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1535,7 +1537,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
         } catch (BucketException e) {
-            logger.error("Problem adding samples to bucket",e);
+            logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
         }
         return createViewResolution(editOrder.getBusinessKey());
@@ -1654,8 +1656,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             } else if (CollectionUtils.isNotEmpty(kitDetails) && kitDetails.size() > Integer
                     .valueOf(kitDefinitionQueryIndex)) {
                 collectionAndOrganismsList.put(chosenOrganism,
-                                               kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex))
-                                                         .getOrganismId());
+                        kitDetails.get(Integer.valueOf(kitDefinitionQueryIndex))
+                                  .getOrganismId());
             }
 
             collectionAndOrganismsList.put("collectionName", sampleCollection.getCollectionName());
@@ -2122,20 +2124,46 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         if (action.equals(PLACE_ORDER) || action.equals(VALIDATE_ORDER)) {
             requireField(editOrder.regulatoryRequirementsMet(),
-                         "its regulatory requirements met or a reason for bypassing the regulatory requirements",
-                         action);
+                    "its regulatory requirements met or a reason for bypassing the regulatory requirements",
+                    action);
             if (!editOrder.orderPredatesRegulatoryRequirement()) {
                 requireField(editOrder.getAttestationConfirmed().booleanValue(),
-                             "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
-                             action);
+                        "the checkbox checked which attests that you are aware of the regulatory requirements for this project",
+                        action);
             }
         }
 
         if (action.equals(SAVE_ACTION)) {
             if (skipRegulatoryInfo) {
                 requireField(editOrder.canSkipRegulatoryRequirements(),
-                             "a reason for bypassing the regulatory requirements", action);
+                        "a reason for bypassing the regulatory requirements", action);
             }
+            String[] regulatoryIds = getContext().getRequest().getParameterValues(REGULATORY_ID_PARAMETER);
+            List<Long> selectedIds = new ArrayList<>();
+            if (editOrder.isDraft()) {
+                if (regulatoryIds != null) {
+                    for (String regulatoryId : regulatoryIds) {
+                        selectedIds.add(Long.parseLong(regulatoryId));
+                    }
+                    List<RegulatoryInfo> selectedRegulatoryInfos = regulatoryInfoDao
+                            .findListByList(RegulatoryInfo.class, RegulatoryInfo_.regulatoryInfoId, selectedIds);
+
+                    Set<String> missingRegulatoryRequirements = new HashSet<>();
+
+                    for (RegulatoryInfo chosenInfo : selectedRegulatoryInfos) {
+                        if (!chosenInfo.getResearchProjects().contains(editOrder.getResearchProject())) {
+                            missingRegulatoryRequirements.add(chosenInfo.getName());
+
+                        }
+                    }
+
+                    addGlobalValidationError("Regulatory info d{2} is not associated with research project {3}",
+                            StringUtils.join(missingRegulatoryRequirements, ", "),
+                            editOrder.getResearchProject().getName());
+
+                }
+            }
+
         }
     }
 

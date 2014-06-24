@@ -181,6 +181,7 @@ public class LabVesselFactory implements Serializable {
                 String vesselType = parentVesselBean.getVesselType().toLowerCase();
                 if (vesselType.contains("plate")) {
                     // todo jmt map other geometries
+                    // todo jmt what if the plate already exists?
                     StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(),
                                                               StaticPlate.PlateType.Eppendorf96);
                     labVessels.add(staticPlate);
@@ -225,6 +226,11 @@ public class LabVesselFactory implements Serializable {
                     }
                     TubeFormation tubeFormation = new TubeFormation(mapPositionToTube,
                                                                     RackOfTubes.RackType.Matrix96);
+                    TubeFormation existingTubeFormation =
+                            (TubeFormation) mapBarcodeToVessel.get(tubeFormation.getLabel());
+                    if (existingTubeFormation != null) {
+                        tubeFormation = existingTubeFormation;
+                    }
                     tubeFormation.addRackOfTubes(rackOfTubes);
                     tubeFormation.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
                             "BSP"));

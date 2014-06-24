@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.mercury.control.dao.rapsheet;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -506,10 +507,13 @@ public class ReworkEjb {
         private List<String> validationMessages = new ArrayList<>();
         private boolean reworkItem;
         private String lastEventStep;
+        private String currentSampleKey;
 
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
          * specified, the tube's sample had better be in only one PDO.
+         *
+         * Only called from tests classes
          *
          * @param tubeBarcode
          */
@@ -518,11 +522,23 @@ public class ReworkEjb {
             this.tubeBarcode = tubeBarcode;
         }
 
+        /**
+         *
+         * Only called from test classes
+         *
+         */
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull ProductOrder productOrder) {
             this.tubeBarcode = tubeBarcode;
             this.productOrder = productOrder;
         }
 
+        /**
+         * Used with Main constructor and toString only
+         *
+         * @param tubeBarcode
+         * @param sampleKey
+         * @param productOrder
+         */
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull String sampleKey,
                                @Nonnull ProductOrder productOrder) {
             this(tubeBarcode, productOrder);
@@ -535,6 +551,11 @@ public class ReworkEjb {
             this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
+            Set<String> sampleNames = new HashSet<>();
+            for(SampleInstance instance:this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
+                sampleNames.add(instance.getStartingSample().getSampleKey());
+            };
+            this.currentSampleKey = StringUtils.join(sampleNames, ", ");
         }
 
         public String getSampleKey() {
@@ -571,6 +592,10 @@ public class ReworkEjb {
 
         public String getLastEventStep() {
             return lastEventStep;
+        }
+
+        public String getCurrentSampleKey() {
+            return currentSampleKey;
         }
 
         @Override

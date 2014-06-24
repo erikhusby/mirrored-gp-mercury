@@ -28,7 +28,7 @@ public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 
-    @PersistenceContext(unitName = "metrics_pu")
+//    @PersistenceContext(unitName = "metrics_pu")
     private EntityManager metricsEntityManager;
 
     /** Add exceptions to this list; the goal is to keep this list empty. */
@@ -69,7 +69,7 @@ public class HibernateMetadataTest extends ContainerTest {
         testPersistenceUnit(session, metricsEntities, null);
     }
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);
