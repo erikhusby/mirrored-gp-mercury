@@ -198,7 +198,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private boolean validCollaborationPortal;
 
-
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
     }
@@ -971,9 +970,5 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public boolean isValidCollaborationPortal() {
         return validCollaborationPortal;
-    }
-
-    public void setValidCollaborationPortal(boolean validCollaborationPortal) {
-        this.validCollaborationPortal = validCollaborationPortal;
     }
 }
