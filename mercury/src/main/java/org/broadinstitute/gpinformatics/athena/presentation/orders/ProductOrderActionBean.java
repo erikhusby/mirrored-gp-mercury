@@ -1508,15 +1508,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent(UNABANDON_SAMPLES_ACTION)
-    public Resolution unabandonSamples() throws Exception {
+    public Resolution unAbandonSamples() throws Exception {
 
         if (CollectionUtils.isNotEmpty(selectedProductOrderSampleIds)) {
             try {
                 productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
-                        abandonComment, this);
+                        unAbandonComment, this);
             } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
                 addGlobalValidationError(e.getMessage());
-                return createViewResolution(editOrder.getBusinessKey());
+                return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
+                        PRODUCT_ORDER_PARAMETER,
+                        editOrder.getBusinessKey());
             }
             productOrderEjb.updateOrderStatus(editOrder.getJiraTicketKey(), this);
         }
