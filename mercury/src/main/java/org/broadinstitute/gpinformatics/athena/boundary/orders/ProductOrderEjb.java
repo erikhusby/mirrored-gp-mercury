@@ -514,11 +514,13 @@ public class ProductOrderEjb {
 
             for (ProductOrderSample sample : samples) {
                 messages.add(sample.getName() + " @ " + sample.getSamplePosition()
-                             + " : current status " + sample.getDeliveryStatus().getDisplayName());
+                             + " : current status " + (StringUtils.isNotBlank(
+                        sample.getDeliveryStatus().getDisplayName()) ? sample.getDeliveryStatus().getDisplayName() :
+                        "Not Started"));
             }
 
-            return "Cannot transition samples to status " + status.getDisplayName()
-                   + ": " + StringUtils.join(messages, ", ");
+            return "Cannot transition samples to status " + (StringUtils.isNotBlank(status.getDisplayName()) ?
+                    status.getDisplayName() : "Not Started") + ": " + StringUtils.join(messages, ", ");
         }
     }
 
@@ -862,10 +864,8 @@ public class ProductOrderEjb {
         Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
         while (samplesIter.hasNext()) {
             ProductOrderSample sample = samplesIter.next();
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
-                samplesIter.remove();
-            }
-            if (!StringUtils.isBlank(comment)) {
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED &&
+                !StringUtils.isBlank(comment)) {
                 sample.setSampleComment(comment);
             }
         }
