@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -50,7 +49,6 @@ public class ResearchProjectResource {
 
     @XmlRootElement
     public static class ResearchProjectData {
-        public static final int COHORT_PREFIX_LENGTH = 3;
         public final String title;
 
         public final String id;
@@ -111,12 +109,12 @@ public class ResearchProjectResource {
 
         /**
          *
-         * @param researchProject
+         * @param researchProject the research project and its associated data
          * @return a list of cohort Ids
          */
 
         private List<Long> createCollections(ResearchProject researchProject) {
-            List<Long> collectionIds = new ArrayList<Long>(researchProject.getCohorts().length);
+            List<Long> collectionIds = new ArrayList<>(researchProject.getCohorts().length);
             for (ResearchProjectCohort researchProjectCohort : researchProject.getCohorts()) {
                 collectionIds.add(researchProjectCohort.getDatabaseId());
             }
