@@ -658,10 +658,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validatePlacedOrder(String action) {
         doValidation(action);
+        validateRegulatoryInformation(action);
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
-        validateRegulatoryInformation(action);
 
         updateFromInitiationTokenInputs();
     }
