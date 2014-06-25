@@ -477,7 +477,7 @@ public class ProductOrderActionBeanTest {
         Assert.assertTrue(actionBean.getValidationErrors().isEmpty());
 
         Product dummyProduct =
-                ProductTestFactory.createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false);
+                ProductTestFactory.createDummyProduct(Workflow.NONE, Product.EXOME_EXPRESS_V2_PART_NUMBER, false, false);
         actionBean.getEditOrder().setProduct(dummyProduct);
         actionBean.getEditOrder().setQuoteId("");
         actionBean.validateQuoteOptions(ProductOrderActionBean.VALIDATE_ORDER);
