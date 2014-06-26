@@ -50,7 +50,7 @@ public class ProductOrderKit implements Serializable {
 
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
+    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet<> ();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -72,6 +72,19 @@ public class ProductOrderKit implements Serializable {
 
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
+    }
+
+    /**
+     * This is used by the web service call that sets up work requests (in ProductOrderResource).
+     *
+     * @param sampleCollectionId The collection.
+     * @param siteId The site.
+     * @param kitDetail The kit detail.
+     */
+    public ProductOrderKit(Long sampleCollectionId, Long siteId, ProductOrderKitDetail kitDetail) {
+        this.sampleCollectionId = sampleCollectionId;
+        this.siteId = siteId;
+        kitOrderDetails.add(kitDetail);
     }
 
     // Only used by tests.

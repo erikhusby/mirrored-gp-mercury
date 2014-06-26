@@ -1,9 +1,20 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -20,6 +31,8 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class ProductOrderData {
+    public static final boolean INCLUDE_SAMPLES = true;
+
     private String title;
     private String id;
     private String comments;
@@ -34,6 +47,10 @@ public class ProductOrderData {
     private String username;
     private String requisitionName;
     private String productOrderKey;
+    private int numberOfSamples;
+    private SampleKitWorkRequest.MoleculeType moleculeType;
+    private String researchProjectKey;
+    private MaterialInfo materialInfo;
 
     /**
      * This is really a list of sample IDs.
@@ -43,6 +60,16 @@ public class ProductOrderData {
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
     ProductOrderData() {
+    }
+
+    /**
+     * Constructor with the {@link ProductOrder} passed in for initialization. This constructor defaults the include
+     * flag to true because if we don't have samples, including will just include nothing.
+     *
+     * @param productOrder the {@link ProductOrder}
+     */
+    public ProductOrderData(@Nonnull ProductOrder productOrder) {
+        this(productOrder, INCLUDE_SAMPLES);
     }
 
     /**
@@ -277,5 +304,100 @@ public class ProductOrderData {
 
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
+    }
+
+    /**
+     * Try to convert the JAXB XML data into a {@link ProductOrder} and do some validation while converting.
+     *
+     * @return the populated {@link ProductOrder}
+     */
+    public ProductOrder convert(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
+                                 ProductDao productDao)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+
+        ProductOrder productOrder = new ProductOrder();
+
+        // Make sure the title/name is supplied and unique
+        if (StringUtils.isBlank(getTitle())) {
+            throw new ApplicationValidationException("Title required for Product Order");
+        }
+
+        // Make sure the title
+        if (productOrderDao.findByTitle(getTitle()) != null) {
+            throw new DuplicateTitleException();
+        }
+
+        productOrder.setTitle(getTitle());
+        productOrder.setComments(getComments());
+        productOrder.setQuoteId(getQuoteId());
+
+        // Find the product by the product name.
+        if (!StringUtils.isBlank(getProductName())) {
+            Product product = productDao.findByName(getProductName());
+            productOrder.setProduct(product);
+        }
+
+        if (!StringUtils.isBlank(getResearchProjectId())) {
+            ResearchProject researchProject =
+                    researchProjectDao.findByBusinessKey(getResearchProjectId());
+
+            // Make sure the required research project is present.
+            if (researchProject == null) {
+                throw new ApplicationValidationException(
+                        "The required research project is not associated to the product order");
+            }
+
+            productOrder.setResearchProject(researchProject);
+        }
+
+        // Find and add the product order samples.
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        for (String sample : getSamples()) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
+        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
+            throw new NoSamplesException();
+        }
+
+        productOrder.addSamples(productOrderSamples);
+
+        // Set the requisition name so one can look up the requisition in the Portal.
+        productOrder.setRequisitionName(getRequisitionName());
+
+        return productOrder;
+    }
+
+    public int getNumberOfSamples() {
+        return numberOfSamples;
+    }
+
+    public void setNumberOfSamples(int numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public SampleKitWorkRequest.MoleculeType getMoleculeType() {
+        return moleculeType;
+    }
+
+    public void setMoleculeType(SampleKitWorkRequest.MoleculeType moleculeType) {
+        this.moleculeType = moleculeType;
+    }
+
+    public String getResearchProjectKey() {
+        return researchProjectKey;
+    }
+
+    public void setResearchProjectKey(String researchProjectKey) {
+        this.researchProjectKey = researchProjectKey;
+    }
+
+    public MaterialInfo getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(MaterialInfo materialInfo) {
+        this.materialInfo = materialInfo;
     }
 }

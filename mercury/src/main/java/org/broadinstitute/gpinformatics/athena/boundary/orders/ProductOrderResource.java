@@ -1,28 +1,38 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
+import org.broadinstitute.bsp.client.site.BspSiteManager;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.samples.MaterialTypeDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.security.Role;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
@@ -46,7 +56,9 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +79,9 @@ public class ProductOrderResource {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private MaterialTypeDao materialTypeDao;
 
     @Inject
     private ProductOrderEjb productOrderEjb;
@@ -92,6 +107,9 @@ public class ProductOrderResource {
     @Inject
     private JiraService jiraService;
 
+    @Inject
+    private BSPManagerFactory bspManagerFactory;
+
     /**
      * Should be used only by test code
      */
@@ -108,11 +126,91 @@ public class ProductOrderResource {
      * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
      *
      * @return the reference for the newly created {@link ProductOrder}
+     */
+
+    @POST
+    @Path("createWithKitRequest")
+    //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
+    @Produces(MediaType.APPLICATION_XML)
+    @Consumes(MediaType.APPLICATION_XML)
+    public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderJaxB)
+            throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException {
+        ProductOrder productOrder = createProductOrder(productOrderJaxB);
+
+        String categoryName = "";
+        String materialTypeName = "";
+
+        ResearchProject researchProject =
+                researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectKey());
+        MaterialType materialType = materialTypeDao.find(categoryName, materialTypeName);
+        SampleKitWorkRequest.MoleculeType moleculeType = productOrderJaxB.getMoleculeType();
+
+        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialType, moleculeType);
+        ProductOrderKitDetail kitDetail =
+                createKitDetail(productOrderJaxB.getNumberOfSamples(), moleculeType, materialInfoDto);
+        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail));
+
+        MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(),
+                messageCollection);
+        return new ProductOrderData(productOrder);
+    }
+
+    private ProductOrderKit createProductOrderKit(ResearchProject researchProject, ProductOrderKitDetail kitDetail)
+            throws ApplicationValidationException {
+        // Get the collection id from the research project so that we can get the site id.
+        Long sampleCollectionId = getFirstCollectionId(researchProject);
+        Long siteId = getSiteId(sampleCollectionId);
+        if (siteId == null) {
+            return null;
+        }
+
+        kitDetail.setProductOrderKitDetailId(kitDetail.getProductOrderKitDetailId());
+        return new ProductOrderKit(sampleCollectionId, siteId, kitDetail);
+    }
+
+    private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
+                                                  MaterialInfoDto materialInfoDto) {
+        ProductOrderKitDetail kitDetail =
+                new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, 87L, materialInfoDto);
+
+        kitDetail.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
+        if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
+            kitDetail.getPostReceiveOptions().add(PostReceiveOption.PICO_RECEIVED);
+        } else {
+            kitDetail.getPostReceiveOptions().add(PostReceiveOption.BIOANALYZER);
+        }
+        return kitDetail;
+    }
+
+    private MaterialInfoDto createMaterialInfoDTO(MaterialType materialType,
+                                                  SampleKitWorkRequest.MoleculeType moleculeType) {
+        MaterialInfoDto materialInfoDto;
+        if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
+            materialInfoDto = new MaterialInfoDto(
+                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialType.getName());
+        } else {
+            materialInfoDto = new MaterialInfoDto(
+                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialType.getName());
+        }
+        return materialInfoDto;
+    }
+
+    /**
+     * Return the information on the newly created {@link ProductOrder} that has Draft status.
+     * <p/>
+     * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
+     * as defined in the class (although I can't seem to be able to use the enum for the annotation.
+     *
+     * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
+     *
+     * @return the reference for the newly created {@link ProductOrder}
      *
      * @throws DuplicateTitleException
      * @throws NoSamplesException
      * @throws QuoteNotFoundException
      */
+
     @POST
     @Path("create")
     //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
@@ -120,7 +218,13 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderJaxB)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = convert(productOrderJaxB);
+        ProductOrder productOrder = createProductOrder(productOrderJaxB);
+        return new ProductOrderData(productOrder, true);
+    }
+
+    private ProductOrder createProductOrder(ProductOrderData productOrderJaxB)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+        ProductOrder productOrder = productOrderJaxB.convert(productOrderDao, researchProjectDao, productDao);
 
         // Figure out who called this so we can record the owner.
         BspUser user = bspUserList.getByUsername(productOrderJaxB.getUsername());
@@ -152,74 +256,6 @@ public class ProductOrderResource {
         log.info(user.getUsername() + " created product order " + productOrder.getBusinessKey()
                  + " with an order status of " + productOrder.getOrderStatus().getDisplayName() + " that includes "
                  + productOrder.getSamples().size() + " samples");
-
-        return new ProductOrderData(productOrder, true);
-    }
-
-    /**
-     * Try to convert the JAXB XML data into a {@link ProductOrder} and do some validation while converting.
-     *
-     * @param productOrderData The JAXB XML element
-     *
-     * @return the populated {@link ProductOrder}
-     */
-    private ProductOrder convert(ProductOrderData productOrderData)
-            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        if (productOrderData == null) {
-            throw new InformaticsServiceException(("No data found to define the new product order"));
-        }
-
-        ProductOrder productOrder = new ProductOrder();
-
-        // Make sure the title/name is supplied and unique
-        if (StringUtils.isBlank(productOrderData.getTitle())) {
-            throw new ApplicationValidationException("Title required for Product Order");
-        }
-
-        // Make sure the title
-        if (productOrderDao.findByTitle(productOrderData.getTitle()) != null) {
-            throw new DuplicateTitleException();
-        }
-
-        productOrder.setTitle(productOrderData.getTitle());
-        productOrder.setComments(productOrderData.getComments());
-        productOrder.setQuoteId(productOrderData.getQuoteId());
-
-        // Find the product by the product name.
-        if (!StringUtils.isBlank(productOrderData.getProductName())) {
-            Product product = productDao.findByName(productOrderData.getProductName());
-            productOrder.setProduct(product);
-        }
-
-        if (!StringUtils.isBlank(productOrderData.getResearchProjectId())) {
-            ResearchProject researchProject =
-                    researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
-
-            // Make sure the required research project is present.
-            if (researchProject == null) {
-                throw new ApplicationValidationException(
-                        "The required research project is not associated to the product order");
-            }
-
-            productOrder.setResearchProject(researchProject);
-        }
-
-        // Find and add the product order samples.
-        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
-        for (String sample : productOrderData.getSamples()) {
-            productOrderSamples.add(new ProductOrderSample(sample));
-        }
-
-        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
-        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
-            throw new NoSamplesException();
-        }
-
-        productOrder.addSamples(productOrderSamples);
-
-        // Set the requisition name so one can look up the requisition in the Portal.
-        productOrder.setRequisitionName(productOrderData.getRequisitionName());
-
         return productOrder;
     }
 
@@ -385,7 +421,7 @@ public class ProductOrderResource {
                     String pdoKey = pdoKeyToSamplesList.getKey();
                     Set<String> sampleNames = pdoKeyToSamplesList.getValue();
                     List<ProductOrderSample> pdoSamples = pdoSampleDao.findByOrderKeyAndSampleNames(pdoKey,
-                                                                                                    sampleNames);
+                            sampleNames);
                     allPdoSamples.addAll(pdoSamples);
                 }
                 pdoSamplesResult = pdoSamplePairs.buildOutputPDOSamplePairsFromInputAndQueryResults(allPdoSamples);
@@ -395,5 +431,26 @@ public class ProductOrderResource {
             }
         }
         return pdoSamplesResult;
+    }
+
+    private Long getSiteId(Long collectionId)
+            throws ApplicationValidationException {
+        // Get the first site Id. If there is not one, give an error.
+        BspSiteManager siteManager = bspManagerFactory.createSiteManager();
+        List<Site> sites = siteManager.getApplicableSites(collectionId).getResult();
+        if (CollectionUtils.isEmpty(sites)) {
+            throw new ApplicationValidationException(
+                    "Could not find a site for the collection on this research project.");
+        }
+
+        return sites.get(0).getId();
+    }
+
+    /**
+     * @return the first (and only) cohort on a product order
+     */
+
+    private long getFirstCollectionId(ResearchProject researchProject) {
+        return researchProject.getCohorts()[0].getDatabaseId();
     }
 }

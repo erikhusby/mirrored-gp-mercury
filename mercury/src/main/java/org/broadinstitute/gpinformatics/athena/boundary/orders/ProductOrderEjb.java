@@ -972,7 +972,12 @@ public class ProductOrderEjb {
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
 
-        if (editOrder.isSampleInitiation()) {
+        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
+        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
+            if (editOrder.isSampleInitiation()) {
+                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
+            }
+
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
