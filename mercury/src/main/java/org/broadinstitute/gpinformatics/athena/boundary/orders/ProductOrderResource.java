@@ -12,6 +12,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
+import org.broadinstitute.bsp.client.workrequest.kit.MaterialType;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -24,7 +25,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -56,9 +56,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -137,13 +135,10 @@ public class ProductOrderResource {
             throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException {
         ProductOrder productOrder = createProductOrder(productOrderJaxB);
 
-        String categoryName = "";
-        String materialTypeName = "";
-
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectKey());
-        MaterialType materialType = materialTypeDao.find(categoryName, materialTypeName);
         SampleKitWorkRequest.MoleculeType moleculeType = productOrderJaxB.getMoleculeType();
+        MaterialType materialType = MaterialType.findByName(productOrderJaxB.getMaterialType());
 
         MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialType, moleculeType);
         ProductOrderKitDetail kitDetail =
@@ -188,10 +183,10 @@ public class ProductOrderResource {
         MaterialInfoDto materialInfoDto;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
             materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialType.getName());
+                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialType.name());
         } else {
             materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialType.getName());
+                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialType.name());
         }
         return materialInfoDto;
     }

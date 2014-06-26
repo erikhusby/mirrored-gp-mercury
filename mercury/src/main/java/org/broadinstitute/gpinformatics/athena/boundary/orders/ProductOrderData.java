@@ -56,6 +56,7 @@ public class ProductOrderData {
      * This is really a list of sample IDs.
      */
     private List<String> samples;
+    private String materialType;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
@@ -83,7 +84,6 @@ public class ProductOrderData {
 
         // This duplicates productOrderKey; need to remove this field completely.
         id = productOrder.getBusinessKey();
-
         productOrderKey = productOrder.getBusinessKey();
         comments = productOrder.getComments();
         placedDate = productOrder.getPlacedDate();
@@ -399,5 +399,13 @@ public class ProductOrderData {
 
     public void setMaterialInfo(MaterialInfo materialInfo) {
         this.materialInfo = materialInfo;
+    }
+
+    public String getMaterialType() {
+        return materialType;
+    }
+
+    public void setMaterialType(String materialType) {
+        this.materialType = materialType;
     }
 }
