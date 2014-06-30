@@ -33,6 +33,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuotePriceItem;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
@@ -41,6 +42,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
+import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
 
 /**
  * This class supports all the actions done on products.
@@ -110,6 +114,12 @@ public class ProductActionBean extends CoreActionBean {
 
     public ProductActionBean() {
         super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+    }
+
+    public ProductActionBean(UserBean userBean, ProductDao productDao) {
+        super(CREATE_PRODUCT, EDIT_PRODUCT, PRODUCT_PARAMETER);
+        this.userBean = userBean;
+        this.productDao = productDao;
     }
 
     private String q;
@@ -331,17 +341,10 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(DOWNLOAD_PRODUCT_LIST)
     public Resolution downloadProductDescriptions() {
-        final List<Product> productDownloadList;
-        String fileName="Product Descriptions.pdf";
-        if (editProduct !=null && StringUtils.isNotBlank(editProduct.getPartNumber())) {
-            Product downloadProduct = productDao.findByPartNumber(editProduct.getPartNumber());
-            productDownloadList = Arrays.asList(downloadProduct);
-            fileName=downloadProduct.getName() + ".pdf";
-        } else {
-            productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO,
-                    ProductDao.IncludePDMOnly.NO);
-        }
-        if (productDownloadList.isEmpty()){
+        final List<Product> productDownloadList = getProductsForPdfDownload();
+        String fileName = getPdfFilename(productDownloadList);
+
+        if (productDownloadList.isEmpty()) {
             addGlobalValidationError("Could not create PDF file. No products found.");
             return getSourcePageResolution();
         }
@@ -358,6 +361,27 @@ public class ProductActionBean extends CoreActionBean {
                 }
             }
         }.setFilename(fileName);
+    }
+
+    public static String getPdfFilename(List<Product> productList) {
+        String fileName = "Product Descriptions.pdf";
+        if (productList.size() == 1) {
+            fileName = productList.iterator().next().getName() + ".pdf";
+        }
+        return fileName;
+
+    }
+
+    protected List<Product> getProductsForPdfDownload() {
+        List<Product> productDownloadList;
+        if (!(editProduct == null || StringUtils.isBlank(editProduct.getPartNumber()))) {
+            Product downloadProduct = productDao.findByPartNumber(editProduct.getPartNumber());
+            productDownloadList = Arrays.asList(downloadProduct);
+        } else {
+            productDownloadList = productDao.findProducts(ProductDao.Availability.CURRENT, TopLevelOnly.NO,
+                    IncludePDMOnly.toIncludePDMOnly(userBean.isPDMUser()));
+        }
+        return productDownloadList;
     }
 
     public Product getEditProduct() {
