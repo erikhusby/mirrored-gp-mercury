@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
@@ -78,13 +80,16 @@ public class ProductOrderKit implements Serializable {
      * This is used by the web service call that sets up work requests (in ProductOrderResource).
      *
      * @param sampleCollectionId The collection.
-     * @param siteId The site.
+     * @param site The site.
      * @param kitDetail The kit detail.
      */
-    public ProductOrderKit(Long sampleCollectionId, Long siteId, ProductOrderKitDetail kitDetail) {
-        this.sampleCollectionId = sampleCollectionId;
-        this.siteId = siteId;
+    public ProductOrderKit(SampleCollection sampleCollection, Site site, ProductOrderKitDetail kitDetail, boolean exomeExpress) {
+        sampleCollectionId = sampleCollection.getCollectionId();
+        sampleCollectionName = sampleCollection.getCollectionName();
+        siteId = site.getId();
+        siteName = site.getName();
         kitOrderDetails.add(kitDetail);
+        this.exomeExpress = exomeExpress;
         kitDetail.setProductOrderKit(this);
     }
 

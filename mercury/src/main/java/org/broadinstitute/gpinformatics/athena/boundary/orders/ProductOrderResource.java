@@ -5,10 +5,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.collection.SampleCollection;
 import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.bsp.client.workrequest.kit.MaterialType;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKit;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPGroupCollectionList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.workrequest.KitType;
@@ -107,6 +110,9 @@ public class ProductOrderResource {
     @Inject
     private BSPManagerFactory bspManagerFactory;
 
+    @Inject
+    private BSPGroupCollectionList bspGroupCollectionList;
+
     /**
      * Should be used only by test code
      */
@@ -145,21 +151,26 @@ public class ProductOrderResource {
         ProductOrderKitDetail kitDetail =
                 createKitDetail(productOrderJaxB.getNumberOfSamples(), moleculeType, materialInfoDto);
 
-        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail));
+        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail, productOrder));
+
+        // Send the kit information to BSP and assign the work request id.
+        MessageCollection messageCollection = new MessageCollection();
+        productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+
         return new ProductOrderData(productOrder);
     }
 
-    private ProductOrderKit createProductOrderKit(ResearchProject researchProject, ProductOrderKitDetail kitDetail)
+    private ProductOrderKit createProductOrderKit(
+            ResearchProject researchProject, ProductOrderKitDetail kitDetail, ProductOrder productOrder)
             throws ApplicationValidationException {
         // Get the collection id from the research project so that we can get the site id.
-        Long sampleCollectionId = getFirstCollectionId(researchProject);
-        Long siteId = getSiteId(sampleCollectionId);
-        if (siteId == null) {
+        SampleCollection sampleCollection = getFirstCollection(researchProject);
+        Site site = getSiteId(sampleCollection.getCollectionId());
+        if (site == null) {
             return null;
         }
 
-        ProductOrderKit productOrderKit = new ProductOrderKit(sampleCollectionId, siteId, kitDetail);
-        return productOrderKit;
+        return new ProductOrderKit(sampleCollection, site, kitDetail, productOrder.getProduct().isExomeExpress());
     }
 
     private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
@@ -173,6 +184,7 @@ public class ProductOrderResource {
         } else {
             kitDetail.getPostReceiveOptions().add(PostReceiveOption.BIOANALYZER);
         }
+
         return kitDetail;
     }
 
@@ -426,7 +438,7 @@ public class ProductOrderResource {
         return pdoSamplesResult;
     }
 
-    private Long getSiteId(Long collectionId)
+    private Site getSiteId(Long collectionId)
             throws ApplicationValidationException {
         // Get the first site Id. If there is not one, give an error.
         BspSiteManager siteManager = bspManagerFactory.createSiteManager();
@@ -436,14 +448,14 @@ public class ProductOrderResource {
                     "Could not find a site for the collection on this research project.");
         }
 
-        return sites.get(0).getId();
+        return sites.get(0);
     }
 
     /**
      * @return the first (and only) cohort on a product order
      */
 
-    private long getFirstCollectionId(ResearchProject researchProject) {
-        return researchProject.getCohorts()[0].getDatabaseId();
+    private SampleCollection getFirstCollection(ResearchProject researchProject) {
+        return bspGroupCollectionList.getById(researchProject.getCohorts()[0].getDatabaseId());
     }
 }
