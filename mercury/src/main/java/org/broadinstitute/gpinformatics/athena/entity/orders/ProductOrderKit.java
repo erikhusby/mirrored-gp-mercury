@@ -85,6 +85,7 @@ public class ProductOrderKit implements Serializable {
         this.sampleCollectionId = sampleCollectionId;
         this.siteId = siteId;
         kitOrderDetails.add(kitDetail);
+        kitDetail.setProductOrderKit(this);
     }
 
     // Only used by tests.

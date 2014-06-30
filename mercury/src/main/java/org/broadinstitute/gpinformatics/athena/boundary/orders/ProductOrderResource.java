@@ -9,7 +9,6 @@ import org.broadinstitute.bsp.client.sample.MaterialInfoDto;
 import org.broadinstitute.bsp.client.site.BspSiteManager;
 import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
 import org.broadinstitute.bsp.client.workrequest.kit.MaterialType;
@@ -133,21 +132,20 @@ public class ProductOrderResource {
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderJaxB)
             throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException {
+        //createProductOrder creates AND places the order, so a jira ticket is created.
         ProductOrder productOrder = createProductOrder(productOrderJaxB);
 
         ResearchProject researchProject =
-                researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectKey());
+                researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectId());
         SampleKitWorkRequest.MoleculeType moleculeType = productOrderJaxB.getMoleculeType();
         MaterialType materialType = MaterialType.findByName(productOrderJaxB.getMaterialType());
 
         MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialType, moleculeType);
+
         ProductOrderKitDetail kitDetail =
                 createKitDetail(productOrderJaxB.getNumberOfSamples(), moleculeType, materialInfoDto);
-        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail));
 
-        MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.placeProductOrder(productOrder.getProductOrderId(), productOrder.getBusinessKey(),
-                messageCollection);
+        productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail));
         return new ProductOrderData(productOrder);
     }
 
@@ -160,8 +158,8 @@ public class ProductOrderResource {
             return null;
         }
 
-        kitDetail.setProductOrderKitDetailId(kitDetail.getProductOrderKitDetailId());
-        return new ProductOrderKit(sampleCollectionId, siteId, kitDetail);
+        ProductOrderKit productOrderKit = new ProductOrderKit(sampleCollectionId, siteId, kitDetail);
+        return productOrderKit;
     }
 
     private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,

@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -49,7 +48,6 @@ public class ProductOrderData {
     private String productOrderKey;
     private int numberOfSamples;
     private SampleKitWorkRequest.MoleculeType moleculeType;
-    private String researchProjectKey;
     private MaterialInfo materialInfo;
 
     /**
@@ -383,14 +381,6 @@ public class ProductOrderData {
 
     public void setMoleculeType(SampleKitWorkRequest.MoleculeType moleculeType) {
         this.moleculeType = moleculeType;
-    }
-
-    public String getResearchProjectKey() {
-        return researchProjectKey;
-    }
-
-    public void setResearchProjectKey(String researchProjectKey) {
-        this.researchProjectKey = researchProjectKey;
     }
 
     public MaterialInfo getMaterialInfo() {
