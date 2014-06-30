@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
 import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.PostReceiveOption;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +14,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.broadinstitute.bsp.client.workrequest.kit.KitTypeAllowanceSpecification;
-import org.broadinstitute.bsp.client.workrequest.kit.MaterialType;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -76,6 +76,7 @@ public class ProductOrderResource {
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
 
     private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
+    private static final long HUMAN = 1L;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -144,9 +145,9 @@ public class ProductOrderResource {
         ResearchProject researchProject =
                 researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectId());
         SampleKitWorkRequest.MoleculeType moleculeType = productOrderJaxB.getMoleculeType();
-        MaterialType materialType = MaterialType.findByName(productOrderJaxB.getMaterialType());
+        MaterialInfo materialInfo = MaterialInfo.valueOf(productOrderJaxB.getMaterialInfo().getName());
 
-        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialType, moleculeType);
+        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialInfo, moleculeType);
 
         ProductOrderKitDetail kitDetail =
                 createKitDetail(productOrderJaxB.getNumberOfSamples(), moleculeType, materialInfoDto);
@@ -176,7 +177,7 @@ public class ProductOrderResource {
     private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
                                                   MaterialInfoDto materialInfoDto) {
         ProductOrderKitDetail kitDetail =
-                new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, 87L, materialInfoDto);
+                new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfoDto);
 
         kitDetail.getPostReceiveOptions().add(PostReceiveOption.FLUIDIGM_FINGERPRINTING);
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
@@ -188,15 +189,15 @@ public class ProductOrderResource {
         return kitDetail;
     }
 
-    private MaterialInfoDto createMaterialInfoDTO(MaterialType materialType,
+    private MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
                                                   SampleKitWorkRequest.MoleculeType moleculeType) {
         MaterialInfoDto materialInfoDto;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
             materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialType.name());
+                    KitTypeAllowanceSpecification.DNA_MATRIX_KIT.getText(), materialInfo.getText());
         } else {
             materialInfoDto = new MaterialInfoDto(
-                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialType.name());
+                    KitTypeAllowanceSpecification.RNA_MATRIX_KIT.getText(), materialInfo.getText());
         }
         return materialInfoDto;
     }
