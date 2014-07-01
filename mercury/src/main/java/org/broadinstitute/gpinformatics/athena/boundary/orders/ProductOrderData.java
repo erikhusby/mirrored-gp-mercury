@@ -1,15 +1,26 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import edu.mit.broad.bsp.core.datavo.workrequest.items.kit.MaterialInfo;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
+import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.LongDateTimeAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 
 import javax.annotation.Nonnull;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -20,6 +31,8 @@ import java.util.List;
 @SuppressWarnings("UnusedDeclaration")
 @XmlRootElement
 public class ProductOrderData {
+    public static final boolean INCLUDE_SAMPLES = true;
+
     private String title;
     private String id;
     private String comments;
@@ -34,15 +47,30 @@ public class ProductOrderData {
     private String username;
     private String requisitionName;
     private String productOrderKey;
+    private int numberOfSamples;
+    private SampleKitWorkRequest.MoleculeType moleculeType;
+    private MaterialInfo materialInfo;
+    private String workRequestId;
 
     /**
      * This is really a list of sample IDs.
      */
     private List<String> samples;
+    private String materialType;
 
     @SuppressWarnings("UnusedDeclaration")
     /** Required by JAXB. */
     ProductOrderData() {
+    }
+
+    /**
+     * Constructor with the {@link ProductOrder} passed in for initialization. This constructor defaults the include
+     * flag to true because if we don't have samples, including will just include nothing.
+     *
+     * @param productOrder the {@link ProductOrder}
+     */
+    public ProductOrderData(@Nonnull ProductOrder productOrder) {
+        this(productOrder, INCLUDE_SAMPLES);
     }
 
     /**
@@ -56,7 +84,6 @@ public class ProductOrderData {
 
         // This duplicates productOrderKey; need to remove this field completely.
         id = productOrder.getBusinessKey();
-
         productOrderKey = productOrder.getBusinessKey();
         comments = productOrder.getComments();
         placedDate = productOrder.getPlacedDate();
@@ -75,6 +102,10 @@ public class ProductOrderData {
 
         if (productOrder.getResearchProject() != null) {
             researchProjectId = productOrder.getResearchProject().getBusinessKey();
+        }
+
+        if (productOrder.getProductOrderKit() != null) {
+            workRequestId = productOrder.getProductOrderKit().getWorkRequestId();
         }
 
         if (includeSamples) {
@@ -96,11 +127,7 @@ public class ProductOrderData {
     }
 
     public String getTitle() {
-        if (title == null) {
-            return "";
-        }
-
-        return title;
+        return (title == null) ? "" : title;
     }
 
     public void setTitle(String title) {
@@ -108,11 +135,7 @@ public class ProductOrderData {
     }
 
     public String getId() {
-        if (id == null) {
-            return "";
-        }
-
-        return id;
+        return (id == null) ? "" : id;
     }
 
     public void setId(String id) {
@@ -120,11 +143,7 @@ public class ProductOrderData {
     }
 
     public String getComments() {
-        if (comments == null) {
-            return "";
-        }
-
-        return comments;
+        return (comments == null) ? "" : comments;
     }
 
     public void setComments(String comments) {
@@ -150,11 +169,7 @@ public class ProductOrderData {
     }
 
     public String getProduct() {
-        if (product == null) {
-            return "";
-        }
-
-        return product;
+        return (product == null) ? "" : product;
     }
 
     public void setProduct(String product) {
@@ -162,11 +177,7 @@ public class ProductOrderData {
     }
 
     public String getStatus() {
-        if (status == null) {
-            return "";
-        }
-
-        return status;
+        return (status == null) ? "" : status;
     }
 
     public void setStatus(String status) {
@@ -182,11 +193,7 @@ public class ProductOrderData {
      */
     @XmlElementWrapper
     public List<String> getSamples() {
-        if (samples == null) {
-            return new ArrayList<>();
-        }
-
-        return samples;
+        return (samples == null) ? Collections.<String>emptyList() : samples;
     }
 
     /**
@@ -203,11 +210,7 @@ public class ProductOrderData {
     }
 
     public String getAggregationDataType() {
-        if (aggregationDataType == null) {
-            return "";
-        }
-
-        return aggregationDataType;
+        return (aggregationDataType == null) ? "" : aggregationDataType;
     }
 
     public void setResearchProjectId(String researchProjectId) {
@@ -215,11 +218,16 @@ public class ProductOrderData {
     }
 
     public String getResearchProjectId() {
-        if (researchProjectId == null) {
-            return "";
-        }
+        return (researchProjectId == null) ? "" : researchProjectId;
+    }
 
-        return researchProjectId;
+
+    public void setWorkRequestId(String workRequestId) {
+        this.workRequestId = workRequestId;
+    }
+
+    public String getWorkRequestId() {
+        return (workRequestId == null) ? "" : workRequestId;
     }
 
     public void setProductName(String productName) {
@@ -227,11 +235,7 @@ public class ProductOrderData {
     }
 
     public String getProductName() {
-        if (productName == null) {
-            return "";
-        }
-
-        return productName;
+        return (productName == null) ? "" : productName;
     }
 
     public void setQuoteId(String quoteId) {
@@ -239,19 +243,11 @@ public class ProductOrderData {
     }
 
     public String getQuoteId() {
-        if (quoteId == null) {
-            return "";
-        }
-
-        return quoteId;
+        return (quoteId == null) ? "" : quoteId;
     }
 
     public String getUsername() {
-        if (username == null) {
-            return "";
-        }
-
-        return username;
+        return (username == null) ? "" : username;
     }
 
     public void setUsername(String username) {
@@ -259,11 +255,7 @@ public class ProductOrderData {
     }
 
     public String getRequisitionName() {
-        if (requisitionName == null) {
-            return "";
-        }
-
-        return requisitionName;
+        return (requisitionName == null) ? "" : requisitionName;
     }
 
     public void setRequisitionName(String requisitionName) {
@@ -277,5 +269,100 @@ public class ProductOrderData {
 
     public void setProductOrderKey(String productOrderKey) {
         this.productOrderKey = productOrderKey;
+    }
+
+    /**
+     * Try to convert the JAXB XML data into a {@link ProductOrder} and do some validation while converting.
+     *
+     * @return the populated {@link ProductOrder}
+     */
+    public ProductOrder convert(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
+                                 ProductDao productDao)
+            throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
+
+        ProductOrder productOrder = new ProductOrder();
+
+        // Make sure the title/name is supplied and unique
+        if (StringUtils.isBlank(getTitle())) {
+            throw new ApplicationValidationException("Title required for Product Order");
+        }
+
+        // Make sure the title
+        if (productOrderDao.findByTitle(getTitle()) != null) {
+            throw new DuplicateTitleException();
+        }
+
+        productOrder.setTitle(getTitle());
+        productOrder.setComments(getComments());
+        productOrder.setQuoteId(getQuoteId());
+
+        // Find the product by the product name.
+        if (!StringUtils.isBlank(getProductName())) {
+            Product product = productDao.findByName(getProductName());
+            productOrder.setProduct(product);
+        }
+
+        if (!StringUtils.isBlank(getResearchProjectId())) {
+            ResearchProject researchProject =
+                    researchProjectDao.findByBusinessKey(getResearchProjectId());
+
+            // Make sure the required research project is present.
+            if (researchProject == null) {
+                throw new ApplicationValidationException(
+                        "The required research project is not associated to the product order");
+            }
+
+            productOrder.setResearchProject(researchProject);
+        }
+
+        // Find and add the product order samples.
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        for (String sample : getSamples()) {
+            productOrderSamples.add(new ProductOrderSample(sample));
+        }
+
+        // Make sure the required sample(s) are present FOR CLIA. For others, adding later is valid.
+        if (productOrderSamples.isEmpty() && ApplicationInstance.CRSP.isCurrent()) {
+            throw new NoSamplesException();
+        }
+
+        productOrder.addSamples(productOrderSamples);
+
+        // Set the requisition name so one can look up the requisition in the Portal.
+        productOrder.setRequisitionName(getRequisitionName());
+
+        return productOrder;
+    }
+
+    public int getNumberOfSamples() {
+        return numberOfSamples;
+    }
+
+    public void setNumberOfSamples(int numberOfSamples) {
+        this.numberOfSamples = numberOfSamples;
+    }
+
+    public SampleKitWorkRequest.MoleculeType getMoleculeType() {
+        return moleculeType;
+    }
+
+    public void setMoleculeType(SampleKitWorkRequest.MoleculeType moleculeType) {
+        this.moleculeType = moleculeType;
+    }
+
+    public MaterialInfo getMaterialInfo() {
+        return materialInfo;
+    }
+
+    public void setMaterialInfo(MaterialInfo materialInfo) {
+        this.materialInfo = materialInfo;
+    }
+
+    public String getMaterialType() {
+        return materialType;
+    }
+
+    public void setMaterialType(String materialType) {
+        this.materialType = materialType;
     }
 }

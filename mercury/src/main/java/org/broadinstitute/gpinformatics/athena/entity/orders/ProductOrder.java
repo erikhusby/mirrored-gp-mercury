@@ -1062,6 +1062,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * This is used to help create or update a PDO's Jira ticket.
      */
+
     public enum JiraField implements CustomField.SubmissionField {
         PRODUCT_FAMILY("Product Family"),
         PRODUCT("Product"),

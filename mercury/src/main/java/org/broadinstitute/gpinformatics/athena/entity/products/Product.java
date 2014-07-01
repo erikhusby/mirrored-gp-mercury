@@ -56,6 +56,8 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     /** The part number for the sample initiation product. */
     public static final String SAMPLE_INITIATION_PART_NUMBER = "P-ESH-0001";
     public static final String EXOME_EXPRESS_V2_PART_NUMBER = "P-EX-0007";
+    public static final String EXOME_EXPRESS = "Exome Express";
+    public static final String EXOME = "Exome";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -676,4 +678,14 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return product.getPartNumber().compareTo(anotherProduct.getPartNumber());
         }
     };
+
+    /**
+     * This is so we can tell bsp whether the product on a product order is exome express. No need to ask the user, since
+     * each product order has a product.
+     *
+     * @return Whether this is an exome express product or not.
+     */
+    public boolean isExomeExpress() {
+        return (productFamily.getName().equals(EXOME)) && (productName.startsWith(EXOME_EXPRESS));
+    }
 }
