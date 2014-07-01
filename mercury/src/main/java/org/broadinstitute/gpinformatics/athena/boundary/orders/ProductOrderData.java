@@ -49,6 +49,7 @@ public class ProductOrderData {
     private int numberOfSamples;
     private SampleKitWorkRequest.MoleculeType moleculeType;
     private MaterialInfo materialInfo;
+    private String workRequestId;
 
     /**
      * This is really a list of sample IDs.
@@ -100,6 +101,10 @@ public class ProductOrderData {
 
         if (productOrder.getResearchProject() != null) {
             researchProjectId = productOrder.getResearchProject().getBusinessKey();
+        }
+
+        if (productOrder.getProductOrderKit() != null) {
+            workRequestId = productOrder.getProductOrderKit().getWorkRequestId();
         }
 
         if (includeSamples) {
@@ -245,6 +250,19 @@ public class ProductOrderData {
         }
 
         return researchProjectId;
+    }
+
+
+    public void setWorkRequestId(String workRequestId) {
+        this.workRequestId = workRequestId;
+    }
+
+    public String getWorkRequestId() {
+        if (workRequestId == null) {
+            return "";
+        }
+
+        return workRequestId;
     }
 
     public void setProductName(String productName) {
