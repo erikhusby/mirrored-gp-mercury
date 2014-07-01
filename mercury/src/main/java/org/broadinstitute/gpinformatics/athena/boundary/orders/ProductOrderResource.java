@@ -138,7 +138,8 @@ public class ProductOrderResource {
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderJaxB)
-            throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException {
+            throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException,
+            WorkRequestCreationException {
         //createProductOrder creates AND places the order, so a jira ticket is created.
         ProductOrder productOrder = createProductOrder(productOrderJaxB);
 
@@ -156,7 +157,12 @@ public class ProductOrderResource {
 
         // Send the kit information to BSP and assign the work request id.
         MessageCollection messageCollection = new MessageCollection();
-        productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+
+        try {
+            productOrderEjb.submitSampleKitRequest(productOrder, messageCollection);
+        } catch (Exception ex) {
+            throw new WorkRequestCreationException(ex);
+        }
 
         return new ProductOrderData(productOrder);
     }
