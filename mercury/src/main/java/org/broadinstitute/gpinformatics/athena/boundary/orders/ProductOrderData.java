@@ -20,6 +20,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -126,11 +127,7 @@ public class ProductOrderData {
     }
 
     public String getTitle() {
-        if (title == null) {
-            return "";
-        }
-
-        return title;
+        return (title == null) ? "" : title;
     }
 
     public void setTitle(String title) {
@@ -138,11 +135,7 @@ public class ProductOrderData {
     }
 
     public String getId() {
-        if (id == null) {
-            return "";
-        }
-
-        return id;
+        return (id == null) ? "" : id;
     }
 
     public void setId(String id) {
@@ -150,11 +143,7 @@ public class ProductOrderData {
     }
 
     public String getComments() {
-        if (comments == null) {
-            return "";
-        }
-
-        return comments;
+        return (comments == null) ? "" : comments;
     }
 
     public void setComments(String comments) {
@@ -180,11 +169,7 @@ public class ProductOrderData {
     }
 
     public String getProduct() {
-        if (product == null) {
-            return "";
-        }
-
-        return product;
+        return (product == null) ? "" : product;
     }
 
     public void setProduct(String product) {
@@ -192,11 +177,7 @@ public class ProductOrderData {
     }
 
     public String getStatus() {
-        if (status == null) {
-            return "";
-        }
-
-        return status;
+        return (status == null) ? "" : status;
     }
 
     public void setStatus(String status) {
@@ -212,11 +193,7 @@ public class ProductOrderData {
      */
     @XmlElementWrapper
     public List<String> getSamples() {
-        if (samples == null) {
-            return new ArrayList<>();
-        }
-
-        return samples;
+        return (samples == null) ? Collections.<String>emptyList() : samples;
     }
 
     /**
@@ -233,11 +210,7 @@ public class ProductOrderData {
     }
 
     public String getAggregationDataType() {
-        if (aggregationDataType == null) {
-            return "";
-        }
-
-        return aggregationDataType;
+        return (aggregationDataType == null) ? "" : aggregationDataType;
     }
 
     public void setResearchProjectId(String researchProjectId) {
@@ -245,11 +218,7 @@ public class ProductOrderData {
     }
 
     public String getResearchProjectId() {
-        if (researchProjectId == null) {
-            return "";
-        }
-
-        return researchProjectId;
+        return (researchProjectId == null) ? "" : researchProjectId;
     }
 
 
@@ -258,11 +227,7 @@ public class ProductOrderData {
     }
 
     public String getWorkRequestId() {
-        if (workRequestId == null) {
-            return "";
-        }
-
-        return workRequestId;
+        return (workRequestId == null) ? "" : workRequestId;
     }
 
     public void setProductName(String productName) {
@@ -270,11 +235,7 @@ public class ProductOrderData {
     }
 
     public String getProductName() {
-        if (productName == null) {
-            return "";
-        }
-
-        return productName;
+        return (productName == null) ? "" : productName;
     }
 
     public void setQuoteId(String quoteId) {
@@ -282,19 +243,11 @@ public class ProductOrderData {
     }
 
     public String getQuoteId() {
-        if (quoteId == null) {
-            return "";
-        }
-
-        return quoteId;
+        return (quoteId == null) ? "" : quoteId;
     }
 
     public String getUsername() {
-        if (username == null) {
-            return "";
-        }
-
-        return username;
+        return (username == null) ? "" : username;
     }
 
     public void setUsername(String username) {
@@ -302,11 +255,7 @@ public class ProductOrderData {
     }
 
     public String getRequisitionName() {
-        if (requisitionName == null) {
-            return "";
-        }
-
-        return requisitionName;
+        return (requisitionName == null) ? "" : requisitionName;
     }
 
     public void setRequisitionName(String requisitionName) {
