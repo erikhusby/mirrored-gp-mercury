@@ -18,10 +18,11 @@ public class ProductTestFactory {
     }
 
     public static Product createDummyProduct(Workflow workflow, String partNumber) {
-        return createDummyProduct(workflow, partNumber, false);
+        return createDummyProduct(workflow, partNumber, false, false);
     }
 
-    public static Product createDummyProduct(Workflow workflow, String partNumber, boolean addRisk) {
+    public static Product createDummyProduct(Workflow workflow, String partNumber, boolean addRisk,
+                                             boolean pdmOrderableOnly) {
         Product product =
                 new Product("productName", new ProductFamily("Test product family"), "description", partNumber,
                         new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables", true,
