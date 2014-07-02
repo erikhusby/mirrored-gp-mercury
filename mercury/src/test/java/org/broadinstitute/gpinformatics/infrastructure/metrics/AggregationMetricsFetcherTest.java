@@ -1,15 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.equalTo;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -20,7 +21,7 @@ import static org.hamcrest.Matchers.closeTo;
  *     <li>we are connecting to the production database because there is not an appropriate dev or test database</li>
  * </ul>
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class AggregationMetricsFetcherTest extends ContainerTest {
 
     /**
@@ -39,12 +40,6 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public static final int MERCURY_AGGREGATION_VERSION = 1;
 
     /**
-     * Data type of aggregation on Mercury research project. Note that, when the aggregation is on Squid project, there
-     * is no data type to query on. Bass will not indicate a data type for Squid project aggregated files.
-     */
-    public static final String DATA_TYPE = "Exome";
-
-    /**
      * Squid project for which SAMPLE has been aggregated on. This is a good test case because, in the metrics database,
      * there are multiple rows in AGGREGATION where LIBRARY is non-null
      */
@@ -57,37 +52,43 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
 
     @Inject
     private AggregationMetricsFetcher fetcher;
+    public static final double MIN_LOD = 53.437256;
+    public static final double MAX_LOD = 55.771678;
 
     public void fetchNonExistentMetrics() {
-        Aggregation aggregation = fetcher.fetch("RP-1", "SM-TEST", 1, "type");
+        Aggregation aggregation = fetcher.fetch("RP-1", "SM-TEST", 1, Aggregation.DATA_TYPE_EXOME);
         assertThat(aggregation, nullValue());
     }
 
     public void fetchMetricsForSampleAggregatedByMercuryRP() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, DATA_TYPE);
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(DATA_TYPE));
-        assertThat(aggregation.getPercentContamination(), closeTo(0.0002, 0.00001));
+        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        LevelOfDetection lod = aggregation.getLevelOfDetection();
+        assertThat(lod.getMax(), equalTo(MAX_LOD));
+        assertThat(lod.getMin(), equalTo(MIN_LOD));
+
+        assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
     }
 
     public void fetchMetricsForSampleAggregatedByMercuryRPWithoutSupplyingDataType() {
         // TODO: This test may need to fail somehow. Perhaps different test data is needed.
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(DATA_TYPE));
-        assertThat(aggregation.getPercentContamination(), closeTo(0.0002, 0.00001));
+        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
     }
 
     public void fetchMetricsForSampleAggregatedBySquidProject() {
-        Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION);
+        Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo("N/A"));
-        assertThat(aggregation.getPercentContamination(), equalTo(0.0));
+        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_NA));
+        assertThat(aggregation.getAggregationContam().getPctContamination(), equalTo(0.0));
     }
 }
