@@ -744,10 +744,6 @@ public class ProductOrderEjb {
      * changes are pushed to JIRA as well, with a comment about the change and the current user.
      *
      * @param jiraTicketKey the key to update
-     * @param reporter the reporter
-     *
-     * @throws NoSuchPDOException
-     * @throws IOException
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException {

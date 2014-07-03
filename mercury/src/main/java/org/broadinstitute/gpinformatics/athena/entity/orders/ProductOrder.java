@@ -198,6 +198,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         readResolve();
     }
 
+    public ProductOrder(String title, String comments, String quoteId) {
+        // Constructor for ProductOrderData.toProductOrder()
+        this.title = title;
+        this.comments = comments;
+        this.quoteId = quoteId;
+    }
+
     /**
      * Constructor called when creating a new ProductOrder.
      */
@@ -1062,7 +1069,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     /**
      * This is used to help create or update a PDO's Jira ticket.
      */
-
     public enum JiraField implements CustomField.SubmissionField {
         PRODUCT_FAMILY("Product Family"),
         PRODUCT("Product"),

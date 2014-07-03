@@ -76,7 +76,8 @@ public class ProductOrderResource {
     private static final String SAMPLES_ADDED_RESPONSE = "Samples added";
 
     private static final String PDO_SAMPLE_STATUS = "pdoSampleStatus";
-    private static final long HUMAN = 1L;
+    // ID for species: Human is 1 in the database
+    private static final long HUMAN = 1;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -127,7 +128,7 @@ public class ProductOrderResource {
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
      * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
-     * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
+     * @param productOrderData the document for the construction of the new {@link ProductOrder}
      *
      * @return the reference for the newly created {@link ProductOrder}
      */
@@ -137,21 +138,20 @@ public class ProductOrderResource {
     //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
-    public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderJaxB)
+    public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, ApplicationValidationException, QuoteNotFoundException, NoSamplesException,
             WorkRequestCreationException {
-        //createProductOrder creates AND places the order, so a jira ticket is created.
-        ProductOrder productOrder = createProductOrder(productOrderJaxB);
+        // This will create a product order and place it, so a JIRA ticket is created.
+        ProductOrder productOrder = createProductOrder(productOrderData);
 
         ResearchProject researchProject =
-                researchProjectDao.findByBusinessKey(productOrderJaxB.getResearchProjectId());
-        SampleKitWorkRequest.MoleculeType moleculeType = productOrderJaxB.getMoleculeType();
-        MaterialInfo materialInfo = MaterialInfo.valueOf(productOrderJaxB.getMaterialInfo().getName());
+                researchProjectDao.findByBusinessKey(productOrderData.getResearchProjectId());
+        SampleKitWorkRequest.MoleculeType moleculeType = productOrderData.getMoleculeType();
 
-        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(materialInfo, moleculeType);
+        MaterialInfoDto materialInfoDto = createMaterialInfoDTO(productOrderData.getMaterialInfo(), moleculeType);
 
         ProductOrderKitDetail kitDetail =
-                createKitDetail(productOrderJaxB.getNumberOfSamples(), moleculeType, materialInfoDto);
+                createKitDetail(productOrderData.getNumberOfSamples(), moleculeType, materialInfoDto);
 
         productOrder.setProductOrderKit(createProductOrderKit(researchProject, kitDetail, productOrder));
 
@@ -180,7 +180,7 @@ public class ProductOrderResource {
         return new ProductOrderKit(sampleCollection, site, kitDetail, productOrder.getProduct().isExomeExpress());
     }
 
-    private ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
+    private static ProductOrderKitDetail createKitDetail(long numberOfSamples, SampleKitWorkRequest.MoleculeType moleculeType,
                                                   MaterialInfoDto materialInfoDto) {
         ProductOrderKitDetail kitDetail =
                 new ProductOrderKitDetail(numberOfSamples, KitType.DNA_MATRIX, HUMAN, materialInfoDto);
@@ -195,7 +195,7 @@ public class ProductOrderResource {
         return kitDetail;
     }
 
-    private MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
+    private static MaterialInfoDto createMaterialInfoDTO(MaterialInfo materialInfo,
                                                   SampleKitWorkRequest.MoleculeType moleculeType) {
         MaterialInfoDto materialInfoDto;
         if (moleculeType == SampleKitWorkRequest.MoleculeType.DNA) {
@@ -214,7 +214,7 @@ public class ProductOrderResource {
      * It would be nice to only allow Project Managers and Administrators to create PDOs.  Use same {@link Role} names
      * as defined in the class (although I can't seem to be able to use the enum for the annotation.
      *
-     * @param productOrderJaxB the document for the construction of the new {@link ProductOrder}
+     * @param productOrderData the document for the construction of the new {@link ProductOrder}
      *
      * @return the reference for the newly created {@link ProductOrder}
      *
@@ -228,21 +228,21 @@ public class ProductOrderResource {
     //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
-    public ProductOrderData create(@Nonnull ProductOrderData productOrderJaxB)
+    public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = createProductOrder(productOrderJaxB);
+        ProductOrder productOrder = createProductOrder(productOrderData);
         return new ProductOrderData(productOrder, true);
     }
 
-    private ProductOrder createProductOrder(ProductOrderData productOrderJaxB)
+    private ProductOrder createProductOrder(ProductOrderData productOrderData)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-        ProductOrder productOrder = productOrderJaxB.convert(productOrderDao, researchProjectDao, productDao);
+        ProductOrder productOrder = productOrderData.toProductOrder(productOrderDao, researchProjectDao, productDao);
 
         // Figure out who called this so we can record the owner.
-        BspUser user = bspUserList.getByUsername(productOrderJaxB.getUsername());
+        BspUser user = bspUserList.getByUsername(productOrderData.getUsername());
         if (user == null) {
             throw new ApplicationValidationException(
-                    "Problem creating the product order, cannot find the user " + productOrderJaxB.getUsername());
+                    "Problem creating the product order, cannot find the user " + productOrderData.getUsername());
         }
 
         try {

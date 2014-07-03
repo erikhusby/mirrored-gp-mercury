@@ -680,12 +680,9 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
     };
 
     /**
-     * This is so we can tell bsp whether the product on a product order is exome express. No need to ask the user, since
-     * each product order has a product.
-     *
      * @return Whether this is an exome express product or not.
      */
     public boolean isExomeExpress() {
-        return (productFamily.getName().equals(EXOME)) && (productName.startsWith(EXOME_EXPRESS));
+        return productFamily.getName().equals(ProductFamily.ProductFamilyName.EXOME.getFamilyName()) && productName.startsWith(EXOME_EXPRESS);
     }
 }
