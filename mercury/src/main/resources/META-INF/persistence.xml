@@ -24,9 +24,9 @@
             <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
             <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
             <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
-            <property name="hibernate.id.new_generator_mappings" value="true"/>
+            <!--<property name="hibernate.id.new_generator_mappings" value="true"/>-->
             <!-- todo jmt this doesn't seem to work -->
-            <property name="org.hibernate.flushMode" value="COMMIT" />
+            <!--<property name="org.hibernate.flushMode" value="COMMIT" />-->
         </properties>
     </persistence-unit>
 

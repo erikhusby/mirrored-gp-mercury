@@ -16,6 +16,7 @@ import javax.persistence.*;
 @Table(name = "RESEARCH_PROJECT_COHORT", schema = "athena")
 public class ResearchProjectCohort {
 
+    public static final int COHORT_PREFIX_LENGTH = 3;
     @Id
     @SequenceGenerator(name="seq_rp_cohort_index", schema = "athena", sequenceName="seq_rp_cohort_index")
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_rp_cohort_index")
@@ -34,6 +35,10 @@ public class ResearchProjectCohort {
     private String cohortId;
 
     protected ResearchProjectCohort() { }
+
+    public Long getDatabaseId() {
+        return Long.parseLong(cohortId.substring(COHORT_PREFIX_LENGTH));
+    }
 
     public ResearchProjectCohort(ResearchProject researchProject, String cohortId) {
         this.researchProject = researchProject;

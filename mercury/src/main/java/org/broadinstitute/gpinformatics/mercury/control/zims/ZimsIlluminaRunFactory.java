@@ -63,7 +63,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
@@ -210,6 +212,7 @@ public class ZimsIlluminaRunFactory {
                                               Map<String, ProductOrder> mapKeyToProductOrder,
                                               Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
+        Map<String, LibraryBean> mapSampleAndIndexToBean = new HashMap<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
             SampleInstance sampleInstance = sampleInstanceDto.getSampleInstance();
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
@@ -291,6 +294,17 @@ public class ZimsIlluminaRunFactory {
 
         // Make order predictable
         Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
+
+        // Consolidates beans that have the same sample name and the same molecular index scheme name.
+        SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
+        for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
+            LibraryBean libraryBean = iter.next();
+            String sampleAndMis =
+                    libraryBean.getSampleId() + "_++_" + libraryBean.getMolecularIndexingScheme().getName();
+            if (!previouslySeenSampleAndMis.add(sampleAndMis)) {
+                iter.remove();
+            }
+        }
         return libraryBeans;
     }
 

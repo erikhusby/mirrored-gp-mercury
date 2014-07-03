@@ -115,9 +115,8 @@ public class ReworkEjb {
      * @param query tube barcode or sample ID to search for
      *
      * @return tube/sample/PDO selections that are valid for rework
-     *
+     * <p/>
      * TODO Remove.  Only called from test cases.
-     *
      */
     public Collection<BucketCandidate> findBucketCandidates(String query) {
         return findBucketCandidates(Collections.singletonList(query));
@@ -172,7 +171,7 @@ public class ReworkEjb {
                 sampleIds.add(currentInstance.getStartingSample().getSampleKey());
             }
 
-            Collection<ProductOrderSample> mapBySamples= productOrderSampleDao.findBySamples(sampleIds);
+            Collection<ProductOrderSample> mapBySamples = productOrderSampleDao.findBySamples(sampleIds);
             bucketCandidates.addAll(collectBucketCandidatesForAMercuryVessel(vessel, mapBySamples));
         }
 
@@ -189,32 +188,31 @@ public class ReworkEjb {
      * collectBucketCandidatesThatHaveBSPVessels will, given a collection of ProductOrderSamples, create BucketCandidates
      * for the samples that have a Vessel that is represented in BSP.
      *
-     *
      * @param samplesById Map of ProductOrderSamples indexed by Sample Name
      *
-     * @return  A collection of Bucket Candidates to add to the collection of found Bucket Candidates
+     * @return A collection of Bucket Candidates to add to the collection of found Bucket Candidates
      */
     public Collection<BucketCandidate> collectBucketCandidatesThatHaveBSPVessels(
             Collection<ProductOrderSample> samplesById) {
 
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
-            Collection<String> sampleIDs = new HashSet<>();
-            for (ProductOrderSample sample : samplesById) {
-                sampleIDs.add(sample.getName());
-            }
-            Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
-            bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
-            for (ProductOrderSample sample : samplesById) {
-                Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+        Collection<String> sampleIDs = new HashSet<>();
+        for (ProductOrderSample sample : samplesById) {
+            sampleIDs.add(sample.getName());
+        }
+        Map<String, BSPSampleDTO> bspResult = bspSampleDataFetcher.fetchSamplesFromBSP(sampleIDs);
+        bspSampleDataFetcher.fetchSamplePlastic(bspResult.values());
+        for (ProductOrderSample sample : samplesById) {
+            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
 
-                if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
-                    String sampleKey = sample.getName();
-                    String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
+            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
+                String sampleKey = sample.getName();
+                String tubeBarcode = bspResult.get(sampleKey).getBarcodeForLabVessel();
 
-                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
-                            tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
-                }
+                bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sampleKey,
+                        tubeBarcode, ProductFamily.ProductFamilyName.EXOME, null, ""));
             }
+        }
         return bucketCandidates;
     }
 
@@ -222,10 +220,9 @@ public class ReworkEjb {
      * collectBucketCandidatesForAMercuryVessel will extract bucket candidates from a collection of productOrderSamples
      * that are associated with a given Vessel.
      *
-     *
-     * @param vessel                lab Vessel for which the samples are associated
-     * @param productOrderSamples   Collection of ProductOrderSamples that are associated with the Samples in the
-     *                              Vessels hierarchy
+     * @param vessel              lab Vessel for which the samples are associated
+     * @param productOrderSamples Collection of ProductOrderSamples that are associated with the Samples in the
+     *                            Vessels hierarchy
      *
      * @return A collection of Bucket Candidates to add to the collection of found Bucket Candidates
      */
@@ -233,19 +230,19 @@ public class ReworkEjb {
                                                                                 Collection<ProductOrderSample> productOrderSamples) {
 
         Collection<BucketCandidate> bucketCandidates = new ArrayList<>();
-            // make sure we have a matching product order sample
-            for (ProductOrderSample sample : productOrderSamples) {
-                Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
+        // make sure we have a matching product order sample
+        for (ProductOrderSample sample : productOrderSamples) {
+            Workflow workflow = sample.getProductOrder().getProduct().getWorkflow();
 
-                if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
+            if (!sample.getProductOrder().isDraft() && Workflow.isWorkflowSupportedByMercury(workflow)) {
 
-                    String eventName = vessel.getLastEventName();
+                String eventName = vessel.getLastEventName();
 
-                    bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
-                            vessel.getLabel(),
-                            ProductFamily.ProductFamilyName.EXOME, vessel, eventName));
-                }
+                bucketCandidates.add(getBucketCandidateConsideringProductFamily(sample, sample.getName(),
+                        vessel.getLabel(),
+                        ProductFamily.ProductFamilyName.EXOME, vessel, eventName));
             }
+        }
         return bucketCandidates;
     }
 
@@ -253,15 +250,15 @@ public class ReworkEjb {
      * getBucketCandidateConsideringProductFamily will construct a bucket candidate based on given key information
      * and add a validation message if the candidate does not match the desired product family
      *
-     * @param sample            ProductOrderSample that is associated with the desired bucket candidate
-     * @param sampleKey         name of the sample to which the BucketCandidate will be associated
-     * @param tubeBarcode       2d Manufacturers Barcode of the labvessel to which this candidate is to be associated
-     * @param productFamily     Product family for which this bucket Candidate is valid
-     * @param labVessel         Entity representation of the Lab Vessle to which this candidate is to be associated
-     * @param lastEventStep     step in the workflow for which the vessel for this candidate originated.  Typically
-     *                          used for Reworks.
+     * @param sample        ProductOrderSample that is associated with the desired bucket candidate
+     * @param sampleKey     name of the sample to which the BucketCandidate will be associated
+     * @param tubeBarcode   2d Manufacturers Barcode of the labvessel to which this candidate is to be associated
+     * @param productFamily Product family for which this bucket Candidate is valid
+     * @param labVessel     Entity representation of the Lab Vessle to which this candidate is to be associated
+     * @param lastEventStep step in the workflow for which the vessel for this candidate originated.  Typically
+     *                      used for Reworks.
      *
-     * @return  A new instance of a Bucket Candidate
+     * @return A new instance of a Bucket Candidate
      */
     public BucketCandidate getBucketCandidateConsideringProductFamily(@Nonnull ProductOrderSample sample,
                                                                       @Nonnull String sampleKey,
@@ -443,7 +440,8 @@ public class ReworkEjb {
         if (candidateVessel.checkCurrentBucketStatus(productOrder, bucketDef.getName(), BucketEntry.Status.Active)) {
             String error =
                     String.format("Tube %s with sample %s in product order %s already exists in the %s bucket.",
-                            candidateVessel.getLabel(), sampleKey, productOrder.getJiraTicketKey(), bucketDef.getName());
+                            candidateVessel.getLabel(), sampleKey, productOrder.getJiraTicketKey(),
+                            bucketDef.getName());
             logger.error(error);
             throw new ValidationException(error);
         }
@@ -512,7 +510,7 @@ public class ReworkEjb {
         /**
          * Create a rework candidate with just the tube barcode. Useful mainly in tests because, since a PDO isn't
          * specified, the tube's sample had better be in only one PDO.
-         *
+         * <p/>
          * Only called from tests classes
          *
          * @param tubeBarcode
@@ -523,9 +521,7 @@ public class ReworkEjb {
         }
 
         /**
-         *
          * Only called from test classes
-         *
          */
         public BucketCandidate(@Nonnull String tubeBarcode, @Nonnull ProductOrder productOrder) {
             this.tubeBarcode = tubeBarcode;
@@ -548,10 +544,15 @@ public class ReworkEjb {
         public BucketCandidate(@Nonnull String sampleKey, @Nonnull String tubeBarcode,
                                ProductOrder productOrder, LabVessel labVessel, String lastEventStep) {
             this(tubeBarcode, sampleKey, productOrder);
-            this.productOrder = productOrder;
             this.labVessel = labVessel;
             this.lastEventStep = lastEventStep;
-            this.currentSampleKey = StringUtils.join(this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null), ", ");
+            Set<String> sampleNames = new HashSet<>();
+            if (labVessel != null) {
+                for (SampleInstance instance : this.labVessel.getSampleInstances(LabVessel.SampleType.ANY, null)) {
+                    sampleNames.add(instance.getStartingSample().getSampleKey());
+                }
+            }
+            this.currentSampleKey = StringUtils.join(sampleNames, ", ");
         }
 
         public String getSampleKey() {

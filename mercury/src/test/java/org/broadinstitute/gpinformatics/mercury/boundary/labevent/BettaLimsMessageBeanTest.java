@@ -51,6 +51,9 @@ public class BettaLimsMessageBeanTest {
             HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
                     JMSFactoryType.CF, transportConfiguration);
 
+            connectionFactory.setConnectionTTL(-1);
+            connectionFactory.setClientFailureCheckPeriod(Long.MAX_VALUE);
+
             connection = connectionFactory.createConnection();
             connection.start();
 
