@@ -42,7 +42,8 @@
         <h1>${actionBean.selectedSearchName}</h1>
     </c:when>
     <c:otherwise>
-        Add search terms, then choose result columns, then click the Search button.
+        Choose a Search term, then click Add Term; choose a Column view set, then click Choose column set, or click
+        Available Result Columns then click right arrow; click the Search button.
         Click the plus sign to expand the Saved Searches section and save your search,
         or load a saved search.
     </c:otherwise>
@@ -503,20 +504,24 @@ function chooseColumnSet() {
     </ul>
 </div>
 <div id="addTermDescription" style="display: none;">
-    Pick a search term from the drop down list, then click Add Term. To narrow down the
-    list of search terms, click in the Filter field and type part of the name of the term
-    you're looking for. <br/>
-    Click the red X next to an added term, to remove it from the search.
+    <ul>
+        <li>Pick a search term from the drop down list, then click Add Term. To narrow down the
+            list of search terms, click in the Filter field and type part of the name of the term
+            you're looking for.</li>
+        <li>Click the red X next to an added term, to remove it from the search.</li>
+    </ul>
 </div>
 <div id="searchDescription" style="display: none;">
-    You can change the type of the comparison for each term, then enter one or more values.
-    If you leave a value blank, or don't change it from '(Choose one)', it won't be
-    included in the search query. <br/>
-    The checkbox next to each term determines whether the
-    associated value is included in the results.<br/>
-    Dates are mm/dd/yyyy format.<br/>
-    For wildcard comparisons, use "_" to match any single character in this position,
-    and "%" to match any number of characters in this position.
+    <ul>
+        <li>You can change the type of the comparison for each term, then enter one or more values.
+            If you leave a value blank, or don't change it from '(Choose one)', it won't be
+            included in the search query.</li>
+        <li>The checkbox next to each term determines whether the
+            associated value is included in the results.</li>
+        <li>Dates are mm/dd/yyyy format.</li>
+        <li>For wildcard comparisons, use "_" to match any single character in this position,
+            and "%" to match any number of characters in this position.</li>
+    </ul>
 </div>
 <div id="resultColumnsDescription" style="display: none;">
     <ul>
@@ -537,31 +542,32 @@ function chooseColumnSet() {
     </ul>
 </div>
 <script type="text/javascript">
-    <c:if test="${not actionBean.readOnly}">
-            new Tip('savedSearchesTooltip', $('savedSearchesDescription'), {
-                style: 'protogrey',
-                stem: 'topLeft',
-                hook: { tip: 'topLeft, mouse: true' },
-                offset: { x: 14, y: 14 }
+    $j(function(){
+        // This is required in order to render HTML in title attributes.
+        $j.widget("ui.tooltip", $j.ui.tooltip, {
+            options: {
+                content: function () {
+                    return $j(this).prop('title');
+                }
+            }
+        });
+
+        <c:if test="${not actionBean.readOnly}">
+            $j('#savedSearchesTooltip').attr('title', function(){
+                return $j('#savedSearchesDescription').remove().html();
             });
-    new Tip('addTermTooltip', $('addTermDescription'), {
-        style: 'protogrey',
-        stem: 'topLeft',
-        hook: { tip: 'topLeft, mouse: true' },
-        offset: { x: 14, y: 14 }
-    });
-    </c:if>
-    new Tip('searchTooltip', $('searchDescription'), {
-        style: 'protogrey',
-        stem: 'topLeft',
-        hook: { tip: 'topLeft, mouse: true' },
-        offset: { x: 14, y: 14 }
-    });
-    new Tip('resultColumnsTooltip', $('resultColumnsDescription'), {
-        style: 'protogrey',
-        stem: 'topLeft',
-        hook: { tip: 'topLeft, mouse: true' },
-        offset: { x: 14, y: 14 }
+            $j('#addTermTooltip').attr('title', function(){
+                return $j('#addTermDescription').remove().html();
+            });
+        </c:if>
+        $j('#searchTooltip').attr('title', function(){
+            return $j('#searchDescription').remove().html();
+        });
+        $j('#resultColumnsTooltip').attr('title', function(){
+            return $j('#resultColumnsDescription').remove().html();
+        });
+
+        $j(document).tooltip();
     });
 </script>
 </stripes:layout-component>
