@@ -41,10 +41,8 @@ public class SearchInstanceList implements PreferenceDefinitionValue {
     public static class SearchInstanceListPreferenceDefinitionCreator implements PreferenceDefinitionCreator {
         @Override
         public PreferenceDefinitionValue create(String xml) throws Exception {
-            NameValueDefinitionValue definitionValue = new NameValueDefinitionValue();
-
-            // This unmarshalls that definition and populates the data map on a newly created definition.
-            return definitionValue.unmarshal(xml);
+            SearchInstanceList searchInstanceList = new SearchInstanceList();
+            return searchInstanceList.unmarshal(xml);
         }
     }
 }
