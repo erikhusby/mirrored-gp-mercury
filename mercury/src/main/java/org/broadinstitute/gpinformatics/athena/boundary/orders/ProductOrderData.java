@@ -272,29 +272,25 @@ public class ProductOrderData {
     }
 
     /**
-     * Try to convert the JAXB XML data into a {@link ProductOrder} and do some validation while converting.
+     * Create a ProductOrder from this ProductOrderData
      *
      * @return the populated {@link ProductOrder}
      */
-    public ProductOrder convert(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
-                                 ProductDao productDao)
+    public ProductOrder toProductOrder(ProductOrderDao productOrderDao, ResearchProjectDao researchProjectDao,
+                                       ProductDao productDao)
             throws DuplicateTitleException, NoSamplesException, QuoteNotFoundException, ApplicationValidationException {
-
-        ProductOrder productOrder = new ProductOrder();
 
         // Make sure the title/name is supplied and unique
         if (StringUtils.isBlank(getTitle())) {
             throw new ApplicationValidationException("Title required for Product Order");
         }
 
-        // Make sure the title
+        // Make sure the title is unique
         if (productOrderDao.findByTitle(getTitle()) != null) {
             throw new DuplicateTitleException();
         }
 
-        productOrder.setTitle(getTitle());
-        productOrder.setComments(getComments());
-        productOrder.setQuoteId(getQuoteId());
+        ProductOrder productOrder = new ProductOrder(getTitle(), getComments(), getQuoteId());
 
         // Find the product by the product name.
         if (!StringUtils.isBlank(getProductName())) {
@@ -316,7 +312,7 @@ public class ProductOrderData {
         }
 
         // Find and add the product order samples.
-        List<ProductOrderSample> productOrderSamples = new ArrayList<>();
+        List<ProductOrderSample> productOrderSamples = new ArrayList<>(getSamples().size());
         for (String sample : getSamples()) {
             productOrderSamples.add(new ProductOrderSample(sample));
         }
