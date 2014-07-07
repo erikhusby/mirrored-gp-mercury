@@ -307,17 +307,21 @@ public class ZimsIlluminaRunFactory {
         // Make order predictable
         Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
 
-        // Consolidates beans that have the same sample name and the same molecular index scheme name.
+        // Consolidates beans that have the same consolidation key.
         SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
         for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
             LibraryBean libraryBean = iter.next();
-            String sampleAndMis =
-                    libraryBean.getSampleId() + "_++_" + libraryBean.getMolecularIndexingScheme().getName();
-            if (!previouslySeenSampleAndMis.add(sampleAndMis)) {
+            String consolidationKey =
+                    makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
+            if (!previouslySeenSampleAndMis.add(consolidationKey)) {
                 iter.remove();
             }
         }
         return libraryBeans;
+    }
+
+    private String makeConsolidationKey(String... components) {
+        return StringUtils.join(components, "__delimiter__");
     }
 
     private LibraryBean createLibraryBean(
