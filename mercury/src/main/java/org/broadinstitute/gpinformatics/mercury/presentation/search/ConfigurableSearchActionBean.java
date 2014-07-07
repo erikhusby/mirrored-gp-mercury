@@ -19,6 +19,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
@@ -193,6 +194,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     @Inject
     private PreferenceDao preferenceDao;
+
+    @Inject
+    private PreferenceEjb preferenceEjb;
 
     @Inject
     private ConfigurableListFactory configurableListFactory;
@@ -783,7 +787,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
                     // Hibernate
                     // object "dirty", so change something else too
                     preference.setModifiedDate(new Date());
-                    preferenceDao.persist(preference);
+                    preferenceEjb.add(userBean.getBspUser().getUserId(),
+                            PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, searchInstanceList);
                     getContext().getMessages().add(new SimpleMessage("The search was saved"));
                 }
             }

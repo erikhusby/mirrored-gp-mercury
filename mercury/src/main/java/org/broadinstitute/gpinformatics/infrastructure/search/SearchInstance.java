@@ -12,6 +12,10 @@ package org.broadinstitute.gpinformatics.infrastructure.search;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,6 +28,8 @@ import java.util.Map;
  * This class represents an instance of a user-defined search.
  */
 @SuppressWarnings("unused")
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SearchInstance implements Serializable {
 
     private static final long serialVersionUID = -7253856859396073349L;
@@ -39,6 +45,7 @@ public class SearchInstance implements Serializable {
         return CHOOSE_VALUE;
     }
 
+    @XmlAccessorType(XmlAccessType.FIELD)
     public static class SearchValue implements ColumnTabulation, Serializable {
 
         private static final long serialVersionUID = -9161359246882136450L;
@@ -71,11 +78,13 @@ public class SearchInstance implements Serializable {
         /**
          * The list of valid values
          */
+        @XmlTransient
         private List<ConstrainedValue> constrainedValues;
 
         /**
          * The data type of the value (String, Date, Double, Boolean).
          */
+        @XmlTransient
         private String dataType;
 
         /**
@@ -91,52 +100,50 @@ public class SearchInstance implements Serializable {
         /**
          * The search term definition on which this SearchValue is based.
          */
-        private transient SearchTerm searchTerm;
+        @XmlTransient
+        private SearchTerm searchTerm;
 
         /**
          * Map from value to value, allows testing of presence in JSP EL.
          */
-        private transient Map<String, String> mappedValues = new HashMap<>();
+        @XmlTransient
+        private Map<String, String> mappedValues = new HashMap<>();
 
         /**
          * Whether the constrained values expression has been evaluated, avoid doing it multiple times.
          */
-        private transient boolean evaluatedConstrainedValues = false;
+        @XmlTransient
+        private boolean evaluatedConstrainedValues = false;
 
         /**
          * Unique ID for HTML divs.
          */
-        private static transient long uniqueId = System.currentTimeMillis();
-
-        /**
-         * To improve performance, compiled version of expression to display results.
-         */
-        private transient Serializable compiledDisplayExpression;
-
-        /**
-         * To improve performance, compiled version of expression to create header for viewing results.
-         */
-        private transient Serializable compiledViewHeaderExpression;
+        @XmlTransient
+        private static long uniqueId = System.currentTimeMillis();
 
         /**
          * True if the value was set when the instance was loaded from persistence, useful in read-only views.
          */
-        private transient Boolean valueSetWhenLoaded;
+        @XmlTransient
+        private Boolean valueSetWhenLoaded;
 
         /**
          * Holder of search values.
          */
-        private transient SearchInstance searchInstance;
+        @XmlTransient
+        private SearchInstance searchInstance;
 
         /**
          * False if the term has no value, for example.
          */
-        private transient Boolean addToCriteria;
+        @XmlTransient
+        private Boolean addToCriteria;
 
         /**
          * Result of searchTerm.constrainedValuesSizeLimitExpression.
          */
-        private transient Integer constrainedValuesSizeLimit;
+        @XmlTransient
+        private Integer constrainedValuesSizeLimit;
 
         /**
          * Default constructor for Stripes.
@@ -669,12 +676,14 @@ public class SearchInstance implements Serializable {
     /**
      * List of columns in the column set that the user chose to view
      */
-    private transient List<String> columnSetColumnNameList;
+    @XmlTransient
+    private List<String> columnSetColumnNameList;
 
     /**
      * Context for evaluation of expressions.
      */
-    private transient Map<String, Object> evalContext;
+    @XmlTransient
+    private Map<String, Object> evalContext;
 
     /**
      * Default constructor for Stripes.

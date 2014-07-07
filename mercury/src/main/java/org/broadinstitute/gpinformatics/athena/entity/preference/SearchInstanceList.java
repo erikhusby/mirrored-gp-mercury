@@ -4,12 +4,14 @@ import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Preference that holds all search instances for a scope.
  */
+@XmlRootElement
 public class SearchInstanceList implements PreferenceDefinitionValue {
     private List<SearchInstance> searchInstances = new ArrayList<>();
     private ObjectMarshaller<SearchInstanceList> marshaller;

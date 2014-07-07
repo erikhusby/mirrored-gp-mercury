@@ -25,8 +25,9 @@ public class SearchTerm implements Serializable, ColumnTabulation {
 
     private static final long serialVersionUID = -7452519036319121392L;
 
-    public interface Evaluator <T> {
-        T evaluate(Object entity, Map<String, Object> context);
+    // JAXB doesn't like interfaces (even if the referring class is XmlTransient), so we have to use a transient class.
+    public abstract static class Evaluator <T> {
+        public abstract T evaluate(Object entity, Map<String, Object> context);
     }
 
     /**
