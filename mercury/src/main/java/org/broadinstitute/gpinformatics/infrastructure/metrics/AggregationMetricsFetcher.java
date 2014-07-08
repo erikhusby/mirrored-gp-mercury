@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class AggregationMetricsFetcher {
 
-    @PersistenceContext(unitName = "metrics_pu")
+//    @PersistenceContext(unitName = "metrics_pu")
     private EntityManager entityManager;
 
     public Aggregation fetch(String project, String sample, int version) {

@@ -123,7 +123,7 @@ public class ZimsIlluminaRunFactoryTest {
 
         Mockito.when(productOrderDao.findByBusinessKey(PRODUCT_ORDER_KEY)).thenReturn(testProductOrder);
 
-        reagents = makeTestReagents(testSampleIds.size());
+        reagents = makeTestReagents(testSampleIds.size(), false);
 
         mapSampleIdToDto.clear();
 
@@ -344,7 +344,7 @@ public class ZimsIlluminaRunFactoryTest {
 
 
     /** Creates some reagents having molecular barcodes for test purposes. */
-    public static List<MolecularIndexReagent> makeTestReagents(int numberOfReagents) {
+    public static List<MolecularIndexReagent> makeTestReagents(int numberOfReagents, final boolean doubleEnded) {
         final Random random = new Random(System.currentTimeMillis());
         List<MolecularIndexReagent> reagents = new ArrayList<>(numberOfReagents);
         for (int i = 0; i < numberOfReagents; ++i) {
@@ -357,6 +357,10 @@ public class ZimsIlluminaRunFactoryTest {
                     new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>(){{
                         put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5,
                                 new MolecularIndex(molecularIndex.toString()));
+                        if (doubleEnded) {
+                            put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7,
+                                    new MolecularIndex(molecularIndex.toString()));
+                        }
                     }};
 
             MolecularIndexingScheme mis = new MolecularIndexingScheme(positionIndexMap);
