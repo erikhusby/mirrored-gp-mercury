@@ -11,15 +11,15 @@
 
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
-import com.lowagie.text.pdf.PRTokeniser;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.RandomAccessFileOrArray;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.ListItem;
+import com.lowagie.text.pdf.PdfWriter;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -28,17 +28,13 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductPdfFactoryTest {
+    public static final String LIST_MATCHER = "[-|•|\\*|\u0095]";
     Logger logger = Logger.getLogger(this.getClass().getName());
     private File tempFile;
 
@@ -52,6 +48,8 @@ public class ProductPdfFactoryTest {
     @AfterMethod
     public void tearDown() throws Exception {
         if (tempFile != null && tempFile.exists()) {
+//            The next line is handy when debugging
+//            FileUtils.copyFile(tempFile, new File("/tmp/test.pdf"));
             tempFile.delete();
         }
     }
@@ -64,7 +62,8 @@ public class ProductPdfFactoryTest {
     public void testFileWritten() throws Exception {
         Product dummyProduct = ProductTestFactory
                 .createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "P-TEST-" + System.currentTimeMillis());
-        ProductPdfFactory.toPdf(new FileOutputStream(tempFile), ProductTestFactory.createStandardExomeSequencing(), dummyProduct);
+        ProductPdfFactory.toPdf(new FileOutputStream(tempFile), ProductTestFactory.createStandardExomeSequencing(),
+                dummyProduct);
         long fileSize = FileUtils.sizeOf(tempFile);
         Assert.assertTrue(fileSize > 0, "file should not be empty but is " + fileSize + " bytes.");
     }
@@ -72,85 +71,77 @@ public class ProductPdfFactoryTest {
     public void testFileData() throws Exception {
         Product standardExomeSequencing = ProductTestFactory.createStandardExomeSequencing();
         ProductPdfFactory.toPdf(new FileOutputStream(tempFile), standardExomeSequencing);
-        validatePdf(tempFile, standardExomeSequencing);
-    }
-
-    private void validatePdf(File pdfFile, Product product) throws IOException, ParseException {
-        PdfReader reader = new PdfReader(pdfFile.getPath());
-        // we can inspect the syntax of the imported page
-        byte[] streamBytes = reader.getPageContent(1);
-        PRTokeniser tokenizer = new PRTokeniser(new RandomAccessFileOrArray(streamBytes));
-        List<String> pdfData = new ArrayList<>();
-        while (tokenizer.nextToken()) {
-            if (tokenizer.getTokenType() == PRTokeniser.TK_STRING) {
-                pdfData.add(tokenizer.getStringValue());
-            }
-        }
-        reader.close();
-
-        Assert.assertEquals(nextString(pdfData), product.getProductFamily().getName().toUpperCase());
-        Assert.assertEquals(nextString(pdfData), product.getProductName());
-        Assert.assertEquals(nextString(pdfData), ProductPdfFactory.PART_NUMBER + ": " + product.getPartNumber());
-        Assert.assertEquals(nextString(pdfData), ProductPdfFactory.PRODUCT_FAMILY + ": " + product.getProductFamily().getName());
-        String[] dateParts = nextString(pdfData).split(":");
-        Date expectedDate = DateUtils.convertStringToDate(dateParts[1]);
-        Assert.assertEquals(expectedDate, product.getAvailabilityDate());
-        Assert.assertEquals(nextString(pdfData), ProductPdfFactory.DESCRIPTION);
-        String descriptionString = getMultiLine(pdfData, ProductPdfFactory.DELIVERABLES);
-        Assert.assertEquals(descriptionString, product.getDescription());
-        Assert.assertEquals(nextString(pdfData), ProductPdfFactory.DELIVERABLES);
-        String deliverable = getMultiLine(pdfData, ProductPdfFactory.INPUT_REQUIREMENTS);
-        Assert.assertEquals(deliverable, product.getDeliverables());
-        Assert.assertEquals("Input Requirements", nextString(pdfData));
-        String inputRequirements = getMultiLine(pdfData, null);
-        Assert.assertEquals(inputRequirements, product.getInputRequirements());
-    }
-
-    public void testGetMultiLine() {
-        List<String> testData = new ArrayList<>(Arrays.asList("a", "b", "c", ProductPdfFactory.DELIVERABLES, "e"));
-        String result = getMultiLine(testData, ProductPdfFactory.DELIVERABLES);
-        Assert.assertEquals(result, "a b c");
-    }
-
-    public void testGetMultiLineNullDelimiter() {
-        List<String> testData = new ArrayList<>(Arrays.asList("a", "b", "c", "d", "e"));
-        String result = getMultiLine(testData, null);
-        Assert.assertEquals(result, "a b c d e");
-    }
-
-    private String getMultiLine(List<String> pdfData, String endingDelimiter) {
-        String descriptionString = nextString(pdfData);
-        if (!descriptionString.endsWith("-")) {
-            descriptionString += " ";
-        }
-        while (!(descriptionString.matches(".*" + endingDelimiter + "\\s?$") || pdfData.isEmpty())) {
-            descriptionString += nextString(pdfData);
-            if (!descriptionString.endsWith("-")) {
-                descriptionString += " ";
-            }
-        }
-        if (StringUtils.isNotBlank(endingDelimiter)) {
-            pdfData.add(0, endingDelimiter);
-            descriptionString =
-                    descriptionString.substring(0, descriptionString.length() - endingDelimiter.length() - 2);
-        }
-        return descriptionString.trim();
-    }
-
-    public void testNextString() {
-        List<String> testData = new ArrayList<>(Arrays.asList("a", "b", "c", "d", "e"));
-        String result = nextString(testData);
-        Assert.assertEquals(result, "a");
+        ProductPdfFactoryUtils.validatePdf(tempFile, standardExomeSequencing);
     }
 
 
-    private String nextString(List<String> pdfData) {
-        String result = null;
-        Iterator<String> iterator = pdfData.iterator();
-        if (iterator.hasNext()) {
-            result = iterator.next();
-            iterator.remove();
-        }
-        return result;
+    public void testSplitTextIntoListElementsBasic() throws Exception {
+        String testDescription = "some text.";
+        Product standardExomeSequencing = ProductPdfFactoryUtils.writeProduct(tempFile, testDescription);
+        ProductPdfFactoryUtils.validatePdf(tempFile, standardExomeSequencing);
+    }
+
+    public void testSplitTextIntoListElementsAllBullets() throws Exception {
+        String testDescription = "* some text.\n* Some more.";
+        Product standardExomeSequencing = ProductPdfFactoryUtils.writeProduct(tempFile, testDescription);
+        ProductPdfFactoryUtils.validatePdf(tempFile, standardExomeSequencing);
+    }
+
+    public void testAddParagraph() throws Exception {
+        Document document = new Document();
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(tempFile));
+        writer.setPdfVersion(PdfWriter.VERSION_1_7);
+        document.open();
+
+        String headerText = "IMA HEADER";
+        String someText = "some text";
+        String isAList = "is list";
+        String listAndNonList = "also is list. *but I am not*";
+        String paragraphText = String.format("%s\n*%s\n*%s", someText, isAList, listAndNonList);
+        ProductPdfFactory.addParagraphWithHeader(document, headerText, paragraphText);
+        document.close();
+        ProductPdfFactoryUtils
+                .validateExtractParagraph(tempFile, headerText, Arrays.asList(someText, isAList, listAndNonList));
+
+    }
+
+    public void testConvertTextFirstLineWithAsterisk() {
+        String description = "* line";
+        List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
+        Assert.assertEquals(elements.size(), 1);
+        Assert.assertEquals(elements.get(0).type(), Element.LIST);
+    }
+
+    public void testConvertTextSecondLineWithAsterisk() {
+        String description = "foo\n* line";
+        List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
+        Assert.assertEquals(elements.size(), 2);
+        Element element = elements.get(0);
+        Assert.assertEquals(element.type(), Element.CHUNK);
+        element = elements.get(1);
+        Assert.assertEquals(element.type(), Element.LIST);
+        Assert.assertEquals(element.getChunks().size(), 1);
+        List<com.lowagie.text.ListItem> listItems = ((com.lowagie.text.List) element).getItems();
+        ListItem listItem = listItems.get(0);
+        Assert.assertEquals(listItem.type(), Element.LISTITEM);
+        Assert.assertEquals(listItem.getContent(), "line");
+    }
+
+    public void testConvertTextSecondLineWithNonListAsterisks() {
+        String someText = "some text";
+        String isAList = "is list";
+        String listAndNonList = "also is list. *but I am not*";
+        String description = String.format("%s\n*%s\n*%s", someText, isAList, listAndNonList);
+        List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
+        Assert.assertEquals(elements.size(), 2);
+        Chunk element = (Chunk) elements.get(0);
+        Assert.assertEquals(element.type(), Element.CHUNK);
+        Assert.assertEquals(element.getContent(), someText);
+        com.lowagie.text.List list = (com.lowagie.text.List) elements.get(1);
+        Assert.assertEquals(list.type(), Element.LIST);
+        List<com.lowagie.text.ListItem> listItems = list.getItems();
+        Assert.assertEquals(listItems.size(), 2);
+        Assert.assertEquals(listItems.get(0).getContent(), isAList);
+        Assert.assertEquals(listItems.get(1).getContent(), listAndNonList);
     }
 }
