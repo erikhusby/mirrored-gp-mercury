@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.equalTo;
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class AggregationMetricsPersistenceUnitTest extends ContainerTest {
 
-    @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
+//    @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager metricsEntityManager;
 
     public void testDatabaseConnection() {
