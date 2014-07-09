@@ -16,12 +16,14 @@ import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
 import com.lowagie.text.ListItem;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfWriter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
@@ -36,22 +38,37 @@ import java.util.List;
  * This class is responsible for creating a pdf representation of one or more Products.
  */
 public class ProductPdfFactory {
+    private static Log log = LogFactory.getLog(ProductPdfFactory.class);
     @Inject
     private ProductDao productDao = new ProductDao();
-    public static final String DESCRIPTION = "Description";
 
+    public static final String DESCRIPTION = "Description";
     public static final String DELIVERABLES = "Deliverables";
     public static final String INPUT_REQUIREMENTS = "Input Requirements";
     public static final String PART_NUMBER = "Part Number";
     public static final String PRODUCT_FAMILY = "Product Family";
-    public static final String AVAILABILITY = "Availability";
 
+    public static final String AVAILABILITY = "Availability";
     public static final String BULLET = "[\\*]";
     public static final String BULLET_LINE = BULLET + "[\\s+]?";
     public static final String LIST_DELIMITER = String.format("\\n(?=(\\*[\\s]?))", BULLET_LINE);
-    public static final Font REGULAR_FONT = FontFactory.getFont(FontFactory.HELVETICA, 9);
-    public static final Font BOLD_FONT = FontFactory.getFont(FontFactory.HELVETICA, 9, Font.BOLD);
+    public static final String BASE_FONT_FILE = "/fonts/Calibri.ttf";
+    public static BaseFont BASE_FONT;
+    public static Font REGULAR_FONT;
+    public static Font BOLD_FONT;
+
+
     private static final float DEFAULT_LEADING = 1.5f;
+
+    static {
+        try {
+            BASE_FONT = BaseFont.createFont(BASE_FONT_FILE, BaseFont.CP1252, BaseFont.EMBEDDED, true);
+        } catch (DocumentException | IOException e) {
+            log.error("Could not create base font.", e);
+        }
+        REGULAR_FONT = new Font(BASE_FONT, 10, Font.NORMAL);
+        BOLD_FONT = new Font(BASE_FONT, 10, Font.BOLD);
+    }
 
     /**
      * Write specified products to an output stream.
@@ -68,8 +85,8 @@ public class ProductPdfFactory {
         writer.setPdfVersion(PdfWriter.VERSION_1_7);
         document.open();
 
-        Font familyFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD);
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Font.BOLD);
+        Font familyFont = new Font(BASE_FONT, 18, Font.BOLD);
+        Font titleFont = new Font(BASE_FONT, 14, Font.BOLD);
         FastDateFormat dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
         String productFamily = "";
         for (Product product : products) {
@@ -81,8 +98,7 @@ public class ProductPdfFactory {
             document.add(new Paragraph(PART_NUMBER + ": " + product.getPartNumber(), REGULAR_FONT));
             document.add(new Paragraph(PRODUCT_FAMILY + ": " + productFamily, REGULAR_FONT));
             document.add(
-                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()),
-                            REGULAR_FONT));
+                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()), REGULAR_FONT));
             addParagraphWithHeader(document, DESCRIPTION, product.getDescription());
             addParagraphWithHeader(document, DELIVERABLES, product.getDeliverables());
             addParagraphWithHeader(document, INPUT_REQUIREMENTS, product.getInputRequirements());
@@ -120,7 +136,8 @@ public class ProductPdfFactory {
         List<String> splitText = Arrays.asList(description.split(delimiter));
 
         com.lowagie.text.List list = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED, 10);
-        list.setListSymbol("•");
+
+        list.setListSymbol("\u2022");
         for (String text : splitText) {
             text = text.trim();
             if (!text.isEmpty()) {

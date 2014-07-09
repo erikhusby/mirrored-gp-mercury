@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductPdfFactoryTest {
-    public static final String LIST_MATCHER = "[-|•|\\*|\u0095]";
+    public static final String LIST_MATCHER = "[-|•|\\*|\u0095|·]";
     Logger logger = Logger.getLogger(this.getClass().getName());
     private File tempFile;
 
@@ -48,8 +48,10 @@ public class ProductPdfFactoryTest {
     @AfterMethod
     public void tearDown() throws Exception {
         if (tempFile != null && tempFile.exists()) {
-//            The next line is handy when debugging
-//            FileUtils.copyFile(tempFile, new File("/tmp/test.pdf"));
+//            The next lines are handy when debugging
+//            if (tempFile.length()>0) {
+//                FileUtils.copyFile(tempFile, new File("/tmp/test.pdf"));
+//            }
             tempFile.delete();
         }
     }
