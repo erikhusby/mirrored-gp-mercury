@@ -184,7 +184,8 @@ public class LabEventResource {
                     operator == null ? "Unknown user: " + labEvent.getEventOperator() : operator.getUsername(),
                     labEvent.getEventDate());
             for (Reagent reagent : labEvent.getReagents()) {
-                labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
+                labEventBean.getReagents().add(
+                        new ReagentBean(reagent.getName(), reagent.getLot(), reagent.getExpiration()));
             }
 
             for(LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
