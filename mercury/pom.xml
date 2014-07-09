@@ -527,12 +527,29 @@
                 <dependency>
                     <groupId>org.eu.ingwar.tools</groupId>
                     <artifactId>arquillian-suite-extension</artifactId>
-                    <version>1.1.1</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
             <build>
                 <plugins>
+                      <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                          <execution>
+                            <id>add-test-source</id>
+                            <phase>generate-test-sources</phase>
+                            <goals>
+                              <goal>add-test-source</goal>
+                            </goals>
+                            <configuration>
+                              <sources>
+                                <source>src/test/arquillianSuiteExtension</source>
+                              </sources>
+                            </configuration>
+                          </execution>
+                        </executions>
+                      </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -557,12 +574,29 @@
                 <dependency>
                     <groupId>org.eu.ingwar.tools</groupId>
                     <artifactId>arquillian-suite-extension</artifactId>
-                    <version>1.1.1</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
             <build>
                 <plugins>
+                    <plugin>
+                      <groupId>org.codehaus.mojo</groupId>
+                      <artifactId>build-helper-maven-plugin</artifactId>
+                      <executions>
+                        <execution>
+                          <id>add-test-source</id>
+                          <phase>generate-test-sources</phase>
+                          <goals>
+                            <goal>add-test-source</goal>
+                          </goals>
+                          <configuration>
+                            <sources>
+                              <source>src/test/arquillianSuiteExtension</source>
+                            </sources>
+                          </configuration>
+                        </execution>
+                      </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -581,6 +615,21 @@
             </build>
         </profile>
 
+        <profile>
+            <id>Tests.Alternatives</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <!-- "arquillian" test group is used by Arquillian itself and needs to be active to run Arquillian tests -->
+                        <configuration>
+                            <groups>arquillian, Alternatives</groups>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- default Java EE profile to include Java EE API dependencies in the absence of a specific container -->
         <profile>
             <id>JavaEE</id>
@@ -1273,6 +1322,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+                <dependency>
+                    <groupId>org.eu.ingwar.tools</groupId>
+                    <artifactId>arquillian-suite-extension</artifactId>
+                    <version>1.1.1</version>
+                    <scope>test</scope>
+                </dependency>
 
             <!-- this is needed for any seam 3 dependencies to work -->
             <!--
@@ -1366,16 +1421,6 @@
             <artifactId>arquillian-drone-selenium-server</artifactId>
             <scope>test</scope>
         </dependency>
-
-<!--
-        <dependency>
-            <groupId>org.eu.ingwar.tools</groupId>
-            <artifactId>arquillian-suite-extension</artifactId>
-            <version>1.1.1</version>
-            &lt;!&ndash; Using provided scope, because only the ArqSuite profiles include this at runtime. &ndash;&gt;
-            <scope>provided</scope>
-        </dependency>
--->
 
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
@@ -1846,7 +1891,11 @@
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.7</version>
                 </plugin>
-
+                <plugin>
+                  <groupId>org.codehaus.mojo</groupId>
+                  <artifactId>build-helper-maven-plugin</artifactId>
+                  <version>1.9</version>
+                </plugin>
                 <!--
                                 <plugin>
                                     <artifactId>maven-dependency-plugin</artifactId>
