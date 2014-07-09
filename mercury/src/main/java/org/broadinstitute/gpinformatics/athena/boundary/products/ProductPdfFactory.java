@@ -41,17 +41,18 @@ public class ProductPdfFactory {
     private static Log log = LogFactory.getLog(ProductPdfFactory.class);
     @Inject
     private ProductDao productDao = new ProductDao();
-
     public static final String DESCRIPTION = "Description";
+
     public static final String DELIVERABLES = "Deliverables";
     public static final String INPUT_REQUIREMENTS = "Input Requirements";
     public static final String PART_NUMBER = "Part Number";
     public static final String PRODUCT_FAMILY = "Product Family";
-
     public static final String AVAILABILITY = "Availability";
-    public static final String BULLET = "[\\*]";
-    public static final String BULLET_LINE = BULLET + "[\\s+]?";
-    public static final String LIST_DELIMITER = String.format("\\n(?=(\\*[\\s]?))", BULLET_LINE);
+
+    public static final String BULLET = "\u2022";
+    public static final String ASTERISK = "[\\*]";
+    public static final String ASTERISK_LINE = ASTERISK + "[\\s+]?";
+    public static final String LIST_DELIMITER = String.format("\\n(?=(\\*[\\s]?))", ASTERISK_LINE);
     public static final String BASE_FONT_FILE = "/fonts/Calibri.ttf";
     public static BaseFont BASE_FONT;
     public static Font REGULAR_FONT;
@@ -137,12 +138,12 @@ public class ProductPdfFactory {
 
         com.lowagie.text.List list = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED, 10);
 
-        list.setListSymbol("\u2022");
+        list.setListSymbol(BULLET);
         for (String text : splitText) {
             text = text.trim();
             if (!text.isEmpty()) {
-                if (text.matches("^" + BULLET_LINE + ".*")) {
-                    list.add(new ListItem(text.replaceFirst(BULLET, "").trim(), REGULAR_FONT));
+                if (text.matches("^" + ASTERISK_LINE + ".*")) {
+                    list.add(new ListItem(text.replaceFirst(ASTERISK, "").trim(), REGULAR_FONT));
                 } else {
                     result.add(new Chunk(text));
                 }
