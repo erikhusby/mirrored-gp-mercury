@@ -15,16 +15,13 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -78,24 +75,13 @@ public class BassSearchService extends AbstractJerseyClientService {
         resource.accept(MediaType.TEXT_PLAIN);
         resource.queryParams(params);
         ClientResponse response = resource.queryParams(params).get(ClientResponse.class);
-        List<BassDTO> results;
         if (!response.getClientResponseStatus().equals(ClientResponse.Status.OK)) {
             String errorString = String.format(
                     "Server returned a status code of %d while getting data from Bass. The error message was \"%s\"",
                     response.getClientResponseStatus().getStatusCode(), response.getEntity(String.class));
             throw new InformaticsServiceException(errorString);
-        } else {
-            InputStream is = response.getEntityInputStream();
-            StringWriter writer = new StringWriter();
-            try {
-                IOUtils.copy(is, writer);
-                String theString = writer.toString();
-                results = BassResultsParser.parse(theString);
-            } catch (IOException e) {
-                throw new RuntimeException("Error reading data from server." + e.getMessage(), e);
-            }
         }
-        return results;
+        return BassResultsParser.parse(response.getEntityInputStream());
     }
 
     protected MultivaluedMap<String, String> getFileTypeParam(FileType fileType) {
@@ -132,9 +118,7 @@ public class BassSearchService extends AbstractJerseyClientService {
      * @see org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO.FileType#BAM
      */
     public List<BassDTO> runSearch(String researchProjectId) {
-        Map<BassResultColumn, List<String>> parameters = new HashMap<>();
-        parameters.put(BassResultColumn.rpid, Arrays.asList(researchProjectId));
-        return runSearch(parameters, BAM);
+        return runSearch(researchProjectId, BAM);
     }
 
     /**
@@ -171,7 +155,9 @@ public class BassSearchService extends AbstractJerseyClientService {
      */
     protected Map<BassResultColumn, List<String>> buildParameterMap(String[] collaboratorSampleId) {
         Map<BassResultColumn, List<String>> parameters = new HashMap<>();
-        parameters.put(BassResultColumn.sample, Arrays.asList(collaboratorSampleId));
+        if (ArrayUtils.isNotEmpty(collaboratorSampleId)) {
+            parameters.put(BassResultColumn.sample, Arrays.asList(collaboratorSampleId));
+        }
         return parameters;
     }
 
