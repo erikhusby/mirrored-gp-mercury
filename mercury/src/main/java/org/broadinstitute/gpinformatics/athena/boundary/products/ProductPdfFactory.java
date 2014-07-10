@@ -53,23 +53,10 @@ public class ProductPdfFactory {
     public static final String ASTERISK = "[\\*]";
     public static final String ASTERISK_LINE = ASTERISK + "[\\s+]?";
     public static final String LIST_DELIMITER = String.format("\\n(?=(\\*[\\s]?))", ASTERISK_LINE);
-    public static final String BASE_FONT_FILE = "/fonts/Calibri.ttf";
-    public static BaseFont BASE_FONT;
-    public static Font REGULAR_FONT;
-    public static Font BOLD_FONT;
-
+//    public static final String BASE_FONT_FILE = "/fonts/Calibri.ttf";
+    public static final String BASE_FONT_FILE = "/fonts/Arial.ttf";
 
     private static final float DEFAULT_LEADING = 1.5f;
-
-    static {
-        try {
-            BASE_FONT = BaseFont.createFont(BASE_FONT_FILE, BaseFont.CP1252, BaseFont.EMBEDDED, true);
-        } catch (DocumentException | IOException e) {
-            log.error("Could not create base font.", e);
-        }
-        REGULAR_FONT = new Font(BASE_FONT, 10, Font.NORMAL);
-        BOLD_FONT = new Font(BASE_FONT, 10, Font.BOLD);
-    }
 
     /**
      * Write specified products to an output stream.
@@ -86,8 +73,8 @@ public class ProductPdfFactory {
         writer.setPdfVersion(PdfWriter.VERSION_1_7);
         document.open();
 
-        Font familyFont = new Font(BASE_FONT, 18, Font.BOLD);
-        Font titleFont = new Font(BASE_FONT, 14, Font.BOLD);
+        Font familyFont = new Font(baseFont(), 18, Font.BOLD);
+        Font titleFont = new Font(baseFont(), 14, Font.BOLD);
         FastDateFormat dateFormat = FastDateFormat.getInstance("MM/dd/yyyy");
         String productFamily = "";
         for (Product product : products) {
@@ -96,10 +83,10 @@ public class ProductPdfFactory {
                 document.add(new Paragraph(productFamily.toUpperCase(), familyFont));
             }
             document.add(new Paragraph(product.getProductName(), titleFont));
-            document.add(new Paragraph(PART_NUMBER + ": " + product.getPartNumber(), REGULAR_FONT));
-            document.add(new Paragraph(PRODUCT_FAMILY + ": " + productFamily, REGULAR_FONT));
+            document.add(new Paragraph(PART_NUMBER + ": " + product.getPartNumber(), regularFont()));
+            document.add(new Paragraph(PRODUCT_FAMILY + ": " + productFamily, regularFont()));
             document.add(
-                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()), REGULAR_FONT));
+                    new Paragraph(AVAILABILITY + ": " + dateFormat.format(product.getAvailabilityDate()), regularFont()));
             addParagraphWithHeader(document, DESCRIPTION, product.getDescription());
             addParagraphWithHeader(document, DELIVERABLES, product.getDeliverables());
             addParagraphWithHeader(document, INPUT_REQUIREMENTS, product.getInputRequirements());
@@ -110,26 +97,29 @@ public class ProductPdfFactory {
         document.close();
     }
 
-    static void addParagraphWithHeader(Document document, String headerText, String text) throws DocumentException {
-        document.add(new Paragraph(defaultLeading(BOLD_FONT), headerText, BOLD_FONT));
-        Paragraph paragraph = new Paragraph(defaultLeading(REGULAR_FONT));
-        paragraph.setFont(REGULAR_FONT);
-        paragraph.setSpacingAfter(DEFAULT_LEADING);
+    static void addParagraphWithHeader(Document document, String headerText, String text)
+            throws DocumentException, IOException {
+        Paragraph sectionParagraph=new Paragraph();
+        sectionParagraph.setKeepTogether(true);
+        sectionParagraph.add(new Paragraph(relativeLeading(boldFont()), headerText, boldFont()));
+        Paragraph paragraph = new Paragraph(relativeLeading(regularFont()));
+        paragraph.setFont(regularFont());
         List<Element> descriptionElements = convertText(text, LIST_DELIMITER);
         for (Element description : descriptionElements) {
             paragraph.add(description);
         }
-        document.add(paragraph);
+        sectionParagraph.add(paragraph);
+        document.add(sectionParagraph);
     }
 
-    private static float defaultLeading(Font font) {
+    private static float relativeLeading(Font font) {
         return font.getSize() * DEFAULT_LEADING;
     }
 
     /**
      * Converts "\n*" to an unordered list.
      */
-    static List<Element> convertText(String description, String delimiter) {
+    static List<Element> convertText(String description, String delimiter) throws IOException, DocumentException {
         List<Element> result = new ArrayList<>();
         if (StringUtils.isEmpty(description)) {
             return result;
@@ -143,7 +133,7 @@ public class ProductPdfFactory {
             text = text.trim();
             if (!text.isEmpty()) {
                 if (text.matches("^" + ASTERISK_LINE + ".*")) {
-                    list.add(new ListItem(text.replaceFirst(ASTERISK, "").trim(), REGULAR_FONT));
+                    list.add(new ListItem(text.replaceFirst(ASTERISK, "").trim(), regularFont()));
                 } else {
                     result.add(new Chunk(text));
                 }
@@ -153,5 +143,17 @@ public class ProductPdfFactory {
             result.add(list);
         }
         return result;
+    }
+
+    private static BaseFont baseFont() throws IOException, DocumentException {
+        return BaseFont.createFont(BASE_FONT_FILE, BaseFont.CP1252, BaseFont.EMBEDDED, true);
+    }
+
+    static Font regularFont() throws IOException, DocumentException {
+        return new Font(baseFont(), 10, Font.NORMAL);
+    }
+
+    static Font boldFont() throws IOException, DocumentException {
+        return new Font(baseFont(), 11, Font.BOLD);
     }
 }

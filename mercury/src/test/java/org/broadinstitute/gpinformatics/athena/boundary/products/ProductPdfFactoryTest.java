@@ -13,7 +13,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
+import com.lowagie.text.Font;
 import com.lowagie.text.ListItem;
 import com.lowagie.text.pdf.PdfWriter;
 import org.apache.commons.io.FileUtils;
@@ -28,6 +30,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -54,6 +57,15 @@ public class ProductPdfFactoryTest {
 //            }
             tempFile.delete();
         }
+    }
+
+    public void testLoadRegularFont() throws IOException, DocumentException {
+        Font font = ProductPdfFactory.regularFont();
+        Assert.assertEquals(font.getStyle(), Font.NORMAL);
+    }
+    public void testLoadBoldFont() throws IOException, DocumentException {
+        Font font = ProductPdfFactory.boldFont();
+        Assert.assertEquals(font.getStyle(), Font.BOLD);
     }
 
     public void testTempFile() {
@@ -107,14 +119,14 @@ public class ProductPdfFactoryTest {
 
     }
 
-    public void testConvertTextFirstLineWithAsterisk() {
+    public void testConvertTextFirstLineWithAsterisk() throws IOException, DocumentException {
         String description = "* line";
         List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
         Assert.assertEquals(elements.size(), 1);
         Assert.assertEquals(elements.get(0).type(), Element.LIST);
     }
 
-    public void testConvertTextSecondLineWithAsterisk() {
+    public void testConvertTextSecondLineWithAsterisk() throws IOException, DocumentException {
         String description = "foo\n* line";
         List<Element> elements = ProductPdfFactory.convertText(description, ProductPdfFactory.LIST_DELIMITER);
         Assert.assertEquals(elements.size(), 2);
@@ -129,7 +141,7 @@ public class ProductPdfFactoryTest {
         Assert.assertEquals(listItem.getContent(), "line");
     }
 
-    public void testConvertTextSecondLineWithNonListAsterisks() {
+    public void testConvertTextSecondLineWithNonListAsterisks() throws IOException, DocumentException {
         String someText = "some text";
         String isAList = "is list";
         String listAndNonList = "also is list. *but I am not*";
