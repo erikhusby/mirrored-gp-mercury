@@ -53,7 +53,6 @@ public class ProductPdfFactory {
     public static final String ASTERISK = "[\\*]";
     public static final String ASTERISK_LINE = ASTERISK + "[\\s+]?";
     public static final String LIST_DELIMITER = String.format("\\n(?=(\\*[\\s]?))", ASTERISK_LINE);
-//    public static final String BASE_FONT_FILE = "/fonts/Calibri.ttf";
     public static final String BASE_FONT_FILE = "/fonts/Arial.ttf";
 
     private static final float DEFAULT_LEADING = 1.5f;
