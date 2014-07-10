@@ -98,17 +98,14 @@ public class ProductPdfFactory {
 
     static void addParagraphWithHeader(Document document, String headerText, String text)
             throws DocumentException, IOException {
-        Paragraph sectionParagraph=new Paragraph();
-        sectionParagraph.setKeepTogether(true);
-        sectionParagraph.add(new Paragraph(relativeLeading(boldFont()), headerText, boldFont()));
+        document.add(new Paragraph(relativeLeading(boldFont()), headerText, boldFont()));
         Paragraph paragraph = new Paragraph(relativeLeading(regularFont()));
         paragraph.setFont(regularFont());
         List<Element> descriptionElements = convertText(text, LIST_DELIMITER);
         for (Element description : descriptionElements) {
             paragraph.add(description);
         }
-        sectionParagraph.add(paragraph);
-        document.add(sectionParagraph);
+        document.add(paragraph);
     }
 
     private static float relativeLeading(Font font) {
