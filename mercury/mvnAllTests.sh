@@ -6,7 +6,7 @@ use Maven-3.0
 #mvn clean | tee tests.log
 OPTIONS="-PArquillian-JBossAS7-Remote,BUILD -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent"
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
-PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree "
+PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby"
 for PROFILE in $PROFILES
 do
     echo "Using profile $PROFILE"
