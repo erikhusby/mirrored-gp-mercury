@@ -1,30 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-
-public class BSPSampleDataFetcherContainerTest extends Arquillian {
-
-    @Deployment
-    public static WebArchive getDeployment() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
-
-    @Inject
-    private BSPSampleDataFetcher bspSampleDataFetcher;
-
-    @Test(enabled = true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+public class BSPSampleDataFetcherContainerTest {
+    private BSPConfig bspConfig=BSPConfig.produce(Deployment.DEV);
+    private BSPSampleDataFetcher bspSampleDataFetcher=new BSPSampleDataFetcher(
+            BSPSampleSearchServiceProducer.testInstance(), bspConfig);
     public void testFFPE() {
         BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
         BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
@@ -42,7 +31,6 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
         Assert.assertFalse(notFFPE.getFfpeStatus());
     }
 
-    @Test(enabled = true)
     public void testSamplePlastic() {
         BSPSampleDTO rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
         BSPSampleDTO aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
@@ -57,7 +45,7 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
         Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
     }
 
-    @Test
+
     public void testGetSampleDetails() {
         String barcode = "0163031423";
         List<String> barcodes =
