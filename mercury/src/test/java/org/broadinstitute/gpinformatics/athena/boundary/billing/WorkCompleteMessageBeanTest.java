@@ -144,6 +144,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     }
 
     public Session createSession() throws JMSException {
+        Connection connection = getConnection();
+        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    }
+
+    private Connection getConnection() throws JMSException {
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
@@ -151,9 +156,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
                             put(TransportConstants.HOST_PROP_NAME, appConfig.getHost());
                         }}
                 ));
+
+        cf.setClientFailureCheckPeriod(Long.MAX_VALUE);
+        cf.setConnectionTTL(-1);
         // This connection is never closed, which is probably Bad but it doesn't seem to break anything.
-        Connection connection = cf.createConnection();
-        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        return cf.createConnection();
     }
 
     /**
@@ -161,11 +168,25 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * listener reads it, it won't get written to the database.
      */
     public void sendMessage() throws JMSException {
-        Session session = createSession();
-        Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
-        MessageProducer producer = session.createProducer(destination);
-        Message message = createMessage(session, false);
-        producer.send(destination, message);
+        Session session = null;
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
+            MessageProducer producer = session.createProducer(destination);
+            Message message = createMessage(session, false);
+            producer.send(destination, message);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+
+            if(connection != null) {
+                connection.close();
+            }
+        }
     }
 
     /**
@@ -174,10 +195,24 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
      * entity to be persisted.
      */
     public void deliverMessage() throws JMSException {
-        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
-        workCompleteMessageBean.processMessage(createMessage(createSession()));
-        workCompleteMessageDao.flush();
-        workCompleteMessageDao.clear();
+        Session session = null;
+        Connection connection = null;
+        try {
+            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao, sessionContextUtility);
+            connection = getConnection();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            workCompleteMessageBean.processMessage(createMessage(session));
+            workCompleteMessageDao.flush();
+            workCompleteMessageDao.clear();
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+
+            if(connection != null) {
+                connection.close();
+            }
+        }
     }
 
     public static Message createMessage(Session session, boolean persist) throws JMSException {

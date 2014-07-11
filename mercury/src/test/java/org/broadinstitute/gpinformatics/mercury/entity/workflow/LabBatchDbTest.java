@@ -76,10 +76,10 @@ public class LabBatchDbTest extends ContainerTest {
                     List<LabEvent> inPlaceLabEvents = new ArrayList<>();
                     if (context.getLabVessel() == null) {
                         for (LabVessel sourceLabVessel : context.getEvent().getSourceLabVessels()) {
-                            inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEvents());
+                            inPlaceLabEvents.addAll(sourceLabVessel.getInPlaceEventsWithContainers());
                         }
                     } else {
-                        inPlaceLabEvents.addAll(context.getLabVessel().getInPlaceEvents());
+                        inPlaceLabEvents.addAll(context.getLabVessel().getInPlaceEventsWithContainers());
                     }
                     Collections.sort(inPlaceLabEvents, new Comparator<LabEvent>() {
                         @Override

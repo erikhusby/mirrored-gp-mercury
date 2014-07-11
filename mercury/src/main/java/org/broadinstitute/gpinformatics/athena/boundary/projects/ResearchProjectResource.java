@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -106,12 +107,17 @@ public class ResearchProjectResource {
             return names;
         }
 
-        private List<Long> createCollections(ResearchProject researchProject) {
-            List<Long> collectionIds = new ArrayList<> (researchProject.getCohortIds().length);
-            for (String cohortId : researchProject.getCohortIds()) {
-                collectionIds.add(Long.parseLong(cohortId.substring(3)));
-            }
+        /**
+         *
+         * @param researchProject the research project and its associated data
+         * @return a list of cohort Ids
+         */
 
+        private List<Long> createCollections(ResearchProject researchProject) {
+            List<Long> collectionIds = new ArrayList<>(researchProject.getCohorts().length);
+            for (ResearchProjectCohort researchProjectCohort : researchProject.getCohorts()) {
+                collectionIds.add(researchProjectCohort.getDatabaseId());
+            }
             return collectionIds;
         }
 

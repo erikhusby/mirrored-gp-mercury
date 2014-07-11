@@ -22,7 +22,11 @@
 
     <stripes:layout-component name="content">
         <div class="clearfix"></div>
-
+        <div class="actionButtons">
+            <img src="${ctxpath}/images/pdficon_small.png" alt=""/>
+            <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
+                Download Product Descriptions</stripes:link>
+        </div>
         <table id="productList" class="table simple">
             <thead>
             <tr>

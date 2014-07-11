@@ -83,6 +83,7 @@ public class TestCoreActionBeanContext extends CoreActionBeanContext {
      *
      * @return the JAAS username
      */
+    @Override
     public String getUsername() {
         HttpServletRequest request = getRequest();
         return request.getRemoteUser();

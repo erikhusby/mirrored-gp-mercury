@@ -82,7 +82,7 @@ public class SampleReceiptResource {
                     null));
         }
         LabVessel firstLabVessel = startingLabVessels.iterator().next();
-        LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
+        LabEvent labEvent = firstLabVessel.getInPlaceEventsWithContainers().iterator().next();
         BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
         return new SampleReceiptBean(
                 labEvent.getEventDate(),

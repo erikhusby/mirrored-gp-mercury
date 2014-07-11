@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.bsp.client.collection.SampleCollection;
+import org.broadinstitute.bsp.client.site.Site;
 import org.broadinstitute.bsp.client.workrequest.SampleKitWorkRequest;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.envers.Audited;
@@ -50,7 +52,7 @@ public class ProductOrderKit implements Serializable {
 
 
     @OneToMany(mappedBy = "productOrderKit", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet();
+    private Set<ProductOrderKitDetail> kitOrderDetails = new HashSet<> ();
 
     @Column(name = "work_request_id")
     private String workRequestId;
@@ -72,6 +74,19 @@ public class ProductOrderKit implements Serializable {
 
     // Required by JPA and used when creating new pdo.
     public ProductOrderKit() {
+    }
+
+    /**
+     * This is used by the web service call that sets up work requests (in ProductOrderResource).
+     */
+    public ProductOrderKit(SampleCollection sampleCollection, Site site, ProductOrderKitDetail kitDetail, boolean exomeExpress) {
+        sampleCollectionId = sampleCollection.getCollectionId();
+        sampleCollectionName = sampleCollection.getCollectionName();
+        siteId = site.getId();
+        siteName = site.getName();
+        kitOrderDetails.add(kitDetail);
+        this.exomeExpress = exomeExpress;
+        kitDetail.setProductOrderKit(this);
     }
 
     // Only used by tests.

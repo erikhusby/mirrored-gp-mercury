@@ -74,8 +74,7 @@ public class ProductOrderKitDetail implements Serializable {
     public ProductOrderKitDetail() {
     }
 
-    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId,
-                                 MaterialInfoDto materialInfo) {
+    public ProductOrderKitDetail(Long numberOfSamples, KitType kitType, Long organismId, MaterialInfoDto materialInfo) {
         this.numberOfSamples = numberOfSamples;
         this.kitType = kitType;
         this.organismId = organismId;

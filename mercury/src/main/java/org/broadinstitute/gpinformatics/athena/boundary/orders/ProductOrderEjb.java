@@ -117,7 +117,7 @@ public class ProductOrderEjb {
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
-     * Persisting a Product order.  This methods primary job is to Support a call from the Product Order Action bean
+     * Persisting a Product order.  This method's primary job is to Support a call from the Product Order Action bean
      * to wrap the persistence of an order in a transaction.
      *
      * @param saveType            Indicates what type of persistence this is:  Save, Update, etc
@@ -514,11 +514,13 @@ public class ProductOrderEjb {
 
             for (ProductOrderSample sample : samples) {
                 messages.add(sample.getName() + " @ " + sample.getSamplePosition()
-                             + " : current status " + sample.getDeliveryStatus().getDisplayName());
+                             + " : current status " + (StringUtils.isNotBlank(
+                        sample.getDeliveryStatus().getDisplayName()) ? sample.getDeliveryStatus().getDisplayName() :
+                        "Not Started"));
             }
 
-            return "Cannot transition samples to status " + status.getDisplayName()
-                   + ": " + StringUtils.join(messages, ", ");
+            return "Cannot transition samples to status " + (StringUtils.isNotBlank(status.getDisplayName()) ?
+                    status.getDisplayName() : "Not Started") + ": " + StringUtils.join(messages, ", ");
         }
     }
 
@@ -742,10 +744,6 @@ public class ProductOrderEjb {
      * changes are pushed to JIRA as well, with a comment about the change and the current user.
      *
      * @param jiraTicketKey the key to update
-     * @param reporter
-     *
-     * @throws NoSuchPDOException
-     * @throws IOException
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException {
@@ -862,10 +860,8 @@ public class ProductOrderEjb {
         Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
         while (samplesIter.hasNext()) {
             ProductOrderSample sample = samplesIter.next();
-            if (sample.getDeliveryStatus() != ProductOrderSample.DeliveryStatus.ABANDONED) {
-                samplesIter.remove();
-            }
-            if (!StringUtils.isBlank(comment)) {
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED &&
+                !StringUtils.isBlank(comment)) {
                 sample.setSampleComment(comment);
             }
         }
@@ -972,7 +968,12 @@ public class ProductOrderEjb {
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
 
-        if (editOrder.isSampleInitiation()) {
+        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
+        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
+            if (editOrder.isSampleInitiation()) {
+                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
+            }
+
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
@@ -1008,7 +1009,7 @@ public class ProductOrderEjb {
      * @param squidInput      Basic information needed for squid to automatically create a work request for the
      *                        material information represented by the samples in the referenced product order
      *
-     * @return
+     * @return work request output
      */
     public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
                                                         @Nonnull AutoWorkRequestInput squidInput) {

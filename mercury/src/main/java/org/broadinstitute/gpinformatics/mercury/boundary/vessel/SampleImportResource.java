@@ -61,7 +61,7 @@ public class SampleImportResource {
 
         Set<LabVessel> startingLabVessels = labBatch.getStartingBatchLabVessels();
         LabVessel firstLabVessel = startingLabVessels.iterator().next();
-        LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
+        LabEvent labEvent = firstLabVessel.getInPlaceEventsWithContainers().iterator().next();
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<>();
         TubeFormation tubeFormation = (TubeFormation) firstLabVessel.getContainers().iterator().next().getEmbedder();
