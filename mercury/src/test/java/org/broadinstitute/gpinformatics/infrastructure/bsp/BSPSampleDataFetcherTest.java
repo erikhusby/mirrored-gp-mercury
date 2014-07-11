@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -13,7 +12,7 @@ import static org.testng.Assert.assertTrue;
 
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class BSPSampleDataFetcherTest extends ContainerTest {
+public class BSPSampleDataFetcherTest {
 
     BSPSampleSearchService sampleSearchService = BSPSampleSearchServiceProducer.testInstance();
 
