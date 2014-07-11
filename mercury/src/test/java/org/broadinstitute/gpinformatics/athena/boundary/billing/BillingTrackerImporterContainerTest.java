@@ -122,14 +122,15 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
             String rnaOrderId = "PDO-23";
             Assert.assertEquals(productOrders.get(0).getBusinessKey(), rnaOrderId, "Should have products");
 
+            // iterator().next() is OK here because there's only one PDO in the spreadsheet.
             Set<Map.Entry<BillableRef, OrderBillSummaryStat>> entries =
                 processor.getChargesMapByPdo().values().iterator().next().entrySet();
 
             // Primary Product data
-            String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
+            String rnaPriceItemName = "Materials";
             OrderBillSummaryStat productStatData = getOrderBillSummaryStat(entries, rnaPriceItemName);
-            Assert.assertEquals(productStatData.getCharge(), 0.0, "Charge mismatch");
-            Assert.assertEquals(productStatData.getCredit(), 2.0, "Credit mismatch");
+            Assert.assertEquals(productStatData.getCharge(), 2.0, "Charge mismatch");
+            Assert.assertEquals(productStatData.getCredit(), 0.0, "Credit mismatch");
 
             // First AddOn data
             String rnaAddonPriceItemName = "DNA or RNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva";
