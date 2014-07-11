@@ -155,13 +155,17 @@ public class BillingTrackerImporterContainerTest extends Arquillian {
         // Find the price item.
         Map.Entry<BillableRef, OrderBillSummaryStat> entry = null;
         Iterator<Map.Entry<BillableRef, OrderBillSummaryStat>> entryIterator = entries.iterator();
+        List<String> allPriceItemNames = new ArrayList<>();
         while ((entry == null) && entryIterator.hasNext()) {
             entry = entryIterator.next();
+            allPriceItemNames.add(entry.getKey().getPriceItemName());
             if (!entry.getKey().getPriceItemName().equals(rnaPriceItemName)) {
                 entry = null;
             }
         }
-        Assert.assertNotNull(entry, "Could not find the matching price item for: " + rnaPriceItemName);
+        Assert.assertNotNull(entry,
+                String.format("Could not find the matching price item for: '%s'. Did not match any of [%s].",
+                        rnaPriceItemName, StringUtils.join(allPriceItemNames, ", ")));
         return entry.getValue();
     }
 
