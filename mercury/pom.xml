@@ -486,8 +486,8 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <groups>DatabaseFree</groups>
-                            <parallel>methods</parallel>
-                            <threadCount>10</threadCount>
+                            <!--<parallel>methods</parallel>-->
+                            <!--<threadCount>10</threadCount>-->
                         </configuration>
                     </plugin>
                 </plugins>
