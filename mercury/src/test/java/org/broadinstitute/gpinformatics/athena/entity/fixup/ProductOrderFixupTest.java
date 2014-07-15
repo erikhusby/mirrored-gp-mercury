@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -447,5 +448,18 @@ public class ProductOrderFixupTest extends Arquillian {
             order.setOrderStatus(ProductOrder.OrderStatus.Completed);
             productOrderDao.persist(order);
         }
+    }
+
+    @Test(enabled = false)
+    public void updateQuotesGPLIM2830() throws Exception {
+        List<ProductOrder> ordersToUpdate = productOrderDao.findListByBusinessKeys(Arrays.asList("PDO-2693","PDO-2771",
+                "PDO-2686","PDO-2635"));
+
+        for(ProductOrder productOrder:ordersToUpdate) {
+            productOrder.setQuoteId("GP87U");
+        }
+        productOrderDao.persistAll(ordersToUpdate);
+        productOrderDao.flush();
+
     }
 }

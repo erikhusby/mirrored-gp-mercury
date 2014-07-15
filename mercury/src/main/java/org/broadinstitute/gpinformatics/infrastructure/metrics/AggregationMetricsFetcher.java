@@ -35,6 +35,7 @@ public class AggregationMetricsFetcher {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
+
         List<Predicate> predicates = new ArrayList<>();
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));

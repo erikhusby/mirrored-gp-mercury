@@ -1,7 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.test.entity.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceImpl;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
@@ -17,7 +21,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 
-public class BSPPlatingTest extends ContainerTest {
+public class BSPPlatingTest  {
 
     //@Inject
     BSPPlatingRequestService platingService;

@@ -198,6 +198,13 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         readResolve();
     }
 
+    public ProductOrder(String title, String comments, String quoteId) {
+        // Constructor for ProductOrderData.toProductOrder()
+        this.title = title;
+        this.comments = comments;
+        this.quoteId = quoteId;
+    }
+
     /**
      * Constructor called when creating a new ProductOrder.
      */

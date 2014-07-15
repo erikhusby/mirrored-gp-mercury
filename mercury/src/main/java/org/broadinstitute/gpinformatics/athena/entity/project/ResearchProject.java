@@ -17,36 +17,9 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Research Projects hold all the information about a research project
@@ -366,6 +339,19 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             cohorts[i++] = cohort.getCohortId();
         }
 
+        return cohorts;
+    }
+
+    /**
+     * @return a full list of cohorts in the same way cohort Ids are retrieved.
+     */
+
+    public ResearchProjectCohort[] getCohorts() {
+        int i = 0;
+        ResearchProjectCohort[] cohorts = new ResearchProjectCohort[sampleCohorts.size()];
+        for (ResearchProjectCohort researchProjectCohort : sampleCohorts) {
+            cohorts[i++] = researchProjectCohort;
+        }
         return cohorts;
     }
 

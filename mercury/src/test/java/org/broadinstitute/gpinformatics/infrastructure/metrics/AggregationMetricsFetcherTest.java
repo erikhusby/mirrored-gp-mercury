@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.equalTo;
  *     <li>we are connecting to the production database because there is not an appropriate dev or test database</li>
  * </ul>
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class AggregationMetricsFetcherTest extends ContainerTest {
 
     /**
