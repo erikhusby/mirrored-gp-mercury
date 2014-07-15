@@ -81,6 +81,7 @@ public class SubmissionDtoFetcherTest {
             Assert.assertEquals(submissionDTO.getAggregationProject(), RESEARCH_PROJECT_ID);
             Assert.assertEquals(submissionDTO.getResearchProject(), RESEARCH_PROJECT_ID);
             Assert.assertEquals(submissionDTO.getFingerprintLOD(), fingerprintLod);
+            Assert.assertEquals(submissionDTO.getProductOrderIds(), Arrays.asList(productOrder.getBusinessKey()));
         }
 
 
