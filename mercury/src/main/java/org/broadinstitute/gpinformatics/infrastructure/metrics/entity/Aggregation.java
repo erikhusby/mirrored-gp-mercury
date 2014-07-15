@@ -54,6 +54,10 @@ public class Aggregation {
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
     private Collection<AggregationReadGroup> aggregationReadGroups;
 
+    public void setAggregationReadGroups(Collection<AggregationReadGroup> aggregationReadGroups) {
+        this.aggregationReadGroups = aggregationReadGroups;
+    }
+
     public String getProject() {
         return project;
     }
@@ -197,4 +201,15 @@ public class Aggregation {
         return result;
     }
 
+    public void setAggregationContam(AggregationContam aggregationContam) {
+        this.aggregationContam = aggregationContam;
+    }
+
+    public void setSample(String sample) {
+        this.sample = sample;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
 }

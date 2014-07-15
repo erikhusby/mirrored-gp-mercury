@@ -19,6 +19,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -74,7 +75,7 @@ public class AggregationReadGroup implements Serializable {
     }
 
     @Transient
-    public List<PicardAnalysis> picardAnalysis;
+    public List<PicardAnalysis> picardAnalysis=new ArrayList<>();
 
     public List<PicardAnalysis> getPicardAnalysis() {
         return picardAnalysis;
@@ -152,5 +153,9 @@ public class AggregationReadGroup implements Serializable {
         result = 31 * result + (pairedEnd ? 1 : 0);
         result = 31 * result + (picardAnalysis != null ? picardAnalysis.hashCode() : 0);
         return result;
+    }
+
+    public void setLane(long lane) {
+        this.lane = lane;
     }
 }

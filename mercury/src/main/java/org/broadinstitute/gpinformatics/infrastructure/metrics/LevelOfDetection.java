@@ -29,6 +29,10 @@ public class LevelOfDetection {
     public LevelOfDetection(@Nonnull Double min, @Nonnull Double max) {
         this.min = min;
         this.max = max;
+        if (min > max) {
+            throw new IllegalStateException(
+                    String.format("value of min(%f) can not be larger than that of max(%f)", min, max));
+        }
     }
 
     public static LevelOfDetection calculate(Collection<AggregationReadGroup> aggregationReadGroups) {

@@ -43,6 +43,10 @@ public class AggregationContam implements Serializable {
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
     private Aggregation aggregation;
 
+    public void setPctContamination(Double pctContamination) {
+        this.pctContamination = pctContamination;
+    }
+
     public int getAggregationId() {
         return aggregationId;
     }

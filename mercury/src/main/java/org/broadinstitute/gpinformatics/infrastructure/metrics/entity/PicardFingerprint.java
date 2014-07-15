@@ -42,6 +42,21 @@ public class PicardFingerprint implements Serializable {
     public PicardFingerprint() {
     }
 
+    public PicardFingerprint(String readGroup, String sample, Double llExpectedSample, Double llRandomSample,
+                             Double lodExpectedSample, Integer haplotypesWithGenotypes,
+                             Integer haplotypesConfidentlyChecked, Integer haplotypesConfidentlyMatching,
+                             PicardAnalysis picardAnalysis) {
+        this.readGroup = readGroup;
+        this.sample = sample;
+        this.llExpectedSample = llExpectedSample;
+        this.llRandomSample = llRandomSample;
+        this.lodExpectedSample = lodExpectedSample;
+        this.haplotypesWithGenotypes = haplotypesWithGenotypes;
+        this.haplotypesConfidentlyChecked = haplotypesConfidentlyChecked;
+        this.haplotypesConfidentlyMatching = haplotypesConfidentlyMatching;
+        this.picardAnalysis = picardAnalysis;
+    }
+
     public PicardFingerprint(int picardAnalysisId, String readGroup, String sample, Double llExpectedSample,
                              Double llRandomSample, Double lodExpectedSample,
                              Integer haplotypesWithGenotypes, Integer haplotypesConfidentlyChecked,
@@ -130,6 +145,10 @@ public class PicardFingerprint implements Serializable {
 
     public Double getLlExpectedSample() {
         return llExpectedSample;
+    }
+
+    public void setLodExpectedSample(Double lodExpectedSample) {
+        this.lodExpectedSample = lodExpectedSample;
     }
 
     public Double getLlRandomSample() {

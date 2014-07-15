@@ -166,4 +166,12 @@ public class PicardAnalysis implements Serializable {
         result = 31 * result + (picardFingerprint != null ? picardFingerprint.hashCode() : 0);
         return result;
     }
+
+    public void setPicardFingerprint(PicardFingerprint picardFingerprint) {
+        this.picardFingerprint = picardFingerprint;
+    }
+
+    public void setLane(String lane) {
+        this.lane = lane;
+    }
 }
