@@ -15,7 +15,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SubmissionDTO {
@@ -33,7 +35,6 @@ public class SubmissionDTO {
     private final Aggregation aggregation;
 
     public SubmissionDTO(BassDTO bassDTO, Aggregation aggregation, List<String> productOrderIds) {
-
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
         this.productOrderIds = productOrderIds;
@@ -81,12 +82,14 @@ public class SubmissionDTO {
         return aggregation.getLevelOfDetection();
     }
 
-    public long getLanes() {
-        long lanes=0;
+    public List<String> getLanes() {
+        List<String> result=new ArrayList<>();
         for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-            lanes += aggregationReadGroup.getLane();
+            for (PicardAnalysis picardAnalysis : aggregationReadGroup.getPicardAnalysis()) {
+                result.add(picardAnalysis.getLane());
+            }
         }
-        return lanes;
+        return result;
     }
 
     public String getResearchProject() {

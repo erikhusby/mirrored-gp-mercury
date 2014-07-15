@@ -31,7 +31,7 @@ public class SubmissionSampleDtoTest {
     public static final String AGGREGATION_PROJECT = "RP-12";
     public static final int VERSION = 1;
     public static final double CONTAMINATION = 0.47;
-    public static final long NUM_LANES = 2;
+    public static final List<String> LANES = Arrays.asList("1", "2");
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
     public static final List<String> PRODUCT_ORDER_IDS = Arrays.asList("PDO-123", "PDO-456");
     public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
@@ -62,7 +62,7 @@ public class SubmissionSampleDtoTest {
 //        Assert.assertEquals(submissionDTO.getQualityMetric(), qualityMetric);
         Assert.assertEquals(submissionDTO.getContamination(), CONTAMINATION);
         Assert.assertEquals(submissionDTO.getFingerprintLOD(), FINGERPRINT_LOD);
-        Assert.assertEquals(submissionDTO.getLanes(), NUM_LANES);
+        Assert.assertEquals(submissionDTO.getLanes(), LANES);
 //        Assert.assertEquals(submissionDTO.getBlacklistedLanes(), blacklistedLanes);
 //        Assert.assertEquals(submissionDTO.getSubmittedVersion(), submittedVersion);
 //        Assert.assertEquals(submissionDTO.getCurrentStatus(), currentStatus);
