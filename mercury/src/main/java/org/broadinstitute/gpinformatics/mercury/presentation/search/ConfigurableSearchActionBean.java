@@ -13,11 +13,11 @@ import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.SimpleMessage;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.preference.PreferenceEjb;
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBeanContext;
@@ -42,9 +43,7 @@ import org.hibernate.Criteria;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -69,11 +68,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * Prefix for pagination session key
      */
     public static final String PAGINATION_PREFIX = "pagination_";
-
-    /**
-     * Separator between preference level name and search instance name
-     */
-    private static final String PREFERENCE_SEPARATOR = " - ";
 
     /**
      * The definition from which the user will create the search
@@ -170,11 +164,6 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private String sessionKey;
 
     /**
-     * Map from preference level name to a method to get the preference
-     */
-    private static Map<String, PreferenceAccess> preferenceAccessMap = new LinkedHashMap<>();
-
-    /**
      * Map from preference level name to fetched preference
      */
     private Map<String, Preference> preferenceMap;
@@ -189,9 +178,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     private String entityName;
 
-    /*
-     * Dependencies:
-     */
+    // Dependencies
     @Inject
     private PreferenceDao preferenceDao;
 
@@ -210,117 +197,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
 
-//    private WorkRequestItem<?> workRequestItem;
-
-    public List<String> getNewSearchLevels() {
-        return newSearchLevels;
-    }
-
-    public void setSearchTermFirstValue(String searchTermFirstValue) {
-        this.searchTermFirstValue = searchTermFirstValue;
-    }
-
-    /**
-     * Method to retrieve preference from the database, has a different implementation for
-     * each level
-     */
-    interface PreferenceAccess {
-        Preference getPreference(CoreActionBeanContext bspActionBeanContext, PreferenceDao preferenceDao);
-
-        Preference createNewPreference(CoreActionBeanContext bspActionBeanContext);
-
-        boolean canModifyPreference(CoreActionBeanContext bspActionBeanContext);
-    }
-
-    static {
-        // TODO jmt do we need search instances for entities other than Sample?
-        preferenceAccessMap.put("GLOBAL", new PreferenceAccess() {
-            @Override
-            public Preference getPreference(CoreActionBeanContext bspActionBeanContext, PreferenceDao preferenceDao) {
-                return preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(CoreActionBeanContext bspActionBeanContext) {
-                return new Preference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, "");
-            }
-
-            @Override
-            public boolean canModifyPreference(CoreActionBeanContext bspActionBeanContext) {
-                return true; // bspActionBeanContext.isAdmin();
-            }
-        });
-/*
-        preferenceAccessMap.put("GROUP", new PreferenceAccess() {
-            @Override
-            public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                return bspActionBeanContext.getGroup() == null ? null : (new PreferenceManager()).getGroupPreference(
-                        bspActionBeanContext.getGroup().getGroupId(),
-                        PreferenceType.Type.GROUP_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                Preference preference = new Preference();
-                PreferenceType preferenceType = new PreferenceType();
-                preferenceType.setPreferenceTypeId(PreferenceType.Type.GROUP_SEARCH_INSTANCES.getId());
-                preference.setPreferenceType(preferenceType);
-                preference.setGroupId(bspActionBeanContext.getGroup().getGroupId());
-                return preference;
-            }
-
-            @Override
-            public boolean canModifyPreference(BspActionBeanContext bspActionBeanContext) {
-                return bspActionBeanContext.isAdmin();
-            }
-        });
-        preferenceAccessMap.put("COLLECTION", new PreferenceAccess() {
-            @Override
-            public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                return bspActionBeanContext.getSampleCollection() == null ? null : (new PreferenceManager())
-                        .getProjectPreference(bspActionBeanContext
-                                .getSampleCollection().getCollectionId(), PreferenceType.Type.PROJECT_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                Preference preference = new Preference();
-                PreferenceType preferenceType = new PreferenceType();
-                preferenceType.setPreferenceTypeId(PreferenceType.Type.PROJECT_SEARCH_INSTANCES.getId());
-                preference.setPreferenceType(preferenceType);
-                preference.setProjectId(bspActionBeanContext.getSampleCollection().getCollectionId());
-                return preference;
-            }
-
-            @Override
-            public boolean canModifyPreference(BspActionBeanContext bspActionBeanContext) {
-                return bspActionBeanContext.isAdmin();
-            }
-        });
-        preferenceAccessMap.put("USER", new PreferenceAccess() {
-            @Override
-            public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                return (new PreferenceManager()).getUserPreference(bspActionBeanContext.getUserProfile(),
-                        PreferenceType.Type.USER_SEARCH_INSTANCES);
-            }
-
-            @Override
-            public Preference createNewPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
-                Preference preference = new Preference();
-                PreferenceType preferenceType = new PreferenceType();
-                preferenceType.setPreferenceTypeId(PreferenceType.Type.USER_SEARCH_INSTANCES.getId());
-                preference.setPreferenceType(preferenceType);
-                preference.setUserId(bspActionBeanContext.getUserProfile().getId());
-                return preference;
-            }
-
-            @Override
-            public boolean canModifyPreference(BspActionBeanContext bspActionBeanContext) {
-                return true;
-            }
-        });
-*/
-    }
+    @Inject
+    private SearchInstanceEjb searchInstanceEjb;
 
     /**
      * Called when the user first visits the page, this method fetches preferences.
@@ -344,21 +222,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         try {
             configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
 
-            for (Map.Entry<String, PreferenceAccess> stringPreferenceAccessEntry : preferenceAccessMap.entrySet()) {
-                PreferenceAccess preferenceAccess = stringPreferenceAccessEntry.getValue();
-                Preference preference = preferenceAccess.getPreference(getContext(), preferenceDao);
-                if (preference != null) {
-                    SearchInstanceList searchInstanceList =
-                            (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
-                    for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
-                        searchInstanceNames.add(stringPreferenceAccessEntry.getKey() + PREFERENCE_SEPARATOR + instance.getName());
-                    }
-                }
-                preferenceMap.put(stringPreferenceAccessEntry.getKey(), preference);
-                if (preferenceAccess.canModifyPreference(getContext())) {
-                    newSearchLevels.add(stringPreferenceAccessEntry.getKey());
-                }
-            }
+            searchInstanceEjb.fetchInstances(preferenceMap,  searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -375,7 +239,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         SearchInstanceList searchInstanceList = null;
         for (Map.Entry<String, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
             if (selectedSearchName.startsWith(stringPreferenceEntry.getKey())) {
-                searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() + PREFERENCE_SEPARATOR.length());
+                searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() +
+                        SearchInstanceEjb.PREFERENCE_SEPARATOR.length());
                 try {
                     searchInstanceList =
                             (SearchInstanceList) stringPreferenceEntry.getValue().getPreferenceDefinition().getDefinitionValue();
@@ -701,101 +566,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     private void persistSearch(boolean newSearch) {
         getPreferences();
-        try {
-            boolean save = true;
-            // For new searches, check the user's authorization
-            if (newSearch) {
-                if (!preferenceAccessMap.get(newSearchLevel).canModifyPreference(getContext())) {
-                    addGlobalValidationError("You are not authorized to save searches at level {2}", newSearchLevel);
-                    save = false;
-                }
-            }
-            String existingSearchLevel = null;
-            String searchName = null;
-            Preference preference = null;
-            if (save) {
-                // Find the existing preference (if any) at the chosen level (each
-                // preference holds many searches)
-                for (String level : preferenceMap.keySet()) {
-                    if (newSearch) {
-                        if (newSearchLevel.equals(level)) {
-                            preference = preferenceMap.get(level);
-                            break;
-                        }
-                    } else {
-                        if (selectedSearchName.startsWith(level)) {
-                            existingSearchLevel = level;
-                            // For existing searches, check the user's authorization
-                            if (preferenceAccessMap.get(selectedSearchName.substring(0, level.length()))
-                                    .canModifyPreference(getContext())) {
-                                searchName = selectedSearchName.substring(level.length()
-                                                                          + PREFERENCE_SEPARATOR.length());
-                                preference = preferenceMap.get(level);
-                            } else {
-                                addGlobalValidationError("You are not authorized to update searches at level {2}",
-                                        level);
-                                save = false;
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            if (save) {
-                SearchInstanceList searchInstanceList;
-                if (preference == null) {
-                    // Didn't find an existing preference, so create a new one
-                    preference = preferenceAccessMap.get(newSearch ? newSearchLevel : existingSearchLevel)
-                            .createNewPreference(getContext());
-                    searchInstanceList = new SearchInstanceList();
-                } else {
-                    searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
-                }
-                if (newSearch) {
-                    // Check for uniqueness
-                    for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-                        if (searchInstanceLocal.getName().equals(newSearchName)) {
-                            getContext().getMessages().add(
-                                    new SimpleMessage("There is already a search called " + newSearchName + " in the "
-                                                      + newSearchLevel + " level"));
-                            save = false;
-                            break;
-                        }
-                    }
-                    searchInstance.setName(newSearchName);
-                    searchInstanceList.getSearchInstances().add(searchInstance);
-                } else {
-                    // Find the search we're updating
-                    boolean found = false;
-                    for (int i = 0; i < searchInstanceList.getSearchInstances().size(); i++) {
-                        if (searchInstanceList.getSearchInstances().get(i).getName().equals(searchName)) {
-                            searchInstance.setName(searchName);
-                            searchInstanceList.getSearchInstances().set(i, searchInstance);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        // We didn't find it, so add it. Arguably this should be an error.
-                        searchInstance.setName(searchName);
-                        searchInstanceList.getSearchInstances().add(searchInstance);
-                    }
-                }
-                if (save) {
-                    preference.markModified(searchInstanceList.marshal());
-                    // Changing the preference definition doesn't seem to make the
-                    // Hibernate
-                    // object "dirty", so change something else too
-                    preference.setModifiedDate(new Date());
-                    preferenceEjb.add(userBean.getBspUser().getUserId(),
-                            PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, searchInstanceList);
-                    getContext().getMessages().add(new SimpleMessage("The search was saved"));
-                }
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            addGlobalValidationError("Failed to save the search");
-        }
+        MessageCollection messageCollection = new MessageCollection();
+        searchInstanceEjb.persistSearch(newSearch, searchInstance, messageCollection, newSearchLevel, newSearchName,
+                selectedSearchName, preferenceMap);
+        addMessages(messageCollection);
         getPreferences();
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
@@ -808,47 +582,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     public Resolution deleteSearch() {
         getPreferences();
-        String searchName = null;
-        Preference preference = null;
-        for (Map.Entry<String, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
-            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey())) {
-                if (preferenceAccessMap.get(selectedSearchName.substring(0, stringPreferenceEntry.getKey().length())).canModifyPreference(
-                        getContext())) {
-                    searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() + PREFERENCE_SEPARATOR.length());
-                    preference = stringPreferenceEntry.getValue();
-                } else {
-                    addGlobalValidationError("You are not authorized to delete this search");
-                }
-                break;
-            }
-        }
-        if (preference != null) {
-            SearchInstanceList searchInstanceList;
-            try {
-                searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            for (SearchInstance instance : searchInstanceList.getSearchInstances()) {
-                if (instance.getName().equals(searchName)) {
-                    searchInstanceList.getSearchInstances().remove(instance);
-                    break;
-                }
-            }
-            preference.setModifiedDate(new Date());
-            try {
-                preferenceDao.persist(preference);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                addGlobalValidationError("Failed to delete the search");
-            }
-            getContext().getMessages().add(new SimpleMessage("The search was deleted"));
-            return queryPage();
-        }
-        initEvalContext(searchInstance, getContext());
-        searchInstance.establishRelationships(configurableSearchDef);
-        getPreferences();
-        return new ForwardResolution("/search/configurable_search.jsp");
+        MessageCollection messageCollection = new MessageCollection();
+        searchInstanceEjb.deleteSearch(messageCollection, selectedSearchName, preferenceMap);
+        return queryPage();
     }
 
     public List<ConfigurableListFactory.ColumnSet> getViewColumnSets() {
@@ -998,4 +734,13 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public void setEntityName(String entityName) {
         this.entityName = entityName;
     }
+
+    public List<String> getNewSearchLevels() {
+        return newSearchLevels;
+    }
+
+    public void setSearchTermFirstValue(String searchTermFirstValue) {
+        this.searchTermFirstValue = searchTermFirstValue;
+    }
+
 }

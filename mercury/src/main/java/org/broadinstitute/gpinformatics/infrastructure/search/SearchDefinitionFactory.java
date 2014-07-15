@@ -30,6 +30,8 @@ public class SearchDefinitionFactory {
         if (mapNameToDef.isEmpty()) {
             ConfigurableSearchDefinition configurableSearchDefinition = buildLabVesselSearchDef();
             mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
+            configurableSearchDefinition = buildLabEventSearchDef();
+            mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
         }
         return mapNameToDef.get(entity);
     }
@@ -389,5 +391,58 @@ public class SearchDefinitionFactory {
             }
         }
         return results;
+    }
+
+    public ConfigurableSearchDefinition buildLabEventSearchDef() {
+        Map<String, List<SearchTerm>> mapGroupSearchTerms = new HashMap<>();
+
+        List<SearchTerm> searchTerms = buildLabEventIds();
+        mapGroupSearchTerms.put("IDs", searchTerms);
+
+        List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
+//        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
+//                "labVessel", BucketEntry.class.getName()));
+        ConfigurableSearchDefinition configurableSearchDefinition = new ConfigurableSearchDefinition(
+                "LabEvent", LabEvent.class.getName(), "labEventId", 100, criteriaProjections, mapGroupSearchTerms);
+        mapNameToDef.put(configurableSearchDefinition.getName(), configurableSearchDefinition);
+        return configurableSearchDefinition;
+    }
+
+    private List<SearchTerm> buildLabEventIds() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("LabEventId");
+        List<SearchTerm.CriteriaPath> criteriaPaths = new ArrayList<>();
+        SearchTerm.CriteriaPath criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("labEventId");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getLabEventId();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EventDate");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("eventDate");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getEventDate();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        return searchTerms;
     }
 }
