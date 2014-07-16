@@ -20,7 +20,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 
@@ -40,7 +39,7 @@ public class Aggregation {
     private Date createdAt;
     private Date modifiedAt;
     private Long isLatest;
-    private BigInteger readGroupCount;
+    private int readGroupCount;
     private String aggregationType;
     private Date workflowStartDate;
     private Date workflowEndDate;
@@ -86,7 +85,7 @@ public class Aggregation {
         return isLatest;
     }
 
-    public BigInteger getReadGroupCount() {
+    public int getReadGroupCount() {
         return readGroupCount;
     }
 
@@ -166,9 +165,6 @@ public class Aggregation {
         if (project != null ? !project.equals(that.project) : that.project != null) {
             return false;
         }
-        if (readGroupCount != null ? !readGroupCount.equals(that.readGroupCount) : that.readGroupCount != null) {
-            return false;
-        }
         if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
             return false;
         }
@@ -193,7 +189,6 @@ public class Aggregation {
         result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
         result = 31 * result + (modifiedAt != null ? modifiedAt.hashCode() : 0);
         result = 31 * result + (isLatest != null ? isLatest.hashCode() : 0);
-        result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
         result = 31 * result + (aggregationType != null ? aggregationType.hashCode() : 0);
         result = 31 * result + (workflowStartDate != null ? workflowStartDate.hashCode() : 0);
         result = 31 * result + (workflowEndDate != null ? workflowEndDate.hashCode() : 0);
@@ -211,5 +206,17 @@ public class Aggregation {
 
     public void setProject(String project) {
         this.project = project;
+    }
+
+    public void setReadGroupCount(int readGroupCount) {
+        this.readGroupCount = readGroupCount;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setWorkflowEndDate(Date workflowEndDate) {
+        this.workflowEndDate = workflowEndDate;
     }
 }

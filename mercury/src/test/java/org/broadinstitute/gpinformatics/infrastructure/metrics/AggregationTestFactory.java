@@ -16,10 +16,14 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 
+import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Date;
 
 public class AggregationTestFactory {
+    @SuppressWarnings("EmptyCatchBlock")
     public static Aggregation buildAggregation(String project, String sample, double contamination,
                                                LevelOfDetection fingerprintLod) {
         Aggregation aggregation = new Aggregation();
@@ -28,7 +32,15 @@ public class AggregationTestFactory {
         AggregationContam aggregationContam = new AggregationContam();
         aggregationContam.setPctContamination(contamination);
         aggregation.setAggregationContam(aggregationContam);
+        aggregation.setReadGroupCount(2);
+        Date createdDate;
 
+        try {
+            createdDate = DateUtils.parseDate("01/01/2014");
+            aggregation.setWorkflowEndDate(createdDate);
+        } catch (ParseException e) {
+
+        }
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup();
 
         PicardFingerprint picardFingerprint1=new PicardFingerprint();

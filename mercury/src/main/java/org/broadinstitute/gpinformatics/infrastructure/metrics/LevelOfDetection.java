@@ -25,6 +25,7 @@ public class LevelOfDetection {
 
     private final Double min;
     private final Double max;
+    private boolean displayString;
 
     public LevelOfDetection(@Nonnull Double min, @Nonnull Double max) {
         this.min = min;
@@ -93,5 +94,9 @@ public class LevelOfDetection {
         int result = min != null ? min.hashCode() : 0;
         result = 31 * result + (max != null ? max.hashCode() : 0);
         return result;
+    }
+
+    public String displayString() {
+        return min + "/" + max;
     }
 }

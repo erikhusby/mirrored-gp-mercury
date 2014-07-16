@@ -42,6 +42,8 @@ import org.broadinstitute.gpinformatics.infrastructure.collaborate.Collaboration
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -114,6 +116,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
+    @Inject
+    private SubmissionDtoFetcher submissionDtoFetcher;
     /**
      * The research project business key
      */
@@ -132,6 +136,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
+    private List<SubmissionDto> submissionSamples;
     /*
      * The search query.
      */
@@ -225,7 +230,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-
+            if (editResearchProject!=null) {
+                submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+            }
             try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
                 validCollaborationPortal = true;
@@ -970,5 +977,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public boolean isValidCollaborationPortal() {
         return validCollaborationPortal;
+    }
+
+    public List<SubmissionDto> getSubmissionSamples() {
+        return submissionSamples;
+    }
+
+    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
+        this.submissionSamples = submissionSamples;
     }
 }

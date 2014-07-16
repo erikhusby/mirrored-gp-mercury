@@ -496,38 +496,38 @@
 
             <div id="submissionsTab">
                 <stripes:form beanclass="${actionBean.class.name}">
-                    <ul>
-                        <li>
-                            <input type="checkbox">Select latest bam for each sample if coverage > <stripes:text class="defaultText" name="coverage" maxlength="250"/>
-                        </li>
-                        <li>
-                            <input type="checkbox">Select latest bam for each sample if contamination < <stripes:text class="defaultText" name="contamination" maxlength="250"/>
-                        </li>
-                        <li>
-                            <input type="checkbox">Require fingerpint match
-                        </li>
+                    <%--<ul>--%>
+                        <%--<li>--%>
+                            <%--<input type="checkbox">Select latest bam for each sample if coverage > <stripes:text class="defaultText" name="coverage" maxlength="250"/>--%>
+                        <%--</li>--%>
+                        <%--<li>--%>
+                            <%--<input type="checkbox">Select latest bam for each sample if contamination < <stripes:text class="defaultText" name="contamination" maxlength="250"/>--%>
+                        <%--</li>--%>
+                        <%--<li>--%>
+                            <%--<input type="checkbox">Require fingerpint match--%>
+                        <%--</li>--%>
 
-                    </ul>
+                    <%--</ul>--%>
 
-                    <table>
-                        <tr>
-                            <td title="Choose the BioProject to which all samples will be submitted">BioProject:</td>
-                            <td>
-                                <stripes:select name="selectedBioProject" onchange="guessBioSamplesForBioProject(this.value)">
-                                    <stripes:option  label="Choose a BioProject" value=""/>
-                                        <stripes:options-collection collection="${actionBean.editResearchProject.bioProjects}"
-                                                                    value="name" label="name"/>
-                                </stripes:select>
-                            </td>
-                        </tr>
-                    </table>
+                    <%--<table>--%>
+                        <%--<tr>--%>
+                            <%--<td title="Choose the BioProject to which all samples will be submitted">BioProject:</td>--%>
+                            <%--<td>--%>
+                                <%--<stripes:select name="selectedBioProject" onchange="guessBioSamplesForBioProject(this.value)">--%>
+                                    <%--<stripes:option  label="Choose a BioProject" value=""/>--%>
+                                        <%--<stripes:options-collection collection="${actionBean.editResearchProject.bioProjects}"--%>
+                                                                    <%--value="name" label="name"/>--%>
+                                <%--</stripes:select>--%>
+                            <%--</td>--%>
+                        <%--</tr>--%>
+                    <%--</table>--%>
 
                     <table class="simple" id="submissionSamples" style="table-layout: fixed;">
                         <thead>
                         <tr>
                             <!-- add data type to big list -->
                             <!-- only show latest single file -->
-                            <th width="20">Choose</th>
+                            <%--<th width="20">Choose</th>--%>
                             <th width="100">Sample</th>
                             <th width="100">BioSample</th>
                             <th width="75">Data Type</th>
@@ -554,27 +554,22 @@
                         <!-- $j('.fileCheckbox').data('contamination') -->
 
 
-                        <c:forEach items="${actionBean.editResearchProject.submissionSamples}" var="submissionSample">
+                        <c:forEach items="${actionBean.submissionSamples}" var="submissionSample">
                                 <tr>
-                                    <td class="fileCheckbox" style="vertical-align: middle; text-align: left;"
-                                        data-contamination="${submissionSample.submissionFile.metrics.contamination}"
-                                        data-coverage="${submissionSample.submissionFile.metrics.qualityMetricValue}">
-                                        <stripes:checkbox title="${submissionSample.submissionFile.label}" class="shiftCheckbox"
-                                                          name="selectedFiles"
-                                                          value="${submissionSample.submissionFile.label}"/>
-                                    </td>
+                                    <%--<td class="fileCheckbox" style="vertical-align: middle; text-align: left;"--%>
+                                        <%--data-contamination="${submissionSample.contamination}"--%>
+                                        <%--data-coverage="${submissionSample.submissionFile.metrics.qualityMetricValue}">--%>
+                                        <%--<stripes:checkbox title="${submissionSample.submissionFile.label}" class="shiftCheckbox"--%>
+                                                          <%--name="selectedFiles"--%>
+                                                          <%--value="${submissionSample.submissionFile.label}"/>--%>
+                                    <%--</td>--%>
                                     <td>${submissionSample.sampleName}</td>
-                                    <td>
-                                        <div data-biosample="${submissionSample.bioSample}" class="BioSample-${submissionSample.sampleName}">
-                                            <stripes:text name="editOrder.title"
-                                                          maxlength="255" title="Choose a BioProject or fill in a BioSample manually"/>
-                                        </div>
-                                    </td>
+                                    <td><%--bio-sample--%></td>
                                     <td>${submissionSample.dataType}</td>
                                     <td style="padding: 5px;
                                                text-align: center;">
                                         <table class="simple" style="table-layout: fixed;">
-                                            <c:forEach items="${submissionSample.pdos}" var="pdo">
+                                            <c:forEach items="${submissionSample.productOrders}" var="pdo">
                                             <tr>
                                                 <td width="100">${pdo.businessKey}</td>
                                                 <td style="max-width: 100px;
@@ -588,54 +583,28 @@
                                             </c:forEach>
                                         </table>
                                     </td>
-                                    <td>
-                                        ${submissionSample.project}
-                                    </td>
+                                        <td> ${submissionSample.aggregationProject} </td>
+                                        <td> ${submissionSample.fileType} </td>
+                                        <td> ${submissionSample.version}</td>
+                                        <td><%--quality metric--%></td>
+                                        <td><fmt:formatNumber type="percent" value="${submissionSample.contamination}"/></td>
+                                        <td>${submissionSample.fingerprintLOD.displayString()}</td>
+                                        <td>${fn:length(submissionSample.lanes)}</td>
+                                        <td><%--blacklisted lanes--%></td>
+                                        <td><%--submitted version--%></td>
+                                        <td><%--current status--%></td>
+                                        <td><fmt:formatDate value="${submissionSample.dateCompleted}"/></td>
 
-                                    <c:if test="${submissionSample.numFiles > 0}">
-                                    <td>
-                                            ${submissionSample.submissionFile.fileType}
-                                    </td>
-                                    <td>
-                                            ${submissionSample.submissionFile.version}
-                                    </td>
-
-                                    <td>
-                                        <!-- todo change to quality label and quality value -->
-
-                                        <div style="font-size: 20px;text-align: center" title="${submissionSample.submissionFile.metrics.qualityMetricName}">
-                                            ${submissionSample.submissionFile.metrics.formattedQualityMetricValue}
-                                        </div>
-                                    </td>
-                                    <td>
-                                            ${submissionSample.submissionFile.metrics.formattedContamination}
-                                    </td>
-
-                                    <td>
-                                        <c:if test="${submissionSample.submissionFile.metrics.doesFingerprintMatch()}">
-                                        <div>
-                                            <img src="${ctxpath}/images/check.png">
-                                        </div>
-                                        </c:if>
-
-
-                                    </td>
-                                    <td>10</td>
-                                    <td>1</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    </c:if>
-                                    <c:if test="${submissionSample.numFiles == 0}">
-                                        <td colspan="11" style="text-align: center;">
-                                            no files available
-                                        </td>
-                                    </c:if>
+                                        <%--<c:if test="${submissionSample.la == 0}">--%>
+                                        <%--<td colspan="11" style="text-align: center;">--%>
+                                            <%--no files available--%>
+                                        <%--</td>--%>
+                                    <%--</c:if>--%>
                                 </tr>
                             </c:forEach>
                         </tbody>
                     </table>
-                    <button>Submit these files</button>
+                    <%--<button>Submit these files</button>--%>
                 </stripes:form>
             </div>
 

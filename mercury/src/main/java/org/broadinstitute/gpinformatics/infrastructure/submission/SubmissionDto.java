@@ -9,8 +9,9 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.athena.entity.project;
+package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
@@ -18,10 +19,12 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
-public class SubmissionDTO {
-    private List<String> productOrderIds;
+public class SubmissionDto {
+    private Collection<ProductOrder> productOrders;
 
     public BassDTO getBassDTO() {
         return bassDTO;
@@ -34,14 +37,14 @@ public class SubmissionDTO {
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
 
-    public SubmissionDTO(BassDTO bassDTO, Aggregation aggregation, List<String> productOrderIds) {
+    public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
-        this.productOrderIds = productOrderIds;
+        this.productOrders = productOrders;
     }
 
 
-    public String getSample() {
+    public String getSampleName() {
         return bassDTO.getSample();
     }
 
@@ -53,8 +56,8 @@ public class SubmissionDTO {
         return bassDTO.getDatatype();
     }
 
-    public List<String> getProductOrderIds() {
-        return productOrderIds;
+    public Collection<ProductOrder> getProductOrders() {
+        return productOrders;
     }
 
     public String getAggregationProject() {
@@ -77,6 +80,10 @@ public class SubmissionDTO {
         return aggregation.getAggregationContam().getPctContamination();
     }
 
+    public Date getDateCompleted() {
+        return aggregation.getWorkflowEndDate();
+    }
+
     public LevelOfDetection getFingerprintLOD() {
         LevelOfDetection.calculate(aggregation.getAggregationReadGroups());
         return aggregation.getLevelOfDetection();
@@ -94,5 +101,9 @@ public class SubmissionDTO {
 
     public String getResearchProject() {
         return bassDTO.getRpid();
+    }
+
+    public int getLanesInAggregation() {
+        return aggregation.getReadGroupCount();
     }
 }

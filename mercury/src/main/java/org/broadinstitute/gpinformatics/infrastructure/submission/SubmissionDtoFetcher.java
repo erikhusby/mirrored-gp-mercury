@@ -9,14 +9,17 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.athena.entity.project;
+package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 
@@ -47,43 +50,57 @@ public class SubmissionDtoFetcher {
         this.bspSampleDataFetcher = bspSampleDataFetcher;
     }
 
-    public void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
+    private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
         Set<String> sampleList = new HashSet<>();
 
         for(ProductOrderSample sample:samples) {
-            sampleList.add(sample.getName());
+            String sampleName = sample.getName();
+            if (BSPUtil.isInBspFormat(sampleName)) {
+                sampleList.add(sampleName);
+            }
         }
 
         Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
 
         for(ProductOrderSample sample:samples) {
-            sample.setBspSampleDTO(bulkInfo.get(sample.getName()));
+            BSPSampleDTO bspSampleDTO = bulkInfo.get(sample.getName());
+            if (bspSampleDTO!=null) {
+                sample.setBspSampleDTO(bspSampleDTO);
+            }
         }
-
     }
 
-    public List<SubmissionDTO> fetch(@Nonnull ResearchProject researchProject, int version) {
-        List<SubmissionDTO> results = new ArrayList<>();
+    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
+        return fetch(researchProject, 1);
+    }
+
+    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, int version) {
+        List<SubmissionDto> results = new ArrayList<>();
 
         Set<ProductOrderSample> productOrderSamples = researchProject.collectSamples();
         updateBulkBspSampleInfo(productOrderSamples);
-        Map<String, List<String>> sampleNameToPdos = new HashMap<>();
+        Map<String, Set<ProductOrder>> sampleNameToPdos = new HashMap<>();
         for (ProductOrderSample productOrderSample : productOrderSamples) {
-            String pdoSampleName = productOrderSample.getName();
-            if (sampleNameToPdos.get(pdoSampleName) == null) {
-                sampleNameToPdos.put(pdoSampleName, new ArrayList<String>());
+            String pdoSampleName = productOrderSample.getBspSampleDTO().getCollaboratorsSampleName();
+            if (!pdoSampleName.isEmpty()) {
+                if (sampleNameToPdos.get(pdoSampleName) == null) {
+                    sampleNameToPdos.put(pdoSampleName, new HashSet<ProductOrder>());
+                }
+                sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder());
             }
-            sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder().getBusinessKey());
         }
 
-        for (Map.Entry<String, List<String>> sampleListMap : sampleNameToPdos.entrySet()) {
+        for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
+            String collaboratorParticipantId = sampleListMap.getKey();
+
             Aggregation metricsAggregation =
-                    aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), sampleListMap.getKey(), version);
+                    aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), collaboratorParticipantId,
+                            version);
             List<BassDTO> bassDTOs =
-                    bassSearchService.runSearch(researchProject.getBusinessKey(), sampleListMap.getKey());
+                    bassSearchService.runSearch(researchProject.getBusinessKey(), collaboratorParticipantId);
             for (BassDTO bassDTO : bassDTOs) {
                 if (bassDTO.getVersion() == version) {
-                    results.add(new SubmissionDTO(bassDTO, metricsAggregation, sampleListMap.getValue()));
+                    results.add(new SubmissionDto(bassDTO, metricsAggregation, sampleListMap.getValue()));
                 }
             }
         }
