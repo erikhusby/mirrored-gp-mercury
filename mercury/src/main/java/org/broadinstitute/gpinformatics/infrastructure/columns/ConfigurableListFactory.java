@@ -376,7 +376,10 @@ public class ConfigurableListFactory {
         }
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
                 ColumnEntity.getByName(entityName));
-        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        // todo jmt adding the BSP stuff needs to be configurable
+        if (entityName.equals("LabVessel")) {
+            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        }
         configurableList.addRows(entityList);
 
         return configurableList.getResultList();

@@ -97,7 +97,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
             ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                     ColumnEntity.getByName(entityName));
-            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+            // todo jmt adding the BSP stuff needs to be configurable
+            if (entityName.equals("LabVessel")) {
+                configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+            }
             configurableList.addRows(entityList);
             ConfigurableList.ResultList resultList = configurableList.getResultList();
             return streamResultList(resultList);
@@ -127,7 +130,10 @@ public class ConfigurableListActionBean extends CoreActionBean {
                 .getAttribute(ConfigurableSearchActionBean.PAGINATION_PREFIX + sessionKey);
         ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
                 ColumnEntity.getByName(entityName));
-        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        // todo jmt adding the BSP stuff needs to be configurable
+        if (entityName.equals("LabVessel")) {
+            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        }
 
         // Get each page and add it to the configurable list
         for (int i = 0; i < pagination.getNumberPages(); i++) {
