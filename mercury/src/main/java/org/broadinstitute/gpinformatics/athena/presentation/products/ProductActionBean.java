@@ -15,6 +15,8 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductPdfFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -51,6 +53,7 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
  */
 @UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
+    private static final Log log = LogFactory.getLog(CoreActionBean.class);
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 
@@ -357,7 +360,9 @@ public class ProductActionBean extends CoreActionBean {
                     ProductPdfFactory.toPdf(response.getOutputStream(),
                             productDownloadList.toArray(new Product[productDownloadList.size()]));
                 } catch (IOException | DocumentException e) {
-                    addGlobalValidationError("Error generating PDF file.");
+                    String errorMessage = "Error generating PDF file.";
+                    log.error(errorMessage, e);
+                    addGlobalValidationError(errorMessage);
                 }
             }
         }.setFilename(fileName);

@@ -47,10 +47,13 @@ public class ProductOrderData {
     private String username;
     private String requisitionName;
     private String productOrderKey;
+    private String workRequestId;
+
+    // These are required input arguments for creating a work request in BSP.
     private int numberOfSamples;
+    // These are "in" parameters only.
     private SampleKitWorkRequest.MoleculeType moleculeType;
     private MaterialInfo materialInfo;
-    private String workRequestId;
 
     /**
      * This is really a list of sample IDs.
@@ -115,6 +118,7 @@ public class ProductOrderData {
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
             samples = null;
         }
+        numberOfSamples = productOrder.getSamples().size();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {

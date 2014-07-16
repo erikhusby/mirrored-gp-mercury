@@ -37,6 +37,7 @@ EOF
 # Make the RC Branch a remote tracking branch
 git checkout  --track -b $RCBRANCH
 mvn versions:set -DnewVersion=$RCVERSION
+mvn versions:resolve-ranges
 git commit -m "REL-714 Setting RC version to $RCVERSION" pom.xml
 # Create the RCBUILD floating tag (but get rid of previous version first)
 git push origin :RCBUILD

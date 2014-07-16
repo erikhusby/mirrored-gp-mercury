@@ -11,6 +11,11 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,5 +63,18 @@ public class BassResultsParser {
         }
 
         return result;
+    }
+
+    public static List<BassDTO> parse(InputStream inputStream) {
+        StringWriter writer = new StringWriter();
+        List<BassDTO> results;
+        try {
+            IOUtils.copy(inputStream, writer);
+            String theString = writer.toString();
+            results = BassResultsParser.parse(theString);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading data from server." + e.getMessage(), e);
+        }
+        return results;
     }
 }
