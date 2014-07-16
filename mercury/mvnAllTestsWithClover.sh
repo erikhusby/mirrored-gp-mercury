@@ -12,7 +12,7 @@ do
     echo "Using profile $PROFILE"
     mvn $OPTIONS -P$PROFILE test | tee -a tests.log
 #    echo -n 1>&2 "Press return to continue."; read CONTINUE
-    mv target/surefire-reports target/surefire-reports-$PROFILE
+    mv target/clover/surefire-reports target/clover/surefire-reports-$PROFILE
 done
 
 mvn $OPTIONS clover2:aggregate clover2:clover | tee -a tests.log
