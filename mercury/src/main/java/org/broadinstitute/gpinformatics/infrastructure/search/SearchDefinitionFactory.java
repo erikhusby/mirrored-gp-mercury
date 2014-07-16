@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.search;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -445,6 +448,62 @@ public class SearchDefinitionFactory {
             @Override
             public String evaluate(Object entity, Map<String, Object> context) {
                 return "Date";
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EventLocation");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("eventLocation");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getEventLocation();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EventOperator");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("eventOperator");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                Long userId = labEvent.getEventOperator();
+                BspUser bspUser = bspUserList.getById(userId);
+                if (bspUser == null) {
+                    return "(Unknown user: " + userId + ")";
+                }
+
+                return bspUser.getFullName();
+            }
+        });
+        searchTerms.add(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("EventType");
+        criteriaPaths = new ArrayList<>();
+        criteriaPath = new SearchTerm.CriteriaPath();
+        criteriaPath.setPropertyName("labEventType");
+        criteriaPaths.add(criteriaPath);
+        searchTerm.setCriteriaPaths(criteriaPaths);
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getLabEventType().getName();
             }
         });
         searchTerms.add(searchTerm);
