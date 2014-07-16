@@ -147,8 +147,8 @@ Move the mouse over the question marks to see details about each section.
 
 </stripes:form>
 <!-- Show results -->
-<fieldset title="Samples">
-    <legend>Samples</legend>
+<fieldset title="Results">
+    <legend>Results</legend>
     <stripes:layout-render name="/columns/configurable_list.jsp"
                            entityName="${actionBean.entityName}"
                            sessionKey="${actionBean.sessionKey}"
