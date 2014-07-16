@@ -4,9 +4,14 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.ColumnSetsPreference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchTerm;
+import org.hibernate.Criteria;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -21,6 +26,15 @@ public class ConfigurableListFactory {
     @Inject
     private PreferenceDao preferenceDao;
 
+    @Inject
+    private ConfigurableSearchDao configurableSearchDao;
+
+    @Inject
+    private PaginationDao paginationDao;
+
+    @Inject
+    private BSPSampleSearchService bspSampleSearchService;
+
     /**
      * Create a ConfigurableList instance.
      *
@@ -28,21 +42,16 @@ public class ConfigurableListFactory {
      * @param downloadColumnSetName Name of the column set to display
      * @param entityName Name of the entity
      * @param entityId ID of the entity
-     * @param domainUser BSPDomainUser object for the current user
-     * @param sampleCollection Sample Collection for this data
      *
      * @return ConfigurableList instance
      */
     public ConfigurableList create(@Nonnull List<?> entityList,
             @Nonnull String downloadColumnSetName,
             @Nonnull String entityName,
-            @Nonnull ColumnEntity entityId/*,
-            @Nonnull BspDomainUser domainUser,
-            @Nonnull SampleCollection sampleCollection*/) {
+            @Nonnull ColumnEntity entityId) {
 
-        List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName/*, domainUser, sampleCollection*/);
-        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC",
-                /*domainUser.isAdmin(), */entityId);
+        List<ColumnTabulation> columnTabulations = buildColumnSetTabulations(downloadColumnSetName, entityName);
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, 0, "ASC", entityId);
         configurableList.addRows(entityList);
         return configurableList;
     }
@@ -52,14 +61,10 @@ public class ConfigurableListFactory {
      *
      * @param downloadColumnSetName name of column set that the user wants to download
      * @param entityName            e.g. "Sample"
-     * @param domainUser            BSP Domain User
-     * @param sampleCollection      Sample Collection for which to build the column definitions
      * @return list of column definitions
      */
     public List<ColumnTabulation> buildColumnSetTabulations(@Nonnull String downloadColumnSetName,
-            @Nonnull String entityName/*,
-            @Nonnull BspDomainUser domainUser,
-            @Nonnull SampleCollection sampleCollection*/) {
+            @Nonnull String entityName) {
         // Determine which set of columns to use
 /*
         PreferenceDomain.domain columnSetDomain = null;
@@ -90,7 +95,7 @@ public class ConfigurableListFactory {
         // How to store column defs?  If enum, might need multiple for different result entities.  Need enum for
         // columns that aren't in use yet, otherwise would have to do discovery?
         ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
-                ConfigurableList.ColumnSetType.DOWNLOAD, /*domainUser, sampleCollection.getGroup(), */columnSetsPreference);
+                ConfigurableList.ColumnSetType.DOWNLOAD, columnSetsPreference);
 //        ListConfig listConfig = entityPreferenceFactory.loadListConfig(entityName);
         ConfigurableSearchDefinition configurableSearchDefinition = new SearchDefinitionFactory().getForEntity(
                 entityName);
@@ -148,21 +153,11 @@ public class ConfigurableListFactory {
      * including the global sets.
      *
      * @param columnSetType     type of column set
-     * @param bspDomainUser     to retrieve preferences and evaluate visibility expression
-     * @param group             to retrieve preferences, and evaluate visibility expression
-     * @param sampleCollection  to retrieve preferences, and evaluate visibility expression
      * @param globalColumnSets  type of columns sets for global scope
-     * @param groupColumnSets   type of columns sets for group scope
-     * @param projectColumnSets type of column sets for project scope
-     * @param userColumnSets    type of column sets for user scope
      * @return list of all applicable column sets
      */
-    public List<ColumnSet> getColumnSubsets(ConfigurableList.ColumnSetType columnSetType, /*BspDomainUser bspDomainUser,
-            Group group, SampleCollection sampleCollection,*/
-            PreferenceType globalColumnSets/*,
-            PreferenceType.Type groupColumnSets,
-            PreferenceType.Type projectColumnSets,
-            PreferenceType.Type userColumnSets*/) {
+    public List<ColumnSet> getColumnSubsets(ConfigurableList.ColumnSetType columnSetType,
+            PreferenceType globalColumnSets) {
 
         List<ColumnSet> columnSets = new ArrayList<>();
         Preference preference = preferenceDao.getGlobalPreference(globalColumnSets);
@@ -239,4 +234,151 @@ public class ConfigurableListFactory {
         }
     }
 */
+
+    /**
+     * Allows multiple returns from method.
+     */
+    public static class FirstPageResults {
+        private ConfigurableList.ResultList resultList;
+        private PaginationDao.Pagination pagination;
+
+        public FirstPageResults(ConfigurableList.ResultList resultList,
+                PaginationDao.Pagination pagination) {
+            this.resultList = resultList;
+            this.pagination = pagination;
+        }
+
+        public ConfigurableList.ResultList getResultList() {
+            return resultList;
+        }
+
+        public PaginationDao.Pagination getPagination() {
+            return pagination;
+        }
+    }
+
+    /**
+     * Gets the first page of results.
+     *
+     * @param searchInstance        search terms and values
+     * @param configurableSearchDef definitions of search terms
+     * @param columnSetName         which column set the user wants results displayed in
+     * @param sortColumnIndex       which column to in-memory sort on (single page results)
+     * @param dbSortPath            which Hibernate property to database sort on (multi-page results)
+     * @param sortDirection         ASC or DSC
+     * @param entityName            the name of the entity we're searching, e.g. Sample
+     * @return list of results
+     */
+    public FirstPageResults getFirstResultsPage(
+            SearchInstance searchInstance,
+            ConfigurableSearchDefinition configurableSearchDef,
+            String columnSetName,
+            Integer sortColumnIndex, String dbSortPath,
+            String sortDirection,
+            String entityName) {
+//        initEvalContext(searchInstance, context);
+
+        Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
+                sortDirection);
+
+        // TODO move join-fetch stuff into ListConfig and SearchInstance
+        // If the user chose columns to view, use those, else use a pre-defined column set
+        List<String> columnNameList;
+        if (searchInstance.getPredefinedViewColumns() != null && !searchInstance.getPredefinedViewColumns().isEmpty()) {
+            columnNameList = searchInstance.getPredefinedViewColumns();
+        } else {
+            // Determine which set of columns to use
+            PreferenceType.PreferenceScope columnSetDomain = null;
+            for (PreferenceType.PreferenceScope domain : PreferenceType.PreferenceScope.values()) {
+                if (columnSetName.startsWith(domain.toString())) {
+                    columnSetDomain = domain;
+                    break;
+                }
+            }
+            if (columnSetDomain == null) {
+                throw new RuntimeException("Failed  to extract domain preference from " + columnSetName);
+            }
+            // Generate the subset of columns the user is interested in
+            String columnSetNameSuffix = columnSetName.substring(columnSetName.indexOf('|') + 1);
+            ColumnSetsPreference columnSets = getColumnSets(columnSetDomain, entityName);
+            ColumnSetsPreference.ColumnSet columnSet = ConfigurableList.getColumnNameList(columnSetNameSuffix,
+                    ConfigurableList.ColumnSetType.VIEW, columnSets);
+            columnNameList = columnSet.getColumnDefinitions();
+            searchInstance.setColumnSetColumnNameList(columnNameList);
+        }
+
+        // To improve performance, add join fetches for search values that have the
+        // "display" checkbox set
+        List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
+        List<String> joinFetchPaths = new ArrayList<>();
+        for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
+            joinFetchPaths.addAll(displaySearchValue.getJoinFetchPaths());
+        }
+        // Add join fetches for the column set
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        for (String columnName : columnNameList) {
+            SearchTerm searchTerm = configurableSearchDef.getSearchTerm(columnName);
+            columnTabulations.add(searchTerm);
+            if (searchTerm.getJoinFetchPaths() != null) {
+                joinFetchPaths.addAll(searchTerm.getJoinFetchPaths());
+            }
+        }
+        columnTabulations.addAll(searchInstance.findTopLevelColumnTabulations());
+
+        PaginationDao.Pagination pagination = new PaginationDao.Pagination(configurableSearchDef.getPageSize());
+        configurableSearchDao.startPagination(pagination, criteria);
+        pagination.setJoinFetchPaths(joinFetchPaths);
+        List<?> entityList = paginationDao.getPage(pagination, 0);
+
+        // Format the results into columns
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations,
+                pagination.getNumberPages() == 1 ? sortColumnIndex : null, sortDirection,
+                ColumnEntity.getByName(entityName));
+        // todo jmt adding the BSP stuff needs to be configurable
+        if (entityName.equals("LabVessel")) {
+            configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        }
+        configurableList.addRows(entityList);
+        ConfigurableList.ResultList resultList = configurableList.getResultList();
+
+        return new FirstPageResults(resultList, pagination);
+    }
+
+    /**
+     * Gets subsequent page of search results.
+     *
+     * @param searchInstance search terms and values
+     * @param pageNumber     which page of results to return
+     * @param entityName     the name of the entity we're searching, e.g. Sample
+     * @param pagination     from HTTP session
+     * @return list of results
+     */
+    public ConfigurableList.ResultList getSubsequentResultsPage(
+            SearchInstance searchInstance, int pageNumber, String entityName, PaginationDao.Pagination pagination) {
+        // Get requested page of results
+        List<?> entityList = paginationDao.getPage(pagination, pageNumber);
+
+        // Format the results into columns
+        ConfigurableSearchDefinition configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        List<ColumnTabulation> columnTabulations = new ArrayList<>();
+        List<SearchInstance.SearchValue> displaySearchValues = searchInstance.findDisplaySearchValues();
+        List<String> columnNameList;
+        if (searchInstance.getPredefinedViewColumns() != null && !searchInstance.getPredefinedViewColumns().isEmpty()) {
+            columnNameList = searchInstance.getPredefinedViewColumns();
+        } else {
+            columnNameList = searchInstance.getColumnSetColumnNameList();
+        }
+        for (String columnName : columnNameList) {
+            columnTabulations.add(configurableSearchDef.getSearchTerm(columnName));
+        }
+        for (SearchInstance.SearchValue displaySearchValue : displaySearchValues) {
+            columnTabulations.add(displaySearchValue);
+        }
+        ConfigurableList configurableList = new ConfigurableList(columnTabulations, null,
+                ColumnEntity.getByName(entityName));
+        configurableList.addListener(new BspSampleSearchAddRowsListener(bspSampleSearchService));
+        configurableList.addRows(entityList);
+
+        return configurableList.getResultList();
+    }
 }

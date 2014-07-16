@@ -441,6 +441,12 @@ public class SearchDefinitionFactory {
                 return labEvent.getEventDate();
             }
         });
+        searchTerm.setTypeExpression(new SearchTerm.Evaluator<String>() {
+            @Override
+            public String evaluate(Object entity, Map<String, Object> context) {
+                return "Date";
+            }
+        });
         searchTerms.add(searchTerm);
 
         return searchTerms;

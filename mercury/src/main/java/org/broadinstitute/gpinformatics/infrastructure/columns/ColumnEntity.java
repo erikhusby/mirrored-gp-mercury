@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.columns;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 /**
@@ -10,6 +11,12 @@ public enum ColumnEntity {
         @Override
         public String getId(Object entity) {
             return ((LabVessel) entity).getLabel();
+        }
+    }),
+    LAB_EVENT("LabEvent", new IdGetter() {
+        @Override
+        public String getId(Object entity) {
+            return ((LabEvent) entity).getLabEventId().toString();
         }
     });
 

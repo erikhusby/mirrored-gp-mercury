@@ -32,6 +32,7 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
      */
     private String name;
 
+    // todo jmt use ColumnEntity here?
     /**
      * Hibernate entity returned by the search
      */

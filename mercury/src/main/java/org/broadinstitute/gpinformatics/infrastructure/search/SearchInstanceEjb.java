@@ -44,7 +44,8 @@ public class SearchInstanceEjb {
     /**
      * Map from preference level name to a method to get the preference
      */
-    private static final Map<String, PreferenceAccess> preferenceAccessMap = new LinkedHashMap<>();
+    private static final Map<PreferenceType.PreferenceScope, PreferenceAccess> mapScopeToPreferenceAccess =
+            new LinkedHashMap<>();
 
     /**
      * Method to retrieve preference from the database, has a different implementation for
@@ -60,9 +61,10 @@ public class SearchInstanceEjb {
 
     static {
         // TODO jmt do we need search instances for entities other than Sample?
-        preferenceAccessMap.put("GLOBAL", new PreferenceAccess() {
+        mapScopeToPreferenceAccess.put(PreferenceType.PreferenceScope.GLOBAL, new PreferenceAccess() {
             @Override
-            public Preference getPreference(/*CoreActionBeanContext bspActionBeanContext, */PreferenceDao preferenceDao) {
+            public Preference getPreference(/*CoreActionBeanContext bspActionBeanContext, */
+                    PreferenceDao preferenceDao) {
                 return preferenceDao.getGlobalPreference(PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES);
             }
 
@@ -77,7 +79,7 @@ public class SearchInstanceEjb {
             }
         });
 /*
-        preferenceAccessMap.put("GROUP", new PreferenceAccess() {
+        mapScopeToPreferenceAccess.put("GROUP", new PreferenceAccess() {
             @Override
             public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
                 return bspActionBeanContext.getGroup() == null ? null : (new PreferenceManager()).getGroupPreference(
@@ -100,7 +102,7 @@ public class SearchInstanceEjb {
                 return bspActionBeanContext.isAdmin();
             }
         });
-        preferenceAccessMap.put("COLLECTION", new PreferenceAccess() {
+        mapScopeToPreferenceAccess.put("COLLECTION", new PreferenceAccess() {
             @Override
             public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
                 return bspActionBeanContext.getSampleCollection() == null ? null : (new PreferenceManager())
@@ -123,7 +125,7 @@ public class SearchInstanceEjb {
                 return bspActionBeanContext.isAdmin();
             }
         });
-        preferenceAccessMap.put("USER", new PreferenceAccess() {
+        mapScopeToPreferenceAccess.put("USER", new PreferenceAccess() {
             @Override
             public Preference getPreference(BspActionBeanContext bspActionBeanContext) throws MPGException {
                 return (new PreferenceManager()).getUserPreference(bspActionBeanContext.getUserProfile(),
@@ -148,9 +150,16 @@ public class SearchInstanceEjb {
 */
     }
 
-    public void fetchInstances(Map<String, Preference> preferenceMap, List<String> searchInstanceNames,
-            List<String> newSearchLevels) {
-        for (Map.Entry<String, PreferenceAccess> stringPreferenceAccessEntry : preferenceAccessMap.entrySet()) {
+    /**
+     *
+     * @param mapScopeToPreference output, maps preference scope to preference
+     * @param searchInstanceNames output, list of search instances, with scope prefix
+     * @param newSearchLevels output, list of scopes the user can add to
+     */
+    public void fetchInstances(Map<PreferenceType.PreferenceScope, Preference> mapScopeToPreference,
+            List<String> searchInstanceNames, List<String> newSearchLevels) {
+        for (Map.Entry<PreferenceType.PreferenceScope, PreferenceAccess> stringPreferenceAccessEntry :
+                mapScopeToPreferenceAccess.entrySet()) {
             PreferenceAccess preferenceAccess = stringPreferenceAccessEntry.getValue();
             Preference preference = preferenceAccess.getPreference(preferenceDao);
             if (preference != null) {
@@ -164,9 +173,9 @@ public class SearchInstanceEjb {
                     searchInstanceNames.add(stringPreferenceAccessEntry.getKey() + PREFERENCE_SEPARATOR + instance.getName());
                 }
             }
-            preferenceMap.put(stringPreferenceAccessEntry.getKey(), preference);
+            mapScopeToPreference.put(stringPreferenceAccessEntry.getKey(), preference);
             if (preferenceAccess.canModifyPreference()) {
-                newSearchLevels.add(stringPreferenceAccessEntry.getKey());
+                newSearchLevels.add(stringPreferenceAccessEntry.getKey().toString());
             }
         }
     }
@@ -177,41 +186,40 @@ public class SearchInstanceEjb {
      *                  search
      */
     public void persistSearch(boolean newSearch, SearchInstance searchInstance, MessageCollection messageCollection,
-            String newSearchLevel, String newSearchName, String selectedSearchName,
-            Map<String, Preference> preferenceMap) {
+            PreferenceType.PreferenceScope newSearchScope, String newSearchName, String selectedSearchName,
+            Map<PreferenceType.PreferenceScope, Preference> mapScopeToPreference) {
         try {
             boolean save = true;
             // For new searches, check the user's authorization
             if (newSearch) {
-                if (!preferenceAccessMap.get(newSearchLevel).canModifyPreference()) {
-                    messageCollection.addError("You are not authorized to save searches at level {2}", newSearchLevel);
+                if (!mapScopeToPreferenceAccess.get(newSearchScope).canModifyPreference()) {
+                    messageCollection.addError("You are not authorized to save searches at level {2}", newSearchScope);
                     save = false;
                 }
             }
-            String existingSearchLevel = null;
+            PreferenceType.PreferenceScope existingSearchScope = null;
             String searchName = null;
             Preference preference = null;
             if (save) {
                 // Find the existing preference (if any) at the chosen level (each
                 // preference holds many searches)
-                for (String level : preferenceMap.keySet()) {
+                for (PreferenceType.PreferenceScope scope : mapScopeToPreference.keySet()) {
                     if (newSearch) {
-                        if (newSearchLevel.equals(level)) {
-                            preference = preferenceMap.get(level);
+                        if (newSearchScope == scope) {
+                            preference = mapScopeToPreference.get(scope);
                             break;
                         }
                     } else {
-                        if (selectedSearchName.startsWith(level)) {
-                            existingSearchLevel = level;
+                        if (selectedSearchName.startsWith(scope.toString())) {
+                            existingSearchScope = scope;
                             // For existing searches, check the user's authorization
-                            if (preferenceAccessMap.get(selectedSearchName.substring(0, level.length()))
-                                    .canModifyPreference()) {
-                                searchName = selectedSearchName.substring(level.length()
-                                                                          + PREFERENCE_SEPARATOR.length());
-                                preference = preferenceMap.get(level);
+                            if (mapScopeToPreferenceAccess.get(scope).canModifyPreference()) {
+                                searchName = selectedSearchName.substring(
+                                        scope.toString().length() + PREFERENCE_SEPARATOR.length());
+                                preference = mapScopeToPreference.get(scope);
                             } else {
-                                messageCollection.addError("You are not authorized to update searches at level {2}",
-                                        level);
+                                messageCollection.addError("You are not authorized to update searches at scope {2}",
+                                        scope);
                                 save = false;
                             }
                             break;
@@ -223,7 +231,7 @@ public class SearchInstanceEjb {
                 SearchInstanceList searchInstanceList;
                 if (preference == null) {
                     // Didn't find an existing preference, so create a new one
-                    preference = preferenceAccessMap.get(newSearch ? newSearchLevel : existingSearchLevel)
+                    preference = mapScopeToPreferenceAccess.get(newSearch ? newSearchScope : existingSearchScope)
                             .createNewPreference();
                     searchInstanceList = new SearchInstanceList();
                 } else {
@@ -234,7 +242,7 @@ public class SearchInstanceEjb {
                     for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
                         if (searchInstanceLocal.getName().equals(newSearchName)) {
                             messageCollection.addError("There is already a search called " + newSearchName + " in the "
-                                                       + newSearchLevel + " level");
+                                                       + newSearchScope + " level");
                             save = false;
                             break;
                         }
@@ -276,15 +284,14 @@ public class SearchInstanceEjb {
     }
 
     public void deleteSearch(MessageCollection messageCollection, String selectedSearchName,
-            Map<String, Preference> preferenceMap) {
+            Map<PreferenceType.PreferenceScope, Preference> mapScopeToPreference) {
         String searchName = null;
         Preference preference = null;
-        for (Map.Entry<String, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
-            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey())) {
-                if (preferenceAccessMap.get(selectedSearchName.substring(0, stringPreferenceEntry.getKey().length())).
-                        canModifyPreference()) {
-                    searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().length() +
-                                                              PREFERENCE_SEPARATOR.length());
+        for (Map.Entry<PreferenceType.PreferenceScope, Preference> stringPreferenceEntry : mapScopeToPreference.entrySet()) {
+            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey().toString())) {
+                if (mapScopeToPreferenceAccess.get(stringPreferenceEntry.getKey()).canModifyPreference()) {
+                    searchName = selectedSearchName.substring(
+                            stringPreferenceEntry.getKey().toString().length() + PREFERENCE_SEPARATOR.length());
                     preference = stringPreferenceEntry.getValue();
                 } else {
                     messageCollection.addError("You are not authorized to delete this search");
