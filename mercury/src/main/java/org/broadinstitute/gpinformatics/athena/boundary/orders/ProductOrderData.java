@@ -115,6 +115,7 @@ public class ProductOrderData {
             // includeSamples = false.  Is the JAXB behavior with an empty List undesirable?
             samples = null;
         }
+        numberOfSamples = productOrder.getSamples().size();
     }
 
     private static List<String> getSampleList(List<ProductOrderSample> productOrderSamples) {
