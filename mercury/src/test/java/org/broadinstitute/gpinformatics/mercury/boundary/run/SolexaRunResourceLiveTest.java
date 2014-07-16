@@ -5,6 +5,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourceLiveTest;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchDbTest;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneReadStructure;
@@ -20,6 +21,8 @@ import org.testng.annotations.Test;
 
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -37,6 +40,8 @@ public class SolexaRunResourceLiveTest extends Arquillian {
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testSquidLanes(@ArquillianResource URL baseUrl) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);
+        String timeStamp = simpleDateFormat.format(new Date());
         String wsUrl = baseUrl.toExternalForm() + "rest/solexarun/storeRunReadStructure";
 
         String runName1 = "120907_SL-HBV_0191_BFCD15DDACXX";
@@ -49,7 +54,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
         for (int i = 1; i <= 8; i++) {
             LaneReadStructure laneReadStructure = new LaneReadStructure();
             laneReadStructure.setLaneNumber(i);
-            laneReadStructure.setActualReadStructure("STRUC" + i);
+            laneReadStructure.setActualReadStructure("STRUC" + timeStamp + i);
             readStructureData.getLaneStructures().add(laneReadStructure);
         }
 
@@ -64,7 +69,8 @@ public class SolexaRunResourceLiveTest extends Arquillian {
                 runName1);
         Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8);
         for (ZimsIlluminaChamber zimsIlluminaChamber : zimsIlluminaRun.getLanes()) {
-            Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(), "STRUC" + zimsIlluminaChamber.getName());
+            Assert.assertEquals(zimsIlluminaChamber.getActualReadStructure(),
+                    "STRUC" + timeStamp + zimsIlluminaChamber.getName());
         }
     }
 }

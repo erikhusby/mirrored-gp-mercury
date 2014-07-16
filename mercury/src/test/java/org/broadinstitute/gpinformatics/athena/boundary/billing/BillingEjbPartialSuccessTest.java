@@ -10,6 +10,8 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestLogHandler;
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -26,16 +28,22 @@ import org.broadinstitute.gpinformatics.infrastructure.test.withdb.ProductOrderD
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import javax.enterprise.inject.Alternative;
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.NullOrEmptyCollection.nullOrEmptyCollection;
 import static org.broadinstitute.gpinformatics.infrastructure.matchers.SuccessfullyBilled.successfullyBilled;
@@ -46,6 +54,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
@@ -78,6 +87,19 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
 
     public static final Log log = LogFactory.getLog(BillingEjbPartialSuccessTest.class);
     protected static final Object lockBox = new Object();
+
+
+    private TestLogHandler testLogHandler;
+    private Logger billingAdaptorLogger;
+
+    @BeforeTest
+    public void setUpTestLogger() {
+        billingAdaptorLogger = Logger.getLogger(BillingAdaptor.class.getName());
+        billingAdaptorLogger.setLevel(Level.ALL);
+        testLogHandler = new TestLogHandler();
+        billingAdaptorLogger.addHandler(testLogHandler);
+        testLogHandler.setLevel(Level.ALL);
+    }
 
     /**
      * This will succeed in billing some but not all work to make sure our Billing Session is left in the state we
@@ -253,7 +275,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
      * </ul>
      */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
-    public void testPositive() {
+      public void testPositive() {
 
         cycleFails = false;
 
@@ -274,6 +296,7 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         assertThat(ledgerEntryItems, is(not(nullOrEmptyCollection())));
         assertThat(ledgerEntryItems, hasSize(2));
 
+        String failMessage = null;
         for (LedgerEntry ledgerEntry : billingSession.getLedgerEntryItems()) {
             if (SM_1234.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(successfullyBilled()));
@@ -282,7 +305,19 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
             if (SM_5678.equals(ledgerEntry.getProductOrderSample().getName())) {
                 assertThat(ledgerEntry, is(unsuccessfullyBilled()));
                 assertThat(ledgerEntry.getWorkItem(), is(nullValue()));
+                failMessage = "A problem occurred attempting to post to the quote server for " +
+                              ledgerEntry.getBillingSession().getBusinessKey() +
+                              ".java.lang.RuntimeException: Intentional Work Registration Failure!";
             }
+        }
+        String successMessagePattern = "Work item \'" + GOOD_WORK_ID + "\' with completion date .*";
+        assertThat(failMessage, notNullValue());
+
+        assertThat(testLogHandler.messageMatches(failMessage), is(true));
+        Collection<LogRecord> successLogs = testLogHandler.findLogs(successMessagePattern);
+        assertThat(successLogs.isEmpty(), is(false));
+        for (LogRecord successLog : successLogs) {
+            assertThat(successLog.getLevel(), is(Level.INFO));
         }
     }
 
@@ -356,5 +391,21 @@ public class BillingEjbPartialSuccessTest extends Arquillian {
         billingSession = billingSessionDao.findByBusinessKey(billingSession.getBusinessKey());
 
         List<QuoteImportItem> quoteImportItems = billingSession.getUnBilledQuoteImportItems(priceListCache);
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    public void testBillingAdaptorLog() {
+        BillingAdaptor adaptor = new BillingAdaptor();
+        PriceItem priceItem = new PriceItem("quoteServerId", "myPlatform", "myCategory", "importItemName");
+        LedgerEntry ledgerEntry1 = new LedgerEntry(new ProductOrderSample("SM-1234"), priceItem, new Date(), 5);
+        LedgerEntry ledgerEntry2 = new LedgerEntry(new ProductOrderSample("SM-5678"), priceItem, new Date(), 5);
+        List<LedgerEntry> ledgerItems = Arrays.asList(ledgerEntry1, ledgerEntry2);
+        QuoteImportItem quoteImportItem =
+                new QuoteImportItem("QUOTE-1", priceItem, "priceType", ledgerItems, new Date());
+        QuotePriceItem quotePriceItem = new QuotePriceItem();
+
+        adaptor.logBilling("1243", quoteImportItem, quotePriceItem, new HashSet<>(Arrays.asList("PDO-1", "PDO-2")));
+        Assert.assertEquals(testLogHandler.getLogs().size(), 1);
+        Assert.assertEquals(TestUtils.getFirst(testLogHandler.getLogs()).getLevel(), Level.INFO);
     }
 }

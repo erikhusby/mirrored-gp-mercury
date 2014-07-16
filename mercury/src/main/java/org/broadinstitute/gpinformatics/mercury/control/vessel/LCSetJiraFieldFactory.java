@@ -218,7 +218,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             int sampleCount = 0;
 
             for (LabVessel currVessel : pdoKey.getValue()) {
-                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.WITH_PDO, null);
+                sampleCount += currVessel.getSampleInstanceCount(LabVessel.SampleType.PREFER_PDO, null);
             }
 
             ticketDescription.append(sampleCount).append(" samples ");

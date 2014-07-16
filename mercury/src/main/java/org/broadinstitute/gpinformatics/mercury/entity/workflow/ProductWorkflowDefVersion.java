@@ -478,7 +478,7 @@ public class ProductWorkflowDefVersion implements Serializable {
             }
             if (!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, actualEventNames,
-                        found, labVessel.getInPlaceEvents(), labEventNode);
+                        found, labVessel.getInPlaceEventsWithContainers(), labEventNode);
             }
             if (!found && !start) {
                 errors.add(new ValidationError("", actualEventNames, validPredecessorEventNames));

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -105,4 +106,5 @@ public class ProductOrderJiraUtil {
         issue.addComment(StringUtils.join(pdo.getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(pdo.getSampleValidationComments(), "\n"));
     }
+
 }

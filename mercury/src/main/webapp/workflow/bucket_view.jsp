@@ -42,9 +42,17 @@
                     $j("td.editable").editable('${ctxpath}/view/bucketView.action?changePdo', {
                         'loadurl': '${ctxpath}/view/bucketView.action?findPdo',
                         'callback': function (sValue, y) {
-                            var cellValue='<span class="ellipsis">'+sValue+'</span><span style="display: none;" class="icon-pencil"></span>';
+                            var jsonValues = $j.parseJSON(sValue);
+                            var pdoKeyCellValue='<span class="ellipsis">'+jsonValues.jiraKey+'</span><span style="display: none;" class="icon-pencil"></span>';
+
                             var aPos = oTable.fnGetPosition(this);
-                            oTable.fnUpdate(cellValue, aPos[0], aPos[1]);
+                            oTable.fnUpdate(pdoKeyCellValue, aPos[0] /*row*/, aPos[1]/*column*/);
+
+                            var pdoTitleCellValue = '<div class="ellipsis" style="width: 300px">'+jsonValues.pdoTitle+'</div>';
+                            oTable.fnUpdate(pdoTitleCellValue, aPos[0] /*row*/, aPos[1]+1/*column*/);
+
+                            var pdoCreatorCellValue = jsonValues.pdoOwner;
+                            oTable.fnUpdate(pdoCreatorCellValue, aPos[0] /*row*/, aPos[1]+2/*column*/);
                         },
                         'submitdata': function (value, settings) {
                             return {
@@ -65,6 +73,7 @@
                         type: "select",
                         indicator : '<img src="${ctxpath}/images/spinner.gif">',
                         submit: 'Save',
+                        cancel: 'Cancel',
                         height: "auto",
                         width: "auto"
                     });

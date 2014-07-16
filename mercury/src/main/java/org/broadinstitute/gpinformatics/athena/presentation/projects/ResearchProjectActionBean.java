@@ -38,6 +38,8 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -89,8 +91,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // Reference sequence that will be used for Exome projects.
     private static final String DEFAULT_REFERENCE_SEQUENCE = "Homo_sapiens_assembly19|1";
-
-    private static final boolean COLLABORATION_ENABLED = false;
 
     @Inject
     private MercuryClientService mercuryClientService;
@@ -196,6 +196,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private CollaborationData collaborationData;
 
+    private boolean validCollaborationPortal;
+
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
     }
@@ -223,8 +225,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-            if (COLLABORATION_ENABLED) {
+
+            try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
+                validCollaborationPortal = true;
+            } catch (CollaborationNotFoundException | CollaborationPortalException ex) {
+                // If there is no collaboration service, for whatever reason, set the data to null so that we
+                collaborationData = null;
+                validCollaborationPortal = false;
             }
         } else {
             if (getUserBean().isValidBspUser()) {
@@ -278,21 +286,24 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void validateCollaborationInformation(ValidationErrors errors) {
         // Cannot start a collaboration with an outside user if there is no PM specified.
         if (editResearchProject.getProjectManagers().length < 1) {
-            errors.add("title", new SimpleError(
-                    "The research project must have a Project Manager before starting a collaboration."));
+            addGlobalValidationError(
+                    "The research project must have a Project Manager before starting a collaboration.");
         }
-    }
 
-    /**
-     * Validation for beginning a collaboration.
-     *
-     * @param errors The errors object
-     */
-    @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
-    public void validateCollaboration(ValidationErrors errors) {
+        if (editResearchProject.getBroadPIs().length < 1) {
+            addGlobalValidationError(
+                    "The research project must have an investigator before starting a collaboration.");
+        }
+
+        if ((editResearchProject.getCohortIds().length != 1)) {
+            addGlobalValidationError(
+                    "A collaboration requires one and only one cohort to be defined on the research project");
+        }
+
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
             errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
         }
+
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
             errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
         }
@@ -955,5 +966,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // Call init again so that the updated project is retrieved.
         init();
         return view();
+    }
+
+    public boolean isValidCollaborationPortal() {
+        return validCollaborationPortal;
     }
 }

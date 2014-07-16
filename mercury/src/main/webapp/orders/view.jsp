@@ -156,6 +156,31 @@ function setupDialogs() {
         ]
     });
 
+    $j("#unAbandonDialog").dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: [
+            {
+                id: "unAbandonOkButton",
+                text: "OK",
+                click: function () {
+                    $j(this).dialog("close");
+                    $j("#unAbandonOkButton").attr("disabled", "disabled");
+                    $j("#abandonStatus").attr("value", $j("#unAbandonDialogId").attr("checked") != undefined);
+                    $j("#unAbandonComment").attr("value", $j("#unAbandonSampleCommentId").val());
+
+                    $j("#orderForm").submit();
+                }
+            },
+            {
+                text: "Cancel",
+                click: function () {
+                    $j(this).dialog("close");
+                }
+            }
+        ]
+    });
+
     $j("#deleteConfirmation").dialog({
         modal: true,
         autoOpen: false,
@@ -236,6 +261,7 @@ function showSamples(sampleData) {
         $j('#volume-' + sampleId).text(sampleData[x].volume);
         $j('#concentration-' + sampleId).text(sampleData[x].concentration);
         $j('#rin-' + sampleId).text(sampleData[x].rin);
+        $j('#rqs-' + sampleId).text(sampleData[x].rqs);
         $j('#total-' + sampleId).text(sampleData[x].total);
         $j('#picoDate-' + sampleId).text(sampleData[x].picoDate);
         $j('#picoDate-' + sampleId).attr("title", sampleData[x].picoDate);
@@ -272,6 +298,7 @@ function showSamples(sampleData) {
 
                 <c:if test="${actionBean.supportsRin}">
                 {"bSortable": true, "sType": "numeric"},        // RIN
+                {"bSortable": true, "sType": "numeric"},        // RQS
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -382,6 +409,18 @@ function showAbandonDialog() {
         $j("#abandonDialog").dialog("open").dialog("option", "width", 600);
     } else {
         $j("#noneSelectedDialogMessage").text("Abandon Samples");
+        $j("#noneSelectedDialog").dialog("open");
+    }
+}
+
+function showUnAbandonDialog() {
+    var numChecked = $("input.shiftCheckbox:checked").size();
+    if (numChecked) {
+        $j("#dialogAction").attr("name", "unAbandonSamples");
+        $j("#unAbandonSelectedSamplesCountId").text(numChecked);
+        $j("#unAbandonDialog").dialog("open").dialog("option", "width", 600);
+    } else {
+        $j("#noneSelectedDialogMessage").text("Un-Abandon Samples");
         $j("#noneSelectedDialog").dialog("open");
     }
 }
@@ -543,6 +582,16 @@ function formatInput(item) {
     <textarea id="abandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
 </div>
 
+<div id="unAbandonDialog" style="width:600px;display:none;">
+    <p>Un-Abandon Samples (<span id="unAbandonSelectedSamplesCountId"> </span> selected)</p>
+
+    <p style="clear:both">
+        <label for="unAbandonSampleCommentId">Comment:</label>
+    </p>
+
+    <textarea id="unAbandonSampleCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
+</div>
+
 <div id="recalculateRiskDialog" style="width:600px;display:none;">
     <p>Recalculate Risk (<span id="recalculateRiskSelectedCountId"> </span> selected)</p>
 
@@ -567,6 +616,7 @@ function formatInput(item) {
 <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
 <stripes:hidden id="riskComment" name="riskComment" value=""/>
 <stripes:hidden id="abandonComment" name="abandonComment" value=""/>
+<stripes:hidden id="unAbandonComment" name="unAbandonComment" value=""/>
 
 <div class="actionButtons">
     <c:choose>
@@ -682,6 +732,22 @@ function formatInput(item) {
     </div>
 </div>
 
+<c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+    <c:if test="${actionBean.editOrder.squidWorkRequest != null}">
+    <div>
+        <div class="control-group view-control-group">
+            <label class="control-label label-form">Squid Work Request</label>
+
+            <div class="controls">
+                <div class="form-value">
+                    <a target="SQUID" href="${actionBean.squidWorkRequestUrl}"
+                       class="external">${actionBean.editOrder.squidWorkRequest}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    </c:if>
+</c:if>
 
 <div class="view-control-group control-group">
     <label class="control-label label-form">Product Family</label>
@@ -736,11 +802,11 @@ function formatInput(item) {
     <div class="controls">
         <div class="form-value">
             <c:choose>
-            <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
-                <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
+                <c:when test="${fn:length(actionBean.editOrder.regulatoryInfos) ne 0}">
+                    <c:forEach var="regulatoryInfo" items="${actionBean.editOrder.regulatoryInfos}">
                         ${regulatoryInfo.displayText}<br/>
-                </c:forEach>
-            </c:when>
+                    </c:forEach>
+                </c:when>
 
                 <c:otherwise>
                     <c:choose><c:when test="${actionBean.editOrder.canSkipRegulatoryRequirements()}">
@@ -886,7 +952,6 @@ function formatInput(item) {
         </div>
     </div>
 </div>
-
 <div class="view-control-group control-group">
     <label class="control-label label-form">Description</label>
 
@@ -987,36 +1052,50 @@ function formatInput(item) {
         <h4 style="display:inline">Samples</h4>
 
         <c:if test="${!actionBean.editOrder.draft}">
+            <span class="actionButtons">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                    style="margin-left:30px;"
+                                    onclick="showConfirm('deleteSamples', 'delete')"/>
+
+                    <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                    style="margin-left:15px;"
+                                    onclick="showAbandonDialog()"/>
+
+                    <stripes:button name="unAbandonSamples" value="Un-Abandon Samples" class="btn"
+                                    style="margin-left:15px;"
+                                    onclick="showUnAbandonDialog()"/>
+
+                    <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
+                                    style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
+
+                    <stripes:button name="setRisk" value="Set Risk" class="btn"
+                                    style="margin-left:5px;" onclick="showRiskDialog()"/>
+
+                    <security:authorizeBlock roles="<%= roles(All) %>"
+                                             context="<%= ApplicationInstance.CRSP %>">
+                        <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
+                                        style="margin-left:5px;" id="addToBucketButton"
+                                        onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
+                    </security:authorizeBlock>
+                </security:authorizeBlock>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <c:if test="${actionBean.editOrder.product.supportsNumberOfLanes}">
+                        <stripes:link beanclass="${actionBean.class.name}" event="<%= ProductOrderActionBean.SQUID_COMPONENTS_ACTION %>">
+                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                            Build Squid Components
+                        </stripes:link>
+                    </c:if>
+                </security:authorizeBlock>
+            </span>
+
             <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
-                            <span class="actionButtons">
-                                <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
-                                                style="margin-left:30px;"
-                                                onclick="showConfirm('deleteSamples', 'delete')"/>
-
-                                <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                                style="margin-left:15px;"
-                                                onclick="showAbandonDialog()"/>
-
-                                <stripes:button name="recalculateRisk" value="Recalculate Risk" class="btn"
-                                                style="margin-left:15px;" onclick="showRecalculateRiskDialog()"/>
-
-                                <stripes:button name="setRisk" value="Set Risk" class="btn"
-                                                style="margin-left:5px;" onclick="showRiskDialog()"/>
-
-                                <security:authorizeBlock roles="<%= roles(All) %>"
-                                                         context="<%= ApplicationInstance.CRSP %>">
-                                    <stripes:button name="addSamplesToBucket" value="Add Samples to Bucket" class="btn"
-                                                    style="margin-left:5px;" id="addToBucketButton"
-                                                    onclick="showConfirm('addSamplesToBucket', 'add to bucket')"/>
-                                </security:authorizeBlock>
-
-                            </span>
-
                 <div class="pull-right">
                     <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
                     <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-right:15px;"/>
                 </div>
             </security:authorizeBlock>
+
         </c:if>
     </div>
 
@@ -1046,6 +1125,7 @@ function formatInput(item) {
 
                 <c:if test="${actionBean.supportsRin}">
                     <th width="40">RIN</th>
+                    <th width="40">RQS</th>
                 </c:if>
 
                 <c:if test="${actionBean.supportsPico}">
@@ -1103,6 +1183,7 @@ function formatInput(item) {
 
                     <c:if test="${actionBean.supportsRin}">
                         <td id="rin-${sample.productOrderSampleId}"></td>
+                        <td id="rqs-${sample.productOrderSampleId}"></td>
                     </c:if>
 
                     <c:if test="${actionBean.supportsPico}">

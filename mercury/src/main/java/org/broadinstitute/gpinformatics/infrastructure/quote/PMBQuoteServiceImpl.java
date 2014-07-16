@@ -172,7 +172,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         } catch (UniformInterfaceException e) {
             throw new QuoteNotFoundException("Could not find price list at " + url);
         } catch (ClientHandlerException e) {
-            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s" + url,
+            throw new QuoteServerException(String.format("Could not communicate with quote server at %s: %s", url,
                                 e.getLocalizedMessage()));
 
         }

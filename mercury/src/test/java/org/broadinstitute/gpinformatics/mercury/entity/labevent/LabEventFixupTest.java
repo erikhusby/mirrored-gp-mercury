@@ -277,4 +277,14 @@ public class LabEventFixupTest extends Arquillian {
         }
     }
 
+    @Test(enabled = false)
+    public void fixupFct18237() {
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 516658L);
+        labEvent.getReagents().clear();
+        labEventDao.remove(labEvent);
+        labEvent = labEventDao.findById(LabEvent.class, 516659L);
+        labEvent.getReagents().clear();
+        labEventDao.remove(labEvent);
+    }
+
 }

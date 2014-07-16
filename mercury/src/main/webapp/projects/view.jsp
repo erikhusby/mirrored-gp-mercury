@@ -175,43 +175,45 @@
                             </div>
 
                             <security:authorizeBlock roles="<%= roles(Developer) %>">
-                                <c:choose>
-                                    <c:when test="${actionBean.invitationPending}">
-                                        <div class="notificationText">
-                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                Collaboration Portal
-                                            </stripes:link>
-                                            invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
-                                            <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
-                                            (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
-                                            <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                            <stripes:param name="resendInvitation" value=""/>
-                                            Resend Invitation
-                                        </stripes:link>)
-                                        </div>
-                                    </c:when>
-                                    <c:when test="${actionBean.collaborationData != null}">
-                                        <div class="notificationText">
-                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                Collaborating on Portal
-                                            </stripes:link>
-                                            with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
-                                        </div>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div style="float:left">
-                                            <stripes:hidden id="dialogAction" name="" value=""/>
-                                            <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
-                                            <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
-                                            <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                <c:if test="${actionBean.validCollaborationPortal}">
+                                    <c:choose>
+                                        <c:when test="${actionBean.invitationPending}">
+                                            <div class="notificationText">
+                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                    Collaboration Portal
+                                                </stripes:link>
+                                                invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
+                                                <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
+                                                (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
+                                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                                <stripes:param name="resendInvitation" value=""/>
+                                                Resend Invitation
+                                            </stripes:link>)
+                                            </div>
+                                        </c:when>
+                                        <c:when test="${actionBean.collaborationData != null}">
+                                            <div class="notificationText">
+                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                    Collaborating on Portal
+                                                </stripes:link>
+                                                with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div style="float:left">
+                                                <stripes:hidden id="dialogAction" name="" value=""/>
+                                                <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
+                                                <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                                                <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
 
-                                            <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
-                                                <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
-                                                                style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
-                                            </security:authorizeBlock>
-                                        </div>
-                                    </c:otherwise>
-                                </c:choose>
+                                                <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                                                    <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
+                                                                    style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
+                                                </security:authorizeBlock>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </security:authorizeBlock>
                         </div>
                     </div>
@@ -464,11 +466,13 @@
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
-                    <th style="width:10em">Identifier</th>
-                    <th>Protocol Title</th>
-                    <th style="width:25em">Type</th>
-                    <th style="width:5em"></th>
-                    <th style="width:9em"></th>
+                    <tr>
+                        <th style="width:10em">Identifier</th>
+                        <th>Protocol Title</th>
+                        <th style="width:25em">Type</th>
+                        <th style="width:5em"></th>
+                        <th style="width:9em"></th>
+                    </tr>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">

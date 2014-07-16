@@ -11,7 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -28,27 +28,54 @@ public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 
+    @PersistenceContext(unitName = "metrics_pu")
+    private EntityManager metricsEntityManager;
+
     /** Add exceptions to this list; the goal is to keep this list empty. */
     private static final String[] ignoredEntities = new String[0];
 
     /**
-     * Method to allow user to ignore certain classes/entities in the testEverything method.
-     * Default is to not ignore anything.
-     *
-     * @param entityName the name of the entity to ignore
-     *
-     * @return true if we should ignore this entity
+     * Entities that should be checked against the metrics persistence unit and, therefore, should not be checked
+     * against the mercury persistence unit.
      */
-    public boolean ignoreEntity(String entityName) {
-        return ArrayUtils.contains(ignoredEntities, entityName);
+    private static final String[] metricsEntities =
+            {"org.broadinstitute.gpinformatics.infrastructure.metrics.Aggregation"};
+
+    /**
+     * Method to allow user to ignore certain classes/entities in the test methods.
+     * Default is to check everything.
+     *
+     * @param entityName the name of the entity to check
+     * @param blackList  classes that should be ignored
+     * @param whiteList  classes that should be included
+     * @return true if we should check this entity
+     */
+    public boolean shouldCheckEntity(String entityName, String[] blackList, String[] whiteList) {
+        if (ArrayUtils.contains(ignoredEntities, entityName)) {
+            return false;
+        } else if (whiteList != null) {
+            return ArrayUtils.contains(whiteList, entityName);
+        } else {
+            return !ArrayUtils.contains(blackList, entityName);
+        }
     }
 
     /**
      * This test iterates through all JPA'd classes validates them
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
-    public void testEverything() throws Exception {
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
+        testPersistenceUnit(session, metricsEntities, null);
+    }
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    public void testMetricsPersistenceUnit() throws Exception {
+        Session session = metricsEntityManager.unwrap(Session.class);
+        testPersistenceUnit(session, null, metricsEntities);
+    }
+
+    private void testPersistenceUnit(Session session, String[] blackList, String[] whiteList) {
         SessionFactory sessionFactory = session.getSessionFactory();
         Map<String, String> failedEntityMap = new HashMap<>();
         Map<String, ClassMetadata> metadata = sessionFactory.getAllClassMetadata();
@@ -56,7 +83,7 @@ public class HibernateMetadataTest extends ContainerTest {
         for (Object o : metadata.values()) {
             entityPersister = (EntityPersister) o;
             String className = entityPersister.getClassMetadata().getEntityName();
-            if (!ignoreEntity(className)) {
+            if (shouldCheckEntity(className, blackList, whiteList)) {
                 try {
                     Query query = session.createQuery("from " + className + " c");
                     query.setMaxResults(10);

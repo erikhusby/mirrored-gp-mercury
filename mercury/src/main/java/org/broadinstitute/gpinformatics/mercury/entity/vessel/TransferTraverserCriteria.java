@@ -598,12 +598,12 @@ public interface TransferTraverserCriteria {
             }
             if (vessel != null) {
                 //check all in place events and descendant in place events
-                for (LabEvent inPlaceEvent : vessel.getInPlaceEvents()) {
+                for (LabEvent inPlaceEvent : vessel.getInPlaceLabEvents()) {
                     evaluteEvent(vessel, inPlaceEvent);
                 }
                 Collection<LabVessel> descendantVessels = vessel.getDescendantVessels();
                 for (LabVessel descendant : descendantVessels) {
-                    Set<LabEvent> inPlaceEvents = descendant.getInPlaceEvents();
+                    Set<LabEvent> inPlaceEvents = descendant.getInPlaceLabEvents();
                     for (LabEvent inPlaceEvent : inPlaceEvents) {
                         evaluteEvent(vessel, inPlaceEvent);
                     }

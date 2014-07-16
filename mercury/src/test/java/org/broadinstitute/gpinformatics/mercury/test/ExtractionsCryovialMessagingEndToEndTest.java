@@ -36,7 +36,10 @@ public class ExtractionsCryovialMessagingEndToEndTest  extends Arquillian {
 
     private final SimpleDateFormat testSuffixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test
+    // This test was disabled since it fails to register the destination rack.  Also there is now
+    // a Gpuitest (ExtractionTest.testBatchlessExtraction) that does this without the expectation
+    // of pre-existing tubes, and uses the correct vessel types.
+    @Test(enabled = false)
     public void testEndToEnd() {
         String testSuffix = testSuffixDateFormat.format(new Date());
 

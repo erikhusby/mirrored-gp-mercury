@@ -32,7 +32,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
         NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8),
         MiSeqReagentKit("MiseqReagentKit", VesselGeometry.MISEQ_REAGENT_KIT),
-        Eco48("Eco48", VesselGeometry.G8x6);
+        Eco48("Eco48", VesselGeometry.G8x6),
+        Plate96Well200("Plate96Well200", VesselGeometry.G12x8),
+        Plate96RoundWellBlock2000("Plate96RoundWellBlock2000", VesselGeometry.G12x8),
+        Plate96Microtube2000("Plate96Microtube2000", VesselGeometry.G12x8);
 
         /**
          * The name that will be supplied by automation scripts.

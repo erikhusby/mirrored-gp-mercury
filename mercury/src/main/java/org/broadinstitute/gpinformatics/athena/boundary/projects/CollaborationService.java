@@ -91,7 +91,12 @@ public class CollaborationService {
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
-            throw new IllegalArgumentException("must specify a Collaborator Domain User ID or an email address");
+            throw new IllegalArgumentException("Must specify a Collaborator Domain User ID or an email address");
+        }
+
+        if (researchProject.getCohortIds().length != 1) {
+            throw new IllegalArgumentException("A collaboration requires one and only one cohort to be defined " +
+                                               "on the research project");
         }
 
         // Look up the selected id.

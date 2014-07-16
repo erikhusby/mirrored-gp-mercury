@@ -79,13 +79,13 @@ jira:
 collaborate:
 
     DEV:
-      urlBase:      http://localhost:8080/portal/collaborate
+      urlBase:      http://gpportal-dev:8080/portal/collaborate
 
     RC:
-      urlBase:      http://gapdev:8080/portal/collaborate
+      urlBase:      http://gpportal-qa:8080/portal/collaborate
 
     PROD:
-      urlBase:      http://gap:8080/portal/collaborate
+      urlBase:      http://gpportal-prod:8080/portal/collaborate
 
 
 portal:
@@ -221,9 +221,14 @@ hipchat:
         gpLimsRoom: Mercury & Athena (GPInfx)
         authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
+bass:
+    PROD:
+      login:    mercury-bass
+      password: LszkUJSGyb!
+      host:     bass.broadinstitute.org
+      port:     443
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
-
-
 mercury:
 
     DEV:
@@ -240,6 +245,7 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
+      bass: PROD
 
 
     AUTO_BUILD:
@@ -256,7 +262,7 @@ mercury:
       bettaLimsServer: DEV
       hipchat: DEV
       collaborate: DEV
-
+      bass: PROD
 
     TEST:
 
@@ -272,10 +278,9 @@ mercury:
       bettaLimsServer: TEST
       hipchat: DEV
       collaborate: DEV
-
+      bass:     PROD
 
     QA:
-
       app:      QA
       bsp:      RC
       jira:     TEST
@@ -288,7 +293,7 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
-
+      bass:     PROD
 
     RC:
 
@@ -304,6 +309,7 @@ mercury:
       bettaLimsServer: QA
       hipchat: DEV
       collaborate: RC
+      bass:     PROD
 
 
     PROD:
@@ -320,3 +326,5 @@ mercury:
       bettaLimsServer: PROD
       hipchat: PROD
       collaborate: PROD
+      bass:     PROD
+

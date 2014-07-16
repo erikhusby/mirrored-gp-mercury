@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestInput;
+import edu.mit.broad.prodinfo.bean.generated.AutoWorkRequestOutput;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -8,12 +10,14 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.util.MessageCollection;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductOrderJiraUtil;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderKitDetail;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -30,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.MessageReporter;
@@ -65,28 +70,30 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
  */
 public class ProductOrderEjb {
 
-    private final ProductOrderDao productOrderDao;
+    private ProductOrderDao productOrderDao;
 
-    private final ProductDao productDao;
+    private ProductDao productDao;
 
-    private final QuoteService quoteService;
+    private QuoteService quoteService;
 
-    private final JiraService jiraService;
+    private JiraService jiraService;
 
-    private final UserBean userBean;
+    private UserBean userBean;
 
-    private final BSPUserList userList;
+    private BSPUserList userList;
 
-    private final BucketEjb bucketEjb;
+    private BucketEjb bucketEjb;
+
+    private SquidConnector squidConnector;
 
     @Inject
     private BSPKitRequestService bspKitRequestService;
 
+    private ProductOrderSampleDao productOrderSampleDao;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ProductOrderEjb() {
-        this(null, null, null, null, null, null, null);
     }
 
     @Inject
@@ -96,7 +103,7 @@ public class ProductOrderEjb {
                            JiraService jiraService,
                            UserBean userBean,
                            BSPUserList userList,
-                           BucketEjb bucketEjb) {
+                           BucketEjb bucketEjb, SquidConnector squidConnector) {
         this.productOrderDao = productOrderDao;
         this.productDao = productDao;
         this.quoteService = quoteService;
@@ -104,12 +111,13 @@ public class ProductOrderEjb {
         this.userBean = userBean;
         this.userList = userList;
         this.bucketEjb = bucketEjb;
+        this.squidConnector = squidConnector;
     }
 
     private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     /**
-     * Persisting a Product order.  This methods primary job is to Support a call from the Product Order Action bean
+     * Persisting a Product order.  This method's primary job is to Support a call from the Product Order Action bean
      * to wrap the persistence of an order in a transaction.
      *
      * @param saveType            Indicates what type of persistence this is:  Save, Update, etc
@@ -277,10 +285,20 @@ public class ProductOrderEjb {
         editOrder.prepareToSave(userBean.getBspUser());
     }
 
-    public void setManualOnRisk(
-            BspUser user, String productOrderKey,
-            List<ProductOrderSample> orderSamples, boolean riskStatus, String riskComment) {
-
+    /**
+     * Manually update risk of samples in a product order
+     *
+     * @param user            User performing action
+     * @param productOrderKey Key of project being updated.
+     * @param orderSamples    Samples who's risk is to be manually updated.
+     * @param riskStatus      New risk status
+     * @param riskComment     Comment of reason why samples' risk is being updated
+     *
+     * @throws IOException
+     */
+    public void addManualOnRisk(@Nonnull BspUser user, @Nonnull String productOrderKey,
+                                List<ProductOrderSample> orderSamples, boolean riskStatus, @Nonnull String riskComment)
+            throws IOException {
         ProductOrder editOrder = productOrderDao.findByBusinessKey(productOrderKey);
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse.
@@ -300,6 +318,30 @@ public class ProductOrderEjb {
 
         // Set the create and modified information.
         editOrder.prepareToSave(user);
+
+        // Add comment about the risk status to jira.
+        updateJiraCommentForRisk(productOrderKey, user, riskComment, orderSamples.size(), riskStatus);
+    }
+
+    /**
+     * Post a comment in jira about risk.
+     *
+     * @param jiraKey     Key of jira issue to add comment to.
+     * @param comment     User supplied comment on change of risk for samples
+     * @param sampleCount number of effected samples
+     * @param isRisk      new risk of samples
+     *
+     * @throws IOException
+     */
+    private void updateJiraCommentForRisk(@Nonnull String jiraKey, @Nonnull BspUser bspUser, @Nonnull String comment,
+                                          int sampleCount, boolean isRisk) throws IOException {
+        String issueComment = buildJiraCommentForRiskString(comment, bspUser.getUsername(), sampleCount, isRisk);
+        jiraService.addComment(jiraKey, issueComment);
+    }
+
+    String buildJiraCommentForRiskString(String comment, String username, int sampleCount, boolean isRisk) {
+        return String.format("%s set manual on risk to %s for %d samples with comment:\n%s",
+                username, isRisk, sampleCount, comment);
     }
 
     public void handleSamplesAdded(@Nonnull String productOrderKey, @Nonnull Collection<ProductOrderSample> newSamples,
@@ -323,16 +365,16 @@ public class ProductOrderEjb {
         validateQuote(productOrder, quoteService);
 
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
-                                                                          JiraTransition.DEVELOPER_EDIT.getStateName());
+                JiraTransition.DEVELOPER_EDIT.getStateName());
 
         List<PDOUpdateField> pdoUpdateFields = new ArrayList<>(Arrays.asList(
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
                 new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY,
-                                   productOrder.getProduct().getProductFamily().getName()),
+                        productOrder.getProduct().getProductFamily().getName()),
                 new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
                 new PDOUpdateField(ProductOrder.JiraField.REPORTER,
-                                   new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy())
-                                                                     .getUsername()))));
+                        new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy())
+                                                          .getUsername()))));
 
         if (productOrder.getProduct().getSupportsNumberOfLanes()) {
             pdoUpdateFields.add(
@@ -358,8 +400,8 @@ public class ProductOrderEjb {
             pdoUpdateFields.add(PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE));
         } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.FUNDING_DEADLINE,
-                                                   JiraService.JIRA_DATE_FORMAT.format(
-                                                           productOrder.getFundingDeadline())));
+                    JiraService.JIRA_DATE_FORMAT.format(
+                            productOrder.getFundingDeadline())));
         }
 
         if (productOrder.getPublicationDeadline() == null) {
@@ -367,14 +409,14 @@ public class ProductOrderEjb {
                     PDOUpdateField.clearedPDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE));
         } else {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.PUBLICATION_DEADLINE,
-                                                   JiraService.JIRA_DATE_FORMAT.format(
-                                                           productOrder.getPublicationDeadline())));
+                    JiraService.JIRA_DATE_FORMAT.format(
+                            productOrder.getPublicationDeadline())));
         }
 
         // Add the Requisition name to the list of fields when appropriate.
         if (ApplicationInstance.CRSP.isCurrent() && !StringUtils.isBlank(productOrder.getRequisitionName())) {
             pdoUpdateFields.add(new PDOUpdateField(ProductOrder.JiraField.REQUISITION_NAME,
-                                                   productOrder.getRequisitionName()));
+                    productOrder.getRequisitionName()));
         }
 
         String[] customFieldNames = new String[pdoUpdateFields.size()];
@@ -472,11 +514,13 @@ public class ProductOrderEjb {
 
             for (ProductOrderSample sample : samples) {
                 messages.add(sample.getName() + " @ " + sample.getSamplePosition()
-                             + " : current status " + sample.getDeliveryStatus().getDisplayName());
+                             + " : current status " + (StringUtils.isNotBlank(
+                        sample.getDeliveryStatus().getDisplayName()) ? sample.getDeliveryStatus().getDisplayName() :
+                        "Not Started"));
             }
 
-            return "Cannot transition samples to status " + status.getDisplayName()
-                   + ": " + StringUtils.join(messages, ", ");
+            return "Cannot transition samples to status " + (StringUtils.isNotBlank(status.getDisplayName()) ?
+                    status.getDisplayName() : "Not Started") + ": " + StringUtils.join(messages, ", ");
         }
     }
 
@@ -571,9 +615,9 @@ public class ProductOrderEjb {
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}\n\n{3}",
-                                              getUserName(), targetStatus.getDisplayName(),
-                                              StringUtils.join(ProductOrderSample.getSampleNames(samples), ","),
-                                              StringUtils.stripToEmpty(comment)));
+                getUserName(), targetStatus.getDisplayName(),
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ","),
+                StringUtils.stripToEmpty(comment)));
     }
 
     /**
@@ -700,10 +744,6 @@ public class ProductOrderEjb {
      * changes are pushed to JIRA as well, with a comment about the change and the current user.
      *
      * @param jiraTicketKey the key to update
-     * @param reporter
-     *
-     * @throws NoSuchPDOException
-     * @throws IOException
      */
     public void updateOrderStatus(@Nonnull String jiraTicketKey, @Nonnull MessageReporter reporter)
             throws NoSuchPDOException, IOException {
@@ -725,7 +765,7 @@ public class ProductOrderEjb {
             }
             if (transition != null) {
                 issue.postTransition(transition.getStateName(),
-                                     getUserName() + " performed " + operation + " transition");
+                        getUserName() + " performed " + operation + " transition");
             }
             // The status was changed, let the user know.
             reporter.addMessage("The order status of ''{0}'' is now {1}.", jiraTicketKey, order.getOrderStatus());
@@ -772,7 +812,7 @@ public class ProductOrderEjb {
         productOrder.setOrderStatus(OrderStatus.Abandoned);
 
         transitionSamples(productOrder, EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
-                          DeliveryStatus.ABANDONED, productOrder.getSamples());
+                DeliveryStatus.ABANDONED, productOrder.getSamples());
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
@@ -794,9 +834,43 @@ public class ProductOrderEjb {
                                @Nonnull String comment)
             throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey,
-                                         EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
-                                         DeliveryStatus.ABANDONED, samples,
-                                         comment);
+                EnumSet.of(DeliveryStatus.ABANDONED, DeliveryStatus.NOT_STARTED),
+                DeliveryStatus.ABANDONED, samples,
+                comment);
+    }
+
+    /**
+     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
+     *
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param samples       the samples to abandon
+     * @param comment       optional user supplied comment about this action.
+     *
+     * @throws IOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws NoSuchPDOException
+     */
+    public void unAbandonSamples(@Nonnull String jiraTicketKey, @Nonnull Collection<Long> samples,
+                                 @Nonnull String comment, @Nonnull MessageReporter reporter)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+
+        List<ProductOrderSample> poSamples = productOrderSampleDao.findListByList(ProductOrderSample.class,
+                ProductOrderSample_.productOrderSampleId, samples);
+
+        Iterator<ProductOrderSample> samplesIter = poSamples.iterator();
+        while (samplesIter.hasNext()) {
+            ProductOrderSample sample = samplesIter.next();
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED &&
+                !StringUtils.isBlank(comment)) {
+                sample.setSampleComment(comment);
+            }
+        }
+
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DeliveryStatus.ABANDONED),
+                DeliveryStatus.NOT_STARTED, poSamples, comment);
+
+        reporter.addMessage("Un-Abandoned samples: {0}.",
+                StringUtils.join(ProductOrderSample.getSampleNames(poSamples), ", "));
     }
 
     /**
@@ -815,18 +889,18 @@ public class ProductOrderEjb {
         order.prepareToSave(bspUser);
         productOrderDao.persist(order);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samples), ",");
-        reporter.addMessage("Added samples: {0}.", nameList);
 
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                                            order.getSampleString(),
-                                            ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                order.getSampleString(),
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                                            order.getSamples().size(),
-                                            ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                order.getSamples().size(),
+                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
         handleSamplesAdded(jiraTicketKey, samples, reporter);
+        reporter.addMessage("Added samples: {0}.", nameList);
 
         updateOrderStatus(jiraTicketKey, reporter);
     }
@@ -846,11 +920,11 @@ public class ProductOrderEjb {
             JiraIssue issue = jiraService.getIssue(productOrder.getJiraTicketKey());
             issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                                                productOrder.getSampleString(),
-                                                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                    productOrder.getSampleString(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
             issue.setCustomFieldUsingTransition(ProductOrder.JiraField.NUMBER_OF_SAMPLES,
-                                                productOrder.getSamples().size(),
-                                                ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
+                    productOrder.getSamples().size(),
+                    ProductOrderEjb.JiraTransition.DEVELOPER_EDIT.getStateName());
 
             updateOrderStatus(productOrder.getJiraTicketKey(), reporter);
         }
@@ -894,7 +968,12 @@ public class ProductOrderEjb {
             throw new InformaticsServiceException("Unable to create the Product Order in Jira", e);
         }
 
-        if (editOrder.isSampleInitiation()) {
+        // This checks if there is a product order kit defined, which will let ANY PDO define the kit work request.
+        if (editOrder.getProductOrderKit().getKitOrderDetails().isEmpty()) {
+            if (editOrder.isSampleInitiation()) {
+                throw new InformaticsServiceException("Kit Work Requests require at least one kit definition");
+            }
+
             try {
                 submitSampleKitRequest(editOrder, messageCollection);
             } catch (Exception e) {
@@ -920,5 +999,58 @@ public class ProductOrderEjb {
         String workRequestBarcode = bspKitRequestService.createAndSubmitKitRequestForPDO(order);
         order.getProductOrderKit().setWorkRequestId(workRequestBarcode);
         messageCollection.addInfo("Created BSP work request ''{0}'' for this order.", workRequestBarcode);
+    }
+
+    /**
+     * This method will post the basic squid work request details entered by a user to create a project and work
+     * request within squid for the product order represented in the input.
+     *
+     * @param productOrderKey Unique Jira key representing the product order for the resultant work request
+     * @param squidInput      Basic information needed for squid to automatically create a work request for the
+     *                        material information represented by the samples in the referenced product order
+     *
+     * @return work request output
+     */
+    public AutoWorkRequestOutput createSquidWorkRequest(@Nonnull String productOrderKey,
+                                                        @Nonnull AutoWorkRequestInput squidInput) {
+
+        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+
+        if (order == null) {
+            throw new RuntimeException("Unable to find a product order with a key of " + productOrderKey);
+        }
+
+        AutoWorkRequestOutput workRequestOutput = squidConnector.createSquidWorkRequest(squidInput);
+
+        order.setSquidWorkRequest(workRequestOutput.getWorkRequestId());
+
+        try {
+            addWorkRequestNotification(order, workRequestOutput, squidInput);
+        } catch (IOException e) {
+            log.info("Unable to post work request creation of " + workRequestOutput.getWorkRequestId() + " to Jira for "
+                     + productOrderKey);
+        }
+        return workRequestOutput;
+    }
+
+    private void addWorkRequestNotification(@Nonnull ProductOrder pdo,
+                                            @Nonnull AutoWorkRequestOutput createdWorkRequestResults,
+                                            AutoWorkRequestInput squidInput)
+            throws IOException {
+
+        JiraIssue pdoIssue = jiraService.getIssue(pdo.getBusinessKey());
+
+        pdoIssue.addComment(String.format("Created new Squid project %s for new Squid work request %s",
+                createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
+
+        if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
+            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
+                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
+        }
+    }
+
+    @Inject
+    public void setProductOrderSampleDao(ProductOrderSampleDao productOrderSampleDao) {
+        this.productOrderSampleDao = productOrderSampleDao;
     }
 }
