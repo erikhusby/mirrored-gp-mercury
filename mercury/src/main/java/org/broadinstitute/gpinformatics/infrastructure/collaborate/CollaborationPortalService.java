@@ -75,6 +75,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
      * @return The collaboration id
      */
     public String beginCollaboration(@Nonnull ResearchProject researchProject, @Nonnull BspUser collaborator,
+                                     @Nonnull String quoteId,
                                      @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
@@ -93,7 +94,7 @@ public class CollaborationPortalService extends AbstractJerseyClientService {
         CollaborationData collaboration =
                 new CollaborationData(researchProject.getName(), researchProject.getSynopsis(),
                         researchProject.getBusinessKey(),
-                        collaborator.getUserId(), projectManager.getUserId(), collaborationMessage);
+                        collaborator.getUserId(), projectManager.getUserId(), quoteId, collaborationMessage);
 
         try {
             return resource.type(MediaType.APPLICATION_XML).post(String.class, collaboration);

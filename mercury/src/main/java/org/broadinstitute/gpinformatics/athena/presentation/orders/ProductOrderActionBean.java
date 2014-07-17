@@ -82,9 +82,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -185,10 +182,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PreferenceEjb preferenceEjb;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
 
     @Inject
     private ProductOrderUtil productOrderUtil;
@@ -585,13 +578,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
-        try {
-            quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
-        } catch (QuoteServerException ex) {
-            addGlobalValidationError("The quote id {2} is not valid: {3}", editOrder.getQuoteId(), ex.getMessage());
-        } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
-        }
+        String quoteId = editOrder.getQuoteId();
+        validateQuoteId(quoteId);
 
         if (editOrder != null) {
             validateRinScores(editOrder);
