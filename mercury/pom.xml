@@ -298,6 +298,8 @@
                             <historyDir>${user.home}/.clover/history/${project.artifactId}</historyDir>
                             <includesAllSourceRoots>false</includesAllSourceRoots>
                             <targetPercentage>${clover.targetPercentage}</targetPercentage>
+                            <generateHtml>true</generateHtml>
+                            <generateXml>true</generateXml>
                         </configuration>
                         <executions>
                             <execution>
