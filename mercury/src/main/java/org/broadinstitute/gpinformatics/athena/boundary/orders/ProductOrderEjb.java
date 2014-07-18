@@ -172,6 +172,8 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        editedProductOrder.calculateRisk();
+
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -315,6 +317,8 @@ public class ProductOrderEjb {
                 sample.setManualNotOnRisk(riskComment);
             }
         }
+
+//        editOrder.updateRiskCount();
 
         // Set the create and modified information.
         editOrder.prepareToSave(user);

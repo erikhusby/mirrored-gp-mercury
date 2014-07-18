@@ -248,7 +248,7 @@ public class ProductOrderResource {
             productOrder.prepareToSave(user, ProductOrder.SaveType.CREATING);
             ProductOrderJiraUtil.placeOrder(productOrder, jiraService);
             productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-
+            productOrder.calculateRisk();
             // Not supplying add-ons at this point, just saving what we defined above and then flushing to make sure
             // any DB constraints have been enforced.
             productOrderDao.persist(productOrder);
@@ -341,6 +341,11 @@ public class ProductOrderResource {
             productOrderEjb.addSamples(bspUser, pdoKey, samplesToAdd, MessageReporter.UNUSED);
         } catch (ProductOrderEjb.NoSuchPDOException | IOException | NoJiraTransitionException | BucketException e) {
             throw new ApplicationValidationException("Could not add samples due to error: " + e);
+        }
+        try {
+            productOrderEjb.calculateRisk(pdoKey);
+        } catch (Exception e) {
+            throw new ApplicationValidationException("RIsk could not be calculated due to error: " + e);
         }
 
         return SAMPLES_ADDED_RESPONSE;

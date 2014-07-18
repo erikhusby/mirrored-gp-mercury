@@ -626,23 +626,25 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doOnRiskUpdate() {
-        try {
-            // Calculate risk here and get back any error message.
-            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
+        if (!hasErrors()) {
+            try {
+                // Calculate risk here and get back any error message.
+                productOrderEjb.calculateRisk(editOrder.getBusinessKey());
 
-            // refetch the order to get updated risk status on the order.
-            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-            int numSamplesOnRisk = editOrder.countItemsOnRisk();
+                // refetch the order to get updated risk status on the order.
+                editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+                int numSamplesOnRisk = editOrder.countItemsOnRisk();
 
-            if (numSamplesOnRisk == 0) {
-                addMessage("None of the samples for this order are on risk");
-            } else {
-                addMessage("{0} {1} for this order {2} on risk",
-                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                        numSamplesOnRisk == 1 ? "is" : "are");
+                if (numSamplesOnRisk == 0) {
+                    addMessage("None of the samples for this order are on risk");
+                } else {
+                    addMessage("{0} {1} for this order {2} on risk",
+                            numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                            numSamplesOnRisk == 1 ? "is" : "are");
+                }
+            } catch (Exception e) {
+                addGlobalValidationError(e.getMessage());
             }
-        } catch (Exception e) {
-            addGlobalValidationError(e.getMessage());
         }
     }
 
@@ -654,9 +656,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validatePlacedOrder(String action) {
         doValidation(action);
         validateRegulatoryInformation(action);
-        if (!hasErrors()) {
-            doOnRiskUpdate();
-        }
+        doOnRiskUpdate();
 
         updateFromInitiationTokenInputs();
     }
@@ -1417,6 +1417,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution deleteSamples() throws Exception {
         productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
                 selectedProductOrderSamples, this);
+        doOnRiskUpdate();
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1519,6 +1520,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
                         unAbandonComment, this);
+                doOnRiskUpdate();
             } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
                 addGlobalValidationError(e.getMessage());
                 return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
@@ -1537,6 +1539,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
             productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
+            doOnRiskUpdate();
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
