@@ -34,7 +34,7 @@ public class DesignedReagent extends Reagent {
 
     public DesignedReagent(ReagentDesign reagentDesign) {
         // todo jmt what to pass to super?
-        super(null, null);
+        super(null, null, null);
         this.reagentDesign = reagentDesign;
         reagentDesign.addDesignedReagent(this);
     }
