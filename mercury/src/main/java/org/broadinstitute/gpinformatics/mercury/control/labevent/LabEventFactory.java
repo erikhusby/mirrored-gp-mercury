@@ -1017,9 +1017,11 @@ public class LabEventFactory implements Serializable {
             GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
                     reagentType.getKitType(), reagentType.getBarcode());
             if (genericReagent == null) {
+                Date expiration = null;
+                if(reagentType.getExpiration() != null)
+                    expiration = reagentType.getExpiration().toGregorianCalendar().getTime();
                 genericReagent = new GenericReagent(
-                        reagentType.getKitType(), reagentType.getBarcode(),
-                        reagentType.getExpiration().toGregorianCalendar().getTime());
+                        reagentType.getKitType(), reagentType.getBarcode(), expiration);
             }
             labEvent.addReagent(genericReagent);
         }

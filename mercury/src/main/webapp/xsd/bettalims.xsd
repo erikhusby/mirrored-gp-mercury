@@ -19,7 +19,7 @@
     <xs:attributeGroup name="reagentGroup">
         <xs:attribute name="barcode" type="xs:NMTOKEN" use="required"/>
         <xs:attribute name="kitType" type="xs:NMTOKEN" use="required"/>
-        <xs:attribute name="expiration" type="xs:dateTime" use="required"/>
+        <xs:attribute name="expiration" type="xs:dateTime"/>
     </xs:attributeGroup>
 
     <xs:complexType name="reagentType">

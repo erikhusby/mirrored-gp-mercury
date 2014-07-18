@@ -73,6 +73,7 @@ public class CadencePicoJaxbBuilder {
                     datatypeFactory.newXMLGregorianCalendar(gregorianCalendar);
             bufferReagent.setExpiration(now);
         } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
         }
         picoBufferAdditionJaxb.getReagent().add(bufferReagent);
         bettaLimsMessageTestFactory.addMessage(messageList, picoBufferAdditionJaxb);
