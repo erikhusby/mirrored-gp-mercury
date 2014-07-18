@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -19,7 +18,9 @@ import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassSearchService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUtil;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationMetricsFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 
@@ -37,7 +38,6 @@ public class SubmissionDtoFetcher {
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
-    private ResearchProjectDao researchProjectDao;
 
     public SubmissionDtoFetcher() {
     }
@@ -62,10 +62,16 @@ public class SubmissionDtoFetcher {
 
         Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
 
-        for(ProductOrderSample sample:samples) {
+        for(final ProductOrderSample sample:samples) {
             BSPSampleDTO bspSampleDTO = bulkInfo.get(sample.getName());
             if (bspSampleDTO!=null) {
                 sample.setBspSampleDTO(bspSampleDTO);
+                // In non-production environments bogus samples are often created so we will
+                // only create a new BSPSampleDTO in those cases
+            } else if (bspSampleDataFetcher.getBspConfig().getMercuryDeployment() != Deployment.PROD) {
+                sample.setBspSampleDTO(new BSPSampleDTO(new HashMap<BSPSampleSearchColumn, String>() {{
+                    put(BSPSampleSearchColumn.SAMPLE_ID, sample.getName());
+                }}));
             }
         }
     }

@@ -46,11 +46,8 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
     @Inject
     private SubmissionDtoFetcher submissionDtoFetcher;
 
-
-    public static final String TEST_SAMPLE = "SM-35BDA";
     public static final String COLLABORATOR_SAMPLE_ID = "NA12878";
     public static final String RESEARCH_PROJECT_ID = "RP-697";
-//    public static final String RESEARCH_PROJECT_ID = "RP-16";
 
     public void testFetch() throws Exception {
         Date dateCompleted = DateUtils.parseDate( "yyyy-MM-dd HH:mm:ss.S", "2014-06-04 22:12:49.0");
@@ -67,10 +64,8 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
-//            assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-//            assertThat(submissionDto.getDateCompleted(), Matchers.equalTo(dateCompleted));
-            assertThat(submissionDto.getDateCompleted(), Matchers.equalTo(dateCompleted));
+            assertThat(dateCompleted, Matchers.equalTo(submissionDto.getDateCompleted()));
         }
 
 
