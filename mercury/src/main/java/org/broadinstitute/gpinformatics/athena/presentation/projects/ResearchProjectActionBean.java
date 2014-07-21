@@ -82,10 +82,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
+    public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
+    public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
 
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -226,14 +228,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
-                    RESEND_INVITATION_ACTION})
+                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-            if (editResearchProject!=null) {
-                submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
-            }
             try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
                 validCollaborationPortal = true;
@@ -754,6 +753,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
             }
         }
         return createTextResolution(result);
+    }
+
+    @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
+    public Resolution viewSubmissions() {
+        if (editResearchProject != null) {
+            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+        }
+        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
     }
 
     /**
