@@ -387,19 +387,19 @@ public class GetSampleInstancesTest {
 
         // Create the source tubes for the first transfer
         Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
-        Set<LabVessel> starterVessels = new HashSet<>();
+        Set<LabVessel> starterVessels1 = new HashSet<>();
         int i = 0;
         for (ProductOrderSample productOrderSample : sampleInitProductOrder.getSamples()) {
             BarcodedTube barcodedTube = new BarcodedTube("tube1." + i, BarcodedTube.BarcodedTubeType.MatrixTube);
             productOrderSample.setMercurySample(new MercurySample(productOrderSample.getSampleKey()));
             barcodedTube.getMercurySamples().add(productOrderSample.getMercurySample());
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(i), barcodedTube);
-            starterVessels.add(barcodedTube);
+            starterVessels1.add(barcodedTube);
             i++;
         }
 
         // Create the first LCSET.
-        LabBatch lcSet1 = new LabBatch("LCSET-1", starterVessels, LabBatch.LabBatchType.WORKFLOW);
+        LabBatch lcSet1 = new LabBatch("LCSET-1", starterVessels1, LabBatch.LabBatchType.WORKFLOW);
         for (LabVessel labVessel : lcSet1.getStartingBatchLabVessels()) {
             BucketEntry bucketEntry = new BucketEntry(labVessel, sampleInitProductOrder,
                     BucketEntry.BucketEntryType.PDO_ENTRY);
@@ -409,10 +409,12 @@ public class GetSampleInstancesTest {
         TubeFormation tubeFormation1 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 
         // Create the destination tubes for the first transfer.
+        Set<LabVessel> starterVessels2 = new HashSet<>();
         mapPositionToTube = new HashMap<>();
         for (int j = 0; j < tubeFormation1.getContainerRole().getContainedVessels().size(); j++) {
             BarcodedTube barcodedTube = new BarcodedTube("tube2." + j, BarcodedTube.BarcodedTubeType.MatrixTube);
             mapPositionToTube.put(SBSSection.ALL96.getWells().get(j), barcodedTube);
+            starterVessels2.add(barcodedTube);
         }
         TubeFormation tubeFormation2 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 
@@ -421,7 +423,7 @@ public class GetSampleInstancesTest {
                 tubeFormation2.getContainerRole(), SBSSection.ALL96, labEvent1));
 
         // Create the second LCSET by reworking all tubes.
-        LabBatch lcSet2 = new LabBatch("LCSET-2", starterVessels, LabBatch.LabBatchType.WORKFLOW);
+        LabBatch lcSet2 = new LabBatch("LCSET-2", starterVessels2, LabBatch.LabBatchType.WORKFLOW);
         for (LabVessel labVessel : lcSet2.getStartingBatchLabVessels()) {
             BucketEntry bucketEntry = new BucketEntry(labVessel, sampleInitProductOrder,
                     BucketEntry.BucketEntryType.REWORK_ENTRY);

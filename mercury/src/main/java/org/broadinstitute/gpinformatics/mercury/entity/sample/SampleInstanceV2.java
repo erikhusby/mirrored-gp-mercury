@@ -283,6 +283,9 @@ todo jmt not sure if this applies.
     public final void applyVesselChanges(LabVessel labVessel) {
         this.labVessel = labVessel;
         reagents.addAll(labVessel.getReagentContents());
+        if (!labVessel.getBucketEntries().isEmpty()) {
+            allBucketEntries.clear();
+        }
         allBucketEntries.addAll(labVessel.getBucketEntries());
         if (labVessel.getBucketEntries().size() == 1) {
             singleBucketEntry = labVessel.getBucketEntries().iterator().next();
