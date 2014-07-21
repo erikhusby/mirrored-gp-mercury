@@ -172,6 +172,8 @@ public class ProductOrderEjb {
         } else {
             updateJiraIssue(editedProductOrder);
         }
+        editedProductOrder.calculateRisk();
+
         productOrderDao.persist(editedProductOrder);
     }
 
@@ -315,6 +317,8 @@ public class ProductOrderEjb {
                 sample.setManualNotOnRisk(riskComment);
             }
         }
+
+//        editOrder.updateRiskCount();
 
         // Set the create and modified information.
         editOrder.prepareToSave(user);
@@ -1044,8 +1048,9 @@ public class ProductOrderEjb {
                 createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
 
         if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
-            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
-                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
+            pdoIssue.addLink(squidInput.getLcsetId());
+//            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
+//                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
     }
 

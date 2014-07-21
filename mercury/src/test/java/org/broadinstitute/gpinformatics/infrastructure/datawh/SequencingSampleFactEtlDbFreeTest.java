@@ -298,8 +298,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     public void testGenericIndexAndDedup() throws Exception {
         // Has only non-indexed reagents so molecular indexes are all "NONE"
-        reagents.add(new GenericReagent("DMSO", "a whole lot"));
-        reagents.add(new GenericReagent("H2O", "Quabbans finest"));
+        reagents.add(new GenericReagent("DMSO", "a whole lot", new Date()));
+        reagents.add(new GenericReagent("H2O", "Quabbans finest", new Date()));
         sampleInstances.add(sampleInstance2);
 
         doExpects();
