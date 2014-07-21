@@ -626,7 +626,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doOnRiskUpdate() {
-        if (!hasErrors()) {
             try {
                 // Calculate risk here and get back any error message.
                 productOrderEjb.calculateRisk(editOrder.getBusinessKey());
@@ -646,7 +645,6 @@ public class ProductOrderActionBean extends CoreActionBean {
                 addGlobalValidationError(e.getMessage());
             }
         }
-    }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
@@ -655,8 +653,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validatePlacedOrder(String action) {
         doValidation(action);
+        if (!hasErrors()) {
+            doOnRiskUpdate();
+        }
         validateRegulatoryInformation(action);
-        doOnRiskUpdate();
 
         updateFromInitiationTokenInputs();
     }
@@ -1417,7 +1417,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution deleteSamples() throws Exception {
         productOrderEjb.removeSamples(getUserBean().getBspUser(), editOrder.getBusinessKey(),
                 selectedProductOrderSamples, this);
-        doOnRiskUpdate();
         return createViewResolution(editOrder.getBusinessKey());
     }
 
@@ -1520,7 +1519,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             try {
                 productOrderEjb.unAbandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIds,
                         unAbandonComment, this);
-                doOnRiskUpdate();
             } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
                 addGlobalValidationError(e.getMessage());
                 return new ForwardResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(
@@ -1539,7 +1537,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         try {
             productOrderEjb.addSamples(userBean.getBspUser(), editOrder.getJiraTicketKey(), samplesToAdd, this);
-            doOnRiskUpdate();
         } catch (BucketException e) {
             logger.error("Problem adding samples to bucket", e);
             addGlobalValidationError(e.getMessage());
