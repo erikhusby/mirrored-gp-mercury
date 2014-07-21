@@ -57,9 +57,7 @@ public class SamplesDaughterPlateHandler {
 
         // This is called in context of bettalims message handling which handles errors via RuntimeException.
         if (response.getClientResponseStatus().getFamily() != Response.Status.Family.SUCCESSFUL) {
-            throw new RuntimeException(
-                    "POST to " + urlString + " returned " + response.getClientResponseStatus().getReasonPhrase());
-
+            throw new RuntimeException("POST to " + urlString + " returned: " + response.getEntity(String.class));
         }
 
     }
