@@ -110,8 +110,10 @@ public class ZimsIlluminaRunFactory {
             PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
-            for (SampleInstanceV2 sampleInstanceV2 : flowcell.getContainerRole()
-                    .getSampleInstancesAtPositionV2(vesselPosition)) {
+            Set<SampleInstanceV2> uniqueSampleInstances = new HashSet<>();
+            // todo jmt convert getSiV2 from list to set?
+            uniqueSampleInstances.addAll(flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition));
+            for (SampleInstanceV2 sampleInstanceV2 : uniqueSampleInstances) {
                 laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
             }
 
