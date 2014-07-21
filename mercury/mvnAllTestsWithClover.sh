@@ -3,6 +3,8 @@
 # Run all the unit tests using each of the several profiles.
 #
 use Maven-3.0
+JBOSS_HOME=/prodinfolocal/jboss-as-7.1.1.Final/
+MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g"
 #mvn clean | tee tests.log
 OPTIONS="-PArquillian-JBossAS7-Remote,BUILD,Clover.All -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent -Dmaven.clover.licenseLocation=/prodinfolocal/BambooHome/clover.license"
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
