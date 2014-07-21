@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -23,6 +24,7 @@ import java.util.List;
  * <p/>
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
+@Stateless
 public class AggregationMetricsFetcher {
     @PersistenceContext(unitName = "metrics_pu")
     private EntityManager entityManager;
