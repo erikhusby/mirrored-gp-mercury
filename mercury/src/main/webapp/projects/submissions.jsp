@@ -94,7 +94,7 @@
                 <td> ${submissionSample.aggregationProject} </td>
                 <td> ${submissionSample.fileType} </td>
                 <td> ${submissionSample.version}</td>
-                <td> ${submissionSample.qualityMetric}</td>
+                <td> ${submissionSample.qualityMetricString}</td>
                 <td>${submissionSample.contaminationString}</td>
                 <td>${submissionSample.fingerprintLOD.displayString()}</td>
                 <td>${fn:length(submissionSample.lanes)}</td>

@@ -53,7 +53,7 @@ public class SubmissionDtoFetcher {
     private void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
         Set<String> sampleList = new HashSet<>();
 
-        for(ProductOrderSample sample:samples) {
+        for (ProductOrderSample sample : samples) {
             String sampleName = sample.getName();
             if (BSPUtil.isInBspFormat(sampleName)) {
                 sampleList.add(sampleName);
@@ -62,9 +62,9 @@ public class SubmissionDtoFetcher {
 
         Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
 
-        for(final ProductOrderSample sample:samples) {
+        for (final ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bulkInfo.get(sample.getName());
-            if (bspSampleDTO!=null) {
+            if (bspSampleDTO != null) {
                 sample.setBspSampleDTO(bspSampleDTO);
                 // In non-production environments bogus samples are often created so we will
                 // only create a new BSPSampleDTO in those cases
@@ -96,22 +96,25 @@ public class SubmissionDtoFetcher {
             }
         }
 
-        for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
-            String collaboratorParticipantId = sampleListMap.getKey();
+        List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
 
-            Aggregation metricsAggregation =
-                    aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), collaboratorParticipantId,
-                            version);
-
-            List<BassDTO> bassDTOs =
-                    bassSearchService.runSearch(researchProject.getBusinessKey(), collaboratorParticipantId);
-            for (BassDTO bassDTO : bassDTOs) {
-                if (bassDTO.getVersion() == version) {
-                    results.add(new SubmissionDto(bassDTO, metricsAggregation, sampleListMap.getValue()));
-                }
-
+        Map<String, BassDTO> bassDTOMap = new HashMap<>();
+        for (BassDTO bassDTO : bassDTOs) {
+            if (bassDTO.getVersion() == version) {
+                bassDTOMap.put(bassDTO.getSample(), bassDTO);
             }
         }
+
+        for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
+            String collaboratorSampleId = sampleListMap.getKey();
+            Aggregation aggregation =
+                    aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), collaboratorSampleId, version);
+            BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
+            if (bassDTO != null && aggregation != null) {
+                results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue()));
+            }
+        }
+
         return results;
     }
 }

@@ -101,7 +101,7 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
             assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-            assertThat(submissionDto.getDateCompleted(), Matchers.equalTo(dateCompleted));
+            assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
 
         }
 
