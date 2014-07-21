@@ -34,9 +34,13 @@
             }
         }
     </script>
+    <%--label html5 tag in search terms consumes entire horizontal layout area (Chrome only?)--%>
+    <style>
+        label {display:inline}
+    </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
-
+<h4>Search For ${actionBean.entityName}</h4>
 <c:choose>
     <c:when test="${actionBean.readOnly}">
         <h1>${actionBean.selectedSearchName}</h1>
@@ -186,7 +190,7 @@ function addTerm() {
     var parameters;
     if (searchTerm == null) {
         searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j.url('?entityName');
+        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j('#searchForm :input[name=entityName]' ).val();
     } else {
         parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
                 + '&entityName=' + $j.url('?entityName');
