@@ -18,7 +18,7 @@ public class ArquillianSuiteDeployments {
     public static WebArchive deploy() {
         String property = System.getProperty(ARQ_SUITE_GROUP);
         if (property == null) {
-            throw new RuntimeException("No ArqSuiteGroup system property.");
+            throw new RuntimeException("No " + ARQ_SUITE_GROUP + " system property.");
         }
         switch (property) {
         case TestGroups.STUBBY:
@@ -26,7 +26,7 @@ public class ArquillianSuiteDeployments {
         case TestGroups.STANDARD:
             return DeploymentBuilder.buildMercuryWar(DEV);
         default:
-            throw new RuntimeException("Unexpected test group " + ARQ_SUITE_GROUP);
+            throw new RuntimeException("Unexpected test group " + property);
         }
     }
 
