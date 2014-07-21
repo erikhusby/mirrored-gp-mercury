@@ -269,7 +269,7 @@ mercury:
       app:      TEST
       bsp:      DEV
       jira:     TEST
-      quote:    DEV
+      quote:    QA
       squid:    TEST
       tableau:  PROD
       thrift:   TEST
