@@ -116,6 +116,17 @@ public class AggregationHybridSelection implements Serializable {
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
     private Aggregation aggregation;
 
+    public AggregationHybridSelection(Double pctTargetBases20X) {
+        this.pctTargetBases20X = pctTargetBases20X;
+    }
+
+    public AggregationHybridSelection() {
+    }
+
+    public void setPctTargetBases20X(Double pctTargetBases20X) {
+        this.pctTargetBases20X = pctTargetBases20X;
+    }
+
     public Double getPctPfUqReads() {
         return pctPfUqReads;
     }

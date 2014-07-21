@@ -54,6 +54,8 @@ public class SubmissionDtoFetcherTest {
     public static final String TEST_SAMPLE = "SM-35BDA";
     public static final String COLLABORATOR_SAMPLE_ID = "BOT2365_T";
     public static final String RESEARCH_PROJECT_ID = "RP-YOMAMA";
+    private static final String DATA_TYPE = "Exome";
+    private static final Double QUALITY_METRIC = 1.2;
 
     public void testFetch() throws Exception {
         Date dateCompleted = DateUtils.parseDate("01/01/2014");
@@ -66,7 +68,7 @@ public class SubmissionDtoFetcherTest {
         researchProject.addProductOrder(productOrder);
         Aggregation aggregation =
                 AggregationTestFactory.buildAggregation(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, contamination,
-                        fingerprintLod);
+                        fingerprintLod, DATA_TYPE, QUALITY_METRIC, null,null);
         BassDTO bassResults = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID);
 
         AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);

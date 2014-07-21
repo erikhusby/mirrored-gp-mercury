@@ -586,8 +586,8 @@
                                         <td> ${submissionSample.aggregationProject} </td>
                                         <td> ${submissionSample.fileType} </td>
                                         <td> ${submissionSample.version}</td>
-                                        <td><%--quality metric--%></td>
-                                        <td><fmt:formatNumber type="percent" value="${submissionSample.contamination}"/></td>
+                                        <td> ${submissionSample.qualityMetric}</td>
+                                        <td>${submissionSample.contaminationString}</td>
                                         <td>${submissionSample.fingerprintLOD.displayString()}</td>
                                         <td>${fn:length(submissionSample.lanes)}</td>
                                         <td><%--blacklisted lanes--%></td>

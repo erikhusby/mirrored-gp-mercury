@@ -37,7 +37,8 @@ public class SubmissionDto {
 
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
-    private double contamination=0;
+    private double contamination = 0;
+
     public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
@@ -73,20 +74,23 @@ public class SubmissionDto {
         return bassDTO.getVersion();
     }
 
-    public String getQualityMetric() {
-        return null;
+    public Double getQualityMetric() {
+        return aggregation.getQualityMetric();
     }
 
-    public double getContamination() {
-        if (aggregation != null) {
-            contamination = aggregation.getAggregationContam().getPctContamination();
-        }
-        return contamination;
+    public String getQualityMetricString() {
+        return aggregation.getQualityMetricString();
+    }
+
+    public String getContaminationString() {
+        return aggregation.getContaminationString();
+    }
+    public Double getContamination() {
+        return aggregation.getAggregationContam().getPctContamination();
     }
 
     public Date getDateCompleted() {
-        dateCompleted=aggregation.getWorkflowEndDate();
-        return aggregation.getWorkflowEndDate();
+        return null;
     }
 
     public LevelOfDetection getFingerprintLOD() {
@@ -95,7 +99,7 @@ public class SubmissionDto {
     }
 
     public List<String> getLanes() {
-        List<String> result=new ArrayList<>();
+        List<String> result = new ArrayList<>();
         for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
             for (PicardAnalysis picardAnalysis : aggregationReadGroup.getPicardAnalysis()) {
                 result.add(picardAnalysis.getLane());

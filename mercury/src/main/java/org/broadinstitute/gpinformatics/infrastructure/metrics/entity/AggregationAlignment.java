@@ -52,6 +52,10 @@ public class AggregationAlignment implements Serializable {
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
     private Aggregation aggregation;
 
+    public AggregationAlignment(Integer pfReadsAligned) {
+        this.pfReadsAligned = pfReadsAligned;
+    }
+
     public String getCategory() {
         return category;
     }

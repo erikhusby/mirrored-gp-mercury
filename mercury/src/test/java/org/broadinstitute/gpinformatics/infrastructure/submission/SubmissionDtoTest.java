@@ -39,20 +39,23 @@ public class SubmissionDtoTest {
     public static final String AGGREGATION_PROJECT = "RP-12";
     public static final int VERSION = 1;
     public static final double CONTAMINATION = 0.47;
+    private static final String CONTAMINATION_STRING = "47%";
     public static final List<String> LANES = Arrays.asList("1", "2");
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
     public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
+    private static final String DATA_TYPE = "Exome";
+    private static final Double QUALITY_METRIC = 1.2;
 
     private Aggregation aggregation;
     private BassDTO bassDto;
-    private List<ProductOrder> productOrders=new ArrayList<>();
+    private List<ProductOrder> productOrders = new ArrayList<>();
 
 
     @BeforeMethod
     public void setUp() throws Exception {
         bassDto = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT, TEST_SAMPLE);
         aggregation = AggregationTestFactory.buildAggregation(RESEARCH_PROJECT, TEST_SAMPLE, CONTAMINATION,
-                FINGERPRINT_LOD);
+                FINGERPRINT_LOD, DATA_TYPE, QUALITY_METRIC, null, null);
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-1234"));
         productOrders.add(ProductOrderTestFactory.createDummyProductOrder("PDO-5678"));
     }
@@ -69,8 +72,9 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
         assertThat(submissionDTO.getFileType(), equalTo(BAM_FILE));
         assertThat(submissionDTO.getVersion(), equalTo(VERSION));
-//        assertThat(submissionDTO.getQualityMetric(), qualityMetric);
+        assertThat(submissionDTO.getQualityMetric(), equalTo(QUALITY_METRIC));
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));
+        assertThat(submissionDTO.getContaminationString(), equalTo(CONTAMINATION_STRING));
         assertThat(submissionDTO.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
         assertThat(submissionDTO.getLanes(), containsInAnyOrder(LANES.toArray()));
         assertThat(submissionDTO.getLanesInAggregation(), Matchers.equalTo(2));
@@ -80,5 +84,6 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getResearchProject(), Matchers.equalTo(RESEARCH_PROJECT));
 
     }
+
 
 }

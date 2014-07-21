@@ -20,9 +20,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
@@ -46,24 +48,77 @@ public class Aggregation {
     private Date workflowEndDate;
     private String dataType;
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
-    private Collection<AggregationAlignment> aggregationAlignments=new ArrayList<>();
+    private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationContam aggregationContam;
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationHybridSelection aggregationHybridSelection;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
-    private Collection<AggregationReadGroup> aggregationReadGroups=new ArrayList<>();
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
+    @OneToOne(mappedBy = "aggregationByAggregationId")
+    private AggregationWgs aggregationWgs;
 
-    public void setAggregationReadGroups(Collection<AggregationReadGroup> aggregationReadGroups) {
-        this.aggregationReadGroups = aggregationReadGroups;
+    public Aggregation(String dataType) {
+        this.dataType = dataType;
+    }
+
+    public Aggregation() {
+    }
+
+    public Double getQualityMetric() {
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return aggregationHybridSelection.getPctTargetBases20X();
+        case DATA_TYPE_RNA:
+            int totalReadsAlignedInPairs = 0;
+            for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
+                totalReadsAlignedInPairs += aggregationAlignment.getPfReadsAligned();
+            }
+            return (double) totalReadsAlignedInPairs;
+        case DATA_TYPE_NA:
+            if (aggregationWgs.getMeanCoverage()!=0){
+                return aggregationWgs.getMeanCoverage();
+            }
+        default:
+            return null;
+
+        }
+    }
+
+    public String getQualityMetricString() {
+        if (dataType==null){
+            return null;
+        }
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return convertToPercent(getQualityMetric());
+        case DATA_TYPE_RNA:
+            return MessageFormat.format("{0,number,#}", getQualityMetric());
+        case DATA_TYPE_NA:
+            return "N/A";
+        }
+        return null;
+
+    }
+
+    protected String convertToPercent(double decimalValue) {
+        return MessageFormat.format("{0,number,#.##%}", decimalValue);
     }
 
     public String getProject() {
         return project;
     }
 
+    public void setProject(String project) {
+        this.project = project;
+    }
+
     public String getSample() {
         return sample;
+    }
+
+    public void setSample(String sample) {
+        this.sample = sample;
     }
 
     public String getLibrary() {
@@ -78,6 +133,10 @@ public class Aggregation {
         return createdAt;
     }
 
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public Date getModifiedAt() {
         return modifiedAt;
     }
@@ -88,6 +147,10 @@ public class Aggregation {
 
     public int getReadGroupCount() {
         return readGroupCount;
+    }
+
+    public void setReadGroupCount(int readGroupCount) {
+        this.readGroupCount = readGroupCount;
     }
 
     public String getAggregationType() {
@@ -102,29 +165,65 @@ public class Aggregation {
         return workflowEndDate;
     }
 
+    public void setWorkflowEndDate(Date workflowEndDate) {
+        this.workflowEndDate = workflowEndDate;
+    }
+
     public String getDataType() {
         return dataType;
     }
 
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
+    }
 
     public Collection<AggregationAlignment> getAggregationAlignments() {
         return aggregationAlignments;
+    }
+
+    public void setAggregationAlignments(List<AggregationAlignment> aggregationAlignments) {
+        this.aggregationAlignments = aggregationAlignments;
     }
 
     public AggregationContam getAggregationContam() {
         return aggregationContam;
     }
 
+    public void setAggregationContam(AggregationContam aggregationContam) {
+        this.aggregationContam = aggregationContam;
+    }
+
+    public String getContaminationString(){
+        return convertToPercent(aggregationContam.getPctContamination());
+    }
+
     public AggregationHybridSelection getAggregationHybridSelection() {
         return aggregationHybridSelection;
+    }
+
+    public void setAggregationHybridSelection(AggregationHybridSelection aggregationHybridSelection) {
+        this.aggregationHybridSelection = aggregationHybridSelection;
     }
 
     public Collection<AggregationReadGroup> getAggregationReadGroups() {
         return aggregationReadGroups;
     }
 
+    public void setAggregationReadGroups(Collection<AggregationReadGroup> aggregationReadGroups) {
+        this.aggregationReadGroups = aggregationReadGroups;
+    }
+
+
+    public AggregationWgs getAggregationWgs() {
+        return aggregationWgs;
+    }
+
+    public void setAggregationWgs(AggregationWgs aggregationWgsById) {
+        this.aggregationWgs = aggregationWgsById;
+    }
+
     @Transient
-    public LevelOfDetection getLevelOfDetection(){
+    public LevelOfDetection getLevelOfDetection() {
         return LevelOfDetection.calculate(getAggregationReadGroups());
     }
 
@@ -197,27 +296,4 @@ public class Aggregation {
         return result;
     }
 
-    public void setAggregationContam(AggregationContam aggregationContam) {
-        this.aggregationContam = aggregationContam;
-    }
-
-    public void setSample(String sample) {
-        this.sample = sample;
-    }
-
-    public void setProject(String project) {
-        this.project = project;
-    }
-
-    public void setReadGroupCount(int readGroupCount) {
-        this.readGroupCount = readGroupCount;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setWorkflowEndDate(Date workflowEndDate) {
-        this.workflowEndDate = workflowEndDate;
-    }
 }
