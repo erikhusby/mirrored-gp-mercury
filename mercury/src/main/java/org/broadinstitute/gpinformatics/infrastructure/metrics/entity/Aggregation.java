@@ -20,6 +20,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
@@ -45,13 +46,13 @@ public class Aggregation {
     private Date workflowEndDate;
     private String dataType;
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
-    private Collection<AggregationAlignment> aggregationAlignments;
+    private Collection<AggregationAlignment> aggregationAlignments=new ArrayList<>();
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationContam aggregationContam;
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationHybridSelection aggregationHybridSelection;
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "aggregation")
-    private Collection<AggregationReadGroup> aggregationReadGroups;
+    private Collection<AggregationReadGroup> aggregationReadGroups=new ArrayList<>();
 
     public void setAggregationReadGroups(Collection<AggregationReadGroup> aggregationReadGroups) {
         this.aggregationReadGroups = aggregationReadGroups;

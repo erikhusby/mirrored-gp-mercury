@@ -97,6 +97,6 @@ public class LevelOfDetection {
     }
 
     public String displayString() {
-        return min + "/" + max;
+        return String.format("%2.2f/%2.2f",min,max);
     }
 }

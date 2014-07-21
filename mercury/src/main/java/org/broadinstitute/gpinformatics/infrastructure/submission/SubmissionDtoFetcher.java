@@ -102,12 +102,14 @@ public class SubmissionDtoFetcher {
             Aggregation metricsAggregation =
                     aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), collaboratorParticipantId,
                             version);
+
             List<BassDTO> bassDTOs =
                     bassSearchService.runSearch(researchProject.getBusinessKey(), collaboratorParticipantId);
             for (BassDTO bassDTO : bassDTOs) {
                 if (bassDTO.getVersion() == version) {
                     results.add(new SubmissionDto(bassDTO, metricsAggregation, sampleListMap.getValue()));
                 }
+
             }
         }
         return results;

@@ -25,6 +25,7 @@ import java.util.List;
 
 public class SubmissionDto {
     private Collection<ProductOrder> productOrders;
+    private Date dateCompleted;
 
     public BassDTO getBassDTO() {
         return bassDTO;
@@ -36,7 +37,7 @@ public class SubmissionDto {
 
     private final BassDTO bassDTO;
     private final Aggregation aggregation;
-
+    private double contamination=0;
     public SubmissionDto(BassDTO bassDTO, Aggregation aggregation, Collection<ProductOrder> productOrders) {
         this.bassDTO = bassDTO;
         this.aggregation = aggregation;
@@ -77,10 +78,14 @@ public class SubmissionDto {
     }
 
     public double getContamination() {
-        return aggregation.getAggregationContam().getPctContamination();
+        if (aggregation != null) {
+            contamination = aggregation.getAggregationContam().getPctContamination();
+        }
+        return contamination;
     }
 
     public Date getDateCompleted() {
+        dateCompleted=aggregation.getWorkflowEndDate();
         return aggregation.getWorkflowEndDate();
     }
 
