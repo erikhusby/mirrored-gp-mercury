@@ -127,6 +127,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
+    private String quoteId;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -292,28 +293,35 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
     public void validateCollaborationInformation(ValidationErrors errors) {
         // Cannot start a collaboration with an outside user if there is no PM specified.
-        if (editResearchProject.getProjectManagers().length < 1) {
+        if (editResearchProject.getProjectManagers().length == 0) {
             addGlobalValidationError(
                     "The research project must have a Project Manager before starting a collaboration.");
         }
 
-        if (editResearchProject.getBroadPIs().length < 1) {
+        if (editResearchProject.getBroadPIs().length == 0) {
             addGlobalValidationError(
                     "The research project must have an investigator before starting a collaboration.");
         }
 
-        if ((editResearchProject.getCohortIds().length != 1)) {
+        if (editResearchProject.getCohortIds().length == 0) {
             addGlobalValidationError(
-                    "A collaboration requires one and only one cohort to be defined on the research project");
+                    "A collaboration requires a cohort to be defined on the research project");
+        }
+
+        if (editResearchProject.getCohortIds().length > 1) {
+            addGlobalValidationError(
+                    "A collaboration requires only one cohort to be defined on the research project");
         }
 
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
-            errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
+            addGlobalValidationError("Must specify either an existing collaborator or an email address.");
         }
 
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
-            errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
+            addGlobalValidationError("''{2}'' is not a valid email address.", specifiedCollaborator);
         }
+
+        validateQuoteId(quoteId);
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -442,7 +450,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    collaborationMessage);
+                    quoteId, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -873,6 +881,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setRegulatoryInfoAlias(String regulatoryInfoAlias) {
         this.regulatoryInfoAlias = regulatoryInfoAlias;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
+    }
+
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
     }
 
     /**

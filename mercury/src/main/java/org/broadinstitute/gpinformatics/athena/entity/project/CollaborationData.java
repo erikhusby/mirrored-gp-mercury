@@ -35,6 +35,8 @@ public class CollaborationData {
 
     private Date expirationDate;
 
+    private String quoteId;
+
     /** URL to view the collaboration in the portal */
     private String viewCollaborationUrl;
 
@@ -53,12 +55,13 @@ public class CollaborationData {
      * @param emailMessage The email message to the collaborator
      */
     public CollaborationData(String name, String description, String researchProjectKey, Long collaboratorId,
-                             Long projectManagerId, String emailMessage) {
+                             Long projectManagerId, String quoteId, String emailMessage) {
         this.name = name;
         this.description = description;
         this.researchProjectKey = researchProjectKey;
         this.collaboratorId = collaboratorId;
         this.projectManagerId = projectManagerId;
+        this.quoteId = quoteId;
         this.emailMessage = emailMessage;
     }
 
@@ -124,5 +127,13 @@ public class CollaborationData {
 
     public void setViewCollaborationUrl(String viewCollaborationUrl) {
         this.viewCollaborationUrl = viewCollaborationUrl;
+    }
+
+    public String getQuoteId() {
+        return quoteId;
+    }
+
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
     }
 }

@@ -64,6 +64,7 @@
                                 $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
                                 $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
                                 $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
+                                $j("#quoteId").attr("value", $j("#quoteIdId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -155,8 +156,13 @@
                 <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
                               name="specifiedCollaborator" maxlength="250"/>
 
+                <label style="float:left;margin-right:10px;width:auto;" for="quoteIdId">Quote *</label>
+                <div class="controls">
+                    <stripes:text id="quoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
+                </div>
+
                 <p style="clear:both">
-                    <label for="collaborationMessage">Optional message to send to collaborator</label>
+                    <label for="collaborationMessageId">Optional message to send to collaborator</label>
                 </p>
 
                 <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
@@ -206,6 +212,7 @@
                                                 <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
                                                 <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
                                                 <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                                <stripes:hidden id="quoteId" name="quoteId" value=""/>
 
                                                 <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
                                                     <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"

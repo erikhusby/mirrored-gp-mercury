@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMess
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.MetadataBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.ReagentBean;
 import org.broadinstitute.gpinformatics.mercury.test.builders.CadencePicoJaxbBuilder;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -75,5 +76,10 @@ public class CadencePicoDbTest extends ContainerTest {
                 .get(LabEventResponseBean.class);
         labEventBeans = labEventResponseBean.getLabEventBeans();
         Assert.assertEquals(1, labEventBeans.size(), "Wrong number of lab events");
+        LabEventBean labEventBean = labEventBeans.get(0);
+        Assert.assertEquals(1, labEventBean.getReagents().size(), "Wrong number of reagents");
+        ReagentBean reagentBean = labEventBean.getReagents().get(0);
+        Assert.assertNotNull(reagentBean.getExpiration(), "Expiration should be set");
+
     }
 }
