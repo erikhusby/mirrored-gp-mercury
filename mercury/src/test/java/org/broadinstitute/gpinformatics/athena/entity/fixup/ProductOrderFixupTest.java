@@ -79,7 +79,7 @@ public class ProductOrderFixupTest extends Arquillian {
     // When you run this on prod, change to PROD and prod.
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
+        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
@@ -461,5 +461,11 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persistAll(ordersToUpdate);
         productOrderDao.flush();
 
+    }
+
+    @Test(enabled = false)
+    public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
+        productOrderEjb.updateOrderStatus("PDO-2635", reporter);
     }
 }
