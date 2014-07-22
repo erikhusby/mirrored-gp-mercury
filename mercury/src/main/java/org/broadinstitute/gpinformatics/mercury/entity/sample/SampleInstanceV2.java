@@ -73,6 +73,7 @@ public class SampleInstanceV2 {
         singleInferredBucketedBatch = other.singleInferredBucketedBatch;
         allProductOrderSamples.addAll(other.allProductOrderSamples);
         allLabBatchStartingVessels.addAll(other.allLabBatchStartingVessels);
+        molecularIndexingScheme = other.molecularIndexingScheme;
     }
 
     /**
@@ -170,7 +171,7 @@ public class SampleInstanceV2 {
                 for (VesselContainer<?> vesselContainer : labVessel.getContainers()) {
                     for (LabVessel containedVessel : vesselContainer.getContainedVessels()) {
                         if (!containedVessel.equals(labVessel)) {
-                            List<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
+                            Set<SampleInstanceV2> sampleInstances = containedVessel.getSampleInstancesV2();
                             if (sampleInstances.size() == 1) {
                                 BucketEntry containedSingleBucketEntry =
                                         sampleInstances.iterator().next().getSingleBucketEntry();

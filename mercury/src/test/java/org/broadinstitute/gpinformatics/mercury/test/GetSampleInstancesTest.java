@@ -185,7 +185,7 @@ public class GetSampleInstancesTest {
                 shearingPlate2.getContainerRole(), VesselPosition.A05,
                 poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
 
-        List<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
+        Set<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
         Assert.assertEquals(poolSampleInstances.size(), 5);
         int matchedSamples = 0;
         for (SampleInstanceV2 poolSampleInstance : poolSampleInstances) {
@@ -281,7 +281,8 @@ public class GetSampleInstancesTest {
         TubeFormation extractControlTubeFormation = new TubeFormation(mapPositionToExtractTubeControl,
                 RackOfTubes.RackType.Matrix96);
 
-        Assert.assertEquals(controlTube.getSampleInstancesV2().get(0).getSingleBatch().getBatchName(), "LCSET-" + lcsetNum);
+        Assert.assertEquals(controlTube.getSampleInstancesV2().iterator().next().getSingleBatch().getBatchName(),
+                "LCSET-" + lcsetNum);
 
         LabEvent shearingTransfer = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(now++), "SUPERMAN", 1L, 101L,
                 "Bravo");

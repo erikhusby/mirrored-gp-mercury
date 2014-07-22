@@ -32,7 +32,7 @@ public class IlluminaRunResourceDiffsTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = true)
     public void testCompareAll() {
         List<IlluminaSequencingRun> illuminaSequencingRuns = illuminaSequencingRunDao.findAll(
                 IlluminaSequencingRun.class);

@@ -950,8 +950,8 @@ public class VesselContainer<T extends LabVessel> {
         return sampleInstances;
     }
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
-        List<SampleInstanceV2> sampleInstanceList = new ArrayList<>();
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
+        Set<SampleInstanceV2> sampleInstanceList = new LinkedHashSet<>();
         VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
         for (VesselPosition vesselPosition : vesselPositions) {
             sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));

@@ -110,15 +110,13 @@ public class ZimsIlluminaRunFactory {
             PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
             Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
-            Set<SampleInstanceV2> uniqueSampleInstances = new HashSet<>();
-            // todo jmt convert getSiV2 from list to set?
-            uniqueSampleInstances.addAll(flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition));
-            for (SampleInstanceV2 sampleInstanceV2 : uniqueSampleInstances) {
+            for (SampleInstanceV2 sampleInstanceV2 :
+                    flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
                 laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
             }
 
             for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
                     // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
                     SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);

@@ -244,7 +244,7 @@ public class SystemRouter implements Serializable {
         Set<SampleInstanceV2> possibleControls = new HashSet<>();
         for (LabVessel labVessel : labVessels) {
             if (labVessel != null) {
-                List<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
                     // Emulate SampleInstanceV1 behavior
                     if (sampleInstance.getMercuryRootSampleName() != null) {
@@ -307,7 +307,7 @@ public class SystemRouter implements Serializable {
             if (vessel == null) {
                 routingOptions.add(SQUID);
             } else {
-                List<SampleInstanceV2> sampleInstances = vessel.getSampleInstancesV2();
+                Set<SampleInstanceV2> sampleInstances = vessel.getSampleInstancesV2();
                 if (sampleInstances.isEmpty()) {
                     routingOptions.add(SQUID);
                 } else {
