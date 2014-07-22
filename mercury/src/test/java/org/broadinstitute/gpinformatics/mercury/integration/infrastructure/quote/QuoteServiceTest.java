@@ -15,7 +15,7 @@ public class QuoteServiceTest {
 
     private QuotePriceItem quotePriceItem;
 
-    @BeforeClass
+    @BeforeClass(groups = EXTERNAL_INTEGRATION)
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JC",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION,"NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina Custom Hybrid Selection Library (93 sample batch size)","15","bannanas","DNA Sequencing");

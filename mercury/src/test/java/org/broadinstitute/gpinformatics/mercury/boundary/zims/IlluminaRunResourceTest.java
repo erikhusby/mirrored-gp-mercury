@@ -459,7 +459,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         return null;
     }
 
-    @BeforeClass
+    @BeforeClass(groups = ALTERNATIVES)
     private void getZamboniRun() throws Exception {
         zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }

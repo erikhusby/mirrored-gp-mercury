@@ -18,7 +18,7 @@ public class QuoteServiceTest {
     private QuotePriceItem quotePriceItem;
 
 
-    @BeforeClass
+    @BeforeClass(groups = DATABASE_FREE)
     private void setupLargeQuoteAndPriceItem() {
         quote = new Quote("DNA4JD",new QuoteFunding(new FundingLevel("100",new Funding(Funding.FUNDS_RESERVATION, "NHGRI", "NHGRI"))), ApprovalStatus.FUNDED);
         quotePriceItem = new QuotePriceItem("Illumina Sequencing","1","Illumina HiSeq Run 44 Base","15","bannan","DNA Sequencing");
