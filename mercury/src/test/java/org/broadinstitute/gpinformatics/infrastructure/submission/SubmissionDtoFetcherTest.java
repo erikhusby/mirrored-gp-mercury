@@ -76,8 +76,7 @@ public class SubmissionDtoFetcherTest {
                 .thenReturn(aggregation);
 
         BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
-        Mockito.when(bassSearchService.runSearch(Mockito.anyString(), Mockito.anyString()))
-                .thenReturn(Arrays.asList(bassResults));
+        Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
 
         Map<String, BSPSampleDTO> bspSampleDTOMap = new HashMap<>();
         HashMap<BSPSampleSearchColumn, String> dataMap = new HashMap<>();
