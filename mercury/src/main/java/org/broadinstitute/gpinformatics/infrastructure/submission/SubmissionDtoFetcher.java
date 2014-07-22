@@ -100,21 +100,21 @@ public class SubmissionDtoFetcher {
         }
         log.debug(String.format("Fetching bassDTOs for %s", researchProject.getBusinessKey()));
         List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
+        log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
             if (bassDTO.getVersion() == version) {
                 bassDTOMap.put(bassDTO.getSample(), bassDTO);
             }
         }
-        log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
 
         log.debug(String.format("Fetching Metrics aggregations for %s", researchProject.getBusinessKey()));
         List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), version);
+        log.debug(String.format("Fetched %d Metrics aggregations", aggregations.size()));
         Map<String, Aggregation> aggregationMap = new HashMap<>();
         for (Aggregation aggregation : aggregations) {
             aggregationMap.put(aggregation.getSample(), aggregation);
         }
-        log.debug(String.format("Fetched %d Metrics aggregations", aggregations.size()));
 
         for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
             String collaboratorSampleId = sampleListMap.getKey();
@@ -126,10 +126,5 @@ public class SubmissionDtoFetcher {
         }
 
         return results;
-    }
-
-    protected float calculateTime(long startTime) {
-        long endTime = System.nanoTime();
-        return (endTime - startTime) / 1000000000;
     }
 }

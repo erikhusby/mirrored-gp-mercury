@@ -72,8 +72,8 @@ public class SubmissionDtoFetcherTest {
         BassDTO bassResults = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID);
 
         AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
-        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt()))
-                .thenReturn(aggregation);
+        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyInt()))
+                .thenReturn(Arrays.asList(aggregation));
 
         BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
         Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
@@ -101,10 +101,7 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getProductOrders(), containsInAnyOrder(productOrder));
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
-
         }
-
-
     }
 
     public void testDate() throws ParseException {

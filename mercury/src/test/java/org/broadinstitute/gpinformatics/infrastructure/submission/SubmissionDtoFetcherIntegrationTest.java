@@ -65,7 +65,5 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
             assertThat(submissionDto.getLanesInAggregation(), equalTo(2));
         }
-
-
     }
 }
