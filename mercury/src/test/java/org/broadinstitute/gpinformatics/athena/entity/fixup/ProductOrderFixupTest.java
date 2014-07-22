@@ -462,4 +462,10 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.flush();
 
     }
+
+    @Test(enabled = false)
+    public void gplim2893ManuallyCompletePDO() throws ProductOrderEjb.NoSuchPDOException, IOException {
+        MessageReporter.LogReporter reporter = new MessageReporter.LogReporter(log);
+        productOrderEjb.updateOrderStatus("PDO-2635", reporter);
+    }
 }

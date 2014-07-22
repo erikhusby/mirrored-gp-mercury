@@ -120,7 +120,7 @@ public class BettaLimsMessageTestFactory {
          */
         LONG,
         /**
-         * short form of well name, e.g. A01
+         * short form of well name, e.g. A1
          */
         SHORT
     }

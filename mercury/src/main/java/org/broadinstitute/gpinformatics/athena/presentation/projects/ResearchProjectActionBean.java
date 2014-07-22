@@ -42,6 +42,8 @@ import org.broadinstitute.gpinformatics.infrastructure.collaborate.Collaboration
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationPortalException;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -80,10 +82,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String VIEW_REGULATORY_INFO_ACTION = "viewRegulatoryInfo";
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
+    public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
+    public static final String PROJECT_SUBMISSIONS_PAGE = "/projects/submissions.jsp";
 
     private static final String BEGIN_COLLABORATION_ACTION = "beginCollaboration";
 
@@ -114,6 +118,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private RegulatoryInfoEjb regulatoryInfoEjb;
 
+    @Inject
+    private SubmissionDtoFetcher submissionDtoFetcher;
     /**
      * The research project business key
      */
@@ -123,6 +129,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Long selectedCollaborator;
     private String specifiedCollaborator;
     private String collaborationMessage;
+    private String quoteId;
 
     @ValidateNestedProperties({
             @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
@@ -132,6 +139,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     })
     private ResearchProject editResearchProject;
 
+    private List<SubmissionDto> submissionSamples;
     /*
      * The search query.
      */
@@ -220,12 +228,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
-                    RESEND_INVITATION_ACTION})
+                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
-
             try {
                 collaborationData = collaborationService.getCollaboration(researchProject);
                 validCollaborationPortal = true;
@@ -285,28 +292,35 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @ValidationMethod(on = BEGIN_COLLABORATION_ACTION)
     public void validateCollaborationInformation(ValidationErrors errors) {
         // Cannot start a collaboration with an outside user if there is no PM specified.
-        if (editResearchProject.getProjectManagers().length < 1) {
+        if (editResearchProject.getProjectManagers().length == 0) {
             addGlobalValidationError(
                     "The research project must have a Project Manager before starting a collaboration.");
         }
 
-        if (editResearchProject.getBroadPIs().length < 1) {
+        if (editResearchProject.getBroadPIs().length == 0) {
             addGlobalValidationError(
                     "The research project must have an investigator before starting a collaboration.");
         }
 
-        if ((editResearchProject.getCohortIds().length != 1)) {
+        if (editResearchProject.getCohortIds().length == 0) {
             addGlobalValidationError(
-                    "A collaboration requires one and only one cohort to be defined on the research project");
+                    "A collaboration requires a cohort to be defined on the research project");
+        }
+
+        if (editResearchProject.getCohortIds().length > 1) {
+            addGlobalValidationError(
+                    "A collaboration requires only one cohort to be defined on the research project");
         }
 
         if ((specifiedCollaborator == null) && (selectedCollaborator == null)) {
-            errors.addGlobalError(new SimpleError("Must specify either an existing collaborator or an email address."));
+            addGlobalValidationError("Must specify either an existing collaborator or an email address.");
         }
 
         if (specifiedCollaborator != null && !EmailValidator.getInstance(false).isValid(specifiedCollaborator)) {
-            errors.addGlobalError(new SimpleError("''{2}'' is not a valid email address.", specifiedCollaborator));
+            addGlobalValidationError("''{2}'' is not a valid email address.", specifiedCollaborator);
         }
+
+        validateQuoteId(quoteId);
     }
 
     public Map<String, Long> getResearchProjectCounts() {
@@ -435,7 +449,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution beginCollaboration() throws Exception {
         try {
             collaborationService.beginCollaboration(editResearchProject, selectedCollaborator, specifiedCollaborator,
-                    collaborationMessage);
+                    quoteId, collaborationMessage);
             addMessage("Collaboration created successfully");
         } catch (Exception e) {
             addGlobalValidationError("Could not begin the Collaboration: {2}", e.getMessage());
@@ -741,6 +755,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return createTextResolution(result);
     }
 
+    @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
+    public Resolution viewSubmissions() {
+        if (editResearchProject != null) {
+            submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
+        }
+        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
+    }
+
     /**
      * Edits a regulatory info record, specifically the title (alias, name). The ID of the regulatory info comes from
      * this.regulatoryInfoId and the new title comes from this.regulatoryInfoAlias.
@@ -868,6 +890,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.regulatoryInfoAlias = regulatoryInfoAlias;
     }
 
+    public String getQuoteId() {
+        return quoteId;
+    }
+
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
+    }
+
     /**
      * @return true if Save is a valid operation.
      */
@@ -970,5 +1000,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public boolean isValidCollaborationPortal() {
         return validCollaborationPortal;
+    }
+
+    public List<SubmissionDto> getSubmissionSamples() {
+        return submissionSamples;
+    }
+
+    public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
+        this.submissionSamples = submissionSamples;
     }
 }

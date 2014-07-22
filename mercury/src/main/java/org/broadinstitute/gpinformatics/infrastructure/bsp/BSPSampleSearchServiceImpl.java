@@ -34,7 +34,14 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     protected void customizeClient(Client client) {
         specifyHttpAuthCredentials(client, bspConfig);
     }
-
+    private static List<List<String>> chopped(List<String> list, final int maxLength) {
+            List<List<String>> parts = new ArrayList<>();
+            final int N = list.size();
+            for (int i = 0; i < N; i += maxLength) {
+                parts.add(new ArrayList<>(list.subList(i, Math.min(N, i + maxLength))));
+            }
+            return parts;
+        }
     @Override
     public List<Map<BSPSampleSearchColumn, String>> runSampleSearch(Collection<String> sampleIDs,
                                                                     final BSPSampleSearchColumn... queryColumns) {
@@ -72,7 +79,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                     Map<BSPSampleSearchColumn, String> newMap = new HashMap<>();
 
                     // It turns out that BSP truncates the rest of the columns, if there are no more values, which
-                    // is consistent with what Excel does, so it probably comes from that. SO, need to make all
                     // values "", once i >= the length of the bspData
                     int i = 0;
                     for (BSPSampleSearchColumn column : queryColumns) {

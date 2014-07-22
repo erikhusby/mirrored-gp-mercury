@@ -698,4 +698,26 @@
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-2841-1">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2841-2">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent_aud" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent_aud" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

@@ -1,7 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -11,30 +17,68 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Data access object for fetching Picard aggregation metrics.
- *
+ * <p/>
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
+@Stateless
 public class AggregationMetricsFetcher {
+    private static final String NULL_DATATYPE = null;
+    private static final String NULL_SAMPLE = null;
 
     @PersistenceContext(unitName = "metrics_pu")
     private EntityManager entityManager;
 
     public Aggregation fetch(String project, String sample, int version) {
-        return fetch(project, sample, version, null);
+        return fetch(project, sample, version, NULL_DATATYPE);
+    }
+
+    public List<Aggregation> fetch(String project, int version) {
+        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, NULL_SAMPLE, version, NULL_DATATYPE);
+        try {
+            List<Aggregation> aggregations = query.getResultList();
+            for (Aggregation aggregation : aggregations) {
+                for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
+                    setPicardAnalysis(aggregationReadGroup);
+                }
+            }
+
+            return aggregations;
+        } catch (NoResultException e) {
+            return Collections.emptyList();
+        }
+
     }
 
     public Aggregation fetch(String project, String sample, int version, String dataType) {
+        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, sample, version, dataType);
+        try {
+            Aggregation aggregation = query.getSingleResult();
+            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
+                setPicardAnalysis(aggregationReadGroup);
+            }
+
+            return aggregation;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    protected TypedQuery<Aggregation> getAggregationTypedQuery(String project, String sample, int version,
+                                                               String dataType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
 
         List<Predicate> predicates = new ArrayList<>();
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+        if (sample != null) {
+            predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+        }
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
 
         // Only query on dataType if it's supplied.
@@ -50,11 +94,24 @@ public class AggregationMetricsFetcher {
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
-        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            return null;
-        }
+        return entityManager.createQuery(criteriaQuery);
+    }
+
+    private void setPicardAnalysis(AggregationReadGroup aggregationReadGroup){
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+        CriteriaQuery<PicardAnalysis> criteriaQuery = criteriaBuilder.createQuery(PicardAnalysis.class);
+        Root<PicardAnalysis> root = criteriaQuery.from(PicardAnalysis.class);
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(criteriaBuilder
+                .equal(root.get(PicardAnalysis_.flowcellBarcode), aggregationReadGroup.getFlowcellBarcode()));
+        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.lane), aggregationReadGroup.getLane()));
+        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.flowcellBarcode), aggregationReadGroup.getFlowcellBarcode()));
+        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.libraryName), aggregationReadGroup.getLibraryName()));
+
+        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
+
+        TypedQuery<PicardAnalysis> query = entityManager.createQuery(criteriaQuery);
+        List<PicardAnalysis> result = query.getResultList();
+        aggregationReadGroup.setPicardAnalysis(result);
     }
 }
