@@ -84,7 +84,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     }
 
     public void fetchMetricsForSampleAggregatedBySquidProject() {
-        Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
+        Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));

@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 import org.hibernate.Query;
@@ -51,6 +52,7 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationContam.class.getName(),
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
+            AggregationWgs.class.getName(),
             PicardAnalysis.class.getName(),
             PicardFingerprint.class.getName(),
     };

@@ -52,6 +52,11 @@ public class AggregationAlignment implements Serializable {
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
     private Aggregation aggregation;
 
+    /**
+     * Default constructor for JPA.
+     */
+    protected AggregationAlignment() {}
+
     public AggregationAlignment(Integer pfReadsAligned) {
         this.pfReadsAligned = pfReadsAligned;
     }

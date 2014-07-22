@@ -42,7 +42,7 @@ public class Aggregation {
     private Date createdAt;
     private Date modifiedAt;
     private Long isLatest;
-    private int readGroupCount;
+    private Integer readGroupCount;
     private String aggregationType;
     private Date workflowStartDate;
     private Date workflowEndDate;
@@ -145,11 +145,11 @@ public class Aggregation {
         return isLatest;
     }
 
-    public int getReadGroupCount() {
+    public Integer getReadGroupCount() {
         return readGroupCount;
     }
 
-    public void setReadGroupCount(int readGroupCount) {
+    public void setReadGroupCount(Integer readGroupCount) {
         this.readGroupCount = readGroupCount;
     }
 

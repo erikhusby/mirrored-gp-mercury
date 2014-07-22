@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
-import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -28,11 +27,11 @@ import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
@@ -64,8 +63,7 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
-            assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
-            assertThat(dateCompleted, Matchers.equalTo(submissionDto.getDateCompleted()));
+            assertThat(submissionDto.getLanesInAggregation(), equalTo(2));
         }
 
 
