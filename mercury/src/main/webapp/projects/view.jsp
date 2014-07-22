@@ -13,6 +13,7 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
+                $j( "#tabs" ).tabs();
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
                     height: 500,
@@ -473,13 +474,11 @@
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
-                    <tr>
                         <th style="width:10em">Identifier</th>
                         <th>Protocol Title</th>
                         <th style="width:25em">Type</th>
                         <th style="width:5em"></th>
                         <th style="width:9em"></th>
-                    </tr>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
@@ -495,6 +494,15 @@
             </table>
         </stripes:form>
 
+        <div id="tabs" class="simpletab">
+            <ul>
+                <li><a href="#ordersTab">Orders</a></li>
+                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                    </stripes:link></li>
+            </ul>
+
+            <div id="ordersTab">
         <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>
 
@@ -554,6 +562,10 @@
                 </c:forEach>
             </tbody>
         </table>
+            </div>
+        </div>
+
+
 
     </stripes:layout-component>
 </stripes:layout-render>

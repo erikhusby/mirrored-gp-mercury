@@ -713,21 +713,4 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         this.mercurySample = mercurySample;
     }
 
-    public static void updateBulkBspSampleInfo(Collection<ProductOrderSample> samples) {
-
-        Set<String> sampleList = new HashSet<>();
-
-        for(ProductOrderSample sample:samples) {
-            sampleList.add(sample.getName());
-        }
-
-        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bulkInfo = bspSampleDataFetcher.fetchSamplesFromBSP(sampleList);
-
-        for(ProductOrderSample sample:samples) {
-            sample.setBspSampleDTO(bulkInfo.get(sample.getName()));
-        }
-
-    }
-
 }
