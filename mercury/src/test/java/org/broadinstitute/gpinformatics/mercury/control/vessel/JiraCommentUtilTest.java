@@ -17,8 +17,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-
 /**
  * Test sending messaging status updates to JIRA
  */
@@ -26,7 +24,7 @@ public class JiraCommentUtilTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(TEST);
+        return DeploymentBuilder.buildMercuryWar();
     }
 
     @Inject
@@ -35,7 +33,7 @@ public class JiraCommentUtilTest extends Arquillian {
     @Inject
     private JiraCommentUtil jiraCommentUtil;
 
-    @Test(enabled = true, groups = TestGroups.ALTERNATIVES)
+    @Test(enabled = true, groups = TestGroups.STUBBY)
     public void testMessaging() {
         BarcodedTube barcodedTube = new BarcodedTube("1234");
 

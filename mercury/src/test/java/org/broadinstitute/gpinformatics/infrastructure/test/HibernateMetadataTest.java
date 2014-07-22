@@ -63,13 +63,13 @@ public class HibernateMetadataTest extends ContainerTest {
     /**
      * This test iterates through all JPA'd classes validates them
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(groups = TestGroups.STANDARD, description = "Tests all the hibernate mappings")
     public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
         testPersistenceUnit(session, metricsEntities, null);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(groups = TestGroups.STANDARD, description = "Tests all the hibernate mappings")
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);
