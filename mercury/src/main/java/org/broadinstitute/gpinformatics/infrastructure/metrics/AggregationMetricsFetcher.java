@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnal
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -17,7 +17,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,33 +38,29 @@ public class AggregationMetricsFetcher {
 
     public List<Aggregation> fetch(String project, int version) {
         TypedQuery<Aggregation> query = getAggregationTypedQuery(project, NULL_SAMPLE, version, NULL_DATATYPE);
-        try {
-            List<Aggregation> aggregations = query.getResultList();
-            for (Aggregation aggregation : aggregations) {
-                for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                    setPicardAnalysis(aggregationReadGroup);
-                }
-            }
-
-            return aggregations;
-        } catch (NoResultException e) {
-            return Collections.emptyList();
-        }
-
+        return fetch(query);
     }
 
     public Aggregation fetch(String project, String sample, int version, String dataType) {
         TypedQuery<Aggregation> query = getAggregationTypedQuery(project, sample, version, dataType);
-        try {
-            Aggregation aggregation = query.getSingleResult();
+        List<Aggregation> aggregations = fetch(query);
+        if (aggregations.size() > 1) {
+            throw new NonUniqueResultException("query did not return a unique result: " + aggregations.size());
+        } else if (aggregations.isEmpty()) {
+            return null;
+        }
+        return aggregations.get(0);
+    }
+
+    private List<Aggregation> fetch(TypedQuery<Aggregation> query) {
+        List<Aggregation> aggregations = query.getResultList();
+        for (Aggregation aggregation : aggregations) {
             for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
                 setPicardAnalysis(aggregationReadGroup);
             }
-
-            return aggregation;
-        } catch (NoResultException e) {
-            return null;
         }
+
+        return aggregations;
     }
 
     protected TypedQuery<Aggregation> getAggregationTypedQuery(String project, String sample, int version,
