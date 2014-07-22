@@ -258,9 +258,7 @@
                         Basket)</a>
                 </c:if>
                 <%-- Tooltip help --%>
-                <img id="${entityName}checkboxesTooltip" src="${ctxpath}/images/help.png" alt="help">
-
-                <div id="${entityName}checkboxesDescription" style="display: none;">
+                <img id="${entityName}checkboxesTooltip" src="${ctxpath}/images/help.png" alt="help" title="
                     You can check individual boxes next to each row, or check the box at the top or
                     bottom of the list to check all rows.
                     <ul>
@@ -274,16 +272,10 @@
                             corner of the page)
                         </li>
                     </ul>
-                </div>
-                <script type="text/javascript">
-                    new Tip('${entityName}checkboxesTooltip', $('${entityName}checkboxesDescription'), {
-                        style: 'protogrey',
-                        stem: 'bottomRight',
-                        hook: { target: 'topMiddle', tip: 'bottomRight' },
-                        offset: { x: -14, y: -14 }
-                    });
-                </script>
-            </c:if></td>
+                </div>">
+
+            </c:if>
+        </td>
     </tr>
 </table>
 </stripes:form>

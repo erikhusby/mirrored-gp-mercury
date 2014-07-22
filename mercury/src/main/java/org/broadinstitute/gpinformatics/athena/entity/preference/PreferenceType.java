@@ -26,6 +26,18 @@ public enum PreferenceType {
     GLOBAL_LAB_VESSEL_SEARCH_INSTANCES("Global Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_VESSEL_COLUMN_SETS("Global Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_LAB_VESSEL_SEARCH_INSTANCES("User Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_LAB_VESSEL_COLUMN_SETS("User Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    GLOBAL_EVENT_SEARCH_INSTANCES("Global Event Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_EVENT_COLUMN_SETS("Global Event Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_EVENT_SEARCH_INSTANCES("User Event Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_EVENT_COLUMN_SETS("User Event Column Sets", PreferenceScope.GLOBAL, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator());
 
     private final String preferenceTypeName;
