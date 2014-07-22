@@ -41,6 +41,12 @@
         return false;
     };
 
+    // When bottom or top checkAllButton checked, opposite button should also be set to same state
+    checkOtherAllBox = function (otherID, cbState ) {
+        $j(otherID)[0].checked = cbState;
+        return true;
+    };
+
     function getWorkRequestSearchFormData() {
 
         assignSearchNames(document.getElementById('searchForm'));
@@ -86,12 +92,12 @@
 <input type="hidden" name="sessionKey" value="${sessionKey}"/>
 <input type="hidden" name="entityName" value="${entityName}"/>
 
-<div id="${entityName}ResultsDiv"
+<div id="${entityName}ResultsDiv" class="form-inline"
 <c:if test="${not empty ajaxDiv}">
     style="height:200px;overflow:auto;"
 </c:if>
 >
-<table width="100%" class="nohover" id="${entityName}ResultsTable">
+<table width="100%" class="table simple dataTable" id="${entityName}ResultsTable">
     <c:forEach items="${resultList.resultRows}" var="resultRow" varStatus="status">
         <%--@elvariable id="resultRow" type="edu.mit.broad.bsp.core.util.columns.ConfigurableListUtils.ResultRow"--%>
         <%-- Break up the table every few hundred rows, because the browser uses unreasonable amounts of
@@ -99,7 +105,7 @@
         <c:if test="${status.index % 500 == 0}">
             <thead>
             <tr>
-                <th><input type="checkbox" onclick="checkAllBoxes('selectedIds', this.form, this.checked);"/></th>
+                <th><input for="count" type="checkbox" class="checkAll" id="checkAllTop" onclick="checkOtherAllBox('#checkAllBottom', this.checked );"><span id="count" class="checkedCount">0</span></th>
                 <c:forEach items="${resultList.headers}" var="resultListHeader" varStatus="status">
                     <%-- Render headers, and links for sorting by column --%>
                     <c:choose>
@@ -142,8 +148,7 @@
         <%-- Render data rows and cells --%>
         <tr ${status.index%2==0 ? "class=\"even\"" : "class=\"odd\""}>
             <td>
-                <stripes:checkbox name="selectedIds" onclick="handleCheckboxRangeSelection(this, event);"
-                                  value="${resultRow.resultId}" checked="${resultRow.checked}"/>
+                <input name="selectedIds" value="${resultRow.resultId}" class="shiftCheckbox" type="checkbox">
             </td>
             <c:forEach items="${resultRow.renderableCells}" var="cell">
                 <td>${cell}</td>
@@ -152,16 +157,15 @@
         <c:if test="${(status.index + 1)%500 == 0}">
             </tbody>
 </table>
-<table width="100%" class="nohover">
+<table width="100%">
     </c:if>
     </c:forEach>
 </table>
 </div>
-<table>
+<table class="table">
     <tr>
         <c:if test="${fn:length(resultList.resultRows) > 0}">
-            <td valign="top"><input type="checkbox"
-                                    onclick="checkAllBoxes('selectedIds', this.form, this.checked);"/></td>
+            <td valign="middle"><input for="count" type="checkbox" class="checkAll"  style="margin-left: -5px" id="checkAllBottom" onclick="checkOtherAllBox('#checkAllTop', this.checked );"></td>
         </c:if>
 
         <td colspan="100" nowrap>
@@ -200,6 +204,11 @@
                     ${entityName} count: <span id="${entityName}Count">${fn:length(resultList.resultRows)}</span>
                 </c:otherwise>
             </c:choose>
+        </td>
+    </tr>
+    <tr>
+        <td>&nbsp;</td>
+        <td style="vertical-align: middle">
             <a name="search${entityName}ListEnd"></a>
             <c:if test="${fn:length(resultList.resultRows) > 0}">
                 <%-- Controls to allow user to specify column set for downloading to Excel--%>
@@ -211,7 +220,7 @@
                     <c:forEach items="${downloadColumnSets}" var="columnSet">
                         <c:set var="optionValue" value="${columnSet.level}|${columnSet.name}"/>
                         <option value="${optionValue}">
-                            ${columnSet.level} - ${columnSet.name}
+                                ${columnSet.level} - ${columnSet.name}
                         </option>
                     </c:forEach>
                 </select>
@@ -274,8 +283,7 @@
                         offset: { x: -14, y: -14 }
                     });
                 </script>
-            </c:if>
-        </td>
+            </c:if></td>
     </tr>
 </table>
 </stripes:form>

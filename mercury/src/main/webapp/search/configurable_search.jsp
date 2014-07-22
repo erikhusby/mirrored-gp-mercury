@@ -34,9 +34,14 @@
             }
         }
     </script>
-    <%--label html5 tag in search terms consumes entire horizontal layout area (Chrome only?)--%>
+    <%-- Need to stomp some global layout settings:
+         label html5 tag in search terms consumes entire horizontal layout area (Chrome only?), remove padding
+         select element are padded in mercury.css resulting in bad vertical layout
+     --%>
     <style>
-        label {display:inline}
+        label {display:inline;}
+        input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+
     </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
@@ -53,8 +58,6 @@
     </c:otherwise>
 </c:choose>
 Move the mouse over the question marks to see details about each section.
-<stripes:errors/>
-<stripes:messages/>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
 <stripes:form action="/search/ConfigurableSearch.action" onsubmit="return validateAndSubmit(this)"
               id="searchForm">
@@ -123,7 +126,7 @@ Move the mouse over the question marks to see details about each section.
                 <a href="#" id="addTerm" onclick="addTerm();return false;">Add Term</a>
                 <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
             </p>
-            Filter: <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
+            <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
 
             <hr/>
 
