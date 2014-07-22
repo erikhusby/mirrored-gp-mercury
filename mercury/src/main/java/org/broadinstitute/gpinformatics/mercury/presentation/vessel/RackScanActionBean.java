@@ -124,7 +124,7 @@ public abstract class RackScanActionBean extends CoreActionBean {
         Geometry geometry = new Geometry();
         geometry.setDimension(new Dimension(8, 12));
         geometry.setIndexing(new AlphaNumeric('A', 1));
-        return geometry.getPositions();
+        return geometry.getValidPositions();
     }
 
     /** Event for the lab selection. */
