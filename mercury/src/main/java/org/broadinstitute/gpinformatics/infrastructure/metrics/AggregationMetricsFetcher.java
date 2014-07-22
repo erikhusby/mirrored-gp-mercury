@@ -17,6 +17,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,21 +27,58 @@ import java.util.List;
  */
 @Stateless
 public class AggregationMetricsFetcher {
+    private static final String NULL_DATATYPE = null;
+    private static final String NULL_SAMPLE = null;
+
     @PersistenceContext(unitName = "metrics_pu")
     private EntityManager entityManager;
 
     public Aggregation fetch(String project, String sample, int version) {
-        return fetch(project, sample, version, null);
+        return fetch(project, sample, version, NULL_DATATYPE);
+    }
+
+    public List<Aggregation> fetch(String project, int version) {
+        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, NULL_SAMPLE, version, NULL_DATATYPE);
+        try {
+            List<Aggregation> aggregations = query.getResultList();
+            for (Aggregation aggregation : aggregations) {
+                for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
+                    setPicardAnalysis(aggregationReadGroup);
+                }
+            }
+
+            return aggregations;
+        } catch (NoResultException e) {
+            return Collections.emptyList();
+        }
+
     }
 
     public Aggregation fetch(String project, String sample, int version, String dataType) {
+        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, sample, version, dataType);
+        try {
+            Aggregation aggregation = query.getSingleResult();
+            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
+                setPicardAnalysis(aggregationReadGroup);
+            }
+
+            return aggregation;
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    protected TypedQuery<Aggregation> getAggregationTypedQuery(String project, String sample, int version,
+                                                               String dataType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
 
         List<Predicate> predicates = new ArrayList<>();
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.project), project));
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+        if (sample != null) {
+            predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
+        }
         predicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
 
         // Only query on dataType if it's supplied.
@@ -56,17 +94,7 @@ public class AggregationMetricsFetcher {
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
-        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
-        try {
-            Aggregation aggregation = query.getSingleResult();
-            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                setPicardAnalysis(aggregationReadGroup);
-            }
-
-            return aggregation;
-        } catch (NoResultException e) {
-            return null;
-        }
+        return entityManager.createQuery(criteriaQuery);
     }
 
     private void setPicardAnalysis(AggregationReadGroup aggregationReadGroup){
