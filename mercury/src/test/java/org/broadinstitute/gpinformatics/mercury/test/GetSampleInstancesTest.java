@@ -315,7 +315,7 @@ public class GetSampleInstancesTest {
                 SBSSection.ALL96, shearingPlate.getContainerRole(), SBSSection.ALL96, baitAdditionTransfer));
 
         // Verify 1st sample
-        List<SampleInstanceV2> sampleInstances =
+        Set<SampleInstanceV2> sampleInstances =
                 shearingPlate.getContainerRole().getSampleInstancesAtPositionV2(position1);
         Assert.assertEquals(sampleInstances.size(), 1);
         SampleInstanceV2 sampleInstance = sampleInstances.iterator().next();

@@ -920,11 +920,11 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    private Map<VesselPosition, List<SampleInstanceV2>> mapPositionToSampleInstances =
+    private Map<VesselPosition, Set<SampleInstanceV2>> mapPositionToSampleInstances =
             new EnumMap<>(VesselPosition.class);
 
-    public List<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
-        List<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
+    public Set<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
+        Set<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
         if (sampleInstances == null) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
 
@@ -940,7 +940,7 @@ public class VesselContainer<T extends LabVessel> {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
             if (ancestorEvents.isEmpty()) {
-                sampleInstances = Collections.emptyList();
+                sampleInstances = Collections.emptySet();
             } else {
                 sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
             }
@@ -962,7 +962,7 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
      */
-    static List<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
+    static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
             List<LabVessel.VesselEvent> ancestorEvents) {
         // Get ancestor SampleInstances
         List<SampleInstanceV2> ancestorSampleInstances = new ArrayList<>();
@@ -977,7 +977,7 @@ public class VesselContainer<T extends LabVessel> {
         }
 
         if (ancestorSampleInstances.isEmpty()) {
-            return ancestorSampleInstances;
+            return new LinkedHashSet<>(ancestorSampleInstances);
         } else {
             // Filter sample instances that are reagent only
             Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
@@ -1025,7 +1025,7 @@ public class VesselContainer<T extends LabVessel> {
                 }
             }
 
-            return currentSampleInstances;
+            return new LinkedHashSet<>(currentSampleInstances);
         }
     }
 
