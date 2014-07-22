@@ -27,16 +27,11 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.hamcrest.Matchers;
 import org.mockito.Mockito;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.sql.Timestamp;
-import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +53,6 @@ public class SubmissionDtoFetcherTest {
     private static final Double QUALITY_METRIC = 1.2;
 
     public void testFetch() throws Exception {
-        Date dateCompleted = DateUtils.parseDate("01/01/2014");
         double contamination = 2.2d;
         LevelOfDetection fingerprintLod = new LevelOfDetection(-45d, -13d);
         ResearchProject researchProject = ResearchProjectTestFactory.createTestResearchProject(RESEARCH_PROJECT_ID);
@@ -102,14 +96,5 @@ public class SubmissionDtoFetcherTest {
             assertThat(submissionDto.getLanesInAggregation(), Matchers.equalTo(2));
             assertThat(submissionDto.getDateCompleted(), Matchers.nullValue());
         }
-    }
-
-    public void testDate() throws ParseException {
-        Timestamp ts = new Timestamp(new Date().getTime());
-        ts.setNanos(100);
-
-        Date dateCompleted=new Date(ts.getTime());
-
-        Assert.assertEquals((Date)ts, dateCompleted);
     }
 }

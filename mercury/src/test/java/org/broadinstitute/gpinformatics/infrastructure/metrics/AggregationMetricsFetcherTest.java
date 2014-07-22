@@ -3,14 +3,18 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -71,6 +75,35 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(lod.getMin(), equalTo(MIN_LOD));
 
         assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
+    }
+
+    public void fetchMetricsForRp() {
+        List<Aggregation> aggregations = fetcher.fetch(MERCURY_PROJECT, MERCURY_AGGREGATION_VERSION);
+        for (Aggregation aggregation : aggregations) {
+            assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
+            assertThat(aggregation.getSample(), equalTo(SAMPLE));
+            assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
+            assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+            LevelOfDetection lod = aggregation.getLevelOfDetection();
+            assertThat(lod.getMax(), equalTo(MAX_LOD));
+            assertThat(lod.getMin(), equalTo(MIN_LOD));
+
+            assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
+        }
+    }
+
+    public void fetchMetricsForRpNoData() {
+        List<Aggregation> aggregations = fetcher.fetch(MERCURY_PROJECT, 9);
+        assertThat(aggregations, is(empty()));
+    }
+    public void fetchMetricsForNonexistantRp() {
+        List<Aggregation> aggregations = fetcher.fetch("NOSUCH-RP", MERCURY_AGGREGATION_VERSION);
+        assertThat(aggregations, is(empty()));
+    }
+
+    public void fetchMetricsWithProjectSampleVersionDataTypeNoResult() {
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_NA);
+        assertThat(aggregation, Matchers.nullValue());
     }
 
     public void fetchMetricsForSampleAggregatedByMercuryRPWithoutSupplyingDataType() {
