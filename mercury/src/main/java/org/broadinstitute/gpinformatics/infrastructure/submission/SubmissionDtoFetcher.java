@@ -11,6 +11,8 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -35,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SubmissionDtoFetcher {
+    private static final Log log = LogFactory.getLog(SubmissionDtoFetcher.class);
     private AggregationMetricsFetcher aggregationMetricsFetcher;
     private BassSearchService bassSearchService;
     private BSPSampleDataFetcher bspSampleDataFetcher;
@@ -95,20 +98,27 @@ public class SubmissionDtoFetcher {
                 sampleNameToPdos.get(pdoSampleName).add(productOrderSample.getProductOrder());
             }
         }
-
+        log.debug(String.format("Fetching bassDTOs for %s", researchProject.getBusinessKey()));
         List<BassDTO> bassDTOs = bassSearchService.runSearch(researchProject.getBusinessKey());
-
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
             if (bassDTO.getVersion() == version) {
                 bassDTOMap.put(bassDTO.getSample(), bassDTO);
             }
         }
+        log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
+
+        log.debug(String.format("Fetching Metrics aggregations for %s", researchProject.getBusinessKey()));
+        List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), version);
+        Map<String, Aggregation> aggregationMap = new HashMap<>();
+        for (Aggregation aggregation : aggregations) {
+            aggregationMap.put(aggregation.getSample(), aggregation);
+        }
+        log.debug(String.format("Fetched %d Metrics aggregations", aggregations.size()));
 
         for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {
             String collaboratorSampleId = sampleListMap.getKey();
-            Aggregation aggregation =
-                    aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), collaboratorSampleId, version);
+            Aggregation aggregation = aggregationMap.get(collaboratorSampleId);
             BassDTO bassDTO = bassDTOMap.get(collaboratorSampleId);
             if (bassDTO != null && aggregation != null) {
                 results.add(new SubmissionDto(bassDTO, aggregation, sampleListMap.getValue()));
@@ -116,5 +126,10 @@ public class SubmissionDtoFetcher {
         }
 
         return results;
+    }
+
+    protected float calculateTime(long startTime) {
+        long endTime = System.nanoTime();
+        return (endTime - startTime) / 1000000000;
     }
 }
