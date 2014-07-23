@@ -79,7 +79,7 @@ public class SubmissionDto {
     }
 
     public String getQualityMetricString() {
-        return aggregation.getQualityMetricString();
+        return aggregation.getQualityMetricString(bassDTO.getDatatype());
     }
 
     public String getContaminationString() {

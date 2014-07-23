@@ -97,6 +97,44 @@ public class Aggregation {
 
     }
 
+    public Double getQualityMetric(String dataType) {
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return aggregationHybridSelection.getPctTargetBases20X();
+        case DATA_TYPE_RNA:
+            long totalReadsAlignedInPairs = 0;
+            for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
+                if (aggregationAlignment.getCategory().equals("PAIR")) {
+                    totalReadsAlignedInPairs = aggregationAlignment.getPfAlignedBases();
+                }
+            }
+            return (double) totalReadsAlignedInPairs;
+        case DATA_TYPE_NA:
+            if (aggregationWgs.getMeanCoverage()!=0){
+                return aggregationWgs.getMeanCoverage();
+            }
+        default:
+            return null;
+
+        }
+    }
+
+    public String getQualityMetricString(String dataType) {
+        if (dataType==null){
+            return null;
+        }
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return convertToPercent(getQualityMetric(dataType));
+        case DATA_TYPE_RNA:
+            return MessageFormat.format("{0,number,#}", getQualityMetric(dataType));
+        case DATA_TYPE_NA:
+            return "N/A";
+        }
+        return null;
+
+    }
+
     public String getLibrary() {
         return library;
     }
@@ -166,7 +204,11 @@ public class Aggregation {
     }
 
     public String getContaminationString(){
-        return convertToPercent(aggregationContam.getPctContamination());
+        if (aggregationContam != null && aggregationContam.getPctContamination() != null) {
+            return convertToPercent(aggregationContam.getPctContamination());
+        } else {
+            return "N/A";
+        }
     }
 
     public AggregationHybridSelection getAggregationHybridSelection() {

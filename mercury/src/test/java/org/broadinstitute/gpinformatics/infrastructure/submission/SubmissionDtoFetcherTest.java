@@ -66,8 +66,8 @@ public class SubmissionDtoFetcherTest {
         BassDTO bassResults = BassDtoTestFactory.buildBassResults(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID);
 
         AggregationMetricsFetcher aggregationMetricsFetcher = Mockito.mock(AggregationMetricsFetcher.class);
-        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyInt()))
-                .thenReturn(Arrays.asList(aggregation));
+        Mockito.when(aggregationMetricsFetcher.fetch(Mockito.anyString(), Mockito.anyString(), Mockito.anyInt()))
+                .thenReturn(aggregation);
 
         BassSearchService bassSearchService = Mockito.mock(BassSearchService.class);
         Mockito.when(bassSearchService.runSearch(Mockito.anyString())).thenReturn(Arrays.asList(bassResults));
@@ -80,11 +80,12 @@ public class SubmissionDtoFetcherTest {
         BSPSampleDataFetcher bspSampleDataFetcher = Mockito.mock(BSPSampleDataFetcher.class);
         bspSampleDTOMap.put(TEST_SAMPLE, new BSPSampleDTO(dataMap));
 
-        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class))).thenReturn(bspSampleDTOMap);
+        Mockito.when(bspSampleDataFetcher.fetchSamplesFromBSP(Mockito.anyCollectionOf(String.class)))
+                .thenReturn(bspSampleDTOMap);
 
         SubmissionDtoFetcher submissionDtoFetcher =
                 new SubmissionDtoFetcher(aggregationMetricsFetcher, bassSearchService, bspSampleDataFetcher);
-        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, 1);
+        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));
         for (SubmissionDto submissionDto : submissionDtoList) {
