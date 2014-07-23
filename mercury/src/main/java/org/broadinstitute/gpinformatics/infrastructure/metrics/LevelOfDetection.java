@@ -25,7 +25,6 @@ public class LevelOfDetection {
 
     private final Double min;
     private final Double max;
-    private boolean displayString;
 
     public LevelOfDetection(@Nonnull Double min, @Nonnull Double max) {
         this.min = min;
@@ -82,11 +81,8 @@ public class LevelOfDetection {
         if (max != null ? !max.equals(that.max) : that.max != null) {
             return false;
         }
-        if (min != null ? !min.equals(that.min) : that.min != null) {
-            return false;
-        }
+        return !(min != null ? !min.equals(that.min) : that.min != null);
 
-        return true;
     }
 
     @Override

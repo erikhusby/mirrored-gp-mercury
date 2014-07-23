@@ -41,11 +41,6 @@ public class AggregationReadGroup implements Serializable {
     private String libraryName;
 
 
-    @Column(name = "MOLECULAR_BARCODE_NAME")
-    private String molecularBarcodeName;
-    @Column(name = "PAIRED_END")
-    private boolean pairedEnd;
-
     @ManyToOne
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, insertable = false,
             updatable = false)
@@ -61,17 +56,7 @@ public class AggregationReadGroup implements Serializable {
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
         this.libraryName = libraryName;
-        this.molecularBarcodeName = molecularBarcodeName;
-        this.pairedEnd = pairedEnd;
         this.picardAnalysis = picardAnalysis;
-    }
-
-    public String getMolecularBarcodeName() {
-        return molecularBarcodeName;
-    }
-
-    public boolean getPairedEnd() {
-        return pairedEnd;
     }
 
     @Transient
@@ -101,6 +86,10 @@ public class AggregationReadGroup implements Serializable {
         return aggregation;
     }
 
+    public void setLane(long lane) {
+        this.lane = lane;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -118,7 +107,7 @@ public class AggregationReadGroup implements Serializable {
         if (lane != that.lane) {
             return false;
         }
-        if (pairedEnd != that.pairedEnd) {
+        if (aggregation != null ? !aggregation.equals(that.aggregation) : that.aggregation != null) {
             return false;
         }
         if (aggregationReadGroupPK != null ? !aggregationReadGroupPK.equals(that.aggregationReadGroupPK) :
@@ -129,10 +118,6 @@ public class AggregationReadGroup implements Serializable {
             return false;
         }
         if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
-            return false;
-        }
-        if (molecularBarcodeName != null ? !molecularBarcodeName.equals(that.molecularBarcodeName) :
-                that.molecularBarcodeName != null) {
             return false;
         }
         if (picardAnalysis != null ? !picardAnalysis.equals(that.picardAnalysis) : that.picardAnalysis != null) {
@@ -149,13 +134,8 @@ public class AggregationReadGroup implements Serializable {
         result = 31 * result + (flowcellBarcode != null ? flowcellBarcode.hashCode() : 0);
         result = 31 * result + (int) (lane ^ (lane >>> 32));
         result = 31 * result + (libraryName != null ? libraryName.hashCode() : 0);
-        result = 31 * result + (molecularBarcodeName != null ? molecularBarcodeName.hashCode() : 0);
-        result = 31 * result + (pairedEnd ? 1 : 0);
+        result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
         result = 31 * result + (picardAnalysis != null ? picardAnalysis.hashCode() : 0);
         return result;
-    }
-
-    public void setLane(long lane) {
-        this.lane = lane;
     }
 }
