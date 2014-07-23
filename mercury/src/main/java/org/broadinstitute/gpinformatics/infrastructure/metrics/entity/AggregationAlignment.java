@@ -84,6 +84,10 @@ public class AggregationAlignment implements Serializable {
         return true;
     }
 
+    public Integer getPfAlignedBases() {
+        return pfAlignedBases;
+    }
+
     @Override
     public int hashCode() {
         int result = aggregationId;

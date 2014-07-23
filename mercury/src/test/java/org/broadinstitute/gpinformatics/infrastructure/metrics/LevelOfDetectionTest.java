@@ -96,7 +96,7 @@ public class LevelOfDetectionTest {
                 new PicardAnalysis(picardAnalysisId, flowcellBarcode, laneName, libraryName, picardFingerprint);
 
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(aggregationId, flowcellBarcode, 1,
-                libraryName, molecularBarcodeName, true, Arrays.asList(picardAnalysis));
+                libraryName, Arrays.asList(picardAnalysis));
 
         return aggregationReadGroup;
     }

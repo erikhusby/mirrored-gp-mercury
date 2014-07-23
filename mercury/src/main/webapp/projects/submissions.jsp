@@ -97,7 +97,7 @@
                 <td> ${submissionSample.qualityMetricString}</td>
                 <td>${submissionSample.contaminationString}</td>
                 <td>${submissionSample.fingerprintLOD.displayString()}</td>
-                <td>${fn:length(submissionSample.lanes)}</td>
+                <td>${submissionSample.lanesInAggregation}</td>
                 <td><%--blacklisted lanes--%></td>
                 <td><%--submitted version--%></td>
                 <td><%--current status--%></td>

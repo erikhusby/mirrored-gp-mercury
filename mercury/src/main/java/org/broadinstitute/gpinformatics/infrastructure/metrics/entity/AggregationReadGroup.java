@@ -50,8 +50,7 @@ public class AggregationReadGroup implements Serializable {
     }
 
     public AggregationReadGroup(int aggregationId, String flowcellBarcode,
-            long lane, String libraryName, String molecularBarcodeName, boolean pairedEnd,
-            List<PicardAnalysis> picardAnalysis) {
+                                long lane, String libraryName, List<PicardAnalysis> picardAnalysis) {
         this.aggregationId = aggregationId;
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
