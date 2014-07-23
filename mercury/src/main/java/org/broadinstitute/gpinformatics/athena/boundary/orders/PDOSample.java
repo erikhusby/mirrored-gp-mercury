@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Bean used by web service to get billing status
- * for a product order sample
+ * Bean used by web service to get billing status for a product order sample
  */
 public class PDOSample {
 
-    private List<String> riskInformation;
+    private List<String> riskInformation = new ArrayList<>();
 
     public PDOSample() {
     }
@@ -85,7 +84,7 @@ public class PDOSample {
     }
 
 
-    public void setRiskInformation(ArrayList<String> riskInformation) {
+    public void setRiskInformation(List<String> riskInformation) {
         this.riskInformation = riskInformation;
     }
 
