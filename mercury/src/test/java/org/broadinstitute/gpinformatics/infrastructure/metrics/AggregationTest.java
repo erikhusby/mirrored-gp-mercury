@@ -12,13 +12,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@Test
+@Test(groups = TestGroups.DATABASE_FREE)
 public class AggregationTest {
     private static final Double EXOME_QUALITY_METRIC = 0.890141;
     private static final Integer RNA_QUALITY_METRIC = 22;

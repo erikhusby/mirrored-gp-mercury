@@ -11,8 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -25,16 +23,7 @@ import java.io.Serializable;
 public class PicardFingerprint implements Serializable {
     @Id
     private int picardAnalysisId;
-    private String readGroup;
-    private String sample;
-    private Double llExpectedSample;
-    private Double llRandomSample;
     private Double lodExpectedSample;
-    private Integer haplotypesWithGenotypes;
-    private Integer haplotypesConfidentlyChecked;
-    @Basic
-    @Column(name = "HAPLOTYPES_CONFIDENTLY_MATCHIN", nullable = true, insertable = true, updatable = true)
-    private Integer haplotypesConfidentlyMatching;
     @OneToOne
     @JoinColumn(name = "PICARD_ANALYSIS_ID", referencedColumnName = "ID", nullable = false)
     private PicardAnalysis picardAnalysis;
@@ -42,34 +31,21 @@ public class PicardFingerprint implements Serializable {
     public PicardFingerprint() {
     }
 
-    public PicardFingerprint(String readGroup, String sample, Double llExpectedSample, Double llRandomSample,
-                             Double lodExpectedSample, Integer haplotypesWithGenotypes,
-                             Integer haplotypesConfidentlyChecked, Integer haplotypesConfidentlyMatching,
-                             PicardAnalysis picardAnalysis) {
-        this.readGroup = readGroup;
-        this.sample = sample;
-        this.llExpectedSample = llExpectedSample;
-        this.llRandomSample = llRandomSample;
+    public PicardFingerprint(int picardAnalysisId,  Double lodExpectedSample) {
+        this.picardAnalysisId = picardAnalysisId;
         this.lodExpectedSample = lodExpectedSample;
-        this.haplotypesWithGenotypes = haplotypesWithGenotypes;
-        this.haplotypesConfidentlyChecked = haplotypesConfidentlyChecked;
-        this.haplotypesConfidentlyMatching = haplotypesConfidentlyMatching;
-        this.picardAnalysis = picardAnalysis;
     }
 
-    public PicardFingerprint(int picardAnalysisId, String readGroup, String sample, Double llExpectedSample,
-                             Double llRandomSample, Double lodExpectedSample,
-                             Integer haplotypesWithGenotypes, Integer haplotypesConfidentlyChecked,
-                             Integer haplotypesConfidentlyMatching) {
-        this.picardAnalysisId = picardAnalysisId;
-        this.readGroup = readGroup;
-        this.sample = sample;
-        this.llExpectedSample = llExpectedSample;
-        this.llRandomSample = llRandomSample;
+    public void setLodExpectedSample(Double lodExpectedSample) {
         this.lodExpectedSample = lodExpectedSample;
-        this.haplotypesWithGenotypes = haplotypesWithGenotypes;
-        this.haplotypesConfidentlyChecked = haplotypesConfidentlyChecked;
-        this.haplotypesConfidentlyMatching = haplotypesConfidentlyMatching;
+    }
+
+    public Double getLodExpectedSample() {
+        return lodExpectedSample;
+    }
+
+    public PicardAnalysis getPicardAnalysis() {
+        return picardAnalysis;
     }
 
     @Override
@@ -86,35 +62,11 @@ public class PicardFingerprint implements Serializable {
         if (picardAnalysisId != that.picardAnalysisId) {
             return false;
         }
-        if (haplotypesConfidentlyChecked != null ?
-                !haplotypesConfidentlyChecked.equals(that.haplotypesConfidentlyChecked) :
-                that.haplotypesConfidentlyChecked != null) {
-            return false;
-        }
-        if (haplotypesConfidentlyMatching != null ?
-                !haplotypesConfidentlyMatching.equals(that.haplotypesConfidentlyMatching) :
-                that.haplotypesConfidentlyMatching != null) {
-            return false;
-        }
-        if (haplotypesWithGenotypes != null ? !haplotypesWithGenotypes.equals(that.haplotypesWithGenotypes) :
-                that.haplotypesWithGenotypes != null) {
-            return false;
-        }
-        if (llExpectedSample != null ? !llExpectedSample.equals(that.llExpectedSample) :
-                that.llExpectedSample != null) {
-            return false;
-        }
-        if (llRandomSample != null ? !llRandomSample.equals(that.llRandomSample) : that.llRandomSample != null) {
-            return false;
-        }
         if (lodExpectedSample != null ? !lodExpectedSample.equals(that.lodExpectedSample) :
                 that.lodExpectedSample != null) {
             return false;
         }
-        if (readGroup != null ? !readGroup.equals(that.readGroup) : that.readGroup != null) {
-            return false;
-        }
-        if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
+        if (picardAnalysis != null ? !picardAnalysis.equals(that.picardAnalysis) : that.picardAnalysis != null) {
             return false;
         }
 
@@ -124,54 +76,8 @@ public class PicardFingerprint implements Serializable {
     @Override
     public int hashCode() {
         int result = picardAnalysisId;
-        result = 31 * result + (readGroup != null ? readGroup.hashCode() : 0);
-        result = 31 * result + (sample != null ? sample.hashCode() : 0);
-        result = 31 * result + (llExpectedSample != null ? llExpectedSample.hashCode() : 0);
-        result = 31 * result + (llRandomSample != null ? llRandomSample.hashCode() : 0);
         result = 31 * result + (lodExpectedSample != null ? lodExpectedSample.hashCode() : 0);
-        result = 31 * result + (haplotypesWithGenotypes != null ? haplotypesWithGenotypes.hashCode() : 0);
-        result = 31 * result + (haplotypesConfidentlyChecked != null ? haplotypesConfidentlyChecked.hashCode() : 0);
-        result = 31 * result + (haplotypesConfidentlyMatching != null ? haplotypesConfidentlyMatching.hashCode() : 0);
+        result = 31 * result + (picardAnalysis != null ? picardAnalysis.hashCode() : 0);
         return result;
-    }
-
-    public String getReadGroup() {
-        return readGroup;
-    }
-
-    public String getSample() {
-        return sample;
-    }
-
-    public Double getLlExpectedSample() {
-        return llExpectedSample;
-    }
-
-    public void setLodExpectedSample(Double lodExpectedSample) {
-        this.lodExpectedSample = lodExpectedSample;
-    }
-
-    public Double getLlRandomSample() {
-        return llRandomSample;
-    }
-
-    public Double getLodExpectedSample() {
-        return lodExpectedSample;
-    }
-
-    public Integer getHaplotypesWithGenotypes() {
-        return haplotypesWithGenotypes;
-    }
-
-    public Integer getHaplotypesConfidentlyChecked() {
-        return haplotypesConfidentlyChecked;
-    }
-
-    public Integer getHaplotypesConfidentlyMatching() {
-        return haplotypesConfidentlyMatching;
-    }
-
-    public PicardAnalysis getPicardAnalysis() {
-        return picardAnalysis;
     }
 }

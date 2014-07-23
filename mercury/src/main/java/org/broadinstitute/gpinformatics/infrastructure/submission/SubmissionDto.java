@@ -94,7 +94,6 @@ public class SubmissionDto {
     }
 
     public LevelOfDetection getFingerprintLOD() {
-        LevelOfDetection.calculate(aggregation.getAggregationReadGroups());
         return aggregation.getLevelOfDetection();
     }
 

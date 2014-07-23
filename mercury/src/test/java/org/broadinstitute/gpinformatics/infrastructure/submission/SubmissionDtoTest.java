@@ -24,7 +24,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -40,7 +39,6 @@ public class SubmissionDtoTest {
     public static final int VERSION = 1;
     public static final double CONTAMINATION = 0.47;
     private static final String CONTAMINATION_STRING = "47%";
-    public static final List<String> LANES = Arrays.asList("1", "2");
     public static final LevelOfDetection FINGERPRINT_LOD = new LevelOfDetection(-4.3d, -3.2d);
     public static final String BAM_FILE = BassDTO.FileType.BAM.getValue();
     private static final String DATA_TYPE = "Exome";
@@ -76,7 +74,6 @@ public class SubmissionDtoTest {
         assertThat(submissionDTO.getContamination(), equalTo(CONTAMINATION));
         assertThat(submissionDTO.getContaminationString(), equalTo(CONTAMINATION_STRING));
         assertThat(submissionDTO.getFingerprintLOD(), equalTo(FINGERPRINT_LOD));
-        assertThat(submissionDTO.getLanes(), containsInAnyOrder(LANES.toArray()));
         assertThat(submissionDTO.getLanesInAggregation(), Matchers.equalTo(2));
 //        assertThat(submissionDTO.getBlacklistedLanes(), blacklistedLanes);
 //        assertThat(submissionDTO.getSubmittedVersion(), submittedVersion);
