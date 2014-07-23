@@ -29,7 +29,7 @@ public class AggregationTestFactory {
     @SuppressWarnings("EmptyCatchBlock")
     public static Aggregation buildAggregation(String project, String sample, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
-                                               Double pctTargetBases20X, Integer totalReadsAlignedInPairs,
+                                               Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
         Aggregation aggregation = new Aggregation();
         aggregation.setSample(sample);
@@ -76,7 +76,7 @@ public class AggregationTestFactory {
     }
 
     public static Aggregation buildAggregation(String dataType, Double pctTargetBases20X,
-                                               Integer totalReadsAlignedInPairs,
+                                               Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
         return buildAggregation(null, null, null, new LevelOfDetection(1.2, 2.2), dataType, pctTargetBases20X,
                 totalReadsAlignedInPairs, meanCoverageWgs);

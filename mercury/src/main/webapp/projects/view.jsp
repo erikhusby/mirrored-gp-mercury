@@ -13,7 +13,18 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
-                $j( "#tabs" ).tabs();
+                $j( "#tabs" ).tabs({
+                    beforeLoad: function(event, ui) {
+                        if (ui.panel.children('form').length == 0) {
+                            if (ui.panel.children('p.loading').length == 0) {
+                                $j('<p>').addClass('loading').append('Loading...').appendTo(ui.panel);
+                            }
+                        } else {
+                            event.preventDefault();
+                        }
+                    }
+                });
+
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
                     height: 500,

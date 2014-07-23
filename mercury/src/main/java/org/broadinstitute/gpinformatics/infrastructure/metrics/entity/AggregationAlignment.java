@@ -27,8 +27,8 @@ public class AggregationAlignment implements Serializable {
     private int aggregationId;
     @Id
     private String category;
-    @Column(name = "PF_READS_ALIGNED") private Integer pfReadsAligned;
-    @Column(name = "PF_ALIGNED_BASES") private Integer pfAlignedBases;
+    @Column(name = "PF_READS_ALIGNED") private Long pfReadsAligned;
+    @Column(name = "PF_ALIGNED_BASES") private Long pfAlignedBases;
     @ManyToOne
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
     private Aggregation aggregation;
@@ -38,7 +38,7 @@ public class AggregationAlignment implements Serializable {
      */
     protected AggregationAlignment() {}
 
-    public AggregationAlignment(Integer pfReadsAligned) {
+    public AggregationAlignment(Long pfReadsAligned) {
         this.pfReadsAligned = pfReadsAligned;
     }
 
@@ -46,7 +46,7 @@ public class AggregationAlignment implements Serializable {
         return category;
     }
 
-    public Integer getPfReadsAligned() {
+    public Long getPfReadsAligned() {
         return pfReadsAligned;
     }
 
@@ -84,7 +84,7 @@ public class AggregationAlignment implements Serializable {
         return true;
     }
 
-    public Integer getPfAlignedBases() {
+    public Long getPfAlignedBases() {
         return pfAlignedBases;
     }
 
