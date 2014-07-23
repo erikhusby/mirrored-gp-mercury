@@ -369,6 +369,7 @@ public class SystemRouter implements Serializable {
                                 BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
                                 if (sampleDTO == null) {
                                     // Don't know what this is, but it isn't for Mercury.
+                                    badCrspRouting();
                                     routingOptions.add(SQUID);
                                 } else {
                                     if (controlCollaboratorSampleIds.contains(sampleDTO.getCollaboratorsSampleName())) {

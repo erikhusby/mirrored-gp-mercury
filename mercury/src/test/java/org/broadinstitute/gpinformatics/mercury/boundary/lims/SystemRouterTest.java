@@ -1135,9 +1135,9 @@ public class SystemRouterTest extends BaseEventTest {
         return placeOrderForTubesAndBatch(Collections.singleton(tube), product, bucket);
     }
 
+    private int sampleNum = 1;
     private ProductOrder placeOrderForTubesAndBatch(Set<LabVessel> tubes, Product product, Bucket bucket) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<>();
-        int sampleNum = 1;
         for (LabVessel tube : tubes) {
             String sampleName = "SM-" + sampleNum;
             productOrderSamples.add(new ProductOrderSample(sampleName));
