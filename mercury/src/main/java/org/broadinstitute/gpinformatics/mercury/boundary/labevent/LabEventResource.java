@@ -202,19 +202,16 @@ public class LabEventResource {
             for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("CherryPickTransfer");
-                LabVessel ancillarySourceVessel = cherryPickTransfer.getAncillarySourceVessel();
-                String sourceBarcode = ancillarySourceVessel == null ?
-                        cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel() :
-                        ancillarySourceVessel.getLabel();
+                String sourceBarcode = getLabel(cherryPickTransfer.getAncillarySourceVessel(),
+                        cherryPickTransfer.getSourceVesselContainer());
                 transferBean.setSourceBarcode(sourceBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
                         sourceBarcode);
                 transferBean.setSourcePosition(cherryPickTransfer.getSourcePosition().name());
-                LabVessel ancillaryTargetVessel = cherryPickTransfer.getAncillaryTargetVessel();
-                String targetBarcode = ancillaryTargetVessel == null ?
-                        cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel() :
-                        ancillaryTargetVessel.getLabel();
+
+                String targetBarcode = getLabel(cherryPickTransfer.getAncillaryTargetVessel(),
+                        cherryPickTransfer.getTargetVesselContainer());
                 transferBean.setTargetBarcode(targetBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
@@ -225,19 +222,16 @@ public class LabEventResource {
             for (SectionTransfer sectionTransfer : labEvent.getSectionTransfers()) {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("SectionTransfer");
-                LabVessel ancillarySourceVessel = sectionTransfer.getAncillarySourceVessel();
-                String sourceBarcode = ancillarySourceVessel == null ?
-                        sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel() :
-                        ancillarySourceVessel.getLabel();
+                String sourceBarcode = getLabel(sectionTransfer.getAncillarySourceVessel(),
+                        sectionTransfer.getSourceVesselContainer());
                 transferBean.setSourceBarcode(sourceBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel(),
                         sourceBarcode);
                 transferBean.setSourceSection(sectionTransfer.getSourceSection().getSectionName());
-                LabVessel ancillaryTargetVessel = sectionTransfer.getAncillaryTargetVessel();
-                String targetBarcode = ancillaryTargetVessel == null ?
-                        sectionTransfer.getSourceVesselContainer().getEmbedder().getLabel() :
-                        ancillaryTargetVessel.getLabel();
+
+                String targetBarcode = getLabel(sectionTransfer.getAncillaryTargetVessel(),
+                        sectionTransfer.getSourceVesselContainer());
                 transferBean.setTargetBarcode(targetBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         sectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
@@ -249,10 +243,8 @@ public class LabEventResource {
                 TransferBean transferBean = new TransferBean();
                 transferBean.setType("VesselToSectionTransfer");
                 transferBean.setSourceBarcode(vesselToSectionTransfer.getSourceVessel().getLabel());
-                LabVessel ancillaryTargetVessel = vesselToSectionTransfer.getAncillaryTargetVessel();
-                String targetBarcode = ancillaryTargetVessel == null ?
-                        vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel() :
-                        ancillaryTargetVessel.getLabel();
+                String targetBarcode = getLabel(vesselToSectionTransfer.getAncillaryTargetVessel(),
+                        vesselToSectionTransfer.getTargetVesselContainer());
                 transferBean.setTargetBarcode(targetBarcode);
                 mapTubeFormationLabelToRackLabel.put(
                         vesselToSectionTransfer.getTargetVesselContainer().getEmbedder().getLabel(),
@@ -372,6 +364,26 @@ public class LabEventResource {
             }
         }
         return labVesselBean;
+    }
+
+    /**
+     * Returns label of vessel, including special handling for tube formations.
+     */
+    private String getLabel(LabVessel ancillaryVessel, VesselContainer<?> vesselContainer) {
+        String label;
+        if (ancillaryVessel == null) {
+            if (vesselContainer.getEmbedder().getType() == LabVessel.ContainerType.TUBE_FORMATION) {
+                // The "label" for a tube formation is the hash of the tube barcodes and their formations, so return the
+                // label for the rack.
+                label = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class).
+                        getRacksOfTubes().iterator().next().getLabel();
+            } else {
+                label = vesselContainer.getEmbedder().getLabel();
+            }
+        } else {
+            label = ancillaryVessel.getLabel();
+        }
+        return label;
     }
 
 }
