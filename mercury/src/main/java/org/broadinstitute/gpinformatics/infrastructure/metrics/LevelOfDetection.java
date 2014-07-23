@@ -11,15 +11,18 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class LevelOfDetection {
 
@@ -36,27 +39,25 @@ public class LevelOfDetection {
     }
 
     public static LevelOfDetection calculate(Collection<AggregationReadGroup> aggregationReadGroups) {
+        if (CollectionUtils.isEmpty(aggregationReadGroups)) {
+            return null;
+        }
         Map<String, Double> laneLodMap = new HashMap<>();
+
+        Set<String> lanes=new HashSet<>();
         for (AggregationReadGroup aggregationReadGroup : aggregationReadGroups) {
             for (PicardAnalysis picardAnalysis : aggregationReadGroup.getPicardAnalysis()) {
                 PicardFingerprint fingerprint = picardAnalysis.getPicardFingerprint();
-                laneLodMap.put(picardAnalysis.getLane(), fingerprint.getLodExpectedSample());
+                lanes.add(picardAnalysis.getLane());
+                if (fingerprint.getLodExpectedSample() != null) {
+                    laneLodMap.put(picardAnalysis.getLane(), fingerprint.getLodExpectedSample());
+                }
             }
         }
-        return new LevelOfDetection(
-                NumberUtils.min(toPrimitiveDouble(laneLodMap.values())),
-                NumberUtils.max(toPrimitiveDouble(laneLodMap.values())));
-
-    }
-
-    private static double[] toPrimitiveDouble(Collection<Double> doubleList) {
-        Double[] bigDoubles = doubleList.toArray(new Double[doubleList.size()]);
-        double[] doubles = new double[doubleList.size()];
-        for (int i = 0; i < bigDoubles.length; i++) {
-            doubles[i] = bigDoubles[i];
+        if (lanes.size() == laneLodMap.size() || laneLodMap.values().isEmpty()) {
+            return new LevelOfDetection(Collections.min(laneLodMap.values()), Collections.max(laneLodMap.values()));
         }
-
-        return doubles;
+        return null;
     }
 
     public Double getMin() {
@@ -93,6 +94,6 @@ public class LevelOfDetection {
     }
 
     public String displayString() {
-        return String.format("%2.2f/%2.2f",min,max);
+        return String.format("%2.2f/%2.2f", min, max);
     }
 }

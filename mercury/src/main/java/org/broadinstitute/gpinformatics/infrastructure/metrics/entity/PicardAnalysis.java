@@ -29,18 +29,16 @@ public class PicardAnalysis implements Serializable {
     @Column(name="LANE")
     private String lane;
     private String libraryName;
-    private String metricsType;
 
     public PicardAnalysis() {
     }
 
     public PicardAnalysis(int id, String flowcellBarcode, String lane,
-                          String libraryName, String metricsType, PicardFingerprint picardFingerprint) {
+                          String libraryName, PicardFingerprint picardFingerprint) {
         this.id = id;
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
         this.libraryName = libraryName;
-        this.metricsType = metricsType;
         this.picardFingerprint = picardFingerprint;
     }
 
@@ -58,10 +56,6 @@ public class PicardAnalysis implements Serializable {
 
     public String getLibraryName() {
         return libraryName;
-    }
-
-    public String getMetricsType() {
-        return metricsType;
     }
 
     public PicardFingerprint getPicardFingerprint() {
@@ -99,9 +93,6 @@ public class PicardAnalysis implements Serializable {
         if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
             return false;
         }
-        if (metricsType != null ? !metricsType.equals(that.metricsType) : that.metricsType != null) {
-            return false;
-        }
         if (picardFingerprint != null ? !picardFingerprint.equals(that.picardFingerprint) :
                 that.picardFingerprint != null) {
             return false;
@@ -116,7 +107,6 @@ public class PicardAnalysis implements Serializable {
         result = 31 * result + (flowcellBarcode != null ? flowcellBarcode.hashCode() : 0);
         result = 31 * result + (lane != null ? lane.hashCode() : 0);
         result = 31 * result + (libraryName != null ? libraryName.hashCode() : 0);
-        result = 31 * result + (metricsType != null ? metricsType.hashCode() : 0);
         result = 31 * result + (picardFingerprint != null ? picardFingerprint.hashCode() : 0);
         return result;
     }
