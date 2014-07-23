@@ -12,17 +12,24 @@ public class PDOSample {
 
     private ArrayList<String> riskInformation;
 
-    public PDOSample() {}
-
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
-        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null);
+    public PDOSample() {
     }
 
-    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, null, false);
+    }
+
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk,
+                     boolean isRiskCalculated) {
         this.pdoKey = pdoKey;
         this.sampleName = sampleName;
         this.hasPrimaryPriceItemBeenBilled = hasPrimaryPriceItemBeenBilled;
         this.onRisk = onRisk;
+        this.isRiskCalculated = isRiskCalculated;
+    }
+
+    public PDOSample(String pdoKey, String sampleName, Boolean hasPrimaryPriceItemBeenBilled, Boolean onRisk) {
+        this(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, onRisk, true);
     }
 
     private String pdoKey;
@@ -32,6 +39,8 @@ public class PDOSample {
     private Boolean hasPrimaryPriceItemBeenBilled;
 
     private Boolean onRisk;
+
+    private boolean isRiskCalculated;
 
     private List<String> riskCategories;
 
@@ -82,5 +91,13 @@ public class PDOSample {
 
     public ArrayList<String> getRiskInformation() {
         return riskInformation;
+    }
+
+    public boolean isRiskCalculated() {
+        return isRiskCalculated;
+    }
+
+    public void setRiskCalculated(boolean isRiskCalculated) {
+        this.isRiskCalculated = isRiskCalculated;
     }
 }
