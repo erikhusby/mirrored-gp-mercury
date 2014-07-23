@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class PDOSample {
 
-    private ArrayList<String> riskInformation;
+    private List<String> riskInformation;
 
     public PDOSample() {
     }
@@ -89,7 +89,7 @@ public class PDOSample {
         this.riskInformation = riskInformation;
     }
 
-    public ArrayList<String> getRiskInformation() {
+    public List<String> getRiskInformation() {
         return riskInformation;
     }
 
