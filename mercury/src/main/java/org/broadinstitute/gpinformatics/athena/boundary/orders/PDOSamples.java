@@ -94,18 +94,17 @@ public class PDOSamples {
             for (ProductOrderSample pdoSample : pdoSamples) {
                 if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
                     PDOSample pdoSampleBean = new PDOSample(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),pdoSample.isOnRisk());
-                    Collection<String> riskCategories = new HashSet<>();
+                    Collection<String> riskCategories = new HashSet<> ();
+                    Collection<String> riskInformation = new ArrayList<> (pdoSample.getRiskItems().size());
                     if (pdoSample.isOnRisk()) {
                         for (RiskItem riskItem : pdoSample.getRiskItems()) {
                             riskCategories.add(riskItem.getRiskCriterion().getCalculationString());
+                            riskInformation.add(riskItem.getInformation());
                         }
                     }
 
-                    if (CollectionUtils.isEmpty(pdoSample.getRiskItems())) {
-                        pdoSampleBean.setRiskCategories(Collections.<String>emptyList());
-                    } else {
-                        pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
-                    }
+                    pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
+                    pdoSampleBean.setRiskInformation(new ArrayList<>(riskInformation));
 
                     pdoSamplesResults.getPdoSamples().add(pdoSampleBean);
                     foundIt = true;

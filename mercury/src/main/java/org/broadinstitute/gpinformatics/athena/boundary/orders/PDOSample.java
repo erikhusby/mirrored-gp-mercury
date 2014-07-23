@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -8,6 +9,8 @@ import java.util.List;
  * for a product order sample
  */
 public class PDOSample {
+
+    private ArrayList<String> riskInformation;
 
     public PDOSample() {}
 
@@ -70,5 +73,14 @@ public class PDOSample {
 
     public void setOnRisk(Boolean onRisk) {
         this.onRisk = onRisk;
+    }
+
+
+    public void setRiskInformation(ArrayList<String> riskInformation) {
+        this.riskInformation = riskInformation;
+    }
+
+    public ArrayList<String> getRiskInformation() {
+        return riskInformation;
     }
 }
