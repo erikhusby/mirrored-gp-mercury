@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,11 +100,18 @@ public class PDOSamples {
                             riskCategories.add(riskItem.getRiskCriterion().getCalculationString());
                         }
                     }
-                    pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
+
+                    if (CollectionUtils.isEmpty(pdoSample.getRiskItems())) {
+                        pdoSampleBean.setRiskCategories(Collections.<String>emptyList());
+                    } else {
+                        pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
+                    }
+
                     pdoSamplesResults.getPdoSamples().add(pdoSampleBean);
                     foundIt = true;
                 }
             }
+
             if (!foundIt) {
                 pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null);
                 String errorMessage = MessageFormat
