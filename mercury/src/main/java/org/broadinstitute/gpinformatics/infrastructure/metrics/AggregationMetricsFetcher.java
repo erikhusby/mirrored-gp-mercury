@@ -7,10 +7,11 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceContextType;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -24,12 +25,12 @@ import java.util.List;
  * <p/>
  * Not a {@link GenericDao} because it uses a different persistence unit.
  */
-@Stateless
+@Stateful
 public class AggregationMetricsFetcher {
     private static final String NULL_DATATYPE = null;
     private static final String NULL_SAMPLE = null;
 
-    @PersistenceContext(unitName = "metrics_pu")
+    @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
     public Aggregation fetch(String project, String sample, int version) {
@@ -100,8 +101,8 @@ public class AggregationMetricsFetcher {
         predicates.add(criteriaBuilder
                 .equal(root.get(PicardAnalysis_.flowcellBarcode), aggregationReadGroup.getFlowcellBarcode()));
         predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.lane), aggregationReadGroup.getLane()));
-        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.flowcellBarcode), aggregationReadGroup.getFlowcellBarcode()));
-        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.libraryName), aggregationReadGroup.getLibraryName()));
+        predicates.add(criteriaBuilder
+                .equal(root.get(PicardAnalysis_.libraryName), aggregationReadGroup.getLibraryName()));
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 

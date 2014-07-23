@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -28,11 +27,17 @@ public class PDOSamples {
     private List<PDOSample> pdoSamples = new ArrayList<>();
     private List<String> errors = new ArrayList<>();
 
-    public PDOSamples() {}
+    public PDOSamples() {
+    }
 
     public void addPdoSample(@Nonnull String pdoKey, @Nonnull String sampleName,
                              Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk) {
-        pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk));
+        addPdoSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, true);
+    }
+
+    public void addPdoSample(@Nonnull String pdoKey, @Nonnull String sampleName,
+                             Boolean hasPrimaryPriceItemBeenBilled, Boolean atRisk, boolean isCalculated) {
+        pdoSamples.add(new PDOSample(pdoKey, sampleName, hasPrimaryPriceItemBeenBilled, atRisk, isCalculated));
     }
 
     public void addError(String errorMessage) {
@@ -91,21 +96,31 @@ public class PDOSamples {
             String requestedPdoKey = requestedPdoSample.getPdoKey();
             String requestedSampleName = requestedPdoSample.getSampleName();
             for (ProductOrderSample pdoSample : pdoSamples) {
-                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) && requestedSampleName.equals(pdoSample.getName())) {
-                    PDOSample pdoSampleBean = new PDOSample(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),pdoSample.isOnRisk());
+                if (requestedPdoKey.equals(pdoSample.getProductOrder().getBusinessKey()) &&
+                    requestedSampleName.equals(pdoSample.getName())) {
+
+                    PDOSample pdoSampleBean =
+                            new PDOSample(requestedPdoKey, requestedSampleName, pdoSample.isCompletelyBilled(),
+                                    pdoSample.isOnRisk(), !pdoSample.getRiskItems().isEmpty());
+
                     Collection<String> riskCategories = new HashSet<>();
+                    Collection<String> riskInformation = new ArrayList<>(pdoSample.getRiskItems().size());
                     if (pdoSample.isOnRisk()) {
                         for (RiskItem riskItem : pdoSample.getRiskItems()) {
                             riskCategories.add(riskItem.getRiskCriterion().getCalculationString());
+                            riskInformation.add(riskItem.getInformation());
                         }
                     }
+
                     pdoSampleBean.setRiskCategories(new ArrayList<>(riskCategories));
+                    pdoSampleBean.setRiskInformation(new ArrayList<>(riskInformation));
                     pdoSamplesResults.getPdoSamples().add(pdoSampleBean);
                     foundIt = true;
                 }
             }
+
             if (!foundIt) {
-                pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null);
+                pdoSamplesResults.addPdoSample(requestedPdoKey, requestedSampleName, null, null, false);
                 String errorMessage = MessageFormat
                         .format("Could not find sample {0} in PDO {1}.", requestedSampleName, requestedPdoKey);
                 pdoSamplesResults.addError(errorMessage);
@@ -116,9 +131,9 @@ public class PDOSamples {
 
     @JsonIgnore
     public Collection<PDOSample> getAtRiskPdoSamples() {
-        List<PDOSample> onRiskSamples=new ArrayList<>();
+        List<PDOSample> onRiskSamples = new ArrayList<>();
         for (PDOSample pdoSample : getPdoSamples()) {
-            if (pdoSample!=null && pdoSample.isOnRisk()){
+            if (pdoSample != null && pdoSample.isOnRisk()) {
                 onRiskSamples.add(pdoSample);
             }
         }

@@ -103,17 +103,18 @@ public class SubmissionDtoFetcher {
         log.debug(String.format("Fetched %d bassDTOs", bassDTOs.size()));
         Map<String, BassDTO> bassDTOMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOs) {
-            if (bassDTO.getVersion() == version) {
-                bassDTOMap.put(bassDTO.getSample(), bassDTO);
-            }
+            bassDTOMap.put(bassDTO.getSample(), bassDTO);
         }
 
-        log.debug(String.format("Fetching Metrics aggregations for %s", researchProject.getBusinessKey()));
-        List<Aggregation> aggregations = aggregationMetricsFetcher.fetch(researchProject.getBusinessKey(), version);
-        log.debug(String.format("Fetched %d Metrics aggregations", aggregations.size()));
         Map<String, Aggregation> aggregationMap = new HashMap<>();
-        for (Aggregation aggregation : aggregations) {
-            aggregationMap.put(aggregation.getSample(), aggregation);
+        for (BassDTO bassDTO : bassDTOMap.values()) {
+            log.debug(String.format("Fetching Metrics aggregations for %s, %s", researchProject.getBusinessKey(),
+                    bassDTO.getSample()));
+            Aggregation aggregation = aggregationMetricsFetcher.fetch(bassDTO.getProject(), bassDTO.getSample(),
+                    bassDTO.getVersion());
+            if (aggregation != null) {
+                aggregationMap.put(aggregation.getSample(), aggregation);
+            }
         }
 
         for (Map.Entry<String, Set<ProductOrder>> sampleListMap : sampleNameToPdos.entrySet()) {

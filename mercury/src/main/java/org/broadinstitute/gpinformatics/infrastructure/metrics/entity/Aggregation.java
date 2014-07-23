@@ -39,14 +39,10 @@ public class Aggregation {
     private String sample;
     private String library;
     private int version;
-    private Date createdAt;
-    private Date modifiedAt;
-    private Long isLatest;
     private Integer readGroupCount;
-    private String aggregationType;
-    private Date workflowStartDate;
     private Date workflowEndDate;
     private String dataType;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
@@ -55,7 +51,7 @@ public class Aggregation {
     private AggregationHybridSelection aggregationHybridSelection;
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
-    @OneToOne(mappedBy = "aggregationByAggregationId")
+    @OneToOne(mappedBy = "aggregation")
     private AggregationWgs aggregationWgs;
 
     public Aggregation(String dataType) {
@@ -101,6 +97,48 @@ public class Aggregation {
 
     }
 
+    public Double getQualityMetric(String dataType) {
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return aggregationHybridSelection.getPctTargetBases20X();
+        case DATA_TYPE_RNA:
+            long totalReadsAlignedInPairs = 0;
+            for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
+                if (aggregationAlignment.getCategory().equals("PAIR")) {
+                    totalReadsAlignedInPairs = aggregationAlignment.getPfAlignedBases();
+                }
+            }
+            return (double) totalReadsAlignedInPairs;
+        case DATA_TYPE_NA:
+            if (aggregationWgs.getMeanCoverage()!=0){
+                return aggregationWgs.getMeanCoverage();
+            }
+        default:
+            return null;
+
+        }
+    }
+
+    public String getQualityMetricString(String dataType) {
+        if (dataType==null){
+            return null;
+        }
+        switch (dataType) {
+        case DATA_TYPE_EXOME:
+            return convertToPercent(getQualityMetric(dataType));
+        case DATA_TYPE_RNA:
+            return MessageFormat.format("{0,number,#}", getQualityMetric(dataType));
+        case DATA_TYPE_NA:
+            return "N/A";
+        }
+        return null;
+
+    }
+
+    public String getLibrary() {
+        return library;
+    }
+
     protected String convertToPercent(double decimalValue) {
         return MessageFormat.format("{0,number,#.##%}", decimalValue);
     }
@@ -121,28 +159,8 @@ public class Aggregation {
         this.sample = sample;
     }
 
-    public String getLibrary() {
-        return library;
-    }
-
     public int getVersion() {
         return version;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getModifiedAt() {
-        return modifiedAt;
-    }
-
-    public Long getIsLatest() {
-        return isLatest;
     }
 
     public Integer getReadGroupCount() {
@@ -151,14 +169,6 @@ public class Aggregation {
 
     public void setReadGroupCount(Integer readGroupCount) {
         this.readGroupCount = readGroupCount;
-    }
-
-    public String getAggregationType() {
-        return aggregationType;
-    }
-
-    public Date getWorkflowStartDate() {
-        return workflowStartDate;
     }
 
     public Date getWorkflowEndDate() {
@@ -194,7 +204,11 @@ public class Aggregation {
     }
 
     public String getContaminationString(){
-        return convertToPercent(aggregationContam.getPctContamination());
+        if (aggregationContam != null && aggregationContam.getPctContamination() != null) {
+            return convertToPercent(aggregationContam.getPctContamination());
+        } else {
+            return "N/A";
+        }
     }
 
     public AggregationHybridSelection getAggregationHybridSelection() {
@@ -232,7 +246,7 @@ public class Aggregation {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof Aggregation)) {
             return false;
         }
 
@@ -244,35 +258,41 @@ public class Aggregation {
         if (version != that.version) {
             return false;
         }
-        if (aggregationType != null ? !aggregationType.equals(that.aggregationType) : that.aggregationType != null) {
+        if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
+                that.aggregationAlignments != null) {
             return false;
         }
-        if (createdAt != null ? !createdAt.equals(that.createdAt) : that.createdAt != null) {
+        if (aggregationContam != null ? !aggregationContam.equals(that.aggregationContam) :
+                that.aggregationContam != null) {
+            return false;
+        }
+        if (aggregationHybridSelection != null ? !aggregationHybridSelection.equals(that.aggregationHybridSelection) :
+                that.aggregationHybridSelection != null) {
+            return false;
+        }
+        if (aggregationReadGroups != null ? !aggregationReadGroups.equals(that.aggregationReadGroups) :
+                that.aggregationReadGroups != null) {
+            return false;
+        }
+        if (aggregationWgs != null ? !aggregationWgs.equals(that.aggregationWgs) : that.aggregationWgs != null) {
             return false;
         }
         if (dataType != null ? !dataType.equals(that.dataType) : that.dataType != null) {
             return false;
         }
-        if (isLatest != null ? !isLatest.equals(that.isLatest) : that.isLatest != null) {
-            return false;
-        }
         if (library != null ? !library.equals(that.library) : that.library != null) {
             return false;
         }
-        if (modifiedAt != null ? !modifiedAt.equals(that.modifiedAt) : that.modifiedAt != null) {
+        if (project != null ? !project.equals(that.project) : that.project != null) {
             return false;
         }
-        if (project != null ? !project.equals(that.project) : that.project != null) {
+        if (readGroupCount != null ? !readGroupCount.equals(that.readGroupCount) : that.readGroupCount != null) {
             return false;
         }
         if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
             return false;
         }
         if (workflowEndDate != null ? !workflowEndDate.equals(that.workflowEndDate) : that.workflowEndDate != null) {
-            return false;
-        }
-        if (workflowStartDate != null ? !workflowStartDate.equals(that.workflowStartDate) :
-                that.workflowStartDate != null) {
             return false;
         }
 
@@ -286,14 +306,14 @@ public class Aggregation {
         result = 31 * result + (sample != null ? sample.hashCode() : 0);
         result = 31 * result + (library != null ? library.hashCode() : 0);
         result = 31 * result + version;
-        result = 31 * result + (createdAt != null ? createdAt.hashCode() : 0);
-        result = 31 * result + (modifiedAt != null ? modifiedAt.hashCode() : 0);
-        result = 31 * result + (isLatest != null ? isLatest.hashCode() : 0);
-        result = 31 * result + (aggregationType != null ? aggregationType.hashCode() : 0);
-        result = 31 * result + (workflowStartDate != null ? workflowStartDate.hashCode() : 0);
+        result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
         result = 31 * result + (workflowEndDate != null ? workflowEndDate.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
+        result = 31 * result + (aggregationAlignments != null ? aggregationAlignments.hashCode() : 0);
+        result = 31 * result + (aggregationContam != null ? aggregationContam.hashCode() : 0);
+        result = 31 * result + (aggregationHybridSelection != null ? aggregationHybridSelection.hashCode() : 0);
+        result = 31 * result + (aggregationReadGroups != null ? aggregationReadGroups.hashCode() : 0);
+        result = 31 * result + (aggregationWgs != null ? aggregationWgs.hashCode() : 0);
         return result;
     }
-
 }

@@ -12,16 +12,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-@Test
+@Test(groups = TestGroups.DATABASE_FREE)
 public class AggregationTest {
     private static final Double EXOME_QUALITY_METRIC = 0.890141;
-    private static final Integer RNA_QUALITY_METRIC = 22;
+    private static final Long RNA_QUALITY_METRIC = 22L;
     private static final Double WGS_QUALITY_METRIC = 18.23;
     private Aggregation aggregation;
 
@@ -39,7 +40,7 @@ public class AggregationTest {
                 .buildAggregation(Aggregation.DATA_TYPE_RNA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
         assertThat(aggregation.getDataType(), is(Aggregation.DATA_TYPE_RNA));
-        assertThat(aggregation.getQualityMetric().intValue(), Matchers.equalTo(RNA_QUALITY_METRIC));
+        assertThat(aggregation.getQualityMetric().longValue(), Matchers.equalTo(RNA_QUALITY_METRIC));
     }
 
 
