@@ -49,22 +49,30 @@ public class ConfigurableSearchTest extends ContainerTest {
         searchInstance.getPredefinedViewColumns().add("LabEventId");
 
         // Save instance
-        Map<PreferenceType.PreferenceScope, Preference> mapScopeToPreference = new HashMap<>();
-        List<String> searchInstanceNames = new ArrayList<>();
-        List<String> newSearchLevels = new ArrayList<>();
-        searchInstanceEjb.fetchInstances(mapScopeToPreference, searchInstanceNames, newSearchLevels);
+        Map<PreferenceType, Preference> mapTypeToPreference = new HashMap<>();
+        Map<String,String> newSearchLevels = new HashMap<>();
+        Map<String,String> searchInstanceNames = new HashMap<>();
+        try {
+            searchInstanceEjb.fetchInstances(10814l, SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         String newSearchName = "Test" +  new SimpleDateFormat("MM/dd/yyyy").format(new Date(System.currentTimeMillis()));
-        searchInstanceEjb.persistSearch(true, searchInstance, new MessageCollection(),
-                PreferenceType.PreferenceScope.GLOBAL, newSearchName, newSearchName, mapScopeToPreference);
+        searchInstanceEjb.persistSearch(10814l, true, searchInstance, new MessageCollection(),
+                PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, newSearchName, mapTypeToPreference);
         preferenceDao.flush();
         preferenceDao.clear();
 
         // Retrieve instance
-        mapScopeToPreference.clear();
+        mapTypeToPreference.clear();
         searchInstanceNames.clear();
         newSearchLevels.clear();
-        searchInstanceEjb.fetchInstances(mapScopeToPreference, searchInstanceNames, newSearchLevels);
-        Preference preference = mapScopeToPreference.get(PreferenceType.PreferenceScope.GLOBAL);
+        try {
+            searchInstanceEjb.fetchInstances(10814l, SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Preference preference = mapTypeToPreference.get(PreferenceType.PreferenceScope.GLOBAL);
         SearchInstance fetchedSearchInstance = null;
         try {
             SearchInstanceList searchInstanceList =
@@ -89,6 +97,6 @@ public class ConfigurableSearchTest extends ContainerTest {
         Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 100);
 
         // Delete instance
-        searchInstanceEjb.deleteSearch(new MessageCollection(), newSearchName, mapScopeToPreference);
+        searchInstanceEjb.deleteSearch(10814l,new MessageCollection(), PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
     }
 }

@@ -30,6 +30,7 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
+import org.broadinstitute.gpinformatics.infrastructure.search.SearchEntityType;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -69,9 +70,11 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private ConfigurableSearchDefinition configurableSearchDef;
 
     /**
-     * List of all search instances, prefixed with level
+     * The available search names for this entity type.
+     * Key is search name prefixed by scope (GLOBAL/USER),
+     *   value is pipe delimited scope|preference type|search name (e.g. GLOBAL|GLOBAL_LAB_VESSEL_SEARCH_INSTANCES|Custom Search)
      */
-    private List<String> searchInstanceNames;
+    private Map<String,String> searchInstanceNames;
 
     /**
      * The name of an existing search the user is using
@@ -89,9 +92,11 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private String newSearchLevel;
 
     /**
-     * The levels in which the user can save new searches
+     * The available levels in which the user can save new searches.
+     * keys are GLOBAL and LOCAL,
+     *    values are associated preference name, never more than 1 each for each search entity
      */
-    private List<String> newSearchLevels = new ArrayList<>();
+    private Map<String,String> newSearchLevels = new HashMap<>();
 
     /**
      * The search the user is creating or running
@@ -158,9 +163,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private String sessionKey;
 
     /**
-     * Map from preference level name to fetched preference
+     * Map from preference type name to fetched preference
      */
-    private Map<PreferenceType.PreferenceScope, Preference> preferenceMap;
+    private Map<PreferenceType, Preference> preferenceMap;
 
     /**
      * The number of the page to fetch in the results set
@@ -168,9 +173,9 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     private int pageNumber;
 
     /**
-     * Which entity we're searching on, e.g. Sample
+     * Which entity we're searching on (LabEvent, LabVessel as of 07/22/2014)
      */
-    private String entityName;
+    private SearchEntityType entityType;
 
     // Dependencies
     @Inject
@@ -211,12 +216,14 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     private void getPreferences() {
         preferenceMap = new HashMap<>();
-        searchInstanceNames = new ArrayList<>();
-        newSearchLevels = new ArrayList<>();
+        searchInstanceNames = new HashMap<>();
+        newSearchLevels = new HashMap<>();
         try {
-            configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+            configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityType.getFormValue());
+            // Required for user defined searches
+            Long userID = getUserBean().getBspUser().getUserId();
 
-            searchInstanceEjb.fetchInstances(preferenceMap,  searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances( userID, entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -229,19 +236,19 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      */
     public Resolution fetchSearch() {
         getPreferences();
-        String searchName = null;
+
+        String[] searchValues = selectedSearchName.split("\\|");
+        PreferenceType.PreferenceScope scope = PreferenceType.PreferenceScope.valueOf(searchValues[0]);
+        PreferenceType type = PreferenceType.valueOf(searchValues[1]);
+        String searchName = searchValues[2];
+
         SearchInstanceList searchInstanceList = null;
-        for (Map.Entry<PreferenceType.PreferenceScope, Preference> stringPreferenceEntry : preferenceMap.entrySet()) {
-            if (selectedSearchName.startsWith(stringPreferenceEntry.getKey().toString())) {
-                searchName = selectedSearchName.substring(stringPreferenceEntry.getKey().toString().length() +
-                        SearchInstanceEjb.PREFERENCE_SEPARATOR.length());
-                try {
-                    searchInstanceList =
-                            (SearchInstanceList) stringPreferenceEntry.getValue().getPreferenceDefinition().getDefinitionValue();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-                break;
+        if( preferenceMap.containsKey(type)){
+            try {
+                searchInstanceList =
+                        (SearchInstanceList) preferenceMap.get(type).getPreferenceDefinition().getDefinitionValue();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
         assert searchInstanceList != null;
@@ -264,7 +271,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render term
      */
     public Resolution addTopLevelTerm() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
         initEvalContext(searchInstance, getContext());
         searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
@@ -280,7 +287,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render term
      */
     public Resolution addTopLevelTermWithValue() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
         searchInstance = new SearchInstance();
         initEvalContext(searchInstance, getContext());
         SearchInstance.SearchValue searchValue = searchInstance.addTopLevelTerm(searchTermName, configurableSearchDef);
@@ -301,7 +308,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP fragment to render search term
      */
     public Resolution addChildTerm() {
-        configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityName);
+        configurableSearchDef = new SearchDefinitionFactory().getForEntity( getEntityName() );
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
         searchValueList = recurseToLeaf(searchInstance.getSearchValues());
@@ -366,7 +373,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
             try {
                 ConfigurableListFactory.FirstPageResults firstPageResults = configurableListFactory.getFirstResultsPage(
                         searchInstance, configurableSearchDef, columnSetName, sortColumnIndex, dbSortPath,
-                        sortDirection, entityName);
+                        sortDirection,  getEntityName() );
                 configurableResultList = firstPageResults.getResultList();
                 getContext().getRequest().getSession().setAttribute(PAGINATION_PREFIX + sessionKey,
                         firstPageResults.getPagination());
@@ -388,7 +395,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         getPreferences();
         searchInstance = (SearchInstance) getContext().getRequest().getSession().getAttribute(
                 SEARCH_INSTANCE_PREFIX + sessionKey);
-        configurableResultList = configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber, entityName,
+        configurableResultList = configurableListFactory.getSubsequentResultsPage(searchInstance, pageNumber,  getEntityName() ,
                 (PaginationDao.Pagination) getContext().getRequest().getSession().getAttribute(
                         PAGINATION_PREFIX + sessionKey));
         return new ForwardResolution("/search/configurable_search.jsp");
@@ -423,10 +430,22 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      *                  search
      */
     private void persistSearch(boolean newSearch) {
+        Long userID = userBean.getBspUser().getUserId();
+        String searchName = null;
+        PreferenceType preferenceType = null;
+        if( newSearch ) {
+            searchName = newSearchName;
+            preferenceType = PreferenceType.valueOf(newSearchLevel);
+        } else {
+            String[] searchValues = selectedSearchName.split("\\|");
+            preferenceType = PreferenceType.valueOf(searchValues[1]);
+            searchName = searchValues[2];
+        }
+
         getPreferences();
         MessageCollection messageCollection = new MessageCollection();
-        searchInstanceEjb.persistSearch(newSearch, searchInstance, messageCollection,
-                PreferenceType.PreferenceScope.valueOf(newSearchLevel), newSearchName, selectedSearchName, preferenceMap);
+        searchInstanceEjb.persistSearch(userID, newSearch, searchInstance, messageCollection,
+                preferenceType, searchName, selectedSearchName, preferenceMap);
         addMessages(messageCollection);
         getPreferences();
         initEvalContext(searchInstance, getContext());
@@ -439,9 +458,17 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
      * @return JSP to display confirmation
      */
     public Resolution deleteSearch() {
-        getPreferences();
-        MessageCollection messageCollection = new MessageCollection();
-        searchInstanceEjb.deleteSearch(messageCollection, selectedSearchName, preferenceMap);
+
+        if( selectedSearchName != null ) {
+            Long userID = userBean.getBspUser().getUserId();
+            String[] searchValues = selectedSearchName.split("\\|");
+            PreferenceType preferenceType = PreferenceType.valueOf(searchValues[1]);
+            String searchName = searchValues[2];
+            getPreferences();
+            MessageCollection messageCollection = new MessageCollection();
+            searchInstanceEjb.deleteSearch(userID, messageCollection, preferenceType, searchName, preferenceMap);
+            addMessages(messageCollection);
+        }
         return queryPage();
     }
 
@@ -537,7 +564,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         this.readOnly = readOnly;
     }
 
-    public List<String> getSearchInstanceNames() {
+    public Map<String,String> getSearchInstanceNames() {
         return searchInstanceNames;
     }
 
@@ -582,14 +609,17 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     }
 
     public String getEntityName() {
-        return entityName;
+        return ( entityType == null ? null : entityType.getFormValue() );
     }
 
-    public void setEntityName(String entityName) {
-        this.entityName = entityName;
+    public void setEntityName( String entityName ) {
+        entityType = null;
+        for( SearchEntityType type : SearchEntityType.values() ) {
+            if( type.getFormValue().equals(entityName) ) entityType = type;
+        }
     }
 
-    public List<String> getNewSearchLevels() {
+    public Map<String,String> getNewSearchLevels() {
         return newSearchLevels;
     }
 

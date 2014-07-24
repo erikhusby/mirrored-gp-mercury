@@ -78,7 +78,7 @@ Move the mouse over the question marks to see details about each section.
                     <p>
                         Search Name:
                         <stripes:select name="selectedSearchName">
-                            <stripes:options-collection collection="${actionBean.searchInstanceNames}"/>
+                            <stripes:options-collection collection="${actionBean.searchInstanceNames.entrySet()}" label="key" value="value"/>
                         </stripes:select>
                         <stripes:submit name="fetchSearch" value="Load Search" onclick="this.wasClicked = true"/>
                         <stripes:submit name="updateSearch" value="Update Search"/>
@@ -88,7 +88,7 @@ Move the mouse over the question marks to see details about each section.
                     <p>
                         New Search Level:
                         <stripes:select name="newSearchLevel" id="newSearchLevel">
-                            <stripes:options-collection collection="${actionBean.newSearchLevels}"/>
+                            <stripes:options-collection collection="${actionBean.newSearchLevels.entrySet()}" label="key" value="value" />
                         </stripes:select>
                         New Search Name:
                         <stripes:text name="newSearchName" id="newSearchName"/>
