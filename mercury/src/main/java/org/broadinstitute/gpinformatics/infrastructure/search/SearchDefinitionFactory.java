@@ -506,6 +506,22 @@ public class SearchDefinitionFactory {
                 return labEvent.getLabEventType().getName();
             }
         });
+        searchTerm.setValuesExpression(new SearchTerm.Evaluator<List<ConstrainedValue>>() {
+            @Override
+            public List<ConstrainedValue> evaluate(Object entity, Map<String, Object> context) {
+                List<ConstrainedValue> constrainedValues = new ArrayList<>();
+                for (LabEventType labEventType : LabEventType.values()) {
+                    constrainedValues.add(new ConstrainedValue(labEventType.toString(), labEventType.getName()));
+                }
+                return constrainedValues;
+            }
+        });
+        searchTerm.setValueConversionExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                return Enum.valueOf(LabEventType.class, (String) context.get("searchString"));
+            }
+        });
         searchTerms.add(searchTerm);
 
         return searchTerms;
