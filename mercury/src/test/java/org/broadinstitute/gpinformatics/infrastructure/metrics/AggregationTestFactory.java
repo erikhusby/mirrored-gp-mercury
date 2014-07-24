@@ -38,7 +38,7 @@ public class AggregationTestFactory {
         AggregationContam aggregationContam = new AggregationContam();
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
         aggregation.setAggregationHybridSelection(aggregationHybridSelection);
-        AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs);
+        AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
         aggregation.setAggregationAlignments(Arrays.asList(aggregationAlignment));
         aggregationContam.setPctContamination(contamination);
         aggregation.setAggregationContam(aggregationContam);

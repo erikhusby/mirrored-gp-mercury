@@ -61,42 +61,6 @@ public class Aggregation {
     public Aggregation() {
     }
 
-    public Double getQualityMetric() {
-        switch (dataType) {
-        case DATA_TYPE_EXOME:
-            return aggregationHybridSelection.getPctTargetBases20X();
-        case DATA_TYPE_RNA:
-            int totalReadsAlignedInPairs = 0;
-            for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
-                totalReadsAlignedInPairs += aggregationAlignment.getPfReadsAligned();
-            }
-            return (double) totalReadsAlignedInPairs;
-        case DATA_TYPE_NA:
-            if (aggregationWgs.getMeanCoverage()!=0){
-                return aggregationWgs.getMeanCoverage();
-            }
-        default:
-            return null;
-
-        }
-    }
-
-    public String getQualityMetricString() {
-        if (dataType==null){
-            return null;
-        }
-        switch (dataType) {
-        case DATA_TYPE_EXOME:
-            return convertToPercent(getQualityMetric());
-        case DATA_TYPE_RNA:
-            return MessageFormat.format("{0,number,#}", getQualityMetric());
-        case DATA_TYPE_NA:
-            return "N/A";
-        }
-        return null;
-
-    }
-
     public Double getQualityMetric(String dataType) {
         switch (dataType) {
         case DATA_TYPE_EXOME:

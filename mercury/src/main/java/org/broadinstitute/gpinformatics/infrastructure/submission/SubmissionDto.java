@@ -75,7 +75,7 @@ public class SubmissionDto {
     }
 
     public Double getQualityMetric() {
-        return aggregation.getQualityMetric();
+        return aggregation.getQualityMetric(bassDTO.getDatatype());
     }
 
     public String getQualityMetricString() {

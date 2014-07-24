@@ -27,7 +27,6 @@ public class AggregationAlignment implements Serializable {
     private int aggregationId;
     @Id
     private String category;
-    @Column(name = "PF_READS_ALIGNED") private Long pfReadsAligned;
     @Column(name = "PF_ALIGNED_BASES") private Long pfAlignedBases;
     @ManyToOne
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
@@ -38,16 +37,13 @@ public class AggregationAlignment implements Serializable {
      */
     protected AggregationAlignment() {}
 
-    public AggregationAlignment(Long pfReadsAligned) {
-        this.pfReadsAligned = pfReadsAligned;
+    public AggregationAlignment(Long pfAlignedBases, String category) {
+        this.pfAlignedBases = pfAlignedBases;
+        this.category = category;
     }
 
     public String getCategory() {
         return category;
-    }
-
-    public Long getPfReadsAligned() {
-        return pfReadsAligned;
     }
 
     public Aggregation getAggregation() {
@@ -77,9 +73,6 @@ public class AggregationAlignment implements Serializable {
         if (pfAlignedBases != null ? !pfAlignedBases.equals(that.pfAlignedBases) : that.pfAlignedBases != null) {
             return false;
         }
-        if (pfReadsAligned != null ? !pfReadsAligned.equals(that.pfReadsAligned) : that.pfReadsAligned != null) {
-            return false;
-        }
 
         return true;
     }
@@ -92,7 +85,6 @@ public class AggregationAlignment implements Serializable {
     public int hashCode() {
         int result = aggregationId;
         result = 31 * result + (category != null ? category.hashCode() : 0);
-        result = 31 * result + (pfReadsAligned != null ? pfReadsAligned.hashCode() : 0);
         result = 31 * result + (pfAlignedBases != null ? pfAlignedBases.hashCode() : 0);
         result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
         return result;
