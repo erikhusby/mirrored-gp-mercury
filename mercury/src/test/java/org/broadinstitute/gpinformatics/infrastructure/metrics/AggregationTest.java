@@ -82,7 +82,7 @@ public class AggregationTest {
                 .buildAggregation(BassDTO.DATA_TYPE_WGS, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetricString(BassDTO.DATA_TYPE_WGS), Matchers.equalTo("N/A"));
+        assertThat(aggregation.getQualityMetricString(BassDTO.DATA_TYPE_WGS), Matchers.equalTo("18.23"));
     }
 
     public void testNullDataTypeQualityMetricFormat() throws Exception {
@@ -97,7 +97,7 @@ public class AggregationTest {
                 .buildAggregation("foo", EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetricString("foo"), Matchers.nullValue());
+        assertThat(aggregation.getQualityMetricString("foo"), Matchers.equalTo("N/A"));
     }
     public void testWgsDataTypeQualityMetricFormat() throws Exception {
         aggregation = AggregationTestFactory
