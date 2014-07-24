@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
@@ -29,25 +30,25 @@ public class AggregationTest {
 
     public void testExomeQualityMetric() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_EXOME, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_EXOME, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
-        assertThat(aggregation.getDataType(), is(Aggregation.DATA_TYPE_EXOME));
-        assertThat(aggregation.getQualityMetric(Aggregation.DATA_TYPE_EXOME), Matchers.equalTo(EXOME_QUALITY_METRIC));
+        assertThat(aggregation.getDataType(), is(BassDTO.DATA_TYPE_EXOME));
+        assertThat(aggregation.getQualityMetric(BassDTO.DATA_TYPE_EXOME), Matchers.equalTo(EXOME_QUALITY_METRIC));
     }
 
     public void testRNAQualityMetric() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_RNA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_RNA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
-        assertThat(aggregation.getDataType(), is(Aggregation.DATA_TYPE_RNA));
-        assertThat(aggregation.getQualityMetric(Aggregation.DATA_TYPE_RNA).longValue(), Matchers.equalTo(RNA_QUALITY_METRIC));
+        assertThat(aggregation.getDataType(), is(BassDTO.DATA_TYPE_RNA));
+        assertThat(aggregation.getQualityMetric(BassDTO.DATA_TYPE_RNA).longValue(), Matchers.equalTo(RNA_QUALITY_METRIC));
     }
 
 
     public void testExomeQualityMetricIsNull() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_EXOME, null, RNA_QUALITY_METRIC, WGS_QUALITY_METRIC);
-        assertThat(aggregation.getQualityMetric(Aggregation.DATA_TYPE_EXOME), Matchers.nullValue());
+                .buildAggregation(BassDTO.DATA_TYPE_EXOME, null, RNA_QUALITY_METRIC, WGS_QUALITY_METRIC);
+        assertThat(aggregation.getQualityMetric(BassDTO.DATA_TYPE_EXOME), Matchers.nullValue());
     }
 
     public void testUnknownDataTypeQualityMetricIsNull() throws Exception {
@@ -61,27 +62,27 @@ public class AggregationTest {
 
     public void testExomeDataTypeQualityMetricFormat() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_EXOME, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_EXOME, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetricString(Aggregation.DATA_TYPE_EXOME), Matchers.equalTo("89.01%"));
+        assertThat(aggregation.getQualityMetricString(BassDTO.DATA_TYPE_EXOME), Matchers.equalTo("89.01%"));
     }
 
     public void testRnaDataTypeQualityMetricFormat() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_RNA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_RNA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetricString(Aggregation.DATA_TYPE_RNA),
+        assertThat(aggregation.getQualityMetricString(BassDTO.DATA_TYPE_RNA),
                 Matchers.equalTo(RNA_QUALITY_METRIC.toString()));
     }
 
-    public void testNADataTypeQualityMetricFormat() throws Exception {
+    public void testWGSDataTypeQualityMetricFormat() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_NA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_WGS, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetricString(Aggregation.DATA_TYPE_NA), Matchers.equalTo("N/A"));
+        assertThat(aggregation.getQualityMetricString(BassDTO.DATA_TYPE_WGS), Matchers.equalTo("N/A"));
     }
 
     public void testNullDataTypeQualityMetricFormat() throws Exception {
@@ -100,9 +101,9 @@ public class AggregationTest {
     }
     public void testWgsDataTypeQualityMetricFormat() throws Exception {
         aggregation = AggregationTestFactory
-                .buildAggregation(Aggregation.DATA_TYPE_NA, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
+                .buildAggregation(BassDTO.DATA_TYPE_WGS, EXOME_QUALITY_METRIC, RNA_QUALITY_METRIC,
                         WGS_QUALITY_METRIC);
 
-        assertThat(aggregation.getQualityMetric(Aggregation.DATA_TYPE_NA), Matchers.equalTo(WGS_QUALITY_METRIC));
+        assertThat(aggregation.getQualityMetric(BassDTO.DATA_TYPE_WGS), Matchers.equalTo(WGS_QUALITY_METRIC));
     }
 }

@@ -30,6 +30,10 @@ import java.util.Map;
  * @see <a href="https://bass.broadinstitute.org/list?rpid=RP-200">Example call to Bass WS</a>
  */
 public class BassDTO {
+    public static final String DATA_TYPE_EXOME = "Exome";
+    public static final String DATA_TYPE_RNA = "RNA";
+    public static final String DATA_TYPE_WGS = "WGS";
+
     public static final String FILETYPE = "file_type";
     static final String BASS_NULL_VALUE = "[NULL]";
     private final SimpleDateFormat BASS_DATE_FORMAT = new SimpleDateFormat("y_M_d_k_m_s_z");

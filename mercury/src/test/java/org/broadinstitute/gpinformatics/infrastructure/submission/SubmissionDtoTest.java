@@ -65,7 +65,7 @@ public class SubmissionDtoTest {
 
         assertThat(submissionDTO.getSampleName(), equalTo(TEST_SAMPLE));
 //        assertThat(submissionDTO.getBioSample());
-        assertThat(submissionDTO.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        assertThat(submissionDTO.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
         assertThat(submissionDTO.getProductOrders(), containsInAnyOrder(productOrders.toArray()));
         assertThat(submissionDTO.getAggregationProject(), equalTo(AGGREGATION_PROJECT));
         assertThat(submissionDTO.getFileType(), equalTo(BAM_FILE));

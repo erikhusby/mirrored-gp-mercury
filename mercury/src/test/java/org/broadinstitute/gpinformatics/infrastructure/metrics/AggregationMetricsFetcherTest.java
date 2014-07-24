@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -60,16 +61,16 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     public static final double MAX_LOD = 55.771678;
 
     public void fetchNonExistentMetrics() {
-        Aggregation aggregation = fetcher.fetch("RP-1", "SM-TEST", 1, Aggregation.DATA_TYPE_EXOME);
+        Aggregation aggregation = fetcher.fetch("RP-1", "SM-TEST", 1, BassDTO.DATA_TYPE_EXOME);
         assertThat(aggregation, nullValue());
     }
 
     public void fetchMetricsForSampleAggregatedByMercuryRP() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_EXOME);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
         LevelOfDetection lod = aggregation.getLevelOfDetection();
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
@@ -83,7 +84,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
             assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
             assertThat(aggregation.getSample(), equalTo(SAMPLE));
             assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-            assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+            assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
             LevelOfDetection lod = aggregation.getLevelOfDetection();
             assertThat(lod.getMax(), equalTo(MAX_LOD));
             assertThat(lod.getMin(), equalTo(MIN_LOD));
@@ -102,17 +103,17 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
     }
 
     public void fetchMetricsWithProjectSampleVersionDataTypeNoResult() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_NA);
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_WGS);
         assertThat(aggregation, Matchers.nullValue());
     }
 
     public void fetchMetricsForSampleAggregatedByMercuryRPWithoutSupplyingDataType() {
         // TODO: This test may need to fail somehow. Perhaps different test data is needed.
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, Aggregation.DATA_TYPE_EXOME);
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_EXOME);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_EXOME));
+        assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
         assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
     }
 
@@ -121,7 +122,6 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
         assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(Aggregation.DATA_TYPE_NA));
         assertThat(aggregation.getAggregationContam().getPctContamination(), equalTo(0.0));
     }
 }

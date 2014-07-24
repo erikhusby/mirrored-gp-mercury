@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
 
 import javax.persistence.Entity;
@@ -29,9 +30,6 @@ import java.util.List;
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation {
-    public static final String DATA_TYPE_EXOME = "Exome";
-    public static final String DATA_TYPE_RNA = "RNA";
-    public static final String DATA_TYPE_NA = "N/A";
 
     @Id
     private int id;
@@ -63,9 +61,9 @@ public class Aggregation {
 
     public Double getQualityMetric(String dataType) {
         switch (dataType) {
-        case DATA_TYPE_EXOME:
+        case BassDTO.DATA_TYPE_EXOME:
             return aggregationHybridSelection.getPctTargetBases20X();
-        case DATA_TYPE_RNA:
+        case BassDTO.DATA_TYPE_RNA:
             long totalReadsAlignedInPairs = 0;
             for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
                 if (aggregationAlignment.getCategory().equals("PAIR")) {
@@ -73,7 +71,7 @@ public class Aggregation {
                 }
             }
             return (double) totalReadsAlignedInPairs;
-        case DATA_TYPE_NA:
+        case BassDTO.DATA_TYPE_WGS:
             if (aggregationWgs.getMeanCoverage()!=0){
                 return aggregationWgs.getMeanCoverage();
             }
@@ -88,11 +86,11 @@ public class Aggregation {
             return null;
         }
         switch (dataType) {
-        case DATA_TYPE_EXOME:
+        case BassDTO.DATA_TYPE_EXOME:
             return convertToPercent(getQualityMetric(dataType));
-        case DATA_TYPE_RNA:
+        case BassDTO.DATA_TYPE_RNA:
             return MessageFormat.format("{0,number,#}", getQualityMetric(dataType));
-        case DATA_TYPE_NA:
+        case BassDTO.DATA_TYPE_WGS:
             return "N/A";
         }
         return null;

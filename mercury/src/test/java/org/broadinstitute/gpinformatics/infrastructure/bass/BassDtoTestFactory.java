@@ -12,7 +12,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bass;
 
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoTest;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +20,7 @@ public class BassDtoTestFactory {
     public static BassDTO buildBassResults(String project, String sample) {
         Map<BassDTO.BassResultColumn, String> resultsMap = new HashMap<>();
         resultsMap.put(BassDTO.BassResultColumn.sample, sample);
-        resultsMap.put(BassDTO.BassResultColumn.datatype, Aggregation.DATA_TYPE_EXOME);
+        resultsMap.put(BassDTO.BassResultColumn.datatype, BassDTO.DATA_TYPE_EXOME);
         resultsMap.put(BassDTO.BassResultColumn.project, project);
         resultsMap.put(BassDTO.BassResultColumn.rpid, project);
         resultsMap.put(BassDTO.BassResultColumn.file_type, SubmissionDtoTest.BAM_FILE);
