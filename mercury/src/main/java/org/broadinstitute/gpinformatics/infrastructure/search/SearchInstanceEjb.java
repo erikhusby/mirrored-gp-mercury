@@ -195,16 +195,18 @@ public class SearchInstanceEjb {
     }
 
     /**
-     * @param userID required for user saved searches
      * @param entityType the target search entity type
      * @param mapTypeToPreference output, maps preference type to preference
      * @param searchInstanceNames output, maps name of search instances (with scope prefi)
      *                            to pipe delimited values
      * @param newSearchLevels output, map of scopes (GLOBAL/USER) to the preference name for  each
      */
-    public void fetchInstances( Long userID, SearchEntityType entityType,
+    public void fetchInstances( SearchEntityType entityType,
             Map<PreferenceType, Preference> mapTypeToPreference,
             Map<String,String> searchInstanceNames, Map<String,String> newSearchLevels) throws Exception {
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
 
         // Entity types available for GLOBAL and USER scopes
         PreferenceType[] types = mapEntityTypeToPrefType.get(entityType);
@@ -246,12 +248,15 @@ public class SearchInstanceEjb {
      * @param newSearch true if inserting a new search, false if updating an existing
      *                  search
      */
-    public void persistSearch(Long userID, boolean newSearch, SearchInstance searchInstance, MessageCollection messageCollection,
-            PreferenceType newSearchType, String newSearchName, String selectedSearchName,
+    public void persistSearch( boolean newSearch, SearchInstance searchInstance, MessageCollection messageCollection,
+            PreferenceType newSearchType, String searchName,
             Map<PreferenceType, Preference> mapTypeToPreference) {
 
         try {
             boolean save = true;
+
+            // Required for user defined searches
+            Long userID = userBean.getBspUser().getUserId();
 
             // Check the user's authorization
             if (!mapTypeToPreferenceAccess.get(newSearchType).canModifyPreference(userID)) {
@@ -259,7 +264,6 @@ public class SearchInstanceEjb {
                 save = false;
             }
 
-            String searchName = null;
             Preference preference = null;
 
             if (save) {
@@ -280,14 +284,14 @@ public class SearchInstanceEjb {
                 if (newSearch) {
                     // Check for uniqueness
                     for (SearchInstance searchInstanceLocal : searchInstanceList.getSearchInstances()) {
-                        if (searchInstanceLocal.getName().equals(newSearchName)) {
-                            messageCollection.addError("There is already a search called " + newSearchName + " in the "
+                        if (searchInstanceLocal.getName().equals(searchName)) {
+                            messageCollection.addError("There is already a search called " + searchName + " in the "
                                                        + newSearchType + " level");
                             save = false;
                             break;
                         }
                     }
-                    searchInstance.setName(newSearchName);
+                    searchInstance.setName(searchName);
                     searchInstanceList.getSearchInstances().add(searchInstance);
                 } else {
                     // Find the search we're updating
@@ -322,9 +326,12 @@ public class SearchInstanceEjb {
         }
     }
 
-    public void deleteSearch(Long userID, MessageCollection messageCollection, PreferenceType preferenceType, String searchName,
+    public void deleteSearch(MessageCollection messageCollection, PreferenceType preferenceType, String searchName,
             Map<PreferenceType, Preference> mapTypeToPreference) {
         Preference preference = mapTypeToPreference.get(preferenceType);
+
+        // Required for user defined searches
+        Long userID = userBean.getBspUser().getUserId();
 
         if (!mapTypeToPreferenceAccess.get(preferenceType).canModifyPreference( userID )) {
             messageCollection.addError("You are not authorized to delete this search");

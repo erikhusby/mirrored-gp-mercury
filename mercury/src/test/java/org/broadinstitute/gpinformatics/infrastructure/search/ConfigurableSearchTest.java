@@ -53,13 +53,13 @@ public class ConfigurableSearchTest extends ContainerTest {
         Map<String,String> newSearchLevels = new HashMap<>();
         Map<String,String> searchInstanceNames = new HashMap<>();
         try {
-            searchInstanceEjb.fetchInstances(10814l, SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances( SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         String newSearchName = "Test" +  new SimpleDateFormat("MM/dd/yyyy").format(new Date(System.currentTimeMillis()));
-        searchInstanceEjb.persistSearch(10814l, true, searchInstance, new MessageCollection(),
-                PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, newSearchName, mapTypeToPreference);
+        searchInstanceEjb.persistSearch(true, searchInstance, new MessageCollection(),
+                PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
         preferenceDao.flush();
         preferenceDao.clear();
 
@@ -68,7 +68,7 @@ public class ConfigurableSearchTest extends ContainerTest {
         searchInstanceNames.clear();
         newSearchLevels.clear();
         try {
-            searchInstanceEjb.fetchInstances(10814l, SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances( SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -97,6 +97,6 @@ public class ConfigurableSearchTest extends ContainerTest {
         Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 100);
 
         // Delete instance
-        searchInstanceEjb.deleteSearch(10814l,new MessageCollection(), PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+        searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
     }
 }

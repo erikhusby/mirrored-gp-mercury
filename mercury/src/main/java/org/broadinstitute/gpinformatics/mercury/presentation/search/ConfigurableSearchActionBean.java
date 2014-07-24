@@ -220,10 +220,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         newSearchLevels = new HashMap<>();
         try {
             configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityType.getFormValue());
-            // Required for user defined searches
-            Long userID = getUserBean().getBspUser().getUserId();
 
-            searchInstanceEjb.fetchInstances( userID, entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
+            searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
             addGlobalValidationError("Failed to retrieve search definitions");
         }
@@ -424,13 +422,12 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     }
 
     /**
-     * Save a search into a preference.
+     * Save a search into a preference.  An update needs to extract values from selectedSearchName pick list.
      *
      * @param newSearch true if inserting a new search, false if updating an existing
      *                  search
      */
     private void persistSearch(boolean newSearch) {
-        Long userID = userBean.getBspUser().getUserId();
         String searchName = null;
         PreferenceType preferenceType = null;
         if( newSearch ) {
@@ -444,12 +441,19 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
         getPreferences();
         MessageCollection messageCollection = new MessageCollection();
-        searchInstanceEjb.persistSearch(userID, newSearch, searchInstance, messageCollection,
-                preferenceType, searchName, selectedSearchName, preferenceMap);
+        searchInstanceEjb.persistSearch(newSearch, searchInstance, messageCollection,
+                preferenceType, searchName, preferenceMap);
         addMessages(messageCollection);
         getPreferences();
         initEvalContext(searchInstance, getContext());
         searchInstance.establishRelationships(configurableSearchDef);
+
+        // Tried to do the UI a favor and select the new search but fails to do so
+        /*
+        if( newSearch ) {
+            setSelectedSearchName( preferenceType.getPreferenceScope().toString() + "|" + preferenceType.toString() + "|" + searchName );
+        }
+        */
     }
 
     /**
@@ -460,13 +464,12 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     public Resolution deleteSearch() {
 
         if( selectedSearchName != null ) {
-            Long userID = userBean.getBspUser().getUserId();
             String[] searchValues = selectedSearchName.split("\\|");
             PreferenceType preferenceType = PreferenceType.valueOf(searchValues[1]);
             String searchName = searchValues[2];
             getPreferences();
             MessageCollection messageCollection = new MessageCollection();
-            searchInstanceEjb.deleteSearch(userID, messageCollection, preferenceType, searchName, preferenceMap);
+            searchInstanceEjb.deleteSearch( messageCollection, preferenceType, searchName, preferenceMap);
             addMessages(messageCollection);
         }
         return queryPage();

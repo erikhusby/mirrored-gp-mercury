@@ -3,7 +3,7 @@
 <stripes:layout-definition>
     <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
     <!-- Allow user to choose column sets -->
-    Column view set:
+    <label>Column view set: </label>
     <select name="columnSetName" id="columnSetName">
         <c:forEach items="${actionBean.viewColumnSets}" var="columnSet">
             <c:set var="optionValue" value="${columnSet.level}|${columnSet.name}"/>

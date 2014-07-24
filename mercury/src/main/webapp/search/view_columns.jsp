@@ -131,13 +131,13 @@ buttons to move columns from one to the other --%>
     <!-- Allow user to choose individual result columns -->
     <table class="resultColumns">
         <tr>
-            <td>Available</td>
+            <td><label>Available</label></td>
             <td>&nbsp;</td>
-            <td>Chosen</td>
+            <td><label>Chosen</label></td>
             <td>&nbsp;</td>
         </tr>
         <tr>
-            <td rowspan="2">
+            <td rowspan="2" style="padding-left: 5px">
                 <select name="sourceColumnDefNames" id="sourceColumnDefNames"
                         multiple="true" size="10">
                     <c:forEach items="${availableMapGroupToColumnNames}" var="entry">
@@ -156,7 +156,7 @@ buttons to move columns from one to the other --%>
                 </a>
 
             </td>
-            <td rowspan="2">
+            <td rowspan="2" style="padding-left: 5px">
                 <select name="searchInstance.predefinedViewColumns" id="selectedColumnDefNames"
                         multiple="true" size="10">
                     <c:if test="${not empty predefinedViewColumns}">
@@ -188,7 +188,7 @@ buttons to move columns from one to the other --%>
             </td>
         </tr>
         <tr style="padding-top: 4px">
-            <td colspan="2">Filter: <input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
+            <td colspan="2"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
             </td>
         </tr>
     </table>

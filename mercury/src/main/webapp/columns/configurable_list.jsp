@@ -80,7 +80,7 @@
 </c:when>
 <c:otherwise>
 <c:if test="${fn:length(resultList.resultRows) > 0 && empty ajaxDiv}">
-    <a href="#search${entityName}ListEnd">Jump to end</a>
+    <div class="control-group"><a href="#search${entityName}ListEnd">Jump to end</a></div>
 </c:if>
 <c:if test="${not empty ajaxDiv}">
     <%-- For Quick Find, update the summary section --%>
@@ -229,10 +229,11 @@
                 <%-- Set name on click, because the same submit is used by addCheckedToBasket AJAX --%>
                 <input type="submit" name="downloadFromIdList" id="downloadFromIdList"
                        value="Download Checked"
-                       onclick="if(atLeastOneChecked('selectedIds', this.form)){ this.name='downloadFromIdList'; return true;} else {return false;}"/>
+                       onclick="if(atLeastOneChecked('selectedIds', this.form)){ this.name='downloadFromIdList'; return true;} else {return false;}"
+                       class="btn btn-primary"/>
                 <c:if test="${not empty pagination and pagination.numberPages > 1}">
                     <input type="submit" name="downloadAllPages" id="downloadAllPages"
-                           value="Download All Pages"/>
+                           value="Download All Pages" class="btn btn-primary"/>
                 </c:if>
 
                 <c:if test="${entityName == 'Sample'}">
