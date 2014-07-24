@@ -77,24 +77,24 @@ public class Aggregation {
             }
         default:
             return null;
-
         }
     }
 
     public String getQualityMetricString(String dataType) {
-        if (dataType==null){
+        if (dataType == null){
             return null;
         }
+        Double qualityMetric = getQualityMetric(dataType);
         switch (dataType) {
         case BassDTO.DATA_TYPE_EXOME:
-            return convertToPercent(getQualityMetric(dataType));
+            return convertToPercent(qualityMetric);
         case BassDTO.DATA_TYPE_RNA:
-            return MessageFormat.format("{0,number,#}", getQualityMetric(dataType));
+            return MessageFormat.format("{0,number,#}", qualityMetric);
         case BassDTO.DATA_TYPE_WGS:
+            return MessageFormat.format("{0,number,#.##}", qualityMetric);
+        default:
             return "N/A";
         }
-        return null;
-
     }
 
     public String getLibrary() {
