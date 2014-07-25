@@ -42,6 +42,15 @@ public class AggregationReadGroup implements Serializable {
             updatable = false)
     private Aggregation aggregation;
 
+    public AggregationReadGroup() {
+    }
+
+    public AggregationReadGroup(String flowcellBarcode, long lane, String libraryName) {
+        this.flowcellBarcode = flowcellBarcode;
+        this.lane = lane;
+        this.libraryName = libraryName;
+    }
+
     public String getFlowcellBarcode() {
         return flowcellBarcode;
     }
@@ -58,10 +67,6 @@ public class AggregationReadGroup implements Serializable {
         return aggregation;
     }
 
-    public void setLane(long lane) {
-        this.lane = lane;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -73,7 +78,7 @@ public class AggregationReadGroup implements Serializable {
 
         AggregationReadGroup that = (AggregationReadGroup) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
         if (lane != that.lane) {
@@ -86,11 +91,8 @@ public class AggregationReadGroup implements Serializable {
         if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
             return false;
         }
-        if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
-            return false;
-        }
+        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
 
-        return true;
     }
 
     @Override

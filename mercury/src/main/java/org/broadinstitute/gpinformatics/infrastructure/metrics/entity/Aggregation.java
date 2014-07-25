@@ -24,7 +24,6 @@ import javax.persistence.Transient;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
@@ -55,10 +54,10 @@ public class Aggregation {
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
     private AggregationContam aggregationContam;
 
-    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
+    @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation", optional = false)
     private AggregationHybridSelection aggregationHybridSelection;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
@@ -69,6 +68,31 @@ public class Aggregation {
 
     @Transient
     private LevelOfDetection levelOfDetection;
+
+    public Aggregation() {
+    }
+
+    public Aggregation(String project, String sample, String library, Integer version, Integer readGroupCount,
+                       String dataType,
+                       Collection<AggregationAlignment> aggregationAlignments,
+                       AggregationContam aggregationContam,
+                       AggregationHybridSelection aggregationHybridSelection,
+                       Collection<AggregationReadGroup> aggregationReadGroups,
+                       AggregationWgs aggregationWgs,
+                       LevelOfDetection levelOfDetection) {
+        this.project = project;
+        this.sample = sample;
+        this.library = library;
+        this.version = version;
+        this.readGroupCount = readGroupCount;
+        this.dataType = dataType;
+        this.aggregationAlignments = aggregationAlignments;
+        this.aggregationContam = aggregationContam;
+        this.aggregationHybridSelection = aggregationHybridSelection;
+        this.aggregationReadGroups = aggregationReadGroups;
+        this.aggregationWgs = aggregationWgs;
+        this.levelOfDetection = levelOfDetection;
+    }
 
     public Double getQualityMetric(String dataType) {
         switch (dataType) {
@@ -120,28 +144,15 @@ public class Aggregation {
         return project;
     }
 
-    public void setProject(String project) {
-        this.project = project;
-    }
-
     public String getSample() {
         return sample;
     }
-
-    public void setSample(String sample) {
-        this.sample = sample;
-    }
-
     public Integer getVersion() {
         return version;
     }
 
     public Integer getReadGroupCount() {
         return readGroupCount;
-    }
-
-    public void setReadGroupCount(Integer readGroupCount) {
-        this.readGroupCount = readGroupCount;
     }
 
     public String getDataType() {
@@ -156,16 +167,8 @@ public class Aggregation {
         return aggregationAlignments;
     }
 
-    public void setAggregationAlignments(List<AggregationAlignment> aggregationAlignments) {
-        this.aggregationAlignments = aggregationAlignments;
-    }
-
     public AggregationContam getAggregationContam() {
         return aggregationContam;
-    }
-
-    public void setAggregationContam(AggregationContam aggregationContam) {
-        this.aggregationContam = aggregationContam;
     }
 
     public String getContaminationString() {
@@ -180,25 +183,12 @@ public class Aggregation {
         return aggregationHybridSelection;
     }
 
-    public void setAggregationHybridSelection(AggregationHybridSelection aggregationHybridSelection) {
-        this.aggregationHybridSelection = aggregationHybridSelection;
-    }
-
     public Collection<AggregationReadGroup> getAggregationReadGroups() {
         return aggregationReadGroups;
     }
 
-    public void setAggregationReadGroups(Collection<AggregationReadGroup> aggregationReadGroups) {
-        this.aggregationReadGroups = aggregationReadGroups;
-    }
-
-
     public AggregationWgs getAggregationWgs() {
         return aggregationWgs;
-    }
-
-    public void setAggregationWgs(AggregationWgs aggregationWgsById) {
-        this.aggregationWgs = aggregationWgsById;
     }
 
     public LevelOfDetection getLevelOfDetection() {
@@ -220,10 +210,10 @@ public class Aggregation {
 
         Aggregation that = (Aggregation) o;
 
-        if (id != that.id) {
+        if (!id.equals(that.id)) {
             return false;
         }
-        if (version != that.version) {
+        if (!version.equals(that.version)) {
             return false;
         }
         if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
@@ -261,11 +251,8 @@ public class Aggregation {
         if (readGroupCount != null ? !readGroupCount.equals(that.readGroupCount) : that.readGroupCount != null) {
             return false;
         }
-        if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
-            return false;
-        }
+        return !(sample != null ? !sample.equals(that.sample) : that.sample != null);
 
-        return true;
     }
 
     @Override

@@ -65,17 +65,12 @@ public class AggregationAlignment implements Serializable {
 
         AggregationAlignment that = (AggregationAlignment) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
-        if (category != null ? !category.equals(that.category) : that.category != null) {
-            return false;
-        }
-        if (pfAlignedBases != null ? !pfAlignedBases.equals(that.pfAlignedBases) : that.pfAlignedBases != null) {
-            return false;
-        }
+        return !(category != null ? !category.equals(that.category) : that.category != null) && !(
+                pfAlignedBases != null ? !pfAlignedBases.equals(that.pfAlignedBases) : that.pfAlignedBases != null);
 
-        return true;
     }
 
     @Override

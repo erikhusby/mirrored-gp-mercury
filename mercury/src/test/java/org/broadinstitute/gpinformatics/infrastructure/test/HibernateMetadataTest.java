@@ -40,7 +40,9 @@ public class HibernateMetadataTest extends ContainerTest {
     private EntityManager metricsEntityManager;
 
     /** Add exceptions to this list; the goal is to keep this list empty. */
-    private static final String[] ignoredEntities = new String[0];
+    private static final String[] ignoredEntities = {
+            LevelOfDetection.class.getName()
+    };
 
     /**
      * Entities that should be checked against the metrics persistence unit and, therefore, should not be checked
@@ -53,7 +55,6 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
             AggregationWgs.class.getName(),
-            LevelOfDetection.class.getName()
     };
 
     /**

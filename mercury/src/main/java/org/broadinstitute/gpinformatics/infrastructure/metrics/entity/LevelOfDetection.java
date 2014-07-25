@@ -127,12 +127,8 @@ public class LevelOfDetection implements Serializable {
         if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
             return false;
         }
-        if (version != null ? !version.equals(that.version) : that.version
-                                                                                               != null) {
-            return false;
-        }
+        return !(version != null ? !version.equals(that.version) : that.version != null);
 
-        return true;
     }
 
     @Override

@@ -56,7 +56,7 @@ public class AggregationReadGroupPK implements Serializable {
 
         AggregationReadGroupPK that = (AggregationReadGroupPK) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
         if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
@@ -65,11 +65,8 @@ public class AggregationReadGroupPK implements Serializable {
         if (lane != null ? !lane.equals(that.lane) : that.lane != null) {
             return false;
         }
-        if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
-            return false;
-        }
+        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
 
-        return true;
     }
 
     @Override

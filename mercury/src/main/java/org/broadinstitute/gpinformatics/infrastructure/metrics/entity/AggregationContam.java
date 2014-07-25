@@ -31,6 +31,13 @@ public class AggregationContam implements Serializable {
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
     private Aggregation aggregation;
 
+    public AggregationContam(Double pctContamination) {
+        this.pctContamination = pctContamination;
+    }
+
+    public AggregationContam() {
+    }
+
     public void setPctContamination(Double pctContamination) {
         this.pctContamination = pctContamination;
     }
@@ -61,12 +68,9 @@ public class AggregationContam implements Serializable {
         if (aggregationId != null ? !aggregationId.equals(that.aggregationId) : that.aggregationId != null) {
             return false;
         }
-        if (pctContamination != null ? !pctContamination.equals(that.pctContamination) :
-                that.pctContamination != null) {
-            return false;
-        }
+        return !(pctContamination != null ? !pctContamination.equals(that.pctContamination) :
+                that.pctContamination != null);
 
-        return true;
     }
 
     @Override

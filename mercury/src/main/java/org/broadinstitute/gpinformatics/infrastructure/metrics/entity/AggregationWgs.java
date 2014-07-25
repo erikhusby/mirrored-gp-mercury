@@ -21,44 +21,38 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "AGGREGATION_WGS", schema = "METRICS")
 public class AggregationWgs {
-    private Double meanCoverage;
-    private Aggregation aggregation;
+    @Id
+    @Column(name = "AGGREGATION_ID")
     private Integer aggregationId;
+
+    @OneToOne
+    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
+    private Aggregation aggregation;
+
+    @Column(name = "MAD_COVERAGE")
+    private Double meanCoverage;
+
+    public AggregationWgs() {
+    }
+
+    public Aggregation getAggregation() {
+        return aggregation;
+    }
+
+    public void setAggregation(Aggregation aggregation) {
+        this.aggregation = aggregation;
+    }
+
+    public Integer getAggregationId() {
+        return aggregationId;
+    }
 
     public AggregationWgs(Double meanCoverage) {
         this.meanCoverage = meanCoverage;
     }
 
-    public AggregationWgs() {
-    }
-
-    @Id
-    @Column(name = "AGGREGATION_ID")
-    public Integer getAggregationId() {
-        return aggregationId;
-    }
-
-    public void setAggregationId(Integer aggregationId) {
-        this.aggregationId = aggregationId;
-    }
-
-
-    @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
-    public Aggregation getAggregation() {
-        return aggregation;
-    }
-
-    public void setAggregation(Aggregation aggregationByAggregationId) {
-        this.aggregation = aggregationByAggregationId;
-    }
-
     public Double getMeanCoverage() {
         return meanCoverage;
-    }
-
-    public void setMeanCoverage(Double meanCoverage) {
-        this.meanCoverage = meanCoverage;
     }
 
     @Override
@@ -83,5 +77,4 @@ public class AggregationWgs {
     public int hashCode() {
         return meanCoverage != null ? meanCoverage.hashCode() : 0;
     }
-
 }

@@ -22,30 +22,20 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDet
 import java.util.Arrays;
 
 public class AggregationTestFactory {
-    @SuppressWarnings("EmptyCatchBlock")
     public static Aggregation buildAggregation(String project, String sample, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
-        Aggregation aggregation = new Aggregation();
-        aggregation.setLevelOfDetection(fingerprintLod);
-        aggregation.setSample(sample);
-        aggregation.setProject(project);
-        aggregation.setDataType(dataType);
-        AggregationContam aggregationContam = new AggregationContam();
-        AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
-        aggregation.setAggregationHybridSelection(aggregationHybridSelection);
-        AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
-        aggregation.setAggregationAlignments(Arrays.asList(aggregationAlignment));
-        aggregationContam.setPctContamination(contamination);
-        aggregation.setAggregationContam(aggregationContam);
-        aggregation.setReadGroupCount(2);
-        AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-        aggregation.setAggregationWgs(aggregationWgs);
 
-        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup();
-        aggregationReadGroup.setLane(2);
-        aggregation.setAggregationReadGroups(Arrays.asList(aggregationReadGroup));
-        return aggregation;
+        AggregationContam aggregationContam = new AggregationContam(contamination);
+        AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
+        AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
+        AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
+        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
+        Integer readGroupCount = 2;
+
+        return new Aggregation(project, sample, null, null, readGroupCount, dataType,
+                Arrays.asList(aggregationAlignment), aggregationContam, aggregationHybridSelection,
+                Arrays.asList(aggregationReadGroup), aggregationWgs, fingerprintLod);
     }
 }

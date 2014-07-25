@@ -55,15 +55,12 @@ public class AggregationHybridSelection implements Serializable {
 
         AggregationHybridSelection that = (AggregationHybridSelection) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
-        if (pctTargetBases20X != null ? !pctTargetBases20X.equals(that.pctTargetBases20X) :
-                that.pctTargetBases20X != null) {
-            return false;
-        }
+        return !(pctTargetBases20X != null ? !pctTargetBases20X.equals(that.pctTargetBases20X) :
+                that.pctTargetBases20X != null);
 
-        return true;
     }
 
     @Override
