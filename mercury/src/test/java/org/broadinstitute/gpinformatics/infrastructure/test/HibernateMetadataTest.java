@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -52,6 +53,7 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
             AggregationWgs.class.getName(),
+            LevelOfDetection.class.getName()
     };
 
     /**
