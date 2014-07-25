@@ -128,7 +128,7 @@ Move the mouse over the question marks to see details about each section.
             </p>
             <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
 
-            <hr/>
+            <hr style="margin: 4px 0px"/>
 
         </c:if>
 
@@ -149,7 +149,7 @@ Move the mouse over the question marks to see details about each section.
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
 
     </fieldset>
-    <div style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 50px;">
+    <div style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 25px;">
         <stripes:submit name="search" value="Search" class="btn btn-primary"/></div>
 
 </stripes:form>

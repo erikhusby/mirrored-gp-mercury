@@ -80,8 +80,25 @@ public class ConfigurableSearchDefinition /*extends PreferenceDefinition*/ {
         buildNameMap();
     }
 
+    /**
+     * Returns available column names which are configured for use as search criteria
+     * @return
+     */
     public Map<String, List<SearchTerm>> getMapGroupSearchTerms() {
-        return mapGroupSearchTerms;
+        Map<String, List<SearchTerm>> mapGroupAvailableCriteria = new HashMap<>();
+        List<SearchTerm> searchTermList;
+        for (Map.Entry<String, List<SearchTerm>> groupSearchListEntry : mapGroupSearchTerms.entrySet()) {
+            searchTermList = new ArrayList<>();
+            for( SearchTerm term : groupSearchListEntry.getValue() ) {
+                if ( term.getCriteriaPaths() != null ) {
+                    searchTermList.add(term);
+                }
+            }
+            if( !searchTermList.isEmpty() ) {
+                mapGroupAvailableCriteria.put(groupSearchListEntry.getKey(), searchTermList);
+            }
+        }
+        return mapGroupAvailableCriteria;
     }
 
     public Map<String, List<ColumnTabulation>> getMapGroupToColumnTabulations() {
