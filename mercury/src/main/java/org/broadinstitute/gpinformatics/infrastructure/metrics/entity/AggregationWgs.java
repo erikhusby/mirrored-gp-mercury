@@ -23,7 +23,7 @@ import javax.persistence.Table;
 public class AggregationWgs {
     private Double meanCoverage;
     private Aggregation aggregation;
-    private int aggregationId;
+    private Integer aggregationId;
 
     public AggregationWgs(Double meanCoverage) {
         this.meanCoverage = meanCoverage;
@@ -34,17 +34,17 @@ public class AggregationWgs {
 
     @Id
     @Column(name = "AGGREGATION_ID")
-    public int getAggregationId() {
+    public Integer getAggregationId() {
         return aggregationId;
     }
 
-    public void setAggregationId(int aggregationId) {
+    public void setAggregationId(Integer aggregationId) {
         this.aggregationId = aggregationId;
     }
 
 
     @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
     public Aggregation getAggregation() {
         return aggregation;
     }

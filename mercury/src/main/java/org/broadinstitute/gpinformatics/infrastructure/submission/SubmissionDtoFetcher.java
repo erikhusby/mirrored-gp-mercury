@@ -80,10 +80,6 @@ public class SubmissionDtoFetcher {
     }
 
     public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject) {
-        return fetch(researchProject, 1);
-    }
-
-    public List<SubmissionDto> fetch(@Nonnull ResearchProject researchProject, int version) {
         List<SubmissionDto> results = new ArrayList<>();
 
         Set<ProductOrderSample> productOrderSamples = researchProject.collectSamples();

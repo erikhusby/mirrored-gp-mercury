@@ -12,8 +12,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
@@ -24,40 +24,51 @@ import javax.persistence.Transient;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 @Entity
 @Table(name = "AGGREGATION", schema = "METRICS")
 public class Aggregation {
-
+    @SuppressWarnings("unused")
     @Id
-    private int id;
+    private Integer id;
+
+    @Column(name="PROJECT")
     private String project;
+
+    @Column(name="SAMPLE")
     private String sample;
+
+    @SuppressWarnings("unused")
+    @Column(name = "LIBRARY")
     private String library;
-    private int version;
+
+    @Column(name="VERSION")
+    private Integer aggregationVersion;
+
+    @Column(name="READ_GROUP_COUNT")
     private Integer readGroupCount;
-    private Date workflowEndDate;
+
+    @Transient
     private String dataType;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private Collection<AggregationAlignment> aggregationAlignments = new ArrayList<>();
+
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationContam aggregationContam;
+
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private AggregationHybridSelection aggregationHybridSelection;
+
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "aggregation")
     private Collection<AggregationReadGroup> aggregationReadGroups = new ArrayList<>();
+
     @OneToOne(mappedBy = "aggregation")
     private AggregationWgs aggregationWgs;
 
-    public Aggregation(String dataType) {
-        this.dataType = dataType;
-    }
-
-    public Aggregation() {
-    }
+    @Transient
+    private LevelOfDetection levelOfDetection;
 
     public Double getQualityMetric(String dataType) {
         switch (dataType) {
@@ -65,7 +76,7 @@ public class Aggregation {
             return aggregationHybridSelection.getPctTargetBases20X();
         case BassDTO.DATA_TYPE_RNA:
             long totalReadsAlignedInPairs = 0;
-            for (AggregationAlignment aggregationAlignment : aggregationAlignments) {
+            for (AggregationAlignment aggregationAlignment : getAggregationAlignments()) {
                 if (aggregationAlignment.getCategory().equals("PAIR")) {
                     totalReadsAlignedInPairs = aggregationAlignment.getPfAlignedBases();
                 }
@@ -77,12 +88,11 @@ public class Aggregation {
             }
         default:
             return null;
-
         }
     }
 
     public String getQualityMetricString(String dataType) {
-        if (dataType==null){
+        if (dataType == null) {
             return null;
         }
         switch (dataType) {
@@ -95,10 +105,6 @@ public class Aggregation {
         }
         return null;
 
-    }
-
-    public String getLibrary() {
-        return library;
     }
 
     protected String convertToPercent(double decimalValue) {
@@ -121,8 +127,8 @@ public class Aggregation {
         this.sample = sample;
     }
 
-    public int getVersion() {
-        return version;
+    public Integer getAggregationVersion() {
+        return aggregationVersion;
     }
 
     public Integer getReadGroupCount() {
@@ -131,14 +137,6 @@ public class Aggregation {
 
     public void setReadGroupCount(Integer readGroupCount) {
         this.readGroupCount = readGroupCount;
-    }
-
-    public Date getWorkflowEndDate() {
-        return workflowEndDate;
-    }
-
-    public void setWorkflowEndDate(Date workflowEndDate) {
-        this.workflowEndDate = workflowEndDate;
     }
 
     public String getDataType() {
@@ -165,7 +163,7 @@ public class Aggregation {
         this.aggregationContam = aggregationContam;
     }
 
-    public String getContaminationString(){
+    public String getContaminationString() {
         if (aggregationContam != null && aggregationContam.getPctContamination() != null) {
             return convertToPercent(aggregationContam.getPctContamination());
         } else {
@@ -198,9 +196,12 @@ public class Aggregation {
         this.aggregationWgs = aggregationWgsById;
     }
 
-    @Transient
     public LevelOfDetection getLevelOfDetection() {
-        return LevelOfDetection.calculate(getAggregationReadGroups());
+        return levelOfDetection;
+    }
+
+    public void setLevelOfDetection(LevelOfDetection levelOfDetection) {
+        this.levelOfDetection = levelOfDetection;
     }
 
     @Override
@@ -217,7 +218,7 @@ public class Aggregation {
         if (id != that.id) {
             return false;
         }
-        if (version != that.version) {
+        if (aggregationVersion != that.aggregationVersion) {
             return false;
         }
         if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
@@ -242,6 +243,10 @@ public class Aggregation {
         if (dataType != null ? !dataType.equals(that.dataType) : that.dataType != null) {
             return false;
         }
+        if (levelOfDetection != null ? !levelOfDetection.equals(that.levelOfDetection) :
+                that.levelOfDetection != null) {
+            return false;
+        }
         if (library != null ? !library.equals(that.library) : that.library != null) {
             return false;
         }
@@ -254,9 +259,6 @@ public class Aggregation {
         if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
             return false;
         }
-        if (workflowEndDate != null ? !workflowEndDate.equals(that.workflowEndDate) : that.workflowEndDate != null) {
-            return false;
-        }
 
         return true;
     }
@@ -267,15 +269,15 @@ public class Aggregation {
         result = 31 * result + (project != null ? project.hashCode() : 0);
         result = 31 * result + (sample != null ? sample.hashCode() : 0);
         result = 31 * result + (library != null ? library.hashCode() : 0);
-        result = 31 * result + version;
+        result = 31 * result + aggregationVersion;
         result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
-        result = 31 * result + (workflowEndDate != null ? workflowEndDate.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         result = 31 * result + (aggregationAlignments != null ? aggregationAlignments.hashCode() : 0);
         result = 31 * result + (aggregationContam != null ? aggregationContam.hashCode() : 0);
         result = 31 * result + (aggregationHybridSelection != null ? aggregationHybridSelection.hashCode() : 0);
         result = 31 * result + (aggregationReadGroups != null ? aggregationReadGroups.hashCode() : 0);
         result = 31 * result + (aggregationWgs != null ? aggregationWgs.hashCode() : 0);
+        result = 31 * result + (levelOfDetection != null ? levelOfDetection.hashCode() : 0);
         return result;
     }
 }

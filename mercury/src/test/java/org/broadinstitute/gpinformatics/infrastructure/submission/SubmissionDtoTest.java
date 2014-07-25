@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDtoTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.AggregationTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;

@@ -2,14 +2,12 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation_;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis_;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
 import javax.ejb.Stateful;
 import javax.persistence.EntityManager;
-import javax.persistence.NonUniqueResultException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceContextType;
 import javax.persistence.TypedQuery;
@@ -27,45 +25,14 @@ import java.util.List;
  */
 @Stateful
 public class AggregationMetricsFetcher {
-    private static final String NULL_DATATYPE = null;
-    private static final String NULL_SAMPLE = null;
+    public static final String SAMPLE_COLUMN = "sample";
+    public static final String PROJECT_COLUMN = "project";
+    public static final String VERSION_COLUMN = "version";
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)
     private EntityManager entityManager;
 
     public Aggregation fetch(String project, String sample, int version) {
-        return fetch(project, sample, version, NULL_DATATYPE);
-    }
-
-    public List<Aggregation> fetch(String project, int version) {
-        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, NULL_SAMPLE, version, NULL_DATATYPE);
-        return fetch(query);
-    }
-
-    public Aggregation fetch(String project, String sample, int version, String dataType) {
-        TypedQuery<Aggregation> query = getAggregationTypedQuery(project, sample, version, dataType);
-        List<Aggregation> aggregations = fetch(query);
-        if (aggregations.size() > 1) {
-            throw new NonUniqueResultException("query did not return a unique result: " + aggregations.size());
-        } else if (aggregations.isEmpty()) {
-            return null;
-        }
-        return aggregations.get(0);
-    }
-
-    private List<Aggregation> fetch(TypedQuery<Aggregation> query) {
-        List<Aggregation> aggregations = query.getResultList();
-        for (Aggregation aggregation : aggregations) {
-            for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-                setPicardAnalysis(aggregationReadGroup);
-            }
-        }
-
-        return aggregations;
-    }
-
-    protected TypedQuery<Aggregation> getAggregationTypedQuery(String project, String sample, int version,
-                                                               String dataType) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
@@ -75,12 +42,7 @@ public class AggregationMetricsFetcher {
         if (sample != null) {
             predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
         }
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
-
-        // Only query on dataType if it's supplied.
-        if (dataType != null) {
-            predicates.add(criteriaBuilder.equal(root.get(Aggregation_.dataType), dataType));
-        }
+        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.aggregationVersion), version));
 
         /*
          * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
@@ -90,24 +52,20 @@ public class AggregationMetricsFetcher {
 
         criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
 
-        return entityManager.createQuery(criteriaQuery);
+        TypedQuery<Aggregation> query = entityManager.createQuery(criteriaQuery);
+        Aggregation aggregation;
+        try {
+            aggregation = query.getSingleResult();
+            TypedQuery<LevelOfDetection> lodQuery =
+                    entityManager.createNamedQuery(LevelOfDetection.LOD_QUERY_NAME, LevelOfDetection.class)
+                            .setParameter(SAMPLE_COLUMN, aggregation.getSample())
+                            .setParameter(PROJECT_COLUMN, aggregation.getProject())
+                            .setParameter(VERSION_COLUMN, aggregation.getAggregationVersion());
+            aggregation.setLevelOfDetection(lodQuery.getSingleResult());
+        } catch (NoResultException e) {
+            aggregation = null;
+        }
+        return aggregation;
     }
 
-    private void setPicardAnalysis(AggregationReadGroup aggregationReadGroup){
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-        CriteriaQuery<PicardAnalysis> criteriaQuery = criteriaBuilder.createQuery(PicardAnalysis.class);
-        Root<PicardAnalysis> root = criteriaQuery.from(PicardAnalysis.class);
-        List<Predicate> predicates = new ArrayList<>();
-        predicates.add(criteriaBuilder
-                .equal(root.get(PicardAnalysis_.flowcellBarcode), aggregationReadGroup.getFlowcellBarcode()));
-        predicates.add(criteriaBuilder.equal(root.get(PicardAnalysis_.lane), aggregationReadGroup.getLane()));
-        predicates.add(criteriaBuilder
-                .equal(root.get(PicardAnalysis_.libraryName), aggregationReadGroup.getLibraryName()));
-
-        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
-
-        TypedQuery<PicardAnalysis> query = entityManager.createQuery(criteriaQuery);
-        List<PicardAnalysis> result = query.getResultList();
-        aggregationReadGroup.setPicardAnalysis(result);
-    }
 }

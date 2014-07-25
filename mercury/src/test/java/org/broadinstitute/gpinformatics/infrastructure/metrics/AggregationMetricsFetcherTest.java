@@ -1,21 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics;
 
-import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.List;
 
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.closeTo;
-import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
 
 /**
  * Tests for the connection to the Picard aggregation metrics database as well as the JPA entity mappings.
@@ -57,20 +53,14 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
 
     @Inject
     private AggregationMetricsFetcher fetcher;
-    public static final double MIN_LOD = 53.437256;
-    public static final double MAX_LOD = 55.771678;
+    private static final double MIN_LOD = 53.437256;
+    private static final double MAX_LOD = 55.771678;
 
-    public void fetchNonExistentMetrics() {
-        Aggregation aggregation = fetcher.fetch("RP-1", "SM-TEST", 1, BassDTO.DATA_TYPE_EXOME);
-        assertThat(aggregation, nullValue());
-    }
-
-    public void fetchMetricsForSampleAggregatedByMercuryRP() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_EXOME);
+    public void testFetchMetricsForSampleAggregatedByMercuryRP() {
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
-        assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
+        assertThat(aggregation.getAggregationVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
         LevelOfDetection lod = aggregation.getLevelOfDetection();
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
@@ -78,50 +68,26 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
     }
 
-    public void fetchMetricsForRp() {
-        List<Aggregation> aggregations = fetcher.fetch(MERCURY_PROJECT, MERCURY_AGGREGATION_VERSION);
-        for (Aggregation aggregation : aggregations) {
-            assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
-            assertThat(aggregation.getSample(), equalTo(SAMPLE));
-            assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-            assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
-            LevelOfDetection lod = aggregation.getLevelOfDetection();
-            assertThat(lod.getMax(), equalTo(MAX_LOD));
-            assertThat(lod.getMin(), equalTo(MIN_LOD));
-
-            assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
-        }
-    }
-
-    public void fetchMetricsForRpNoData() {
-        List<Aggregation> aggregations = fetcher.fetch(MERCURY_PROJECT, 9);
-        assertThat(aggregations, is(empty()));
-    }
-    public void fetchMetricsForNonexistantRp() {
-        List<Aggregation> aggregations = fetcher.fetch("NOSUCH-RP", MERCURY_AGGREGATION_VERSION);
-        assertThat(aggregations, is(empty()));
-    }
-
-    public void fetchMetricsWithProjectSampleVersionDataTypeNoResult() {
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_WGS);
+    public void testFetchMetricsWithBadProject() {
+        Aggregation aggregation = fetcher.fetch("BAD-"+MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
         assertThat(aggregation, Matchers.nullValue());
     }
 
-    public void fetchMetricsForSampleAggregatedByMercuryRPWithoutSupplyingDataType() {
-        // TODO: This test may need to fail somehow. Perhaps different test data is needed.
-        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION, BassDTO.DATA_TYPE_EXOME);
-        assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
-        assertThat(aggregation.getSample(), equalTo(SAMPLE));
-        assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
-        assertThat(aggregation.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
-        assertThat(aggregation.getAggregationContam().getPctContamination(), closeTo(0.0002, 0.00001));
+    public void testFetchMetricsWithBadSample() {
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, "BAD-"+SAMPLE, MERCURY_AGGREGATION_VERSION);
+        assertThat(aggregation, Matchers.nullValue());
     }
 
-    public void fetchMetricsForSampleAggregatedBySquidProject() {
+    public void testFetchMetricsWithBadVersion() {
+        Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION*100);
+        assertThat(aggregation, Matchers.nullValue());
+    }
+
+    public void testFetchMetricsForSampleAggregatedBySquidProject() {
         Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
-        assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));
+        assertThat(aggregation.getAggregationVersion(), equalTo(SQUID_AGGREGATION_VERSION));
         assertThat(aggregation.getAggregationContam().getPctContamination(), equalTo(0.0));
     }
 }
