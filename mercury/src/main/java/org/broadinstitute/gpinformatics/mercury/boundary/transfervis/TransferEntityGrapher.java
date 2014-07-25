@@ -459,7 +459,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
                 // todo jmt fix rack type
                 rackVertex = new Vertex(label, IdType.CONTAINER_ID_TYPE.toString(),
-                        /*vesselContainer.getRackType().getDisplayName() +*/ " : " +
+                        /*vesselContainer.getRackType().getAutomationName() +*/ " : " +
                                                                              vesselContainer.getEmbedder()
                                                                                      .getLabCentricName(),
                         maxRowNumber, maxColumnNumber);

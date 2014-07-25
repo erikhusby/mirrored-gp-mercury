@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Well;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
@@ -111,7 +112,37 @@ public class LabVesselFactoryTest {
                 sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
         Assert.assertEquals(labVessels.size(), 1, "Wrong number of vessels");
         StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
-        Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2, "Wrong number of child vessels");
+        // LabVesselFactory found "plate" in the parentVessel type name and assigned default.
+        Assert.assertEquals(staticPlate.getPlateType(), StaticPlate.PlateType.Eppendorf96);
+        Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2,
+                "Wrong number of child vessels");
+        PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(VesselPosition.A01);
+        Set<SampleInstance> sampleInstances = plateWell.getSampleInstances();
+        Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");
+        Assert.assertEquals(sampleInstances.iterator().next().getStartingSample().getSampleKey(), sampleId1, "Wrong sample");
+    }
+
+    @Test
+    public void testReceivePlatesAccuratePlateType() {
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<>();
+        ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        String sampleId1 = "SM-1234";
+        childVesselBeans.add(new ChildVesselBean(null, sampleId1, "Well [200uL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(null, "SM-2345", "Well [200uL]", "A02"));
+        parentVesselBeans.add(new ParentVesselBean("P1234", null, "Plate96Well200PCR", childVesselBeans));
+        SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans, "jowalsh");
+
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
+                new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, Set<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
+        Assert.assertEquals(labVessels.size(), 1, "Wrong number of vessels");
+        StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
+        Assert.assertEquals(staticPlate.getPlateType(), StaticPlate.PlateType.Plate96Well200PCR);
+        Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2,
+                "Wrong number of child vessels");
         PlateWell plateWell = staticPlate.getContainerRole().getVesselAtPosition(VesselPosition.A01);
         Set<SampleInstance> sampleInstances = plateWell.getSampleInstances();
         Assert.assertEquals(sampleInstances.size(), 1, "Wrong number of samples");

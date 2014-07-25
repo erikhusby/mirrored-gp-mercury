@@ -1477,7 +1477,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                                 .getBarcode());
             fluidigmSampleInputJaxb.setSourcePositionMap(sourcePositionMap);
             fluidigmSampleInputJaxb.getPlate().setPhysType(
-                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
+                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getAutomationName());
             fluidigmSampleInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
             bettaLimsMessageTestFactory.addMessage(messageList, fluidigmSampleInputJaxb);
 
@@ -1485,10 +1485,10 @@ public class LabEventTest extends BaseEventTest {
             fluidigmIndexedAdapterInputJaxb = bettaLimsMessageTestFactory.buildPlateToPlate(
                     "FluidigmIndexedAdapterInput", indexPlate.getLabel(), chipBarcode);
             fluidigmIndexedAdapterInputJaxb.getSourcePlate().setPhysType(
-                    StaticPlate.PlateType.IndexedAdapterPlate96.getDisplayName());
+                    StaticPlate.PlateType.IndexedAdapterPlate96.getAutomationName());
             fluidigmIndexedAdapterInputJaxb.getSourcePlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
             fluidigmIndexedAdapterInputJaxb.getPlate().setPhysType(
-                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
+                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getAutomationName());
             fluidigmIndexedAdapterInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
             bettaLimsMessageTestFactory
                     .addMessage(messageList, fluidigmIndexedAdapterInputJaxb);
@@ -1503,7 +1503,7 @@ public class LabEventTest extends BaseEventTest {
                                                                                         chipBarcode, harvestRackBarcode,
                                                                                         harvestTubeBarcodes);
             fluidigmHarvestingToRackJaxb.getSourcePlate().setPhysType(
-                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
+                    StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getAutomationName());
             fluidigmHarvestingToRackJaxb.getSourcePlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
 
             fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes,

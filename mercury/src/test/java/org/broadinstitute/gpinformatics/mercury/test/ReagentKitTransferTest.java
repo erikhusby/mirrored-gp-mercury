@@ -96,7 +96,7 @@ public class ReagentKitTransferTest {
             MatcherAssert.assertThat(reagentKit.getBarcode(), Matchers.equalTo(miSeqReagentKitBarcode));
             MatcherAssert.assertThat(reagentKit.getPhysType(), Matchers.equalTo("MiseqReagentKit"));
             MatcherAssert.assertThat(reagentKit.getPhysType(),
-                    Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getDisplayName()));
+                    Matchers.equalTo(StaticPlate.PlateType.MiSeqReagentKit.getAutomationName()));
 
             // test the kind of event returned
             MatcherAssert.assertThat(transferEventType.getEventType(),

@@ -203,7 +203,7 @@ public class LabEventFactory implements Serializable {
         }
 
         PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
-                StaticPlate.PlateType.MiSeqReagentKit.getDisplayName(), MiSeqReagentKit.LOADING_WELL.name(), null);
+                StaticPlate.PlateType.MiSeqReagentKit.getAutomationName(), MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getSourcePlate().add(reagentKitType);
 
         PlateType flowcell = BettaLimsObjectFactory
@@ -626,7 +626,7 @@ public class LabEventFactory implements Serializable {
 
                     if (labVessel == null) {
                         labVessel = new StaticPlate(plateType.getBarcode(),
-                                StaticPlate.PlateType.getByDisplayName(plateType.getPhysType()));
+                                StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }
                     mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
                 }
@@ -960,7 +960,12 @@ public class LabEventFactory implements Serializable {
                 if (source && !(CREATE_SOURCES || createSources)) {
                     throw new RuntimeException("Failed to find tube " + receptacleType.getBarcode());
                 }
-                barcodedTube = new BarcodedTube(receptacleType.getBarcode());
+                BarcodedTube.BarcodedTubeType tubeType =
+                        BarcodedTube.BarcodedTubeType.getByAutomationName(receptacleType.getReceptacleType());
+                if (tubeType == null) {
+                    tubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+                }
+                barcodedTube = new BarcodedTube(receptacleType.getBarcode(), tubeType);
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), barcodedTube);
             }
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), barcodedTube);
@@ -1000,7 +1005,7 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
         if (plate == null) {
             if (CREATE_SOURCES) {
-                plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByDisplayName(
+                plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByAutomationName(
                         plateEvent.getPlate().getPhysType()));
             } else {
                 throw new RuntimeException("Failed to find plate " + plateEvent.getPlate().getBarcode());
