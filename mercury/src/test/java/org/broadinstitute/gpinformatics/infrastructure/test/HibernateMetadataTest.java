@@ -18,8 +18,7 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -30,7 +29,8 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
@@ -53,8 +53,7 @@ public class HibernateMetadataTest extends ContainerTest {
             AggregationHybridSelection.class.getName(),
             AggregationReadGroup.class.getName(),
             AggregationWgs.class.getName(),
-            PicardAnalysis.class.getName(),
-            PicardFingerprint.class.getName(),
+            LevelOfDetection.class.getName()
     };
 
     /**

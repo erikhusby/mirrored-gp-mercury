@@ -17,13 +17,9 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
-import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 
 public class AggregationTestFactory {
     @SuppressWarnings("EmptyCatchBlock")
@@ -32,6 +28,7 @@ public class AggregationTestFactory {
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
         Aggregation aggregation = new Aggregation();
+        aggregation.setLevelOfDetection(fingerprintLod);
         aggregation.setSample(sample);
         aggregation.setProject(project);
         aggregation.setDataType(dataType);
@@ -45,40 +42,10 @@ public class AggregationTestFactory {
         aggregation.setReadGroupCount(2);
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
         aggregation.setAggregationWgs(aggregationWgs);
-        Date createdDate;
 
-        try {
-            createdDate = DateUtils.parseDate("01/01/2014");
-            aggregation.setWorkflowEndDate(createdDate);
-        } catch (ParseException e) {
-
-        }
         AggregationReadGroup aggregationReadGroup = new AggregationReadGroup();
-
-        PicardFingerprint picardFingerprint1 = new PicardFingerprint();
-        picardFingerprint1.setLodExpectedSample(fingerprintLod.getMax());
-        PicardAnalysis picardAnalysis1 = new PicardAnalysis();
-        picardAnalysis1.setPicardFingerprint(picardFingerprint1);
-        picardAnalysis1.setLane("1");
-
-        aggregationReadGroup.getPicardAnalysis().add(picardAnalysis1);
-
-
-        PicardFingerprint picardFingerprint2 = new PicardFingerprint();
-        picardFingerprint2.setLodExpectedSample(fingerprintLod.getMin());
-        PicardAnalysis picardAnalysis2 = new PicardAnalysis();
-        picardAnalysis2.setPicardFingerprint(picardFingerprint2);
-        picardAnalysis2.setLane("2");
-        aggregationReadGroup.getPicardAnalysis().add(picardAnalysis2);
         aggregationReadGroup.setLane(2);
         aggregation.setAggregationReadGroups(Arrays.asList(aggregationReadGroup));
         return aggregation;
-    }
-
-    public static Aggregation buildAggregation(String dataType, Double pctTargetBases20X,
-                                               Long totalReadsAlignedInPairs,
-                                               Double meanCoverageWgs) {
-        return buildAggregation(null, null, null, new LevelOfDetection(1.2, 2.2), dataType, pctTargetBases20X,
-                totalReadsAlignedInPairs, meanCoverageWgs);
     }
 }

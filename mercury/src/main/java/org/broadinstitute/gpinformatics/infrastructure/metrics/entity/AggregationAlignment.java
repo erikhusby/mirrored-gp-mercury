@@ -24,12 +24,12 @@ import java.io.Serializable;
 public class AggregationAlignment implements Serializable {
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
-    private int aggregationId;
+    private Integer aggregationId;
     @Id
     private String category;
     @Column(name = "PF_ALIGNED_BASES") private Long pfAlignedBases;
     @ManyToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false,  updatable = false, insertable = false)
     private Aggregation aggregation;
 
     /**
@@ -40,6 +40,10 @@ public class AggregationAlignment implements Serializable {
     public AggregationAlignment(Long pfAlignedBases, String category) {
         this.pfAlignedBases = pfAlignedBases;
         this.category = category;
+    }
+
+    public Long getPfAlignedBases() {
+        return pfAlignedBases;
     }
 
     public String getCategory() {
@@ -64,9 +68,6 @@ public class AggregationAlignment implements Serializable {
         if (aggregationId != that.aggregationId) {
             return false;
         }
-        if (aggregation != null ? !aggregation.equals(that.aggregation) : that.aggregation != null) {
-            return false;
-        }
         if (category != null ? !category.equals(that.category) : that.category != null) {
             return false;
         }
@@ -77,16 +78,11 @@ public class AggregationAlignment implements Serializable {
         return true;
     }
 
-    public Long getPfAlignedBases() {
-        return pfAlignedBases;
-    }
-
     @Override
     public int hashCode() {
         int result = aggregationId;
         result = 31 * result + (category != null ? category.hashCode() : 0);
         result = 31 * result + (pfAlignedBases != null ? pfAlignedBases.hashCode() : 0);
-        result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
         return result;
     }
 }
