@@ -104,8 +104,8 @@ public class SubmissionDtoFetcher {
 
         Map<String, Aggregation> aggregationMap = new HashMap<>();
         for (BassDTO bassDTO : bassDTOMap.values()) {
-            log.debug(String.format("Fetching Metrics aggregations for %s, %s", researchProject.getBusinessKey(),
-                    bassDTO.getSample()));
+            log.debug(String.format("Fetching Metrics aggregations for project: %s, sample: %s, version: %d",
+                    researchProject.getBusinessKey(), bassDTO.getSample(), bassDTO.getVersion()));
             Aggregation aggregation = aggregationMetricsFetcher.fetch(bassDTO.getProject(), bassDTO.getSample(),
                     bassDTO.getVersion());
             if (aggregation != null) {

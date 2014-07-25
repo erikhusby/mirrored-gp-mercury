@@ -12,6 +12,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
 import javax.annotation.Nonnull;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityResult;
 import javax.persistence.Id;
@@ -37,7 +38,8 @@ public class LevelOfDetection implements Serializable {
     @Id
     private String sample;
     @Id
-    private Integer aggregationVersion;
+    @Column(name="version")
+    private Integer version;
 
     private Double min;
     private Double max;
@@ -54,7 +56,7 @@ public class LevelOfDetection implements Serializable {
 
         this.project = project;
         this.sample = sample;
-        this.aggregationVersion = version;
+        this.version = version;
         this.min = min;
         this.max = max;
     }
@@ -75,12 +77,12 @@ public class LevelOfDetection implements Serializable {
         this.sample = sample;
     }
 
-    public Integer getAggregationVersion() {
-        return aggregationVersion;
+    public Integer getVersion() {
+        return version;
     }
 
-    public void setAggregationVersion(Integer version) {
-        this.aggregationVersion = version;
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 
     public void setMin(Double min) {
@@ -125,7 +127,7 @@ public class LevelOfDetection implements Serializable {
         if (sample != null ? !sample.equals(that.sample) : that.sample != null) {
             return false;
         }
-        if (aggregationVersion != null ? !aggregationVersion.equals(that.aggregationVersion) : that.aggregationVersion
+        if (version != null ? !version.equals(that.version) : that.version
                                                                                                != null) {
             return false;
         }
@@ -137,7 +139,7 @@ public class LevelOfDetection implements Serializable {
     public int hashCode() {
         int result = project != null ? project.hashCode() : 0;
         result = 31 * result + (sample != null ? sample.hashCode() : 0);
-        result = 31 * result + (aggregationVersion != null ? aggregationVersion.hashCode() : 0);
+        result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (min != null ? min.hashCode() : 0);
         result = 31 * result + (max != null ? max.hashCode() : 0);
         return result;

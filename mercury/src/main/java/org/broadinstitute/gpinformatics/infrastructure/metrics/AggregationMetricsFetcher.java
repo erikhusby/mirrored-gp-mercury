@@ -35,6 +35,7 @@ public class AggregationMetricsFetcher {
     public Aggregation fetch(String project, String sample, int version) {
         CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Aggregation> criteriaQuery = criteriaBuilder.createQuery(Aggregation.class);
+
         Root<Aggregation> root = criteriaQuery.from(Aggregation.class);
 
         List<Predicate> predicates = new ArrayList<>();
@@ -42,7 +43,7 @@ public class AggregationMetricsFetcher {
         if (sample != null) {
             predicates.add(criteriaBuilder.equal(root.get(Aggregation_.sample), sample));
         }
-        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.aggregationVersion), version));
+        predicates.add(criteriaBuilder.equal(root.get(Aggregation_.version), version));
 
         /*
          * Look for the row where LIBRARY is NULL because otherwise there would be multiple results. Kathleen Tibbetts
@@ -60,7 +61,7 @@ public class AggregationMetricsFetcher {
                     entityManager.createNamedQuery(LevelOfDetection.LOD_QUERY_NAME, LevelOfDetection.class)
                             .setParameter(SAMPLE_COLUMN, aggregation.getSample())
                             .setParameter(PROJECT_COLUMN, aggregation.getProject())
-                            .setParameter(VERSION_COLUMN, aggregation.getAggregationVersion());
+                            .setParameter(VERSION_COLUMN, aggregation.getVersion());
             aggregation.setLevelOfDetection(lodQuery.getSingleResult());
         } catch (NoResultException e) {
             aggregation = null;

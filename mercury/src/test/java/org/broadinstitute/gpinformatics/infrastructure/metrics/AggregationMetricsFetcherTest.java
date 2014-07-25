@@ -60,7 +60,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         Aggregation aggregation = fetcher.fetch(MERCURY_PROJECT, SAMPLE, MERCURY_AGGREGATION_VERSION);
         assertThat(aggregation.getProject(), equalTo(MERCURY_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
-        assertThat(aggregation.getAggregationVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
+        assertThat(aggregation.getVersion(), equalTo(MERCURY_AGGREGATION_VERSION));
         LevelOfDetection lod = aggregation.getLevelOfDetection();
         assertThat(lod.getMax(), equalTo(MAX_LOD));
         assertThat(lod.getMin(), equalTo(MIN_LOD));
@@ -87,7 +87,7 @@ public class AggregationMetricsFetcherTest extends ContainerTest {
         Aggregation aggregation = fetcher.fetch(SQUID_PROJECT, SAMPLE, SQUID_AGGREGATION_VERSION);
         assertThat(aggregation.getProject(), equalTo(SQUID_PROJECT));
         assertThat(aggregation.getSample(), equalTo(SAMPLE));
-        assertThat(aggregation.getAggregationVersion(), equalTo(SQUID_AGGREGATION_VERSION));
+        assertThat(aggregation.getVersion(), equalTo(SQUID_AGGREGATION_VERSION));
         assertThat(aggregation.getAggregationContam().getPctContamination(), equalTo(0.0));
     }
 }

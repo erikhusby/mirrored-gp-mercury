@@ -44,7 +44,7 @@ public class Aggregation {
     private String library;
 
     @Column(name="VERSION")
-    private Integer aggregationVersion;
+    private Integer version;
 
     @Column(name="READ_GROUP_COUNT")
     private Integer readGroupCount;
@@ -127,8 +127,8 @@ public class Aggregation {
         this.sample = sample;
     }
 
-    public Integer getAggregationVersion() {
-        return aggregationVersion;
+    public Integer getVersion() {
+        return version;
     }
 
     public Integer getReadGroupCount() {
@@ -218,7 +218,7 @@ public class Aggregation {
         if (id != that.id) {
             return false;
         }
-        if (aggregationVersion != that.aggregationVersion) {
+        if (version != that.version) {
             return false;
         }
         if (aggregationAlignments != null ? !aggregationAlignments.equals(that.aggregationAlignments) :
@@ -269,7 +269,7 @@ public class Aggregation {
         result = 31 * result + (project != null ? project.hashCode() : 0);
         result = 31 * result + (sample != null ? sample.hashCode() : 0);
         result = 31 * result + (library != null ? library.hashCode() : 0);
-        result = 31 * result + aggregationVersion;
+        result = 31 * result + version;
         result = 31 * result + (readGroupCount != null ? readGroupCount.hashCode() : 0);
         result = 31 * result + (dataType != null ? dataType.hashCode() : 0);
         result = 31 * result + (aggregationAlignments != null ? aggregationAlignments.hashCode() : 0);
