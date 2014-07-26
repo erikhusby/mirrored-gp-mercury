@@ -107,10 +107,13 @@ public class BarcodedTube extends LabVessel {
 
         private static final Map<String, BarcodedTubeType> MAP_NAME_TO_TYPE =
                 new HashMap<>(BarcodedTubeType.values().length);
+        private static final Map<String, BarcodedTubeType> MAP_DISPLAY_NAME_TO_TYPE =
+                new HashMap<>(BarcodedTubeType.values().length);
 
         static {
             for (BarcodedTubeType barcodedTubeType : BarcodedTubeType.values()) {
                 MAP_NAME_TO_TYPE.put(barcodedTubeType.automationName, barcodedTubeType);
+                MAP_DISPLAY_NAME_TO_TYPE.put(barcodedTubeType.displayName, barcodedTubeType);
             }
         }
 
@@ -121,7 +124,12 @@ public class BarcodedTube extends LabVessel {
          * @return the BarcodedTubeType or null
          */
         public static BarcodedTubeType getByAutomationName(String automationName) {
-            return MAP_NAME_TO_TYPE.get(automationName);
+            if (MAP_NAME_TO_TYPE.containsKey(automationName)) {
+                return MAP_NAME_TO_TYPE.get(automationName);
+            } else {
+                // If match failed try matching the display name.
+                return MAP_DISPLAY_NAME_TO_TYPE.get(automationName);
+            }
         }
 
     }
