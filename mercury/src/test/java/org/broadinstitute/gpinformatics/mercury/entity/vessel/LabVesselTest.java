@@ -71,4 +71,61 @@ public class LabVesselTest {
                 LabEventType.SAMPLE_IMPORT);
         Assert.assertEquals(vesselsForLabEventType.size(), 1);
     }
+
+    @Test
+    public void testDaughterPlateWithDifferentTypes() {
+        Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
+        BarcodedTube sourceTube1 = new BarcodedTube("ST1", "Conical50");
+        mapPositionToTube.put(VesselPosition._8_2, sourceTube1);
+        BarcodedTube sourceTube2 = new BarcodedTube("ST2", "Conical [50mL]");
+        mapPositionToTube.put(VesselPosition._8_3, sourceTube2);
+        TubeFormation sourceTubeFormation =
+                new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Conical50ml_8x3rack);
+
+        mapPositionToTube = new HashMap<>();
+        BarcodedTube destinationTube1 = new BarcodedTube("DT1", "Vacutainer EDTA Tube Purple-Top [3mL]");
+        mapPositionToTube.put(VesselPosition.A31, destinationTube1);
+        BarcodedTube destinationTube2 = new BarcodedTube("DT2", "VacutainerBloodTubeEDTA_3");
+        mapPositionToTube.put(VesselPosition.A32, destinationTube2);
+        TubeFormation targetTubeFormation =
+                new TubeFormation(mapPositionToTube, RackOfTubes.RackType.HamiltonSampleCarrier32);
+
+        LabEvent labEvent = new LabEvent(LabEventType.AUTO_DAUGHTER_PLATE_CREATION, new Date(), "SUPERMAN", 1L, 101L,
+                "Bravo");
+
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTubeFormation.getContainerRole(), VesselPosition._8_2,
+                targetTubeFormation.getContainerRole(), VesselPosition.A31, labEvent));
+        labEvent.getCherryPickTransfers().add(new CherryPickTransfer(
+                sourceTubeFormation.getContainerRole(), VesselPosition._8_3,
+                targetTubeFormation.getContainerRole(), VesselPosition.A32, labEvent));
+
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+
+        List<ChildVesselBean> childVesselBeans = new ArrayList<>();
+        childVesselBeans.add(new ChildVesselBean(destinationTube1.getLabel(), "SM-1234",
+                destinationTube1.getTubeType().getDisplayName(), VesselPosition._8_2.name()));
+        childVesselBeans.add(new ChildVesselBean(destinationTube2.getLabel(), "SM-2345",
+                destinationTube2.getTubeType().getDisplayName(), VesselPosition._8_3.name()));
+        ParentVesselBean parentVesselBean = new ParentVesselBean("Rack1", null, "Conical50ml_8x3rack",
+                childVesselBeans);
+
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<>();
+        mapBarcodeToVessel.put(destinationTube1.getLabel(), destinationTube1);
+        mapBarcodeToVessel.put(destinationTube2.getLabel(), destinationTube2);
+        mapBarcodeToVessel.put(targetTubeFormation.getLabel(), targetTubeFormation);
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
+                mapBarcodeToVessel, new HashMap<String, List<MercurySample>>(),
+                new HashMap<String, Set<ProductOrderSample>>(), "jowalsh",
+                new Date(), Collections.singletonList(parentVesselBean), LabEventType.SAMPLE_IMPORT);
+
+        BarcodedTube tube1 = (BarcodedTube)labVessels.get(0);
+        Assert.assertEquals(tube1.getTubeType(), BarcodedTube.BarcodedTubeType.VacutainerBloodTubeEDTA_3);
+
+        Map <LabEvent, Set<LabVessel>> vesselsForLabEventType = sourceTube1.findVesselsForLabEventType(
+                LabEventType.SAMPLE_IMPORT);
+        Assert.assertEquals(vesselsForLabEventType.values().iterator().next().iterator().next().getLabel(),
+                tube1.getLabel());
+    }
 }
