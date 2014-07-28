@@ -13,7 +13,7 @@ public class SubmissionStatusResults implements Serializable {
         return submissionStatuses;
     }
 
-    public void setSubmissionStatuses (SubmissionStatusDetails[] submissionStatuses)
+    public void setSubmissionStatuses (SubmissionStatusDetails... submissionStatuses)
     {
         this.submissionStatuses = submissionStatuses;
     }

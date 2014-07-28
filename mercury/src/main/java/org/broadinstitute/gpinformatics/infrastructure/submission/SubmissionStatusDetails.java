@@ -14,6 +14,16 @@ public class SubmissionStatusDetails implements Serializable {
     public SubmissionStatusDetails() {
     }
 
+    public SubmissionStatusDetails(String uuid, String status) {
+        this.uuid = uuid;
+        setStatus(status);
+    }
+
+    public SubmissionStatusDetails(String uuid, String status, String... errors) {
+        this(uuid, status);
+        setErrors(errors);
+    }
+
     public String getUuid ()
     {
         return uuid;
@@ -44,7 +54,9 @@ public class SubmissionStatusDetails implements Serializable {
      * TODO scottmat fill in javadoc!!!
      */
     public static enum Status {
-        INPROGRESS("InProgress");
+        INPROGRESS("InProgress"),
+        SUBMITTED("Submitted"),
+        FAILURE("Failure");
 
         Status(String description) {
             this.description = description;
