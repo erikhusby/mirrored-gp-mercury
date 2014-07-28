@@ -657,43 +657,71 @@ public class VesselContainer<T extends LabVessel> {
      * @return LCSETs, empty if no contained vessels are associated with LCSETs
      */
     public Set<LabBatch> getComputedLcSetsForSection(SBSSection section) {
-        Set<LabBatch> computedLcSets = new HashSet<>();
-        // find lab batch that is used by every vessel in section
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
-        int numVesselsWithBucketEntries = 0;
+        int numSampleInstanceWithBucketEntries = 0;
         for (VesselPosition vesselPosition : section.getWells()) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
-            if (vesselAtPosition != null) {
-                Set<BucketEntry> bucketEntries = vesselAtPosition.getBucketEntries();
-                if (!bucketEntries.isEmpty()) {
-                    numVesselsWithBucketEntries++;
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
+            numSampleInstanceWithBucketEntries = collateLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries,
+                    vesselAtPosition);
+        }
+        return computeLcSets(mapLabBatchToCount, numSampleInstanceWithBucketEntries);
+    }
+
+    /**
+     * Calculates the number of bucket entries for each LCSET.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries number of sample instances that have at least one bucket entry
+     * @param labVessel vessel to evaluate
+     * @return changed numSampleInstanceWithBucketEntries
+     */
+    public static int collateLcSets(Map<LabBatch, Integer> mapLabBatchToCount, int numSampleInstanceWithBucketEntries,
+            LabVessel labVessel) {
+        if (labVessel != null) {
+            Set<LabBatch> labBatches = new HashSet<>();
+            for (SampleInstanceV2 sampleInstanceV2 : labVessel.getSampleInstancesV2()) {
+                List<BucketEntry> allBucketEntries = sampleInstanceV2.getAllBucketEntries();
+                for (BucketEntry bucketEntry : allBucketEntries) {
                     if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
-                        }
+                        labBatches.add(bucketEntry.getLabBatch());
                     }
                 }
+
+                if (!labBatches.isEmpty()) {
+                    numSampleInstanceWithBucketEntries++;
+                }
+            }
+            for (LabBatch labBatch : labBatches) {
+                Integer count = mapLabBatchToCount.get(labBatch);
+                if (count == null) {
+                    count = 1;
+                } else {
+                    count = count + 1;
+                }
+                mapLabBatchToCount.put(labBatch, count);
             }
         }
+        return numSampleInstanceWithBucketEntries;
+    }
+
+    /**
+     * Determine the common LCSET between sample instances.
+     * @param mapLabBatchToCount map from LCSET to count of bucket entries
+     * @param numSampleInstanceWithBucketEntries    number of sample instances that have at least one bucket entry
+     * @return LCSET that all sample instances have in common
+     */
+    public static Set<LabBatch> computeLcSets(Map<LabBatch, Integer> mapLabBatchToCount,
+            int numSampleInstanceWithBucketEntries) {
+        Set<LabBatch> computedLcSets = new HashSet<>();
         if (LabVessel.DIAGNOSTICS) {
-            System.out.println("numVesselsWithBucketEntries " + numVesselsWithBucketEntries);
+            System.out.println("numSampleInstanceWithBucketEntries " + numSampleInstanceWithBucketEntries);
         }
         for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
+            if (labBatchIntegerEntry.getValue() == numSampleInstanceWithBucketEntries) {
                 computedLcSets.add(labBatchIntegerEntry.getKey());
             }
             if (LabVessel.DIAGNOSTICS) {
                 System.out.println("LabBatch " + labBatchIntegerEntry.getKey().getBatchName() + " count " +
-                        labBatchIntegerEntry.getValue());
+                                   labBatchIntegerEntry.getValue());
             }
         }
         return computedLcSets;
@@ -892,30 +920,38 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     @Transient
-    private Map<VesselPosition, List<SampleInstanceV2>> mapPositionToSampleInstances =
+    private Map<VesselPosition, Set<SampleInstanceV2>> mapPositionToSampleInstances =
             new EnumMap<>(VesselPosition.class);
 
-    public List<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
-        List<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
+    public Set<SampleInstanceV2> getSampleInstancesAtPositionV2(VesselPosition vesselPosition) {
+        Set<SampleInstanceV2> sampleInstances = mapPositionToSampleInstances.get(vesselPosition);
         if (sampleInstances == null) {
             T vesselAtPosition = getVesselAtPosition(vesselPosition);
 
             // Get ancestor events
             List<LabVessel.VesselEvent> ancestorEvents;
             if (vesselAtPosition == null) {
-                ancestorEvents = getAncestors(vesselPosition);
+                if (mapPositionToVessel.isEmpty()) {
+                    ancestorEvents = getAncestors(vesselPosition);
+                } else {
+                    ancestorEvents = Collections.emptyList();
+                }
             } else {
                 ancestorEvents = vesselAtPosition.getAncestors();
             }
-            sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            if (ancestorEvents.isEmpty()) {
+                sampleInstances = Collections.emptySet();
+            } else {
+                sampleInstances = getAncestorSampleInstances(vesselAtPosition, ancestorEvents);
+            }
 
             mapPositionToSampleInstances.put(vesselPosition, sampleInstances);
         }
         return sampleInstances;
     }
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
-        List<SampleInstanceV2> sampleInstanceList = new ArrayList<>();
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
+        Set<SampleInstanceV2> sampleInstanceList = new LinkedHashSet<>();
         VesselPosition[] vesselPositions = getEmbedder().getVesselGeometry().getVesselPositions();
         for (VesselPosition vesselPosition : vesselPositions) {
             sampleInstanceList.addAll(getSampleInstancesAtPositionV2(vesselPosition));
@@ -926,7 +962,7 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * Get the SampleInstances for a set of ancestor events.  Static so it can be shared with LabVessel.
      */
-    static List<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
+    static Set<SampleInstanceV2> getAncestorSampleInstances(LabVessel labVessel,
             List<LabVessel.VesselEvent> ancestorEvents) {
         // Get ancestor SampleInstances
         List<SampleInstanceV2> ancestorSampleInstances = new ArrayList<>();
@@ -940,53 +976,57 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
 
-        // Filter sample instances that are reagent only
-        Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
-        List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
-        while (iterator.hasNext()) {
-            SampleInstanceV2 sampleInstance = iterator.next();
-            if (sampleInstance.isReagentOnly()) {
-                reagentSampleInstances.add(sampleInstance);
-                iterator.remove();
-            }
-        }
-
-        // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
-        // away the bait.
-        List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
         if (ancestorSampleInstances.isEmpty()) {
-            currentSampleInstances.add(new SampleInstanceV2());
+            return new LinkedHashSet<>(ancestorSampleInstances);
         } else {
-            // Clone ancestors
-            for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
-                currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
-            }
-        }
-
-        // Apply reagents
-        for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
-            for (Reagent reagent : reagentSampleInstance.getReagents()) {
-                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                    currentSampleInstance.addReagent(reagent);
+            // Filter sample instances that are reagent only
+            Iterator<SampleInstanceV2> iterator = ancestorSampleInstances.iterator();
+            List<SampleInstanceV2> reagentSampleInstances = new ArrayList<>();
+            while (iterator.hasNext()) {
+                SampleInstanceV2 sampleInstance = iterator.next();
+                if (sampleInstance.isReagentOnly()) {
+                    reagentSampleInstances.add(sampleInstance);
+                    iterator.remove();
                 }
             }
-        }
 
-        // Apply vessel changes to clones
-        if (labVessel != null) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyVesselChanges(labVessel);
+            // BaitSetup has a bait in the source, but no samples in the target (until BaitAddition), so avoid throwing
+            // away the bait.
+            List<SampleInstanceV2> currentSampleInstances = new ArrayList<>();
+            if (ancestorSampleInstances.isEmpty()) {
+                currentSampleInstances.add(new SampleInstanceV2());
+            } else {
+                // Clone ancestors
+                for (SampleInstanceV2 ancestorSampleInstance : ancestorSampleInstances) {
+                    currentSampleInstances.add(new SampleInstanceV2(ancestorSampleInstance));
+                }
             }
-        }
 
-        // Apply events to clones
-        for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
-            for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
-                currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+            // Apply reagents
+            for (SampleInstanceV2 reagentSampleInstance : reagentSampleInstances) {
+                for (Reagent reagent : reagentSampleInstance.getReagents()) {
+                    for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                        currentSampleInstance.addReagent(reagent);
+                    }
+                }
             }
-        }
 
-        return currentSampleInstances;
+            // Apply vessel changes to clones
+            if (labVessel != null) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyVesselChanges(labVessel);
+                }
+            }
+
+            // Apply events to clones
+            for (LabVessel.VesselEvent ancestorEvent : ancestorEvents) {
+                for (SampleInstanceV2 currentSampleInstance : currentSampleInstances) {
+                    currentSampleInstance.applyEvent(ancestorEvent.getLabEvent());
+                }
+            }
+
+            return new LinkedHashSet<>(currentSampleInstances);
+        }
     }
 
     /**

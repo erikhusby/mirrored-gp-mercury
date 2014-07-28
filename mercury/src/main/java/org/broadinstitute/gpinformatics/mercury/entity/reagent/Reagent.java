@@ -4,6 +4,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * Some chemistry bits applied to Goop to help transform it into a sequenceable state.
@@ -27,9 +28,13 @@ public abstract class Reagent {
     @Column(name = "LOT", nullable = true)
     private String lot;
 
-    protected Reagent(@Nullable String reagentName, @Nullable String lot) {
+    @Column(name = "EXPIRATION", nullable = true)
+    private Date expiration;
+
+    protected Reagent(@Nullable String reagentName, @Nullable String lot, @Nullable Date expiration) {
         this.name = reagentName;
         this.lot = lot;
+        this.expiration = expiration;
     }
 
     protected Reagent() {
@@ -49,5 +54,13 @@ public abstract class Reagent {
 
     public void setLot(String lot) {
         this.lot = lot;
+    }
+
+    public Date getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(Date expiration) {
+        this.expiration = expiration;
     }
 }

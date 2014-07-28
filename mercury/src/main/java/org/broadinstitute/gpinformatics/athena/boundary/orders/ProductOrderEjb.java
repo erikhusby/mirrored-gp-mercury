@@ -1044,8 +1044,9 @@ public class ProductOrderEjb {
                 createdWorkRequestResults.getProjectId(), createdWorkRequestResults.getWorkRequestId()));
 
         if (StringUtils.isNotBlank(squidInput.getLcsetId())) {
-            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
-                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
+            pdoIssue.addLink(squidInput.getLcsetId());
+//            pdoIssue.addComment(String.format("Work request %s is associated with LCSet %s",
+//                    createdWorkRequestResults.getWorkRequestId(), squidInput.getLcsetId()));
         }
     }
 

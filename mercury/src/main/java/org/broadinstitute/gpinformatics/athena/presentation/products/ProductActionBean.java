@@ -53,7 +53,7 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
  */
 @UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
-    private static final Log log = LogFactory.getLog(CoreActionBean.class);
+    private static final Log log = LogFactory.getLog(ProductActionBean.class);
     public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
     public static final String PRODUCT_PARAMETER = "product";
 

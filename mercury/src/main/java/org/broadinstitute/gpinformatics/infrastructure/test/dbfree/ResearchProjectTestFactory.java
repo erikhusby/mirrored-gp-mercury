@@ -27,6 +27,12 @@ public class ResearchProjectTestFactory {
         return createDummyResearchProject(TEST_CREATOR, "title " + uuid, "synopsis " + uuid, true);
     }
 
+    public static ResearchProject createTestResearchProject(String jiraTicketId) {
+        ResearchProject testResearchProject = createTestResearchProject();
+        testResearchProject.setJiraTicketKey(jiraTicketId);
+        return testResearchProject;
+    }
+
     public static ResearchProject createDummyResearchProject(long createdBy, String title, String synopsis,
                                                              boolean irbNotEngaged) {
         ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged);

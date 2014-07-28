@@ -698,4 +698,38 @@
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet author="jowalsh" id="GPLIM-2841-1">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="jowalsh" id="GPLIM-2841-2">
+        <preConditions>
+            <not>
+                <columnExists tableName="reagent_aud" columnName="expiration" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="reagent_aud" schemaName="mercury">
+            <column name="expiration" type="timestamp"></column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2908-1">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL_CONTAINERS" indexName="IX_LVC_CONTAINERS">
+            <column name="CONTAINERS"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2908-2">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL" indexName="IX_LV_FLOWCELL">
+            <column name="FLOWCELL"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

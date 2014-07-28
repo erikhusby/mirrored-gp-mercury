@@ -135,7 +135,6 @@ public class ProductOrderResource {
 
     @POST
     @Path("createWithKitRequest")
-    //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData createWithKitRequest(@Nonnull ProductOrderData productOrderData)
@@ -225,7 +224,6 @@ public class ProductOrderResource {
 
     @POST
     @Path("create")
-    //@RolesAllowed("Mercury-ProjectManagers, Mercury-Administrators")
     @Produces(MediaType.APPLICATION_XML)
     @Consumes(MediaType.APPLICATION_XML)
     public ProductOrderData create(@Nonnull ProductOrderData productOrderData)
@@ -421,8 +419,8 @@ public class ProductOrderResource {
      */
     @POST
     @Path(PDO_SAMPLE_STATUS)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public PDOSamples getPdoSampleStatus(PDOSamples pdoSamplePairs) {
         PDOSamples pdoSamplesResult = new PDOSamples();
         if (pdoSamplePairs != null) {

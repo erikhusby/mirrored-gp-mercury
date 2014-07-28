@@ -82,9 +82,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.security.ApplicationInstance;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 import org.broadinstitute.gpinformatics.mercury.boundary.BucketException;
@@ -185,10 +182,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private PreferenceEjb preferenceEjb;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private QuoteService quoteService;
 
     @Inject
     private ProductOrderUtil productOrderUtil;
@@ -585,13 +578,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             requireField(editOrder.getLaneCount() > 0, "a specified number of lanes", action);
         }
 
-        try {
-            quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
-        } catch (QuoteServerException ex) {
-            addGlobalValidationError("The quote id {2} is not valid: {3}", editOrder.getQuoteId(), ex.getMessage());
-        } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
-        }
+        String quoteId = editOrder.getQuoteId();
+        validateQuoteId(quoteId);
 
         if (editOrder != null) {
             validateRinScores(editOrder);
@@ -638,25 +626,25 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doOnRiskUpdate() {
-        try {
-            // Calculate risk here and get back any error message.
-            productOrderEjb.calculateRisk(editOrder.getBusinessKey());
+            try {
+                // Calculate risk here and get back any error message.
+                productOrderEjb.calculateRisk(editOrder.getBusinessKey());
 
-            // refetch the order to get updated risk status on the order.
-            editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
-            int numSamplesOnRisk = editOrder.countItemsOnRisk();
+                // refetch the order to get updated risk status on the order.
+                editOrder = productOrderDao.findByBusinessKey(editOrder.getBusinessKey());
+                int numSamplesOnRisk = editOrder.countItemsOnRisk();
 
-            if (numSamplesOnRisk == 0) {
-                addMessage("None of the samples for this order are on risk");
-            } else {
-                addMessage("{0} {1} for this order {2} on risk",
-                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
-                        numSamplesOnRisk == 1 ? "is" : "are");
+                if (numSamplesOnRisk == 0) {
+                    addMessage("None of the samples for this order are on risk");
+                } else {
+                    addMessage("{0} {1} for this order {2} on risk",
+                            numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk),
+                            numSamplesOnRisk == 1 ? "is" : "are");
+                }
+            } catch (Exception e) {
+                addGlobalValidationError(e.getMessage());
             }
-        } catch (Exception e) {
-            addGlobalValidationError(e.getMessage());
         }
-    }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
@@ -665,10 +653,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void validatePlacedOrder(String action) {
         doValidation(action);
-        validateRegulatoryInformation(action);
         if (!hasErrors()) {
             doOnRiskUpdate();
         }
+        validateRegulatoryInformation(action);
 
         updateFromInitiationTokenInputs();
     }

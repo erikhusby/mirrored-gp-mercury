@@ -160,12 +160,17 @@ public class LabVesselFactory implements Serializable {
             String sampleId = parentVesselBean.getSampleId();
             String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
                     parentVesselBean.getManufacturerBarcode();
+            String vesselType = parentVesselBean.getVesselType();
+
             // LabVessel may already exist if receipts are being backfilled
             LabVessel labVessel = mapBarcodeToVessel.get(barcode);
 
             if (parentVesselBean.getChildVesselBeans() == null || parentVesselBean.getChildVesselBeans().isEmpty()) {
-                // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.
-                BarcodedTube barcodedTube = labVessel == null ? new BarcodedTube(barcode) :
+                BarcodedTube.BarcodedTubeType tubeType = BarcodedTube.BarcodedTubeType.getByAutomationName(vesselType);
+                if (tubeType == null) {
+                    tubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+                }
+                BarcodedTube barcodedTube = labVessel == null ? new BarcodedTube(barcode, tubeType) :
                         (BarcodedTube) labVessel;
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
@@ -178,12 +183,13 @@ public class LabVesselFactory implements Serializable {
                 }
                 labVessels.add(barcodedTube);
             } else {
-                String vesselType = parentVesselBean.getVesselType().toLowerCase();
-                if (vesselType.contains("plate")) {
-                    // todo jmt map other geometries
+                if (vesselType.toLowerCase().contains("plate")) {
                     // todo jmt what if the plate already exists?
-                    StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(),
-                                                              StaticPlate.PlateType.Eppendorf96);
+                    StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(vesselType);
+                    if (plateType == null) {
+                        plateType = StaticPlate.PlateType.Eppendorf96;
+                    }
+                    StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), plateType);
                     labVessels.add(staticPlate);
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
                         VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
@@ -198,12 +204,16 @@ public class LabVesselFactory implements Serializable {
                     staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator,
                                                              "BSP"));
                     disambiguator++;
-                } else if (vesselType.contains("rack") || vesselType.contains("box")) {
+                } else if (vesselType.toLowerCase().contains("rack") || vesselType.toLowerCase().contains("box")
+                           || RackOfTubes.RackType.getByName(vesselType) != null) {
                     RackOfTubes rackOfTubes =
                             (RackOfTubes) mapBarcodeToVessel.get(parentVesselBean.getManufacturerBarcode());
                     if (rackOfTubes == null) {
-                        rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(),
-                                                      RackOfTubes.RackType.Matrix96);
+                        RackOfTubes.RackType rackType = RackOfTubes.RackType.getByName(vesselType);
+                        if (rackType == null) {
+                            rackType = RackOfTubes.RackType.Matrix96;
+                        }
+                        rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(), rackType);
                     }
                     Map<VesselPosition, BarcodedTube> mapPositionToTube = new HashMap<>();
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
@@ -214,7 +224,8 @@ public class LabVesselFactory implements Serializable {
                         BarcodedTube barcodedTube = (BarcodedTube) mapBarcodeToVessel.get(
                                 childVesselBean.getManufacturerBarcode());
                         if (barcodedTube == null) {
-                            barcodedTube = new BarcodedTube(childVesselBean.getManufacturerBarcode());
+                            barcodedTube = new BarcodedTube(childVesselBean.getManufacturerBarcode(),
+                                    childVesselBean.getVesselType());
                         }
                         barcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                                                     childVesselBean.getSampleId()));
@@ -224,8 +235,12 @@ public class LabVesselFactory implements Serializable {
                         mapPositionToTube.put(vesselPosition, barcodedTube);
                         labVessels.add(barcodedTube);
                     }
-                    TubeFormation tubeFormation = new TubeFormation(mapPositionToTube,
-                                                                    RackOfTubes.RackType.Matrix96);
+                    RackOfTubes.RackType tubeFormationType = RackOfTubes.RackType.getByName(vesselType);
+                    if (tubeFormationType == null) {
+                        tubeFormationType = RackOfTubes.RackType.Matrix96;
+                    }
+                    TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, tubeFormationType);
+
                     TubeFormation existingTubeFormation =
                             (TubeFormation) mapBarcodeToVessel.get(tubeFormation.getLabel());
                     if (existingTubeFormation != null) {

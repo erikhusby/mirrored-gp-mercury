@@ -12,6 +12,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationAlignment;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationContam;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -22,7 +29,8 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
@@ -32,14 +40,22 @@ public class HibernateMetadataTest extends ContainerTest {
     private EntityManager metricsEntityManager;
 
     /** Add exceptions to this list; the goal is to keep this list empty. */
-    private static final String[] ignoredEntities = new String[0];
+    private static final String[] ignoredEntities = {
+            LevelOfDetection.class.getName()
+    };
 
     /**
      * Entities that should be checked against the metrics persistence unit and, therefore, should not be checked
      * against the mercury persistence unit.
      */
-    private static final String[] metricsEntities =
-            {"org.broadinstitute.gpinformatics.infrastructure.metrics.Aggregation"};
+    private static final String[] metricsEntities = {
+            Aggregation.class.getName(),
+            AggregationAlignment.class.getName(),
+            AggregationContam.class.getName(),
+            AggregationHybridSelection.class.getName(),
+            AggregationReadGroup.class.getName(),
+            AggregationWgs.class.getName(),
+    };
 
     /**
      * Method to allow user to ignore certain classes/entities in the test methods.
@@ -63,13 +79,13 @@ public class HibernateMetadataTest extends ContainerTest {
     /**
      * This test iterates through all JPA'd classes validates them
      */
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings in the mercury_pu")
     public void testMercuryPersistenceUnit() throws Exception {
         Session session = entityManager.unwrap(Session.class);
         testPersistenceUnit(session, metricsEntities, null);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings in the metrics_pu.")
     public void testMetricsPersistenceUnit() throws Exception {
         Session session = metricsEntityManager.unwrap(Session.class);
         testPersistenceUnit(session, null, metricsEntities);

@@ -66,6 +66,13 @@ public class CherryPickTransfer extends VesselTransfer {
         return sourcePosition;
     }
 
+    /**
+     * For fixups only.
+     */
+    void setSourcePosition(VesselPosition sourcePosition) {
+        this.sourcePosition = sourcePosition;
+    }
+
     public VesselContainer<?> getTargetVesselContainer() {
         return targetVessel.getContainerRole();
     }
@@ -83,7 +90,7 @@ public class CherryPickTransfer extends VesselTransfer {
      * @return concatenation of key fields
      */
     public String getKey() {
-        return sourceVessel.getLabel() + "|" + sourcePosition + "|" + targetVessel.getLabel() + "|" +
-                targetPosition;
+        return getVesselTransferId() + "|" + sourceVessel.getLabel() + "|" + sourcePosition + "|" +
+               targetVessel.getLabel() + "|" + targetPosition;
     }
 }

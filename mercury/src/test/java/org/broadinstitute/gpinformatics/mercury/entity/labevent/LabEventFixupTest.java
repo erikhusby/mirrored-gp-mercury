@@ -3,12 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
@@ -30,6 +34,9 @@ public class LabEventFixupTest extends Arquillian {
 
     @Inject
     private GenericReagentDao reagentDao;
+
+    @Inject
+    private BarcodedTubeDao barcodedTubeDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -278,6 +285,13 @@ public class LabEventFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupFct18386() {
+        // Delete BSP UI daughter plate transfer, which duplicates earlier deck automation transfer.
+        LabEvent labEvent = labEventDao.findById(LabEvent.class, 524316L);
+        labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = false)
     public void fixupFct18237() {
         LabEvent labEvent = labEventDao.findById(LabEvent.class, 516658L);
         labEvent.getReagents().clear();
@@ -285,6 +299,33 @@ public class LabEventFixupTest extends Arquillian {
         labEvent = labEventDao.findById(LabEvent.class, 516659L);
         labEvent.getReagents().clear();
         labEventDao.remove(labEvent);
+    }
+
+    @Test(enabled = true)
+    public void fixupPo743 () {
+        BarcodedTube tube = barcodedTubeDao.findByBarcode("0168281750");
+        Assert.assertEquals(tube.getTransfersTo().size(), 1);
+        LabEvent labEvent = tube.getTransfersTo().iterator().next();
+        for (CherryPickTransfer cherryPickTransfer : labEvent.getCherryPickTransfers()) {
+            switch (cherryPickTransfer.getTargetPosition()) {
+                case A02:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.C01);
+                    break;
+                case C01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.A01);
+                    break;
+                case B02:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.C01);
+                    break;
+                case G01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.B01);
+                    break;
+                case H01:
+                    cherryPickTransfer.setSourcePosition(VesselPosition.B01);
+                    break;
+            }
+        }
+        barcodedTubeDao.flush();
     }
 
 }

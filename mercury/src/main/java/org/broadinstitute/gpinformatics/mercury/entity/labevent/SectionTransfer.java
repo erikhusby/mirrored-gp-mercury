@@ -87,7 +87,7 @@ public class SectionTransfer extends VesselTransfer {
      * @return concatenation of critical fields
      */
     public String getKey() {
-        return sourceVessel.getLabel() + "|" + sourceSection.getSectionName() + "|" + targetVessel.getLabel() + "|" +
-                targetSection.getSectionName();
+        return getVesselTransferId() + "|" + sourceVessel.getLabel() + "|" + sourceSection.getSectionName() + "|" +
+               targetVessel.getLabel() + "|" + targetSection.getSectionName();
     }
 }
