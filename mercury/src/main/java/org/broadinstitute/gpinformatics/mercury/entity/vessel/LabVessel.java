@@ -56,6 +56,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1799,19 +1800,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     @Transient
-    private List<SampleInstanceV2> sampleInstances;
+    private Set<SampleInstanceV2> sampleInstances;
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new ArrayList<>();
-            if (getContainerRole() != null) {
-                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
-            }
-            List<VesselEvent> ancestorEvents = getAncestors();
-            if (ancestorEvents.isEmpty()) {
-                sampleInstances.add(new SampleInstanceV2(this));
+            sampleInstances = new LinkedHashSet<>();
+            if (getContainerRole() == null) {
+                List<VesselEvent> ancestorEvents = getAncestors();
+                if (ancestorEvents.isEmpty()) {
+                    sampleInstances.add(new SampleInstanceV2(this));
+                } else {
+                    sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                }
             } else {
-                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
             }
         }
         return sampleInstances;
@@ -1822,6 +1824,10 @@ public abstract class LabVessel implements Serializable {
      */
     public void clearCaches() {
         sampleInstances = null;
+        VesselContainer<?> containerRole = getContainerRole();
+        if (containerRole != null) {
+            containerRole.clearCaches();
+        }
     }
 
 }

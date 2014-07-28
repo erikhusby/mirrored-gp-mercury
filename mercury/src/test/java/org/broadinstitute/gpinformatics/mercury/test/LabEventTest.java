@@ -42,6 +42,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowValidator;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkDetail;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.ReworkReason;
@@ -713,6 +714,7 @@ public class LabEventTest extends BaseEventTest {
 
             Map<String, BarcodedTube> mapBarcodeToTube2 = createInitialRack(productOrder2, "R2_");
             BarcodedTube reworkTube = mapBarcodeToTube1.values().iterator().next();
+            reworkTube.clearCaches();
             mapBarcodeToTube2.put(reworkTube.getLabel(), reworkTube);
             LabBatch workflowBatch2 = new LabBatch("Exome Express Batch 2",
                                                    new HashSet<LabVessel>(mapBarcodeToTube2.values()),
@@ -720,7 +722,7 @@ public class LabEventTest extends BaseEventTest {
             workflowBatch2.setCreatedOn(EX_EX_IN_MERCURY_CALENDAR.getTime());
             workflowBatch2.setWorkflow(Workflow.AGILENT_EXOME_EXPRESS);
 
-            bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
+            Bucket bucket = bucketBatchAndDrain(mapBarcodeToTube2, productOrder2, workflowBatch2, "2");
             PicoPlatingEntityBuilder picoPlatingEntityBuilder2 = runPicoPlatingProcess(mapBarcodeToTube2,
                                                                                        String.valueOf(
                                                                                                runDate.getTime()), "2",
@@ -754,12 +756,23 @@ public class LabEventTest extends BaseEventTest {
                                               libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                                               libraryConstructionEntityBuilder.getPondRegTubeBarcodes(), "1");
             QtpEntityBuilder qtpEntityBuilder = runQtpProcess(hybridSelectionEntityBuilder.getNormCatchRack(),
-                                                              hybridSelectionEntityBuilder.getNormCatchBarcodes(),
-                                                              hybridSelectionEntityBuilder
-                                                                      .getMapBarcodeToNormCatchTubes(), "1");
+                    hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                    hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(), "1");
+            // Rework in pooling bucket should not change LCSET in pipeline
+            BarcodedTube catchTube = hybridSelectionEntityBuilder.getNormCatchRack().getContainerRole().
+                    getVesselAtPosition(VesselPosition.A01);
+            catchTube.clearCaches();
+            BucketEntry bucketEntry = new BucketEntry(catchTube, productOrder1, bucket,
+                    BucketEntry.BucketEntryType.PDO_ENTRY);
+            LabBatch poolReworkBatch = new LabBatch("LCSET-pool", Collections.<LabVessel>singleton(catchTube),
+                    LabBatch.LabBatchType.WORKFLOW);
+            bucketEntry.setLabBatch(poolReworkBatch);
+            catchTube.addBucketEntry(bucketEntry);
             HiSeq2500FlowcellEntityBuilder hiSeq2500FlowcellEntityBuilder = runHiSeq2500FlowcellProcess(
                     qtpEntityBuilder.getDenatureRack(), "1" + "ADXX", "squidDesignationName",
                     ProductionFlowcellPath.DENATURE_TO_FLOWCELL, null, Workflow.AGILENT_EXOME_EXPRESS);
+
+            runTransferVisualizer(mapBarcodeToTube1.values().iterator().next());
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(IlluminaSequencingRun.RUN_FORMAT_PATTERN);
             File runPath = File.createTempFile("tempRun" + dateFormat.format(runDate), ".txt");
@@ -861,6 +874,7 @@ public class LabEventTest extends BaseEventTest {
             // Add sample from LCSET 1 TO LCSET 2 at shearing bucket
             final BarcodedTube reworkTube =
                     picoPlatingEntityBuilder1.getNormBarcodeToTubeMap().values().iterator().next();
+            reworkTube.clearCaches();
 //            workflowBatch2.addLabVessel(reworkTube);
             Map<String, BarcodedTube> mapBarcodeToTubesPlusRework =
                     new LinkedHashMap<>(picoPlatingEntityBuilder2.getNormBarcodeToTubeMap());

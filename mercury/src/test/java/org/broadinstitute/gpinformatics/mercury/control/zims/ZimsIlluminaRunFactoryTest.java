@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -189,9 +190,8 @@ public class ZimsIlluminaRunFactoryTest {
                 }
                 LabBatch batch = new LabBatch(batchName, Collections.<LabVessel>singleton(testTube), testLabBatchType);
 
-                SampleInstance instance = new SampleInstance(mercurySample);
+                SampleInstanceV2 instance = new SampleInstanceV2(testTube);
                 instance.addReagent(reagents.get(sampleIdx));
-                instance.getAllLabBatches().add(batch);
 
                 if (testLabBatchType == LabBatch.LabBatchType.WORKFLOW) {
                     JiraTicket lcSetTicket = new JiraTicket(mockJiraService, batchName);
