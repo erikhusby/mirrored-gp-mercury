@@ -102,8 +102,6 @@ public class ConfigurableList {
      *
      * @param columnSetName which preference to use
      * @param columnSetType type of column set
-     * @param bspDomainUser to retrieve preferences, and evaluate visibility expression
-     * @param group         to retrieve preferences, and evaluate visibility expression
      * @param columnSets    holds column sets
      * @return list of column names
      */
@@ -168,7 +166,6 @@ public class ConfigurableList {
      * @param columnTabulations The tabulations used.
      * @param sortColumnIndex The column to sort.
      * @param sortDirection Ascending or descending.
-     * @param admin Is this admin?
      * @param columnEntity The field id.
      * @param multiValueDelimiter The text to use as the delimiter between values in a multi-valued field.
      * @param multiValueAddTrailingDelimiter Whether to include a trailing delimiter in multi-valued fields.
@@ -202,11 +199,10 @@ public class ConfigurableList {
      *
      * @param columnTabulations The tabulations used.
      * @param sortColumnIndexes The columns to sort by.
-     * @param admin Is this admin?
      * @param columnEntity The field id.
      */
     public ConfigurableList(List<ColumnTabulation> columnTabulations, List<SortColumn> sortColumnIndexes,
-            /*Boolean admin, */ @Nonnull ColumnEntity columnEntity) {
+            @Nonnull ColumnEntity columnEntity) {
 
         this(columnTabulations, null, null, /*admin, */columnEntity);
         if (sortColumnIndexes != null && !sortColumnIndexes.isEmpty()) {
@@ -666,7 +662,7 @@ public class ConfigurableList {
         for (ResultRow row : resultList.getResultRows()) {
             if (rowNum % 500 == 0) {
                 for (Header header : resultList.getHeaders()) {
-                    printWriter.println("<th>" + header.getViewHeader() + "</td>");
+                    printWriter.println("<th>" + header.getViewHeader() + "</th>");
                 }
             }
             printWriter.println("<tr>");
