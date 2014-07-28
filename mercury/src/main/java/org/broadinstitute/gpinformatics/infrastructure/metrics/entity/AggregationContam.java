@@ -28,14 +28,21 @@ public class AggregationContam implements Serializable {
     @Column(name = "PCT_CONTAMINATION")
     private Double pctContamination;
     @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
     private Aggregation aggregation;
+
+    public AggregationContam(Double pctContamination) {
+        this.pctContamination = pctContamination;
+    }
+
+    public AggregationContam() {
+    }
 
     public void setPctContamination(Double pctContamination) {
         this.pctContamination = pctContamination;
     }
 
-    public int getAggregationId() {
+    public Integer getAggregationId() {
         return aggregationId;
     }
 
@@ -58,25 +65,18 @@ public class AggregationContam implements Serializable {
 
         AggregationContam that = (AggregationContam) o;
 
-        if (aggregation != null ? !aggregation.equals(that.aggregation) : that.aggregation != null) {
-            return false;
-        }
         if (aggregationId != null ? !aggregationId.equals(that.aggregationId) : that.aggregationId != null) {
             return false;
         }
-        if (pctContamination != null ? !pctContamination.equals(that.pctContamination) :
-                that.pctContamination != null) {
-            return false;
-        }
+        return !(pctContamination != null ? !pctContamination.equals(that.pctContamination) :
+                that.pctContamination != null);
 
-        return true;
     }
 
     @Override
     public int hashCode() {
         int result = aggregationId != null ? aggregationId.hashCode() : 0;
         result = 31 * result + (pctContamination != null ? pctContamination.hashCode() : 0);
-        result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
         return result;
     }
 }

@@ -282,7 +282,7 @@ public class LabEventResource {
         // todo jmt need to hide on-the-fly creation of plate wells
         String type = labVesselEntity.getType().name();
         if (labVesselEntity.getType() == LabVessel.ContainerType.STATIC_PLATE) {
-            type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
+            type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getAutomationName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {

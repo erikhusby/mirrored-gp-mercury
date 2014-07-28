@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 
+import javax.annotation.concurrent.Immutable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -21,14 +22,15 @@ import java.io.Serializable;
 
 @Entity
 @Table(name = "AGGREGATION_HYBRID_SELECTION", schema = "METRICS")
+@Immutable
 public class AggregationHybridSelection implements Serializable {
     @Id
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
-    private int aggregationId;
+    private Integer aggregationId;
     @Column(name = "PCT_TARGET_BASES_20X")
     private Double pctTargetBases20X;
     @OneToOne
-    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, updatable = false, insertable = false)
     private Aggregation aggregation;
 
     public AggregationHybridSelection(Double pctTargetBases20X) {
@@ -53,25 +55,18 @@ public class AggregationHybridSelection implements Serializable {
 
         AggregationHybridSelection that = (AggregationHybridSelection) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
-        if (aggregation != null ? !aggregation.equals(that.aggregation) : that.aggregation != null) {
-            return false;
-        }
-        if (pctTargetBases20X != null ? !pctTargetBases20X.equals(that.pctTargetBases20X) :
-                that.pctTargetBases20X != null) {
-            return false;
-        }
+        return !(pctTargetBases20X != null ? !pctTargetBases20X.equals(that.pctTargetBases20X) :
+                that.pctTargetBases20X != null);
 
-        return true;
     }
 
     @Override
     public int hashCode() {
         int result = aggregationId;
         result = 31 * result + (pctTargetBases20X != null ? pctTargetBases20X.hashCode() : 0);
-        result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
         return result;
     }
 }

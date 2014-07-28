@@ -14,52 +14,35 @@ package org.broadinstitute.gpinformatics.infrastructure.metrics.entity;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
-import java.math.BigInteger;
 
 @Embeddable
 public class AggregationReadGroupPK implements Serializable {
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
-    private int aggregationId;
+    private Integer aggregationId;
 
     @Column(name = "FLOWCELL_BARCODE", nullable = false, insertable = false, updatable = false)
     private String flowcellBarcode;
 
     @Column(name = "LANE", nullable = false, insertable = false, updatable = false)
-    private BigInteger lane;
+    private Integer lane;
 
     @Column(name = "LIBRARY_NAME", nullable = false, insertable = false, updatable = false)
     private String libraryName;
 
-    public int getAggregationId() {
+    public Integer getAggregationId() {
         return aggregationId;
-    }
-
-    public void setAggregationId(int aggregationId) {
-        this.aggregationId = aggregationId;
     }
 
     public String getFlowcellBarcode() {
         return flowcellBarcode;
     }
 
-    public void setFlowcellBarcode(String flowcellBarcode) {
-        this.flowcellBarcode = flowcellBarcode;
-    }
-
-    public BigInteger getLane() {
+    public Integer getLane() {
         return lane;
-    }
-
-    public void setLane(BigInteger lane) {
-        this.lane = lane;
     }
 
     public String getLibraryName() {
         return libraryName;
-    }
-
-    public void setLibraryName(String libraryName) {
-        this.libraryName = libraryName;
     }
 
     @Override
@@ -73,7 +56,7 @@ public class AggregationReadGroupPK implements Serializable {
 
         AggregationReadGroupPK that = (AggregationReadGroupPK) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
         if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
@@ -82,11 +65,8 @@ public class AggregationReadGroupPK implements Serializable {
         if (lane != null ? !lane.equals(that.lane) : that.lane != null) {
             return false;
         }
-        if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
-            return false;
-        }
+        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
 
-        return true;
     }
 
     @Override

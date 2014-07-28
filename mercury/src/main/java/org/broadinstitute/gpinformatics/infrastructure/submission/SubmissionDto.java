@@ -13,15 +13,11 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregation;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 
 public class SubmissionDto {
     private Collection<ProductOrder> productOrders;
@@ -95,16 +91,6 @@ public class SubmissionDto {
 
     public LevelOfDetection getFingerprintLOD() {
         return aggregation.getLevelOfDetection();
-    }
-
-    public List<String> getLanes() {
-        List<String> result = new ArrayList<>();
-        for (AggregationReadGroup aggregationReadGroup : aggregation.getAggregationReadGroups()) {
-            for (PicardAnalysis picardAnalysis : aggregationReadGroup.getPicardAnalysis()) {
-                result.add(picardAnalysis.getLane());
-            }
-        }
-        return result;
     }
 
     public String getResearchProject() {

@@ -17,68 +17,25 @@ import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.Aggregatio
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationHybridSelection;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationReadGroup;
 import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.AggregationWgs;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardAnalysis;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.PicardFingerprint;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 
-import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Date;
 
 public class AggregationTestFactory {
-    @SuppressWarnings("EmptyCatchBlock")
     public static Aggregation buildAggregation(String project, String sample, Double contamination,
                                                LevelOfDetection fingerprintLod, String dataType,
                                                Double pctTargetBases20X, Long totalReadsAlignedInPairs,
                                                Double meanCoverageWgs) {
-        Aggregation aggregation = new Aggregation();
-        aggregation.setSample(sample);
-        aggregation.setProject(project);
-        aggregation.setDataType(dataType);
-        AggregationContam aggregationContam = new AggregationContam();
+
+        AggregationContam aggregationContam = new AggregationContam(contamination);
         AggregationHybridSelection aggregationHybridSelection = new AggregationHybridSelection(pctTargetBases20X);
-        aggregation.setAggregationHybridSelection(aggregationHybridSelection);
         AggregationAlignment aggregationAlignment = new AggregationAlignment(totalReadsAlignedInPairs, "PAIR");
-        aggregation.setAggregationAlignments(Arrays.asList(aggregationAlignment));
-        aggregationContam.setPctContamination(contamination);
-        aggregation.setAggregationContam(aggregationContam);
-        aggregation.setReadGroupCount(2);
         AggregationWgs aggregationWgs=new AggregationWgs(meanCoverageWgs);
-        aggregation.setAggregationWgs(aggregationWgs);
-        Date createdDate;
+        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup(null, 2, null);
+        Integer readGroupCount = 2;
 
-        try {
-            createdDate = DateUtils.parseDate("01/01/2014");
-            aggregation.setWorkflowEndDate(createdDate);
-        } catch (ParseException e) {
-
-        }
-        AggregationReadGroup aggregationReadGroup = new AggregationReadGroup();
-
-        PicardFingerprint picardFingerprint1 = new PicardFingerprint();
-        picardFingerprint1.setLodExpectedSample(fingerprintLod.getMax());
-        PicardAnalysis picardAnalysis1 = new PicardAnalysis();
-        picardAnalysis1.setPicardFingerprint(picardFingerprint1);
-        picardAnalysis1.setLane("1");
-
-        aggregationReadGroup.getPicardAnalysis().add(picardAnalysis1);
-
-
-        PicardFingerprint picardFingerprint2 = new PicardFingerprint();
-        picardFingerprint2.setLodExpectedSample(fingerprintLod.getMin());
-        PicardAnalysis picardAnalysis2 = new PicardAnalysis();
-        picardAnalysis2.setPicardFingerprint(picardFingerprint2);
-        picardAnalysis2.setLane("2");
-        aggregationReadGroup.getPicardAnalysis().add(picardAnalysis2);
-        aggregationReadGroup.setLane(2);
-        aggregation.setAggregationReadGroups(Arrays.asList(aggregationReadGroup));
-        return aggregation;
-    }
-
-    public static Aggregation buildAggregation(String dataType, Double pctTargetBases20X,
-                                               Long totalReadsAlignedInPairs,
-                                               Double meanCoverageWgs) {
-        return buildAggregation(null, null, null, new LevelOfDetection(1.2, 2.2), dataType, pctTargetBases20X,
-                totalReadsAlignedInPairs, meanCoverageWgs);
+        return new Aggregation(project, sample, null, null, readGroupCount, dataType,
+                Arrays.asList(aggregationAlignment), aggregationContam, aggregationHybridSelection,
+                Arrays.asList(aggregationReadGroup), aggregationWgs, fingerprintLod);
     }
 }

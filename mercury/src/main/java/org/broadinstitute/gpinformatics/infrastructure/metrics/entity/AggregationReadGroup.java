@@ -17,10 +17,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "AGGREGATION_READ_GROUP", schema = "METRICS")
@@ -29,7 +26,7 @@ public class AggregationReadGroup implements Serializable {
     private AggregationReadGroupPK aggregationReadGroupPK;
 
     @Column(name = "AGGREGATION_ID", nullable = false, insertable = false, updatable = false)
-    private int aggregationId;
+    private Integer aggregationId;
 
     @Column(name = "FLOWCELL_BARCODE", nullable = false, insertable = false, updatable = false)
     private String flowcellBarcode;
@@ -40,7 +37,6 @@ public class AggregationReadGroup implements Serializable {
     @Column(name = "LIBRARY_NAME", nullable = false, insertable = false, updatable = false)
     private String libraryName;
 
-
     @ManyToOne
     @JoinColumn(name = "AGGREGATION_ID", referencedColumnName = "ID", nullable = false, insertable = false,
             updatable = false)
@@ -49,24 +45,10 @@ public class AggregationReadGroup implements Serializable {
     public AggregationReadGroup() {
     }
 
-    public AggregationReadGroup(int aggregationId, String flowcellBarcode,
-                                long lane, String libraryName, List<PicardAnalysis> picardAnalysis) {
-        this.aggregationId = aggregationId;
+    public AggregationReadGroup(String flowcellBarcode, long lane, String libraryName) {
         this.flowcellBarcode = flowcellBarcode;
         this.lane = lane;
         this.libraryName = libraryName;
-        this.picardAnalysis = picardAnalysis;
-    }
-
-    @Transient
-    public List<PicardAnalysis> picardAnalysis=new ArrayList<>();
-
-    public List<PicardAnalysis> getPicardAnalysis() {
-        return picardAnalysis;
-    }
-
-    public void setPicardAnalysis(List<PicardAnalysis> picardAnalysis) {
-        this.picardAnalysis = picardAnalysis;
     }
 
     public String getFlowcellBarcode() {
@@ -85,10 +67,6 @@ public class AggregationReadGroup implements Serializable {
         return aggregation;
     }
 
-    public void setLane(long lane) {
-        this.lane = lane;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -100,13 +78,10 @@ public class AggregationReadGroup implements Serializable {
 
         AggregationReadGroup that = (AggregationReadGroup) o;
 
-        if (aggregationId != that.aggregationId) {
+        if (!aggregationId.equals(that.aggregationId)) {
             return false;
         }
         if (lane != that.lane) {
-            return false;
-        }
-        if (aggregation != null ? !aggregation.equals(that.aggregation) : that.aggregation != null) {
             return false;
         }
         if (aggregationReadGroupPK != null ? !aggregationReadGroupPK.equals(that.aggregationReadGroupPK) :
@@ -116,14 +91,8 @@ public class AggregationReadGroup implements Serializable {
         if (flowcellBarcode != null ? !flowcellBarcode.equals(that.flowcellBarcode) : that.flowcellBarcode != null) {
             return false;
         }
-        if (libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null) {
-            return false;
-        }
-        if (picardAnalysis != null ? !picardAnalysis.equals(that.picardAnalysis) : that.picardAnalysis != null) {
-            return false;
-        }
+        return !(libraryName != null ? !libraryName.equals(that.libraryName) : that.libraryName != null);
 
-        return true;
     }
 
     @Override
@@ -133,8 +102,6 @@ public class AggregationReadGroup implements Serializable {
         result = 31 * result + (flowcellBarcode != null ? flowcellBarcode.hashCode() : 0);
         result = 31 * result + (int) (lane ^ (lane >>> 32));
         result = 31 * result + (libraryName != null ? libraryName.hashCode() : 0);
-        result = 31 * result + (aggregation != null ? aggregation.hashCode() : 0);
-        result = 31 * result + (picardAnalysis != null ? picardAnalysis.hashCode() : 0);
         return result;
     }
 }
