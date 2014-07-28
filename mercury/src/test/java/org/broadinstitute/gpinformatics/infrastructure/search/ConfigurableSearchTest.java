@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.preference.Preference
 import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
@@ -53,7 +54,7 @@ public class ConfigurableSearchTest extends ContainerTest {
         Map<String,String> newSearchLevels = new HashMap<>();
         Map<String,String> searchInstanceNames = new HashMap<>();
         try {
-            searchInstanceEjb.fetchInstances( SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances(ColumnEntity.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -68,7 +69,7 @@ public class ConfigurableSearchTest extends ContainerTest {
         searchInstanceNames.clear();
         newSearchLevels.clear();
         try {
-            searchInstanceEjb.fetchInstances( SearchEntityType.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances( ColumnEntity.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
