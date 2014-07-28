@@ -54,9 +54,11 @@ public class SubmissionStatusDetails implements Serializable {
      * TODO scottmat fill in javadoc!!!
      */
     public static enum Status {
-        INPROGRESS("InProgress"),
+        IN_TRANSIT("InTransit"),
         SUBMITTED("Submitted"),
-        FAILURE("Failure");
+        FAILURE("Failure"),
+        READY_FOR_SUBMISSION("ReadyForSubmission"),
+        PROCESSING("Processing");
 
         Status(String description) {
             this.description = description;

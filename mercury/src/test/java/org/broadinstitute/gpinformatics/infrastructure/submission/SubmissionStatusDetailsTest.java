@@ -24,10 +24,10 @@ public class SubmissionStatusDetailsTest {
 
         Assert.assertEquals(testStatus.getUuid(), testUuid);
 
-        testStatus.setStatus("InProgress");
+        testStatus.setStatus("InTransit");
 
         Assert.assertEquals(testStatus.getStatus(),
-                SubmissionStatusDetails.Status.INPROGRESS.getDescription());
+                SubmissionStatusDetails.Status.IN_TRANSIT.getDescription());
 
         testStatus.setErrors(testError1, testError2);
 
