@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
@@ -30,7 +31,6 @@ import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearch
 import org.broadinstitute.gpinformatics.infrastructure.search.ConfigurableSearchDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.search.PaginationDao;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchDefinitionFactory;
-import org.broadinstitute.gpinformatics.infrastructure.search.SearchEntityType;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstance;
 import org.broadinstitute.gpinformatics.infrastructure.search.SearchInstanceEjb;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -175,7 +175,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     /**
      * Which entity we're searching on (LabEvent, LabVessel as of 07/22/2014)
      */
-    private SearchEntityType entityType;
+    private ColumnEntity entityType;
 
     // Dependencies
     @Inject
@@ -617,8 +617,8 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
 
     public void setEntityName( String entityName ) {
         entityType = null;
-        for( SearchEntityType type : SearchEntityType.values() ) {
-            if( type.getFormValue().equals(entityName) ) entityType = type;
+        for( ColumnEntity type : entityType.values() ) {
+            if( type.getEntityName().equals(entityName) ) entityType = type;
         }
     }
 

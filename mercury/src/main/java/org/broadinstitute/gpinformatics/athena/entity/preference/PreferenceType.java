@@ -15,14 +15,6 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
 public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
-    // Global vessel column sets
-    // User vessel column sets
-    // Global vessel search instances
-    // User vessel search instances
-    // Global event column sets
-    // User event column sets
-    // Global event search instances
-    // User event search instances
     GLOBAL_LAB_VESSEL_SEARCH_INSTANCES("Global Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_VESSEL_COLUMN_SETS("Global Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
