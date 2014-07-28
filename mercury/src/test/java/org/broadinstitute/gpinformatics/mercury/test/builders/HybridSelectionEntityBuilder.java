@@ -174,6 +174,7 @@ public class HybridSelectionEntityBuilder {
         LabEvent baitAdditionEntity = labEventFactory.buildFromBettaLims(
                 hybridSelectionJaxbBuilder.getBaitAdditionJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(baitAdditionEntity);
+        hybridizationPlate.clearCaches();
 
         // BeadAddition
         LabEventTest.validateWorkflow("BeadAddition", hybridizationPlate);

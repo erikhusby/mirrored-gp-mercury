@@ -720,4 +720,16 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="thompson" id="GPLIM-2908-1">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL_CONTAINERS" indexName="IX_LVC_CONTAINERS">
+            <column name="CONTAINERS"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="thompson" id="GPLIM-2908-2">
+        <createIndex schemaName="mercury" tableName="LAB_VESSEL" indexName="IX_LV_FLOWCELL">
+            <column name="FLOWCELL"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

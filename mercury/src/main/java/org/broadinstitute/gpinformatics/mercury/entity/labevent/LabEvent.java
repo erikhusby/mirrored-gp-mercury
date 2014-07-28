@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
@@ -433,39 +433,15 @@ todo jmt adder methods
     }
 
     private Set<LabBatch> computeLcSetsForCherryPickTransfers() {
-        Set<LabBatch> computedLcSets = new HashSet<>();
         Map<LabBatch, Integer> mapLabBatchToCount = new HashMap<>();
         int numVesselsWithBucketEntries = 0;
         for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
             LabVessel sourceVessel = cherryPickTransfer.getSourceVesselContainer()
                     .getVesselAtPosition(cherryPickTransfer.getSourcePosition());
-            if (sourceVessel != null) {
-                Set<BucketEntry> bucketEntries = sourceVessel.getBucketEntries();
-                if (!bucketEntries.isEmpty()) {
-                    numVesselsWithBucketEntries++;
-                }
-                for (BucketEntry bucketEntry : bucketEntries) {
-                    if (bucketEntry.getLabBatch() != null) {
-                        LabBatch labBatch = bucketEntry.getLabBatch();
-                        if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                            Integer count = mapLabBatchToCount.get(labBatch);
-                            if (count == null) {
-                                count = 1;
-                            } else {
-                                count = count + 1;
-                            }
-                            mapLabBatchToCount.put(labBatch, count);
-                        }
-                    }
-                }
-            }
+            numVesselsWithBucketEntries = VesselContainer.collateLcSets(mapLabBatchToCount, numVesselsWithBucketEntries,
+                    sourceVessel);
         }
-        for (Map.Entry<LabBatch, Integer> labBatchIntegerEntry : mapLabBatchToCount.entrySet()) {
-            if (labBatchIntegerEntry.getValue() == numVesselsWithBucketEntries) {
-                computedLcSets.add(labBatchIntegerEntry.getKey());
-            }
-        }
-        return computedLcSets;
+        return VesselContainer.computeLcSets(mapLabBatchToCount, numVesselsWithBucketEntries);
     }
 
     /**
