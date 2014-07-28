@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.Preference;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceDefinition;
 import org.broadinstitute.gpinformatics.athena.entity.preference.PreferenceType;
 import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceList;
+import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.ejb.Stateful;
@@ -57,7 +58,7 @@ public class SearchInstanceEjb {
     /**
      * Map each search entity type to its respective GLOBAL/USER preference types
      */
-    private static final Map<SearchEntityType,PreferenceType[]> mapEntityTypeToPrefType = new LinkedHashMap<>();
+    private static final Map<ColumnEntity,PreferenceType[]> mapEntityTypeToPrefType = new LinkedHashMap<>();
 
     /**
      * Method to retrieve preference from the database, has a different implementation for each type
@@ -74,10 +75,10 @@ public class SearchInstanceEjb {
     }
 
     static {
-        mapEntityTypeToPrefType.put(SearchEntityType.LAB_VESSEL,
+        mapEntityTypeToPrefType.put(ColumnEntity.LAB_VESSEL,
                 new PreferenceType[]{PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES,
                         PreferenceType.USER_LAB_VESSEL_SEARCH_INSTANCES});
-        mapEntityTypeToPrefType.put(SearchEntityType.LAB_EVENT,
+        mapEntityTypeToPrefType.put(ColumnEntity.LAB_EVENT,
                 new PreferenceType[]{PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES,
                         PreferenceType.USER_LAB_EVENT_SEARCH_INSTANCES});
     }
@@ -201,7 +202,7 @@ public class SearchInstanceEjb {
      *                            to pipe delimited values
      * @param newSearchLevels output, map of scopes (GLOBAL/USER) to the preference name for  each
      */
-    public void fetchInstances( SearchEntityType entityType,
+    public void fetchInstances( ColumnEntity entityType,
             Map<PreferenceType, Preference> mapTypeToPreference,
             Map<String,String> searchInstanceNames, Map<String,String> newSearchLevels) throws Exception {
 
