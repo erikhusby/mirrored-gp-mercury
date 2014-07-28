@@ -21,20 +21,20 @@ public enum ColumnEntity {
     });
 
     private IdGetter idGetter;
-    private String entityName, formValue;
+    private String entityName, displayName;
 
-    ColumnEntity(String entityName, String formValue, IdGetter idGetter) {
+    ColumnEntity(String entityName, String displayName, IdGetter idGetter) {
         this.entityName = entityName;
         this.idGetter = idGetter;
-        this.formValue = formValue;
+        this.displayName = displayName;
     }
 
     public interface IdGetter {
         String getId(Object entity);
     }
 
-    public String getFormValue(){
-        return formValue;
+    public String getDisplayName(){
+        return displayName;
     }
 
     public String getEntityName(){

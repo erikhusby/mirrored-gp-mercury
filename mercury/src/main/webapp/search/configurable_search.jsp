@@ -45,7 +45,7 @@
     </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
-<h4>Search For ${actionBean.entityName}</h4>
+<h4>Search For ${actionBean.entityType.displayName}</h4>
 <c:choose>
     <c:when test="${actionBean.readOnly}">
         <h1>${actionBean.selectedSearchName}</h1>

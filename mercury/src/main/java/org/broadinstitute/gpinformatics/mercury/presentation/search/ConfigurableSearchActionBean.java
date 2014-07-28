@@ -219,7 +219,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         searchInstanceNames = new HashMap<>();
         newSearchLevels = new HashMap<>();
         try {
-            configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityType.getFormValue());
+            configurableSearchDef = new SearchDefinitionFactory().getForEntity(entityType.getEntityName());
 
             searchInstanceEjb.fetchInstances( entityType, preferenceMap,  searchInstanceNames, newSearchLevels );
         } catch (Exception e) {
@@ -612,7 +612,7 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
     }
 
     public String getEntityName() {
-        return ( entityType == null ? null : entityType.getFormValue() );
+        return ( entityType == null ? null : entityType.getEntityName() );
     }
 
     public void setEntityName( String entityName ) {
@@ -620,6 +620,10 @@ public class ConfigurableSearchActionBean extends CoreActionBean {
         for( ColumnEntity type : entityType.values() ) {
             if( type.getEntityName().equals(entityName) ) entityType = type;
         }
+    }
+
+    public ColumnEntity getEntityType(){
+        return entityType;
     }
 
     public Map<String,String> getNewSearchLevels() {
