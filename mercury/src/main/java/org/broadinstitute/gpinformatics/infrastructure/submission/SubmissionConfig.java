@@ -73,11 +73,11 @@ public class SubmissionConfig extends AbstractConfig implements LoginAndPassword
     public static String getHttpScheme() {
             return "https://";
         }
-    public String getUrl(String suffix) {
-        return getWSUrl(suffix);
+    public String getUrl() {
+        return getWSUrl();
     }
-    public String getWSUrl(String suffix) {
-        return String.format("%s%s:%d/%s", getHttpScheme(),getHost(), getPort(), suffix);
+    public String getWSUrl() {
+        return String.format("%s%s:%d/", getHttpScheme(),getHost(), getPort());
     }
 
     /**
