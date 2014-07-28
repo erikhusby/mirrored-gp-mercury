@@ -91,7 +91,9 @@ buttons to move columns from one to the other --%>
          * @param available multi-select of available columns
          * @param chosen multi-select of chosen columns
          */
-        syncChosenAvailable = function (available, chosen) {
+        syncChosenAvailable = function () {
+            var available = $j('#sourceColumnDefNames')[0];
+            var chosen = $j('#selectedColumnDefNames')[0];
             for (var i = 0; i < chosen.options.length; i++) {
                 var option = chosen.options[i];
                 for (var j = 0; j < available.options.length; j++) {
@@ -123,19 +125,19 @@ buttons to move columns from one to the other --%>
             }
         };
 
-        Event.observe(window, 'load', function () { syncChosenAvailable($j('#sourceColumnDefNames')[0], $j('#selectedColumnDefNames')[0]); });
+        $( document ).ready( syncChosenAvailable );
     </script>
     <br/>
     <!-- Allow user to choose individual result columns -->
     <table class="resultColumns">
         <tr>
-            <td>Available</td>
+            <td><label>Available</label></td>
             <td>&nbsp;</td>
-            <td>Chosen</td>
+            <td><label>Chosen</label></td>
             <td>&nbsp;</td>
         </tr>
         <tr>
-            <td rowspan="2">
+            <td rowspan="2" style="padding-left: 5px">
                 <select name="sourceColumnDefNames" id="sourceColumnDefNames"
                         multiple="true" size="10">
                     <c:forEach items="${availableMapGroupToColumnNames}" var="entry">
@@ -154,7 +156,7 @@ buttons to move columns from one to the other --%>
                 </a>
 
             </td>
-            <td rowspan="2">
+            <td rowspan="2" style="padding-left: 5px">
                 <select name="searchInstance.predefinedViewColumns" id="selectedColumnDefNames"
                         multiple="true" size="10">
                     <c:if test="${not empty predefinedViewColumns}">
@@ -173,7 +175,7 @@ buttons to move columns from one to the other --%>
         </tr>
         <tr>
             <td valign="top">
-                <a href="javascript:removeColumns($j('#selectedColumnDefNames')[0], $('sourceColumnDefNames'));">
+                <a href="javascript:removeColumns($j('#selectedColumnDefNames')[0], $j('#sourceColumnDefNames')[0]);">
                     <img style="vertical-align:middle;" border="0" src="${ctxpath}/images/left.png" alt="Remove Column"
                          title="Remove Column"/>
                 </a>
@@ -185,8 +187,8 @@ buttons to move columns from one to the other --%>
                 </a>
             </td>
         </tr>
-        <tr>
-            <td>Filter: <input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
+        <tr style="padding-top: 4px">
+            <td colspan="2"><label>Filter: </label><input type="text" id="filterColumns" onkeyup="filterSelect($j('#sourceColumnDefNames')[0], this);">
             </td>
         </tr>
     </table>

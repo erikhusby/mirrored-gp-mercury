@@ -16,6 +16,7 @@ import org.hibernate.Criteria;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -276,7 +277,7 @@ public class ConfigurableListFactory {
             Integer sortColumnIndex, String dbSortPath,
             String sortDirection,
             String entityName) {
-//        initEvalContext(searchInstance, context);
+        searchInstance.setEvalContext(new HashMap<String, Object>());
 
         Criteria criteria = configurableSearchDao.buildCriteria(configurableSearchDef, searchInstance, dbSortPath,
                 sortDirection);

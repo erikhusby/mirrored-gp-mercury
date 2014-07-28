@@ -11,13 +11,13 @@
         <%-- Link to remove term--%>
         <c:choose>
             <c:when test="${not actionBean.readOnly and not searchValue.searchTerm.required}">
-                <a href="#" onclick="removeTerm(this);return false;"><img class="removeIcon"
+            <a href="#" onclick="removeTerm(this);return false;"><img class="removeIcon"
                                                                           src="${ctxpath}/images/error.png"
                                                                           alt="Remove term"/></a>
             </c:when>
             <c:otherwise>
                 <%-- Blank to keep the required terms lined up vertically --%>
-                <span class="removeIcon">&nbsp;</span>
+            <label><span class="removeIcon">&nbsp;</span></label>
             </c:otherwise>
         </c:choose>
         <%-- Term name for form submission --%>

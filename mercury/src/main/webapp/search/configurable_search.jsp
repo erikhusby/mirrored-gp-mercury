@@ -34,9 +34,18 @@
             }
         }
     </script>
+    <%-- Need to stomp some global layout settings:
+         label html5 tag in search terms consumes entire horizontal layout area (Chrome only?), remove padding
+         select element are padded in mercury.css resulting in bad vertical layout
+     --%>
+    <style>
+        label {display:inline; margin-left: 5px;}
+        input.displayTerm, input.termoperator, input.termvalue { margin: 3px; }
+
+    </style>
 </stripes:layout-component>
 <stripes:layout-component name="content">
-
+<h4>Search For ${actionBean.entityType.displayName}</h4>
 <c:choose>
     <c:when test="${actionBean.readOnly}">
         <h1>${actionBean.selectedSearchName}</h1>
@@ -49,8 +58,6 @@
     </c:otherwise>
 </c:choose>
 Move the mouse over the question marks to see details about each section.
-<stripes:errors/>
-<stripes:messages/>
 <%--@elvariable id="actionBean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.ConfigurableSearchActionBean"--%>
 <stripes:form action="/search/ConfigurableSearch.action" onsubmit="return validateAndSubmit(this)"
               id="searchForm">
@@ -69,24 +76,24 @@ Move the mouse over the question marks to see details about each section.
                 </legend>
                 <div style="display:none" id="savedSearchesDiv">
                     <p>
-                        Search Name:
+                        <label>Search Name:</label>
                         <stripes:select name="selectedSearchName">
-                            <stripes:options-collection collection="${actionBean.searchInstanceNames}"/>
+                            <stripes:options-collection collection="${actionBean.searchInstanceNames.entrySet()}" label="key" value="value"/>
                         </stripes:select>
-                        <stripes:submit name="fetchSearch" value="Load Search" onclick="this.wasClicked = true"/>
-                        <stripes:submit name="updateSearch" value="Update Search"/>
-                        <stripes:submit name="deleteSearch" value="Delete Search" onclick="this.wasClicked = true"/>
+                        <stripes:submit name="fetchSearch" value="Load Search" onclick="this.wasClicked = true" class="btn btn-primary" />
+                        <stripes:submit name="updateSearch" value="Update Search" class="btn btn-primary" />
+                        <stripes:submit name="deleteSearch" value="Delete Search" onclick="this.wasClicked = true" class="btn btn-primary" />
                     </p>
 
                     <p>
-                        New Search Level:
+                        <label>New Search Level:</label>
                         <stripes:select name="newSearchLevel" id="newSearchLevel">
-                            <stripes:options-collection collection="${actionBean.newSearchLevels}"/>
+                            <stripes:options-collection collection="${actionBean.newSearchLevels.entrySet()}" label="key" value="value" />
                         </stripes:select>
-                        New Search Name:
+                        <label>New Search Name:</label>
                         <stripes:text name="newSearchName" id="newSearchName"/>
                         <stripes:submit name="saveNewSearch" value="Save New Search"
-                                        onclick="return validateNewSearch();"/>
+                                        onclick="return validateNewSearch();" class="btn btn-primary" />
                     </p>
                 </div>
             </fieldset>
@@ -99,8 +106,8 @@ Move the mouse over the question marks to see details about each section.
         <c:if test="${not actionBean.readOnly}">
             <%-- Allow user to add top-level terms, and terms that are derived from
             constrained values (e.g. phenotype names) --%>
-            <p style="margin-left: 3px;">
-                Search terms:
+            <p class="control-group">
+                <label>Search terms:</label>
                 <stripes:select name="searchTermSelect" id="searchTermSelect">
                     <c:forEach items="${actionBean.configurableSearchDef.mapGroupSearchTerms}" var="entry">
                         <optgroup label="${entry.key}">
@@ -119,9 +126,9 @@ Move the mouse over the question marks to see details about each section.
                 <a href="#" id="addTerm" onclick="addTerm();return false;">Add Term</a>
                 <img id="addTermTooltip" src="${ctxpath}/images/help.png" alt="help">
             </p>
-            Filter: <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
+            <label>Filter: </label> <input type="text" id="filterSearchTerms" onkeyup="filterSelect($j('#searchTermSelect')[0], this);">
 
-            <hr/>
+            <hr style="margin: 4px 0px"/>
 
         </c:if>
 
@@ -132,7 +139,7 @@ Move the mouse over the question marks to see details about each section.
             <jsp:include page="recurse_search_terms.jsp"/>
         </div>
     </fieldset>
-    <fieldset>
+    <fieldset class="control-group">
         <legend>Result Columns <img id="resultColumnsTooltip" src="${ctxpath}/images/help.png" alt="help"></legend>
         <!-- Allow user to choose column sets -->
         <stripes:layout-render name="/columns/view_column_sets.jsp"/>
@@ -142,13 +149,13 @@ Move the mouse over the question marks to see details about each section.
                                predefinedViewColumns="${actionBean.searchInstance.predefinedViewColumns}"/>
 
     </fieldset>
-    <stripes:submit name="search" value="Search"
-                    style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 50px;"/>
+    <div style="padding-left: 6px; margin-left: 2px; margin-top: 4px; border-bottom-width: 1px; margin-bottom: 25px;">
+        <stripes:submit name="search" value="Search" class="btn btn-primary"/></div>
 
 </stripes:form>
 <!-- Show results -->
-<fieldset title="Samples">
-    <legend>Samples</legend>
+<fieldset title="Results">
+    <legend>Results</legend>
     <stripes:layout-render name="/columns/configurable_list.jsp"
                            entityName="${actionBean.entityName}"
                            sessionKey="${actionBean.sessionKey}"
@@ -186,7 +193,7 @@ function addTerm() {
     var parameters;
     if (searchTerm == null) {
         searchTermName = option.value;
-        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j.url('?entityName');
+        parameters = 'addTopLevelTerm&searchTermName=' + option.value + '&entityName=' + $j('#searchForm :input[name=entityName]' ).val();
     } else {
         parameters = 'addTopLevelTermWithValue&searchTermName=' + searchTerm + '&searchTermFirstValue=' + option.value
                 + '&entityName=' + $j.url('?entityName');

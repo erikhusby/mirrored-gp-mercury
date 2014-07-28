@@ -15,17 +15,21 @@ package org.broadinstitute.gpinformatics.athena.entity.preference;
 public enum PreferenceType {
     PDO_SEARCH("PDO Search Preference", PreferenceScope.USER, 1,
             new NameValueDefinitionValue.NameValuePreferenceDefinitionCreator()),
-    // Global vessel column sets
-    // User vessel column sets
-    // Global vessel search instances
-    // User vessel search instances
-    // Global event column sets
-    // User event column sets
-    // Global event search instances
-    // User event search instances
     GLOBAL_LAB_VESSEL_SEARCH_INSTANCES("Global Lab Vessel Search Instances", PreferenceScope.GLOBAL, 1,
             new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
     GLOBAL_LAB_VESSEL_COLUMN_SETS("Global Lab Vessel Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_LAB_VESSEL_SEARCH_INSTANCES("User Lab Vessel Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_LAB_VESSEL_COLUMN_SETS("User Lab Vessel Column Sets", PreferenceScope.USER, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    GLOBAL_LAB_EVENT_SEARCH_INSTANCES("Global Lab Event Search Instances", PreferenceScope.GLOBAL, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    GLOBAL_LAB_EVENT_COLUMN_SETS("Global Lab Event Column Sets", PreferenceScope.GLOBAL, 1,
+            new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator()),
+    USER_LAB_EVENT_SEARCH_INSTANCES("User Lab Event Search Instances", PreferenceScope.USER, 1,
+            new SearchInstanceList.SearchInstanceListPreferenceDefinitionCreator()),
+    USER_LAB_EVENT_COLUMN_SETS("User Lab Event Column Sets", PreferenceScope.USER, 1,
             new ColumnSetsPreference.ColumnSetsPreferenceDefinitionCreator());
 
     private final String preferenceTypeName;
