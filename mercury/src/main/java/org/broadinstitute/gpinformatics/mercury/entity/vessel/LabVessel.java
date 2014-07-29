@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -56,6 +57,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1101,7 +1103,7 @@ public abstract class LabVessel implements Serializable {
         Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
             @Override
             public int compare(LabBatchStartingVessel o1, LabBatchStartingVessel o2) {
-                return o1.getLabBatch().getCreatedOn().compareTo(o2.getLabBatch().getCreatedOn());
+                return ObjectUtils.compare(o1.getLabBatch().getCreatedOn(), o2.getLabBatch().getCreatedOn());
             }
         });
         return batchVesselsByDate;
@@ -1799,19 +1801,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     @Transient
-    private List<SampleInstanceV2> sampleInstances;
+    private Set<SampleInstanceV2> sampleInstances;
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new ArrayList<>();
-            if (getContainerRole() != null) {
-                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
-            }
-            List<VesselEvent> ancestorEvents = getAncestors();
-            if (ancestorEvents.isEmpty()) {
-                sampleInstances.add(new SampleInstanceV2(this));
+            sampleInstances = new LinkedHashSet<>();
+            if (getContainerRole() == null) {
+                List<VesselEvent> ancestorEvents = getAncestors();
+                if (ancestorEvents.isEmpty()) {
+                    sampleInstances.add(new SampleInstanceV2(this));
+                } else {
+                    sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                }
             } else {
-                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
             }
         }
         return sampleInstances;
@@ -1822,6 +1825,10 @@ public abstract class LabVessel implements Serializable {
      */
     public void clearCaches() {
         sampleInstances = null;
+        VesselContainer<?> containerRole = getContainerRole();
+        if (containerRole != null) {
+            containerRole.clearCaches();
+        }
     }
 
 }

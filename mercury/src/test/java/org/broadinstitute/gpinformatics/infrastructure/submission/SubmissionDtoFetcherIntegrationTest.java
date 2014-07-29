@@ -13,17 +13,16 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.metrics.LevelOfDetection;
+import org.broadinstitute.gpinformatics.infrastructure.bass.BassDTO;
+import org.broadinstitute.gpinformatics.infrastructure.metrics.entity.LevelOfDetection;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -49,18 +48,19 @@ public class SubmissionDtoFetcherIntegrationTest extends Arquillian {
     public static final String RESEARCH_PROJECT_ID = "RP-697";
 
     public void testFetch() throws Exception {
-        Date dateCompleted = DateUtils.parseDate( "yyyy-MM-dd HH:mm:ss.S", "2014-06-04 22:12:49.0");
-        double contamination = 2.2d;
-        LevelOfDetection fingerprintLod = new LevelOfDetection(53.437256, 55.771678);
+        double contamination = 0.0002d;
+        LevelOfDetection fingerprintLod = new LevelOfDetection(RESEARCH_PROJECT_ID, COLLABORATOR_SAMPLE_ID, 1, 53.437256, 55.771678);
 
         ResearchProject researchProject = researchProjectDao.findByBusinessKey(RESEARCH_PROJECT_ID);
 
-        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject, 1);
+        List<SubmissionDto> submissionDtoList = submissionDtoFetcher.fetch(researchProject);
 
         assertThat(submissionDtoList, is(not(empty())));
         for (SubmissionDto submissionDto : submissionDtoList) {
             assertThat(submissionDto.getSampleName(), equalTo(COLLABORATOR_SAMPLE_ID));
             assertThat(submissionDto.getAggregationProject(), equalTo(RESEARCH_PROJECT_ID));
+            assertThat(submissionDto.getDataType(), equalTo(BassDTO.DATA_TYPE_EXOME));
+            assertThat(submissionDto.getContamination(), equalTo(contamination));
             assertThat(submissionDto.getResearchProject(), equalTo(RESEARCH_PROJECT_ID));
             assertThat(submissionDto.getFingerprintLOD(), equalTo(fingerprintLod));
             assertThat(submissionDto.getLanesInAggregation(), equalTo(2));

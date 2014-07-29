@@ -90,7 +90,7 @@ input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; colo
 input[type='checkbox'].checkAll { margin-left: -8px; }
 
 /* multi-check box count indicator */
-.checkedCount { font-size: 8pt; vertical-align: super; margin-left: 2px; width: 25px; font-weight: normal }
+.checkedCount { font-size: 8pt; vertical-align: middle; margin-left: 2px; width: 25px; font-weight: normal }
 
 .form-horizontal .view-control-group { margin-bottom: 5px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }

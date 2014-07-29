@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,7 +20,7 @@ public class IlluminaRunChamber extends RunChamber {
     protected IlluminaRunChamber() {
     }
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private IlluminaFlowcell flowcell;
     
     private int laneNumber;
