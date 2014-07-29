@@ -14,7 +14,7 @@ public class SampleLedgerRow {
     private String productOrderKey;
     private String productOrderTitle;
     private String projectManagerName;
-    private Double numberOfLanes;
+    private Integer numberOfLanes;
 
     public String getSampleId() {
         return sampleId;
@@ -88,11 +88,11 @@ public class SampleLedgerRow {
         this.projectManagerName = projectManagerName;
     }
 
-    public Double getNumberOfLanes() {
+    public Integer getNumberOfLanes() {
         return numberOfLanes;
     }
 
-    public void setNumberOfLanes(Double numberOfLanes) {
+    public void setNumberOfLanes(Integer numberOfLanes) {
         this.numberOfLanes = numberOfLanes;
     }
 }

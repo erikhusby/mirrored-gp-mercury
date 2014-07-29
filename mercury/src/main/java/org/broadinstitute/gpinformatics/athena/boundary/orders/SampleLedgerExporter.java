@@ -58,7 +58,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
     private final BSPSampleDataFetcher sampleDataFetcher;
     private final AppConfig appConfig;
     private final TableauConfig tableauConfig;
-    private final Map<Product, List<List<String>>> sampleRowData;
+    private final Map<Product, List<SampleLedgerRow>> sampleRowData;
 
     public SampleLedgerExporter(
             PriceItemDao priceItemDao,
@@ -70,7 +70,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
             AppConfig appConfig,
             TableauConfig tableauConfig,
             SampleLedgerSpreadSheetWriter writer,
-            Map<Product, List<List<String>>> sampleRowData) {
+            Map<Product, List<SampleLedgerRow>> sampleRowData) {
         super(writer);
 
         this.priceItemDao = priceItemDao;
@@ -250,20 +250,20 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
 
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample,
                           int sortOrder, Map<String, WorkCompleteMessage> workCompleteMessageBySample,
-                          List<String> sampleData) {
+                          SampleLedgerRow sampleData) {
         getWriter().nextRow();
 
         // sample name.
-        getWriter().writeCell(sampleData.get(0));
+        getWriter().writeCell(sampleData.getSampleId());
 
         // collaborator sample ID, looks like this is properly initialized.
-        getWriter().writeCell(sampleData.get(1));
+        getWriter().writeCell(sampleData.getCollaboratorSampleId());
 
         // Material type.
-        getWriter().writeCell(sampleData.get(2));
+        getWriter().writeCell(sampleData.getMaterialType());
 
         // Risk Information.
-        String riskString = sampleData.get(3);
+        String riskString = sampleData.getRiskText();
         if (StringUtils.isBlank(riskString)) {
             getWriter().nextCell();
         } else {
@@ -271,25 +271,25 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter<SampleLedg
         }
 
         // Sample Delivery Status.
-        String deliveryStatus = sampleData.get(4);
+        String deliveryStatus = sampleData.getDeliveryStatus();
         getWriter().writeCell(deliveryStatus);
 
         // product name.
-        getWriter().writeCell(sampleData.get(5));
+        getWriter().writeCell(sampleData.getProductName());
 
         // Product Order ID.
-        String pdoKey = sampleData.get(6);
+        String pdoKey = sampleData.getProductOrderKey();
         getWriter().writeCellLink(pdoKey, ProductOrderActionBean.getProductOrderLink(pdoKey, appConfig));
 
         // Product Order Name (actually this concept is called 'Title' in PDO world).
-        getWriter().writeCell(sampleData.get(7));
+        getWriter().writeCell(sampleData.getProductOrderTitle());
 
         // Project Manager - need to turn this into a user name.
-        getWriter().writeCell(sampleData.get(8));
+        getWriter().writeCell(sampleData.getProjectManagerName());
 
         // Lane Count
         if (BillingTrackerHeader.LANE_COUNT.shouldShow(sample.getProductOrder().getProduct())) {
-            getWriter().writeCell(sample.getProductOrder().getLaneCount());
+            getWriter().writeCell(sampleData.getNumberOfLanes());
         }
 
         // auto bill date is the date of any ledger items were auto billed by external messages.

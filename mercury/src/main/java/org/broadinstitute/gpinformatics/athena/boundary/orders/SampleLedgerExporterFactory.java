@@ -63,10 +63,10 @@ public class SampleLedgerExporterFactory {
      * @return a new exporter
      */
     public SampleLedgerExporter makeExporter(List<ProductOrder> productOrders) {
-        SortedMap<Product, List<List<String>>> sampleRowDataByProduct = new TreeMap<>();
+        SortedMap<Product, List<SampleLedgerRow>> sampleRowDataByProduct = new TreeMap<>();
         for (ProductOrder productOrder : productOrders) {
             Product product = productOrder.getProduct();
-            List<List<String>> sampleRowDataForProduct = sampleRowDataByProduct.get(product);
+            List<SampleLedgerRow> sampleRowDataForProduct = sampleRowDataByProduct.get(product);
             if (sampleRowDataForProduct == null) {
                 sampleRowDataForProduct = new ArrayList<>();
                 sampleRowDataByProduct.put(product, sampleRowDataForProduct);
@@ -78,20 +78,21 @@ public class SampleLedgerExporterFactory {
                 spreadSheetWriter, sampleRowDataByProduct);
     }
 
-    public List<List<String>> gatherSampleRowData(ProductOrder productOrder) {
-        ArrayList<List<String>> sampleRowData = new ArrayList<>();
+    public List<SampleLedgerRow> gatherSampleRowData(ProductOrder productOrder) {
+        ArrayList<SampleLedgerRow> sampleRowData = new ArrayList<>();
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            ArrayList<String> data = new ArrayList<>();
-            data.add(productOrderSample.getSampleKey());
-            data.add(productOrderSample.getBspSampleDTO().getCollaboratorsSampleName());
-            data.add(productOrderSample.getBspSampleDTO().getMaterialType());
-            data.add(productOrderSample.getRiskString());
-            data.add(productOrderSample.getDeliveryStatus().getDisplayName());
-            data.add(productOrderSample.getProductOrder().getProduct().getProductName());
-            data.add(productOrderSample.getProductOrder().getBusinessKey());
-            data.add(productOrderSample.getProductOrder().getTitle());
-            data.add(bspUserList.getById(productOrderSample.getProductOrder().getCreatedBy()).getFullName());
-            sampleRowData.add(data);
+            SampleLedgerRow row = new SampleLedgerRow();
+            row.setSampleId(productOrderSample.getSampleKey());
+            row.setCollaboratorSampleId(productOrderSample.getBspSampleDTO().getCollaboratorsSampleName());
+            row.setMaterialType(productOrderSample.getBspSampleDTO().getMaterialType());
+            row.setRiskText(productOrderSample.getRiskString());
+            row.setDeliveryStatus(productOrderSample.getDeliveryStatus().getDisplayName());
+            row.setProductName(productOrderSample.getProductOrder().getProduct().getProductName());
+            row.setProductOrderKey(productOrderSample.getProductOrder().getBusinessKey());
+            row.setProductOrderTitle(productOrderSample.getProductOrder().getTitle());
+            row.setProjectManagerName(bspUserList.getById(productOrderSample.getProductOrder().getCreatedBy()).getFullName());
+            row.setNumberOfLanes(productOrderSample.getProductOrder().getLaneCount());
+            sampleRowData.add(row);
         }
         return sampleRowData;
     }

@@ -54,49 +54,49 @@ public class SampleLedgerExporterFactoryTest {
     }
 
     public void gatherNoSamplesForEmptyProductOrder() {
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.size(), equalTo(0));
     }
 
     public void gatherSampleFromProductOrderWithOneSample() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.size(), equalTo(1));
-        assertThat(data.get(0).get(0), equalTo("SM-1234"));
+        assertThat(data.get(0).getSampleId(), equalTo("SM-1234"));
     }
 
     public void gatherSamplesFromProductOrderWithTwoSamples() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
         productOrder.addSample(new ProductOrderSample("SM-5678", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.size(), equalTo(2));
-        assertThat(data.get(0).get(0), equalTo("SM-1234"));
-        assertThat(data.get(1).get(0), equalTo("SM-5678"));
+        assertThat(data.get(0).getSampleId(), equalTo("SM-1234"));
+        assertThat(data.get(1).getSampleId(), equalTo("SM-5678"));
     }
 
     public void gatherCollaboratorSampleId() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO(Collections.singletonMap(
                 BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID, "Sample1"))));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(1), equalTo("Sample1"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getCollaboratorSampleId(), equalTo("Sample1"));
     }
 
     public void gatherMaterialType() {
         productOrder.addSample(new ProductOrderSample("SM-1234",
                 new BSPSampleDTO(Collections.singletonMap(BSPSampleSearchColumn.MATERIAL_TYPE, "Test material"))));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(2), equalTo("Test material"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getMaterialType(), equalTo("Test material"));
     }
 
     public void gatherRiskWhenNoRisk() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(3), equalTo(""));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getRiskText(), equalTo(""));
     }
 
     public void gatherRiskWhenOnRisk() {
@@ -104,8 +104,8 @@ public class SampleLedgerExporterFactoryTest {
         sample.setManualOnRisk(RiskCriterion.createManual(), "Test risk");
         productOrder.addSample(sample);
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(3),
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getRiskText(),
                 pattern("At \\d{1,2}:\\d{2}:\\d{2} [AP]M on \\w+ \\d{1,2}, \\d{4}, calculated Manual with comment: Test risk"));
     }
 
@@ -114,45 +114,44 @@ public class SampleLedgerExporterFactoryTest {
         sample.setDeliveryStatus(ProductOrderSample.DeliveryStatus.DELIVERED);
         productOrder.addSample(sample);
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(4), equalTo(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName()));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getDeliveryStatus(), equalTo(ProductOrderSample.DeliveryStatus.DELIVERED.getDisplayName()));
     }
 
     public void gatherProductName() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(5), equalTo("Test Product"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getProductName(), equalTo("Test Product"));
     }
 
     public void gatherProductOrderKey() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
         productOrder.setJiraTicketKey("PDO-123");
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(6), equalTo("PDO-123"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getProductOrderKey(), equalTo("PDO-123"));
     }
 
     public void gatherProductOrderTitle() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(7), equalTo("SampleLedgerExporterFactoryTest"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getProductOrderTitle(), equalTo("SampleLedgerExporterFactoryTest"));
     }
 
     public void gatherProjectManager() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(8), equalTo("Test Dummy"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getProjectManagerName(), equalTo("Test Dummy"));
     }
 
-    @Test(enabled = false)
     public void gatherNumberOfLanes() {
         productOrder.addSample(new ProductOrderSample("SM-1234", new BSPSampleDTO()));
-        product.setProductFamily(new ProductFamily(ProductFamily.ProductFamilyName.SEQUENCE_ONLY.getFamilyName()));
+        productOrder.setLaneCount(8);
 
-        List<List<String>> data = factory.gatherSampleRowData(productOrder);
-        assertThat(data.get(0).get(9), equalTo("8"));
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getNumberOfLanes(), equalTo(8));
     }
 }
