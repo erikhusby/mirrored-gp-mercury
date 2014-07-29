@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 
@@ -37,5 +39,16 @@ public class SubmissionsServiceImpl implements SubmissionsService {
                 JerseyUtils.getWebResource(submissionsConfig.getUrl(), MediaType.APPLICATION_JSON_TYPE,
                         submissionParameters).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
         return response.getEntity(SubmissionStatusResultBean.class);
+    }
+
+    @Override
+    public List<BioProject> getAllBioProjects() {
+        List<BioProject> bioProjects;
+        ClientResponse response =
+                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.LIST_BIOPROJECTS_ACTION), MediaType.APPLICATION_JSON_TYPE)
+                        .accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
+        bioProjects = response.getEntity(new GenericType<List<BioProject>>() {
+        });
+        return bioProjects;
     }
 }

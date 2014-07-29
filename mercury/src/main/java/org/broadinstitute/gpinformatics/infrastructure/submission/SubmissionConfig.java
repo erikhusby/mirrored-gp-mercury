@@ -14,7 +14,6 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
-import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -24,6 +23,9 @@ import java.io.Serializable;
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("submission")
 public class SubmissionConfig extends AbstractConfig implements Serializable {
+    public static final String LIST_BIOPROJECTS_ACTION="bioproject/all";
+    public static final String SUBMIT_ACTION="submissions/submit";
+    private String login;
 
     private String host;
 
@@ -49,14 +51,21 @@ public class SubmissionConfig extends AbstractConfig implements Serializable {
     public void setPort(int port) {
         this.port = port;
     }
+
     public static String getHttpScheme() {
-            return "https://";
-        }
+        return "https://";
+    }
+
     public String getUrl() {
         return getWSUrl();
     }
+
     public String getWSUrl() {
-        return String.format("%s%s:%d/", getHttpScheme(),getHost(), getPort());
+        return String.format("%s%s:%d/", getHttpScheme(), getHost(), getPort());
+    }
+
+    public String getWSUrl(String suffix) {
+        return String.format("%s%s:%d/%s", getHttpScheme(), getHost(), getPort(), suffix);
     }
 
     /**
