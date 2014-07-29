@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 import java.net.URL;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 import static org.testng.Assert.assertTrue;
 
 public class ExtractTransformResourceTest extends RestServiceContainerTest {
@@ -31,7 +31,7 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         return "etl";
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @BeforeMethod
     public void beforeMethod() {
         // Deletes the etl .dat files.
@@ -39,7 +39,7 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testAnalyze(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "analyze/sequencingRun/1");
@@ -55,7 +55,7 @@ public class ExtractTransformResourceTest extends RestServiceContainerTest {
         assertTrue(result.contains("canEtl"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = STANDARD, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testIncrementalAndBackup(@ArquillianResource URL baseUrl) {
 

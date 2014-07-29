@@ -19,7 +19,7 @@ import java.util.List;
  *         Date: 2/21/13
  *         Time: 1:50 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class ControlDaoTest extends ContainerTest {
 
     @Inject

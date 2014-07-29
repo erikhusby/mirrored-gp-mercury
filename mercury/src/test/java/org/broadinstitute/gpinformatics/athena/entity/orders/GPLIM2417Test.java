@@ -4,11 +4,12 @@ import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.common.BaseSplitter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
-
+@Test(groups = {TestGroups.STUBBY})
 public class GPLIM2417Test extends ContainerTest {
 
     @Inject

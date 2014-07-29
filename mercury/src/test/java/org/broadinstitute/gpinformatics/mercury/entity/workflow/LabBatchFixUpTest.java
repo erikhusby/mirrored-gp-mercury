@@ -107,7 +107,7 @@ public class LabBatchFixUpTest extends Arquillian {
     }
 
     /** Rename Exome Express to Agilent Exome Express. */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void updateWorkflowName() {
         List<LabBatch> updates = new ArrayList<>();
         for (LabBatch batch : labBatchDao.findAll(LabBatch.class)) {

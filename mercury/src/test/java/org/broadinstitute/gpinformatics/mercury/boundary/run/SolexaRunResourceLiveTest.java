@@ -26,6 +26,7 @@ import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
 
 /**
  * Test SolexaRunResource with no stubs.
@@ -37,7 +38,7 @@ public class SolexaRunResourceLiveTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(TEST);
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = STANDARD, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void testSquidLanes(@ArquillianResource URL baseUrl) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(LabBatchDbTest.XML_DATE_FORMAT);

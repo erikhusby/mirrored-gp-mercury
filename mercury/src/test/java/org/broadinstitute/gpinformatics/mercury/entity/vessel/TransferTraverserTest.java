@@ -11,6 +11,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Validate that the traverser finds events correctly
@@ -19,7 +20,7 @@ public class TransferTraverserTest extends ContainerTest {
     @Inject
     private JiraTicketDao jiraTicketDao;
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = STUBBY)
     public void testLcSetPaths() {
         boolean finished = false;
         int first = 0;

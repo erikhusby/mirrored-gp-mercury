@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.ALTERNATIVES, enabled = true)
 public class BillingWorkItemPersistenceTest extends AbstractContainerTest {
 
     @Inject

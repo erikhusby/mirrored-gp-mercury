@@ -24,7 +24,7 @@ public class SampleImportResourceDbTest extends ContainerTest {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled=true, groups= TestGroups.EXTERNAL_INTEGRATION, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled=true, groups= TestGroups.STUBBY, dataProvider= Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testImportTubes(@ArquillianResource URL baseUrl) {
         Date now = new Date();

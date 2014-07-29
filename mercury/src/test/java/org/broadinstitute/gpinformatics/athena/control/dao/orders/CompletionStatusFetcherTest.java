@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.is;
 /**
  * Test the progress object.
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class CompletionStatusFetcherTest extends ContainerTest {
 
     @Inject

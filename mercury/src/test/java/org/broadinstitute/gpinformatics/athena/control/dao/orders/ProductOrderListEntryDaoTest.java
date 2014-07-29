@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.*;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     @Inject
@@ -49,7 +49,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     private ProductOrder order;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (ledgerEntryDao == null) {

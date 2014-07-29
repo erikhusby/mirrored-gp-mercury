@@ -29,7 +29,7 @@ import java.util.List;
  *         Date: 11/6/12
  *         Time: 1:05 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class BucketDaoTest extends ContainerTest {
 
     public static final String EXTRACTION_BUCKET_NAME = "Extraction Bucket";
@@ -48,7 +48,7 @@ public class BucketDaoTest extends ContainerTest {
     private String tempBucketSuffix;
     private String extractionTestBucketName;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -71,7 +71,7 @@ public class BucketDaoTest extends ContainerTest {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
