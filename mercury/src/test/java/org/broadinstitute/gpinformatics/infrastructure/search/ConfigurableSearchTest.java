@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.preference.SearchInstanceL
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ConfigurableListFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,8 +35,15 @@ public class ConfigurableSearchTest extends ContainerTest {
     @Inject
     private ConfigurableListFactory configurableListFactory;
 
+    @Inject
+    private UserBean userBean;
+
     @Test
     public void testX() {
+
+        // Login a fake user
+        userBean.loginTestUser();
+
         // Create instance
         SearchInstance searchInstance = new SearchInstance();
         SearchDefinitionFactory searchDefinitionFactory = new SearchDefinitionFactory();
@@ -54,13 +62,13 @@ public class ConfigurableSearchTest extends ContainerTest {
         Map<String,String> newSearchLevels = new HashMap<>();
         Map<String,String> searchInstanceNames = new HashMap<>();
         try {
-            searchInstanceEjb.fetchInstances(ColumnEntity.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances(ColumnEntity.LAB_EVENT, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         String newSearchName = "Test" +  new SimpleDateFormat("MM/dd/yyyy").format(new Date(System.currentTimeMillis()));
         searchInstanceEjb.persistSearch(true, searchInstance, new MessageCollection(),
-                PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+                PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
         preferenceDao.flush();
         preferenceDao.clear();
 
@@ -69,11 +77,11 @@ public class ConfigurableSearchTest extends ContainerTest {
         searchInstanceNames.clear();
         newSearchLevels.clear();
         try {
-            searchInstanceEjb.fetchInstances( ColumnEntity.LAB_VESSEL, mapTypeToPreference, searchInstanceNames, newSearchLevels);
+            searchInstanceEjb.fetchInstances( ColumnEntity.LAB_EVENT, mapTypeToPreference, searchInstanceNames, newSearchLevels);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Preference preference = mapTypeToPreference.get(PreferenceType.PreferenceScope.GLOBAL);
+        Preference preference = mapTypeToPreference.get(PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES);
         SearchInstance fetchedSearchInstance = null;
         try {
             SearchInstanceList searchInstanceList =
@@ -98,6 +106,6 @@ public class ConfigurableSearchTest extends ContainerTest {
         Assert.assertEquals(firstPageResults.getResultList().getResultRows().size(), 100);
 
         // Delete instance
-        searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_LAB_VESSEL_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
+        searchInstanceEjb.deleteSearch(new MessageCollection(), PreferenceType.GLOBAL_LAB_EVENT_SEARCH_INSTANCES, newSearchName, mapTypeToPreference);
     }
 }

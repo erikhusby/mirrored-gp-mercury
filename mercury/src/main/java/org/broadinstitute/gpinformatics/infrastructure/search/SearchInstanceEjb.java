@@ -256,6 +256,10 @@ public class SearchInstanceEjb {
         try {
             boolean save = true;
 
+            // Flag to create a brand new global or user preference
+            //    (vs. adding/updating a search instance in an existing preference)
+            boolean preferenceExists = true;
+
             // Required for user defined searches
             Long userID = userBean.getBspUser().getUserId();
 
@@ -278,6 +282,7 @@ public class SearchInstanceEjb {
                     preference = mapTypeToPreferenceAccess.get(newSearchType)
                             .createNewPreference(userID);
                     searchInstanceList = new SearchInstanceList();
+                    preferenceExists = false;
                 } else {
                     searchInstanceList = (SearchInstanceList) preference.getPreferenceDefinition().getDefinitionValue();
                 }
@@ -312,12 +317,16 @@ public class SearchInstanceEjb {
                     }
                 }
                 if (save) {
-                    preference.markModified(searchInstanceList.marshal());
-                    // Changing the preference definition doesn't seem to make the
-                    // Hibernate object "dirty", so change something else too
-                    preference.setModifiedDate(new Date());
-                    preferenceEjb.add(userID,
-                            newSearchType, searchInstanceList);
+                    if(!preferenceExists) {
+                        preferenceEjb.add(userID,
+                                newSearchType, searchInstanceList);
+                    } else {
+                        preference.markModified(searchInstanceList.marshal());
+                        // Changing the preference definition doesn't seem to make the
+                        // Hibernate object "dirty", so change something else too
+                        preference.setModifiedDate(new Date());
+                    }
+
                     messageCollection.addInfo("The search was saved");
                 }
             }
