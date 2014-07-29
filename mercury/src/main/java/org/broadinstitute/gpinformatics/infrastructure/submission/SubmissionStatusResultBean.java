@@ -8,16 +8,16 @@ import java.io.Serializable;
  * TODO scottmat fill in javadoc!!!
  */
 @XmlRootElement()
-public class SubmissionStatusResults implements Serializable {
-    private SubmissionStatusDetails[] submissionStatuses;
+public class SubmissionStatusResultBean implements Serializable {
+    private SubmissionStatusDetailBean[] submissionStatuses;
 
-    public SubmissionStatusDetails[] getSubmissionStatuses ()
+    public SubmissionStatusDetailBean[] getSubmissionStatuses ()
     {
         return submissionStatuses;
     }
 
     @XmlElement
-    public void setSubmissionStatuses (SubmissionStatusDetails... submissionStatuses)
+    public void setSubmissionStatuses (SubmissionStatusDetailBean... submissionStatuses)
     {
         this.submissionStatuses = submissionStatuses;
     }

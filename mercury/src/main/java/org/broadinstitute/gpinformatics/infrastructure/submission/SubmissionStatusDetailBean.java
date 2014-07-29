@@ -6,21 +6,21 @@ import java.io.Serializable;
 /**
  * TODO scottmat fill in javadoc!!!
  */
-public class SubmissionStatusDetails implements Serializable {
+public class SubmissionStatusDetailBean implements Serializable {
 
     private String uuid;
     private Status status;
     private String[] errors;
 
-    public SubmissionStatusDetails() {
+    public SubmissionStatusDetailBean() {
     }
 
-    public SubmissionStatusDetails(String uuid, String status) {
+    public SubmissionStatusDetailBean(String uuid, String status) {
         this.uuid = uuid;
         setStatus(status);
     }
 
-    public SubmissionStatusDetails(String uuid, String status, String... errors) {
+    public SubmissionStatusDetailBean(String uuid, String status, String... errors) {
         this(uuid, status);
         setErrors(errors);
     }

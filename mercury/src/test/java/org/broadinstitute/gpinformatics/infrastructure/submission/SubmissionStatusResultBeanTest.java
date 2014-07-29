@@ -11,10 +11,10 @@ import org.testng.annotations.Test;
 import java.io.StringWriter;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SubmissionStatusDetailsResultsTest {
+public class SubmissionStatusResultBeanTest {
 
-    private SubmissionStatusDetails detail1;
-    private SubmissionStatusDetails detail2;
+    private SubmissionStatusDetailBean detail1;
+    private SubmissionStatusDetailBean detail2;
     private String testUUID1;
     private String testUUID2;
 
@@ -22,15 +22,15 @@ public class SubmissionStatusDetailsResultsTest {
     public void setUp() throws Exception {
 
         testUUID1 = "d835cc7-cd63-4cc6-9621-868155618745";
-        detail1 = new SubmissionStatusDetails(testUUID1,"Submitted");
+        detail1 = new SubmissionStatusDetailBean(testUUID1,"Submitted");
         testUUID2 = "d835cc7-cd63-4cc6-9621-868155618746";
-        detail2 = new SubmissionStatusDetails(testUUID2,"Failure", "And error was returned from NCBI");
+        detail2 = new SubmissionStatusDetailBean(testUUID2,"Failure", "And error was returned from NCBI");
 
     }
 
     public void testResults() throws Exception {
 
-        SubmissionStatusResults results = new SubmissionStatusResults();
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
 
 
         Assert.assertNull(results.getSubmissionStatuses());
@@ -43,12 +43,12 @@ public class SubmissionStatusDetailsResultsTest {
 
     public void testResultsFromArray() throws Exception {
 
-        SubmissionStatusResults results = new SubmissionStatusResults();
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
 
 
         Assert.assertNull(results.getSubmissionStatuses());
 
-        results.setSubmissionStatuses(new SubmissionStatusDetails[]{detail1, detail2});
+        results.setSubmissionStatuses(new SubmissionStatusDetailBean[]{detail1, detail2});
 
         Assert.assertNotNull(results.getSubmissionStatuses());
         Assert.assertEquals(2, results.getSubmissionStatuses().length);
@@ -92,25 +92,25 @@ public class SubmissionStatusDetailsResultsTest {
                           + "}";
 
         JSONJAXBContext context = new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                SubmissionStatusResults.class);
+                SubmissionStatusResultBean.class);
         JSONMarshaller marshaller = context.createJSONMarshaller();
 
         StringWriter writer = new StringWriter();
 
-        SubmissionStatusResults results = new SubmissionStatusResults();
-        SubmissionStatusDetails detail1 =
-                new SubmissionStatusDetails("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission");
-        SubmissionStatusDetails detail2 =
-                new SubmissionStatusDetails("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission");
-        SubmissionStatusDetails detail3 =
-                new SubmissionStatusDetails("7d835cc7-cd63-4cc6-9621-868155618749", "Failure",
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
+        SubmissionStatusDetailBean detail1 =
+                new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission");
+        SubmissionStatusDetailBean detail2 =
+                new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission");
+        SubmissionStatusDetailBean detail3 =
+                new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure",
                         "No bioproject found matching submitted accession BlahBlahBlah",
                         "No biosample found matching submitted id BlahBlahBlah");
-        SubmissionStatusDetails detail4 =
-                new SubmissionStatusDetails("7d835cc7-cd63-4cc6-9621-868155618748", "Failure",
+        SubmissionStatusDetailBean detail4 =
+                new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure",
                         "No biosample found matching submitted id BlahBlahBlah");
-        SubmissionStatusDetails detail5 =
-                new SubmissionStatusDetails("7d835cc7-cd63-4cc6-9621-868155618747", "Failure",
+        SubmissionStatusDetailBean detail5 =
+                new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure",
                         "No bioproject found matching submitted accession BlahBlah");
         results.setSubmissionStatuses(detail1, detail2, detail3, detail4, detail5);
 

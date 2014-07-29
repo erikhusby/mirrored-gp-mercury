@@ -5,6 +5,6 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
  */
 public interface SubmissionsService {
 
-    public SubmissionStatusResults getSubmissionStatus(String... uuids);
+    public SubmissionStatusResultBean getSubmissionStatus(String... uuids);
 
 }

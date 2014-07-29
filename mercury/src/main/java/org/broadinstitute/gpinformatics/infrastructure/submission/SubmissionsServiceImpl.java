@@ -27,7 +27,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
 
 
     @Override
-    public SubmissionStatusResults getSubmissionStatus(@Nonnull String... uuids) {
+    public SubmissionStatusResultBean getSubmissionStatus(@Nonnull String... uuids) {
 
         Map<String, List<String>> submissionParameters = new HashMap<>();
 
@@ -36,6 +36,6 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         ClientResponse response =
                 JerseyUtils.getWebResource(submissionsConfig.getUrl(), MediaType.APPLICATION_JSON_TYPE,
                         submissionParameters).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
-        return response.getEntity(SubmissionStatusResults.class);
+        return response.getEntity(SubmissionStatusResultBean.class);
     }
 }

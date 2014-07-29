@@ -8,11 +8,11 @@ import javax.enterprise.inject.Alternative;
 @Alternative
 public class SubmissionsServiceStub implements SubmissionsService {
     @Override
-    public SubmissionStatusResults getSubmissionStatus(String... uuids) {
-        SubmissionStatusDetails detail1 = new SubmissionStatusDetails("d835cc7-cd63-4cc6-9621-868155618745","Submitted");
-        SubmissionStatusDetails detail2 = new SubmissionStatusDetails("d835cc7-cd63-4cc6-9621-868155618745","Failure", "And error was returned from NCBI");
+    public SubmissionStatusResultBean getSubmissionStatus(String... uuids) {
+        SubmissionStatusDetailBean detail1 = new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745","Submitted");
+        SubmissionStatusDetailBean detail2 = new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745","Failure", "And error was returned from NCBI");
 
-        SubmissionStatusResults results = new SubmissionStatusResults();
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
         results.setSubmissionStatuses(detail1, detail2);
 
         return results;

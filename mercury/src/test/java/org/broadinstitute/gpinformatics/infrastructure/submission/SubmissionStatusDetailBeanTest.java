@@ -6,7 +6,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SubmissionStatusDetailsTest {
+public class SubmissionStatusDetailBeanTest {
 
 
     private final String testError1 = "Invalid UUID";
@@ -14,7 +14,7 @@ public class SubmissionStatusDetailsTest {
     private String testUuid = "d835cc7-cd63-4cc6-9621-868155618745";
 
     public void testStatusConstruction() throws Exception {
-        SubmissionStatusDetails testStatus = new SubmissionStatusDetails();
+        SubmissionStatusDetailBean testStatus = new SubmissionStatusDetailBean();
 
         Assert.assertNull(testStatus.getUuid());
         Assert.assertNull(testStatus.getStatus());
@@ -27,7 +27,7 @@ public class SubmissionStatusDetailsTest {
         testStatus.setStatus("InTransit");
 
         Assert.assertEquals(testStatus.getStatus(),
-                SubmissionStatusDetails.Status.IN_TRANSIT.getDescription());
+                SubmissionStatusDetailBean.Status.IN_TRANSIT.getDescription());
 
         testStatus.setErrors(testError1, testError2);
 
