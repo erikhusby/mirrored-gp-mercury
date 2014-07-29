@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import com.sun.jersey.api.client.ClientResponse;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.JerseyUtils;
 
 import javax.annotation.Nonnull;
@@ -14,6 +15,7 @@ import java.util.Map;
 /**
  * TODO scottmat fill in javadoc!!!
  */
+@Impl
 public class SubmissionsServiceImpl implements SubmissionsService {
 
     private final SubmissionConfig submissionsConfig;
