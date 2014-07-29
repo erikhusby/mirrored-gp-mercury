@@ -246,12 +246,8 @@ public class SystemRouter implements Serializable {
             if (labVessel != null) {
                 Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
                 for (SampleInstanceV2 sampleInstance : sampleInstances) {
-                    // Emulate SampleInstanceV1 behavior
-                    if (sampleInstance.getMercuryRootSampleName() != null) {
-                        BucketEntry singleBucketEntry = sampleInstance.getSingleBucketEntry();
-                        if (singleBucketEntry == null) {
-                            possibleControls.add(sampleInstance);
-                        }
+                    if (!sampleInstance.isReagentOnly() && sampleInstance.getAllBucketEntries().isEmpty()) {
+                        possibleControls.add(sampleInstance);
                     }
                 }
             }
@@ -262,7 +258,7 @@ public class SystemRouter implements Serializable {
         Map<String, BSPSampleDTO> mapSampleNameToDto = null;
         if (!possibleControls.isEmpty()) {
             for (SampleInstanceV2 sampleInstance : possibleControls) {
-                sampleNames.add(sampleInstance.getMercuryRootSampleName());
+                sampleNames.add(sampleInstance.getEarliestMercurySampleName());
             }
             mapSampleNameToDto = bspSampleDataFetcher.fetchSamplesFromBSP(sampleNames);
 
@@ -331,7 +327,7 @@ public class SystemRouter implements Serializable {
                                         LabBatch labBatch = sampleInstance.getSingleBatch();
                                         if(labBatch == null) {
                                             throw new RuntimeException("No lab batch for sample " +
-                                                                     sampleInstance.getMercuryRootSampleName());
+                                                                     sampleInstance.getEarliestMercurySampleName());
                                         }
                                         // Per Andrew, we can assume that validation plastic has only one LCSET
                                         if(labBatch.isValidationBatch()) {
@@ -365,7 +361,7 @@ public class SystemRouter implements Serializable {
                             routingOptions.add(SQUID);
                         } else {
                             for (SampleInstanceV2 possibleControl : possibleControls) {
-                                String sampleKey = possibleControl.getMercuryRootSampleName();
+                                String sampleKey = possibleControl.getEarliestMercurySampleName();
                                 BSPSampleDTO sampleDTO = mapSampleNameToDto.get(sampleKey);
                                 if (sampleDTO == null) {
                                     // Don't know what this is, but it isn't for Mercury.

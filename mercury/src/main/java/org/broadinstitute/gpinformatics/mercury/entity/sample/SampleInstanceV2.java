@@ -28,6 +28,7 @@ public class SampleInstanceV2 {
     private static final Log log = LogFactory.getLog(SampleInstanceV2.class);
 
     private Set<MercurySample> rootMercurySamples = new HashSet<>();
+    private List<MercurySample> mercurySamples = new ArrayList<>();
     private List<Reagent> reagents = new ArrayList<>();
     private BucketEntry singleBucketEntry;
     private List<BucketEntry> allBucketEntries = new ArrayList<>();
@@ -50,6 +51,7 @@ public class SampleInstanceV2 {
     public SampleInstanceV2(LabVessel labVessel) {
         this.labVessel = labVessel;
         rootMercurySamples.addAll(labVessel.getMercurySamples());
+        mercurySamples.addAll(labVessel.getMercurySamples());
         if (LabVessel.DIAGNOSTICS) {
             String message = "Created sample instance ";
             if (!labVessel.getMercurySamples().isEmpty()) {
@@ -67,6 +69,7 @@ public class SampleInstanceV2 {
     @SuppressWarnings("AccessingNonPublicFieldOfAnotherObject")
     public SampleInstanceV2(SampleInstanceV2 other) {
         rootMercurySamples.addAll(other.rootMercurySamples);
+        mercurySamples.addAll(other.mercurySamples);
         reagents.addAll(other.reagents);
         singleBucketEntry = other.singleBucketEntry;
         allBucketEntries.addAll(other.allBucketEntries);
@@ -79,13 +82,24 @@ public class SampleInstanceV2 {
     /**
      * Returns the sample that has no incoming transfers.  This is typically the sample that BSP received from the
      * collaborator, but in the absence of extraction transfers, Mercury may not be able to follow the transfer chain
-     * that far.  May be null for a vessel that holds only reagents.
+     * that far.  May be null for a vessel that holds only reagents.  May be null for BSP samples that pre-date Mercury.
      */
     public String getMercuryRootSampleName() {
         if (rootMercurySamples.isEmpty()) {
             return null;
         }
         return rootMercurySamples.iterator().next().getSampleKey();
+    }
+
+    /**
+     * Returns the earliest Mercury sample.  Tolerates unknown root sample.
+     */
+    public String getEarliestMercurySampleName() {
+        String sampleName = null;
+        if (!mercurySamples.isEmpty()) {
+            sampleName = mercurySamples.get(0).getSampleKey();
+        }
+        return sampleName;
     }
 
     /**
@@ -260,7 +274,7 @@ todo jmt not sure if this applies.
     }
 
     public boolean isReagentOnly() {
-        return rootMercurySamples.isEmpty() && !reagents.isEmpty();
+        return mercurySamples.isEmpty() && !reagents.isEmpty();
     }
 
     /**
@@ -283,6 +297,7 @@ todo jmt not sure if this applies.
      */
     public final void applyVesselChanges(LabVessel labVessel) {
         this.labVessel = labVessel;
+        mercurySamples.addAll(labVessel.getMercurySamples());
         reagents.addAll(labVessel.getReagentContents());
         if (!labVessel.getBucketEntries().isEmpty()) {
             allBucketEntries.clear();
@@ -346,8 +361,9 @@ todo jmt not sure if this applies.
                 sampleInstanceV2.molecularIndexingScheme != null) {
             return false;
         }
-        if (rootMercurySamples != null ? !rootMercurySamples.equals(sampleInstanceV2.rootMercurySamples) :
-                sampleInstanceV2.rootMercurySamples != null) {
+        if (getEarliestMercurySampleName() != null ?
+                !getEarliestMercurySampleName().equals(sampleInstanceV2.getEarliestMercurySampleName()) :
+                sampleInstanceV2.getEarliestMercurySampleName() != null) {
             return false;
         }
 
@@ -356,7 +372,7 @@ todo jmt not sure if this applies.
 
     @Override
     public int hashCode() {
-        int result = rootMercurySamples != null ? rootMercurySamples.hashCode() : 0;
+        int result = getEarliestMercurySampleName() != null ? getEarliestMercurySampleName().hashCode() : 0;
         result = 31 * result + (molecularIndexingScheme != null ? molecularIndexingScheme.hashCode() : 0);
         return result;
     }
