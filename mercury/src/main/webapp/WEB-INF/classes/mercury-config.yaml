@@ -229,9 +229,11 @@ bass:
       port:     443
 
 submission:
+    DEV:
+      host:     picard01
+      port:     33333
+
     PROD:
-      login:    mercury-submission
-      password: somepwd
       host:     somesite.broadinstitute.org
       port:     443
 
@@ -253,6 +255,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass: PROD
+      submission: DEV
 
 
     AUTO_BUILD:
@@ -270,6 +273,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass: PROD
+      submission: DEV
 
     TEST:
 
@@ -286,6 +290,7 @@ mercury:
       hipchat: DEV
       collaborate: DEV
       bass:     PROD
+      submission: DEV
 
     QA:
       app:      QA
@@ -301,6 +306,7 @@ mercury:
       hipchat: DEV
       collaborate: RC
       bass:     PROD
+      submission: DEV
 
     RC:
 
@@ -317,6 +323,7 @@ mercury:
       hipchat: DEV
       collaborate: RC
       bass:     PROD
+      submission: DEV
 
 
     PROD:
@@ -334,4 +341,5 @@ mercury:
       hipchat: PROD
       collaborate: PROD
       bass:     PROD
+      submission: PROD
 

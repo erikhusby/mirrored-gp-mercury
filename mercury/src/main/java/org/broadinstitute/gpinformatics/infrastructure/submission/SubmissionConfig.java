@@ -23,10 +23,7 @@ import java.io.Serializable;
 
 @SuppressWarnings("UnusedDeclaration")
 @ConfigKey("submission")
-public class SubmissionConfig extends AbstractConfig implements LoginAndPassword, Serializable {
-    private String login;
-
-    private String password;
+public class SubmissionConfig extends AbstractConfig implements Serializable {
 
     private String host;
 
@@ -37,30 +34,12 @@ public class SubmissionConfig extends AbstractConfig implements LoginAndPassword
         super(deployment);
     }
 
-    @Override
-    public String getLogin() {
-        return login;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
     public String getHost() {
         return host;
     }
 
     public int getPort() {
         return port;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public void setHost(String host) {
