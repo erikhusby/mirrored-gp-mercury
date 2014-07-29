@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -56,6 +57,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -186,9 +188,6 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<>();
-
-    @Transient
-    private Integer sampleInstanceCount;
 
     @Transient
     private Map<String, Set<LabMetric>> metricMap;
@@ -450,10 +449,14 @@ public abstract class LabVessel implements Serializable {
         this.createdOn = createdOn;
     }
 
-    public Set<LabEvent> getInPlaceEvents() {
+    public Set<LabEvent> getInPlaceLabEvents() {
+        return inPlaceLabEvents;
+    }
+
+    public Set<LabEvent> getInPlaceEventsWithContainers() {
         Set<LabEvent> totalInPlaceEventsSet = Collections.unmodifiableSet(inPlaceLabEvents);
         for (LabVessel vesselContainer : containers) {
-            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEvents());
+            totalInPlaceEventsSet = Sets.union(totalInPlaceEventsSet, vesselContainer.getInPlaceEventsWithContainers());
         }
         return totalInPlaceEventsSet;
     }
@@ -547,6 +550,17 @@ public abstract class LabVessel implements Serializable {
 
     public void addNonReworkLabBatchStartingVessel(LabBatchStartingVessel labBatchStartingVessel) {
         labBatches.add(labBatchStartingVessel);
+    }
+
+    public String getLastEventName() {
+        String eventName = "";
+        List<LabEvent> eventList = new ArrayList<>(getInPlaceAndTransferToEvents());
+        Collections.sort(eventList, LabEvent.BY_EVENT_DATE);
+
+        if (!eventList.isEmpty()) {
+            eventName = eventList.get(eventList.size() - 1).getLabEventType().getName();
+        }
+        return eventName;
     }
 
     public enum ContainerType {
@@ -706,11 +720,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     public int getSampleInstanceCount(SampleType sampleType, @Nullable LabBatch.LabBatchType batchType) {
-        // FIXME: Don't cache sampleInstanceCount because it may change depending on how getSampleInstances() is called!
-        if (sampleInstanceCount == null) {
-            sampleInstanceCount = getSampleInstances(sampleType, batchType).size();
-        }
-        return sampleInstanceCount;
+        return getSampleInstances(sampleType, batchType).size();
     }
 
     /**
@@ -1007,11 +1017,11 @@ public abstract class LabVessel implements Serializable {
      * @return in place events, transfers from, transfers to
      */
     public Set<LabEvent> getEvents() {
-        return Sets.union(getInPlaceEvents(), Sets.union(getTransfersFrom(), getTransfersTo()));
+        return Sets.union(getInPlaceEventsWithContainers(), Sets.union(getTransfersFrom(), getTransfersTo()));
     }
 
     public Set<LabEvent> getInPlaceAndTransferToEvents() {
-        return Sets.union(getInPlaceEvents(), getTransfersTo());
+        return Sets.union(getInPlaceLabEvents(), getTransfersTo());
     }
 
     public BigDecimal getVolume() {
@@ -1093,7 +1103,7 @@ public abstract class LabVessel implements Serializable {
         Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
             @Override
             public int compare(LabBatchStartingVessel o1, LabBatchStartingVessel o2) {
-                return o1.getLabBatch().getCreatedOn().compareTo(o2.getLabBatch().getCreatedOn());
+                return ObjectUtils.compare(o1.getLabBatch().getCreatedOn(), o2.getLabBatch().getCreatedOn());
             }
         });
         return batchVesselsByDate;
@@ -1791,19 +1801,20 @@ public abstract class LabVessel implements Serializable {
     }
 
     @Transient
-    private List<SampleInstanceV2> sampleInstances;
+    private Set<SampleInstanceV2> sampleInstances;
 
-    public List<SampleInstanceV2> getSampleInstancesV2() {
+    public Set<SampleInstanceV2> getSampleInstancesV2() {
         if (sampleInstances == null) {
-            sampleInstances = new ArrayList<>();
-            if (getContainerRole() != null) {
-                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
-            }
-            List<VesselEvent> ancestorEvents = getAncestors();
-            if (ancestorEvents.isEmpty()) {
-                sampleInstances.add(new SampleInstanceV2(this));
+            sampleInstances = new LinkedHashSet<>();
+            if (getContainerRole() == null) {
+                List<VesselEvent> ancestorEvents = getAncestors();
+                if (ancestorEvents.isEmpty()) {
+                    sampleInstances.add(new SampleInstanceV2(this));
+                } else {
+                    sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                }
             } else {
-                sampleInstances.addAll(VesselContainer.getAncestorSampleInstances(this, ancestorEvents));
+                sampleInstances.addAll(getContainerRole().getSampleInstancesV2());
             }
         }
         return sampleInstances;
@@ -1814,6 +1825,10 @@ public abstract class LabVessel implements Serializable {
      */
     public void clearCaches() {
         sampleInstances = null;
+        VesselContainer<?> containerRole = getContainerRole();
+        if (containerRole != null) {
+            containerRole.clearCaches();
+        }
     }
 
 }

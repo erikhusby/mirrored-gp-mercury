@@ -49,9 +49,9 @@ public class ConfigurableListContainerTest extends Arquillian {
 
         ConfigurableSearchDefinition configurableSearchDefinition =
                 new SearchDefinitionFactory().buildLabVesselSearchDef();
-        for (Map.Entry<String, List<SearchTerm>> groupListSearchTermEntry :
-                configurableSearchDefinition.getMapGroupSearchTerms().entrySet()) {
-            for (SearchTerm searchTerm : groupListSearchTermEntry.getValue()) {
+        for (Map.Entry<String, List<ColumnTabulation>> groupListSearchTermEntry :
+                configurableSearchDefinition.getMapGroupToColumnTabulations().entrySet()) {
+            for (ColumnTabulation searchTerm : groupListSearchTermEntry.getValue()) {
                 columnTabulations.add(searchTerm);
             }
         }
@@ -62,11 +62,22 @@ public class ConfigurableListContainerTest extends Arquillian {
         configurableList.addRows(labVessels);
 
         ConfigurableList.ResultList resultList = configurableList.getResultList();
+
         Assert.assertEquals(resultList.getResultRows().size(), 92);
         // todo jmt why does 1090466540 return nothing for stock sample?  Search in Mercury shows SM-4NFIJ, BSP shows terminated, material type doesn't include "active stock"
+
         ConfigurableList.ResultRow resultRow = resultList.getResultRows().get(1);
         Assert.assertEquals(resultRow.getResultId(), "0162998809");
-        Assert.assertEquals(resultRow.getRenderableCells().get(2), "SM-5CQ9Y");
+
+        // Find Imported Sample ID
+        List<ConfigurableList.Header> headers = resultList.getHeaders();
+        int columnIndex = 0;
+        for( ConfigurableList.Header header : headers ) {
+            if( header.getViewHeader().equals("Imported Sample ID")) break;
+            columnIndex++;
+        }
+        Assert.assertTrue( columnIndex < headers.size(), "Column header 'Imported Sample ID' not found in results" );
+        Assert.assertEquals(resultRow.getRenderableCells().get(columnIndex), "SM-5KWVC");
 
     }
 }

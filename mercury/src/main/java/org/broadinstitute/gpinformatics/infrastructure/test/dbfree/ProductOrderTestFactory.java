@@ -88,6 +88,14 @@ public class ProductOrderTestFactory {
         );
     }
 
+    public static ProductOrder createDummyProductOrder(int numSamples, @Nonnull String jiraTicketKey) {
+        return createDummyProductOrder(numSamples, jiraTicketKey, Workflow.AGILENT_EXOME_EXPRESS, 10950,
+                "MyResearchProject", otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber", SAMPLE_SUFFIX,
+                "ExExQuoteId");
+    }
+
+
+
     public static Map<String, ProductOrder> buildTestProductOrderMap() {
 
         Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<>();

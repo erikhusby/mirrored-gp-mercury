@@ -13,6 +13,18 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
+                $j( "#tabs" ).tabs({
+                    beforeLoad: function(event, ui) {
+                        if (ui.panel.children('form').length == 0) {
+                            if (ui.panel.children('p.loading').length == 0) {
+                                $j('<p>').addClass('loading').append('Loading...').appendTo(ui.panel);
+                            }
+                        } else {
+                            event.preventDefault();
+                        }
+                    }
+                });
+
                 $j('#addRegulatoryInfoDialog').dialog({
                     autoOpen: false,
                     height: 500,
@@ -63,6 +75,7 @@
                                 $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
                                 $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
                                 $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
+                                $j("#quoteId").attr("value", $j("#quoteIdId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -154,8 +167,13 @@
                 <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
                               name="specifiedCollaborator" maxlength="250"/>
 
+                <label style="float:left;margin-right:10px;width:auto;" for="quoteIdId">Quote *</label>
+                <div class="controls">
+                    <stripes:text id="quoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
+                </div>
+
                 <p style="clear:both">
-                    <label for="collaborationMessage">Optional message to send to collaborator</label>
+                    <label for="collaborationMessageId">Optional message to send to collaborator</label>
                 </p>
 
                 <textarea id="collaborationMessageId" name="message" class="controlledText" cols="80" rows="4"> </textarea>
@@ -175,43 +193,46 @@
                             </div>
 
                             <security:authorizeBlock roles="<%= roles(Developer) %>">
-                                <c:choose>
-                                    <c:when test="${actionBean.invitationPending}">
-                                        <div class="notificationText">
-                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                Collaboration Portal
-                                            </stripes:link>
-                                            invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
-                                            <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
-                                            (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
-                                            <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
-                                            <stripes:param name="resendInvitation" value=""/>
-                                            Resend Invitation
-                                        </stripes:link>)
-                                        </div>
-                                    </c:when>
-                                    <c:when test="${actionBean.collaborationData != null}">
-                                        <div class="notificationText">
-                                            <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
-                                                Collaborating on Portal
-                                            </stripes:link>
-                                            with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
-                                        </div>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div style="float:left">
-                                            <stripes:hidden id="dialogAction" name="" value=""/>
-                                            <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
-                                            <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
-                                            <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                <c:if test="${actionBean.validCollaborationPortal}">
+                                    <c:choose>
+                                        <c:when test="${actionBean.invitationPending}">
+                                            <div class="notificationText">
+                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                    Collaboration Portal
+                                                </stripes:link>
+                                                invitation sent to ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}, expires on
+                                                <fmt:formatDate value="${actionBean.collaborationData.expirationDate}" pattern="${actionBean.datePattern}"/>
+                                                (<stripes:link beanclass="${actionBean.class.name}" style="font-size: x-small; font-weight: normal;">
+                                                <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                                                <stripes:param name="resendInvitation" value=""/>
+                                                Resend Invitation
+                                            </stripes:link>)
+                                            </div>
+                                        </c:when>
+                                        <c:when test="${actionBean.collaborationData != null}">
+                                            <div class="notificationText">
+                                                <stripes:link style="font-size:x-small;" href="${actionBean.collaborationData.viewCollaborationUrl}">
+                                                    Collaborating on Portal
+                                                </stripes:link>
+                                                with ${actionBean.getUserFullName(actionBean.collaborationData.collaboratorId)}
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div style="float:left">
+                                                <stripes:hidden id="dialogAction" name="" value=""/>
+                                                <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
+                                                <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
+                                                <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
+                                                <stripes:hidden id="quoteId" name="quoteId" value=""/>
 
-                                            <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
-                                                <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
-                                                                style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
-                                            </security:authorizeBlock>
-                                        </div>
-                                    </c:otherwise>
-                                </c:choose>
+                                                <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                                                    <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"
+                                                                    style="margin-left: 10px;" onclick="showBeginCollaboration()"/>
+                                                </security:authorizeBlock>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </security:authorizeBlock>
                         </div>
                     </div>
@@ -464,11 +485,11 @@
             <input type="hidden" id="removeRegulatoryInfoId" name="regulatoryInfoId">
             <table class="table simple">
                 <thead>
-                    <th style="width:10em">Identifier</th>
-                    <th>Protocol Title</th>
-                    <th style="width:25em">Type</th>
-                    <th style="width:5em"></th>
-                    <th style="width:9em"></th>
+                        <th style="width:10em">Identifier</th>
+                        <th>Protocol Title</th>
+                        <th style="width:25em">Type</th>
+                        <th style="width:5em"></th>
+                        <th style="width:9em"></th>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editResearchProject.regulatoryInfos}" var="regulatoryInfo">
@@ -484,6 +505,15 @@
             </table>
         </stripes:form>
 
+        <div id="tabs" class="simpletab">
+            <ul>
+                <li><a href="#ordersTab">Orders</a></li>
+                <li><stripes:link beanclass="${actionBean.class.name}" event="viewSubmissions">Submission Requests
+                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
+                    </stripes:link></li>
+            </ul>
+
+            <div id="ordersTab">
         <div class="tableBar" style="clear:both;">
             <h4 style="display:inline">Orders</h4>
 
@@ -543,6 +573,10 @@
                 </c:forEach>
             </tbody>
         </table>
+            </div>
+        </div>
+
+
 
     </stripes:layout-component>
 </stripes:layout-render>

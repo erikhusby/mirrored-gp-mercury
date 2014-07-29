@@ -10,7 +10,12 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
 
@@ -22,64 +27,66 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.C
 public class StaticPlate extends LabVessel implements VesselContainerEmbedder<PlateWell>, Serializable {
 
     public enum PlateType {
-        Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
-        Matrix96("Matrix96", VesselGeometry.G12x8),
         CovarisRack("CovarisRack", VesselGeometry.G12x8),
-        IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
-        SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
-        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
-        FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
+        Eco48("Eco48", VesselGeometry.G8x6),
+        Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
         Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
-        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8),
+        FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
+        Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
+        IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
+        Matrix96("Matrix96", VesselGeometry.G12x8),
         MiSeqReagentKit("MiseqReagentKit", VesselGeometry.MISEQ_REAGENT_KIT),
-        Eco48("Eco48", VesselGeometry.G8x6);
+        MicrofluorPlate96Well("MicrofluorPlate96Well", VesselGeometry.G12x8),
+        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8),
+        Plate384WellBlack50("Plate384WellBlack50", VesselGeometry.G24x16),
+        Plate384WellClear50("Plate384WellClear50", VesselGeometry.G24x16),
+        Plate384WellEppendorfTwintec40("Plate384WellEppendorfTwintec40", VesselGeometry.G24x16),
+        Plate4x6Well5000("Plate4x6Well5000", VesselGeometry.G4x6_NUM),
+        Plate96Microtube1200("Plate96Microtube1200", VesselGeometry.G12x8),
+        Plate96Microtube2000("Plate96Microtube2000", VesselGeometry.G12x8),
+        Plate96RNEasyWell1000("Plate96RNEasyWell1000", VesselGeometry.G12x8),
+        Plate96RoundWellBlock2000("Plate96RoundWellBlock2000", VesselGeometry.G12x8),
+        Plate96SchredderSpinColumn1000("Plate96SchredderSpinColumn1000", VesselGeometry.G12x8),
+        Plate96Well200("Plate96Well200", VesselGeometry.G12x8),
+        Plate96Well200PCR("Plate96Well200PCR", VesselGeometry.G12x8),
+        Plate96Well200PCR_Expression("Plate96Well200PCR_Expression", VesselGeometry.G12x8),
+        Plate96Well800("Plate96Well800", VesselGeometry.G12x8),
+        Plate96Well1200("Plate96Well1200", VesselGeometry.G12x8),
+        Plate96WellCollectionTube2000("Plate96WellCollectionTube2000", VesselGeometry.G12x8),
+        Plate96WellRNA("Plate96WellRNA", VesselGeometry.G12x8),
+        SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
+        SpinColumn96SlotRack("SpinColumn96SlotRack", VesselGeometry.G12x8);
 
         /**
          * The name that will be supplied by automation scripts.
          */
         private String automationName;
 
-        /**
-         * The name to be displayed in UI.
-         */
-        private String displayName;
-
         private VesselGeometry vesselGeometry;
 
         /**
-         * Creates a PlateType with a display name the same as the automation name.
+         * Creates a PlateType.
          *
          * @param automationName    the name that will be supplied by automation scripts
          * @param vesselGeometry    the vessel geometry
          */
         PlateType(String automationName, VesselGeometry vesselGeometry) {
             this.automationName = automationName;
-            // We can add a constructor parameter if we ever decide to have different automation and display names.
-            this.displayName = automationName;
             this.vesselGeometry = vesselGeometry;
         }
 
         /**
          * Returns the name that will be supplied by automation scripts.
          */
-        private String getAutomationName() {
+        public String getAutomationName() {
             return automationName;
         }
 
-        /**
-         * Returns the name to be displayed in UI.
-         */
-        public String getDisplayName() {
-            return displayName;
-        }
-
         private static Map<String, PlateType> mapAutomationNameToType = new HashMap<>();
-        private static Map<String, PlateType> mapDisplayNameToType = new HashMap<>();
 
         static {
             for (PlateType plateType : PlateType.values()) {
                 mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
-                mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
             }
         }
 
@@ -91,14 +98,6 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
          */
         public static PlateType getByAutomationName(String automationName) {
             return mapAutomationNameToType.get(automationName);
-        }
-
-        public static PlateType getByDisplayName(String displayName) {
-            PlateType plateTypeLocal = mapDisplayNameToType.get(displayName);
-            if(plateTypeLocal == null) {
-                throw new RuntimeException("Failed to find plate type " + displayName);
-            }
-            return plateTypeLocal;
         }
 
         public VesselGeometry getVesselGeometry() {

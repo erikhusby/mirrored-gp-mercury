@@ -25,7 +25,7 @@ public class QuoteFundingList extends AbstractCache {
 
     private PMBQuoteService quoteService;
 
-    private Log logger = LogFactory.getLog(QuoteFundingList.class);
+    private static final Log log = LogFactory.getLog(QuoteFundingList.class);
 
     @Inject
     private Deployment deployment;
@@ -127,7 +127,7 @@ public class QuoteFundingList extends AbstractCache {
 
             fundingList = ImmutableSet.copyOf(rawFunding);
         } catch (QuoteServerException | QuoteNotFoundException ex) {
-            logger.error("Could not refresh the funding list.", ex);
+            log.error("Could not refresh the funding list.", ex);
         }
     }
 }

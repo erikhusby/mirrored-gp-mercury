@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.MetadataType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -37,6 +38,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
@@ -201,7 +203,7 @@ public class LabEventFactory implements Serializable {
         }
 
         PlateType reagentKitType = BettaLimsObjectFactory.createPlateType(reagentKitBarcode,
-                StaticPlate.PlateType.MiSeqReagentKit.getDisplayName(), MiSeqReagentKit.LOADING_WELL.name(), null);
+                StaticPlate.PlateType.MiSeqReagentKit.getAutomationName(), MiSeqReagentKit.LOADING_WELL.name(), null);
         transferEvent.getSourcePlate().add(reagentKitType);
 
         PlateType flowcell = BettaLimsObjectFactory
@@ -449,6 +451,8 @@ public class LabEventFactory implements Serializable {
             labEvent = buildFromBettaLims(plateCherryPickEvent, mapBarcodeToVessel);
         }
         addReagents(labEvent, plateCherryPickEvent.getReagent());
+        addMetadatas(labEvent, plateCherryPickEvent.getMetadata());
+
         return labEvent;
     }
 
@@ -622,7 +626,7 @@ public class LabEventFactory implements Serializable {
 
                     if (labVessel == null) {
                         labVessel = new StaticPlate(plateType.getBarcode(),
-                                StaticPlate.PlateType.getByDisplayName(plateType.getPhysType()));
+                                StaticPlate.PlateType.getByAutomationName(plateType.getPhysType()));
                     }
                     mapBarcodeToVessel.put(plateType.getBarcode(), labVessel);
                 }
@@ -850,6 +854,7 @@ public class LabEventFactory implements Serializable {
                     rackOfTubesDao.findByBarcode(plateEventType.getPlate().getBarcode()));
         }
         addReagents(labEvent, plateEventType.getReagent());
+        addMetadatas(labEvent, plateEventType.getMetadata());
         return labEvent;
     }
 
@@ -870,6 +875,7 @@ public class LabEventFactory implements Serializable {
                     plateTransferEvent.getPlate().getBarcode());
             LabEvent labEvent = buildFromBettaLimsPlateToPlateDbFree(plateTransferEvent, stripTube, illuminaFlowcell);
             addReagents(labEvent, plateTransferEvent.getReagent());
+            addMetadatas(labEvent, plateTransferEvent.getMetadata());
             return labEvent;
         }
         List<String> barcodes = new ArrayList<>();
@@ -884,6 +890,7 @@ public class LabEventFactory implements Serializable {
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         LabEvent labEvent = buildFromBettaLims(plateTransferEvent, mapBarcodeToVessel);
         addReagents(labEvent, plateTransferEvent.getReagent());
+        addMetadatas(labEvent, plateTransferEvent.getMetadata());
         return labEvent;
     }
 
@@ -953,7 +960,12 @@ public class LabEventFactory implements Serializable {
                 if (source && !(CREATE_SOURCES || createSources)) {
                     throw new RuntimeException("Failed to find tube " + receptacleType.getBarcode());
                 }
-                barcodedTube = new BarcodedTube(receptacleType.getBarcode());
+                BarcodedTube.BarcodedTubeType tubeType =
+                        BarcodedTube.BarcodedTubeType.getByAutomationName(receptacleType.getReceptacleType());
+                if (tubeType == null) {
+                    tubeType = BarcodedTube.BarcodedTubeType.MatrixTube;
+                }
+                barcodedTube = new BarcodedTube(receptacleType.getBarcode(), tubeType);
                 mapBarcodeToTubes.put(receptacleType.getBarcode(), barcodedTube);
             }
             mapPositionToTube.put(VesselPosition.getByName(receptacleType.getPosition()), barcodedTube);
@@ -993,7 +1005,7 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
         if (plate == null) {
             if (CREATE_SOURCES) {
-                plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByDisplayName(
+                plate = new StaticPlate(plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByAutomationName(
                         plateEvent.getPlate().getPhysType()));
             } else {
                 throw new RuntimeException("Failed to find plate " + plateEvent.getPlate().getBarcode());
@@ -1010,9 +1022,27 @@ public class LabEventFactory implements Serializable {
             GenericReagent genericReagent = genericReagentDao.findByReagentNameAndLot(
                     reagentType.getKitType(), reagentType.getBarcode());
             if (genericReagent == null) {
-                genericReagent = new GenericReagent(reagentType.getKitType(), reagentType.getBarcode());
+                Date expiration = null;
+                if(reagentType.getExpiration() != null)
+                    expiration = reagentType.getExpiration().toGregorianCalendar().getTime();
+                genericReagent = new GenericReagent(
+                        reagentType.getKitType(), reagentType.getBarcode(), expiration);
             }
             labEvent.addReagent(genericReagent);
+        }
+    }
+
+    private void addMetadatas( LabEvent labEvent, List<MetadataType> metadataTypes) {
+        for(MetadataType metadataType: metadataTypes){
+            LabEventMetadata.LabEventMetadataType labEventMetadataType =
+                    LabEventMetadata.LabEventMetadataType.getByName(metadataType.getName());
+            if(labEventMetadataType != null) { //Throw runtime exception for unknown metadata?
+                LabEventMetadata labEventMetadata =
+                        new LabEventMetadata(labEventMetadataType, metadataType.getValue());
+                labEvent.addMetadata(labEventMetadata);
+            } else {
+                throw new RuntimeException("Failed to find metadata " + metadataType.getName());
+            }
         }
     }
 

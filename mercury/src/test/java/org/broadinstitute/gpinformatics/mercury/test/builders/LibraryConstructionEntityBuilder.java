@@ -143,6 +143,8 @@ public class LibraryConstructionEntityBuilder {
         LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLims(
                 libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), mapBarcodeToVessel);
         labEventHandler.processEvent(indexedAdapterLigationEntity);
+        shearingCleanupPlate.clearCaches();
+
         // asserts
         Set<SampleInstance> postIndexingSampleInstances =
                 shearingCleanupPlate.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
@@ -191,6 +193,7 @@ public class LibraryConstructionEntityBuilder {
             LabEvent indexP5PondEnrichmentEntity = labEventFactory.buildFromBettaLims(
                     libraryConstructionJaxbBuilder.getIndexP5PondEnrichmentJaxb(), mapBarcodeToVessel);
             labEventHandler.processEvent(indexP5PondEnrichmentEntity);
+            ligationCleanupPlate.clearCaches();
         }
 
         // PostPondEnrichmentThermoCyclerLoaded

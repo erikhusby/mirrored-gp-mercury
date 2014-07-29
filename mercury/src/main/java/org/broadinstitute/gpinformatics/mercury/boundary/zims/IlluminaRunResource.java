@@ -98,9 +98,8 @@ public class IlluminaRunResource implements Serializable {
             if (illuminaSequencingRun == null) {
                 runBean = callThrift(runName);
             } else {
-                SystemRouter.System systemOfRecordForVessel =
-                        systemRouter.getSystemOfRecordForVessel(
-                                illuminaSequencingRun.getSampleCartridge().getLabel());
+                SystemRouter.System systemOfRecordForVessel = systemRouter.getSystemOfRecordForVessel(
+                        illuminaSequencingRun.getSampleCartridge().getLabel());
                 switch (systemOfRecordForVessel) {
                 case MERCURY:
                     runBean = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);

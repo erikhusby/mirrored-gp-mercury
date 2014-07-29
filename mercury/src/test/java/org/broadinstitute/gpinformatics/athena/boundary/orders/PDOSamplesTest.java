@@ -41,7 +41,7 @@ public class PDOSamplesTest {
 
         ProductOrderSample pdoSample1 = new ProductOrderSample(sample1);
         Product dummyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber");
-        riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true);
+        riskyProduct = ProductTestFactory.createDummyProduct(Workflow.AGILENT_EXOME_EXPRESS, "partNumber", true, false);
         ProductOrder pdo1 = new ProductOrder(ResearchProjectTestFactory.TEST_CREATOR, "containerTest Product Order Test1",
                 Arrays.asList(pdoSample1),
                         "newQuote", dummyProduct,

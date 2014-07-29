@@ -1,13 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -16,21 +11,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 
 
 @Test(groups = EXTERNAL_INTEGRATION)
-public class BSPSetVolumeConcentrationTest extends Arquillian {
+public class BSPSetVolumeConcentrationTest  {
     private static final double ERROR_BAND = 0.00001;
 
-    @Deployment
-    public static WebArchive getDeployment() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
+    private BSPConfig bspConfig=BSPConfig.produce(DEV);
 
-    @Inject
-    private BSPConfig bspConfig;
+    private BSPSampleSearchService bspSampleSearchService=new BSPSampleSearchServiceImpl(bspConfig);
 
-    @Inject
-    private BSPSampleSearchService bspSampleSearchService;
-
-    @Test
     public void testSetVolumeAndConcentration() {
         BSPSampleDataFetcher dataFetcher = new BSPSampleDataFetcher(bspSampleSearchService, bspConfig);
         BSPSetVolumeConcentrationImpl bspSetVolumeConcentration = new BSPSetVolumeConcentrationImpl(bspConfig);

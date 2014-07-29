@@ -7,6 +7,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
@@ -16,35 +17,9 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Research Projects hold all the information about a research project
@@ -56,6 +31,7 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public static final boolean IRB_ENGAGED = false;
 
     public static final boolean IRB_NOT_ENGAGED = true;
+    public static final String PREFIX = "RP-";
 
     private static final long serialVersionUID = 937268527371239980L;
 
@@ -363,6 +339,19 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             cohorts[i++] = cohort.getCohortId();
         }
 
+        return cohorts;
+    }
+
+    /**
+     * @return a full list of cohorts in the same way cohort Ids are retrieved.
+     */
+
+    public ResearchProjectCohort[] getCohorts() {
+        int i = 0;
+        ResearchProjectCohort[] cohorts = new ResearchProjectCohort[sampleCohorts.size()];
+        for (ResearchProjectCohort researchProjectCohort : sampleCohorts) {
+            cohorts[i++] = researchProjectCohort;
+        }
         return cohorts;
     }
 
@@ -749,6 +738,15 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     public void removeRegulatoryInfo(RegulatoryInfo regulatoryInfo) {
         regulatoryInfos.remove(regulatoryInfo);
         regulatoryInfo.removeResearchProject(this);
+    }
+
+    public Set<ProductOrderSample> collectSamples() {
+
+        Set<ProductOrderSample> allProductOrderSamples = new HashSet<>();
+        for(ProductOrder order:productOrders) {
+            allProductOrderSamples.addAll(order.getSamples());
+        }
+        return allProductOrderSamples;
     }
 
     public enum Status implements StatusType {

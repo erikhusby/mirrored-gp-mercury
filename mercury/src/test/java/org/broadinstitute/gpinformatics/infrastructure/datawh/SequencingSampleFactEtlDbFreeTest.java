@@ -13,12 +13,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactoryTest;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme.IndexPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -26,9 +24,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.SampleType;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
@@ -45,7 +43,6 @@ import org.broadinstitute.gpinformatics.mercury.test.builders.ProductionFlowcell
 import org.broadinstitute.gpinformatics.mercury.test.builders.QtpEntityBuilder;
 import org.easymock.EasyMock;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -81,9 +78,6 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private final String machineName = "ABC-DEF";
     private final String cartridgeName = "flowcell09u1234-8931";
     private final long operator = 5678L;
-    private final String now = String.valueOf(java.lang.System.currentTimeMillis());
-    private final String[] molecularIndex = new String[]{"ATTACCA", "GTTACCA", "CTTACCA"};
-    private final String[] molecularIndexSchemeName = new String[]{"abcd-", "bcde-", "cdef-"};
     private final long researchProjectId = 33221144L;
     private final Set<SampleInstance> sampleInstances = new HashSet<>();
     private final List<Reagent> reagents = new ArrayList<>();
@@ -109,14 +103,6 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     private final TemplateEngine templateEngine = new TemplateEngine();
     private LabBatch workflowBatch;
-
-    @BeforeClass(groups = TestGroups.DATABASE_FREE)
-    public void objSetUp() {
-        // Fixes up name uniqueness by appending an mSec timestamp.
-        for (int i = 0; i < molecularIndexSchemeName.length; ++i) {
-            molecularIndexSchemeName[i] += now;
-        }
-    }
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
@@ -188,12 +174,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        // Sets up the molecular barcode.
-        Map<IndexPosition, MolecularIndex> positionIndexMap = new HashMap<>();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P5, new MolecularIndex(molecularIndex[0]));
-        MolecularIndexingScheme mis = new MolecularIndexingScheme(positionIndexMap);
-        mis.setName(molecularIndexSchemeName[0]);
-        reagents.add(new MolecularIndexReagent(mis));
+        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(1, false));
+        String misName = ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName();
 
         doExpects();
 
@@ -219,10 +201,10 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 2, tubeBarcode,
+                verifyRecord(record, misName, pdoId, sampleKey, 2, tubeBarcode,
                              tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
             } else {
-                verifyRecord(record, molecularIndexSchemeName[0], pdoId, sampleKey, 1, tubeBarcode,
+                verifyRecord(record, misName, pdoId, sampleKey, 1, tubeBarcode,
                              tubeCreateDateFormat, cartridgeName, researchProjectId, workflowBatch.getBatchName());
             }
         }
@@ -233,13 +215,9 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     }
 
     public void testMultiple1() throws Exception {
-        // Adds two molecular barcodes but only one reagent.
-        Map<IndexPosition, MolecularIndex> positionIndexMap = new HashMap<>();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P5, new MolecularIndex(molecularIndex[0]));
-        positionIndexMap.put(IndexPosition.ILLUMINA_P7, new MolecularIndex(molecularIndex[1]));
-        MolecularIndexingScheme molecularIndexingScheme = new MolecularIndexingScheme(positionIndexMap);
-        molecularIndexingScheme.setName(molecularIndexSchemeName[1]);
-        reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+        // Adds a second molecular barcode on the one reagent.
+        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(1, true));
+        String misName = ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName();
 
         doExpects();
 
@@ -264,11 +242,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 2, denatureSource.getLabel(),
+                verifyRecord(record, misName, pdoId, sampleKey, 2, denatureSource.getLabel(),
                              ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                              researchProjectId, workflowBatch.getBatchName());
             } else {
-                verifyRecord(record, molecularIndexSchemeName[1], pdoId, sampleKey, 1, denatureSource.getLabel(),
+                verifyRecord(record, misName, pdoId, sampleKey, 1, denatureSource.getLabel(),
                              ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                              researchProjectId, workflowBatch.getBatchName());
             }
@@ -278,17 +256,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     public void testMultiple2() throws Exception {
         // Adds two molecular barcodes in two reagents.
-        Map<IndexPosition, MolecularIndex> positionIndexMap = new HashMap<>();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P5, new MolecularIndex(molecularIndex[2]));
-        MolecularIndexingScheme molecularIndexingScheme = new MolecularIndexingScheme(positionIndexMap);
-        molecularIndexingScheme.setName(molecularIndexSchemeName[2]);
-        reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
-
-        positionIndexMap.clear();
-        positionIndexMap.put(IndexPosition.ILLUMINA_P7, new MolecularIndex(molecularIndex[0]));
-        molecularIndexingScheme = new MolecularIndexingScheme(positionIndexMap);
-        molecularIndexingScheme.setName(molecularIndexSchemeName[0]);
-        reagents.add(new MolecularIndexReagent(molecularIndexingScheme));
+        reagents.addAll(ZimsIlluminaRunFactoryTest.makeTestReagents(2, false));
+        String[] misNames = new String[] {
+                ((MolecularIndexReagent)reagents.get(0)).getMolecularIndexingScheme().getName(),
+                ((MolecularIndexReagent)reagents.get(1)).getMolecularIndexingScheme().getName()
+        };
 
         doExpects();
 
@@ -306,18 +278,17 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         EasyMock.expect(sampleInstance.getReagents()).andReturn(reagents).anyTimes();
 
         EasyMock.replay(mocks);
-        String expectedMolecularIndexName = molecularIndexSchemeName[0] + " " + molecularIndexSchemeName[2];
         Collection<String> records = tst.dataRecords(etlDateString, false, entityId);
         EasyMock.verify(mocks);
 
         Assert.assertEquals(records.size(), 2);
         for (String record : records) {
             if (record.contains(",2,")) {
-                verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 2, denatureSource.getLabel(),
+                verifyRecord(record, misNames, pdoId, sampleKey, 2, denatureSource.getLabel(),
                              ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                              researchProjectId, workflowBatch.getBatchName());
             } else {
-                verifyRecord(record, expectedMolecularIndexName, pdoId, sampleKey, 1, denatureSource.getLabel(),
+                verifyRecord(record, misNames, pdoId, sampleKey, 1, denatureSource.getLabel(),
                              ExtractTransform.formatTimestamp(denatureSource.getCreatedOn()), cartridgeName,
                              researchProjectId, workflowBatch.getBatchName());
             }
@@ -327,8 +298,8 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
 
     public void testGenericIndexAndDedup() throws Exception {
         // Has only non-indexed reagents so molecular indexes are all "NONE"
-        reagents.add(new GenericReagent("DMSO", "a whole lot"));
-        reagents.add(new GenericReagent("H2O", "Quabbans finest"));
+        reagents.add(new GenericReagent("DMSO", "a whole lot", new Date()));
+        reagents.add(new GenericReagent("H2O", "Quabbans finest", new Date()));
         sampleInstances.add(sampleInstance2);
 
         doExpects();
@@ -508,6 +479,14 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
     private String[] verifyRecord(String record, String expectedName, long pdoId, String sampleKey, Integer lane,
                                   String tubeBarcode, String createdDateStr, String cartridgeName,
                                   long researchProjectId, String batchName) {
+
+        return verifyRecord(record, new String[]{expectedName}, pdoId, sampleKey, lane, tubeBarcode,
+                createdDateStr, cartridgeName, researchProjectId, batchName);
+    }
+
+    private String[] verifyRecord(String record, String[] expectedNames, long pdoId, String sampleKey, Integer lane,
+                                  String tubeBarcode, String createdDateStr, String cartridgeName,
+                                  long researchProjectId, String batchName) {
         int i = 0;
         String[] parts = record.split(",");
         Assert.assertEquals(parts[i++], etlDateString);
@@ -519,7 +498,11 @@ public class SequencingSampleFactEtlDbFreeTest extends BaseEventTest {
         } else {
             i++;
         }
-        Assert.assertEquals(parts[i++], expectedName);
+        // Every expected name must be present in names, in any order.
+        String names = parts[i++];
+        for (String expectedName : expectedNames) {
+            Assert.assertTrue(names.contains(expectedName));
+        }
         Assert.assertEquals(parts[i++], String.valueOf(pdoId));
         Assert.assertEquals(parts[i++], sampleKey);
         Assert.assertEquals(parts[i++], String.valueOf(researchProjectId));

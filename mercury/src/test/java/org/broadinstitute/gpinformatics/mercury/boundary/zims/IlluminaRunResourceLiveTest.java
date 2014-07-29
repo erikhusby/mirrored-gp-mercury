@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -78,11 +79,21 @@ public class IlluminaRunResourceLiveTest extends Arquillian {
     }
 
     public static ZimsIlluminaRun getZimsIlluminaRun(URL baseUrl, String runName) {
+        WebResource.Builder builder = getBuilder(baseUrl, runName);
+        return builder.get(ZimsIlluminaRun.class);
+    }
+
+    public static String getZimsIlluminaRunString(URL baseUrl, String runName) {
+        WebResource.Builder builder = getBuilder(baseUrl, runName);
+        return builder.get(String.class);
+    }
+
+    private static WebResource.Builder getBuilder(URL baseUrl, String runName) {
         String url = baseUrl.toExternalForm() + IlluminaRunResourceTest.WEBSERVICE_URL;
         DefaultClientConfig clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         return Client.create(clientConfig).resource(url)
                 .queryParam("runName", runName)
-                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+                .accept(MediaType.APPLICATION_JSON);
     }
 }

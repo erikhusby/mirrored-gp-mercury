@@ -78,44 +78,6 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public static final String IRB_REQUIRED_START_DATE_STRING = "04/01/2014";
 
-    public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
-        return researchProject.getRegulatoryInfos();
-    }
-
-    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
-        this.regulatoryInfos.clear();
-        getRegulatoryInfos().addAll(regulatoryInfos);
-    }
-
-    public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
-        getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
-    }
-
-    @Transient
-    public boolean orderPredatesRegulatoryRequirement() {
-        Date testDate = getPlacedDate();
-        if (getPlacedDate() == null) {
-            testDate = new Date();
-        }
-        return testDate.before(getIrbRequiredStartDate());
-    }
-
-    @Transient
-    public boolean regulatoryRequirementsMet() {
-        if (orderPredatesRegulatoryRequirement()) {
-            return true;
-        }
-        if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
-            return true;
-        }
-        return false;
-    }
-
-    @Transient
-    public boolean canSkipRegulatoryRequirements() {
-        return !StringUtils.isBlank(skipRegulatoryReason);
-    }
-
     public enum SaveType {CREATING, UPDATING}
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
@@ -225,12 +187,22 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
     @Column(name = "attestation_confirmed")
     private Boolean attestationConfirmed = false;
 
+    @Column(name = "squid_work_request")
+    private String squidWorkRequest;
+
     /**
      * Default no-arg constructor, also used when creating a new ProductOrder.
      */
     public ProductOrder() {
         // Do stuff that needs to happen after serialization and here.
         readResolve();
+    }
+
+    public ProductOrder(String title, String comments, String quoteId) {
+        // Constructor for ProductOrderData.toProductOrder()
+        this.title = title;
+        this.comments = comments;
+        this.quoteId = quoteId;
     }
 
     /**
@@ -970,6 +942,46 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     public void setSkipRegulatoryReason(String skipRegulatoryReason) {
         this.skipRegulatoryReason = skipRegulatoryReason;
+    }
+
+    public Collection<RegulatoryInfo> findAvailableRegulatoryInfos() {
+        return researchProject.getRegulatoryInfos();
+    }
+
+    public void setRegulatoryInfos(Collection<RegulatoryInfo> regulatoryInfos) {
+        this.regulatoryInfos.clear();
+        getRegulatoryInfos().addAll(regulatoryInfos);
+    }
+
+    public void addRegulatoryInfo(@Nonnull RegulatoryInfo... regulatoryInfo) {
+        getRegulatoryInfos().addAll(Arrays.asList(regulatoryInfo));
+    }
+
+    public boolean orderPredatesRegulatoryRequirement() {
+        Date testDate = ((getPlacedDate() == null) ?new Date():getPlacedDate());
+        return testDate.before(getIrbRequiredStartDate());
+    }
+
+    public boolean regulatoryRequirementsMet() {
+        if (orderPredatesRegulatoryRequirement()) {
+            return true;
+        }
+        if (!getRegulatoryInfos().isEmpty() || canSkipRegulatoryRequirements()) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean canSkipRegulatoryRequirements() {
+        return !StringUtils.isBlank(skipRegulatoryReason);
+    }
+
+    public String getSquidWorkRequest() {
+        return squidWorkRequest;
+    }
+
+    public void setSquidWorkRequest(String squidWorkRequest) {
+        this.squidWorkRequest = squidWorkRequest;
     }
 
     @Override

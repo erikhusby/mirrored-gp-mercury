@@ -83,15 +83,22 @@ public class CollaborationService {
      * @param researchProject The research project
      * @param selectedCollaborator The bsp user id for an external collaborator that was specified
      * @param collaboratorEmail The email of a collaborator that was specifically specified
+     * @param quoteId the collaboration's quote ID
      * @param collaborationMessage The optional extra message from the project manager
      */
     public void beginCollaboration(@Nonnull ResearchProject researchProject, @Nullable Long selectedCollaborator,
-                                   @Nullable String collaboratorEmail, @Nullable String collaborationMessage)
+                                   @Nullable String collaboratorEmail, @Nonnull String quoteId,
+                                   @Nullable String collaborationMessage)
             throws CollaborationNotFoundException, CollaborationPortalException {
 
         // If both the selected collaborator and the specified collaborators are null, then throw an exception.
         if ((selectedCollaborator == null) && (collaboratorEmail == null)) {
-            throw new IllegalArgumentException("must specify a Collaborator Domain User ID or an email address");
+            throw new IllegalArgumentException("Must specify a Collaborator Domain User ID or an email address");
+        }
+
+        if (researchProject.getCohortIds().length != 1) {
+            throw new IllegalArgumentException("A collaboration requires one and only one cohort to be defined " +
+                                               "on the research project");
         }
 
         // Look up the selected id.
@@ -121,7 +128,7 @@ public class CollaborationService {
 
         // Now tell the portal to create this collaborator.
         String collaborationId =
-                collaborationPortalService.beginCollaboration(researchProject, bspUser, collaborationMessage);
+                collaborationPortalService.beginCollaboration(researchProject, bspUser, quoteId, collaborationMessage);
         if (StringUtils.isBlank(collaborationId)) {
             throw new RuntimeException("Could not create a Collaboration");
         }

@@ -128,6 +128,13 @@ public class LabVesselFixupTest extends Arquillian {
     }
 
     @Test(enabled = false)
+    public void fixupBsp1914() {
+        LabVessel labVessel = labVesselDao.findByIdentifier("CO-9202643");
+        labVessel.setLabel("CO-9624594");
+        labVesselDao.flush();
+    }
+
+    @Test(enabled = false)
     public void fixupZeroRacks() {
         TubeFormation tubeFormation = tubeFormationDao.findByDigest("31003665b6e8cf20071a0f6c530da6e7");
         deleteZeroRack(tubeFormation);
@@ -445,6 +452,86 @@ public class LabVesselFixupTest extends Arquillian {
             throw new RuntimeException("Failed to find tube formation for daughter plate transfer");
         }
         barcodedTubeDao.flush();
+    }
+
+    /*
+    * BSP had a rearray done prior to pico, and Mercury must reflect it so quant upload works.
+    */
+    @Test(enabled = false)
+    public void fixupIpi612227() {
+        BarcodedTube tube5558 = barcodedTubeDao.findByBarcode("1107705558");
+        BarcodedTube tube5548 = barcodedTubeDao.findByBarcode("1107705548");
+        BarcodedTube tube1537 = barcodedTubeDao.findByBarcode("1107851537");
+        BarcodedTube tube5557 = barcodedTubeDao.findByBarcode("1107705557");
+
+        // Get rack & tube formation from database, just because I had already done the query.
+        // select v2.label, pv.mapkey, vc.containers, v.label tube_barcode
+        // from lab_vessel v, lab_vessel_containers vc, lab_vessel_racks_of_tubes rot,
+        //      lab_vessel v2, lv_map_position_to_vessel pv
+        // where v.lab_vessel_id = vc.lab_vessel
+        // and v.lab_vessel_id = pv.map_position_to_vessel
+        // and vc.containers = rot.lab_vessel
+        // and rot.racks_of_tubes = v2.lab_vessel_id
+        // and rot.lab_vessel = pv.lab_vessel
+        // and v2.label in ('CO-9565972', 'CO-9604477')
+        // and v.label  in ('1107705558', '1107705548', '1107851537', '1107705557')
+        // order by tube_barcode;
+        //
+        // CO-9565972 B02 1221051 1107705548
+        // CO-9604477 A01 1221054 1107705548
+        // CO-9565972 H01 1221051 1107705557
+        // CO-9604477 C01 1221054 1107705557
+        // CO-9565972 A02 1221051 1107705558
+        // CO-9565972 C02 1221051 1107851537
+        // CO-9604477 B01 1221054 1107851537
+
+        VesselContainer<?> co72 = getContainerForTube(tube5548, 1221051L);
+        VesselContainer<?> co77 = getContainerForTube(tube5548, 1221054L);
+
+        Assert.assertNotNull(co72);
+        Assert.assertNotNull(co77);
+
+        TubeFormation tf72 = (TubeFormation) co72.getEmbedder();
+        TubeFormation tf77 = (TubeFormation) co77.getEmbedder();
+
+        Assert.assertNotNull(tf72);
+        Assert.assertNotNull(tf77);
+
+        Map<VesselPosition, BarcodedTube> mapPv72 =
+                (Map<VesselPosition, BarcodedTube>) co72.getMapPositionToVessel();
+        Map<VesselPosition, BarcodedTube> mapPv77 =
+                (Map<VesselPosition, BarcodedTube>) co77.getMapPositionToVessel();
+
+        // Want this:
+        //CO-9565972.H01 1107705558  SM-6AI7J
+        //CO-9565972.A02 null
+        //CO-9565972.B02 null
+        //CO-9565972.C02 null
+        //CO-9604477.A01 1107705548  SM-6AI7K
+        //CO-9604477.B01 1107851537  SM-6AI92
+        //CO-9604477.C01 1107705557  SM-6AI7I
+
+        mapPv72.put(VesselPosition.H01, tube5558);
+        mapPv72.remove(VesselPosition.A02);
+        mapPv72.remove(VesselPosition.B02);
+        mapPv72.remove(VesselPosition.C02);
+        mapPv77.put(VesselPosition.A01, tube5548);
+        mapPv77.put(VesselPosition.B01, tube1537);
+        mapPv77.put(VesselPosition.C01, tube5557);
+
+        tf72.setLabel(TubeFormation.makeDigest(mapPv72));
+        tf77.setLabel(TubeFormation.makeDigest(mapPv77));
+
+        barcodedTubeDao.flush();
+    }
+
+    private VesselContainer<?> getContainerForTube(BarcodedTube barcodedTube, Long tubeFormationId) {
+        for (VesselContainer<?> container : barcodedTube.getContainers()) {
+            if (container.getEmbedder().getLabVesselId().equals(tubeFormationId)) {
+                return container;
+            }
+        }
+        return null;
     }
 
     @Test(enabled = false)

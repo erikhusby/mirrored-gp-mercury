@@ -21,9 +21,9 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.SequencingTemplate
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.SystemRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -35,13 +35,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRunChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstanceV2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWellTransient;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatchStartingVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -61,7 +65,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
@@ -96,7 +102,6 @@ public class ZimsIlluminaRunFactory {
         List<List<SampleInstanceDto>> perLaneSampleInstanceDtos = new ArrayList<>();
         Set<String> sampleIds = new HashSet<>();
         Set<String> productOrderKeys = new HashSet<>();
-
         // Makes DTOs for aliquot samples and product orders, per lane.
         Iterator<String> positionNames = flowcell.getVesselGeometry().getPositionNames();
         short laneNum = 0;
@@ -108,23 +113,42 @@ public class ZimsIlluminaRunFactory {
             VesselPosition vesselPosition = VesselPosition.getByName(positionName);
             PipelineTransformationCriteria criteria = new PipelineTransformationCriteria();
             flowcell.getContainerRole().evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
-                Set<SampleInstance> sampleInstances =
-                        labVessel.getSampleInstances(LabVessel.SampleType.ROOT_SAMPLE, LabBatch.LabBatchType.WORKFLOW);
-                for (SampleInstance sampleInstance : sampleInstances) {
+            Map<SampleInstanceV2, SampleInstanceV2> laneSampleInstances = new HashMap<>();
+            for (SampleInstanceV2 sampleInstanceV2 :
+                    flowcell.getContainerRole().getSampleInstancesAtPositionV2(vesselPosition)) {
+                laneSampleInstances.put(sampleInstanceV2, sampleInstanceV2);
+            }
 
-                    String productOrderKey = sampleInstance.getProductOrderKey();
-                    if (productOrderKey != null) {
+            for (LabVessel labVessel : criteria.getNearestLabVessels()) {
+                Set<SampleInstanceV2> sampleInstances = labVessel.getSampleInstancesV2();
+                for (SampleInstanceV2 sampleInstance : sampleInstances) {
+                    // Must use equivalent sample instance in the lane, to reflect any rework LCSET since the catch.
+                    SampleInstanceV2 laneSampleInstance = laneSampleInstances.get(sampleInstance);
+                    if (laneSampleInstance == null) {
+                        throw new RuntimeException("Failed to find " + sampleInstance.getMercuryRootSampleName() +
+                                " in lane " + laneNum);
+                    }
+                    BucketEntry singleBucketEntry = laneSampleInstance.getSingleBucketEntry();
+                    String productOrderKey = null;
+                    if (singleBucketEntry != null) {
+                        productOrderKey = singleBucketEntry.getPoBusinessKey();
                         productOrderKeys.add(productOrderKey);
                     }
-                    String pdoSampleName = sampleInstance.getStartingSample().getSampleKey();
-                    String sampleId = (sampleInstance.getBspExportSample() != null) ?
-                            sampleInstance.getBspExportSample().getSampleKey() : pdoSampleName;
+                    // todo jmt root may be null
+                    String pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
+                    String sampleId = pdoSampleName;
+                    LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);
+                    if (importLbsv != null) {
+                        Set<MercurySample> mercurySamples = importLbsv.getLabVessel().getMercurySamples();
+                        if (!mercurySamples.isEmpty()) {
+                            sampleId = mercurySamples.iterator().next().getSampleKey();
+                        }
+                    }
                     sampleIds.add(sampleId);
                     LabVessel libraryVessel = flowcell.getNearestTubeAncestorsForLanes().get(vesselPosition);
                     String libraryName = libraryVessel.getLabel();
                     sampleInstanceDtos
-                            .add(new SampleInstanceDto(laneNum, labVessel, sampleInstance, sampleId, productOrderKey,
+                            .add(new SampleInstanceDto(laneNum, labVessel, laneSampleInstance, sampleId, productOrderKey,
                                                        libraryName, libraryVessel.getCreatedOn(), pdoSampleName));
                 }
             }
@@ -208,36 +232,32 @@ public class ZimsIlluminaRunFactory {
                                               Map<String, ProductOrder> mapKeyToProductOrder,
                                               Map<String, Control> mapNameToControl) {
         List<LibraryBean> libraryBeans = new ArrayList<>();
+        Map<String, LibraryBean> mapSampleAndIndexToBean = new HashMap<>();
         for (SampleInstanceDto sampleInstanceDto : sampleInstanceDtos) {
-            SampleInstance sampleInstance = sampleInstanceDto.getSampleInstance();
+            SampleInstanceV2 sampleInstance = sampleInstanceDto.getSampleInstance();
             ProductOrder productOrder = (sampleInstanceDto.getProductOrderKey() != null) ?
                     mapKeyToProductOrder.get(sampleInstanceDto.getProductOrderKey()) : null;
 
-            Set<LabBatch> allLabBatches = new HashSet<>(sampleInstance.getAllLabBatches());
             List<LabBatch> lcSetBatches = new ArrayList<>();
-            for (LabBatch labBatch : allLabBatches) {
-                if (labBatch.getLabBatchType() == LabBatch.LabBatchType.WORKFLOW) {
-                    lcSetBatches.add(labBatch);
-                }
+            for (LabBatchStartingVessel labBatchStartingVessel :
+                    sampleInstance.getAllBatchVessels(LabBatch.LabBatchType.WORKFLOW)) {
+                lcSetBatches.add(labBatchStartingVessel.getLabBatch());
             }
 
             // if there's at least one LCSET batch, and getLabBatch (the singular version) returns null,
             // then throw an exception
-            if (lcSetBatches.size() > 1 && sampleInstance.getLabBatch() == null) {
+            if (lcSetBatches.size() > 1 && sampleInstance.getSingleBatch() == null) {
                 throw new RuntimeException(
                         String.format("Expected one LabBatch but found %s.", lcSetBatches.size()));
             }
             String lcSet = null;
-            if (lcSetBatches.size() == 1) {
-                JiraTicket jiraTicket = lcSetBatches.get(0).getJiraTicket();
-                if (jiraTicket != null) {
-                    lcSet = jiraTicket.getTicketId();
+            if (sampleInstance.getSingleInferredBucketedBatch() == null) {
+                if (sampleInstance.getSingleBatch() != null) {
+                    lcSet = sampleInstance.getSingleBatch().getBatchName();
                 }
                 // else it is probably a control.
             } else {
-                if (sampleInstance.getLabBatch() != null) {
-                    lcSet = sampleInstance.getLabBatch().getBatchName();
-                }
+                lcSet = sampleInstance.getSingleInferredBucketedBatch().getBatchName();
             }
 
             // This loop goes through all the reagents and takes the last bait name (under the assumption that
@@ -289,7 +309,22 @@ public class ZimsIlluminaRunFactory {
 
         // Make order predictable
         Collections.sort(libraryBeans, LibraryBean.BY_SAMPLE_ID);
+
+        // Consolidates beans that have the same consolidation key.
+        SortedSet<String> previouslySeenSampleAndMis = new TreeSet<>();
+        for (Iterator<LibraryBean> iter = libraryBeans.iterator(); iter.hasNext(); ) {
+            LibraryBean libraryBean = iter.next();
+            String consolidationKey =
+                    makeConsolidationKey(libraryBean.getSampleId(), libraryBean.getMolecularIndexingScheme().getName());
+            if (!previouslySeenSampleAndMis.add(consolidationKey)) {
+                iter.remove();
+            }
+        }
         return libraryBeans;
+    }
+
+    private String makeConsolidationKey(String... components) {
+        return StringUtils.join(components, "__delimiter__");
     }
 
     private LibraryBean createLibraryBean(
@@ -402,8 +437,16 @@ public class ZimsIlluminaRunFactory {
                 if (containerRole == null) {
                     mapHopToLabVessels.get(context.getHopCount()).add(labVessel);
                 } else {
-                    mapHopToLabVessels.get(context.getHopCount()).add(containerRole.getVesselAtPosition(
-                            context.getVesselPosition()));
+                    LabVessel vesselAtPosition = containerRole.getVesselAtPosition(context.getVesselPosition());
+                    if (vesselAtPosition == null) {
+                        if (OrmUtil.proxySafeIsInstance(labVessel, StaticPlate.class)) {
+                            vesselAtPosition = new PlateWellTransient((StaticPlate) labVessel, context.getVesselPosition());
+                        } else {
+                            throw new RuntimeException("No vessel at position " + context.getVesselPosition() + " in " +
+                                    labVessel.getLabel());
+                        }
+                    }
+                    mapHopToLabVessels.get(context.getHopCount()).add(vesselAtPosition);
                 }
             }
             return TraversalControl.StopTraversing;
@@ -433,14 +476,14 @@ public class ZimsIlluminaRunFactory {
     static class SampleInstanceDto {
         private short laneNumber;
         private LabVessel labVessel;
-        private SampleInstance sampleInstance;
+        private SampleInstanceV2 sampleInstance;
         private String sampleId;
         private String productOrderKey;
         private String sequencedLibraryName;
         private Date sequencedLibraryDate;
         private String pdoSampleName;
 
-        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstance sampleInstance, String sampleId,
+        public SampleInstanceDto(short laneNumber, LabVessel labVessel, SampleInstanceV2 sampleInstance, String sampleId,
                                  String productOrderKey, String sequencedLibraryName, Date sequencedLibraryDate,
                                  String pdoSampleName) {
             this.laneNumber = laneNumber;
@@ -461,7 +504,7 @@ public class ZimsIlluminaRunFactory {
             return labVessel;
         }
 
-        public SampleInstance getSampleInstance() {
+        public SampleInstanceV2 getSampleInstance() {
             return sampleInstance;
         }
 

@@ -11,8 +11,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.entity.samples.SampleReceiptValidation;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.AbstractSample;
 import org.broadinstitute.gpinformatics.infrastructure.common.MathUtils;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.annotations.Index;
@@ -124,17 +126,60 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         return names;
     }
 
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     *
+     * @param samples the samples to convert.
+     *
+     * @return the names of the samples, in the same order as the input.
+     */
+    public static List<Long> getSampleIDs(Collection<ProductOrderSample> samples) {
+        List<Long> ids = new ArrayList<>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            ids.add(productOrderSample.getProductOrderSampleId());
+        }
+        return ids;
+    }
+
     public boolean calculateRisk() {
         riskItems.clear();
 
         boolean isOnRisk = false;
+        RiskCriterion rinRisk = null;
+        RiskCriterion rqsRisk = null;
 
         // Go through each risk check on the product
         for (RiskCriterion criterion : productOrder.getProduct().getRiskCriteria()) {
-            // If this is on risk, then create a risk item for it and add it in
-            if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
-                isOnRisk = true;
+            switch (criterion.getType()) {
+            case RIN:
+                rinRisk = criterion;
+                break;
+            case RQS:
+                rqsRisk = criterion;
+                break;
+            default:
+                isOnRisk = evaluateCriterion(criterion, isOnRisk);
+            }
+        }
+
+        // Special handling for the combination of RIN and RQS risk criteria.
+        if (rinRisk != null && rqsRisk != null) {
+            if (hasRin() == hasRqs()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            } else if (hasRin()) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+                // suppress RQS risk criterion
+            } else if (hasRqs()) {
+                // suppress RIN risk criterion
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
+            }
+        } else {
+            if (rinRisk != null) {
+                isOnRisk = evaluateCriterion(rinRisk, isOnRisk);
+            }
+            if (rqsRisk != null) {
+                isOnRisk = evaluateCriterion(rqsRisk, isOnRisk);
             }
         }
 
@@ -145,6 +190,23 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
         }
 
         return isOnRisk;
+    }
+
+    private boolean evaluateCriterion(RiskCriterion criterion, boolean isOnRisk) {
+        // If this is on risk, then create a risk item for it and add it in
+        if (criterion.onRisk(this)) {
+            riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
+            isOnRisk = true;
+        }
+        return isOnRisk;
+    }
+
+    private boolean hasRin() {
+        return isInBspFormat() && getBspSampleDTO().getRin() != null;
+    }
+
+    private boolean hasRqs() {
+        return isInBspFormat() && getBspSampleDTO().getRqs() != null;
     }
 
     public void setManualOnRisk(RiskCriterion criterion, String comment) {
@@ -228,12 +290,39 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     }
 
     /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName    the sample ID
+     * @param primaryKey    the primary key
+     *
+     * @see #ProductOrderSample(String)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, Long primaryKey) {
+        this(sampleName);
+        this.productOrderSampleId = primaryKey;
+    }
+
+    /**
      * Used for testing only.
      */
     public ProductOrderSample(@Nonnull String sampleName,
                               @Nonnull BSPSampleDTO bspSampleDTO) {
         super(bspSampleDTO);
         this.sampleName = sampleName;
+    }
+
+    /**
+     * TEST-ONLY delegating constructor that also sets the entity's primary key.
+     *
+     * @param sampleName      the sample ID
+     * @param bspSampleDTO    the sample data from BSP
+     * @param primaryKey      the primary key
+     *
+     * @see #ProductOrderSample(String, BSPSampleDTO)
+     */
+    public ProductOrderSample(@Nonnull String sampleName, @Nonnull BSPSampleDTO bspSampleDTO, Long primaryKey) {
+        this(sampleName, bspSampleDTO);
+        this.productOrderSampleId = primaryKey;
     }
 
     @Override
@@ -491,7 +580,7 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
      */
     public boolean isOnRisk() {
         for (RiskItem item : riskItems) {
-            if (item.getRiskCriterion() != null) {
+            if (item.isOnRisk()) {
                 return true;
             }
         }
@@ -623,4 +712,5 @@ public class ProductOrderSample extends AbstractSample implements BusinessObject
     public void setMercurySample(MercurySample mercurySample) {
         this.mercurySample = mercurySample;
     }
+
 }

@@ -11,17 +11,13 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.admin;
 
-import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import org.broadinstitute.gpinformatics.athena.boundary.infrastructure.PublicMessageEjb;
-import org.broadinstitute.gpinformatics.athena.entity.infrastructure.PublicMessage;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -38,14 +34,8 @@ public class PublicMessageAdminActionBean extends CoreActionBean {
     @Inject
     private PublicMessageEjb publicMessageEjb;
 
-    @ValidateNestedProperties(@Validate(
-            field = "message", label = "Public message text", required = true, maxlength = 255, on = SET_MESSAGE))
-    private PublicMessage publicMessage;
-
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void init() {
-        publicMessage = publicMessageEjb.getPublicMessage();
-    }
+    @Validate(label = "Public message text", required = true, maxlength = 255, on = SET_MESSAGE)
+    private String messageText;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -55,7 +45,7 @@ public class PublicMessageAdminActionBean extends CoreActionBean {
 
     @HandlesEvent(SET_MESSAGE)
     public Resolution setMessage() {
-        publicMessageEjb.setPublicMessage(publicMessage);
+        publicMessageEjb.setPublicMessage(messageText);
         return getSourcePageResolution();
     }
 
@@ -65,11 +55,11 @@ public class PublicMessageAdminActionBean extends CoreActionBean {
         return getSourcePageResolution();
     }
 
-    public PublicMessage getPublicMessage() {
-        return publicMessage;
+    public String getMessageText() {
+        return messageText;
     }
 
-    public void setPublicMessage(PublicMessage publicMessage) {
-        this.publicMessage = publicMessage;
+    public void setMessageText(String messageText) {
+        this.messageText = messageText;
     }
 }

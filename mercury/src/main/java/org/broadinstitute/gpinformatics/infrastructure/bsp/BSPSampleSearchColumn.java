@@ -28,6 +28,7 @@ public enum BSPSampleSearchColumn {
     ETHNICITY("Ethnicity"),
     RACKSCAN_MISMATCH("Sample Kit Data Upload/Rackscan Mismatch"),
     RIN("RIN Number"),
+    RQS("RNA Quality Score (RQS)"),
     PICO_RUN_DATE("Pico Run Date"),
     RECEIPT_DATE("Receipt Date"),
     TUMOR_NORMAL("Sample Type"),
@@ -64,6 +65,7 @@ public enum BSPSampleSearchColumn {
         BSPSampleSearchColumn.RACE,
         BSPSampleSearchColumn.RACKSCAN_MISMATCH,
         BSPSampleSearchColumn.RIN,
+        BSPSampleSearchColumn.RQS,
         BSPSampleSearchColumn.PICO_RUN_DATE,
         BSPSampleSearchColumn.RECEIPT_DATE
     };

@@ -66,6 +66,10 @@ public class RiskItem implements Serializable {
         this.remark = comment;
     }
 
+    public boolean isOnRisk() {
+        return riskCriterion != null;
+    }
+
     public Long getRiskItemId() {
         return riskItemId;
     }
@@ -121,5 +125,10 @@ public class RiskItem implements Serializable {
         return MessageFormat.format(
                 "At {0,time} on {0,date}, calculated ({1}) risk on value {2} {3}",
                 occurredDate, riskCriterion.getCalculationString(), comparedValue, comment);
+    }
+
+    @Override
+    public String toString() {
+        return getInformation();
     }
 }

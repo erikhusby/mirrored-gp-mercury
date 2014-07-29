@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventRefData
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -116,7 +117,7 @@ public class LabEventResource {
         List<LabEvent> labEvents = new ArrayList<>();
 
         for (LabVessel labVessel : labVessels) {
-            for (LabEvent labEvent : labVessel.getInPlaceEvents()) {
+            for (LabEvent labEvent : labVessel.getInPlaceEventsWithContainers()) {
                 if (!labEvent.getReagents().isEmpty()) {
                     labEvents.add(labEvent);
                 }
@@ -183,7 +184,14 @@ public class LabEventResource {
                     operator == null ? "Unknown user: " + labEvent.getEventOperator() : operator.getUsername(),
                     labEvent.getEventDate());
             for (Reagent reagent : labEvent.getReagents()) {
-                labEventBean.getReagents().add(new ReagentBean(reagent.getName(), reagent.getLot()));
+                labEventBean.getReagents().add(
+                        new ReagentBean(reagent.getName(), reagent.getLot(), reagent.getExpiration()));
+            }
+
+            for(LabEventMetadata labEventMetadata : labEvent.getLabEventMetadatas()) {
+                labEventBean.getMetadatas().add(new MetadataBean(
+                        labEventMetadata.getLabEventMetadataType().getDisplayName(),
+                        labEventMetadata.getValue()));
             }
 
             LabBatch labBatch = labEvent.getLabBatch();
@@ -274,7 +282,7 @@ public class LabEventResource {
         // todo jmt need to hide on-the-fly creation of plate wells
         String type = labVesselEntity.getType().name();
         if (labVesselEntity.getType() == LabVessel.ContainerType.STATIC_PLATE) {
-            type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
+            type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getAutomationName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         } else if (labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {

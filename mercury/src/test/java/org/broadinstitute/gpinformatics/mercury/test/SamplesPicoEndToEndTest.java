@@ -289,7 +289,7 @@ public class SamplesPicoEndToEndTest {
     }
 
     public static void printVessel(LabVesselBean labVesselBean) {
-        StaticPlate.PlateType plateType = StaticPlate.PlateType.getByDisplayName(labVesselBean.getType());
+        StaticPlate.PlateType plateType = StaticPlate.PlateType.getByAutomationName(labVesselBean.getType());
         VesselGeometry vesselGeometry;
         if (plateType == null) {
             vesselGeometry = VesselGeometry.G12x8;

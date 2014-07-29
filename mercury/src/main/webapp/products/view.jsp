@@ -12,11 +12,16 @@
     <stripes:layout-component name="content">
 
         <div class="form-horizontal span7">
-
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.partNumber} (<a href="Product Descriptions.pdf">Product Descriptions PDF</a>)</div>
+                    <div class="form-value">
+                        <img src="${ctxpath}/images/pdficon_small.png" alt="">
+                        <stripes:link beanclass="${actionBean.class.name}" event="downloadProductDescriptions">
+                            ${actionBean.editProduct.partNumber}
+                            <stripes:param name="editProduct.partNumber" value="${actionBean.editProduct.partNumber}"/>
+                        </stripes:link>
+                    </div>
                 </div>
             </div>
 
@@ -55,21 +60,21 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.description}</div>
+                    <div class="form-value" style="white-space: pre-wrap;">${actionBean.editProduct.description}</div>
                 </div>
             </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Deliverables</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.deliverables}</div>
+                    <div class="form-value" style="white-space: pre-wrap;">${actionBean.editProduct.deliverables}</div>
                 </div>
             </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Input Requirements</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.inputRequirements}</div>
+                    <div class="form-value" style="white-space: pre-wrap;">${actionBean.editProduct.inputRequirements}</div>
                 </div>
             </div>
 

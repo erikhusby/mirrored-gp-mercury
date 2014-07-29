@@ -240,11 +240,17 @@ IS
       WHERE is_delete = 'T'
     );
 
-    -- For this fact table, a re-export of audited entity ids should replace existing ones.
+    -- For this fact table, a re-export of audited entities should replace
+    -- existing ones.  Sequencing will reuse flowcell barcode when redoing a
+    -- run, so replace based on flowcell barcode too, provided the imported
+    -- sequencing run is later than the exiting one.
     DELETE FROM sequencing_sample_fact
-    WHERE sequencing_run_id IN (SELECT
-                                  DISTINCT sequencing_run_id
-                                FROM im_sequencing_sample_fact);
+    WHERE sequencing_sample_fact_id IN
+    (SELECT ssf.sequencing_sample_fact_id
+     FROM sequencing_sample_fact ssf, im_sequencing_sample_fact issf
+     WHERE ssf.sequencing_run_id = issf.sequencing_run_id
+     OR (ssf.flowcell_barcode = issf.flowcell_barcode
+         AND ssf.sequencing_run_id < issf.sequencing_run_id));
 
     COMMIT;
 
