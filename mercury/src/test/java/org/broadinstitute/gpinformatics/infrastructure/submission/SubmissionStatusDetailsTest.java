@@ -34,7 +34,7 @@ public class SubmissionStatusDetailsTest {
         Assert.assertNotNull(testStatus.getErrors());
 
         Assert.assertEquals(2, testStatus.getErrors().length);
-        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(),testError1));
-        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(),testError2));
+        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(), testError1));
+        Assert.assertTrue(ArrayUtils.contains(testStatus.getErrors(), testError2));
     }
 }

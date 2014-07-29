@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 
 /**
@@ -29,6 +30,7 @@ public class SubmissionStatusDetails implements Serializable {
         return uuid;
     }
 
+    @XmlElement
     public void setUuid (String uuid)
     {
         this.uuid = uuid;
@@ -38,6 +40,7 @@ public class SubmissionStatusDetails implements Serializable {
         return (status != null)?status.getDescription():null;
     }
 
+    @XmlElement
     public void setStatus(String status) {
         this.status = Status.fromDescription( status);
     }
@@ -46,6 +49,7 @@ public class SubmissionStatusDetails implements Serializable {
         return errors;
     }
 
+    @XmlElement
     public void setErrors(String... errors) {
         this.errors = errors;
     }
