@@ -15,6 +15,7 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductTestFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.Workflow;
 import org.broadinstitute.gpinformatics.mercury.presentation.TestCoreActionBeanContext;
@@ -33,7 +34,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
 
-@Test(enabled = true)
+@Test(groups = TestGroups.DATABASE_FREE)
 public class PdfDownloadDbFreeTest {
     public static final boolean IS_PDM_USER = true;
     public static final boolean NOT_PDM_USER = false;
