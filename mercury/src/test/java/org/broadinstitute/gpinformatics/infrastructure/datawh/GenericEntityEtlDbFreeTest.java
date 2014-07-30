@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.EnversAudit;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -29,8 +30,7 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * dbfree unit test of GenericEntityEtl as implemented by LabBatch etl.
- * @author epolk
- */
+  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class GenericEntityEtlDbFreeTest {
@@ -75,10 +75,10 @@ public class GenericEntityEtlDbFreeTest {
         Collection<Long> revIds = new ArrayList<>();
         revIds.add(entityId);
 
-        List<Object[]> dataChanges = new ArrayList<>();
-        dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
+        List<EnversAudit> enversAudits = new ArrayList<>();
+        enversAudits.add(new EnversAudit(obj, revInfo[0], RevisionType.ADD));
 
-        expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(dataChanges);
+        expect(auditReader.fetchDataChanges(revIds, tst.entityClass)).andReturn(enversAudits);
         expect(dao.findById(LabVessel.class, entityId)).andReturn(obj);
 
         expect(obj.getLabVesselId()).andReturn(entityId).times(2);
@@ -104,10 +104,10 @@ public class GenericEntityEtlDbFreeTest {
         revIds.add(entityId);
 
         // Three changes to one entity result in one deletion record.
-        List<Object[]> dataChanges = new ArrayList<>();
-        dataChanges.add(new Object[]{obj, revInfo[0], RevisionType.ADD});
-        dataChanges.add(new Object[]{obj, revInfo[1], RevisionType.MOD});
-        dataChanges.add(new Object[]{obj, revInfo[2], RevisionType.DEL});
+        List<EnversAudit> dataChanges = new ArrayList<>();
+        dataChanges.add(new EnversAudit(obj, revInfo[0], RevisionType.ADD));
+        dataChanges.add(new EnversAudit(obj, revInfo[1], RevisionType.MOD));
+        dataChanges.add(new EnversAudit(obj, revInfo[2], RevisionType.DEL));
 
         expect(auditReader.fetchDataChanges(eq(revIds), (Class)anyObject())).andReturn(dataChanges);
         expect(obj.getLabVesselId()).andReturn(entityId).times(3);
