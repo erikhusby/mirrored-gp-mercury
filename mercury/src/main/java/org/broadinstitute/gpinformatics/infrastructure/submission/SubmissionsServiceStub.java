@@ -1,11 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 @Stub
@@ -18,11 +17,13 @@ public class SubmissionsServiceStub implements SubmissionsService {
     private String githubBaseUri;
 
 
-
     @Override
     public SubmissionStatusResultBean getSubmissionStatus(String... uuids) {
-        SubmissionStatusDetailBean detail1 = new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745","Submitted");
-        SubmissionStatusDetailBean detail2 = new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745","Failure", "And error was returned from NCBI");
+        SubmissionStatusDetailBean detail1 =
+                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Submitted");
+        SubmissionStatusDetailBean detail2 =
+                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Failure",
+                        "And error was returned from NCBI");
 
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
         results.setSubmissionStatuses(detail1, detail2);
@@ -31,12 +32,8 @@ public class SubmissionsServiceStub implements SubmissionsService {
     }
 
     @Override
-    public List<BioProject> getAllBioProjects() {
-        return allBioProjects();
-    }
-
-    static List<BioProject> allBioProjects() {
-        return Arrays.asList(
+    public BioProjects getAllBioProjects() {
+        return new BioProjects(
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),

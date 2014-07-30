@@ -11,13 +11,14 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-@Test
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectTest {
 
 
@@ -29,7 +30,7 @@ public class BioProjectTest {
         return new BioProject(TEST_ACCESSION_ID, TEST_ALIAS, TEST_PROJECT_NAME);
     }
 
-    public void testCreate(){
+    public void testCreate() {
         BioProject bioProject = createBioProject();
         assertThat(bioProject.getAccession(), is(equalTo(TEST_ACCESSION_ID)));
         assertThat(bioProject.getAlias(), is(equalTo(TEST_ALIAS)));
@@ -42,5 +43,13 @@ public class BioProjectTest {
 
         assertThat(bioProject1, is(equalTo(bioProject2)));
         assertThat(bioProject2, is(equalTo(bioProject1)));
+    }
+
+    public void testEqualsJustAccessionConstructor() {
+        BioProject bioProject1 = new BioProject(TEST_ACCESSION_ID);
+        BioProject bioProject2 = new BioProject(TEST_ACCESSION_ID);
+        assertThat(bioProject1, is(equalTo(bioProject2)));
+        assertThat(bioProject2, is(equalTo(bioProject1)));
+
     }
 }

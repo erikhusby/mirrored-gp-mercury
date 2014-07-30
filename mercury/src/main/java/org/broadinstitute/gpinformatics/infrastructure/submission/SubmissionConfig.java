@@ -53,7 +53,7 @@ public class SubmissionConfig extends AbstractConfig implements Serializable {
     }
 
     public static String getHttpScheme() {
-        return "https://";
+        return "http://";
     }
 
     public String getUrl() {

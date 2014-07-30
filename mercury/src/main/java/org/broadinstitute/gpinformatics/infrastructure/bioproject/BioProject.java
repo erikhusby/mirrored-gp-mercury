@@ -11,10 +11,11 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import java.io.Serializable;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
-@XmlRootElement
+import java.io.Serializable;
 public class BioProject implements Serializable {
     private static final long serialVersionUID = 2014072901l;
     private String accession;
@@ -58,6 +59,7 @@ public class BioProject implements Serializable {
         this.projectName = projectName;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -67,26 +69,15 @@ public class BioProject implements Serializable {
             return false;
         }
 
-        BioProject that = (BioProject) o;
-
-        if (!accession.equals(that.accession)) {
-            return false;
-        }
-        if (!alias.equals(that.alias)) {
-            return false;
-        }
-        if (!projectName.equals(that.projectName)) {
-            return false;
-        }
-
-        return true;
+        BioProject that = OrmUtil.proxySafeCast(o, BioProject.class);
+        return new EqualsBuilder()
+                .append(this.accession, that.accession)
+                .append(this.alias, that.alias)
+                .append(this.projectName, that.projectName).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = accession.hashCode();
-        result = 31 * result + alias.hashCode();
-        result = 31 * result + projectName.hashCode();
-        return result;
+        return new HashCodeBuilder().append(accession).append(alias).append(projectName).hashCode();
     }
 }
