@@ -24,8 +24,12 @@ public class BioProject implements Serializable {
     public BioProject() {
     }
 
-    public BioProject(String accession, String alias, String projectName) {
+    public BioProject(String accession) {
         this.accession = accession;
+    }
+
+    public BioProject(String accession, String alias, String projectName) {
+        this(accession);
         this.alias = alias;
         this.projectName = projectName;
     }
