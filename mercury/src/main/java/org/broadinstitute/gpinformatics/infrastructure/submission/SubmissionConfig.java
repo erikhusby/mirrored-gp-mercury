@@ -25,6 +25,7 @@ import java.io.Serializable;
 public class SubmissionConfig extends AbstractConfig implements Serializable {
     public static final String LIST_BIOPROJECTS_ACTION="bioproject/all";
     public static final String SUBMIT_ACTION="submissions/submit";
+    public static final String SUBMISSIONS_STATUS_URI = "submissions/status";
     private String login;
 
     private String host;

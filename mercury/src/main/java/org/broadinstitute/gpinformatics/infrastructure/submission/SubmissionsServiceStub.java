@@ -45,6 +45,20 @@ public class SubmissionsServiceStub implements SubmissionsService {
         return bioProjects.getBioprojects();
     }
 
+    @Override
+    public SubmissionStatusResultBean postSubmissions(SubmissionRequestBean submissions) {
+        SubmissionStatusDetailBean detail1 =
+                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Submitted");
+        SubmissionStatusDetailBean detail2 =
+                new SubmissionStatusDetailBean("d835cc7-cd63-4cc6-9621-868155618745", "Failure",
+                        "And error was returned from NCBI");
+
+        SubmissionStatusResultBean results = new SubmissionStatusResultBean();
+        results.setSubmissionStatuses(detail1, detail2);
+
+        return results;
+    }
+
     private static String generateTestName(String prefix) {
         return String.format("%s%d", prefix, new Random().nextInt(9999));
     }
