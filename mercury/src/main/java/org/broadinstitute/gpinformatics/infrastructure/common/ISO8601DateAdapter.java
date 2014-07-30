@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.infrastructure.submission;
+package org.broadinstitute.gpinformatics.infrastructure.common;
 
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
