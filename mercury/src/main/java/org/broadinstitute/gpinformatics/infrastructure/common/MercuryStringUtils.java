@@ -11,6 +11,9 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
+import java.util.UUID;
+import java.util.zip.CRC32;
+
 public class MercuryStringUtils {
     /**
      * Splits camel case input string into words for example productOrder would return "product order"
@@ -24,5 +27,36 @@ public class MercuryStringUtils {
                         "(?<=[^A-Z])(?=[A-Z])",
                         "(?<=[A-Za-z])(?=[^A-Za-z])"), " "
         );
+    }
+
+    public String generateGUID(String value, String aVersion) {
+
+        CRC32 cRC32Generator = new CRC32();
+        cRC32Generator.update(value.getBytes());
+        Long tempApplicationChecksum = cRC32Generator.getValue();
+        cRC32Generator.update(aVersion.getBytes());
+        Long tempVersionChecksum = cRC32Generator.getValue();
+        cRC32Generator.reset();
+
+        Long tempMSBits = tempApplicationChecksum * tempVersionChecksum;
+        Long tempLSBits = tempVersionChecksum * tempVersionChecksum;
+
+        StringBuilder tempUUID =
+                new StringBuilder(new UUID(tempMSBits, tempLSBits).toString());
+        tempUUID.replace(14, 15, "4");
+        tempUUID.replace(19, 20,
+                convertSecondReservedCharacter(tempUUID.substring(19, 20)));
+
+        return tempUUID.toString();
+    }
+
+    private String convertSecondReservedCharacter(String aString) {
+        switch (aString.charAt(0) % 4) {
+        case 0: return "8";
+        case 1: return "9";
+        case 2: return "a";
+        case 3: return "b";
+        default: return aString;
+        }
     }
 }

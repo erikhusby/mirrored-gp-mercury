@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * TODO scottmat fill in javadoc!!!
@@ -11,6 +13,7 @@ public class SubmissionStatusDetailBean implements Serializable {
     private String uuid;
     private Status status;
     private String[] errors;
+    private Date lastStatusUpdate;
 
     public SubmissionStatusDetailBean() {
     }
@@ -52,6 +55,16 @@ public class SubmissionStatusDetailBean implements Serializable {
     @XmlElement
     public void setErrors(String... errors) {
         this.errors = errors;
+    }
+
+
+    public Date getLastStatusUpdate() {
+        return lastStatusUpdate;
+    }
+
+    @XmlElement
+    public void setLastStatusUpdate(Date lastStatusUpdate) {
+        this.lastStatusUpdate = lastStatusUpdate;
     }
 
     /**

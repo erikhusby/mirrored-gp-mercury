@@ -9,6 +9,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.StringWriter;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SubmissionStatusResultBeanTest {
@@ -59,10 +62,12 @@ public class SubmissionStatusResultBeanTest {
         String testJson = "{\n"
                           + "  \"submissionStatuses\": [\n"
                           + "    {\n"
+                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"ReadyForSubmission\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618745\"\n"
                           + "    },\n"
                           + "    {\n"
+                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"ReadyForSubmission\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618746\"\n"
                           + "    },\n"
@@ -71,6 +76,7 @@ public class SubmissionStatusResultBeanTest {
                           + "        \"No bioproject found matching submitted accession BlahBlahBlah\",\n"
                           + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
                           + "      ],\n"
+                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618749\"\n"
                           + "    },\n"
@@ -78,6 +84,7 @@ public class SubmissionStatusResultBeanTest {
                           + "      \"errors\": [\n"
                           + "        \"No biosample found matching submitted id BlahBlahBlah\"\n"
                           + "      ],\n"
+                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618748\"\n"
                           + "    },\n"
@@ -85,6 +92,7 @@ public class SubmissionStatusResultBeanTest {
                           + "      \"errors\": [\n"
                           + "        \"No bioproject found matching submitted accession BlahBlah\"\n"
                           + "      ],\n"
+                          + "      \"lastStatusUpdate\": \"2014-07-30T11:35:58Z\", \n"
                           + "      \"status\": \"Failure\",\n"
                           + "      \"uuid\": \"7d835cc7-cd63-4cc6-9621-868155618747\"\n"
                           + "    }\n"
@@ -100,18 +108,25 @@ public class SubmissionStatusResultBeanTest {
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
         SubmissionStatusDetailBean detail1 =
                 new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618745", "ReadyForSubmission");
+        GregorianCalendar statusUpdate = new GregorianCalendar();
+        statusUpdate.set(2014, Calendar.JULY, 30,11,35,58);
+        detail1.setLastStatusUpdate(statusUpdate.getTime());
         SubmissionStatusDetailBean detail2 =
                 new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618746", "ReadyForSubmission");
+        detail2.setLastStatusUpdate(statusUpdate.getTime());
         SubmissionStatusDetailBean detail3 =
                 new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618749", "Failure",
                         "No bioproject found matching submitted accession BlahBlahBlah",
                         "No biosample found matching submitted id BlahBlahBlah");
+        detail3.setLastStatusUpdate(statusUpdate.getTime());
         SubmissionStatusDetailBean detail4 =
                 new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618748", "Failure",
                         "No biosample found matching submitted id BlahBlahBlah");
+        detail4.setLastStatusUpdate(statusUpdate.getTime());
         SubmissionStatusDetailBean detail5 =
                 new SubmissionStatusDetailBean("7d835cc7-cd63-4cc6-9621-868155618747", "Failure",
                         "No bioproject found matching submitted accession BlahBlah");
+        detail5.setLastStatusUpdate(statusUpdate.getTime());
         results.setSubmissionStatuses(detail1, detail2, detail3, detail4, detail5);
 
         marshaller.marshallToJSON(results, writer);
