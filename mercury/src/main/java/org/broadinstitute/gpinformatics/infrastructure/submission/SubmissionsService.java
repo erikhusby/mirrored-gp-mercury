@@ -10,4 +10,6 @@ public interface SubmissionsService {
     public SubmissionStatusResultBean getSubmissionStatus(String... uuids);
 
     public BioProjects getAllBioProjects();
+
+    public SubmissionStatusResultBean postSubmissions(SubmissionRequestBean submissions);
 }

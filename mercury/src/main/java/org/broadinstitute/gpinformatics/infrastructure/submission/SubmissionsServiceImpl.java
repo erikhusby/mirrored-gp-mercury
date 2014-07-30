@@ -49,4 +49,14 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         bioProjects = response.getEntity(BioProjects.class);
         return bioProjects;
     }
+
+    @Override
+    public SubmissionStatusResultBean postSubmissions(SubmissionRequestBean submissions) {
+
+        ClientResponse response =
+                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMIT_ACTION),
+                        MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON).entity(submissions)
+                           .post(ClientResponse.class);
+        return response.getEntity(SubmissionStatusResultBean.class);
+    }
 }
