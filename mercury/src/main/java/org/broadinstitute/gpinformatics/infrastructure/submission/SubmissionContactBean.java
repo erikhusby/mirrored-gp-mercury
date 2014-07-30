@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -12,13 +14,13 @@ import java.util.Map;
 
 public class SubmissionContactBean implements Serializable {
 
+    private static final long serialVersionUID = 8166404474924070240L;
     private String email;
     private String phone;
     private String lab;
     private String firstName;
     private String lastName;
     private String middleName;
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     public SubmissionContactBean() {
     }
@@ -93,19 +95,29 @@ public class SubmissionContactBean implements Serializable {
 
     @Override
     public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+        return new HashCodeBuilder().append(getFirstName()).append(getMiddleName()).append(getLastName())
+                                    .append(getEmail()).append(getPhone()).append(getLab()).toHashCode();
     }
 
     @Override
     public boolean equals(Object other) {
-        return EqualsBuilder.reflectionEquals(this, other);
+        if (this == other) {
+            return true;
+        }
+
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionContactBean.class)) {
+            return false;
+        }
+
+        SubmissionContactBean castOther = OrmUtil.proxySafeCast(other, SubmissionContactBean.class);
+        return new EqualsBuilder().append(getFirstName(), castOther.getFirstName())
+                                  .append(getMiddleName(), castOther.getMiddleName())
+                                  .append(getLastName(), castOther.getLastName())
+                                  .append(getEmail(), castOther.getEmail())
+                                  .append(getPhone(), castOther.getPhone())
+                                  .append(getLab(), castOther.getLab()).isEquals();
+
     }
 
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
-    }
 
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
-    }
 }

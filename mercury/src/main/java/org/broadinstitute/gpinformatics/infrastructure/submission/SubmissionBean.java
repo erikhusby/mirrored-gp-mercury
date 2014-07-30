@@ -4,20 +4,18 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
 public class SubmissionBean implements Serializable {
 
+    private static final long serialVersionUID = 1304022388798502284L;
     private String uuid;
     private String studyContact;
     private BioProject bioproject;
     private SubmissionBioSampleBean biosample;
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     public SubmissionBean() {
     }
@@ -69,21 +67,28 @@ public class SubmissionBean implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this);
+    public boolean equals(Object other) {
+
+        if (this == other) {
+            return true;
+        }
+
+        if (other == null || !OrmUtil.proxySafeIsInstance(other, SubmissionBean.class)) {
+            return false;
+        }
+
+        SubmissionBean castOther = OrmUtil.proxySafeCast(other, SubmissionBean.class);
+        return new EqualsBuilder().append(getUuid(), castOther.getUuid())
+                                  .append(getStudyContact(), castOther.getStudyContact())
+                                  .append(getBioproject(), castOther.getBioproject())
+                                  .append(getBiosample(), castOther.getBiosample()).isEquals();
     }
 
     @Override
-    public boolean equals(Object other) {
-        return EqualsBuilder.reflectionEquals(this, other);
+    public int hashCode() {
+        return new HashCodeBuilder().append(getUuid())
+                                    .append(getStudyContact())
+                                    .append(getBioproject())
+                                    .append(getBiosample()).toHashCode();
     }
-
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
-    }
-
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
-    }
-
 }

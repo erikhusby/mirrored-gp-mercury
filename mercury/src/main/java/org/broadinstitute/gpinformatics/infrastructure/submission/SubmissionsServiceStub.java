@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -27,7 +28,7 @@ public class SubmissionsServiceStub implements SubmissionsService {
                         "And error was returned from NCBI");
 
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
-        results.setSubmissionStatuses(detail1, detail2);
+        results.setSubmissionStatuses(Arrays.asList(detail1, detail2));
 
         return results;
     }
@@ -54,7 +55,7 @@ public class SubmissionsServiceStub implements SubmissionsService {
                         "And error was returned from NCBI");
 
         SubmissionStatusResultBean results = new SubmissionStatusResultBean();
-        results.setSubmissionStatuses(detail1, detail2);
+        results.setSubmissionStatuses(Arrays.asList(detail1, detail2));
 
         return results;
     }
