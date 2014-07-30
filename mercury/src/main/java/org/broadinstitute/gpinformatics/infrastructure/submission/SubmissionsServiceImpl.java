@@ -35,7 +35,7 @@ public class SubmissionsServiceImpl implements SubmissionsService {
         submissionParameters.put("uuid", Arrays.asList(uuids));
 
         ClientResponse response =
-                JerseyUtils.getWebResource(submissionsConfig.getUrl(), MediaType.APPLICATION_JSON_TYPE,
+                JerseyUtils.getWebResource(submissionsConfig.getWSUrl(SubmissionConfig.SUBMISSIONS_STATUS_URI), MediaType.APPLICATION_JSON_TYPE,
                         submissionParameters).accept(MediaType.APPLICATION_JSON).get(ClientResponse.class);
         return response.getEntity(SubmissionStatusResultBean.class);
     }
