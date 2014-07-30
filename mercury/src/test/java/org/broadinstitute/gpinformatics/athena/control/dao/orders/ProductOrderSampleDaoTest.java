@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 
-@Test(enabled = true)
+@Test(enabled = true, groups = TestGroups.STUBBY)
 public class ProductOrderSampleDaoTest extends ContainerTest {
 
     @Inject
