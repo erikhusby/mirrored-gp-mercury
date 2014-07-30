@@ -18,24 +18,26 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 @XmlRootElement
 public class BioProjects implements Serializable {
-    @XmlElement
-    BioProject[] bioprojects;
+    private List<BioProject> bioprojects;
 
     public BioProjects() {
     }
 
-    public BioProjects(BioProject ... bioprojects) {
-        this.bioprojects = bioprojects;
+    public BioProjects(BioProject ... bioProjects) {
+        this.bioprojects = Arrays.asList(bioProjects);
     }
 
-    public BioProject[] getBioprojects() {
+    @XmlElement
+    public List<BioProject> getBioprojects() {
         return bioprojects;
     }
 
-    public void setBioprojects(BioProject... bioprojects) {
+    public void setBioprojects(List<BioProject>  bioprojects) {
         this.bioprojects = bioprojects;
     }
 

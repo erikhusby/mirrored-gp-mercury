@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import javax.enterprise.inject.Alternative;
+import java.util.List;
 import java.util.Random;
 
 @Stub
@@ -32,8 +33,8 @@ public class SubmissionsServiceStub implements SubmissionsService {
     }
 
     @Override
-    public BioProjects getAllBioProjects() {
-        return new BioProjects(
+    public List<BioProject> getAllBioProjects() {
+        BioProjects bioProjects = new BioProjects(
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
@@ -41,6 +42,7 @@ public class SubmissionsServiceStub implements SubmissionsService {
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME),
                 new BioProject(generateTestName("PRJ"), generateTestName("phs"), TEST_PROJECT_NAME)
         );
+        return bioProjects.getBioprojects();
     }
 
     private static String generateTestName(String prefix) {

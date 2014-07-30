@@ -11,11 +11,13 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjects;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hamcrest.Matchers;
 import org.testng.annotations.Test;
+
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,9 +28,7 @@ public class SubmissionsServiceImplTest {
 
     public void testGetAllBioProjects() throws Exception {
         SubmissionsService submissionsService = new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
-        BioProjects allBioProjects = submissionsService.getAllBioProjects();
-        assertThat(allBioProjects.getBioprojects(), is(not(Matchers.emptyArray())));
+        List<BioProject> allBioProjects = submissionsService.getAllBioProjects();
+        assertThat(allBioProjects, is(not(Matchers.emptyCollectionOf(BioProject.class))));
     }
-
-
 }
