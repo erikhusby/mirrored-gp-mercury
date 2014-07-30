@@ -17,9 +17,12 @@ import java.io.Serializable;
 @XmlRootElement
 public class BioProject implements Serializable {
     private static final long serialVersionUID = 2014072901l;
-    private final String accession;
-    private final String alias;
-    private final String projectName;
+    private String accession;
+    private String alias;
+    private String projectName;
+
+    public BioProject() {
+    }
 
     public BioProject(String accession, String alias, String projectName) {
         this.accession = accession;
@@ -31,12 +34,24 @@ public class BioProject implements Serializable {
         return accession;
     }
 
+    public void setAccession(String accession) {
+        this.accession = accession;
+    }
+
     public String getAlias() {
         return alias;
     }
 
+    public void setAlias(String alias) {
+        this.alias = alias;
+    }
+
     public String getProjectName() {
         return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     @Override
