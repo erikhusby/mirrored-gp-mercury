@@ -7,11 +7,14 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
+import org.hibernate.envers.RevisionType;
 import org.hibernate.envers.exception.AuditException;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
+import org.hibernate.envers.tools.Pair;
 
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -93,15 +97,24 @@ public class AuditReaderDao extends GenericDao {
         return map;
     }
 
+
     /**
-     * Finds and records all data changes for the given audit revision ids.
+     * Finds data changes for one entity type over a collection of revision ids.
      *
-     * @param revIds      audit revision ids
-     * @param entityClass the class of entity to process
-     * @return list of Object[3].  Array elements are {entity, RevInfo, RevisionType}.
+     * @param entityClassName the class name of the entity.
+     * @param revIds collection of audit revision ids to search through.
+     * @return list of EnversAudit objects.
      */
-    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class<?> entityClass) {
-        return fetchDataChanges(revIds, entityClass, true);
+    public List<EnversAudit> fetchDataChanges(Collection<Long> revIds, Class entityClassName) {
+        List<EnversAudit> enversAudits = new ArrayList<>();
+        // Does the AuditReader query and converts each object array into EnversAudit.
+        for (Object[] enversTriple : fetchDataChanges(revIds, entityClassName, true)) {
+            Object obj = enversTriple[AuditReaderDao.AUDIT_READER_ENTITY_IDX];
+            RevInfo revInfo = (RevInfo) enversTriple[AuditReaderDao.AUDIT_READER_REV_INFO_IDX];
+            RevisionType revType = (RevisionType) enversTriple[AuditReaderDao.AUDIT_READER_TYPE_IDX];
+            enversAudits.add(new EnversAudit(obj, revInfo, revType));
+        }
+        return enversAudits;
     }
 
     // Allows "unrolling" the batch to handle AuditReader failures on individual records.
@@ -141,5 +154,38 @@ public class AuditReaderDao extends GenericDao {
             }
         }
         return dataChanges;
+    }
+
+    public Collection<String> getClassnamesModifiedAtRevision(Number revId) {
+        Collection<String> classnames = new ArrayList<>();
+        Set<Pair<String, Class>> modifiedEntityTypes =
+                getAuditReader().getCrossTypeRevisionChangesReader().findEntityTypes(revId);
+        for (Pair<String, Class> modifiedEntityType : modifiedEntityTypes) {
+            classnames.add(modifiedEntityType.getFirst());
+        }
+        return classnames;
+    }
+
+    public <T> T getPreviousVersion(T entity, Class cls, long revId) {
+        // JiraTicket does not have a Long primary key.
+        if (cls.equals(JiraTicket.class)) {
+            return null;
+        }
+
+        Long entityId = ReflectionUtil.getEntityId(entity, cls);
+
+        AuditReader reader = getAuditReader();
+        Number previousRevId = (Number) reader.createQuery()
+                .forRevisionsOfEntity(entity.getClass(), false, true)
+                .addProjection(AuditEntity.revisionNumber().max())
+                .add(AuditEntity.id().eq(entityId))
+                .add(AuditEntity.revisionNumber().lt(revId))
+                .getSingleResult();
+
+        if (previousRevId != null) {
+            return (T) reader.find(entity.getClass(), entityId, previousRevId);
+        } else {
+            return null;
+        }
     }
 }

@@ -9,7 +9,7 @@ then
     JBOSS_HOME=/prodinfolocal/jboss-as-7.1.1.Final/
 fi
 MAVEN_OPTS="-Xms4g -XX:MaxPermSize=1g"
-OPTIONS="-PArquillian-JBossAS7-Remote,BUILD -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent"
+OPTIONS="-PArquillian-JBossAS7-Remote,BUILD -Djava.awt.headless=true --batch-mode -Dmaven.download.meter=silent "
 PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby Tests.DatabaseFree Tests.ExternalIntegration Tests.Alternatives"
 #PROFILES="Tests.ArqSuite.Standard Tests.ArqSuite.Stubby"
 

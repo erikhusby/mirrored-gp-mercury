@@ -732,4 +732,26 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-2906-2" author="epolk">
+        <createTable tableName="revchanges" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entityname" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="revchanges" schemaName="mercury" columnNames="rev, entityname"/>
+	<addForeignKeyConstraint baseTableName="revchanges" baseTableSchemaName="mercury"
+                                 baseColumnNames="rev"
+                                 constraintName="fk_revchanges"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-2906-3" author="epolk">
+        <dropTable tableName="quote" schemaName="mercury"/>
+        <dropTable tableName="quote_aud" schemaName="mercury"/>
+    </changeSet>
+
 </databaseChangeLog>
