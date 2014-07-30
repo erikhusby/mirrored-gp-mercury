@@ -20,8 +20,6 @@ import static org.hamcrest.Matchers.is;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BioProjectTest {
-
-
     public static final String TEST_ACCESSION_ID = "PRJNA74863";
     public static final String TEST_ALIAS = "phs000298";
     public static final String TEST_PROJECT_NAME = "Primary submission";
@@ -50,6 +48,5 @@ public class BioProjectTest {
         BioProject bioProject2 = new BioProject(TEST_ACCESSION_ID);
         assertThat(bioProject1, is(equalTo(bioProject2)));
         assertThat(bioProject2, is(equalTo(bioProject1)));
-
     }
 }
