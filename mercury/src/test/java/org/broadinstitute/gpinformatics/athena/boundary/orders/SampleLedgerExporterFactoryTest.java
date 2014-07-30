@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -18,19 +18,21 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.PatternMatcher.pattern;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
+ * Tests for {@link SampleLedgerExporterFactory} ability to gather all of the data needed to write rows to a billing
+ * tracker.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleLedgerExporterFactoryTest {
 
-    private Product product;
     private ProductOrder productOrder;
     private SampleLedgerExporterFactory factory;
 
@@ -42,8 +44,9 @@ public class SampleLedgerExporterFactoryTest {
         bspUser.setLastName("Dummy");
         when(mockBspUserList.getById(1L)).thenReturn(bspUser);
 
-        product = new Product("Test Product", null, null, null, null, null, null, null, null, null, null, null, true,
-                Workflow.NONE, false, null);
+        Product product =
+                new Product("Test Product", null, null, null, null, null, null, null, null, null, null, null, true,
+                        Workflow.NONE, false, null);
 
         ResearchProject researchProject = new ResearchProject(1L, "Test Project", "Test", true);
 
@@ -153,5 +156,23 @@ public class SampleLedgerExporterFactoryTest {
 
         List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
         assertThat(data.get(0).getNumberOfLanes(), equalTo(8));
+    }
+
+    public void gatherAutoLedgerDate() {
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        productOrder.addSample(sample);
+        sample.addAutoLedgerItem(new Date(1L), new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1, new Date(2L));
+
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getAutoLedgerDate(), equalTo(new Date(2L)));
+    }
+
+    public void gatherWorkCompleteDate() {
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", new BSPSampleDTO());
+        productOrder.addSample(sample);
+        sample.addAutoLedgerItem(new Date(1L), new PriceItem("Quote-1", "Crush", "Test", "Test Price Item"), 1, new Date(2L));
+
+        List<SampleLedgerRow> data = factory.gatherSampleRowData(productOrder);
+        assertThat(data.get(0).getWorkCompleteDate(), equalTo(new Date(1L)));
     }
 }

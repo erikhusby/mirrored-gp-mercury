@@ -21,6 +21,8 @@ import java.util.Iterator;
 
 /**
  * Wrapper for all exporters so that the writer and exporter can share some members.
+ *
+ * @param <T>
  */
 public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetExporter.SpreadSheetWriter> {
 
@@ -41,6 +43,7 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
 
     private final T writer;
 
+    @SuppressWarnings("unchecked")
     protected AbstractSpreadsheetExporter() {
         this((T) new SpreadSheetWriter());
     }
@@ -80,14 +83,6 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
     protected CellStyle getWrappedHeaderStyle(byte[] rgbColor) {
         CellStyle style = buildWrappedHeaderStyle();
         ((XSSFCellStyle) style).setFillForegroundColor(new XSSFColor(rgbColor));
-        return style;
-    }
-
-    protected CellStyle getWrappedHeaderStyle(byte[] rgbColor, boolean vertical) {
-        CellStyle style = getWrappedHeaderStyle(rgbColor);
-        if (vertical) {
-            style.setRotation((short) 90);
-        }
         return style;
     }
 
@@ -195,9 +190,14 @@ public abstract class AbstractSpreadsheetExporter<T extends AbstractSpreadsheetE
         return style;
     }
 
-    public interface ISpreadSheetWriter {}
-
-    public static class SpreadSheetWriter implements ISpreadSheetWriter {
+    /**
+     * An abstraction over the POI API providing convenience methods and more of a streaming interface so that the
+     * caller can avoid having to constantly manually advance to the next cell.
+     * <p>
+     * This class can be extended to provide further convenience methods specific to a particular type of spreadsheet
+     * being written.
+     */
+    public static class SpreadSheetWriter {
         private Workbook workbook;
         private CellStyle preambleStyle;
         private CellStyle hyperlinkStyle;

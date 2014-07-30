@@ -1,7 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import java.util.Date;
+
 /**
  * Simple bean representing a row of data for the billing tracker.
+ * <p>
+ * The eventual goal of this bean is to hold all of the data needed by {@link SampleLedgerExporter} to write a row to the
+ * spreadsheet. Doing so eliminates dependencies from SampleLedgerExporter, thereby making it easier to test. The
+ * responsibility for gathering the data is gradually being migrated to {@link SampleLedgerExporterFactory}.
  */
 public class SampleLedgerRow {
 
@@ -15,6 +21,8 @@ public class SampleLedgerRow {
     private String productOrderTitle;
     private String projectManagerName;
     private Integer numberOfLanes;
+    private Date autoLedgerDate;
+    private Date workCompleteDate;
 
     public String getSampleId() {
         return sampleId;
@@ -94,5 +102,21 @@ public class SampleLedgerRow {
 
     public void setNumberOfLanes(Integer numberOfLanes) {
         this.numberOfLanes = numberOfLanes;
+    }
+
+    public Date getAutoLedgerDate() {
+        return autoLedgerDate;
+    }
+
+    public void setAutoLedgerDate(Date autoLedgerDate) {
+        this.autoLedgerDate = autoLedgerDate;
+    }
+
+    public Date getWorkCompleteDate() {
+        return workCompleteDate;
+    }
+
+    public void setWorkCompleteDate(Date workCompleteDate) {
+        this.workCompleteDate = workCompleteDate;
     }
 }
