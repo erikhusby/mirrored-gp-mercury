@@ -80,4 +80,8 @@ public class BioProject implements Serializable {
     public int hashCode() {
         return new HashCodeBuilder().append(accession).append(alias).append(projectName).hashCode();
     }
+
+    public String displayName() {
+        return String.format("%s - %s - %s", accession, alias, projectName);
+    }
 }
