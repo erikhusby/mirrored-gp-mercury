@@ -11,6 +11,7 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.bioproject;
 
+import org.broadinstitute.gpinformatics.infrastructure.common.TestUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionConfig;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsServiceImpl;
@@ -23,7 +24,7 @@ import static org.hamcrest.Matchers.not;
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BioProjectListTest {
-    public static final String TEST_ACCESSION_ID = "PRJNA75555";
+
     private SubmissionsServiceImpl submissionsService =
             new SubmissionsServiceImpl(SubmissionConfig.produce(Deployment.DEV));
     private BioProjectList bioProjectList = new BioProjectList(submissionsService);
@@ -33,7 +34,8 @@ public class BioProjectListTest {
     }
 
     public void testGetByAccession(){
-        BioProject bioProject  = bioProjectList.getBioProject(TEST_ACCESSION_ID);
-        assertThat(bioProject.getAccession(), Matchers.equalTo(TEST_ACCESSION_ID));
+        BioProject bioProject  = TestUtils.getFirst(bioProjectList.getBioProjects());
+        BioProject bioProjectById = bioProjectList.getBioProject(bioProject.getAccession());
+        assertThat(bioProjectById, Matchers.equalTo(bioProject));
     }
 }
