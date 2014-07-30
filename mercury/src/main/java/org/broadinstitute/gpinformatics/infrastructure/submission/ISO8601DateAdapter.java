@@ -6,12 +6,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * <code>DateAdapter</code> is an {@link XmlAdapter} implementation that
+ * <code>ISO8601DateAdapter</code> is an {@link XmlAdapter} implementation that
  * (un)marshals dates between <code>String</code> and <code>Date</code> representations.
  * All date strings meet <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO
  * 8601</a> basic format. For example, June 16, 2011 16:46:01 GMT is
@@ -19,13 +18,13 @@ import java.util.logging.Logger;
  * http://blogs.oracle.com/CoreJavaTechTips/entry/exchanging_data_with_xml_and
  */
 
-public class DateAdapter extends XmlAdapter<String, Date> {
+public class ISO8601DateAdapter extends XmlAdapter<String, Date> {
 
     private static Logger logger = Logger
-            .getLogger(DateAdapter.class.getName());
+            .getLogger(ISO8601DateAdapter.class.getName());
     private SimpleDateFormat format;
 
-    public DateAdapter() {
+    public ISO8601DateAdapter() {
         format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         format.setTimeZone(Calendar.getInstance().getTimeZone());
     }
