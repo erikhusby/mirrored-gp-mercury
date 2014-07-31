@@ -16,7 +16,8 @@ public class ReflectionUtil {
         if (field != null) {
             if (field.getType().getCanonicalName().equals(Long.class.getCanonicalName())) {
                 try {
-                    return field.getLong(entity);
+                    field.setAccessible(true);
+                    return (Long)field.get(entity);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Reflection cannot access field " + field.getName() +
                                                " on class " + cls.getCanonicalName());

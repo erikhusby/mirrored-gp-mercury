@@ -5,6 +5,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.common.SessionContextUtilityKeepScope;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.BarcodedTubeDao;
@@ -33,10 +34,8 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * Container test of AuditReaderDao.
  */
 
-@Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
-public class AuditReaderDaoTest extends Arquillian {
-    private static final Log logger = LogFactory.getLog(AuditReaderDaoTest.class);
-
+@Test(enabled = true, groups = TestGroups.STANDARD)
+public class AuditReaderDaoTest extends ContainerTest {
     @Inject
     private AuditReaderDao auditReaderDao;
 
@@ -50,13 +49,8 @@ public class AuditReaderDaoTest extends Arquillian {
     @Inject
     private UserTransaction utx;
 
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, "dev", SessionContextUtilityKeepScope.class);
-    }
-
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testGetModifiedNames() throws Exception {
+    @Test(groups = TestGroups.STANDARD)
+    public void testGetModifiedEntityTypes() throws Exception {
         final long now = System.currentTimeMillis();
         final LabVessel labVessel = new BarcodedTube("A" + now);
         Pair<Long, Long> revPair = revsBracketingTransaction(new Runnable() {
@@ -79,7 +73,7 @@ public class AuditReaderDaoTest extends Arquillian {
         Assert.assertTrue(found);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STANDARD)
     public void testPreviousRev() throws Exception {
         final long now = System.currentTimeMillis();
         final String barcode = "A" + now;
@@ -158,7 +152,11 @@ public class AuditReaderDaoTest extends Arquillian {
         Assert.assertNotNull(tubeCreatedRevId);
         Assert.assertNotNull(tubeModifiedRevId);
         Assert.assertNotNull(tubeDeletedRevId);
-        /*
+
+        BarcodedTube preCreationTube =
+                auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeCreatedRevId);
+        Assert.assertNull(preCreationTube);
+
         BarcodedTube createdTube =
                 auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeModifiedRevId);
         Assert.assertEquals(createdTube.getTubeType(), BarcodedTube.BarcodedTubeType.MatrixTube);
@@ -166,7 +164,7 @@ public class AuditReaderDaoTest extends Arquillian {
         BarcodedTube modifiedTube =
                 auditReaderDao.getPreviousVersion(persistedTube, BarcodedTube.class, tubeDeletedRevId);
         Assert.assertEquals(modifiedTube.getTubeType(), BarcodedTube.BarcodedTubeType.Cryovial2018);
-        */
+
     }
 
     /**
