@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.submission;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 /**
@@ -18,6 +21,9 @@ public class SubmissionsServiceProducer {
     }
 
 
+    @Produces
+    @Default
+    @RequestScoped
     public SubmissionsService produce(@New SubmissionsServiceStub stub, @New SubmissionsServiceImpl impl) {
         if(deployment == Deployment.STUBBY) {
             return stub;

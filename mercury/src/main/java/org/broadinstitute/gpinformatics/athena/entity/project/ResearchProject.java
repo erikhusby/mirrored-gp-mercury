@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
+import sun.awt.X11.XBaseWindow;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -136,6 +137,10 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
     // This is used for edit to keep track of changes to the object.
     @Transient
     private String originalTitle;
+
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            orphanRemoval = true)
+    private List<SubmissionTracker> submissionTrackers = new ArrayList<>();
 
     /**
      * no arg constructor.
@@ -747,6 +752,22 @@ public class ResearchProject implements BusinessObject, JiraProject, Comparable<
             allProductOrderSamples.addAll(order.getSamples());
         }
         return allProductOrderSamples;
+    }
+
+    public List<SubmissionTracker> getSubmissionTrackers() {
+        return submissionTrackers;
+    }
+
+    public void setSubmissionTrackers(List<SubmissionTracker> submissionTrackers) {
+        this.submissionTrackers = submissionTrackers;
+    }
+
+    public void addSubmissionTracker(SubmissionTracker... submissionTracker) {
+        submissionTrackers.addAll(Arrays.asList(submissionTracker));
+
+        for(SubmissionTracker tracker:submissionTracker) {
+            tracker.setResearchProject(this);
+        }
     }
 
     public enum Status implements StatusType {
