@@ -62,8 +62,8 @@ public class BioProjectTokenInputTest {
         String messageFormat = "<div class=\"ac-dropdown-text\">{0}</div><div class=\"ac-dropdown-subtext\">{1}</div>";
         String message = bioProjectTokenInput.formatMessage(messageFormat, bioProject);
         String expected = String.format(
-                "<div class=\"ac-dropdown-text\">accession: %s alias: %s</div><div class=\"ac-dropdown-subtext\">project: %s</div>",
-                bioProject.getAccession(), bioProject.getAlias(), bioProject.getProjectName());
+                "<div class=\"ac-dropdown-text\">%s</div><div class=\"ac-dropdown-subtext\">accession: %s alias: %s</div>",
+                bioProject.getProjectName(), bioProject.getAccession(), bioProject.getAlias());
         assertThat(message, equalTo(expected));
     }
 
