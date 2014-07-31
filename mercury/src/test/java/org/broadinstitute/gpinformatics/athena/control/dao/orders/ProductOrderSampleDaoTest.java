@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 
-@Test(enabled = true)
+@Test(enabled = true, groups = TestGroups.STUBBY)
 public class ProductOrderSampleDaoTest extends ContainerTest {
 
     @Inject
@@ -39,7 +39,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
     @Inject
     UserTransaction utx;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -49,7 +49,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         utx.begin();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -59,7 +59,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.STUBBY, enabled = true)
     public void testFindByProductOrder() throws Exception {
         String[] sampleNames = { "MS-1111", "MS-2222", "MS-3333" };
 
@@ -83,7 +83,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         }
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.STUBBY, enabled = true)
     public void testFindByPDOKeyAndSampleNames() {
         String[] sampleNames = { "MS-1111", "MS-2222", "MS-3333" };
 
@@ -112,7 +112,7 @@ public class ProductOrderSampleDaoTest extends ContainerTest {
         Assert.assertEquals(returnedSampleNames,sampleNamesSubset);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+    @Test(groups = TestGroups.STUBBY, enabled = true)
     public void testFindByPDOKeyAndSampleNamesWithLotsOfSamples() {
         ProductOrder pdo = productOrderDao.findByBusinessKey("PDO-1312");
         Assert.assertTrue(pdo.getSamples().size() > 1000);

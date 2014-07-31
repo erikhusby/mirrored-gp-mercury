@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import org.apache.http.cookie.SM;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.generated.RegisterTubeBean;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.BarcodedTube;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -27,6 +28,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+@Test(groups = TestGroups.STANDARD)
 public class VesselResourceTest extends Arquillian {
 
     @Inject

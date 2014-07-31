@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+@Test(groups = TestGroups.ALTERNATIVES, enabled = false)
 public class BillingEjbJiraDelayedTest extends Arquillian {
     private static boolean failQuoteCall = false;
     private static boolean inContainer = true;
@@ -218,7 +218,7 @@ public class BillingEjbJiraDelayedTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = "timeoutCases", enabled = false)
+    @Test(groups = TestGroups.ALTERNATIVES, dataProvider = "timeoutCases", enabled = false)
     public void testTransactionTimeout(String testScenario, Integer timeoutIncrement,
                                        Integer expectedSuccessfulLedgerEntries, Boolean mockProductOrderEjb,
                                        Boolean forceJiraSvcSleepParam, Boolean failQuote)

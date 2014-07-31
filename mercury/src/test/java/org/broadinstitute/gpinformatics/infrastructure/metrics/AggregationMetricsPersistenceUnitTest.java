@@ -12,7 +12,7 @@ import javax.persistence.Query;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class AggregationMetricsPersistenceUnitTest extends ContainerTest {
 
     @PersistenceContext(unitName = "metrics_pu", type = PersistenceContextType.EXTENDED)

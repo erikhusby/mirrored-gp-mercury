@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.SortedMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Test creation and retrieval of indexes
@@ -36,7 +37,7 @@ public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -46,7 +47,7 @@ public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
         utx.begin();
     }
 
-    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {

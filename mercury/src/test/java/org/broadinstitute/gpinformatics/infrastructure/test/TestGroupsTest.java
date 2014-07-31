@@ -28,9 +28,10 @@ import java.util.Set;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class TestGroupsTest {
 
-    public void testHasTestGroup() throws Exception {
+    public void testHasTestGroup() throws ClassNotFoundException, java.io.IOException {
         List<String> errors = new ArrayList<>();
-        URL[] urls = ClasspathUrlFinder.findClassPaths();
+        // Find the path to target/test-classes (use "META-INF/persistence.xml" if you need to find target/classes).
+        URL[] urls = ClasspathUrlFinder.findResourceBases("arquillian.xml");
         AnnotationDB db = new AnnotationDB();
         db.scanArchives(urls);
         db.setScanMethodAnnotations(true);
@@ -40,8 +41,7 @@ public class TestGroupsTest {
         for (String entityClass : entityClasses) {
             Class clazz = Class.forName(entityClass);
             for (Annotation annotation : clazz.getAnnotations()) {
-                if (annotation.annotationType() == Test.class) {
-                    Test t = (Test) annotation;
+                if (annotation.annotationType().equals(Test.class)) {
                     String[] groups = ((Test) annotation).groups();
                     boolean enabled = ((Test) annotation).enabled();
                     if (groups.length == 0 && enabled) {

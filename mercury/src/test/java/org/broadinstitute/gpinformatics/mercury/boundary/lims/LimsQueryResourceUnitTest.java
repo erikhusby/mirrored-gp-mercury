@@ -41,7 +41,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * Tests of LimsQueryResource's API behavior and interactions with other services.
  */
-@Test(singleThreaded = true)
+@Test(singleThreaded = true, groups = DATABASE_FREE)
 public class LimsQueryResourceUnitTest {
 
     private SystemRouter mockSystemRouter;

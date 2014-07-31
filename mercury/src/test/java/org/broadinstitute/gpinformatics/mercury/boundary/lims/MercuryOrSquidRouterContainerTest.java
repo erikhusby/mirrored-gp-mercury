@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettaLimsConnec
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.BettaLimsMessageTestFactory;
-import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -59,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEventTestFactory.makeTubeFormation;
 
 /**
@@ -67,7 +65,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.dbfree.LabEve
  *         Date: 2/7/13
  *         Time: 11:10 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -109,10 +107,10 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, WsMessageStoreStub.class);
+        return DeploymentBuilder.buildMercuryWar();
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
 
         if (utx == null) {
@@ -143,7 +141,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
             return;
@@ -154,7 +152,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
     // todo this was changed from SQUID to WORKFLOW_DEPENDENT, need another scenario that tests SQUID
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testExomeExpressEvents() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -230,7 +228,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressTubesToPlateEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -291,7 +289,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressIndexPlateLigationEvent() throws Exception {
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
 
@@ -369,7 +367,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressPlateToRackEvent() throws Exception {
 
 
@@ -456,7 +454,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         EasyMock.verify(mockConnector);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressRackToStripTubeBEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -581,7 +579,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressStripTubeBToFlowcellEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);
@@ -724,7 +722,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.STUBBY)
     public void testNonExomeExpressFlowcellLoadEvent() throws Exception {
 
         mockConnector = EasyMock.createNiceMock(BettaLimsConnector.class);

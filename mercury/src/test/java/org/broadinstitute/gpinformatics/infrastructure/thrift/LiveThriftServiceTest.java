@@ -52,7 +52,7 @@ import static org.hamcrest.Matchers.nullValue;
  *
  * @author breilly
  */
-@Test(singleThreaded = true)
+@Test(singleThreaded = true, groups = EXTERNAL_INTEGRATION)
 public class LiveThriftServiceTest {
 
     private LiveThriftService thriftService;

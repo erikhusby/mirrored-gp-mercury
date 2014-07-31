@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true )
+@Test(groups = TestGroups.STUBBY, enabled = true )
 public class BSPMaterialTypeListTest extends ContainerTest {
 
     @Inject

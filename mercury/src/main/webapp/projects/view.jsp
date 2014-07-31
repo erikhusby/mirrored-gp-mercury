@@ -75,7 +75,7 @@
                                 $j("#selectedCollaborator").attr("value", $j("#collaboratorId").val());
                                 $j("#specifiedCollaborator").attr("value", $j("#emailTextId").val());
                                 $j("#collaborationMessage").attr("value", $j("#collaborationMessageId").val());
-                                $j("#quoteId").attr("value", $j("#quoteIdId").val());
+                                $j("#collaborationQuoteId").attr("value", $j("#collaborationQuoteIdId").val());
                                 $j("#projectForm").submit();
                             }
                         },
@@ -167,9 +167,9 @@
                 <stripes:text class="defaultText" style="display:none;margin-left:4px;width:240px;" id="emailTextId"
                               name="specifiedCollaborator" maxlength="250"/>
 
-                <label style="float:left;margin-right:10px;width:auto;" for="quoteIdId">Quote *</label>
+                <label style="float:left;margin-right:10px;width:auto;" for="collaborationQuoteIdId">Quote *</label>
                 <div class="controls">
-                    <stripes:text id="quoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
+                    <stripes:text id="collaborationQuoteIdId" name="quote" class="defaultText" title="Enter the Quote ID"/>
                 </div>
 
                 <p style="clear:both">
@@ -223,7 +223,7 @@
                                                 <stripes:hidden id="selectedCollaborator" name="selectedCollaborator" value=""/>
                                                 <stripes:hidden id="specifiedCollaborator" name="specifiedCollaborator" value=""/>
                                                 <stripes:hidden id="collaborationMessage" name="collaborationMessage" value=""/>
-                                                <stripes:hidden id="quoteId" name="quoteId" value=""/>
+                                                <stripes:hidden id="collaborationQuoteId" name="collaborationQuoteId" value=""/>
 
                                                 <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
                                                     <stripes:button name="collaborate" value="Begin Collaboration" class="btn-mini"

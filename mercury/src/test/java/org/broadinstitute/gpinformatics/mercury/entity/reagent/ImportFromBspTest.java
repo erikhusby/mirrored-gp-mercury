@@ -32,7 +32,7 @@ public class ImportFromBspTest extends ContainerTest {
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STUBBY)
     public void testImportExportedTubes() {
         String testSuffix = testPrefixDateFormat.format(new Date());
 

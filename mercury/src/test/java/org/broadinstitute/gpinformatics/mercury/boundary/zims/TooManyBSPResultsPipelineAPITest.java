@@ -29,7 +29,7 @@ public class TooManyBSPResultsPipelineAPITest extends Arquillian {
         ).addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testTooManyBSPResults() throws Exception {
         ZimsIlluminaRun run = runLaneResource.getRun(IlluminaRunResourceTest.RUN_NAME);
         Assert.assertNotNull(run.getError());

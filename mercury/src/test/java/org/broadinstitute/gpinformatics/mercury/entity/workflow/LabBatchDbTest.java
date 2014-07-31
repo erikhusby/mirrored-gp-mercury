@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Tests of the LabBatch entity, using a database
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LabBatchDbTest extends ContainerTest {
 
     @Inject
@@ -107,7 +107,7 @@ public class LabBatchDbTest extends ContainerTest {
 
     }
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.STUBBY)
     public void findMessageFilesForBatch() {
         List<String> lcSets = new ArrayList<>();
         // PDO-135, C19F5ACXX

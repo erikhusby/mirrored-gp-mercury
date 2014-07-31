@@ -23,7 +23,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.STUBBY, enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     @Inject
@@ -45,7 +45,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     ProductOrder order;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
@@ -60,7 +60,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         productOrderDao.clear();
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container.
         if (utx == null) {

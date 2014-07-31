@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 
 public class IlluminaRunResourceTest extends Arquillian {
 
@@ -95,7 +95,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
      */
-    @Test(groups = EXTERNAL_INTEGRATION)
+    @Test(groups = ALTERNATIVES)
     public void testZimsInContainer() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
         wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
@@ -110,7 +110,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * out to HTTP
      */
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
-          groups = EXTERNAL_INTEGRATION)
+          groups = ALTERNATIVES)
     @RunAsClient
     public void testErrorHandling(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -134,7 +134,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     * @param baseUrl
     */
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
-        groups = EXTERNAL_INTEGRATION)
+        groups = ALTERNATIVES)
     @RunAsClient
     public void testZimsOverHttp(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -210,7 +210,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * test data.
      *
      */
-    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = ALTERNATIVES, enabled = false)
     public void testZimsMercury() throws Exception {
         String url = ImportFromSquidTest.TEST_MERCURY_URL + "/rest/IlluminaRun/queryMercury";
 
@@ -459,7 +459,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         return null;
     }
 
-    @BeforeClass
+    @BeforeClass(groups = ALTERNATIVES)
     private void getZamboniRun() throws Exception {
         zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
     }
