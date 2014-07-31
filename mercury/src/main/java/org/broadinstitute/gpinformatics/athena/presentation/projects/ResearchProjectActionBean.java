@@ -32,10 +32,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.RegulatoryInfo;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.DisplayableItem;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.BioProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.collaborate.CollaborationNotFoundException;
@@ -110,6 +112,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private ProjectTokenInput projectTokenInput;
+
+    @Inject
+    private BioProjectTokenInput bioProjectTokenInput;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION, BEGIN_COLLABORATION_ACTION})
     @Inject
@@ -205,6 +210,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private CollaborationData collaborationData;
 
     private boolean validCollaborationPortal;
+
+    @Inject
+    private BioProjectList bioProjectList;
 
     public ResearchProjectActionBean() {
         super(CREATE_PROJECT, EDIT_PROJECT, RESEARCH_PROJECT_PARAMETER);
@@ -379,6 +387,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         otherUserList.setup(editResearchProject.getOther());
         fundingSourceList.setup(editResearchProject.getFundingIds());
         cohortsList.setup(editResearchProject.getCohortIds());
+        bioProjectTokenInput.setup(bioProjectList.getBioProjectMap().keySet());
         // The parent research project doesn't need to be defined, so only pre-populate if it's present.
         if (editResearchProject.getParentResearchProject() != null) {
             projectTokenInput.setup(editResearchProject.getParentResearchProject().getBusinessKey());
@@ -549,6 +558,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent("projectAutocomplete")
     public Resolution projectAutocomplete() throws Exception {
         return createTextResolution(projectTokenInput.getJsonString(getQ()));
+    }
+
+    @HandlesEvent("bioProjectAutocomplete")
+    public Resolution bioProjectAutocomplete() throws Exception {
+        return createTextResolution(bioProjectTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent("projectHierarchyAwareAutocomplete")
@@ -1008,5 +1022,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setSubmissionSamples(List<SubmissionDto> submissionSamples) {
         this.submissionSamples = submissionSamples;
+    }
+
+    public BioProjectTokenInput getBioProjectTokenInput() {
+        return bioProjectTokenInput;
+    }
+
+    public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
+        this.bioProjectTokenInput = bioProjectTokenInput;
     }
 }

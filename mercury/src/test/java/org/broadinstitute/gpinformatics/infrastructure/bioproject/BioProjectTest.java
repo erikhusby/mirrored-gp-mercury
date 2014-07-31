@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.is;
 public class BioProjectTest {
     public static final String TEST_ACCESSION_ID = "PRJNA74863";
     public static final String TEST_ALIAS = "phs000298";
-    public static final String TEST_PROJECT_NAME = "Primary submission";
+    public static final String TEST_PROJECT_NAME = "ARRA Autism Sequencing Collaboration";
 
     private BioProject createBioProject() {
         return new BioProject(TEST_ACCESSION_ID, TEST_ALIAS, TEST_PROJECT_NAME);

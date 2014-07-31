@@ -17,13 +17,14 @@ import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsSer
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 @ApplicationScoped
 public class BioProjectList extends AbstractCache implements Serializable {
-    SubmissionsService submissionsService;
-
+    private SubmissionsService submissionsService;
     @Inject
     public BioProjectList(SubmissionsService submissionsService) {
         this.submissionsService = submissionsService;
@@ -54,5 +55,17 @@ public class BioProjectList extends AbstractCache implements Serializable {
 
     public BioProject getBioProject(String testAccessionId) {
         return getBioProjectMap().get(testAccessionId);
+    }
+
+    public Collection<BioProject> search(String query) {
+        Collection<BioProject> foundList = new HashSet<>();
+        for (BioProject bioProject : getBioProjects()) {
+            if (bioProject.getAccession().toLowerCase().contains(query.toLowerCase()) ||
+                bioProject.getAlias().toLowerCase().contains(query.toLowerCase()) ||
+                bioProject.getProjectName().toLowerCase().contains(query.toLowerCase())) {
+                foundList.add(bioProject);
+            }
+        }
+        return foundList;
     }
 }

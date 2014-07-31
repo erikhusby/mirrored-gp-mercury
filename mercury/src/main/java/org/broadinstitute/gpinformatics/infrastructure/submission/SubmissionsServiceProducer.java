@@ -25,7 +25,7 @@ public class SubmissionsServiceProducer {
     @Default
     @RequestScoped
     public SubmissionsService produce(@New SubmissionsServiceStub stub, @New SubmissionsServiceImpl impl) {
-        if(deployment == Deployment.STUBBY) {
+        if (deployment == Deployment.STUBBY) {
             return stub;
         }
         return impl;
