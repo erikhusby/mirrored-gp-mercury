@@ -104,4 +104,9 @@ public class SubmissionDto {
     public String getFileName() {
         return bassDTO.getFileName();
     }
+
+
+    public String getFilePath() {
+        return bassDTO.getPath();
+    }
 }

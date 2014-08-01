@@ -1069,4 +1069,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public void setSelectedSubmissionSamples(List<String> selectedSubmissionSamples) {
         this.selectedSubmissionSamples = selectedSubmissionSamples;
     }
+
+    public List<String> getSelectedSubmissionSamples() {
+        return selectedSubmissionSamples;
+    }
 }

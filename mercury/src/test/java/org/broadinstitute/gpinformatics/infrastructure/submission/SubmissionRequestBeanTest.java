@@ -1,17 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.submission;
 
-import com.sun.jersey.api.json.JSONConfiguration;
-import com.sun.jersey.api.json.JSONJAXBContext;
-import com.sun.jersey.api.json.JSONMarshaller;
-import com.sun.jersey.api.json.JSONUnmarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.Arrays;
 
@@ -148,9 +143,9 @@ public class SubmissionRequestBeanTest {
         bioProject2 = new BioProject("BlahBlah");
         bioProject3 = new BioProject("BlahBlahBlah");
         bioSampleBean1 = new SubmissionBioSampleBean("S_2507","/some/funky/file.bam",
-        new SubmissionContactBean("jgentry@broadinstitute.org","617-555-9292","homer","Jeff","Gentry", "A"));
-        contact2 = new SubmissionContactBean("jgentry2@broadinstitute.org", "617-555-5555",
-                "homer", "Jeffrey", "G", "A");
+        new SubmissionContactBean("Jeff", "Gentry", "jgentry@broadinstitute.org","617-555-9292","homer", "A"));
+        contact2 = new SubmissionContactBean("Jeffrey", "G", "jgentry2@broadinstitute.org", "617-555-5555",
+                "homer", "A");
         bioSampleBean2 = new SubmissionBioSampleBean("S_2651","/some/funky/file2.bam",
                 contact2);
         bioSampleBean3 = new SubmissionBioSampleBean("BlahBlahBlah","/some/funky/file2.bam",
@@ -170,38 +165,23 @@ public class SubmissionRequestBeanTest {
                 new SubmissionBean(uuID3, studyContact2, bioProject2, bioSampleBean2),
                 new SubmissionBean(uuID4, studyContact3, bioProject1, bioSampleBean3),
                 new SubmissionBean(uuID5, studyContact4, bioProject3, bioSampleBean3)));
-
     }
 
     public void testSerialize() throws Exception {
 
-
-        JSONJAXBContext context = new JSONJAXBContext(
-                JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                SubmissionRequestBean.class);
-        JSONMarshaller marshaller = context.createJSONMarshaller();
-
-        StringWriter writer = new StringWriter();
-
-        marshaller.marshallToJSON(testRequest, writer);
+        StringWriter writer = MercuryStringUtils.serializeJsonBean(testRequest);
         Assert.assertEquals(writer.toString().replaceAll("\\s+", ""), testJson.replaceAll("\\s+", ""));
 
     }
 
     public void testDeSerialize() throws Exception {
-        JSONJAXBContext context =
-                new JSONJAXBContext(JSONConfiguration.natural().humanReadableFormatting(true).build(),
-                        SubmissionRequestBean.class);
-
-        JSONUnmarshaller unmarshaller = context.createJSONUnmarshaller();
-
-        InputStream input = new ByteArrayInputStream(testJson.getBytes());
-
-        SubmissionRequestBean requestBean = unmarshaller.unmarshalFromJSON(input, SubmissionRequestBean.class);
+        SubmissionRequestBean requestBean = MercuryStringUtils.deSerializeJsonBean(testJson,
+                SubmissionRequestBean.class);
 
         Assert.assertEquals(requestBean.getSubmissions().size(), testRequest.getSubmissions().size());
         Assert.assertEquals(requestBean.getSubmissions(), testRequest.getSubmissions());
 
         Assert.assertEquals(requestBean, testRequest);
     }
+
 }

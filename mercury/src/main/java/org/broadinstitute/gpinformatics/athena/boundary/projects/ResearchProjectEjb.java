@@ -12,6 +12,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.UpdateField;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -24,6 +26,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchPro
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.MercuryStringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -46,6 +49,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,6 +64,9 @@ import java.util.Map;
  * This class is responsible for interactions between Jira and Research Projects
  */
 public class ResearchProjectEjb {
+
+    private static final Log log = LogFactory.getLog(ResearchProjectEjb.class);
+
     private final JiraService jiraService;
     private final UserBean userBean;
     private final BSPUserList userList;
@@ -251,9 +258,11 @@ public class ResearchProjectEjb {
 
             SubmissionBioSampleBean bioSampleBean =
                     new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
-                            dtoByTracker.getValue().getFileName());
-            bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getEmail(),
-                    userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()));
+                            dtoByTracker.getValue().getFilePath());
+            bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getFirstName(),
+                    userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()
+//                    ,"617-714-8460", "homer", "G"
+            ));
 
             SubmissionBean submissionBean =
                     new SubmissionBean(dtoByTracker.getKey().getSubmissionIdentifier(),
@@ -262,8 +271,15 @@ public class ResearchProjectEjb {
         }
 
         SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
+        try {
+            log.info(MercuryStringUtils.serializeJsonBean(requestBean).toString());
+        } catch (JAXBException e) {
+            e.printStackTrace();
+        }
 
         SubmissionStatusResultBean submissionResults = submissionsService.postSubmissions(requestBean);
+
+
         return submissionResults;
     }
 

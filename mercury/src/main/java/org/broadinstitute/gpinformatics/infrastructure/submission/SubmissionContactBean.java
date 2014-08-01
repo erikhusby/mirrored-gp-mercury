@@ -31,7 +31,7 @@ public class SubmissionContactBean implements Serializable {
         this.email = email;
     }
 
-    public SubmissionContactBean(String email, String phone, String lab, String firstName, String lastName,
+    public SubmissionContactBean(String firstName, String lastName, String email, String phone, String lab,
                                  String middleName) {
         this(firstName,lastName,email);
         this.phone = phone;
