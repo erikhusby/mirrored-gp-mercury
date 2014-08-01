@@ -134,6 +134,7 @@ public class ZimsIlluminaRunFactory {
                         productOrderKey = singleBucketEntry.getPoBusinessKey();
                         productOrderKeys.add(productOrderKey);
                     }
+                    // todo jmt root may be null
                     String pdoSampleName = laneSampleInstance.getMercuryRootSampleName();
                     String sampleId = pdoSampleName;
                     LabBatchStartingVessel importLbsv = laneSampleInstance.getSingleBatchVessel(LabBatch.LabBatchType.SAMPLES_IMPORT);

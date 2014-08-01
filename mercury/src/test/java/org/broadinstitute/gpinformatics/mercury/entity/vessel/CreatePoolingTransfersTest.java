@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 
 /**
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.
@@ -38,7 +39,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     @Inject
     BSPUserList bspUserList;
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = STUBBY)
     public void testImport() throws ParseException {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                                                             "    r.barcode as source_tube_barcode, " +

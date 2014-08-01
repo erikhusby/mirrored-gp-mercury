@@ -678,6 +678,17 @@ public class Product implements BusinessObject, Serializable, Comparable<Product
             return product.getPartNumber().compareTo(anotherProduct.getPartNumber());
         }
     };
+    @Transient
+    public static Comparator<Product> BY_FAMILY_THEN_PART_NUMBER = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product anotherProduct) {
+            int compare = product.getProductFamily().getName().compareTo(anotherProduct.getProductFamily().getName());
+            if (compare!=0){
+                return compare;
+            }
+            return BY_PART_NUMBER.compare(product, anotherProduct);
+        }
+    };
 
     /**
      * @return Whether this is an exome express product or not.

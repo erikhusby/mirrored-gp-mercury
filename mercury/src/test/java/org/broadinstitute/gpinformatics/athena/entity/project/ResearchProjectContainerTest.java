@@ -16,7 +16,7 @@ import java.io.IOException;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STANDARD)
 public class ResearchProjectContainerTest extends Arquillian {
     @Inject
     private ResearchProjectEjb researchProjectEjb;

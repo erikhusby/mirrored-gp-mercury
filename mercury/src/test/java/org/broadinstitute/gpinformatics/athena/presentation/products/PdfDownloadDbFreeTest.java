@@ -34,7 +34,7 @@ import java.util.List;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.IncludePDMOnly;
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao.TopLevelOnly;
 
-@Test(groups = TestGroups.DATABASE_FREE)
+@Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class PdfDownloadDbFreeTest {
     public static final boolean IS_PDM_USER = true;
     public static final boolean NOT_PDM_USER = false;
@@ -43,7 +43,7 @@ public class PdfDownloadDbFreeTest {
     private Product pdmOnlyProduct;
     private ProductDao productDao;
 
-    @BeforeMethod()
+    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
         everyoneProduct = ProductTestFactory.createStandardExomeSequencing();
         pdmOnlyProduct = ProductTestFactory.createDummyProduct(Workflow.NONE, "P1-" + System.currentTimeMillis(), false, true);

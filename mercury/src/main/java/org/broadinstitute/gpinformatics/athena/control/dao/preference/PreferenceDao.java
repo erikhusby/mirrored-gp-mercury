@@ -104,6 +104,18 @@ public class PreferenceDao extends GenericDao {
     }
 
     /**
+     * Get a global preference.
+     *
+     * @param preferenceType type of preference to get
+     *
+     * @return a single preference
+     *
+     */
+    public Preference getGlobalPreference(PreferenceType preferenceType) {
+        return findSingle(Preference.class, Preference_.preferenceType, preferenceType);
+    }
+
+    /**
      * Common code used by all methods to set up the preference criteria.
      *
      * @param criteriaBuilder The builder object.

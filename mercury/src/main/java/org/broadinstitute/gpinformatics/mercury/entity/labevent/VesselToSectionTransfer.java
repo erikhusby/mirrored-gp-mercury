@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -24,13 +25,19 @@ public class VesselToSectionTransfer extends VesselTransfer {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_vtst_lab_event")
     @ManyToOne
     private LabEvent labEvent;
 
-    public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection, VesselContainer<?> targetVesselContainer, LabEvent labEvent) {
+    public VesselToSectionTransfer(LabVessel sourceVessel, SBSSection targetSection,
+            VesselContainer<?> targetVesselContainer, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
         this.sourceVessel = sourceVessel;
         this.targetSection = targetSection;
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         this.targetVessel = targetVesselContainer.getEmbedder();
         sourceVessel.getVesselToSectionTransfersThisAsSource().add(this);
@@ -50,6 +57,11 @@ public class VesselToSectionTransfer extends VesselTransfer {
 
     public VesselContainer<?> getTargetVesselContainer() {
         return targetVessel.getContainerRole();
+    }
+
+    @Nullable
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {

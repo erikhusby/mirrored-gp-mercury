@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class LabBatchEJBTest extends ContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
@@ -68,7 +68,7 @@ public class LabBatchEJBTest extends ContainerTest {
     private String scottmat;
     private Bucket bucket;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.STUBBY)
     public void setUp() throws Exception {
 
         if (utx == null) {
@@ -106,7 +106,7 @@ public class LabBatchEJBTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.STUBBY)
     public void tearDown() throws Exception {
         if (utx == null) {
             return;

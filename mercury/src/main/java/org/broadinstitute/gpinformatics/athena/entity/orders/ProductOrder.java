@@ -22,8 +22,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.BusinessObject;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -111,6 +113,10 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
 
     @Column(name = "MODIFIED_BY", nullable = false)
     private long modifiedBy;
+
+    @NotAudited
+    @Formula("(select count(*) from athena.product_order_sample where product_order_sample.product_order = product_order_id)")
+    private int sampleCount;
 
     /**
      * Unique title for the order.
@@ -1565,4 +1571,7 @@ public class ProductOrder implements BusinessObject, JiraProject, Serializable {
         return !StringUtils.isBlank(getSkipQuoteReason()) && getProduct().getSupportsSkippingQuote();
     }
 
+    public int getSampleCount() {
+        return sampleCount;
+    }
 }

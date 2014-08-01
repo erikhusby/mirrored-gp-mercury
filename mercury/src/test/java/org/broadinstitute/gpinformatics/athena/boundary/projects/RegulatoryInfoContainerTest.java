@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.Date;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.STUBBY)
 public class RegulatoryInfoContainerTest extends ContainerTest {
 
     @Inject

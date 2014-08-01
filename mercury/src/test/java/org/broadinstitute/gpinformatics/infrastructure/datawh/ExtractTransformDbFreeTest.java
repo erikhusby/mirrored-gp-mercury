@@ -93,7 +93,7 @@ public class ExtractTransformDbFreeTest {
             labMetricEtl
     };
 
-    @BeforeClass(groups = TestGroups.DATABASE_FREE)
+    @BeforeClass
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
@@ -104,6 +104,7 @@ public class ExtractTransformDbFreeTest {
                 etlInstances.add((GenericEntityEtl)mock);
             }
         }
+
         extractTransform = new ExtractTransform(auditReaderDao,
                 new SessionContextUtility(null, null) {
                     @Override
@@ -114,14 +115,14 @@ public class ExtractTransformDbFreeTest {
                 etlInstances);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
         reset(mocks);
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod
     public void afterMethod() throws Exception {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }

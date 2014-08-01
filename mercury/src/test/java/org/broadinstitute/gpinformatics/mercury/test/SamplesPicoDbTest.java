@@ -30,7 +30,7 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.STUBBY, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEndToEnd(@ArquillianResource URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());

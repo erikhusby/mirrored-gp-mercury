@@ -69,7 +69,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         return DeploymentBuilder.buildMercuryWarWithAlternatives(ControlBusinessKeyJiraService.class);
     }
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.ALTERNATIVES)
     public void setUp() throws Exception {
 
         if (productOrderEjb == null) {
@@ -92,7 +92,7 @@ public class ConcurrentProductOrderDoubleCreateTest extends ConcurrentBaseTest {
         productOrderKey = testOrder.getBusinessKey();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.ALTERNATIVES)
     public void testMultithreaded() throws Exception {
         Throwable pdoJiraError = null;
         startingKey = "PDO-" + basePdoKey;

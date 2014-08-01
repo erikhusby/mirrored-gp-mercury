@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.integration.RestServiceContainerTest;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -16,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -76,7 +76,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         return "limsQueryTypes";
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoBooleanAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoBoolean");
@@ -88,7 +88,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result2, equalTo("true"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoDoubleAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoDouble");
@@ -100,7 +100,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result2, equalTo("1.0"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoString");
@@ -109,7 +109,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo("test"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringArrayAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringArray");
@@ -127,7 +127,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
      *
      * @param baseUrl Base URL to use for calculating the URL.
      */
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringArrayLargeAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringArray");
@@ -141,7 +141,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo(toJson(values)));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoFlowcellDesignationAsJson(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoFlowcellDesignation");
@@ -150,7 +150,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo(FLOWCELL_DESIGNATION_JSON));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoStringToBooleanMap(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoStringToBooleanMap");
@@ -160,7 +160,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo(request));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoWellAndSourceTube(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
@@ -170,7 +170,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo(request));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoWellAndSourceTubeList(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTubeList");
@@ -180,7 +180,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertThat(result, equalTo(request));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowRuntimeException(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
@@ -188,7 +188,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
         assertErrorResponse(caught, 500, "testThrowRuntimeException");
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @Test(groups = TestGroups.STUBBY, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testThrowApplicationException(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwApplicationException");

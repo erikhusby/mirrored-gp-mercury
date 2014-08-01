@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -1102,7 +1103,7 @@ public abstract class LabVessel implements Serializable {
         Collections.sort(batchVesselsByDate, new Comparator<LabBatchStartingVessel>() {
             @Override
             public int compare(LabBatchStartingVessel o1, LabBatchStartingVessel o2) {
-                return o1.getLabBatch().getCreatedOn().compareTo(o2.getLabBatch().getCreatedOn());
+                return ObjectUtils.compare(o1.getLabBatch().getCreatedOn(), o2.getLabBatch().getCreatedOn());
             }
         });
         return batchVesselsByDate;

@@ -13,7 +13,10 @@ import java.net.URL;
 import java.util.List;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.ALTERNATIVES;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STANDARD;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.STUBBY;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
@@ -44,7 +47,7 @@ public abstract class RestServiceContainerTest extends Arquillian {
      */
     protected abstract String getResourcePath();
 
-    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = {EXTERNAL_INTEGRATION, ALTERNATIVES, STUBBY, STANDARD})
     public void setUp() throws Exception {
         clientConfig = new DefaultClientConfig();
         clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
