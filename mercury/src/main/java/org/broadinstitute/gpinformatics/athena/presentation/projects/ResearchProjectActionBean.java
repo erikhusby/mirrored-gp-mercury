@@ -61,6 +61,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 /**
  * This class is for research projects action bean / web page.
@@ -85,6 +87,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static final String EDIT_REGULATORY_INFO_ACTION = "editRegulatoryInfo";
     public static final String VALIDATE_TITLE_ACTION = "validateTitle";
     public static final String VIEW_SUBMISSIONS_ACTION = "viewSubmissions";
+    public static final String POST_SUBMISSIONS_ACTION = "postSubmissions";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -169,6 +172,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * On demand counts of orders on the project. Map of business key to count value.
      */
     private Map<String, Long> projectOrderCounts;
+
+    @Validate(on = POST_SUBMISSIONS_ACTION, required = true)
+    private List<String> selectedSubmissionSamples;
 
     @ValidateNestedProperties(
             @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
@@ -771,10 +777,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_SUBMISSIONS_ACTION)
     public Resolution viewSubmissions() {
+        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
+    }
+
+    @Before(stages = LifecycleStage.EventHandling,
+            on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
+    public void initializeForSubmissions() {
+        updateSubmissionSamples();
+    }
+
+    private void updateSubmissionSamples() {
         if (editResearchProject != null) {
             submissionSamples = submissionDtoFetcher.fetch(editResearchProject);
         }
-        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
     }
 
     /**
@@ -788,6 +803,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
         regulatoryInfoEjb.editRegulatoryInfo(regulatoryInfoId, regulatoryInfoAlias);
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION)
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
+    }
+
+    @HandlesEvent(POST_SUBMISSIONS_ACTION)
+    public Resolution postSubmissions() {
+
+        NavigableMap<String, SubmissionDto> sortedInfo = new TreeMap<>();
+
+        for(SubmissionDto sortableSubmission:submissionSamples) {
+            sortedInfo.put(sortableSubmission.getSampleName(), sortableSubmission);
+        }
+//        ResearchProjectEjb.processSubmissions()
+        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp

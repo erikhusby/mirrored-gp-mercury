@@ -100,4 +100,8 @@ public class SubmissionDto {
     public int getLanesInAggregation() {
         return aggregation.getReadGroupCount();
     }
+
+    public String getFileName() {
+        return bassDTO.getFileName();
+    }
 }

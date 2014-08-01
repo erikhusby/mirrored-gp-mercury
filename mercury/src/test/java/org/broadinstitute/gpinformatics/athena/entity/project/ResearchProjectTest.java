@@ -14,11 +14,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NoJiraTransitionException;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ProductOrderTestFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.dbfree.ResearchProjectTestFactory;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.easymock.EasyMock;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -259,6 +261,7 @@ public class ResearchProjectTest {
         BSPUserList bspUserList = EasyMock.createMock(BSPUserList.class);
         BSPCohortList bspCohortList = EasyMock.createMock(BSPCohortList.class);
         ResearchProjectDao researchProjectDao = EasyMock.createMock(ResearchProjectDao.class);
+        SubmissionsService submissionsService = Mockito.mock(SubmissionsService.class);
 
         researchProject = EasyMock.createMock(ResearchProject.class);
 
@@ -269,7 +272,7 @@ public class ResearchProjectTest {
 
         EasyMock.replay(userBean, bspCohortList, bspUserList, researchProject);
         return new ResearchProjectEjb(jiraService, userBean, bspUserList,
-                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao);
+                bspCohortList, AppConfig.produce(Deployment.STUBBY), researchProjectDao, submissionsService);
 
     }
 

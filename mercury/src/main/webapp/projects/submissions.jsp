@@ -20,7 +20,32 @@
                         var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
                         return "<li>" + item.dropdownItem + extraCount + '</li>';
                     }
+        $j(document).ready(function () {
+            var oTable = $j('#submissionSamples').dataTable({
+                "aaSorting": [
+                        [1, asc]
+                ],
+                "aoColumns": [
+                    {"bSortable": false},               //Checkbox
+                    {"bSortable": true},                //Sample
+                    {"bSortable": false},               //Biosample
+                    {"bSortable": false},               //Data Type
+                    {"bSortable": false},               //PDOs
+                    {"bSortable": false},               //Aggregation Project
+                    {"bSortable": false},               //File Type
+                    {"bSortable": false},               //Version
+                    {"bSortable": false},               //QualityMetric
+                    {"bSortable": false},               //Contamination
+                    {"bSortable": false},               //Fingerprint
+                    {"bSortable": false},               //Lanes in Aggregation
+                    {"bSortable": false},               //Blacklisted Lanes
+                    {"bSortable": false},               //Submitted Version
+                    {"bSortable": false},               //Current Status
+                    {"bSortable": false}                //Status Date
+                ]
+            });
 
+        })
     </script>
 </head>
 
@@ -41,7 +66,10 @@
         <tr>
             <!-- add data type to big list -->
             <!-- only show latest single file -->
-            <th width="20">Choose</th>
+            <th width="20">
+                <input id="submissionSelections" for="submissionCount" type="checkbox" class="checkAll"/>
+                <span id="submissionCount" class="checkedCount"></span>
+            </th>
             <th width="100">Sample</th>
             <th width="100">BioSample</th>
             <th width="75">Data Type</th>
@@ -70,13 +98,11 @@
 
         <c:forEach items="${actionBean.submissionSamples}" var="submissionSample">
             <tr>
-                <td class="fileCheckbox" style="vertical-align: middle; text-align: left;"
-                    <%--data-contamination="${submissionSample.contamination}"--%>
-                    <%--data-coverage="${submissionSample.submissionFile.metrics.qualityMetricValue}">--%>
-                    <input type="checkbox" name="submissionSamples" class="shiftCheckbox" />
-                    <%--name="selectedFiles"--%>
-                    <%--value="${submissionSample.submissionFile.label}"/>--%>
-                    </td>
+                <td>
+                    <stripes:checkbox name="selectedSubmissionSamples" class="shiftCheckbox"
+                                      value="${submissionSample.sampleName}" />
+                </td>
+
                 <td>${submissionSample.sampleName}</td>
                 <td><%--bio-sample--%></td>
                 <td>${submissionSample.dataType}</td>

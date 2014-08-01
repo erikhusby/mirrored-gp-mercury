@@ -25,6 +25,11 @@ public class SubmissionRequestBean implements Serializable {
     public SubmissionRequestBean() {
     }
 
+    public SubmissionRequestBean(List<SubmissionBean> submissionBeans) {
+        setSubmissions(submissionBeans);
+
+    }
+
     public List<SubmissionBean> getSubmissions() {
         return submissions;
     }

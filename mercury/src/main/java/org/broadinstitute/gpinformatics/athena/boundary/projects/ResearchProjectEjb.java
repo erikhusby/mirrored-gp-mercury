@@ -19,7 +19,9 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
+import org.broadinstitute.gpinformatics.athena.entity.project.SubmissionTracker;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
@@ -30,6 +32,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionBioSampleBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionContactBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionRequestBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionStatusResultBean;
+import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionsService;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
@@ -40,6 +50,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,22 +66,25 @@ public class ResearchProjectEjb {
     private final BSPCohortList cohortList;
     private final AppConfig appConfig;
     private final ResearchProjectDao researchProjectDao;
+    private final SubmissionsService submissionsService;
 
     // EJBs require a no arg constructor.
     @SuppressWarnings("unused")
     public ResearchProjectEjb() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     @Inject
     public ResearchProjectEjb(JiraService jiraService, UserBean userBean, BSPUserList userList,
-                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao) {
+                              BSPCohortList cohortList, AppConfig appConfig, ResearchProjectDao researchProjectDao,
+                              SubmissionsService submissionsService) {
         this.jiraService = jiraService;
         this.userBean = userBean;
         this.userList = userList;
         this.cohortList = cohortList;
         this.appConfig = appConfig;
         this.researchProjectDao = researchProjectDao;
+        this.submissionsService = submissionsService;
     }
 
     /**
@@ -204,6 +218,53 @@ public class ResearchProjectEjb {
             }
         }
         return StringUtils.join(piNameList, '\n');
+    }
+
+    public SubmissionStatusResultBean processSubmissions(@Nonnull String businessKey,
+                                                         @Nonnull BioProject selectedBioProject,
+                                                         @Nonnull List<SubmissionDto> submissionDtos) {
+
+        if(submissionDtos.isEmpty()) {
+            throw new InformaticsServiceException("At least one selection is needed to post submissions");
+        }
+
+        ResearchProject submissionProject = researchProjectDao.findByBusinessKey(businessKey);
+
+        Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
+
+        for(SubmissionDto submissionDto:submissionDtos) {
+            SubmissionTracker tracker =
+                    new SubmissionTracker(submissionDto.getSampleName(), submissionDto.getFileName(),
+                            String.valueOf(submissionDto.getVersion()));
+            submissionProject.addSubmissionTracker(tracker);
+            submissionDtoMap.put(tracker, submissionDto);
+        }
+
+        researchProjectDao.persist(submissionProject);
+
+        List<SubmissionBean> submissionBeans = new ArrayList<>();
+
+        for(Map.Entry<SubmissionTracker, SubmissionDto> dtoByTracker:submissionDtoMap.entrySet()) {
+
+            BioProject submitBioProject = new BioProject();
+            submitBioProject.setAccession(selectedBioProject.getAccession());
+
+            SubmissionBioSampleBean bioSampleBean =
+                    new SubmissionBioSampleBean(dtoByTracker.getValue().getSampleName(),
+                            dtoByTracker.getValue().getFileName());
+            bioSampleBean.setContact(new SubmissionContactBean(userBean.getBspUser().getEmail(),
+                    userBean.getBspUser().getLastName(), userBean.getBspUser().getEmail()));
+
+            SubmissionBean submissionBean =
+                    new SubmissionBean(dtoByTracker.getKey().getSubmissionIdentifier(),
+                            userBean.getBspUser().getUsername(),submitBioProject,bioSampleBean);
+            submissionBeans.add(submissionBean);
+        }
+
+        SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
+
+        SubmissionStatusResultBean submissionResults = submissionsService.postSubmissions(requestBean);
+        return submissionResults;
     }
 
     /**
