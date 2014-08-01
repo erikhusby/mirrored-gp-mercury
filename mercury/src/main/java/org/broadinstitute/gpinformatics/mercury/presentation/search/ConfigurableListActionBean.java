@@ -8,6 +8,7 @@ import net.sourceforge.stripes.validation.SimpleError;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnEntity;
 import org.broadinstitute.gpinformatics.infrastructure.columns.ColumnTabulation;
@@ -27,7 +28,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * For actions invoked by configurableList.jsp
@@ -54,6 +57,9 @@ public class ConfigurableListActionBean extends CoreActionBean {
 
     @Inject
     private BSPSampleSearchService bspSampleSearchService;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     /**
      * Stream an Excel spreadsheet, from a list of IDs
@@ -158,8 +164,12 @@ public class ConfigurableListActionBean extends CoreActionBean {
      */
     public Resolution createConfigurableDownload(List<?> entityList, String downloadColumnSetName,
             CoreActionBeanContext context, String entityName, String entityId) {
+
+        Map<String, Object> evalContext = new HashMap<>();
+        evalContext.put("bspUserList", bspUserList );
+
         ConfigurableList configurableListUtils = configurableListFactory.create(entityList, downloadColumnSetName,
-                entityName, ColumnEntity.getByName(entityName));
+                entityName, ColumnEntity.getByName(entityName), evalContext );
 
         Object[][] data = configurableListUtils.getResultList().getAsArray();
         return StreamCreatedSpreadsheetUtil.streamSpreadsheet(data, SPREADSHEET_FILENAME);

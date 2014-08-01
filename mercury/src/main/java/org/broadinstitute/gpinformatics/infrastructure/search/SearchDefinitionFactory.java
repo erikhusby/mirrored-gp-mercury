@@ -4,12 +4,12 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.columns.BspSampleSearchAddRowsListener;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -402,6 +402,9 @@ public class SearchDefinitionFactory {
         List<SearchTerm> searchTerms = buildLabEventIds();
         mapGroupSearchTerms.put("IDs", searchTerms);
 
+        searchTerms = buildLabEventReagents();
+        mapGroupSearchTerms.put("Nested Data", searchTerms);
+
         List<ConfigurableSearchDefinition.CriteriaProjection> criteriaProjections = new ArrayList<>();
 //        criteriaProjections.add(new ConfigurableSearchDefinition.CriteriaProjection("bucketEntries", "labVesselId",
 //                "labVessel", BucketEntry.class.getName()));
@@ -476,10 +479,11 @@ public class SearchDefinitionFactory {
         criteriaPaths.add(criteriaPath);
         searchTerm.setCriteriaPaths(criteriaPaths);
         searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
-            private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+            //private BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
             @Override
             public Object evaluate(Object entity, Map<String, Object> context) {
+                BSPUserList bspUserList = (BSPUserList)context.get("bspUserList");
                 LabEvent labEvent = (LabEvent) entity;
                 Long userId = labEvent.getEventOperator();
                 BspUser bspUser = bspUserList.getById(userId);
@@ -523,6 +527,62 @@ public class SearchDefinitionFactory {
             }
         });
         searchTerms.add(searchTerm);
+
+        return searchTerms;
+    }
+
+
+    /**
+     * Top down of nested query for reagents
+     * @return List of search terms/column definitions for lab event reagent
+     */
+    private List<SearchTerm> buildLabEventReagents() {
+        List<SearchTerm> searchTerms = new ArrayList<>();
+
+        SearchTerm parentSearchTerm = new SearchTerm();
+        parentSearchTerm.setName("Lab Event Reagents");
+        parentSearchTerm.setIsNestedParent(Boolean.TRUE);
+        parentSearchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                LabEvent labEvent = (LabEvent) entity;
+                return labEvent.getReagents();
+            }
+        });
+        searchTerms.add(parentSearchTerm);
+
+        SearchTerm searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Type");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                Reagent reagent = (Reagent) entity;
+                return ( reagent.getName()==null?"":reagent.getName() );
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Lot");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                Reagent reagent = (Reagent) entity;
+                return ( reagent.getLot()==null?"":reagent.getLot() );
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
+
+        searchTerm = new SearchTerm();
+        searchTerm.setName("Reagent Expiration");
+        searchTerm.setDisplayExpression(new SearchTerm.Evaluator<Object>() {
+            @Override
+            public Object evaluate(Object entity, Map<String, Object> context) {
+                Reagent reagent = (Reagent) entity;
+                return ( reagent.getExpiration()==null?"":reagent.getExpiration());
+            }
+        });
+        parentSearchTerm.addNestedEntityColumn(searchTerm);
 
         return searchTerms;
     }

@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -498,6 +499,37 @@ public class SearchInstance implements Serializable {
             return evalHeaderExpression(entity);
         }
 
+        /* ***********************************************
+         * None of the nested table logic applies to SearchValue
+         */
+        @Override
+        public List<? extends ColumnTabulation> getNestedEntityColumns() {
+            throw new UnsupportedOperationException(
+                    "Method getNestedEntityColumns not implemented in SearchInstance.SearchValue");
+        }
+
+        @Override
+        public void addNestedEntityColumn(ColumnTabulation x) {
+            throw new UnsupportedOperationException(
+                    "Method addNestedEntityColumn not implemented in SearchInstance.SearchValue");
+        }
+
+        @Override
+        public Boolean isNestedParent() {
+            throw new UnsupportedOperationException(
+                    "Method isNestedParent not implemented in SearchInstance.SearchValue");
+        }
+
+        @Override
+        public void setIsNestedParent(Boolean x) {
+            throw new UnsupportedOperationException(
+                    "Method setIsNestedParent not implemented in SearchInstance.SearchValue");
+        }
+        /* ***********************************************
+         * End of the nested table logic
+         */
+
+
         @Override
         public Object evalDownloadHeader1Expression(Object entity, Map<String, Object> context) {
             return evalHeaderExpression(entity);
@@ -506,6 +538,11 @@ public class SearchInstance implements Serializable {
         @Override
         public Object evalDownloadHeader2Expression(Object entity, Map<String, Object> context) {
             return null;
+        }
+
+        public Collection<?> evalNestedTableExpression(Object entity, Map<String, Object> context) {
+            throw new UnsupportedOperationException(
+                    "Method evalNestedTableExpression not implemented in SearchInstance.SearchValue");
         }
 
         @Override

@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -177,7 +178,10 @@ public class ConfigurableList {
         this.multiValueDelimiter = multiValueDelimiter;
         this.multiValueAddTrailingDelimiter = multiValueAddTrailingDelimiter;
         for (ColumnTabulation columnTabulation : columnTabulations) {
-            headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+            // Ignore header logic on nested table ColumnTabulation
+            if( !columnTabulation.isNestedParent() ) {
+                headerGroupMap.put(columnTabulation.getName(), new HeaderGroup(columnTabulation.getName()));
+            }
         }
         this.sortColumnIndex = sortColumnIndex;
         this.sortDirection = sortDirection;
@@ -412,6 +416,11 @@ public class ConfigurableList {
 
         private final List<Cell> cells = new ArrayList<>();
 
+        /**
+         * Hold the entity list for a nested table at the row level (required when building ResultList)
+         */
+        private final Map<ColumnTabulation, Collection<?>> nestedTableEntities = new LinkedHashMap<>();
+
         Row(String id) {
             this.id = id;
         }
@@ -427,16 +436,37 @@ public class ConfigurableList {
         List<Cell> getCells() {
             return cells;
         }
+
+        /**
+         * Access nested tables when building ResultList
+         * @return All nested tables for this row
+         */
+        Map<ColumnTabulation, Collection<?>> getNestedTableEntities() {
+            return nestedTableEntities;
+        }
     }
 
     /**
      * Adds rows to a list, by evaluating column definition expressions.
+     * Supplies an empty context but some eval expressions require context objects (e.g. BSP user list)
      *
      * @param entityList list of objects, where each object is likely to be the root of a
      *                   graph that is navigated by column definition expressions.
      */
+    @Deprecated
     public void addRows(List<?> entityList) {
         Map<String, Object> context = new HashMap<>();
+        addRows(entityList, context);
+    }
+
+    /**
+     * Enhanced addRows to provide ability to supply context objects
+     * @param entityList list of objects, where each object is likely to be the root of a
+     *                   graph that is navigated by column definition expressions.
+     * @param context Any required context objects (e.g.as required in eval expressions
+     */
+    public void addRows(List<?> entityList, @Nonnull Map<String, Object> context ) {
+
 //        context.put("isAdmin", isAdmin);
 
         for (AddRowsListener addRowsListener : addRowsListeners) {
@@ -447,13 +477,20 @@ public class ConfigurableList {
             Row row = new Row(columnEntity.getIdGetter().getId(entity));
             rows.add(row);
             for (ColumnTabulation columnTabulation : nonPluginTabulations) {
-                recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                if( !columnTabulation.isNestedParent() ) {
+                    recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
+                } else {
+                    row.getNestedTableEntities().put(columnTabulation, columnTabulation.evalNestedTableExpression(entity, context));
+                }
             }
         }
 
         try {
             // Call the plugins, and add their data to the accumulated rows.
             for (ColumnTabulation columnTabulation : pluginTabulations) {
+                // Plugins not supported for nested tables
+                if( columnTabulation.isNestedParent() ) continue;
+
                 ListPlugin listPlugin = (ListPlugin) Class.forName(columnTabulation.getPluginClass()).getConstructor().
                         newInstance();
                 List<Row> pluginRows = listPlugin.getData(entityList, headerGroupMap.get(columnTabulation.getName()));
@@ -578,6 +615,35 @@ public class ConfigurableList {
     }
 
     /**
+     * Build a simple non-sortable ResultList to use as a nested table
+     * @param columnTabulation Descriptor for nested table and all child columns
+     * @param nestedEntityList Collection of entities in nested table
+     * @param context Objects which may be required in evaluation
+     * @return Simple nested table data set for use in UI
+     */
+    private ResultList buildNestedTable(ColumnTabulation columnTabulation, Collection<?> nestedEntityList, Map<String, Object> context) {
+        List<ResultRow> rows = new ArrayList<>();
+        List<Header> headers = new ArrayList<>();
+        List<Comparable<?>> emptySortableCells = new ArrayList<>();
+
+        for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
+            String nestedName = nestedColumnTabulation.getName();
+            headers.add(new Header(nestedName, nestedName, null, null));
+        }
+
+        for( Object entity : nestedEntityList ) {
+            List<String> cells = new ArrayList<>();
+            for( ColumnTabulation nestedColumnTabulation : columnTabulation.getNestedEntityColumns() ) {
+                cells.add(nestedColumnTabulation.evalPlainTextExpression( entity, context ).toString());
+            }
+            ResultRow row = new ResultRow( emptySortableCells, cells, null );
+            rows.add(row);
+        }
+
+        return new ResultList(rows, headers, 0, "ASC" );
+    }
+
+    /**
      * Converts from Rows of compact Cells to a sparse matrix with empty cells to align
      * each cell with its associated header.
      *
@@ -624,6 +690,14 @@ public class ConfigurableList {
                 renderableCells.add(null);
             }
             ResultRow resultRow = new ResultRow(sortableCells, renderableCells, row.getId());
+
+            // Build nested tables
+            for( Map.Entry<ColumnTabulation, Collection<?>> entry : row.getNestedTableEntities().entrySet() ){
+                //TODO jms Deal with context (store as member variable?)
+                ResultList nestedTable = buildNestedTable(entry.getKey(), entry.getValue(), new HashMap<String, Object>());
+                resultRow.addNestedTable( entry.getKey().getName() , nestedTable );
+            }
+
             resultRows.add(resultRow);
         }
 
@@ -835,6 +909,11 @@ public class ConfigurableList {
          */
         private String checked;
 
+        /**
+         * Each row may have a nested table
+         */
+        private Map<String, ResultList> nestedTables = new HashMap<>();
+
         ResultRow(List<Comparable<?>> sortableCells, List<String> renderableCells, String resultId) {
             this.sortableCells = sortableCells;
             this.renderableCells = renderableCells;
@@ -878,6 +957,23 @@ public class ConfigurableList {
                     sortableCells.set(index, theValue);
                 }
             }
+        }
+
+        /**
+         * Any nested tables associated with this row, key is name of parent search term
+         * @return Nested table collection for UI
+         */
+        Map<String, ResultList> getNestedTables(){
+            return nestedTables;
+        }
+
+        /**
+         * Add a nested table to collection for this row
+         * @param name Title of nested table
+         * @param nestedTable Nested table ResultList data
+         */
+        public void addNestedTable(String name, ResultList nestedTable) {
+            nestedTables.put(name, nestedTable);
         }
     }
 
