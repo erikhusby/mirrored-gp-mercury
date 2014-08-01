@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -28,7 +29,7 @@
                 "aoColumns": [
                     {"bSortable": false},               //Checkbox
                     {"bSortable": true},                //Sample
-                    {"bSortable": false},               //Biosample
+//                    {"bSortable": false},               //Biosample
                     {"bSortable": false},               //Data Type
                     {"bSortable": false},               //PDOs
                     {"bSortable": false},               //Aggregation Project
@@ -51,7 +52,8 @@
 
 
 <stripes:form beanclass="${actionBean.class.name}">
-
+    <stripes:hidden name="submitString"/>
+    <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
 
     <div class="control-group">
         <stripes:label for="bioProject" class="control-label">Choose a BioProject</stripes:label>
@@ -71,7 +73,7 @@
                 <span id="submissionCount" class="checkedCount"></span>
             </th>
             <th width="100">Sample</th>
-            <th width="100">BioSample</th>
+            <%--<th width="100">BioSample</th>--%>
             <th width="75">Data Type</th>
             <th width="180">PDOs</th>
             <th width="100">Aggregation Project</th>
@@ -104,7 +106,7 @@
                 </td>
 
                 <td>${submissionSample.sampleName}</td>
-                <td><%--bio-sample--%></td>
+                <%--<td>&lt;%&ndash;bio-sample&ndash;%&gt;</td>--%>
                 <td>${submissionSample.dataType}</td>
                 <td style="padding: 5px;
                                                text-align: center;">
@@ -144,5 +146,10 @@
         </c:forEach>
         </tbody>
     </table>
+    <div class="span1">
+        <stripes:submit name="<%=ResearchProjectActionBean.POST_SUBMISSIONS_ACTION%>" value="Post Selected Submissions"
+                        class="btn btn-primary"/>
+    </div>
+
     <%--<button>Submit these files</button>--%>
 </stripes:form>

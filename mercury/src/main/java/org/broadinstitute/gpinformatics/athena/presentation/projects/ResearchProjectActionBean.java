@@ -37,6 +37,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Cohor
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProject;
 import org.broadinstitute.gpinformatics.infrastructure.bioproject.BioProjectList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -242,7 +243,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, REGULATORY_INFO_QUERY_ACTION,
                     ADD_REGULATORY_INFO_TO_RESEARCH_PROJECT_ACTION, ADD_NEW_REGULATORY_INFO_ACTION,
                     REMOVE_REGULATORY_INFO_ACTION, EDIT_REGULATORY_INFO_ACTION, BEGIN_COLLABORATION_ACTION,
-                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION})
+                    RESEND_INVITATION_ACTION, VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public void init() throws Exception {
         researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
@@ -808,13 +809,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @HandlesEvent(POST_SUBMISSIONS_ACTION)
     public Resolution postSubmissions() {
 
-        NavigableMap<String, SubmissionDto> sortedInfo = new TreeMap<>();
-
-        for(SubmissionDto sortableSubmission:submissionSamples) {
-            sortedInfo.put(sortableSubmission.getSampleName(), sortableSubmission);
+        List<SubmissionDto> selectedSubmissions = new ArrayList<>();
+        for(SubmissionDto dto:submissionSamples) {
+            if(selectedSubmissionSamples.contains(dto.getSampleName())) {
+                selectedSubmissions.add(dto);
+            }
         }
-//        ResearchProjectEjb.processSubmissions()
-        return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
+
+        BioProject selectedProject = bioProjectTokenInput.getTokenObject();
+
+        researchProjectEjb.processSubmissions(researchProject, new BioProject(selectedProject.getAccession()), selectedSubmissions);
+
+        return new RedirectResolution(ResearchProjectActionBean.class, PROJECT_SUBMISSIONS_PAGE)
+                .addParameter(RESEARCH_PROJECT_PARAMETER, researchProject);
     }
 
     // Complete Data getters are for the prepopulates on the create.jsp
@@ -1057,5 +1064,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setBioProjectTokenInput(BioProjectTokenInput bioProjectTokenInput) {
         this.bioProjectTokenInput = bioProjectTokenInput;
+    }
+
+    public void setSelectedSubmissionSamples(List<String> selectedSubmissionSamples) {
+        this.selectedSubmissionSamples = selectedSubmissionSamples;
     }
 }
