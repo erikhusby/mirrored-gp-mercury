@@ -423,8 +423,9 @@ public class GetSampleInstancesTest {
         TubeFormation tubeFormation2 = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96);
 
         LabEvent labEvent1 = new LabEvent(LabEventType.SHEARING_TRANSFER, new Date(), "SPIDERMAN", 1L, 101L, "Bravo");
-        labEvent1.getSectionTransfers().add(new SectionTransfer(tubeFormation1.getContainerRole(), SBSSection.ALL96,
-                tubeFormation2.getContainerRole(), SBSSection.ALL96, labEvent1));
+        labEvent1.getSectionTransfers().add(new SectionTransfer(
+                tubeFormation1.getContainerRole(), SBSSection.ALL96, null,
+                tubeFormation2.getContainerRole(), SBSSection.ALL96, null, labEvent1));
 
         // Create the second LCSET by reworking all tubes.
         LabBatch lcSet2 = new LabBatch("LCSET-2", starterVessels2, LabBatch.LabBatchType.WORKFLOW);
@@ -445,8 +446,9 @@ public class GetSampleInstancesTest {
 
         // Create the second transfer.
         LabEvent labEvent2 = new LabEvent(LabEventType.HYBRIDIZATION, new Date(), "BATMAN", 2L, 101L, "Bravo");
-        labEvent2.getSectionTransfers().add(new SectionTransfer(tubeFormation2.getContainerRole(), SBSSection.ALL96,
-                tubeFormation3.getContainerRole(), SBSSection.ALL96, labEvent2));
+        labEvent2.getSectionTransfers().add(new SectionTransfer(
+                tubeFormation2.getContainerRole(), SBSSection.ALL96, null,
+                tubeFormation3.getContainerRole(), SBSSection.ALL96, null, labEvent2));
 
         Assert.assertEquals(labEvent2.getComputedLcSets().size(), 1);
         Assert.assertEquals(labEvent2.getComputedLcSets().iterator().next(), lcSet2);
