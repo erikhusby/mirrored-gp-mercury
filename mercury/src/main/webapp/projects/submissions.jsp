@@ -12,6 +12,7 @@
                         prePopulate: ${actionBean.ensureStringResult(actionBean.bioProjectTokenInput.completeData)},
                         tokenDelimiter: "${actionBean.bioProjectTokenInput.separator}",
                         preventDuplicates: true,
+                        tokenLimit: 1,
                         resultsFormatter: formatInput
                     }
             )
