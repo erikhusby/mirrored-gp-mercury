@@ -438,7 +438,7 @@ public class BaseEventTest {
         return new QtpEntityBuilder(
                 bettaLimsMessageTestFactory, labEventFactory, getLabEventHandler(),
                 Collections.singletonList(rack),
-                Collections.singletonList(rack.getLabel()),
+                Collections.singletonList(rack.getRacksOfTubes().iterator().next().getLabel()),
                 Collections.singletonList(tubeBarcodes),
                 mapBarcodeToTube, barcodeSuffix).invoke();
     }

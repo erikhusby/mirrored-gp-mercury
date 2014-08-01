@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -22,18 +23,28 @@ public class SectionTransfer extends VesselTransfer {
     @Enumerated(EnumType.STRING)
     private SBSSection sourceSection;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillarySourceVessel;
+
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabVessel targetVessel;
 
     @Enumerated(EnumType.STRING)
     private SBSSection targetSection;
 
+    /** Typically a RackOfTubes. */
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVessel ancillaryTargetVessel;
+
     @Index(name = "ix_st_lab_event")
     @ManyToOne(fetch = FetchType.LAZY)
     private LabEvent labEvent;
 
-    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection,
-            VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
+    public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection, LabVessel ancillarySourceVessel,
+            VesselContainer targetVesselContainer, SBSSection targetSection, LabVessel ancillaryTargetVessel, LabEvent labEvent) {
+        this.ancillarySourceVessel = ancillarySourceVessel;
+        this.ancillaryTargetVessel = ancillaryTargetVessel;
         this.labEvent = labEvent;
         sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getSectionTransfersFrom().add(this);
@@ -64,6 +75,11 @@ public class SectionTransfer extends VesselTransfer {
         this.sourceSection = sourceSection;
     }
 
+    @Nullable
+    public LabVessel getAncillarySourceVessel() {
+        return ancillarySourceVessel;
+    }
+
     public VesselContainer getTargetVesselContainer() {
         return targetVessel.getContainerRole();
     }
@@ -78,6 +94,11 @@ public class SectionTransfer extends VesselTransfer {
 
     public void setTargetSection(SBSSection targetSection) {
         this.targetSection = targetSection;
+    }
+
+    @Nullable
+    public LabVessel getAncillaryTargetVessel() {
+        return ancillaryTargetVessel;
     }
 
     public LabEvent getLabEvent() {

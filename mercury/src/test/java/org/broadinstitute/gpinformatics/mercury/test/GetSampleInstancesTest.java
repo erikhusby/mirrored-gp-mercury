@@ -139,8 +139,8 @@ public class GetSampleInstancesTest {
 
         TubeFormation targetTubeFormation = new TubeFormation(mapPositionToExtractTube, RackOfTubes.RackType.Matrix96);
         extractionTransfer.getSectionTransfers().add(new SectionTransfer(
-                sourceTubeFormation.getContainerRole(), SBSSection.ALL96,
-                targetTubeFormation.getContainerRole(), SBSSection.ALL96, extractionTransfer));
+                sourceTubeFormation.getContainerRole(), SBSSection.ALL96, null,
+                targetTubeFormation.getContainerRole(), SBSSection.ALL96, null, extractionTransfer));
 
         // sequencing PDO
         Product sequencingProduct = ProductTestFactory.createDummyProduct(Workflow.HYBRID_SELECTION, "HYBSEL-01");
@@ -170,20 +170,20 @@ public class GetSampleInstancesTest {
         mapPositionToPoolTube.put(VesselPosition.A01, poolTube);
         TubeFormation poolTubeFormation = new TubeFormation(mapPositionToPoolTube, RackOfTubes.RackType.Matrix96);
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A01,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A01, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A02,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A02, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate1.getContainerRole(), VesselPosition.A03,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate1.getContainerRole(), VesselPosition.A03, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate2.getContainerRole(), VesselPosition.A04,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate2.getContainerRole(), VesselPosition.A04, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
         poolingTransfer.getCherryPickTransfers().add(new CherryPickTransfer(
-                shearingPlate2.getContainerRole(), VesselPosition.A05,
-                poolTubeFormation.getContainerRole(), VesselPosition.A01, poolingTransfer));
+                shearingPlate2.getContainerRole(), VesselPosition.A05, null,
+                poolTubeFormation.getContainerRole(), VesselPosition.A01, null, poolingTransfer));
 
         Set<SampleInstanceV2> poolSampleInstances = poolTube.getSampleInstancesV2();
         Assert.assertEquals(poolSampleInstances.size(), 5);
@@ -288,31 +288,34 @@ public class GetSampleInstancesTest {
                 "Bravo");
         StaticPlate shearingPlate = new StaticPlate("SHEAR" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         shearingTransfer.getSectionTransfers().add(new SectionTransfer(
-                extractControlTubeFormation.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, shearingTransfer));
+                extractControlTubeFormation.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, shearingTransfer));
 
         // P7 index transfer
         LabEvent p7IndexTransfer = new LabEvent(LabEventType.INDEXED_ADAPTER_LIGATION, new Date(now++), "SPIDERMAN", 1L,
                 101L, "Bravo");
-        p7IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP7.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, p7IndexTransfer));
+        p7IndexTransfer.getSectionTransfers().add(new SectionTransfer(
+                indexPlateP7.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, p7IndexTransfer));
 
         // P5 index transfer
         LabEvent p5IndexTransfer = new LabEvent(LabEventType.INDEX_P5_POND_ENRICHMENT, new Date(now++), "TORCH", 1L,
                 101L, "Bravo");
-        p5IndexTransfer.getSectionTransfers().add(new SectionTransfer(indexPlateP5.getContainerRole(), SBSSection.ALL96,
-                shearingPlate.getContainerRole(), SBSSection.ALL96, p5IndexTransfer));
+        p5IndexTransfer.getSectionTransfers().add(new SectionTransfer(
+                indexPlateP5.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, p5IndexTransfer));
 
         // bait transfers
         StaticPlate baitPlate = new StaticPlate("BAITPLATE" + lcsetNum, StaticPlate.PlateType.Eppendorf96);
         LabEvent baitSetupTransfer = new LabEvent(LabEventType.BAIT_SETUP, new Date(now++), "TICK", 1L, 101L, "Bravo");
         baitSetupTransfer.getVesselToSectionTransfers().add(new VesselToSectionTransfer(baitTube, SBSSection.ALL96,
-                baitPlate.getContainerRole(), baitSetupTransfer));
+                baitPlate.getContainerRole(), null, baitSetupTransfer));
 
         LabEvent baitAdditionTransfer = new LabEvent(LabEventType.BAIT_ADDITION, new Date(now++), "BATMAN", 1L, 101L,
                 "Bravo");
-        baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(baitPlate.getContainerRole(),
-                SBSSection.ALL96, shearingPlate.getContainerRole(), SBSSection.ALL96, baitAdditionTransfer));
+        baitAdditionTransfer.getSectionTransfers().add(new SectionTransfer(
+                baitPlate.getContainerRole(), SBSSection.ALL96, null,
+                shearingPlate.getContainerRole(), SBSSection.ALL96, null, baitAdditionTransfer));
 
         // Verify 1st sample
         Set<SampleInstanceV2> sampleInstances =
