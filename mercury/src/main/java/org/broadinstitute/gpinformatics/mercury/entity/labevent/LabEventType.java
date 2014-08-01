@@ -488,6 +488,8 @@ public enum LabEventType {
             PlasticToValidate.SOURCE, PipelineTransformation.NONE),
     SEQ_PLATING_NORMALIZATION("SeqPlatingNormalization", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
             SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
+    ARRAY_PLATING_DILUTION("ArrayPlatingDilution", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
+            SystemOfRecord.MERCURY, CreateSources.TRUE, PlasticToValidate.SOURCE, PipelineTransformation.NONE),
 
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", ExpectSourcesEmpty.FALSE, ExpectTargetsEmpty.TRUE,
