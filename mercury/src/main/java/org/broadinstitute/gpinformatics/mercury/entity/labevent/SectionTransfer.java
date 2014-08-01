@@ -35,11 +35,13 @@ public class SectionTransfer extends VesselTransfer {
     public SectionTransfer(VesselContainer sourceVesselContainer, SBSSection sourceSection,
             VesselContainer targetVesselContainer, SBSSection targetSection, LabEvent labEvent) {
         this.labEvent = labEvent;
-        this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVessel = sourceVesselContainer.getEmbedder();
         sourceVesselContainer.getSectionTransfersFrom().add(this);
         this.sourceSection = sourceSection;
-        this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVessel = targetVesselContainer.getEmbedder();
         targetVesselContainer.getSectionTransfersTo().add(this);
+        // In case we're adding molecular indexes, clear the cached sample instances.
+        targetVesselContainer.clearCaches();
         this.targetSection = targetSection;
     }
 
@@ -47,15 +49,15 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer getSourceVesselContainer() {
-        return this.sourceVessel.getContainerRole();
+        return sourceVessel.getContainerRole();
     }
 
     public void setSourceVesselContainer(VesselContainer sourceVesselContainer) {
-        this.sourceVessel = sourceVesselContainer.getEmbedder();
+        sourceVessel = sourceVesselContainer.getEmbedder();
     }
 
     public SBSSection getSourceSection() {
-        return this.sourceSection;
+        return sourceSection;
     }
 
     public void setSourceSection(SBSSection sourceSection) {
@@ -63,15 +65,15 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer getTargetVesselContainer() {
-        return this.targetVessel.getContainerRole();
+        return targetVessel.getContainerRole();
     }
 
     public void setTargetVesselContainer(VesselContainer targetVesselContainer) {
-        this.targetVessel = targetVesselContainer.getEmbedder();
+        targetVessel = targetVesselContainer.getEmbedder();
     }
 
     public SBSSection getTargetSection() {
-        return this.targetSection;
+        return targetSection;
     }
 
     public void setTargetSection(SBSSection targetSection) {
