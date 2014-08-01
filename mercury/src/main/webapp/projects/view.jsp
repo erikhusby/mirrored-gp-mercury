@@ -49,6 +49,8 @@
 
             function showBeginCollaboration() {
                 $j("#dialogAction").attr("name", "beginCollaboration");
+                // Make sure email field's show/hide state is correct.
+                updateEmailField();
                 $j("#confirmDialog").dialog("open");
             }
 
