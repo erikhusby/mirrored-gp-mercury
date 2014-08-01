@@ -24,11 +24,11 @@ public class SubmissionTrackerTest {
 
         Assert.assertEquals(tracker.getVersion() , testVersion);
 
-        Assert.assertNull(tracker.getSubmissionIdentifier());
+        Assert.assertNull(tracker.createSubmissionIdentifier());
 
         tracker.setSubmissionTrackerId(345L);
 
-        Assert.assertEquals(tracker.getSubmissionIdentifier(), SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX +345L);
+        Assert.assertEquals(tracker.createSubmissionIdentifier(), SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX +345L);
 
         Assert.assertNull(tracker.getResearchProject());
 

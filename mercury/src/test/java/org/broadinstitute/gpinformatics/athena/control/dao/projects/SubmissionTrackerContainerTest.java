@@ -50,11 +50,11 @@ public class SubmissionTrackerContainerTest extends ContainerTest {
 
         researchProjectDao.persist(testProject);
 
-        Assert.assertNotNull(tracker.getSubmissionIdentifier());
+        Assert.assertNotNull(tracker.createSubmissionIdentifier());
         Assert.assertNotNull(tracker.getSubmissionTrackerId());
 
         Assert.assertEquals(String.valueOf(tracker.getSubmissionTrackerId()),
-                tracker.getSubmissionIdentifier().substring(SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX.length()));
+                tracker.createSubmissionIdentifier().substring(SubmissionTracker.MERCURY_SUBMISSION_ID_PREFIX.length()));
     }
 
 }

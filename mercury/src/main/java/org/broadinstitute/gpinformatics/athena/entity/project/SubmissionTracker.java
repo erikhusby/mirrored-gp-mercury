@@ -15,7 +15,8 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * TODO scottmat fill in javadoc!!!
+ * Represents the association between a submitted sample and its' submission identifier.  This will aid the system
+ * in tracking and retrieving the status for a pending submission
  */
 @Entity
 @Audited
@@ -23,21 +24,38 @@ import javax.persistence.Table;
 public class SubmissionTracker {
 
     public static final String MERCURY_SUBMISSION_ID_PREFIX = "MERCURY_SUB_";
+
+    /**
+     * Unique Database identifier for the entity.  This will be used to create the Submissions Identifier
+     */
     @Id
     @SequenceGenerator(name = "SEQ_SUBMISSION_TRACKER", schema = "athena", sequenceName = "SEQ_SUBMISSION_TRACKER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SUBMISSION_TRACKER")
     @Column(name = "SUBMISSION_TRACKER_ID")
     private Long submissionTrackerId;
 
+    /**
+     * Represents the name of the sample that has been submitted.  This field name may be changed based on the outcome
+     * of discussions on what data to specifically send.
+     */
     @Column(name = "ACCESSION_IDENTIFIER")
     private String accessionIdentifier;
 
+    /**
+     * File name and path for the data file being submitted
+     */
     @Column(name = "FILE_NAME")
     private String fileName;
 
+    /**
+     * version of the data file created
+     */
     @Column(name = "VERSION")
     private String version;
 
+    /**
+     * research project under which the submission has been made.
+     */
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "RESEARCH_PROJECT_ID")
     private ResearchProject researchProject;
@@ -50,6 +68,16 @@ public class SubmissionTracker {
         this.accessionIdentifier = testAccessionID;
         this.fileName = testFileName;
         this.version = testVersion;
+    }
+
+    /**
+     * This method creates a unique string to be associated with the submission request for the sample file and version
+     * that is represented in an instance of the SubmissionTracker.  This identifier will be used to query for status
+     * on the progress of the submission
+     * @return  A string that is used to identify the submission request
+     */
+    public String createSubmissionIdentifier() {
+        return (submissionTrackerId != null) ? (MERCURY_SUBMISSION_ID_PREFIX + submissionTrackerId) : null;
     }
 
     public String getAccessionIdentifier() {
@@ -70,11 +98,6 @@ public class SubmissionTracker {
 
     protected void setSubmissionTrackerId(Long id) {
         this.submissionTrackerId = id;
-    }
-
-
-    public String getSubmissionIdentifier() {
-        return (submissionTrackerId != null) ? (MERCURY_SUBMISSION_ID_PREFIX + submissionTrackerId) : null;
     }
 
     public ResearchProject getResearchProject() {
