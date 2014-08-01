@@ -47,6 +47,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDto;
 import org.broadinstitute.gpinformatics.infrastructure.submission.SubmissionDtoFetcher;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -781,6 +782,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return new ForwardResolution(PROJECT_SUBMISSIONS_PAGE);
     }
 
+    /**
+     * Forces an update of all submission DTOs associated with the current Research Project
+     */
     @Before(stages = LifecycleStage.EventHandling,
             on = {VIEW_SUBMISSIONS_ACTION, POST_SUBMISSIONS_ACTION})
     public void initializeForSubmissions() {
@@ -806,6 +810,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
                 .addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
+    /**
+     * Handles a users request to submit samples to the submissions serverice
+     * @return
+     */
     @HandlesEvent(POST_SUBMISSIONS_ACTION)
     public Resolution postSubmissions() {
 

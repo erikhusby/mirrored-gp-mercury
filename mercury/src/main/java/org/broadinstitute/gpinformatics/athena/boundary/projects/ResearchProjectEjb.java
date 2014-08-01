@@ -227,7 +227,15 @@ public class ResearchProjectEjb {
         return StringUtils.join(piNameList, '\n');
     }
 
-    public SubmissionStatusResultBean processSubmissions(@Nonnull String businessKey,
+    /**
+     * When called, this method will post to the submission service the samples and their related information
+     * that have been selected to be submitted.
+     * @param researchProjectBusinessKey    Unique key of the Research Project under which the
+     * @param selectedBioProject            BioProject to be associated with all submissions
+     * @param submissionDtos                Collection of submissionDTOs selected to be submitted
+     * @return the results from the post to the submission service
+     */
+    public SubmissionStatusResultBean processSubmissions(@Nonnull String researchProjectBusinessKey,
                                                          @Nonnull BioProject selectedBioProject,
                                                          @Nonnull List<SubmissionDto> submissionDtos) {
 
@@ -235,7 +243,7 @@ public class ResearchProjectEjb {
             throw new InformaticsServiceException("At least one selection is needed to post submissions");
         }
 
-        ResearchProject submissionProject = researchProjectDao.findByBusinessKey(businessKey);
+        ResearchProject submissionProject = researchProjectDao.findByBusinessKey(researchProjectBusinessKey);
 
         Map<SubmissionTracker, SubmissionDto> submissionDtoMap = new HashMap<>();
 
@@ -272,7 +280,7 @@ public class ResearchProjectEjb {
 
         SubmissionRequestBean requestBean = new SubmissionRequestBean(submissionBeans);
         try {
-            log.info(MercuryStringUtils.serializeJsonBean(requestBean).toString());
+            log.debug(MercuryStringUtils.serializeJsonBean(requestBean).toString());
         } catch (JAXBException e) {
             e.printStackTrace();
         }
