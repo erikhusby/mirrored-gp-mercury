@@ -72,7 +72,7 @@ public class CollaborationService {
      *           invitation.
      *       </dd>
      *       <dd>The research project will be updated with appropriate information</dd>
-     *     <dt><In Portal/dt>
+     *     <dt>In Portal</dt>
      *         <dd>A call will be made to create the collaboration. The portal will then invite the user if there
      *         is no account or associate the user and notify them of the new collaboration</dd>
      *         <dd>Will request user account information</dd>
