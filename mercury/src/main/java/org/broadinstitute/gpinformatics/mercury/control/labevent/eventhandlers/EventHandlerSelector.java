@@ -58,14 +58,12 @@ public class EventHandlerSelector {
 
         case AUTO_DAUGHTER_PLATE_CREATION:
             stationEvent.setEventType(LabEventType.SAMPLES_DAUGHTER_PLATE_CREATION.getName());
-        case BLOOD_CRYOVIAL_EXTRACTION:
-        case BLOOD_DEEPWELL_CHEMAGEN_TRANSFER:
-        case BLOOD_CHEMAGEN_TO_FINAL_RACK:
-        case SALIVA_CRYOVIAL_EXTRACTION:
-        case SALIVA_DEEPWELL_CHEMAGEN_TRANSFER:
-        case SALIVA_CHEMAGEN_TO_FINAL_RACK:
-            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
             break;
+        }
+
+        // For automated plate transfers in BSP, post the message to BSP PlateTransferResource.
+        if (targetEvent.getLabEventType().isSendToBsp()) {
+            samplesDaughterPlateHandler.postToBsp(stationEvent, SamplesDaughterPlateHandler.BSP_TRANSFER_REST_URL);
         }
     }
 
