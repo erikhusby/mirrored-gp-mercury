@@ -480,7 +480,10 @@ public class ConfigurableList {
                 if( !columnTabulation.isNestedParent() ) {
                     recurseColumns(context, entity, row, columnTabulation, columnTabulation.getName());
                 } else {
-                    row.getNestedTableEntities().put(columnTabulation, columnTabulation.evalNestedTableExpression(entity, context));
+                    Collection<?> nestedEntities = columnTabulation.evalNestedTableExpression(entity, context);
+                    if( nestedEntities != null && nestedEntities.size() > 0 ) {
+                        row.getNestedTableEntities().put(columnTabulation, nestedEntities);
+                    }
                 }
             }
         }
@@ -963,7 +966,7 @@ public class ConfigurableList {
          * Any nested tables associated with this row, key is name of parent search term
          * @return Nested table collection for UI
          */
-        Map<String, ResultList> getNestedTables(){
+        public Map<String, ResultList> getNestedTables(){
             return nestedTables;
         }
 
